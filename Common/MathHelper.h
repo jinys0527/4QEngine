@@ -160,6 +160,14 @@ namespace MathUtils
 		return inverse;
 	}	
 
+	inline XMFLOAT4X4 Inverse(XMVECTOR& determinant, const XMFLOAT4X4& mat)
+	{
+		XMFLOAT4X4 inverse;
+		XMMATRIX mInverse = XMMatrixInverse(&determinant, XMLoadFloat4x4(&mat));
+		XMStoreFloat4x4(&inverse, mInverse);
+		return inverse;
+	}
+
 	inline void DecomposeMatrix(const XMFLOAT4X4 matrix, XMFLOAT3& outTranslation, XMFLOAT4& outRotation, XMFLOAT3& outScale)
 	{
 		XMVECTOR scale, rot, trans;
