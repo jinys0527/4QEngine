@@ -242,6 +242,7 @@
     <ClInclude Include="CoreTypes.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIComponent.h" />
     <ClInclude Include="UIObject.h" />
   </ItemGroup>
@@ -249,6 +250,7 @@
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
   </ItemGroup>
