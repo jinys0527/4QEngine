@@ -12,6 +12,9 @@ void SceneManager::Initialize()
 
 void SceneManager::Update(float deltaTime)
 {
+	if (!m_CurrentScene)
+		return;
+
 	static float totalTime = 0;
 	totalTime += deltaTime;
 	if (totalTime >= 0.016f)

@@ -2,14 +2,11 @@
 #include "Editor.h"
 #include "json.hpp"
 #include "Scene.h"
-#include "TransformComponent.h"
 #include "GameObject.h"
-#include "ItemObject.h"
 #include <fstream>
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
-#include "SpriteRenderer.h"
 
 void Editor::Update()
 {
@@ -184,16 +181,16 @@ void Editor::DrawGameObjectInspector(std::shared_ptr<Scene> currentScene)
 			m_SelectedKey = gameObject->m_Name;
 		}
 
-		if (auto* item = dynamic_cast<ItemObject*>(gameObject.get()))
-		{
-			int lane = static_cast<int>(item->GetZ());
-			if (ImGui::SliderInt("Lane", &lane, 0, 2))
-			{
-				item->SetZ(static_cast<float>(lane));
-			}
-		}
+		//if (auto* item = dynamic_cast<ItemObject*>(gameObject.get()))
+		//{
+		//	int lane = static_cast<int>(item->GetZ());
+		//	if (ImGui::SliderInt("Lane", &lane, 0, 2))
+		//	{
+		//		item->SetZ(static_cast<float>(lane));
+		//	}
+		//}
 
-		auto* spriteRenderer = gameObject->GetComponent<SpriteRenderer>();
+		/*auto* spriteRenderer = gameObject->GetComponent<SpriteRenderer>();
 		if (spriteRenderer)
 		{
 			float opacity = spriteRenderer->GetOpacity();
@@ -202,10 +199,10 @@ void Editor::DrawGameObjectInspector(std::shared_ptr<Scene> currentScene)
 			{
 				spriteRenderer->SetOpacity(opacity);
 			}
-		}
+		}*/
 
 
-		auto* transform = gameObject->GetComponent<TransformComponent>();
+		//auto* transform = gameObject->GetComponent<TransformComponent>();
 
 		/*if (transform)
 		{

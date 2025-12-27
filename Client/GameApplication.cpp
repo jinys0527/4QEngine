@@ -1,9 +1,6 @@
 ﻿#include "pch.h"
 #include "GameApplication.h"
 #include "GameObject.h"
-#include "SpriteRenderer.h"
-#include "TransformComponent.h"
-#include "BoxColliderComponent.h"
 
 #include <imgui.h>
 #include <imgui_impl_dx11.h>

@@ -151,7 +151,7 @@ UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 
 bool UIObject::HitCheck(const POINT& pos)
 {
-
+	return true;
 }
 
 bool UIObject::IsFullScreen()

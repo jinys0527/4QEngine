@@ -3,11 +3,8 @@
 #include "json.hpp"
 #include "GameObject.h"
 #include "UIObject.h"
-#include "ItemObject.h"
 #include "GameManager.h"
 #include <unordered_set>
-#include "SpriteRenderer.h"
-#include "TransformComponent.h"
 
 Scene::~Scene()
 {
@@ -29,7 +26,7 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 	auto it = m_GameObjects.find(gameObject->m_Name);
 	if (it != m_GameObjects.end())
 	{
-		gameObject->GetComponent<TransformComponent>()->DetachFromParent();
+		//gameObject->GetComponent<TransformComponent>()->DetachFromParent();
 		m_GameObjects.erase(gameObject->m_Name);
 	}
 }
@@ -92,28 +89,21 @@ void Scene::Deserialize(const nlohmann::json& j)
 		std::string name = gameObjectJson.at("name");
 		auto it = m_GameObjects.find(name);
 		if (it != m_GameObjects.end())
-		{
+		{/*
 			auto sr = it->second->GetComponent<SpriteRenderer>();
-			if(sr)
+			if(sr)*/
 			//	sr->SetAssetManager(&m_AssetManager);
 			/*auto animComp = it->second->GetComponent<AnimationComponent>();*/
 			//if (animComp)
 			//	animComp->SetAssetManager(&m_AssetManager);
 			// 기존 오브젝트가 있으면 내부 상태만 갱신
-			it->second->Deserialize(gameObjectJson);
+			/*it->second->Deserialize(gameObjectJson);*/
 		}
 		else
 		{
 			std::shared_ptr<GameObject> gameObject;
 			// 없으면 새로 생성 후 추가
-			if (name.find("Item"))
-			{
-				gameObject = std::make_shared<ItemObject>(m_EventDispatcher);
-			}
-			else
-			{
-				gameObject = std::make_shared<GameObject>(m_EventDispatcher);
-			}
+			gameObject = std::make_shared<GameObject>(m_EventDispatcher);
 			
 			gameObject->Deserialize(gameObjectJson);
 			m_GameObjects[name] = std::move(gameObject);

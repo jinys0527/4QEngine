@@ -2,8 +2,6 @@
 #include "UIManager.h"
 #include "Event.h"
 #include <algorithm>
-#include "UIButtonComponent.h"
-#include "UISliderComponent.h"
 
 UIManager::~UIManager()
 {
@@ -133,13 +131,11 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
 	if (ui->hasButton)
 	{
-		for (auto& btn : ui->GetComponents<UIButtonComponent>())
-			btn->OnEvent(type, data);
+
 	}
 	if (ui->hasSlider)
 	{
-		for (auto& slider : ui->GetComponents<UISliderComponent>())
-			slider->OnEvent(type, data);
+
 	}
 }
 
