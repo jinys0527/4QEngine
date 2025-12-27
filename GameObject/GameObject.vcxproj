@@ -238,6 +238,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="CoreTypes.h" />
     <ClInclude Include="GameObject.h" />
@@ -247,6 +248,7 @@
     <ClInclude Include="UIObject.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Object.cpp" />

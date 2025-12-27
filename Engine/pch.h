@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef PCH_H
 #define PCH_H
@@ -6,7 +6,7 @@
 #include "framework.h"
 #include <iostream>
 
-#define WIN32_LEAN_AND_MEAN             // °ÅÀÇ »ç¿ëµÇÁö ¾Ê´Â ³»¿ëÀ» Windows Çì´õ¿¡¼­ Á¦¿ÜÇÕ´Ï´Ù.
+#define WIN32_LEAN_AND_MEAN             // ê±°ì˜ ì‚¬ìš©ë˜ì§€ ì•ŠëŠ” ë‚´ìš©ì„ Windows í—¤ë”ì—ì„œ ì œì™¸í•©ë‹ˆë‹¤.
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -31,15 +31,29 @@
 #include <vector>
 #include <string>
 
+#include <memory>
+#include <chrono>
 
-// COM ¹× DirectX ÀÎÅÍÆäÀÌ½º
-#include <wrl/client.h>              // ComPtr
-#include <d3d11.h>                   // Direct3D 11
-#include <dxgi1_6.h>                 // DXGI 1.6 (Windows 10 ÀÌ»ó ÃÖ½Å ½º¿ÒÃ¼ÀÎ)
-#include <d2d1_3.h>                  // Direct2D 1.3 (ID2D1Factory4)
-#include <d2d1_3helper.h>            // D2D1::Helper Å¬·¡½ºµé
-#include <dwrite_3.h>                // DirectWrite (ÃÖ½Å ÅØ½ºÆ® ¿£Áø)
-#include <wincodec.h>                // WIC (ÀÌ¹ÌÁö ·Îµù)
+#include <wrl.h>
+using namespace Microsoft::WRL;
+
+
+// DirectX
+#include <d3d11.h>
+#pragma comment(lib, "d3d11")
+
+
+// DirectX Math
+#include <DirectXMath.h>
+using namespace DirectX;
+
+
+// DirectX Graphics Infrastructure
+#include <dxgi1_4.h>
+#include <dxgi1_6.h>
+#pragma comment(lib, "dxgi")
+
+#include <unordered_map>
 
 
 #include "fmod.hpp"

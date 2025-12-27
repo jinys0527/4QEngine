@@ -81,9 +81,9 @@ namespace MathUtils
 		return XMMatrixMultiply(XMMatrixMultiply(mScale, mRot), mTrans);
 	}
 
-	inline XMMATRIX LookAtLH(const XMFLOAT3& eye, const XMFLOAT4& look, const XMFLOAT3& up)
+	inline XMMATRIX LookAtLH(const XMFLOAT3& eye, const XMFLOAT3& look, const XMFLOAT3& up)
 	{
-		return XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat4(&look), XMLoadFloat3(&up));
+		return XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&look), XMLoadFloat3(&up));
 	}
 
 	inline XMMATRIX PerspectiveLH(float angle, float aspect, float nearZ, float farZ)
@@ -159,6 +159,14 @@ namespace MathUtils
 		XMStoreFloat4x4(&inverse, mInverse);
 		return inverse;
 	}	
+
+	inline XMFLOAT4X4 Inverse(XMVECTOR& determinant, const XMFLOAT4X4& mat)
+	{
+		XMFLOAT4X4 inverse;
+		XMMATRIX mInverse = XMMatrixInverse(&determinant, XMLoadFloat4x4(&mat));
+		XMStoreFloat4x4(&inverse, mInverse);
+		return inverse;
+	}
 
 	inline void DecomposeMatrix(const XMFLOAT4X4 matrix, XMFLOAT3& outTranslation, XMFLOAT4& outRotation, XMFLOAT3& outScale)
 	{
