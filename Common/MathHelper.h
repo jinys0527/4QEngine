@@ -81,9 +81,9 @@ namespace MathUtils
 		return XMMatrixMultiply(XMMatrixMultiply(mScale, mRot), mTrans);
 	}
 
-	inline XMMATRIX LookAtLH(const XMFLOAT3& eye, const XMFLOAT4& look, const XMFLOAT3& up)
+	inline XMMATRIX LookAtLH(const XMFLOAT3& eye, const XMFLOAT3& look, const XMFLOAT3& up)
 	{
-		return XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat4(&look), XMLoadFloat3(&up));
+		return XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&look), XMLoadFloat3(&up));
 	}
 
 	inline XMMATRIX PerspectiveLH(float angle, float aspect, float nearZ, float farZ)

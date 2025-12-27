@@ -28,6 +28,9 @@
     <ClCompile Include="TransformComponent.cpp">
       <Filter>Components\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CameraComponent.cpp">
+      <Filter>Components\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component.h">
@@ -71,6 +74,9 @@
       <Filter>Components\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TransformComponent.h">
+      <Filter>Components\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraComponent.h">
       <Filter>Components\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
