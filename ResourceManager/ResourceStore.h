@@ -120,7 +120,7 @@ private:
 			id = static_cast<uint32_t>(m_Entries.size());
 			m_Entries.emplace_back();
 		}
-
+		 
 		HandleType handle;
 		handle.id = id;
 		handle.generation = m_Entries[id].generation;
