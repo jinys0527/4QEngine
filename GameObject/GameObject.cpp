@@ -1,13 +1,10 @@
 ﻿#include "Component.h"
 #include "GameObject.h"
-#include "TransformComponent.h"
-#include "SpriteRenderer.h"
-#include "UIImageComponent.h"
-#include "BoxColliderComponent.h"
+
 
 GameObject::GameObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 {
-	m_Transform = AddComponent<TransformComponent>();
+	//m_Transform = AddComponent<TransformComponent>();
 }
 
 //bool GameObject::IsInView(CameraObject* camera) const

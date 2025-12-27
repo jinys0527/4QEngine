@@ -1,16 +1,9 @@
 ﻿#include "UIObject.h"
-#include "RectTransformComponent.h"
-#include "UIImageComponent.h"
-#include "UIButtonComponent.h"
-#include "UISliderComponent.h"
-#include "UIGridComponent.h"
-#include "UITextComponent.h"
-#include "UIUtils.h"
 #include "Object.h"
 
 UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 {
-	m_RectTransform = AddComponent<RectTransformComponent>();
+
 }
 
 //void UIObject::Render(std::vector<UIRenderInfo>& renderInfo)
@@ -158,14 +151,7 @@ UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 
 bool UIObject::HitCheck(const POINT& pos)
 {
-	auto rectTransform = GetComponent<RectTransformComponent>();
-	if (!rectTransform) return false;
 
-	auto size = rectTransform->GetSize();
-	auto position = rectTransform->GetPosition();
-	auto pivot = rectTransform->GetPivot();
-
-	return IsPointInUIRect(position, size, pivot, pos);
 }
 
 bool UIObject::IsFullScreen()
@@ -180,6 +166,5 @@ bool UIObject::IsVisible()
 
 void UIObject::UpdateInteractableFlags()
 {
-	hasButton = !GetComponents<UIButtonComponent>().empty();
-	hasSlider = !GetComponents<UISliderComponent>().empty();
+
 }

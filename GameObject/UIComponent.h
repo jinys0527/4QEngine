@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include <vector>
 #include "IEventListener.h"
@@ -19,8 +19,8 @@ public:
 	void Deserialize(const nlohmann::json& j) override;
 protected:
 
-	bool m_Visible = true;
-	int m_ZOrder = 0;
+	bool  m_Visible = true;
+	int   m_ZOrder = 0;
 	float m_Opacity = 1.0f;
 };
 

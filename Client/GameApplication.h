@@ -8,7 +8,6 @@
 #include "Editor.h"
 
 class GameObject;
-class CameraObject;
 
 class GameApplication : public NzWndBase
 {

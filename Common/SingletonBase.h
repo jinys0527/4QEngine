@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <mutex>
 
 template<typename T>
@@ -16,10 +16,10 @@ protected:
 	virtual ~SingletonBase() = default;
 
 private:
-	SingletonBase(const SingletonBase&) = delete;
+	SingletonBase(const SingletonBase&)            = delete;
 	SingletonBase& operator=(const SingletonBase&) = delete;
-	SingletonBase(SingletonBase&&) = delete;
-	SingletonBase& operator=(SingletonBase&&) = delete;
+	SingletonBase(SingletonBase&&)                 = delete;
+	SingletonBase& operator=(SingletonBase&&)      = delete;
 
 	friend T;
 };

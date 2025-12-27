@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <string>
 #include <vector>
@@ -48,7 +48,7 @@ public:
 	void SetIsActive(bool active) { m_IsActive = active; }
 	bool GetIsActive() { return m_IsActive; }
 protected:
-	bool m_IsActive = true;
+	bool    m_IsActive = true;
 	Object* m_Owner = nullptr;
 	std::unordered_map<myCore::MessageID, std::vector<HandlerType>> m_MessageHandlers;
 	EventDispatcher& GetEventDispatcher() const;

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <unordered_set>
 #include <windows.h>
 #include "EventDispatcher.h"
@@ -13,20 +13,20 @@ class InputManager
 public:
 	InputManager(EventDispatcher& dispatcher);
 	~InputManager() = default;
-	void Update();
-	void OnKeyDown(char key);
-	void OnKeyUp(char key);
-	bool IsKeyPressed(char key) const;
+	void Update         ();
+	void OnKeyDown      (char key);
+	void OnKeyUp        (char key);
+	bool IsKeyPressed   (char key) const;
 	bool OnHandleMessage(const MSG& msg);
-	void HandleMsgMouse(const MSG& msg);
+	void HandleMsgMouse (const MSG& msg);
 
 private:
-	std::unordered_set<char> m_KeysDown;			// ÇöÀç ´­¸²
-	std::unordered_set<char> m_KeysDownPrev;		// ÀÌÀü ÇÁ·¹ÀÓ ´­¸²
+	std::unordered_set<char> m_KeysDown;			// í˜„ì¬ ëˆŒë¦¼
+	std::unordered_set<char> m_KeysDownPrev;		// ì´ì „ í”„ë ˆì„ ëˆŒë¦¼
 
-	Events::MouseState m_Mouse;
-	Events::MouseState m_MousePrev;
+	Events::MouseState       m_Mouse;
+	Events::MouseState       m_MousePrev;
 
-	EventDispatcher& m_EventDispatcher;				// ÂüÁ¶ º¸°ü
+	EventDispatcher&         m_EventDispatcher;				// ì°¸ì¡° ë³´ê´€
 };
 

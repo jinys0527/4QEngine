@@ -130,17 +130,12 @@
     <ClInclude Include="json.hpp" />
     <ClInclude Include="NzWndBase.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PlatformHelpers.h" />
-    <ClInclude Include="SimpleMathHelper.h" />
     <ClInclude Include="SingletonBase.h" />
-    <ClInclude Include="TMHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="NzWndBase.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="SimpleMathHelper.cpp" />
-    <ClCompile Include="TMHelper.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

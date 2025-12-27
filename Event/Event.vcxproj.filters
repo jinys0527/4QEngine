@@ -24,15 +24,9 @@
     <ClInclude Include="IEventListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TestListener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EventDispatcher.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TestListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

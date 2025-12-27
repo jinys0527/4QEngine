@@ -238,58 +238,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ButtonUI.h" />
-    <ClInclude Include="BoxColliderComponent.h" />
-    <ClInclude Include="CircleColliderComponent.h" />
-    <ClInclude Include="ColliderComponent.h" />
     <ClInclude Include="Component.h" />
-    <ClInclude Include="ControlComponent.h" />
     <ClInclude Include="CoreTypes.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ItemObject.h" />
-    <ClInclude Include="LoadingRollerComponent.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="RectTransformComponent.h" />
-    <ClInclude Include="RigidbodyComponent.h" />
-    <ClInclude Include="RollerBackComponent.h" />
-    <ClInclude Include="SoundUI.h" />
-    <ClInclude Include="SpriteRenderer.h" />
-    <ClInclude Include="TransformComponent.h" />
-    <ClInclude Include="TriggerBox.h" />
-    <ClInclude Include="UIButtonComponent.h" />
     <ClInclude Include="UIComponent.h" />
-    <ClInclude Include="UIGridComponent.h" />
-    <ClInclude Include="UIImageComponent.h" />
     <ClInclude Include="UIObject.h" />
-    <ClInclude Include="UISliderComponent.h" />
-    <ClInclude Include="UITextComponent.h" />
-    <ClInclude Include="UIUtils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ButtonUI.cpp" />
-    <ClCompile Include="BoxColliderComponent.cpp" />
-    <ClCompile Include="CircleColliderComponent.cpp" />
-    <ClCompile Include="ColliderComponent.cpp" />
     <ClCompile Include="Component.cpp" />
-    <ClCompile Include="ControlComponent.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="ItemObject.cpp" />
-    <ClCompile Include="LoadingRollerComponent.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="RectTransformComponent.cpp" />
-    <ClCompile Include="RigidbodyComponent.cpp" />
-    <ClCompile Include="RollerBackComponent.cpp" />
-    <ClCompile Include="SoundUI.cpp" />
-    <ClCompile Include="SpriteRenderer.cpp" />
-    <ClCompile Include="TransformComponent.cpp" />
-    <ClCompile Include="TriggerBox.cpp" />
-    <ClCompile Include="UIButtonComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
-    <ClCompile Include="UIGridComponent.cpp" />
-    <ClCompile Include="UIImageComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
-    <ClCompile Include="UISliderComponent.cpp" />
-    <ClCompile Include="UITextComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AI\AI.vcxproj">

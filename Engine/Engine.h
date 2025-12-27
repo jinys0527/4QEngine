@@ -39,7 +39,7 @@ private:
 private:
 	GameTimer m_GameTimer;
 	std::unique_ptr<EventDispatcher> m_EventDispatcher = nullptr;
-	std::unique_ptr<InputManager> m_InputManager = nullptr;
+	std::unique_ptr<InputManager>    m_InputManager    = nullptr;
 	//std::unique_ptr<D2DRenderer> m_Renderer = nullptr;
 	//std::unique_ptr<AssetManager> m_AssetManager = nullptr;
 	//std::unique_ptr<SoundAssetManager> m_SoundAssetManager = nullptr;

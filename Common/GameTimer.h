@@ -1,4 +1,4 @@
-#ifndef GAMETIMER_H
+﻿#ifndef GAMETIMER_H
 #define GAMETIMER_H
 
 #include <chrono>
@@ -8,8 +8,8 @@ class GameTimer
 public:
 	GameTimer();
 
-	float TotalTime() const;
-	float DeltaTime() const;
+	float TotalTime()   const;
+	float DeltaTime()   const;
 	float DeltaTimeMs() const;
 
 	void Reset();

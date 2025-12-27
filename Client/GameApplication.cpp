@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 #include "GameApplication.h"
-#include "SimpleMathHelper.h"
 #include "GameObject.h"
 #include "SpriteRenderer.h"
 #include "TransformComponent.h"

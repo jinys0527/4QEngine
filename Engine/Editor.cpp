@@ -207,7 +207,7 @@ void Editor::DrawGameObjectInspector(std::shared_ptr<Scene> currentScene)
 
 		auto* transform = gameObject->GetComponent<TransformComponent>();
 
-		if (transform)
+		/*if (transform)
 		{
 			Math::Vector2F pos = transform->GetPosition();
 			float rot = transform->GetRotation();
@@ -225,7 +225,7 @@ void Editor::DrawGameObjectInspector(std::shared_ptr<Scene> currentScene)
 			{
 				transform->SetScale(scale);
 			}
-		}
+		}*/
 	}
 	ImGui::End();
 }

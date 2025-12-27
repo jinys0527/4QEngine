@@ -2,16 +2,11 @@
 #include "Object.h"
 #include "json.hpp"
 
-class TransformComponent;
-class CameraObject;
 
 class GameObject : public Object 
 {
 	friend class Editor;
 	friend class Scene;
-	friend class TitleScene;
-	friend class InGameUITestScene;
-	friend class BossScene;
 
 public:
 	GameObject(EventDispatcher& eventDispatcher);
@@ -33,12 +28,12 @@ public:
 	virtual void Serialize(nlohmann::json& j) const;
 	virtual void Deserialize(const nlohmann::json& j);
 
-	GameObject(const GameObject&) = delete;
+	GameObject           (const GameObject&) = delete;
 	GameObject& operator=(const GameObject&) = delete;
-	GameObject(GameObject&&) = delete;
-	GameObject& operator=(GameObject&&) = delete;
+	GameObject           (GameObject&&)      = delete;
+	GameObject& operator=(GameObject&&)      = delete;
 
 protected:
-	TransformComponent* m_Transform;
+	//TransformComponent* m_Transform;
 };
 

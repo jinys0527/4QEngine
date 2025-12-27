@@ -2,17 +2,10 @@
 #include "Object.h"
 #include <windows.h>
 
-class RectTransformComponent;
-class UIButtonComponent;
-class UISliderComponent;
 
 class UIObject : public Object
 {
 	friend class UIManager;
-	friend class Scene;
-	friend class TitleScene;
-	friend class InGameUITestScene;
-	friend class BossScene;
 public:
 	UIObject(EventDispatcher& eventDispatcher);
 	virtual ~UIObject() = default;
@@ -21,12 +14,12 @@ public:
 	//void Render(std::vector<UITextInfo>& textInfo);
 
 	void SetZOrder(int zOrder) { m_ZOrder = zOrder; }
-	int GetZOrder() const { return m_ZOrder; }
+	int GetZOrder () const     { return m_ZOrder;   }
 
-	bool HitCheck(const POINT& pos);
+	bool HitCheck       (const POINT& pos);
 	
 	void SetIsFullScreen(bool isFullScreen) { m_IsFullScreen = isFullScreen; }
-	bool IsFullScreen();
+	bool IsFullScreen   ();
 
 	void SetIsVisible(bool isVisible) 
 	{
@@ -56,8 +49,8 @@ protected:
 	bool hasButton = false;
 	bool hasSlider = false;
 
-	RectTransformComponent* m_RectTransform;
-	int m_ZOrder = 0;
+
+	int  m_ZOrder = 0;
 	bool m_IsFullScreen = false;
 	bool m_IsVisible = true;
 };

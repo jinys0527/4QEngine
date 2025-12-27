@@ -11,10 +11,6 @@
 class Object
 {
 	friend class Scene;
-	friend class TitleScene;
-	friend class GameScene;
-	friend class CharacterScene;
-	friend class InGameUITestScene;
 
 public:
 	Object(EventDispatcher& eventDispatcher);
