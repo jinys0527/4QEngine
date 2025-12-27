@@ -69,10 +69,7 @@ protected:
 public:
 	CameraComponent() = default;
 	CameraComponent(float viewportW, float viewportH,
-		float fov, float aspect, float nearZ, float farZ);
-
-	CameraComponent(float viewportW, float viewportH,
-		float width, float height, float nearZ, float farZ);
+		float fov, float aspect, float nearZ, float farZ, ProjectionMode mode);
 
 	CameraComponent(float viewportW, float viewportH,
 		float left, float right, float bottom, float top, float nearZ, float farZ);

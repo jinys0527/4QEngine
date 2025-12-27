@@ -30,16 +30,19 @@ void CameraComponent::RebuildProjIfDirty()
 }
 
 CameraComponent::CameraComponent(float viewportW, float viewportH,
-	float fov, float aspect, float nearZ, float farZ) : m_ViewportSize({ viewportW, viewportH }), m_Persp({ fov, aspect }), m_NearZ(nearZ), m_FarZ(farZ)
+	float param1, float param2, float nearZ, float farZ, ProjectionMode mode) : m_ViewportSize({ viewportW, viewportH }), m_NearZ(nearZ), m_FarZ(farZ), m_Mode(mode)
 {
-	SetPerspectiveProj(fov, aspect, nearZ, farZ);
+	switch (mode)
+	{
+	case ProjectionMode::Perspective:
+		SetPerspectiveProj(param1, param2, nearZ, farZ);
+		break;
+	case ProjectionMode::Orthographic:
+		SetOrthoProj(param1, param2, nearZ, farZ);
+		break;
+	}
 }
 
-CameraComponent::CameraComponent(float viewportW, float viewportH,
-	float width, float height, float nearZ, float farZ) : m_ViewportSize({ viewportW, viewportH }), m_Ortho({ width, height }), m_NearZ(nearZ), m_FarZ(farZ)
-{
-	SetOrthoProj(width, height, nearZ, farZ);
-}
 
 CameraComponent::CameraComponent(float viewportW, float viewportH,
 	float left, float right, float bottom, float top, float nearZ, float farZ) : m_ViewportSize({ viewportW, viewportH }), m_OrthoOC({ left, right, bottom, top }), m_NearZ(nearZ), m_FarZ(farZ)
