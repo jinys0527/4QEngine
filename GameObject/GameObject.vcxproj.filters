@@ -25,6 +25,9 @@
     <ClCompile Include="Object.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TransformComponent.cpp">
+      <Filter>Components\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component.h">
@@ -65,6 +68,9 @@
       <Filter>Components\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIComponent.h">
+      <Filter>Components\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformComponent.h">
       <Filter>Components\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
