@@ -1,8 +1,8 @@
-#pragma once
-
+﻿#pragma once
+#include <Windows.h>
 #include <cstdint>
 
 namespace myCore
 {
-	using MessageID = uint32_t;
+	using MessageID = UINT32;
 }

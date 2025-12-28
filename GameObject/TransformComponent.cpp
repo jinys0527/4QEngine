@@ -87,7 +87,7 @@ XMFLOAT3 TransformComponent::GetForward() const
 	return forward;
 }
 
-const XMFLOAT4X4& TransformComponent::GetWorldMatrix()
+const XMFLOAT4X4& TransformComponent::GetWorldMatrix() 
 {
 	if (m_IsDirty) UpdateMatrices();
 	return m_WorldMatrix;

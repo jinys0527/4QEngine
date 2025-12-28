@@ -183,7 +183,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc; $(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -197,7 +197,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc; $(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -213,7 +213,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc; $(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -229,7 +229,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)AI;$(SolutionDir)Event; $(SolutionDir)Engine; $(SolutionDir)Client;$(SolutionDir)SoundSystem; $(SolutionDir)ThirdParty\FMOD\inc; $(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -242,6 +242,10 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="CoreTypes.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="LightComponent.h" />
+    <ClInclude Include="MaterialComponent.h" />
+    <ClInclude Include="MeshComponent.h" />
+    <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIComponent.h" />
@@ -251,6 +255,10 @@
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="LightComponent.cpp" />
+    <ClCompile Include="MaterialComponent.cpp" />
+    <ClCompile Include="MeshComponent.cpp" />
+    <ClCompile Include="MeshRenderer.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
@@ -262,6 +270,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Event\Event.vcxproj">
       <Project>{f19d0681-a873-4297-bb00-e750294995e9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ResourceManager\ResourceManager.vcxproj">
+      <Project>{bc2c9dcb-3118-45b6-a6ef-087337daa9cb}</Project>
     </ProjectReference>
     <ProjectReference Include="..\SoundSystem\SoundSystem.vcxproj">
       <Project>{325c5192-b1ee-455d-9f9e-d0aec399023b}</Project>
