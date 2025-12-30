@@ -128,8 +128,10 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="MathHelper.h" />
     <ClInclude Include="NzWndBase.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="RayHelper.h" />
     <ClInclude Include="SingletonBase.h" />
   </ItemGroup>
   <ItemGroup>

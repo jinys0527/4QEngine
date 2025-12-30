@@ -101,15 +101,15 @@ public:
 private:
 	struct Entry
 	{
-		std::string key;
+		std::string        key;
 		std::unique_ptr<T> resource;
-		uint32_t generation = 1;
-		bool alive = false;
+		UINT32             generation = 1;
+		bool               alive = false;
 	};
 
 	HandleType AllocateHandle()
 	{
-		uint32_t id = 0;
+		UINT32 id = 0;
 		if (!m_FreeIds.empty())
 		{
 			id = m_FreeIds.back();
@@ -117,10 +117,10 @@ private:
 		}
 		else
 		{
-			id = static_cast<uint32_t>(m_Entries.size());
+			id = static_cast<UINT32>(m_Entries.size());
 			m_Entries.emplace_back();
 		}
-
+		 
 		HandleType handle;
 		handle.id = id;
 		handle.generation = m_Entries[id].generation;
@@ -129,5 +129,5 @@ private:
 
 	std::unordered_map<std::string, HandleType> m_KeyToHandle;
 	std::vector<Entry>    m_Entries = std::vector<Entry>(1);
-	std::vector<uint32_t> m_FreeIds;
+	std::vector<UINT32>   m_FreeIds;
 };

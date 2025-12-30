@@ -1,13 +1,14 @@
 ﻿#pragma once
 
 #include <cstdint>
+#include <Windows.h>
 
 // id + generation만 들고 있는 가벼운 참조값
 
 struct ResourceHandle
 {
-	uint32_t id = 0;
-	uint32_t generation = 0;
+	UINT32 id = 0;
+	UINT32 generation = 0;
 
 	bool IsValid() const
 	{
@@ -33,8 +34,8 @@ struct ResourceHandle
 template <typename Tag>
 struct TypedHandle
 {
-	uint32_t id = 0;
-	uint32_t generation = 0;
+	UINT32 id = 0;
+	UINT32 generation = 0;
 
 	bool IsValid() const
 	{
@@ -69,6 +70,11 @@ struct TextureTag
 {
 };
 
+struct ShaderTag
+{
+};
+
 using MeshHandle     = TypedHandle<MeshTag>;
 using MaterialHandle = TypedHandle<MaterialTag>;
 using TextureHandle  = TypedHandle<TextureTag>;
+using ShaderHandle   = TypedHandle<ShaderTag>;

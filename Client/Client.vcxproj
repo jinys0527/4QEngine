@@ -182,7 +182,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -203,7 +203,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -226,7 +226,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -249,7 +249,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -282,6 +282,9 @@
     </ProjectReference>
     <ProjectReference Include="..\ImGUIDX11\ImGUIDX11.vcxproj">
       <Project>{dd6614b4-19c1-4673-9445-f0305a3e044c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ResourceManager\ResourceManager.vcxproj">
+      <Project>{bc2c9dcb-3118-45b6-a6ef-087337daa9cb}</Project>
     </ProjectReference>
     <ProjectReference Include="..\SoundSystem\SoundSystem.vcxproj">
       <Project>{325c5192-b1ee-455d-9f9e-d0aec399023b}</Project>
