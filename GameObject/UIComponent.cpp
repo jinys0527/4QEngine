@@ -1,4 +1,4 @@
-#include "UIComponent.h"
+﻿#include "UIComponent.h"
 
 void UIComponent::Update(float deltaTime)
 {

@@ -1,4 +1,4 @@
-#include "Object.h"
+﻿#include "Object.h"
 
 Object::Object(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher)
 {
