@@ -1,4 +1,4 @@
-#include "EventDispatcher.h"
+﻿#include "EventDispatcher.h"
 
 void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 {

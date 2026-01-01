@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 LRESULT CALLBACK NzWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
