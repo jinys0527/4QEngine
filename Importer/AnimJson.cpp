@@ -1,7 +1,8 @@
 ﻿#include "pch.h"
+#include "assimp/scene.h"
 #include "AnimJson.h"
 
-static std::string SanitizeName(const std::string& s)
+inline std::string SanitizeName(const std::string& s)
 {
 	if (s.empty()) return "Anim";
 	std::string out = s;
@@ -65,7 +66,7 @@ static json ClipToJson(const AnimationClip& clip)
 	};
 }
 
-bool ExportAnimationsToJson(const aiScene* scene, const std::string& outDir, const std::string& baseName, const std::unordered_map<std::string, uint32_t>& boneNameToIndex, std::vector<std::string>& outAnimFiles)
+bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const std::string& baseName, const std::unordered_map<std::string, uint32_t>& boneNameToIndex, std::vector<std::string>& outAnimFiles)
 {
 	outAnimFiles.clear();
 	if (!scene || scene->mNumAnimations == 0) return true;

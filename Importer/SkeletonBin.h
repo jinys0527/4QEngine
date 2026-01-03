@@ -25,8 +25,9 @@ struct SkeletonBuildResult
 	std::unordered_map<std::string, uint32_t> boneNameToIndex;
 };
 
+struct aiScene;
 SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene);
 bool ImportFBXToSkelBin(
-	const std::string& fbxPath,
+	const aiScene* scene,
 	const std::string& outSkelBin,
 	std::unordered_map<std::string, uint32_t>& outBoneNameToIndex);

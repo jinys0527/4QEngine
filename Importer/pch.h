@@ -10,8 +10,8 @@
 
 #include "ImporterMathHelper.h"
 
-#ifdef _DEBUG
-#pragma comment(lib, "assimp-vc143-mtd")
-#else
-#pragma comment(lib, "assimp-vc143-mt")
-#endif
+//#ifdef _DEBUG
+//#pragma comment(lib, "assimp-vc143-mtd")
+//#else
+//#pragma comment(lib, "assimp-vc143-mt")
+//#endif

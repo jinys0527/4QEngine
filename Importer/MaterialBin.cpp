@@ -16,20 +16,8 @@ static std::string GetTexPath(const aiMaterial* mat, aiTextureType type)
 }
 
 
-bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMaterialBin)
+bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterialBin)
 {
-	Assimp::Importer importer;
-
-	// DX11 / LH 기준
-	const aiScene* scene = importer.ReadFile(
-		fbxPath,
-		aiProcess_Triangulate			|			// 모든 면을 삼각형으로 반환
-		aiProcess_GenNormals			|			// 노멀 생성
-		aiProcess_CalcTangentSpace		|			// 탄젠트 공간 계산
-		aiProcess_JoinIdenticalVertices |			// 중복 정점 제거
-		aiProcess_ConvertToLeftHanded				// LH 변환
-	);
-
 	if (!scene || !scene->HasMaterials()) return false;
 
 	std::vector<MatData> materials;

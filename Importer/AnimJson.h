@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include "json.hpp"
 #include <cstdint>
+#include "assimp/anim.h"
 #include "MathHelper.h"
+
 using nlohmann::json;
 
 template<typename T>
@@ -117,7 +119,9 @@ struct AnimationClip
 	std::vector<AnimationTrack> tracks;
 };
 
-bool ExportAnimationsToJson(
+struct aiScene;
+inline std::string SanitizeName(const std::string& s);
+bool ImportFBXToAnimJson(
 	const aiScene* scene,
 	const std::string& outDir,
 	const std::string& baseName,

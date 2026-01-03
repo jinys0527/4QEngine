@@ -219,25 +219,13 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 }
 
 bool ImportFBXToMeshBin(
-	const std::string& fbxPath, 
+	const aiScene* scene,
 	const std::string& outDir, 
 	const std::string& baseName,
 	const std::unordered_map<std::string, uint32_t>& boneNameToIndex, //skinned
 	std::vector<std::string>& outMeshFiles
 )
 {
-	Assimp::Importer importer;
-
-	// DX11 / LH 기준
-	const aiScene* scene = importer.ReadFile(
-		fbxPath,
-		aiProcess_Triangulate           |			// 모든 면을 삼각형으로 반환
-		aiProcess_GenNormals            |			// 노멀 생성
-		aiProcess_CalcTangentSpace      |			// 탄젠트 공간 계산
-		aiProcess_JoinIdenticalVertices |			// 중복 정점 제거
-		aiProcess_ConvertToLeftHanded				// LH 변환
-	);
-
 	if (!scene || !scene->HasMeshes()) return false;
 
 

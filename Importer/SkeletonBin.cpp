@@ -162,20 +162,10 @@ SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene)
 }
 
 bool ImportFBXToSkelBin(
-	const std::string& fbxPath, 
+	const aiScene* scene,
 	const std::string& outSkelBin, 
 	std::unordered_map<std::string, uint32_t>& outBoneNameToIndex)
 {
-	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(
-		fbxPath,
-		aiProcess_Triangulate			|			// 모든 면을 삼각형으로 반환
-		aiProcess_GenNormals			|			// 노멀 생성
-		aiProcess_CalcTangentSpace		|			// 탄젠트 공간 계산
-		aiProcess_JoinIdenticalVertices |			// 중복 정점 제거
-		aiProcess_ConvertToLeftHanded				// LH 변환
-	);
-
 	if (!scene || !scene->mRootNode) return false;
 
 	SkeletonBuildResult skel = BuildSkeletonFromScene(scene);

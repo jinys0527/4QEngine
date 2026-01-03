@@ -100,4 +100,11 @@ namespace DX
 #endif
 
 
-
+////////////////////////////////////
+// test용 editor에 넣고 실제론 지울 예정
+////////////////////////////////////
+#ifdef _DEBUG
+#pragma comment(lib, "assimp-vc143-mtd")
+#else
+#pragma comment(lib, "assimp-vc143-mt")
+#endif

@@ -27,4 +27,6 @@ struct MatData
 };
 #pragma pack(pop)
 
-bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMaterialBin);
+struct aiScene;
+
+bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterialBin);

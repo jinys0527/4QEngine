@@ -5,6 +5,7 @@
 #include "SoundManager.h"
 #include "UIManager.h"
 #include "GameManager.h"
+#include "Importer.h"
 
 namespace
 {
@@ -27,6 +28,7 @@ int main()
     UIManager uiManager(engine.GetEventDispatcher());
 	SceneManager sceneManager(/*engine.GetRenderer(),*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, gameManager, uiManager);
    
+    ImportFBX("../Dying.fbx", "../test");
 #ifdef _EDITOR
     Editor editor(sceneManager);
 

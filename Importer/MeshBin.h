@@ -46,8 +46,10 @@ struct VertexSkinned : Vertex
 };
 #pragma pack(pop)
 
+struct aiScene;
+
 bool ImportFBXToMeshBin(
-    const std::string& fbxPath,
+    const aiScene* scene, 
     const std::string& outDir,
     const std::string& baseName,
     const std::unordered_map<std::string, uint32_t>& boneNameToIndex, //skinned
