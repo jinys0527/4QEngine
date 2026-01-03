@@ -1,15 +1,6 @@
 ﻿#include "pch.h"
 #include "MaterialBin.h"
-
-static uint32_t AddString(std::vector<char>& table, const std::string& s)
-{
-	if (s.empty()) return 0;
-
-	const uint32_t offset = static_cast<uint32_t>(table.size());
-	table.insert(table.end(), s.begin(), s.end());
-	table.push_back('\0');
-	return offset;
-}
+#include "BinHelper.h"
 
 static std::string GetTexPath(const aiMaterial* mat, aiTextureType type)
 {
@@ -44,9 +35,9 @@ bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMa
 	std::vector<MatData> materials;
 	materials.reserve(scene->mNumMaterials);
 
-	std::vector<char> stringTable;
+	std::string stringTable;
 	stringTable.reserve(4096);
-	stringTable.push_back('\0'); // offset 0 = empty string
+	stringTable.push_back('\0');
 
 	for (uint32_t m = 0; m < scene->mNumMaterials; ++m)
 	{
@@ -96,7 +87,7 @@ bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMa
 		if (mat->Get(AI_MATKEY_OPACITY, opacity) == AI_SUCCESS)
 			out.opacity = opacity;
 		
-		uint8_t twoSided = 0;
+		int twoSided = 0;
 		if (mat->Get(AI_MATKEY_TWOSIDED, twoSided) == AI_SUCCESS)
 			out.doubleSided = (twoSided != 0) ? 1 : 0;
 
@@ -114,7 +105,7 @@ bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMa
 #ifdef AI_MATKEY_GLTF_ALPHACUTOFF
 			float cutoff = 0.5f;
 			if (mat->Get(AI_MATKEY_GLTF_ALPHACUTOFF, cutoff) == AI_SUCCESS)
-				r.alphaCutOff = cutoff;
+				out.alphaCutOff = cutoff;
 #endif
 		}
 
@@ -129,10 +120,10 @@ bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMa
 
 		// Metallic / Roughness / AO / Emissive
 		{
-			out.texPathOffset[(size_t)ETextureType::METALLIC] = AddString(stringTable, GetTexPath(mat, aiTextureType_METALNESS));
+			out.texPathOffset[(size_t)ETextureType::METALLIC]  = AddString(stringTable, GetTexPath(mat, aiTextureType_METALNESS));
 			out.texPathOffset[(size_t)ETextureType::ROUGHNESS] = AddString(stringTable, GetTexPath(mat, aiTextureType_DIFFUSE_ROUGHNESS));
-			out.texPathOffset[(size_t)ETextureType::AO] = AddString(stringTable, GetTexPath(mat, aiTextureType_AMBIENT_OCCLUSION));
-			out.texPathOffset[(size_t)ETextureType::EMISSIVE] = AddString(stringTable, GetTexPath(mat, aiTextureType_EMISSIVE));
+			out.texPathOffset[(size_t)ETextureType::AO]        = AddString(stringTable, GetTexPath(mat, aiTextureType_AMBIENT_OCCLUSION));
+			out.texPathOffset[(size_t)ETextureType::EMISSIVE]  = AddString(stringTable, GetTexPath(mat, aiTextureType_EMISSIVE));
 		}
 
 		materials.push_back(out);
@@ -151,6 +142,9 @@ bool ImportFBXToMaterialBin(const std::string& fbxPath, const std::string& outMa
 	{
 		ofs.write(reinterpret_cast<const char*>(materials.data()), sizeof(MatData) * materials.size());
 	}
+	
+	if (!stringTable.empty())
+		ofs.write((const char*)stringTable.data(), stringTable.size());
 
 	return true;
 }
