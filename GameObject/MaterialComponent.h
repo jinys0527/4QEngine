@@ -16,6 +16,16 @@ public:
 	void SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
 	MaterialHandle GetMaterialHandle() const      { return m_MaterialHandle;   }
 
+	void SetMaterialAssetReference(const std::string& assetPath, UINT32 materialIndex)
+	{
+		m_MaterialAssetPath = assetPath;
+		m_MaterialAssetIndex = materialIndex;
+	}
+
+	const std::string& GetMaterialAssetPath() const { return m_MaterialAssetPath; }
+	UINT32 GetMaterialAssetIndex() const { return m_MaterialAssetIndex; }
+
+
 	void SetOverrides(const RenderData::MaterialData& overrides);
 	void ClearOverrides();
 	bool HasOverrides() const { return m_UseOverrides; }
@@ -29,6 +39,8 @@ public:
 
 protected:
 	MaterialHandle m_MaterialHandle;
+	std::string m_MaterialAssetPath;
+	UINT32 m_MaterialAssetIndex = 0;
 	RenderData::MaterialData m_Overrides;
 	bool m_UseOverrides = false;
 };

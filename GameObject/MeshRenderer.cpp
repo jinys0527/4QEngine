@@ -37,10 +37,6 @@ void MeshRenderer::OnEvent(EventType type, const void* data)
 
 void MeshRenderer::Serialize(nlohmann::json& j) const
 {
-	j["mesh"]["id"]             = m_MeshHandle.id;
-	j["mesh"]["generation"]     = m_MeshHandle.generation;
-	j["material"]["id"]         = m_MaterialHandle.id;
-	j["material"]["generation"] = m_MaterialHandle.generation;
 	j["visible"]                = m_Visible;
 	j["castShadow"]             = m_CastShadow;
 	j["receiveShadow"]          = m_ReceiveShadow;
@@ -49,18 +45,6 @@ void MeshRenderer::Serialize(nlohmann::json& j) const
 
 void MeshRenderer::Deserialize(const nlohmann::json& j)
 {
-	if (j.contains("mesh"))
-	{
-		m_MeshHandle.id         = j["mesh"].value("id", 0u);
-		m_MeshHandle.generation = j["mesh"].value("generation", 0u);
-	}
-
-	if (j.contains("material"))
-	{
-		m_MaterialHandle.id         = j["material"].value("id", 0u);
-		m_MaterialHandle.generation = j["material"].value("generation", 0u);
-	}
-
 	m_Visible       = j.value("visible", true);
 	m_CastShadow    = j.value("castShadow", true);
 	m_ReceiveShadow = j.value("receiveShadow", true);

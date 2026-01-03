@@ -5,6 +5,10 @@
 #include "UIObject.h"
 #include "GameManager.h"
 #include <unordered_set>
+#include "CameraComponent.h"
+#include "MeshRenderer.h"
+#include "LightComponent.h"
+#include "CameraObject.h"
 
 Scene::~Scene()
 {
@@ -16,7 +20,7 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
 	if (gameObject->m_Name == "Camera")
 	{
-		//SetMainCamera(gameObject);
+		SetMainCamera(gameObject);
 	}
 	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
@@ -31,10 +35,10 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 	}
 }
 
-//void Scene::SetMainCamera(std::shared_ptr<GameObject> gameObject)
-//{
-//	m_Camera = dynamic_cast<CameraObject*>(gameObject.get());
-//}
+void Scene::SetMainCamera(std::shared_ptr<GameObject> gameObject)
+{
+	m_Camera = dynamic_cast<CameraObject*>(gameObject.get());
+}
 
 void Scene::Serialize(nlohmann::json& j) const
 {
@@ -107,6 +111,64 @@ void Scene::Deserialize(const nlohmann::json& j)
 			
 			gameObject->Deserialize(gameObjectJson);
 			m_GameObjects[name] = std::move(gameObject);
+		}
+	}
+}
+
+void Scene::BuildFrameData(RenderData::FrameData& frameData) const
+{
+	frameData.renderItems.clear();
+	frameData.lights.clear();
+
+	RenderData::FrameContext& context = frameData.context;
+	context = RenderData::FrameContext{};
+
+	if (m_Camera)
+	{
+		context.view = m_Camera->GetViewMatrix();
+		context.proj = m_Camera->GetProjMatrix();
+		const auto viewport = m_Camera->GetViewportSize();
+		context.width  = static_cast<UINT32>(viewport.Width);
+		context.height = static_cast<UINT32>(viewport.Height);
+		context.cameraPos = m_Camera->GetEye();
+
+		const auto view = XMLoadFloat4x4(&context.view);
+		const auto proj = XMLoadFloat4x4(&context.proj);
+		const auto viewProj = XMMatrixMultiply(view, proj);
+		XMStoreFloat4x4(&context.viewProj, viewProj);
+	}
+
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		for (const auto* renderer : gameObject->GetComponents<MeshRenderer>())
+		{
+			RenderData::RenderItem item{};
+			if (renderer && renderer->BuildRenderItem(item))
+			{
+				frameData.renderItems.push_back(item);
+			}
+		}
+
+		for (const auto* light : gameObject->GetComponents<LightComponent>())
+		{
+			if (!light)
+				continue;
+
+			RenderData::LightData data{};
+			data.type		   = light->GetType();
+			data.posiiton	   = light->GetPosition();
+			data.range		   = light->GetRange();
+			data.diretion	   = light->GetDirection();
+			data.spotAngle	   = light->GetSpotAngle();
+			data.color         = light->GetColor();
+			data.intensity	   = light->GetIntensity();
+			data.lightViewProj = light->GetLightViewProj();
+			data.castShadow	   = light->CastShadow();
+
+			frameData.lights.push_back(data);
 		}
 	}
 }

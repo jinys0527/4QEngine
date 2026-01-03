@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "MeshBin.h"
 #include "BinHelper.h"
+#include "iostream"
 
 struct Influence
 {
@@ -130,7 +131,8 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 	else
 	{
 		infl.resize(mesh->mNumVertices);
-
+		std::cout << mesh->mNumVertices << "\n";
+	
 		//aiBone -> vertex influences 누적
 		for (uint32_t b = 0; b < mesh->mNumBones; ++b)
 		{

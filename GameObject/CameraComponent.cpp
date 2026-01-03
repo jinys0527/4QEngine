@@ -60,10 +60,105 @@ void CameraComponent::OnEvent(EventType type, const void* data)
 
 void CameraComponent::Serialize(nlohmann::json& j) const
 {
+	j["mode"] = static_cast<int>(m_Mode);
+	j["viewport"]["width"]  = m_ViewportSize.Width;
+	j["viewport"]["height"] = m_ViewportSize.Height;
+	j["nearZ"] = m_NearZ;
+	j["farZ"]  = m_FarZ;
+
+	j["eye"]["x"]  = m_Eye.x;
+	j["eye"]["y"]  = m_Eye.y;
+	j["eye"]["z"]  = m_Eye.z;
+
+	j["look"]["x"] = m_Look.x;
+	j["look"]["y"] = m_Look.y;
+	j["look"]["z"] = m_Look.z;
+
+	j["up"]["x"]   = m_Up.x;
+	j["up"]["y"]   = m_Up.y;
+	j["up"]["z"]   = m_Up.z;
+
+	switch (m_Mode)
+	{
+	case ProjectionMode::Perspective:
+		j["perspective"]["fov"]       = m_Persp.Fov;
+		j["perspective"]["aspect"]    = m_Persp.Aspect;
+		break;
+	case ProjectionMode::Orthographic:
+		j["orthographic"]["width"]    = m_Ortho.Width;
+		j["orthographic"]["height"]   = m_Ortho.Height;
+		break;
+	case ProjectionMode::OrthoOffCenter:
+		j["orthoOffCenter"]["left"]   = m_OrthoOC.Left;
+		j["orthoOffCenter"]["right"]  = m_OrthoOC.Right;
+		j["orthoOffCenter"]["bottom"] = m_OrthoOC.Bottom;
+		j["orthoOffCenter"]["top"]    = m_OrthoOC.Top;
+		break;
+	}
 }
 
 void CameraComponent::Deserialize(const nlohmann::json& j)
 {
+	m_Mode = static_cast<ProjectionMode>(j.value("mode", static_cast<int>(ProjectionMode::Perspective)));
+	if (j.contains("viewport"))
+	{
+		m_ViewportSize.Width  = j["viewport"].value("width", m_ViewportSize.Width);
+		m_ViewportSize.Height = j["viewport"].value("height", m_ViewportSize.Height);
+	}
+
+	m_NearZ = j.value("nearZ", m_NearZ);
+	m_FarZ  = j.value("farZ", m_FarZ);
+
+	if (j.contains("eye"))
+	{
+		m_Eye.x = j["eye"].value("x", m_Eye.x);
+		m_Eye.y = j["eye"].value("y", m_Eye.y);
+		m_Eye.z = j["eye"].value("z", m_Eye.z);
+	}
+
+	if (j.contains("look"))
+	{
+		m_Look.x = j["look"].value("x", m_Look.x);
+		m_Look.y = j["look"].value("y", m_Look.y);
+		m_Look.z = j["look"].value("z", m_Look.z);
+	}
+
+	if (j.contains("up"))
+	{
+		m_Up.x = j["up"].value("x", m_Up.x);
+		m_Up.y = j["up"].value("y", m_Up.y);
+		m_Up.z = j["up"].value("z", m_Up.z);
+	}
+
+	switch (m_Mode)
+	{
+	case ProjectionMode::Perspective:
+		if(j.contains("perspective"))
+		{
+			m_Persp.Fov    = j["perspective"].value("fov", m_Persp.Fov);
+			m_Persp.Aspect = j["perspective"].value("aspect", m_Persp.Aspect);
+		}
+		break;
+	case ProjectionMode::Orthographic:
+		if(j.contains("orthographic"))
+		{
+			m_Ortho.Width = j["orthographic"].value("width", m_Ortho.Width);
+			m_Ortho.Height = j["orthographic"].value("height", m_Ortho.Height);
+		}
+		break;
+	case ProjectionMode::OrthoOffCenter:
+		if (j.contains("orthoOffCenter"))
+		{
+			m_OrthoOC.Left   = j["orthoOffCenter"].value("left", m_OrthoOC.Left);
+			m_OrthoOC.Right  = j["orthoOffCenter"].value("right", m_OrthoOC.Right);
+			m_OrthoOC.Bottom = j["orthoOffCenter"].value("bottom", m_OrthoOC.Bottom);
+			m_OrthoOC.Top    = j["orthoOffCenter"].value("top", m_OrthoOC.Top);
+		}
+		break;
+	}
+
+	m_ViewDirty = true;
+	m_ProjDirty = true;
 }
 
 XMFLOAT4X4 CameraComponent::GetViewMatrix()

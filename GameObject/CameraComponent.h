@@ -14,6 +14,33 @@ class CameraComponent : public Component
 {
 	friend class Editor;
 
+public:
+	struct Viewport
+	{
+		float Width = 0.0f;
+		float Height = 0.0f;
+	};
+
+	struct PerspectiveParams
+	{
+		float Fov = XM_PIDIV4;
+		float Aspect = 1.0f;
+	};
+
+	struct OrthoParams
+	{
+		float Width = 10.0f;
+		float Height = 10.0f;
+	};
+
+	struct OrthoOffCenterParams
+	{
+		float Left = -1.0f;
+		float Right = 1.0f;
+		float Bottom = -1.0f; ;
+		float Top = 1.0f;
+	};
+
 protected:
 	// 내부 재계산
 	void RebuildViewIfDirty    ();
@@ -21,35 +48,17 @@ protected:
 
 protected:
 	// Viewport(또는 화면) 관련
-	struct Viewport
-	{
-		float Width = 0.0f;
-		float Height = 0.0f;
-	}m_ViewportSize;
+	Viewport m_ViewportSize;
 
 
 	float m_NearZ  = 0.1f;
 	float m_FarZ   = 1000.0f;
 
-	struct PerspectiveParams
-	{
-		float Fov    = XM_PIDIV4;
-		float Aspect = 1.0f;
-	} m_Persp;
+	PerspectiveParams m_Persp;
 
-	struct OrthoParams
-	{
-		float Width  = 10.0f;
-		float Height = 10.0f;
-	} m_Ortho;
+	OrthoParams m_Ortho;
 
-	struct OrthoOffCenterParams
-	{
-		float Left   = -1.0f;
-		float Right  =  1.0f;
-		float Bottom = -1.0f; ;
-		float Top    =  1.0f;
-	} m_OrthoOC;
+	OrthoOffCenterParams m_OrthoOC;
 
 
 	XMFLOAT4X4 m_View = Identity();
