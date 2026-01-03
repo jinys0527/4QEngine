@@ -190,4 +190,22 @@ namespace MathUtils
 		XMStoreFloat4x4(&result, mResult);
 		return result;
 	}
+
+	inline XMFLOAT3 Lerp3(const XMFLOAT3& a, const XMFLOAT3& b, float t)
+	{
+		XMVECTOR A = XMLoadFloat3(&a);
+		XMVECTOR B = XMLoadFloat3(&b);
+		XMVECTOR R = XMVectorLerp(A, B, t);
+		XMFLOAT3 out; XMStoreFloat3(&out, R);
+		return out;
+	}
+
+	inline XMFLOAT4 Slerp4(const XMFLOAT4& a, const XMFLOAT4& b, float t)
+	{
+		XMVECTOR A = XMLoadFloat4(&a);
+		XMVECTOR B = XMLoadFloat4(&b);
+		XMVECTOR R = XMQuaternionSlerp(A, B, t);
+		XMFLOAT4 out; XMStoreFloat4(&out, R);
+		return out;
+	}
 }
