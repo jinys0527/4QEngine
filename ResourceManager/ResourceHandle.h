@@ -74,7 +74,17 @@ struct ShaderTag
 {
 };
 
-using MeshHandle     = TypedHandle<MeshTag>;
-using MaterialHandle = TypedHandle<MaterialTag>;
-using TextureHandle  = TypedHandle<TextureTag>;
-using ShaderHandle   = TypedHandle<ShaderTag>;
+struct SkeletonTag
+{
+};
+
+struct AnimationTag
+{
+};
+
+using MeshHandle      = TypedHandle<MeshTag>;
+using MaterialHandle  = TypedHandle<MaterialTag>;
+using TextureHandle   = TypedHandle<TextureTag>;
+using ShaderHandle    = TypedHandle<ShaderTag>;
+using SkeletonHandle  = TypedHandle<SkeletonTag>;
+using AnimationHandle = TypedHandle<AnimationTag>;

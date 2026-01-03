@@ -16,6 +16,15 @@ public:
 	void SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
 	MeshHandle GetMeshHandle() const      { return m_MeshHandle;   }
 
+	void SetMeshAssetReference(const std::string& assetPath, UINT32 meshIndex)
+	{
+		m_MeshAssetPath = assetPath;
+		m_MeshAssetIndex = meshIndex;
+	}
+
+	const std::string& GetMeshAssetPath() const { return m_MeshAssetPath; }
+	UINT32 GetMeshAssetIndex() const { return m_MeshAssetIndex; }
+
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
@@ -23,6 +32,8 @@ public:
 	void Deserialize(const nlohmann::json& j) override;
 protected:
 	MeshHandle m_MeshHandle;
+	std::string m_MeshAssetPath;
+	UINT32 m_MeshAssetIndex = 0;
 };
 
 REGISTER_COMPONENT(MeshComponent);

@@ -4,12 +4,6 @@
     <ClCompile Include="Component.cpp">
       <Filter>Components\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraffitiComponent.cpp">
-      <Filter>Components\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FlyingObstacleComponent.cpp">
-      <Filter>Components\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UIObject.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
@@ -17,9 +11,6 @@
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIComponent.cpp">
-      <Filter>Components\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ControlComponent.cpp">
       <Filter>Components\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Object.cpp">
@@ -43,6 +34,9 @@
     <ClCompile Include="MeshRenderer.cpp">
       <Filter>Components\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CameraObject.cpp">
+      <Filter>Objects\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component.h">
@@ -54,34 +48,13 @@
     <ClInclude Include="Object.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraffitiComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Object.h">
-      <Filter>Objects\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UISliderComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SoundUI.h">
-      <Filter>Objects\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Telegraph.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIObject.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DropObstacle.h">
-      <Filter>Objects\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FlyingObstacleComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CoreTypes.h" />
-    <ClInclude Include="RunPlayerController.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UIComponent.h">
       <Filter>Components\Header Files</Filter>
     </ClInclude>
@@ -102,6 +75,9 @@
     </ClInclude>
     <ClInclude Include="MeshRenderer.h">
       <Filter>Components\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraObject.h">
+      <Filter>Objects\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

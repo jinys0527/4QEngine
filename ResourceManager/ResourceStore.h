@@ -3,7 +3,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <typeinfo>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -98,6 +100,20 @@ public:
 		return entry.alive && entry.generation == handle.generation;
 	}
 
+#if defined(_DEBUG)
+	void DebugDump(std::ostream& os) const
+	{
+		os << "ResourceStore<" << typeid(T).name() << "> entries=" << (m_Entries.size() > 0 ? m_Entries.size() - 1 : 0)
+			<< " freeIds=" << m_FreeIds.size() << "\n";
+
+		for (size_t i = 1; i < m_Entries.size(); ++i)
+		{
+			const Entry& entry = m_Entries[i];
+			os << "  [" << i << "] key=\"" << entry.key << "\" alive=" << (entry.alive ? "true" : "false")
+				<< " gen=" << entry.generation << "\n";
+		}
+	}
+#endif
 private:
 	struct Entry
 	{

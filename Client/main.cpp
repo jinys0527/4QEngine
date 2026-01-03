@@ -6,6 +6,7 @@
 #include "UIManager.h"
 #include "GameManager.h"
 #include "Importer.h"
+#include "AssetLoader.h"
 
 namespace
 {
@@ -43,6 +44,77 @@ int main()
  		std::cerr << "Failed to initialize sample code." << std::endl;
  		return -1;
  	}
+    AssetLoader loader;
+
+    AssetLoader::AssetLoadResult result = loader.LoadAsset("../test/Dying/Meta/Dying.asset.json");
+
+    // 2) 메쉬/머티리얼 핸들 꺼내기
+    if (!result.meshes.empty())
+    {
+        MeshHandle meshHandle = result.meshes[0];
+        RenderData::MeshData* mesh = loader.GetMeshes().Get(meshHandle);
+        if (mesh)
+        {
+            // vertices, indices 갯수 확인
+            std::cout << "Vertices: " << mesh->vertices.size() << "\n";
+            std::cout << "Indices: " << mesh->indices.size() << "\n";
+
+            // SubMesh가 있는지, index 범위 검사 등
+            for (auto& sub : mesh->subMeshes)
+            {
+                if (sub.indexStart + sub.indexCount > mesh->indices.size())
+                    std::cout << "Invalid submesh index range\n";
+            }
+        }
+    }
+
+    if (!result.materials.empty())
+    {
+        auto matHandle = result.materials[0];
+        RenderData::MaterialData* mat = loader.GetMaterials().Get(matHandle);
+        if (mat)
+        {
+            std::cout << "baseColor: " << mat->baseColor.x << ", " << mat->baseColor.y << "\n";
+            // 텍스 핸들이 유효한지 확인
+        }
+    }
+
+    if (result.skeleton.IsValid())
+    {
+        auto skel = loader.GetSkeletons().Get(result.skeleton);
+        if (skel)
+            std::cout << "Bones: " << skel->bones.size() << "\n";
+    }
+
+    if (!result.animations.empty())
+    {
+        auto anim = loader.GetAnimations().Get(result.animations[0]);
+        if (anim)
+            std::cout << "Anim name: " << anim->name << ", tracks: " << anim->tracks.size() << "\n";
+    }
+    // 3) 실제 RenderData 접근 예시
+    // (필요 시 내부 데이터를 직접 꺼내 사용 가능)
+    if (!result.meshes.empty())
+    {
+        RenderData::MeshData* meshData = loader.GetMeshes().Get(result.meshes[0]);
+        // meshData->vertices / indices 접근 가능
+    }
+
+    if (result.skeleton.IsValid())
+    {
+        RenderData::Skeleton* skeleton = loader.GetSkeletons().Get(result.skeleton);
+        // skeleton->bones 사용 가능
+
+    }
+
+#if defined(_DEBUG)
+    // Store별로 내부 상태 출력
+    loader.GetMeshes().DebugDump(std::cout);
+    loader.GetMaterials().DebugDump(std::cout);
+    loader.GetTextures().DebugDump(std::cout);
+    loader.GetSkeletons().DebugDump(std::cout);
+    loader.GetAnimations().DebugDump(std::cout);
+#endif
 
  	g_pMainApp->Run();
  

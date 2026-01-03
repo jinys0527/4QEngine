@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
-//#include "RenderData.h"
+#include "RenderData.h"
 //#include "D2DRenderer.h"
 //#include "AssetManager.h"
 //#include "SoundAssetManager.h"
@@ -14,6 +14,7 @@ class GameObject;
 class UIObject;
 class GameManager;
 class SceneManager;
+class CameraObject;
 
 class Scene
 {
@@ -47,11 +48,12 @@ public:
 	void AddGameObject      (std::shared_ptr<GameObject> gameObject);
 	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject);
 
-	//void SetMainCamera(std::shared_ptr<GameObject> gameObject);
-	//CameraObject* GetMainCamera() { return m_Camera; }
+	void SetMainCamera(std::shared_ptr<GameObject> gameObject);
+	CameraObject* GetMainCamera() { return m_Camera; }
 
 	void Serialize          (nlohmann::json& j) const;
 	void Deserialize        (const nlohmann::json& j);
+	void BuildFrameData(RenderData::FrameData& frameData) const;
 
 	void SetName            (std::string name) { m_Name = name; }
 	std::string GetName     () const     { return m_Name;   }
@@ -72,7 +74,7 @@ protected:
 	UIManager&      m_UIManager;
 	SceneManager*   m_SceneManager = nullptr;
 	GameManager*    m_GameManager = nullptr;
-	//CameraObject* m_Camera;
+	CameraObject*   m_Camera;
 	std::string     m_Name;
 
 	bool m_Pause;
