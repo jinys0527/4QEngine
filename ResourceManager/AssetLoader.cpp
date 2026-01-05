@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <cstdint>
+#include <unordered_map>
 
 #include "json.hpp"
 using nlohmann::json;
@@ -33,6 +34,7 @@ namespace
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
 		uint32_t subMeshCount = 0;
+		uint32_t stringTableBytes = 0;
 		AABBf    bounds{};
 	};
 
@@ -40,7 +42,7 @@ namespace
 	{
 		uint32_t indexStart;
 		uint32_t indexCount;
-		uint32_t materialIndex;
+		uint32_t materialNameOffset;
 		AABBf    bounds{};
 	};
 
@@ -252,6 +254,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 	const std::string skeletonFile = filesJson.value("skeleton", "");
 
 	std::vector<MaterialHandle> materialHandles;
+	std::unordered_map<std::string, MaterialHandle> materialByName;
 	if (!materialsFile.empty())
 	{
 		const fs::path materialPath = ResolvePath(baseDir, materialsFile);
@@ -273,6 +276,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 				}
 
 				materialHandles.reserve(mats.size());
+				materialByName.reserve(mats.size());
 				for (size_t i = 0; i < mats.size(); ++i)
 				{
 					const MatData& mat = mats[i];
@@ -326,6 +330,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 						});
 
 					materialHandles.push_back(handle);
+					materialByName.emplace(materialName, handle);
 					result.materials.push_back(handle);
 				}
 			}
@@ -402,18 +407,37 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			RenderData::MeshData meshData{};
 			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
 
+			std::string stringTable;
+			if (header.stringTableBytes > 0)
+			{
+				stringTable.resize(header.stringTableBytes);
+				meshStream.read(stringTable.data(), header.stringTableBytes);
+			}
+
 			meshData.subMeshes.reserve(subMeshes.size());
 			for (const auto& subMesh : subMeshes)
 			{
 				RenderData::MeshData::SubMesh out{};
 				out.indexStart = subMesh.indexStart;
 				out.indexCount = subMesh.indexCount;
-				if (subMesh.materialIndex < materialHandles.size())
+
+				const std::string materialName = ReadStringAtOffset(stringTable, subMesh.materialNameOffset);
+				if (!materialName.empty())
 				{
-					out.material = materialHandles[subMesh.materialIndex];
+					auto it = materialByName.find(materialName);
+					if (it != materialByName.end())
+					{
+						out.material = it->second;
+					}
 				}
+				else if (materialHandles.size() == 1)
+				{
+					out.material = materialHandles.front();
+				}
+
 				meshData.subMeshes.push_back(out);
 			}
+
 
 			meshData.vertices.reserve(header.vertexCount);
 			if (meshData.hasSkinning)

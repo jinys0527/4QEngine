@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "Importer.h"
-
+#include "iostream"
 #include <filesystem>
 namespace fs = std::filesystem;
 
@@ -24,6 +24,245 @@ static std::string RelToBase(const fs::path& baseDir, const fs::path& fullPath)
 	if (ec) return ToGenericString(fullPath); // fallback
 	return ToGenericString(rel);
 }
+
+
+static std::string EmbeddedTextureExtension(const aiTexture* texture)
+{
+	if (!texture) return "png";
+	return (texture->mHeight == 0) ? "png" : "rgba";
+}
+
+static std::string TextureTypeSuffix(aiTextureType type)
+{
+	switch (type)
+	{
+	case aiTextureType_BASE_COLOR:
+	case aiTextureType_DIFFUSE:
+		return "albedo";
+	case aiTextureType_NORMALS:
+	case aiTextureType_HEIGHT:
+		return "normal";
+	case aiTextureType_SPECULAR:
+		return "specular";
+	case aiTextureType_SHININESS:
+		return "glossiness";
+	case aiTextureType_METALNESS:
+		return "metallic";
+	case aiTextureType_DIFFUSE_ROUGHNESS:
+		return "roughness";
+	case aiTextureType_AMBIENT_OCCLUSION:
+		return "ao";
+	case aiTextureType_EMISSIVE:
+		return "emissive";
+	}
+
+	return "type_" + std::to_string(static_cast<int>(type));
+}
+
+static std::string TextureTypeLabel(aiTextureType type)
+{
+	switch (type)
+	{
+	case aiTextureType_BASE_COLOR:
+	case aiTextureType_DIFFUSE:
+		return "albedo";
+	case aiTextureType_NORMALS:
+	case aiTextureType_HEIGHT:
+		return "normal";
+	case aiTextureType_SPECULAR:
+		return "specular";
+	case aiTextureType_SHININESS:
+		return "glossiness";
+	case aiTextureType_METALNESS:
+		return "metallic";
+	case aiTextureType_DIFFUSE_ROUGHNESS:
+		return "roughness";
+	case aiTextureType_AMBIENT_OCCLUSION:
+		return "ao";
+	case aiTextureType_EMISSIVE:
+		return "emissive";
+	}
+
+	return "type_" + std::to_string(static_cast<int>(type));
+}
+
+static std::string TextureTypeInfo(aiTextureType type)
+{
+	return TextureTypeLabel(type) + "(" + TextureTypeSuffix(type) + ")";
+}
+
+static std::string BaseNameFromPath(const std::string& path)
+{
+	const size_t pos = path.find_last_of("/\\");
+	if (pos == std::string::npos) return path;
+	return path.substr(pos + 1);
+}
+
+static bool TryParseEmbeddedIndex(const aiString& path, uint32_t& outIndex)
+{
+	const std::string rawPath = path.C_Str();
+	if (rawPath.empty()) return false;
+
+	const char* parseStart = nullptr;
+	if (rawPath[0] == '*')
+	{
+		parseStart = rawPath.c_str() + 1;
+	}
+	else if (rawPath.rfind("embedded_", 0) == 0)
+	{
+		parseStart = rawPath.c_str() + std::strlen("embedded_");
+	}
+	else if (std::isdigit(static_cast<unsigned char>(rawPath[0])) != 0)
+	{
+		parseStart = rawPath.c_str();
+	}
+	else
+	{
+		return false;
+	}
+
+	char* endPtr = nullptr;
+	const unsigned long parsed = std::strtoul(parseStart, &endPtr, 10);
+	if (endPtr == parseStart) return false;
+
+	outIndex = static_cast<uint32_t>(parsed);
+	return true;
+}
+
+static bool TryResolveEmbeddedIndex(const aiScene* scene, const aiString& path, uint32_t& outIndex)
+{
+	if (TryParseEmbeddedIndex(path, outIndex)) return true;
+	if (!scene || scene->mNumTextures == 0) return false;
+
+	const std::string rawPath = path.C_Str();
+	if (rawPath.empty()) return false;
+
+	const std::string rawBase = BaseNameFromPath(rawPath);
+
+	for (uint32_t i = 0; i < scene->mNumTextures; ++i)
+	{
+		const aiTexture* texture = scene->mTextures[i];
+		if (!texture) continue;
+
+		const std::string texName = texture->mFilename.C_Str();
+		if (texName.empty()) continue;
+
+		const std::string texBase = BaseNameFromPath(texName);
+
+		if (rawPath == texName || rawPath == texBase || rawBase == texName || rawBase == texBase)
+		{
+			outIndex = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static std::unordered_map<uint32_t, std::vector<aiTextureType>> CollectEmbeddedTextureUsage(const aiScene* scene)
+{
+	std::unordered_map<uint32_t, std::vector<aiTextureType>> usage;
+	if (!scene || !scene->HasMaterials()) return usage;
+
+	static const aiTextureType kTypes[] = {
+		aiTextureType_BASE_COLOR,
+		aiTextureType_DIFFUSE,
+		aiTextureType_NORMALS,
+		aiTextureType_HEIGHT,
+		aiTextureType_SPECULAR,
+		aiTextureType_SHININESS,
+		aiTextureType_METALNESS,
+		aiTextureType_DIFFUSE_ROUGHNESS,
+		aiTextureType_AMBIENT_OCCLUSION,
+		aiTextureType_EMISSIVE
+	};
+
+	std::unordered_set<uint64_t> seen;
+	for (uint32_t m = 0; m < scene->mNumMaterials; ++m)
+	{
+		const aiMaterial* mat = scene->mMaterials[m];
+		if (!mat) continue;
+
+		for (aiTextureType type : kTypes)
+		{
+			const unsigned int textureCount = mat->GetTextureCount(type);
+			for (unsigned int t = 0; t < textureCount; ++t)
+			{
+				aiString path;
+				if (mat->GetTexture(type, t, &path) != AI_SUCCESS) continue;
+
+				uint32_t index = 0;
+				if (!TryResolveEmbeddedIndex(scene, path, index)) continue;
+
+				const uint64_t key = (static_cast<uint64_t>(index) << 32) | static_cast<uint32_t>(type);
+				if (!seen.insert(key).second) continue;
+
+				usage[index].push_back(type);
+			}
+		}
+	}
+
+	return usage;
+}
+
+static void WriteEmbeddedTextures(
+	const aiScene* scene,
+	const fs::path& texDir,
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& usage)
+{
+	if (!scene || scene->mNumTextures == 0) return;
+
+	for (uint32_t i = 0; i < scene->mNumTextures; ++i)
+	{
+		const aiTexture* texture = scene->mTextures[i];
+		if (!texture) continue;
+
+		const std::string extension = EmbeddedTextureExtension(texture);
+		std::vector<fs::path> outPaths;
+
+		auto it = usage.find(i);
+		if (it == usage.end() || it->second.empty())
+		{
+			outPaths.push_back(texDir / ("embedded_" + std::to_string(i) + "_texture." + extension));
+		}
+		else
+		{
+			for (aiTextureType type : it->second)
+			{
+				const std::string suffix = TextureTypeSuffix(type);
+				outPaths.push_back(texDir / ("embedded_" + std::to_string(i) + "_" + suffix + "." + extension));
+			}
+		}
+
+		for (const auto& outPath : outPaths)
+		{
+			std::ofstream ofs(outPath, std::ios::binary);
+			if (!ofs) continue;
+
+			if (texture->mHeight == 0)
+			{
+				const size_t byteCount = static_cast<size_t>(texture->mWidth);
+				ofs.write(reinterpret_cast<const char*>(texture->pcData), byteCount);
+			}
+			else
+			{
+				const size_t pixelCount = static_cast<size_t>(texture->mWidth) * texture->mHeight;
+				std::vector<unsigned char> rgba(pixelCount * 4);
+				for (size_t p = 0; p < pixelCount; ++p)
+				{
+					const aiTexel& texel = texture->pcData[p];
+					rgba[p * 4 + 0] = texel.r;
+					rgba[p * 4 + 1] = texel.g;
+					rgba[p * 4 + 2] = texel.b;
+					rgba[p * 4 + 3] = texel.a;
+				}
+
+				ofs.write(reinterpret_cast<const char*>(rgba.data()), rgba.size());
+			}
+		}
+	}
+}
+
 
 // file: "Hero_Idle.anim.json" or ".../Hero_Idle.anim.json"
 // baseName: "Hero"  -> returns "Idle"
@@ -95,6 +334,8 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	if (!scene) return ;
 
 	// ----- 3) Import pipeline -----
+	const auto embeddedUsage = CollectEmbeddedTextureUsage(scene);
+	WriteEmbeddedTextures(scene, texDir, embeddedUsage);
 	std::unordered_map<std::string, uint32_t> boneMap;
 	// Skeleton (없으면 boneMap 비거나 skel 파일 안 만들어도 됨)
 	if(!ImportFBXToSkelBin(scene, ToGenericString(skelBinPath), boneMap)) return;

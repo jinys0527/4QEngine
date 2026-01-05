@@ -28,5 +28,4 @@ struct MatData
 #pragma pack(pop)
 
 struct aiScene;
-
 bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterialBin);

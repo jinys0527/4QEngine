@@ -191,20 +191,48 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 		indices.push_back(static_cast<uint32_t>(face.mIndices[2]));
 	}
 
+	const uint32_t materialIndex = mesh->mMaterialIndex;
+	std::string materialName;
+	if (materialIndex < scene->mNumMaterials)
+	{
+		const aiMaterial* material = scene->mMaterials[materialIndex];
+		if (material)
+		{
+			aiString name;
+			if (material->Get(AI_MATKEY_NAME, name) == AI_SUCCESS)
+			{
+				materialName = name.C_Str();
+			}
+		}
+	}
+
+	if (materialName.empty())
+	{
+		materialName = "Material_" + std::to_string(materialIndex);
+	}
+
+	std::string stringTable;
+	stringTable.reserve(materialName.size() + 1);
+	stringTable.push_back('\0');
+	const uint32_t materialNameOffset = static_cast<uint32_t>(stringTable.size());
+	stringTable.append(materialName);
+	stringTable.push_back('\0');
+
 	// subMesh 기록
 	SubMeshBin sm{};
 	sm.indexStart = 0;
 	sm.indexCount = (uint32_t)indices.size();
-	sm.materialIndex = mesh->mMaterialIndex;
+	sm.materialNameOffset = materialNameOffset;
 	sm.bounds = bounds;
 
 	//헤더 구성
 	MeshBinHeader header{};
-	header.version = 1;
+	header.version = 2;
 	header.flags = isSkinned ? MESH_HAS_SKINNING : 0;
 	header.vertexCount = isSkinned ? static_cast<uint32_t>(verticesSkinned.size()) : static_cast<uint32_t>(vertices.size());
 	header.indexCount = static_cast<uint32_t>(indices.size());
 	header.subMeshCount = 1;
+	header.stringTableBytes = static_cast<uint32_t>(stringTable.size());
 	header.bounds = bounds;
 
 	//저장
@@ -216,6 +244,10 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 	isSkinned ? ofs.write(reinterpret_cast<const char*>(verticesSkinned.data()), sizeof(VertexSkinned) * verticesSkinned.size()) 
 			  : ofs.write(reinterpret_cast<const char*>(vertices.data()), sizeof(Vertex) * vertices.size());
 	ofs.write(reinterpret_cast<const char*>(indices.data()), sizeof(uint32_t) * indices.size());
+	if (!stringTable.empty())
+	{
+		ofs.write(stringTable.data(), stringTable.size());
+	}
 
 	return true;
 }

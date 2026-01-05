@@ -15,11 +15,12 @@ struct AABBf
 struct MeshBinHeader
 {
     uint32_t magic = 0x4D455348; // "MESH"
-    uint16_t version = 0;
+    uint16_t version = 2;
     uint16_t flags = 0;          // bit0: hasSkinning
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
     uint32_t subMeshCount = 0;
+    uint32_t stringTableBytes = 0;
     AABBf    bounds{};
 };
 
@@ -27,7 +28,7 @@ struct SubMeshBin
 {
     uint32_t indexStart;
     uint32_t indexCount;
-    uint32_t materialIndex;
+    uint32_t materialNameOffset;
     AABBf    bounds{};
 };
 
