@@ -1,7 +1,9 @@
 ﻿#include "LightComponent.h"
 #include "MathHelper.h"
+#include "ReflectionMacro.h"
 using namespace MathUtils;
 
+REGISTER_COMPONENT(LightComponent);
 LightComponent::LightComponent::LightComponent()
 {
 	m_LightViewProj = Identity();

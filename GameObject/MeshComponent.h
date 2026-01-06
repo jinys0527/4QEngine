@@ -8,7 +8,7 @@ class MeshComponent : public Component
 
 public:
 	static constexpr const char* StaticTypeName = "MeshComponent";
-	const char* GetTypeName() const override { return StaticTypeName; }
+	const char* GetTypeName() const override;
 
 	MeshComponent() = default;
 	virtual ~MeshComponent() = default;
@@ -36,5 +36,5 @@ protected:
 	UINT32 m_MeshAssetIndex = 0;
 };
 
-REGISTER_COMPONENT(MeshComponent);
+
 

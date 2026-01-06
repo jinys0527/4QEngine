@@ -9,7 +9,7 @@ class LightComponent : public Component
 public:
 
 	static constexpr const char* StaticTypeName = "LightComponent";
-	const char* GetTypeName() const override { return StaticTypeName; }
+	const char* GetTypeName() const override;
 
 	LightComponent();
 	virtual ~LightComponent() = default;
@@ -59,5 +59,4 @@ protected:
 	BOOL       m_CastShadow = true;
 };
 
-REGISTER_COMPONENT(LightComponent);
 
