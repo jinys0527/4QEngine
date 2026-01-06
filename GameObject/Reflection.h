@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -23,6 +23,7 @@ using namespace MathUtils;
 		const string& GetName() const { return m_Name; }
 
 		//virtual void DrawEditor(Component* c) const;
+
 		virtual void Serialize(Component* c, nlohmann::json& j) const = 0;
 		virtual void DeSerialize(Component* c, const nlohmann::json& j) const = 0;
 

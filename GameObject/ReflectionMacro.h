@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //#include <type_traits>
 #include "Reflection.h"
 //매크로만 등록 하는 곳

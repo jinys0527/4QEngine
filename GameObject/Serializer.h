@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include "json.hpp"
 
@@ -70,3 +70,5 @@ struct Serializer<XMFLOAT4> {
 		v.w = j["w"];
 	}
 };
+
+// Draw ??
