@@ -182,7 +182,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(VCPKG_ROOT)\installed\x64-windows-static\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(VCPKG_ROOT)installed\x64-windows\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -190,7 +190,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)\installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>fmodL_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>

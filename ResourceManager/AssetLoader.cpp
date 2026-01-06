@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstdint>
 #include <unordered_map>
+#include <iostream>
 
 #include "json.hpp"
 using nlohmann::json;
@@ -318,7 +319,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 								tex->sRGB = isSRGB;
 								return tex;
 							});
-
+						std::cout << texPath.generic_string() << std::endl;
 						material.textures[static_cast<size_t>(slot)] = textureHandle;
 						PushUnique(result.textures, textureHandle);
 					}

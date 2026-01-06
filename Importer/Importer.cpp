@@ -305,6 +305,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	const fs::path animsDir = baseDir / "Anims";
 	const fs::path matsDir = baseDir / "Mats";
 	const fs::path texDir = baseDir / "Textures";
+	const fs::path skelDir = baseDir / "Skels";
 	const fs::path metaDir = baseDir / "Meta";
 
 	EnsureDir(meshesDir);
@@ -313,7 +314,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	EnsureDir(texDir);
 	EnsureDir(metaDir);
 
-	const fs::path skelBinPath = metaDir / (assetName + ".skelbin");
+	const fs::path skelBinPath = skelDir / (assetName + ".skelbin");
 	const fs::path matBinPath = matsDir / (assetName + ".matbin");
 	const fs::path metaPath = metaDir / (assetName + ".asset.json");
 
@@ -338,10 +339,16 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	WriteEmbeddedTextures(scene, texDir, embeddedUsage);
 	std::unordered_map<std::string, uint32_t> boneMap;
 	// Skeleton (없으면 boneMap 비거나 skel 파일 안 만들어도 됨)
-	if(!ImportFBXToSkelBin(scene, ToGenericString(skelBinPath), boneMap)) return;
+	if (!ImportFBXToSkelBin(scene, ToGenericString(skelBinPath), boneMap))
+	{
+		std::cout << "No Skel" << std::endl;
+	}
 
 	std::vector<std::string> meshFiles;
-	if(!ImportFBXToMeshBin(scene, ToGenericString(meshesDir), assetName, boneMap, meshFiles)) return;
+	if (!ImportFBXToMeshBin(scene, ToGenericString(meshesDir), assetName, boneMap, meshFiles))
+	{
+		std::cout << "No Mesh" << std::endl;
+	}
 
 	std::vector<MetaMeshItem> metaMeshes;
 
@@ -357,7 +364,10 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	}
 
 	std::vector<std::string> animFiles;
-	if(!ImportFBXToAnimJson(scene, ToGenericString(animsDir), assetName, boneMap, animFiles)) return;
+	if (!ImportFBXToAnimJson(scene, ToGenericString(animsDir), assetName, boneMap, animFiles))
+	{
+		std::cout << "No Anim" << std::endl;
+	}
 
 	std::vector<MetaAnimItem> metaAnims;
 
@@ -372,21 +382,26 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		metaAnims.push_back({ SanitizeName(clipName), rel });
 	}
 
-	if(!ImportFBXToMaterialBin(scene, ToGenericString(matBinPath))) return;
-
+	if (!ImportFBXToMaterialBin(scene, ToGenericString(matBinPath), embeddedUsage))
+	{
+		std::cout << "No Mat" << std::endl;
+	}
 	// ----- 4) Write meta -----
 	// meta는 Meta 폴더에 있으므로, 런타임 기준(metaDir)에서 asset 루트(baseDir)로 올라가게 baseDir=".."
 	// textureDir은 asset 루트 기준 "Textures"로 통일
 	const std::string metaBaseDir = "..";
 	const std::string metaTextureDir = "Textures";
 
-	if(!WriteAssetMetaJson(
+	if (!WriteAssetMetaJson(
 		ToGenericString(metaPath),			//outPath
 		assetName,							//assetName
 		metaBaseDir,						// baseDir (meta 파일 기준)
 		metaTextureDir,                     // textureDir (asset 루트 기준)
 		RelToBase(baseDir, matBinPath),		//matBin	상대경로
 		RelToBase(baseDir, skelBinPath),	//skelBin	상대경로
-		metaMeshes, 
-		metaAnims)) return;
+		metaMeshes,
+		metaAnims))
+	{
+		std::cout << "No Meta" << std::endl;
+	}
 }

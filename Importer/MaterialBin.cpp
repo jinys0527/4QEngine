@@ -100,8 +100,18 @@ static bool TryResolveEmbeddedIndex(const aiScene* scene, const std::string& raw
 	return false;
 }
 
+static bool EmbeddedTextureHasType(
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& usage,
+	uint32_t index,
+	aiTextureType type)
+{
+	const auto it = usage.find(index);
+	if (it == usage.end()) return false;
+	const auto& types = it->second;
+	return std::find(types.begin(), types.end(), type) != types.end();
+}
 
-static std::string GetTexPath(const aiScene* scene, const aiMaterial* mat, aiTextureType type)
+static std::string GetTexPath(const aiScene* scene, const aiMaterial* mat, aiTextureType type, const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage)
 {
 	if (!mat) return {};
 	if (mat->GetTextureCount(type) <= 0) return {};
@@ -111,19 +121,27 @@ static std::string GetTexPath(const aiScene* scene, const aiMaterial* mat, aiTex
 
 	const std::string rawPath = path.C_Str();
 	uint32_t index = 0;
-	if (TryParseEmbeddedIndex(rawPath, index))
+	if (TryResolveEmbeddedIndex(scene, rawPath, index))
 	{
 		const aiTexture* texture = (scene && index < scene->mNumTextures) ? scene->mTextures[index] : nullptr;
 		const std::string extension = EmbeddedTextureExtension(texture);
+		if (!EmbeddedTextureHasType(embeddedUsage, index, type))
+		{
+			return "embedded_" + std::to_string(index) + "_texture." + extension;
+		}
+
 		const std::string suffix = TextureTypeSuffix(type);
-		return "Textures/embedded_" + std::to_string(index) + "_" + suffix + "." + extension;
+		return "embedded_" + std::to_string(index) + "_" + suffix + "." + extension;
 	}
 
 	return rawPath;
 }
 
 
-bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterialBin)
+bool ImportFBXToMaterialBin(
+	const aiScene* scene,
+	const std::string& outMaterialBin,
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage)
 {
 	if (!scene || !scene->HasMaterials()) return false;
 
@@ -205,20 +223,20 @@ bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterial
 		}
 
 
-		std::string albedo = GetTexPath(scene, mat, aiTextureType_BASE_COLOR);
-		if (albedo.empty()) albedo = GetTexPath(scene, mat, aiTextureType_DIFFUSE);
+		std::string albedo = GetTexPath(scene, mat, aiTextureType_BASE_COLOR, embeddedUsage);
+		if (albedo.empty()) albedo = GetTexPath(scene, mat, aiTextureType_DIFFUSE, embeddedUsage);
 		out.texPathOffset[(size_t)ETextureType::ALBEDO] = AddString(stringTable, albedo);
 
-		std::string normal = GetTexPath(scene, mat, aiTextureType_NORMALS);
-		if (normal.empty()) normal = GetTexPath(scene, mat, aiTextureType_HEIGHT);
+		std::string normal = GetTexPath(scene, mat, aiTextureType_NORMALS, embeddedUsage);
+		if (normal.empty()) normal = GetTexPath(scene, mat, aiTextureType_HEIGHT, embeddedUsage);
 		out.texPathOffset[(size_t)ETextureType::NORMAL] = AddString(stringTable, normal);
 
 		// Metallic / Roughness / AO / Emissive
 		{
-			out.texPathOffset[(size_t)ETextureType::METALLIC]  = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_METALNESS));
-			out.texPathOffset[(size_t)ETextureType::ROUGHNESS] = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_DIFFUSE_ROUGHNESS));
-			out.texPathOffset[(size_t)ETextureType::AO]        = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_AMBIENT_OCCLUSION));
-			out.texPathOffset[(size_t)ETextureType::EMISSIVE]  = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_EMISSIVE));
+			out.texPathOffset[(size_t)ETextureType::METALLIC]  = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_METALNESS, embeddedUsage));
+			out.texPathOffset[(size_t)ETextureType::ROUGHNESS] = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_DIFFUSE_ROUGHNESS, embeddedUsage));
+			out.texPathOffset[(size_t)ETextureType::AO]        = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_AMBIENT_OCCLUSION, embeddedUsage));
+			out.texPathOffset[(size_t)ETextureType::EMISSIVE]  = AddString(stringTable, GetTexPath(scene, mat, aiTextureType_EMISSIVE, embeddedUsage));
 		}
 
 		materials.push_back(out);
