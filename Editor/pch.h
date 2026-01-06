@@ -1,54 +1,27 @@
 ﻿#pragma once
+//Editor
 
-#ifndef PCH_H
-#define PCH_H
 
-#include "framework.h"
-#include <iostream>
 
-#define WIN32_LEAN_AND_MEAN             // 거의 사용되지 않는 내용을 Windows 헤더에서 제외합니다.
-
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-#ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN
-#endif
-
-// Windows
-#include <windows.h>
-#include <objbase.h> // CoInitializeEx, CoUninitialize
-
+#include<windows.h>
+#include<objbase.h>
 #include <stdio.h>
-
 #include <cassert>
 #include <exception>
 #include <crtdbg.h>
-
 #include <array>
 #include <list>
 #include <vector>
 #include <string>
-
-// 미리 컴파일된 헤더를 사용하는 경우 컴파일이 성공하려면 이 소스 파일이 필요합니다.
-// 
-
+#include <iostream>
 #pragma comment(lib, "ole32.lib")
-// Direct3D & DXGI
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
-//#pragma comment(lib, "d3dcompiler.lib")
-
-// Direct2D & DirectWrite
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
-
-// WIC (Windows Imaging Component)
 #pragma comment(lib, "windowscodecs.lib")
-
-
-// COM 및 DirectX 인터페이스
+#pragma comment(lib, "assimp-vc143-mtd")
+//DX관련
 #include <wrl/client.h>              // ComPtr
 #include <d3d11.h>                   // Direct3D 11
 #include <dxgi1_6.h>                 // DXGI 1.6 (Windows 10 이상 최신 스왑체인)
@@ -57,12 +30,14 @@
 #include <dwrite_3.h>                // DirectWrite (최신 텍스트 엔진)
 #include <wincodec.h>                // WIC (이미지 로딩)
 
-
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <stdexcept>
 
-//https://github.com/Microsoft/DirectXTK/wiki/throwIfFailed
+//imgui
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
+
 namespace DX
 {
 	// Helper class for COM exceptions
@@ -92,17 +67,3 @@ namespace DX
 		}
 	}
 }
-
-#define _CRTDBG_MAP_ALLOC
-
-#endif
-
-
-////////////////////////////////////
-// test용 editor에 넣고 실제론 지울 예정
-////////////////////////////////////
-#ifdef _DEBUG
-#pragma comment(lib, "assimp-vc143-mtd")
-#else
-#pragma comment(lib, "assimp-vc143-mt")
-#endif
