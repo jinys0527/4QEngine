@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -34,24 +34,24 @@ typedef DXGI_MODE_DESC DISPLAY;
 //	VK_O, VK_P, VK_Q, VK_R, VK_S, VK_T, VK_U, VK_V, VK_W, VK_X, VK_Y, VK_Z,
 //};
 //#endif
-
+// ì´ ë¶€ë¶„ë„ í´ë˜ìŠ¤í™”
 #define ERROR_MSG(hr) \
     { \
         wchar_t buf[512]; \
-        swprintf_s(buf, L"[½ÇÆĞ] \nÆÄÀÏ: %s\nÁÙ: %d\nHRESULT: 0x%08X", \
+        swprintf_s(buf, L"[ì‹¤íŒ¨] \níŒŒì¼: %s\nì¤„: %d\nHRESULT: 0x%08X", \
                    _CRT_WIDE(__FILE__), __LINE__, hr); \
         MessageBox(NULL, buf, L"Error", MB_OK | MB_ICONERROR); \
     }
 
 enum class DS{
-	ON,				//±íÀÌ¹öÆÛ ON! (±âº»°ª), ½ºÅÙ½Ç¹öÆÛ OFF.
-	OFF,				//±íÀÌ¹öÆÛ OFF!
-	//DS_DEPTH_WRITE_OFF,			//±íÀÌ¹öÆÛ ¾²±â ²ô±â
+	ON,				//ê¹Šì´ë²„í¼ ON! (ê¸°ë³¸ê°’), ìŠ¤í…ì‹¤ë²„í¼ OFF.
+	OFF,				//ê¹Šì´ë²„í¼ OFF!
+	//DS_DEPTH_WRITE_OFF,			//ê¹Šì´ë²„í¼ ì“°ê¸° ë„ê¸°
 
 	MAX,
 };
 
-//·»´õ¸µ »óÅÂ °´Ã¼µé : ¿£Áø ÀüÃ¼ °øÀ¯ÇÔ. "Device.cpp"
+//ë Œë”ë§ ìƒíƒœ ê°ì²´ë“¤ : ì—”ì§„ ì „ì²´ ê³µìœ í•¨. "Device.cpp"
 extern ComPtr<ID3D11DepthStencilState> g_DSState[static_cast<int>(DS::MAX)];
 
 
@@ -79,7 +79,7 @@ void	SystemUpdate(float dTime);
 
 
 
-#pragma region ¹öÆÛ ¿î¿ëÇÔ¼ö
+#pragma region ë²„í¼ ìš´ìš©í•¨ìˆ˜
 int 	CreateBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppBuff);
 int 	UpdateBuffer(ID3D11Buffer* pBuff, LPVOID pData, UINT size);
 

@@ -19,6 +19,6 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pBCB;
 
 	std::vector<ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
-	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
-	std::vector<UINT32>* indexcounts = nullptr;
+	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers	 = nullptr;
+	std::vector<UINT32>* indexcounts				 = nullptr;
 };

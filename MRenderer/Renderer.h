@@ -28,7 +28,8 @@ private:
 	RenderContext m_RenderContext;
 
 	//버텍스버퍼들
+	//※ map으로 관리 or 다른 방식 사용. notion issue 참조※
 	std::vector<ComPtr<ID3D11Buffer>> m_vVertexBuffers;
-	std::vector<ComPtr<ID3D11Buffer>> m_vIndexBuffers;
-	std::vector<UINT32> m_vIndexCounts;
+	std::vector<ComPtr<ID3D11Buffer>> m_vIndexBuffers ;
+	std::vector<UINT32>				  m_vIndexCounts  ;
 };
