@@ -3,7 +3,7 @@
 #include "CameraComponent.h"
 #include "GameObject.h"
 #include "Scene.h"
-
+#include "DX11.h"
 
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -29,7 +29,7 @@ bool EditorApplication::Initialize()
 
 	ImGui::CreateContext();
 	ImGui_ImplWin32_Init(m_hwnd);
-	//ImGui_ImplDX11_Init(m_Engine.GetRenderer().GetD3DDevice(), m_Engine.GetRenderer().GetD3DContext());
+	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
 	//ID3D11RenderTargetView* rtvs[] = { m_Engine.GetRenderer().GetD3DRenderTargetView() };
 
 
