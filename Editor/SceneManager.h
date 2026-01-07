@@ -16,8 +16,13 @@ class SceneManager
 public:
 	SceneManager(/*D2DRenderer& renderer, */EventDispatcher& eventDispatcher,
 		/*AssetManager& assetManager, SoundAssetManager& soundAssetManager,*/
-		SoundManager& soundManager, GameManager& gameManager, UIManager& uiManager) : /*m_Renderer(renderer), */m_EventDispatcher(eventDispatcher), /*m_AssetManager(assetManager), m_SoundAssetManager(soundAssetManager), */m_SoundManager(soundManager), m_GameManager(gameManager), m_UIManager(uiManager) {
-	}
+		SoundManager& soundManager, GameManager& gameManager, UIManager& uiManager) : 
+		/*m_Renderer(renderer), */
+		m_EventDispatcher(eventDispatcher), /*
+		m_AssetManager(assetManager), m_SoundAssetManager(soundAssetManager), */
+		m_SoundManager(soundManager), 
+		m_GameManager(gameManager), 
+		m_UIManager(uiManager) { }
 	~SceneManager() = default;
 
 	void Initialize();

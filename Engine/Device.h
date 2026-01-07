@@ -1,11 +1,16 @@
 ﻿#pragma once
+
+#include <wrl/client.h>
+#include <d3d11.h>
+
+using Microsoft::WRL::ComPtr;
+
 class Device
 {
 public:
 	void Create(HWND hwnd);
-
-	ComPtr<ID3D11Device>		 GetDevice() { return m_Device; }
-	ComPtr<ID3D11DeviceContext>  GetDC    () { return m_DXDC;   }
+	ComPtr<ID3D11Device>		 GetDevice	() { return m_Device; }
+	ComPtr<ID3D11DeviceContext>  GetDXDC    () { return m_DXDC;   }
 private:
 	ComPtr<ID3D11Device>		 m_Device;
 	ComPtr<ID3D11DeviceContext>  m_DXDC;
