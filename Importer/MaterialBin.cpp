@@ -2,7 +2,141 @@
 #include "MaterialBin.h"
 #include "BinHelper.h"
 
-static std::string GetTexPath(const aiMaterial* mat, aiTextureType type)
+static std::string EmbeddedTextureExtension(const aiTexture* texture)
+{
+	if (!texture) return "png";
+	return (texture->mHeight == 0) ? "png" : "rgba";
+}
+
+static std::string TextureTypeSuffix(aiTextureType type)
+{
+	switch (type)
+	{
+	case aiTextureType_BASE_COLOR:
+	case aiTextureType_DIFFUSE:
+		return "albedo";
+	case aiTextureType_NORMALS:
+	case aiTextureType_HEIGHT:
+		return "normal";
+	case aiTextureType_SPECULAR:
+		return "specular";
+	case aiTextureType_SHININESS:
+		return "glossiness";
+	case aiTextureType_METALNESS:
+		return "metallic";
+	case aiTextureType_DIFFUSE_ROUGHNESS:
+		return "roughness";
+	case aiTextureType_AMBIENT_OCCLUSION:
+		return "ao";
+	case aiTextureType_EMISSIVE:
+		return "emissive";
+	}
+
+	return "type_" + std::to_string(static_cast<int>(type));
+}
+
+static std::string BaseNameFromPath(const std::string& path)
+{
+	const size_t pos = path.find_last_of("/\\");
+	if (pos == std::string::npos) return path;
+	return path.substr(pos + 1);
+}
+
+static bool TryParseEmbeddedIndex(const std::string& rawPath, uint32_t& outIndex)
+{
+	if (rawPath.empty()) return false;
+
+	const char* parseStart = nullptr;
+	if (rawPath[0] == '*')
+	{
+		parseStart = rawPath.c_str() + 1;
+	}
+	else if (rawPath.rfind("embedded_", 0) == 0)
+	{
+		parseStart = rawPath.c_str() + std::strlen("embedded_");
+	}
+	else if (std::isdigit(static_cast<unsigned char>(rawPath[0])) != 0)
+	{
+		parseStart = rawPath.c_str();
+	}
+	else
+	{
+		return false;
+	}
+
+	char* endPtr = nullptr;
+	const unsigned long parsed = std::strtoul(parseStart, &endPtr, 10);
+	if (endPtr == parseStart) return false;
+
+	outIndex = static_cast<uint32_t>(parsed);
+	return true;
+}
+
+static bool TryResolveEmbeddedIndex(const aiScene* scene, const std::string& rawPath, uint32_t& outIndex)
+{
+	if (TryParseEmbeddedIndex(rawPath, outIndex)) return true;
+	if (!scene || scene->mNumTextures == 0) return false;
+	if (rawPath.empty()) return false;
+
+	const std::string rawBase = BaseNameFromPath(rawPath);
+
+	for (uint32_t i = 0; i < scene->mNumTextures; ++i)
+	{
+		const aiTexture* texture = scene->mTextures[i];
+		if (!texture) continue;
+
+		const std::string texName = texture->mFilename.C_Str();
+		if (texName.empty()) continue;
+
+		const std::string texBase = BaseNameFromPath(texName);
+
+		if (rawPath == texName || rawPath == texBase || rawBase == texName || rawBase == texBase)
+		{
+			outIndex = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool EmbeddedTextureHasType(
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& usage,
+	uint32_t index,
+	aiTextureType type)
+{
+	const auto it = usage.find(index);
+	if (it == usage.end()) return false;
+	const auto& types = it->second;
+	return std::find(types.begin(), types.end(), type) != types.end();
+}
+
+static std::string ResolveExternalTexturePath(
+	const std::unordered_map<std::string, std::string>& externalTextureRemap,
+	const std::string& rawPath)
+{
+	if (rawPath.empty()) return {};
+
+	auto it = externalTextureRemap.find(rawPath);
+	if (it != externalTextureRemap.end()) return it->second;
+
+	const std::string baseName = BaseNameFromPath(rawPath);
+	if (!baseName.empty())
+	{
+		it = externalTextureRemap.find(baseName);
+		if (it != externalTextureRemap.end()) return it->second;
+	}
+
+	return rawPath;
+}
+
+
+static std::string GetTexPath(
+	const aiScene* scene,
+	const aiMaterial* mat,
+	aiTextureType type,
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage,
+	const std::unordered_map<std::string, std::string>& externalTextureRemap)
 {
 	if (!mat) return {};
 	if (mat->GetTextureCount(type) <= 0) return {};
@@ -10,13 +144,43 @@ static std::string GetTexPath(const aiMaterial* mat, aiTextureType type)
 	aiString path;
 	if (mat->GetTexture(type, 0, &path) != AI_SUCCESS) return {};
 
-	// Assimp는 embedded 텍스처면 "*0" 같은 이름이 올 수 있음.
-	// 프로젝트에서 embedded 지원 안 하면 이 경우를 걸러야 함.
-	return std::string(path.C_Str());
+	const std::string rawPath = path.C_Str();
+	uint32_t index = 0;
+	if (TryResolveEmbeddedIndex(scene, rawPath, index))
+	{
+		const aiTexture* texture = (scene && index < scene->mNumTextures) ? scene->mTextures[index] : nullptr;
+		const std::string extension = EmbeddedTextureExtension(texture);
+		if (!EmbeddedTextureHasType(embeddedUsage, index, type))
+		{
+			return "Textures/embedded_" + std::to_string(index) + "_texture." + extension;
+		}
+
+		const std::string suffix = TextureTypeSuffix(type);
+		return "Textures/embedded_" + std::to_string(index) + "_" + suffix + "." + extension;
+	}
+
+	return ResolveExternalTexturePath(externalTextureRemap, rawPath);
 }
 
+static std::string ResolveFallbackTexture(
+	ETextureType slot,
+	const std::unordered_map<ETextureType, std::string>& fallbackTextureMap)
+{
+	const auto it = fallbackTextureMap.find(slot);
+	if (it == fallbackTextureMap.end())
+	{
+		return {};
+	}
 
-bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterialBin)
+	return it->second;
+}
+
+bool ImportFBXToMaterialBin(
+	const aiScene* scene,
+	const std::string& outMaterialBin,
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage,
+	const std::unordered_map<std::string, std::string>& externalTextureRemap,
+	const std::unordered_map<ETextureType, std::string>& fallbackTextureMap)
 {
 	if (!scene || !scene->HasMaterials()) return false;
 
@@ -98,20 +262,33 @@ bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterial
 		}
 
 
-		std::string albedo = GetTexPath(mat, aiTextureType_BASE_COLOR);
-		if (albedo.empty()) albedo = GetTexPath(mat, aiTextureType_DIFFUSE);
+		std::string albedo = GetTexPath(scene, mat, aiTextureType_BASE_COLOR, embeddedUsage, externalTextureRemap);
+		if (albedo.empty()) albedo = GetTexPath(scene, mat, aiTextureType_DIFFUSE, embeddedUsage, externalTextureRemap);
+		if (albedo.empty()) albedo = ResolveFallbackTexture(ETextureType::ALBEDO, fallbackTextureMap);
 		out.texPathOffset[(size_t)ETextureType::ALBEDO] = AddString(stringTable, albedo);
 
-		std::string normal = GetTexPath(mat, aiTextureType_NORMALS);
-		if (normal.empty()) normal = GetTexPath(mat, aiTextureType_HEIGHT);
+		std::string normal = GetTexPath(scene, mat, aiTextureType_NORMALS, embeddedUsage, externalTextureRemap);
+		if (normal.empty()) normal = GetTexPath(scene, mat, aiTextureType_HEIGHT, embeddedUsage, externalTextureRemap);
+		if (normal.empty()) normal = ResolveFallbackTexture(ETextureType::NORMAL, fallbackTextureMap);
 		out.texPathOffset[(size_t)ETextureType::NORMAL] = AddString(stringTable, normal);
 
 		// Metallic / Roughness / AO / Emissive
 		{
-			out.texPathOffset[(size_t)ETextureType::METALLIC]  = AddString(stringTable, GetTexPath(mat, aiTextureType_METALNESS));
-			out.texPathOffset[(size_t)ETextureType::ROUGHNESS] = AddString(stringTable, GetTexPath(mat, aiTextureType_DIFFUSE_ROUGHNESS));
-			out.texPathOffset[(size_t)ETextureType::AO]        = AddString(stringTable, GetTexPath(mat, aiTextureType_AMBIENT_OCCLUSION));
-			out.texPathOffset[(size_t)ETextureType::EMISSIVE]  = AddString(stringTable, GetTexPath(mat, aiTextureType_EMISSIVE));
+			std::string metallic = GetTexPath(scene, mat, aiTextureType_METALNESS, embeddedUsage, externalTextureRemap);
+			if (metallic.empty()) metallic = ResolveFallbackTexture(ETextureType::METALLIC, fallbackTextureMap);
+			out.texPathOffset[(size_t)ETextureType::METALLIC] = AddString(stringTable, metallic);
+
+			std::string roughness = GetTexPath(scene, mat, aiTextureType_DIFFUSE_ROUGHNESS, embeddedUsage, externalTextureRemap);
+			if (roughness.empty()) roughness = ResolveFallbackTexture(ETextureType::ROUGHNESS, fallbackTextureMap);
+			out.texPathOffset[(size_t)ETextureType::ROUGHNESS] = AddString(stringTable, roughness);
+
+			std::string ao = GetTexPath(scene, mat, aiTextureType_AMBIENT_OCCLUSION, embeddedUsage, externalTextureRemap);
+			if (ao.empty()) ao = ResolveFallbackTexture(ETextureType::AO, fallbackTextureMap);
+			out.texPathOffset[(size_t)ETextureType::AO] = AddString(stringTable, ao);
+
+			std::string emissive = GetTexPath(scene, mat, aiTextureType_EMISSIVE, embeddedUsage, externalTextureRemap);
+			if (emissive.empty()) emissive = ResolveFallbackTexture(ETextureType::EMISSIVE, fallbackTextureMap);
+			out.texPathOffset[(size_t)ETextureType::EMISSIVE] = AddString(stringTable, emissive);
 		}
 
 		materials.push_back(out);

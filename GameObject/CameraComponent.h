@@ -85,7 +85,7 @@ public:
 	virtual ~CameraComponent() = default;
 
 	static constexpr const char* StaticTypeName = "CameraComponent";
-	const char* GetTypeName() const override { return StaticTypeName; }
+	const char* GetTypeName() const override;
 
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
@@ -117,4 +117,3 @@ public:
 
 };
 
-REGISTER_COMPONENT(CameraComponent);

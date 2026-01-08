@@ -1,6 +1,12 @@
 ﻿#include "TransformComponent.h"
 #include "Event.h"
 #include <cassert>
+#include "ReflectionMacro.h"
+REGISTER_COMPONENT(TransformComponent)  //컴포넌트 등록
+// 컴포넌트 property 등록 **이름 주의**
+REGISTER_PROPERTY(TransformComponent, Position)
+REGISTER_PROPERTY(TransformComponent, Rotation)
+REGISTER_PROPERTY(TransformComponent, Scale)
 
 void TransformComponent::SetParent(TransformComponent* newParent)
 {

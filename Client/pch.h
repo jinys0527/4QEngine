@@ -58,10 +58,8 @@
 #include <wincodec.h>                // WIC (이미지 로딩)
 
 
-
 #define _USE_MATH_DEFINES
 #include <cmath>
-
 #include <stdexcept>
 
 //https://github.com/Microsoft/DirectXTK/wiki/throwIfFailed

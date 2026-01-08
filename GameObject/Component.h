@@ -82,14 +82,3 @@ public:
 private:
 	std::unordered_map<std::string, ComponentCreateFunc> factoryMap;
 };
-
-
-#define REGISTER_COMPONENT(TYPE) \
-    namespace { \
-        struct TYPE##Registrator { \
-            TYPE##Registrator() { \
-                ComponentFactory::Instance().Register(#TYPE, []() -> std::unique_ptr<Component> { return std::make_unique<TYPE>(); }); \
-            } \
-        }; \
-        static TYPE##Registrator global_##TYPE##Registrator; \
-    }

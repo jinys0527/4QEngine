@@ -74,6 +74,8 @@ public:
 			m_Components.erase(it);
 	}
 
+	std::vector<std::string> GetComponentTypeNames() const;
+
 	virtual void Update(float deltaTime);
 
 	virtual void FixedUpdate();

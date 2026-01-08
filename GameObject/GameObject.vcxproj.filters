@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Component.cpp">
@@ -36,6 +36,12 @@
     </ClCompile>
     <ClCompile Include="CameraObject.cpp">
       <Filter>Objects\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Reflection.cpp">
+      <Filter>Reflection\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentRegistration.cpp">
+      <Filter>Components\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +85,15 @@
     <ClInclude Include="CameraObject.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ReflectionMacro.h">
+      <Filter>Reflection\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Reflection.h">
+      <Filter>Reflection\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Serializer.h">
+      <Filter>Reflection\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">
@@ -98,6 +113,15 @@
     </Filter>
     <Filter Include="Objects\Source Files">
       <UniqueIdentifier>{5b944315-1acd-4d83-8799-110f9d0f50de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reflection">
+      <UniqueIdentifier>{7c42dae0-0e6a-4543-943b-17059a8a4ca8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reflection\Header Files">
+      <UniqueIdentifier>{97353ede-ee33-44b9-956d-276481e7ed60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reflection\Source Files">
+      <UniqueIdentifier>{8c211b32-5e0f-4eb8-b840-2ce14980ebaa}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

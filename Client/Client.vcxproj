@@ -182,7 +182,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(VCPKG_ROOT)\installed\x64-windows-static\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(VCPKG_ROOT)installed\x64-windows\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -190,7 +190,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)\installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>fmodL_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -233,7 +233,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(VCPKG_ROOT)\installed\x64-windows\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(VCPKG_ROOT)installed\x64-windows\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -242,7 +242,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>fmod_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)\installed\x64-windows\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)installed\x64-windows\lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmod.dll" "$(TargetDir)"
@@ -295,9 +295,6 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     <ProjectReference Include="..\GameObject\GameObject.vcxproj">
       <Project>{27a8092d-9702-4ab5-9e74-0a204595aad5}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\ImGUIDX11\ImGUIDX11.vcxproj">
-      <Project>{dd6614b4-19c1-4673-9445-f0305a3e044c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\Importer\Importer.vcxproj">
       <Project>{cda21401-5075-4361-81a3-b8926519745f}</Project>
     </ProjectReference>
@@ -322,6 +319,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Register.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
   </ItemGroup>
