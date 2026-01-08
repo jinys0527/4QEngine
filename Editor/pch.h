@@ -14,6 +14,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <algorithm>
+
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")

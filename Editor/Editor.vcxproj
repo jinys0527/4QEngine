@@ -131,12 +131,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="EditorApplication.h" />
+    <ClInclude Include="EditorViewPort.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="UIManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EditorApplication.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="EditorViewPort.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>

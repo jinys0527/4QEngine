@@ -48,6 +48,10 @@ public:
 	void AddGameObject      (std::shared_ptr<GameObject> gameObject);
 	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject);
 
+	// For Editor map 자체 Getter( 수정 불가능 상태 )
+	// 수정 해야하는 경우 양 const 제거 ( Add GameObject 는 editor에서 call 하면, Scene의 add object 작동 editor map 직접 수정 X)
+	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetGameObjects() const { return m_GameObjects; }
+
 	void SetMainCamera(std::shared_ptr<GameObject> gameObject);
 	CameraObject* GetMainCamera() { return m_Camera; }
 

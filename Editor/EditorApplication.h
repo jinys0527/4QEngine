@@ -1,8 +1,13 @@
 ﻿#pragma once
 
 #include "NzWndBase.h"
-#include <wrl/client.h>
+#include <memory>
+#include <string>
+#include "AssetLoader.h"
+#include "EditorViewport.h"
 #include "Engine.h"
+//#include "RenderTargetContext.h" -> MRenderer에 추가될 것 RT 관련
+#include "Renderer.h"
 #include "SceneManager.h"
 #include "SoundManager.h"
 
@@ -12,7 +17,8 @@ class EditorApplication : public NzWndBase
 {
 
 public:
-	EditorApplication(Engine& engine, SceneManager& sceneManager, SoundManager& soundManager) : NzWndBase(), m_Engine(engine), m_SceneManager(sceneManager), m_SoundManager(soundManager) {}
+	EditorApplication(Engine& engine, SceneManager& sceneManager, SoundManager& soundManager) 
+		: NzWndBase(), m_Engine(engine), m_SceneManager(sceneManager), m_SoundManager(soundManager) {}
 
 	virtual ~EditorApplication() = default;
 
@@ -24,19 +30,33 @@ public:
 
 private:
 	void UpdateInput();
-	void UpdateLogic();
+	//void UpdateLogic();
 	void Update();
-
+	void UpdateSceneViewport();
 	void Render();
 	void RenderImGUI();
+	void RenderSceneView();
+	void DrawHierarchy();
+	void DrawInspector();
+
+
 
 	void OnResize(int width, int height) override;
 	void OnClose() override;
 
-	//GameObject* m_Player;
-	//GameObject* m_Obstacle;
-	float m_fFrameCount;
+	float m_fFrameCount = 0.0f;
+	UINT64 m_FrameIndex = 0;
+
 	Engine& m_Engine;
+
 	SceneManager& m_SceneManager;
 	SoundManager& m_SoundManager;
+	//AssetLoader m_AssetLoader;
+	//Renderer m_Renderer;
+	RenderData::FrameData m_FrameData;
+	//RenderTargetContext m_SceneRenderTarget;
+	EditorViewport m_Viewport;
+
+
+	std::string m_SelectedObjectName;
 };

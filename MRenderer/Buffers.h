@@ -22,3 +22,4 @@ struct RenderContext
 	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers	 = nullptr;
 	std::vector<UINT32>* indexcounts				 = nullptr;
 };
+

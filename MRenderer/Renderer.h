@@ -32,4 +32,6 @@ private:
 	std::vector<ComPtr<ID3D11Buffer>> m_vVertexBuffers;
 	std::vector<ComPtr<ID3D11Buffer>> m_vIndexBuffers ;
 	std::vector<UINT32>				  m_vIndexCounts  ;
+	// RT
+	// 
 };

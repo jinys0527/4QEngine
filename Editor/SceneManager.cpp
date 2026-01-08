@@ -1,7 +1,7 @@
 ﻿//editor
 #include "pch.h"
 #include "SceneManager.h"
-
+//editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
 {
 	m_SoundManager.Init();

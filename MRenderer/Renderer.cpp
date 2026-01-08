@@ -9,10 +9,10 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 	m_RenderContext.indexBuffers = &m_vIndexBuffers;
 	m_RenderContext.indexcounts = &m_vIndexCounts;
 
-	DXSetup(hWnd, width, height);
+	DXSetup(hWnd, width, height); // 멤버함수로 교체
 
-	InitVB(frame);
-	InitIB(frame);
+	InitVB(frame);// 멤버함수로 교체
+	InitIB(frame);// 멤버함수로 교체
 
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 
