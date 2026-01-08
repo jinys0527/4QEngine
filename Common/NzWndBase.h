@@ -13,7 +13,7 @@ public:
 
 	void* GetHandle() const { return m_hwnd;   }
 	
-	int    GetWidth() const { return m_width;  }
+	int   GetWidth () const { return m_width;  }
 	int   GetHeight() const { return m_height; }
 
 protected:

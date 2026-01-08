@@ -264,6 +264,175 @@ static void WriteEmbeddedTextures(
 }
 
 
+static std::string CopyExternalTexture(
+	const fs::path& fbxDir,
+	const fs::path& texDir,
+	const std::string& rawPath
+)
+{
+	if (rawPath.empty()) return{};
+
+	fs::path sourcePath = fs::u8path(rawPath);
+	if (!sourcePath.is_absolute())
+	{
+		sourcePath = fbxDir / sourcePath;
+	}
+
+	std::error_code ec;
+	fs::path normalizedSource = fs::weakly_canonical(sourcePath, ec);
+	if (ec)
+	{
+		normalizedSource = sourcePath;
+	}
+
+	if (!fs::exists(normalizedSource))
+	{
+		return {};
+	}
+
+	const fs::path destPath = texDir / normalizedSource.filename();
+	fs::copy_file(normalizedSource, destPath, fs::copy_options::overwrite_existing, ec);
+	if (ec)
+	{
+		return {};
+	}
+
+	return ToGenericString(destPath.filename());
+}
+
+static std::unordered_map<std::string, std::string> CollectExternalTextureRemap(
+	const aiScene* scene,
+	const fs::path& fbxDir,
+	const fs::path& texDir)
+{
+	std::unordered_map<std::string, std::string> remap;
+	if (!scene || !scene->HasMaterials()) return remap;
+
+	static const aiTextureType kTypes[] = {
+		aiTextureType_BASE_COLOR,
+		aiTextureType_DIFFUSE,
+		aiTextureType_NORMALS,
+		aiTextureType_HEIGHT,
+		aiTextureType_METALNESS,
+		aiTextureType_DIFFUSE_ROUGHNESS,
+		aiTextureType_AMBIENT_OCCLUSION,
+		aiTextureType_EMISSIVE
+	};
+
+	for (uint32_t m = 0; m < scene->mNumMaterials; ++m)
+	{
+		const aiMaterial* mat = scene->mMaterials[m];
+		if (!mat) continue;
+
+		for (aiTextureType type : kTypes)
+		{
+			const unsigned int textureCount = mat->GetTextureCount(type);
+			for (unsigned int t = 0; t < textureCount; ++t)
+			{
+				aiString path;
+				if (mat->GetTexture(type, t, &path) != AI_SUCCESS) continue;
+
+				uint32_t index = 0;
+				if (TryResolveEmbeddedIndex(scene, path, index)) continue;
+
+				const std::string rawPath = path.C_Str();
+				if (rawPath.empty()) continue;
+
+				if (remap.find(rawPath) != remap.end()) continue;
+
+				const std::string resolved = CopyExternalTexture(fbxDir, texDir, rawPath);
+				if (resolved.empty()) continue;
+
+				remap.emplace(rawPath, resolved);
+
+				const std::string baseName = BaseNameFromPath(rawPath);
+				if (!baseName.empty())
+				{
+					remap.emplace(baseName, resolved);
+				}
+			}
+		}
+	}
+
+	return remap;
+}
+
+static bool HasKeyword(const std::string& value, const std::string& keyword)
+{
+	const auto it = std::search(
+		value.begin(),
+		value.end(),
+		keyword.begin(),
+		keyword.end(),
+		[](char a, char b)
+		{
+			return std::tolower(static_cast<unsigned char>(a)) ==
+				std::tolower(static_cast<unsigned char>(b));
+		});
+	return it != value.end();
+}
+
+static void TryAssignFallbackTexture(
+	std::unordered_map<ETextureType, std::string>& out,
+	ETextureType slot,
+	const fs::path& filePath)
+{
+	if (out.find(slot) != out.end())
+	{
+		return;
+	}
+
+	out.emplace(slot, ToGenericString(fs::path("Textures") / filePath.filename()));
+}
+
+static std::unordered_map<ETextureType, std::string> CollectFallbackTextures(const fs::path& texDir)
+{
+	std::unordered_map<ETextureType, std::string> fallback;
+	if (!fs::exists(texDir))
+	{
+		return fallback;
+	}
+
+	for (const auto& entry : fs::directory_iterator(texDir))
+	{
+		if (!entry.is_regular_file())
+		{
+			continue;
+		}
+
+		const std::string filename = entry.path().filename().string();
+
+		if (HasKeyword(filename, "BaseColor") || HasKeyword(filename, "Albedo") || HasKeyword(filename, "Diffuse"))
+		{
+			TryAssignFallbackTexture(fallback, ETextureType::ALBEDO, entry.path());
+		}
+		else if (HasKeyword(filename, "Normal"))
+		{
+			TryAssignFallbackTexture(fallback, ETextureType::NORMAL, entry.path());
+		}
+		else if (HasKeyword(filename, "Metal"))
+		{
+			TryAssignFallbackTexture(fallback, ETextureType::METALLIC, entry.path());
+		}
+		else if (HasKeyword(filename, "Rough"))
+		{
+			TryAssignFallbackTexture(fallback, ETextureType::ROUGHNESS, entry.path());
+		}
+		else if (HasKeyword(filename, "AO") || HasKeyword(filename, "Occlusion"))
+		{
+			TryAssignFallbackTexture(fallback, ETextureType::AO, entry.path());
+		}
+		else if (HasKeyword(filename, "Emissive") || HasKeyword(filename, "Emission"))
+		{
+			TryAssignFallbackTexture(fallback, ETextureType::EMISSIVE, entry.path());
+		}
+	}
+
+	return fallback;
+}
+
+
+
 // file: "Hero_Idle.anim.json" or ".../Hero_Idle.anim.json"
 // baseName: "Hero"  -> returns "Idle"
 static std::string ExtractClipName(const std::string& filePath, const std::string& baseName)
@@ -312,6 +481,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	EnsureDir(animsDir);
 	EnsureDir(matsDir);
 	EnsureDir(texDir);
+	EnsureDir(skelDir);
 	EnsureDir(metaDir);
 
 	const fs::path skelBinPath = skelDir / (assetName + ".skelbin");
@@ -337,6 +507,8 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	// ----- 3) Import pipeline -----
 	const auto embeddedUsage = CollectEmbeddedTextureUsage(scene);
 	WriteEmbeddedTextures(scene, texDir, embeddedUsage);
+	const auto externalTextureRemap = CollectExternalTextureRemap(scene, fbxPath.parent_path(), texDir);
+	const auto fallbackTextureMap = CollectFallbackTextures(texDir);
 	std::unordered_map<std::string, uint32_t> boneMap;
 	// Skeleton (없으면 boneMap 비거나 skel 파일 안 만들어도 됨)
 	if (!ImportFBXToSkelBin(scene, ToGenericString(skelBinPath), boneMap))
@@ -382,7 +554,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		metaAnims.push_back({ SanitizeName(clipName), rel });
 	}
 
-	if (!ImportFBXToMaterialBin(scene, ToGenericString(matBinPath), embeddedUsage))
+	if (!ImportFBXToMaterialBin(scene, ToGenericString(matBinPath), embeddedUsage, externalTextureRemap, fallbackTextureMap))
 	{
 		std::cout << "No Mat" << std::endl;
 	}
@@ -393,12 +565,12 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	const std::string metaTextureDir = "Textures";
 
 	if (!WriteAssetMetaJson(
-		ToGenericString(metaPath),			//outPath
-		assetName,							//assetName
+		ToGenericString(metaPath),			// outPath
+		assetName,							// assetName
 		metaBaseDir,						// baseDir (meta 파일 기준)
 		metaTextureDir,                     // textureDir (asset 루트 기준)
-		RelToBase(baseDir, matBinPath),		//matBin	상대경로
-		RelToBase(baseDir, skelBinPath),	//skelBin	상대경로
+		RelToBase(baseDir, matBinPath),		// matBin	상대경로
+		RelToBase(baseDir, skelBinPath),	// skelBin	상대경로
 		metaMeshes,
 		metaAnims))
 	{

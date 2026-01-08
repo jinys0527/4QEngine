@@ -31,7 +31,10 @@ int main()
    
     ImportFBX("../Dying.fbx", "../test");
     ImportFBX("../Unarmed Walk Forward.fbx", "../test");
-
+	ImportFBX("../all.fbx", "../test");
+	ImportFBX("../cycle.fbx", "../test");
+    ImportFBX("../hiroshi.fbx", "../test");
+    ImportFBX("../shinchan.fbx", "../test");
 
 #ifdef _EDITOR
     Editor editor(sceneManager);
@@ -51,6 +54,11 @@ int main()
 
     AssetLoader::AssetLoadResult result = loader.LoadAsset("../test/Dying/Meta/Dying.asset.json");
     loader.LoadAsset("../test/Unarmed Walk Forward/Meta/Unarmed Walk Forward.asset.json");
+    loader.LoadAsset("../test/all/Meta/all.asset.json");
+    loader.LoadAsset("../test/cycle/Meta/cycle.asset.json");
+    loader.LoadAsset("../test/hiroshi/Meta/hiroshi.asset.json");
+    loader.LoadAsset("../test/shinchan/Meta/shinchan.asset.json");
+
     // 2) 메쉬/머티리얼 핸들 꺼내기
     //if (!result.meshes.empty())
     //{
@@ -110,14 +118,14 @@ int main()
 
     //}
 
-#if defined(_DEBUG)
-    // Store별로 내부 상태 출력
-    loader.GetMeshes().DebugDump(std::cout);
-    loader.GetMaterials().DebugDump(std::cout);
-    loader.GetTextures().DebugDump(std::cout);
-    loader.GetSkeletons().DebugDump(std::cout);
-    loader.GetAnimations().DebugDump(std::cout);
-#endif
+//#if defined(_DEBUG)
+//    // Store별로 내부 상태 출력
+//    loader.GetMeshes().DebugDump(std::cout);
+//    loader.GetMaterials().DebugDump(std::cout);
+//    loader.GetTextures().DebugDump(std::cout);
+//    loader.GetSkeletons().DebugDump(std::cout);
+//    loader.GetAnimations().DebugDump(std::cout);
+//#endif
 
  	g_pMainApp->Run();
  

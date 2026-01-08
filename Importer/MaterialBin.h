@@ -39,4 +39,6 @@ struct aiScene;
 bool ImportFBXToMaterialBin(
 	const aiScene* scene,
 	const std::string& outMaterialBin,
-	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage);
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage,
+	const std::unordered_map<std::string, std::string>& externalTextureRemap,
+	const std::unordered_map<ETextureType, std::string>& fallbackTextureMap);

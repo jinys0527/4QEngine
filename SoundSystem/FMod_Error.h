@@ -1,10 +1,10 @@
-#pragma once
+Ôªø#pragma once
 
 #include <iostream>
 #include <cstdlib>
 #include <fmod_errors.h>
 
-// 1) ∞·∞˙∏∏ √º≈©«ÿ ∑Œ±Î∏∏ «“ ∂ß
+// 1) Í≤∞Í≥ºÎßå Ï≤¥ÌÅ¨Ìï¥ Î°úÍπÖÎßå Ìï† Îïå
 inline void FMOD_LogIfError(FMOD_RESULT result,
 	const char* expr,
 	const char* file,
@@ -13,13 +13,13 @@ inline void FMOD_LogIfError(FMOD_RESULT result,
 	if (result != FMOD_OK)
 	{
 		std::cerr << "[" << file << ":" << line << "] "
-			<< expr << " failed °Ê "
+			<< expr << " failed ‚Üí "
 			<< FMOD_ErrorString(result)
 			<< " (" << result << ")\n";
 	}
 }
 
-// 2) ø°∑Ø Ω√ false ∏Æ≈œ±Ó¡ˆ π≠æÓº≠ √º≈©«“ ∂ß
+// 2) ÏóêÎü¨ Ïãú false Î¶¨ÌÑ¥ÍπåÏßÄ Î¨∂Ïñ¥ÏÑú Ï≤¥ÌÅ¨Ìï† Îïå
 inline bool FMOD_CheckOrReturn(FMOD_RESULT result,
 	const char* expr,
 	const char* file,
@@ -28,7 +28,7 @@ inline bool FMOD_CheckOrReturn(FMOD_RESULT result,
 	if (result != FMOD_OK)
 	{
 		std::cerr << "[" << file << ":" << line << "] "
-			<< expr << " failed °Ê "
+			<< expr << " failed ‚Üí "
 			<< FMOD_ErrorString(result)
 			<< " (" << result << ")\n";
 		return false;
@@ -36,7 +36,7 @@ inline bool FMOD_CheckOrReturn(FMOD_RESULT result,
 	return true;
 }
 
-// 3) ø°∑Ø Ω√ ¡ÔΩ√ ¡æ∑·«“ ∂ß
+// 3) ÏóêÎü¨ Ïãú Ï¶âÏãú Ï¢ÖÎ£åÌï† Îïå
 inline void FMOD_AssertExit(FMOD_RESULT result,
 	const char* expr,
 	const char* file,
@@ -45,7 +45,7 @@ inline void FMOD_AssertExit(FMOD_RESULT result,
 	if (result != FMOD_OK)
 	{
 		std::cerr << "[" << file << ":" << line << "] "
-			<< expr << " failed °Ê "
+			<< expr << " failed ‚Üí "
 			<< FMOD_ErrorString(result)
 			<< " (" << result << ")\n";
 		std::abort();
