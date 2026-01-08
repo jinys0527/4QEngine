@@ -16,7 +16,7 @@ class TransformComponent : public Component
 public:
 
 	static constexpr const char* StaticTypeName = "TransformComponent";
-	const char* GetTypeName() const override { return StaticTypeName; }
+	const char* GetTypeName() const override;
 
 	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 0), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
 	{
@@ -101,6 +101,4 @@ private:
 	bool m_IsDirty = true;
 
 };
-
-REGISTER_COMPONENT(TransformComponent);
 

@@ -1,4 +1,7 @@
 ﻿#include "MaterialComponent.h"
+#include "ReflectionMacro.h"
+
+REGISTER_COMPONENT(MaterialComponent);
 
 void MaterialComponent::SetOverrides(const RenderData::MaterialData& overrides)
 {

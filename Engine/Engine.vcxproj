@@ -272,9 +272,6 @@
     <ProjectReference Include="..\Event\Event.vcxproj">
       <Project>{f19d0681-a873-4297-bb00-e750294995e9}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\ImGUIDX11\ImGUIDX11.vcxproj">
-      <Project>{dd6614b4-19c1-4673-9445-f0305a3e044c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\ResourceManager\ResourceManager.vcxproj">
       <Project>{bc2c9dcb-3118-45b6-a6ef-087337daa9cb}</Project>
     </ProjectReference>

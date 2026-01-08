@@ -10,7 +10,7 @@ class MeshRenderer : public Component
 
 public:
 	static constexpr const char* StaticTypeName = "MeshRenderer";
-	const char* GetTypeName() const override { return StaticTypeName; }
+	const char* GetTypeName() const override;
 	
 	MeshRenderer() = default;
 	virtual ~MeshRenderer() = default;

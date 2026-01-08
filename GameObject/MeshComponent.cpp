@@ -1,4 +1,6 @@
 ﻿#include "MeshComponent.h"
+#include "ReflectionMacro.h"
+REGISTER_COMPONENT(MeshComponent);
 
 void MeshComponent::Update(float deltaTime)
 {

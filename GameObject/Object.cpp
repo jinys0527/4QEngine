@@ -4,6 +4,17 @@ Object::Object(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispat
 {
 }
 
+std::vector<std::string> Object::GetComponentTypeNames() const
+{
+	std::vector<std::string> names;
+	names.reserve(m_Components.size());
+	for (const auto& entry : m_Components)
+	{
+		names.push_back(entry.first);
+	}
+	return names;
+}
+
 void Object::Update(float deltaTime)
 {
 	for (auto it = m_Components.begin(); it != m_Components.end(); it++)

@@ -10,7 +10,7 @@ class UIComponent : public Component, public IEventListener
 {
 public:
 	static constexpr const char* StaticTypeName = "UIComponent";
-	const char* GetTypeName() const override { return StaticTypeName; }
+	const char* GetTypeName() const override;
 
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
@@ -24,4 +24,3 @@ protected:
 	float m_Opacity = 1.0f;
 };
 
-REGISTER_COMPONENT(UIComponent);
