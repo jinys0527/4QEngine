@@ -1,8 +1,6 @@
 ﻿#pragma once
 //Editor
 
-
-
 #include<windows.h>
 #include<objbase.h>
 #include <stdio.h>
@@ -22,7 +20,7 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 #pragma comment(lib, "windowscodecs.lib")
-#pragma comment(lib, "assimp-vc143-mtd")
+
 //DX관련
 #include <wrl/client.h>              // ComPtr
 #include <d3d11.h>                   // Direct3D 11
@@ -69,3 +67,9 @@ namespace DX
 		}
 	}
 }
+
+#ifdef _DEBUG
+#pragma comment(lib, "assimp-vc143-mtd")
+#else
+#pragma comment(lib, "assimp-vc143-mt")
+#endif

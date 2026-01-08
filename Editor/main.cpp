@@ -1,13 +1,14 @@
-﻿
-//editor
+﻿//editor
 #include "pch.h"
 #include "EditorApplication.h"
 #include "SceneManager.h"
 #include "SoundManager.h"
 #include "UIManager.h"
 #include "Engine.h"
-#include "Importer.h"
 #include "AssetLoader.h"
+#include "Renderer.h"
+#include "Importer.h"
+
 
 //namespace
 //{
@@ -26,12 +27,14 @@ int main()
 	SoundManager soundManager;
 	UIManager uiManager(engine.GetEventDispatcher());
 	SceneManager sceneManager(engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, uiManager);
-
+	AssetLoader assetLoader;
+	Renderer renderer(assetLoader);
+	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
 	//ImportFBX("../Dying.fbx", "../test");
 	//ImportFBX("../Unarmed Walk Forward.fbx", "../test");
 
-	EditorApplication app(engine, sceneManager, soundManager);
+	EditorApplication app(engine,renderer, sceneManager, soundManager);
 	if (!app.Initialize())
 	{
 		CoUninitialize();

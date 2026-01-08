@@ -28,7 +28,6 @@ int main()
     GameManager gameManager(engine.GetEventDispatcher());
     UIManager uiManager(engine.GetEventDispatcher());
 	SceneManager sceneManager(/*engine.GetRenderer(),*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, gameManager, uiManager);
-   
     ImportFBX("../Dying.fbx", "../test");
     ImportFBX("../Unarmed Walk Forward.fbx", "../test");
 #ifdef _EDITOR

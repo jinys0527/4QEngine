@@ -6,7 +6,7 @@
 using Microsoft::WRL::ComPtr;
 
 class Device
-{
+{ // Device만 생성
 public:
 	void Create(HWND hwnd);
 	ComPtr<ID3D11Device>		 GetDevice	() { return m_Device; }

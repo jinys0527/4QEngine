@@ -6,7 +6,7 @@
 #include "AssetLoader.h"
 #include "EditorViewport.h"
 #include "Engine.h"
-//#include "RenderTargetContext.h" -> MRenderer에 추가될 것 RT 관련
+#include "RenderTargetContext.h" 
 #include "Renderer.h"
 #include "SceneManager.h"
 #include "SoundManager.h"
@@ -17,8 +17,8 @@ class EditorApplication : public NzWndBase
 {
 
 public:
-	EditorApplication(Engine& engine, SceneManager& sceneManager, SoundManager& soundManager) 
-		: NzWndBase(), m_Engine(engine), m_SceneManager(sceneManager), m_SoundManager(soundManager) {}
+	EditorApplication(Engine& engine,Renderer& renderer, SceneManager& sceneManager, SoundManager& soundManager) 
+		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager) {}
 
 	virtual ~EditorApplication() = default;
 
@@ -52,9 +52,9 @@ private:
 	SceneManager& m_SceneManager;
 	SoundManager& m_SoundManager;
 	//AssetLoader m_AssetLoader;
-	//Renderer m_Renderer;
+	Renderer& m_Renderer;
 	RenderData::FrameData m_FrameData;
-	//RenderTargetContext m_SceneRenderTarget;
+	RenderTargetContext m_SceneRenderTarget;
 	EditorViewport m_Viewport;
 
 

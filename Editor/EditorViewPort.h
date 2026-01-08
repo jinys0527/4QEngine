@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <imgui.h>
-// #include "RenderTargetContext.h" -> 필요 
+#include "RenderTargetContext.h"
 
 class EditorViewport
 {
@@ -9,7 +9,7 @@ public:
 	EditorViewport() = default;
 	~EditorViewport() = default;
 
-	//bool Draw(const RenderTargetContext& renderTarget); 
+	bool Draw(const RenderTargetContext& renderTarget); 
 	const ImVec2& GetViewportSize() const { return m_ViewportSize; }
 
 private:

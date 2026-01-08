@@ -7,7 +7,6 @@ void Engine::Initailize()
 	m_InputManager    = std::make_unique<InputManager>(*m_EventDispatcher);
 	m_Device		  =	std::make_unique<Device>();
 	
-	//m_Renderer = std::make_unique<D2DRenderer>();
 	//m_AssetManager = std::make_unique<AssetManager>(*m_Renderer);
 	//m_SoundAssetManager = std::make_unique<SoundAssetManager>();
 
@@ -24,6 +23,7 @@ void Engine::UpdateInput()
 	m_InputManager->Update();
 }
 
+//아직 생성은 안함
 void Engine::CreateDevice(HWND hwnd) {
 	if (!m_Device) {
 		// 없다면 생성 시도

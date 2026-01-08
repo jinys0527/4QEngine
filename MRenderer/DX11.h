@@ -59,6 +59,7 @@ extern ComPtr<ID3D11Device> g_pDevice;
 extern ComPtr<ID3D11DeviceContext> g_pDXDC;
 extern ComPtr<IDXGISwapChain> g_pSwapChain;
 extern ComPtr<ID3D11RenderTargetView> g_pRTView; 
+
 extern	BOOL 		g_bVSync;
 extern int g_MonitorWidth;
 extern int g_MonitorHeight;
@@ -93,6 +94,12 @@ HRESULT CreateDynamicConstantBuffer(ID3D11Device* pDev, UINT size, LPVOID pData,
 HRESULT UpdateDynamicBuffer(ID3D11DeviceContext* pDXDC, ID3D11Resource* pBuff, LPVOID pData, UINT size);
 
 #pragma endregion
+
+HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
+HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
+HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
+HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D*& pDSTex, ID3D11DepthStencilView*& pDSView);
+
 
 DWORD	AlignCBSize(DWORD size);
 

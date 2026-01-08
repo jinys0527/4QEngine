@@ -15,6 +15,7 @@ public:
 	const RenderPipeline& GetPipeline() const { return m_Pipeline; }
 
 	void Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height);
+	void InitializeTest(HWND hWnd, int width, int height);
 	void RenderFrame(const RenderData::FrameData& frame);
 
 	void InitVB(const RenderData::FrameData& frame);

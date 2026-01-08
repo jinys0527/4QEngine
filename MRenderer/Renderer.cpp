@@ -5,6 +5,8 @@ UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
 
 void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height)
 {
+	// Device 생성을 여기서함 (원래는 engine에서 받는 거)
+
 	m_RenderContext.vertexBuffers = &m_vVertexBuffers;
 	m_RenderContext.indexBuffers = &m_vIndexBuffers;
 	m_RenderContext.indexcounts = &m_vIndexCounts;
@@ -18,14 +20,30 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 
 	UINT size;
 	CreateDynamicConstantBuffer(g_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
-
-
-	
-
 	//이 아래는 확인용
 	ClearBackBuffer(COLOR(0, 0, 1, 1));
 
 	Flip();
+}
+
+void Renderer::InitializeTest(HWND hWnd, int width, int height)
+{
+	//Device 생성을 여기서
+	m_RenderContext.vertexBuffers = &m_vVertexBuffers;
+	m_RenderContext.indexBuffers = &m_vIndexBuffers;
+	m_RenderContext.indexcounts = &m_vIndexCounts;
+
+	DXSetup(hWnd, width, height); // 멤버함수로 교체
+
+	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
+
+	UINT size;
+	//CreateDynamicConstantBuffer(g_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
+	//이 아래는 확인용
+	ClearBackBuffer(COLOR(0, 0, 1, 1));
+
+	Flip();
+
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)

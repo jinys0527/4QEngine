@@ -2,13 +2,12 @@
 #include "EditorApplication.h"
 #include "CameraComponent.h"
 #include "GameObject.h"
+#include "Renderer.h"
 #include "Scene.h"
 #include "DX11.h"
 
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-
 
 bool EditorApplication::Initialize()
 {
@@ -19,17 +18,18 @@ bool EditorApplication::Initialize()
 	{
 		return false;
 	}
-
-	
+	///m_hwnd
 	//m_Engine.GetAssetManager().Init(L"../Resource");
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-
+	m_Renderer.InitializeTest(m_hwnd,m_width,m_height);  // Device 생성
 	m_SceneManager.Initialize();
 
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark(); 
 	ImGui_ImplWin32_Init(m_hwnd);
 	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
+	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
+	
 	//RT 받기
 	//ID3D11RenderTargetView* rtvs[] = { m_Engine.GetRenderer().GetD3DRenderTargetView() };
 
@@ -96,9 +96,8 @@ void EditorApplication::Update()
 
 void EditorApplication::Render() {
 	m_SceneManager.Render(); // Scene 전체 그리고
-
 	RenderImGUI();
-	//Flip(); //★
+	Flip(); //★
 }
 
 void EditorApplication::RenderImGUI() {
@@ -108,54 +107,54 @@ void EditorApplication::RenderImGUI() {
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	//DrawHierarchy();
-	//DrawInspector();
+	DrawHierarchy();
+	DrawInspector();
 
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
-	//const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget);
-	//if (viewportChanged)
-	//{
-	//	UpdateSceneViewport();
-	//}
-	//
-	//RenderSceneView(); //Scene 그리기
-	//
-	//ImGui::Render();
-	//
-	//ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-	//g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-	//SetViewPort(m_width, m_height);
-	//ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
-	//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget);
+	if (viewportChanged)
+	{
+		UpdateSceneViewport();
+	}
+	
+	RenderSceneView(); //Scene그리기
+	
+	ImGui::Render();  // Gui들그리기
+	
+	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height);
+	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 
 }
 
-// 게임화면
+// 게임화면 // CCTV 그리기 
 void EditorApplication::RenderSceneView() {
-	
-	//if (!m_SceneRenderTarget.IsValid())
-	//{
-	//	return;
-	//}
-	//
-	//auto scene = m_SceneManager.GetCurrentScene();
-	//if (!scene)
-	//{
-	//	return;
-	//}
-	//
-	//scene->BuildFrameData(m_FrameData);
-	//m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
-	//m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
-	//
-	//m_Renderer.InitVB(m_FrameData);
-	//m_Renderer.InitIB(m_FrameData);
-	//
-	//m_SceneRenderTarget.Bind();
-	//m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
-	//
-	//m_Renderer.RenderFrame(m_FrameData);
+
+	/*if (!m_SceneRenderTarget.IsValid())
+	{
+		return;
+	}
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	scene->BuildFrameData(m_FrameData);
+	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
+	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
+
+	m_Renderer.InitVB(m_FrameData);
+	m_Renderer.InitIB(m_FrameData);
+
+	m_SceneRenderTarget.Bind();
+	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_Renderer.RenderFrame(m_FrameData);*/
 }
 
 void EditorApplication::DrawHierarchy() {
@@ -197,7 +196,7 @@ void EditorApplication::DrawInspector() {
 	const auto it = gameObjects.find(m_SelectedObjectName);
 
 	// 선택된 오브젝트가 없거나, 실체가 없는 경우
-	if (it == gameObjects.end() || !it->second); //second == Object 포인터
+	if (it == gameObjects.end() || !it->second) //second == Object 포인터
 	{	
 		ImGui::Text("No Selected GameObject");
 		ImGui::End();
@@ -217,8 +216,6 @@ void EditorApplication::DrawInspector() {
 
 
 }
-
-
 
 void EditorApplication::UpdateSceneViewport()
 {
@@ -250,9 +247,6 @@ void EditorApplication::UpdateSceneViewport()
 		cameraComponent->SetViewportSize(static_cast<float>(width), static_cast<float>(height));
 	}*/
 }
-
-
-
 
 void EditorApplication::OnResize(int width, int height)
 {
