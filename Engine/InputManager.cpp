@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "InputManager.h"
 #include "EventDispatcher.h"
 #include "Event.h"
@@ -31,7 +31,7 @@ void InputManager::Update()
 
 	m_KeysDownPrev = m_KeysDown;
 
-	//¸¶¿ì½º ÁÂÅ¬¸¯ ÀÌº¥Æ®
+	//ë§ˆìš°ìŠ¤ ì¢Œí´ë¦­ ì´ë²¤íŠ¸
 	if (!m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
 		m_EventDispatcher.Dispatch(EventType::MouseLeftClick, &m_Mouse);
@@ -65,7 +65,7 @@ void InputManager::Update()
 	
 
 
-	//¹öÆ°À§¿¡ È£¹öµÆ´ÂÁö È®ÀÎÇÏ±â À§ÇØ ¸Å¹ø º¸³»¾ßÇÔ
+	//ë²„íŠ¼ìœ„ì— í˜¸ë²„ëëŠ”ì§€ í™•ì¸í•˜ê¸° ìœ„í•´ ë§¤ë²ˆ ë³´ë‚´ì•¼í•¨
 	m_EventDispatcher.Dispatch(EventType::Hovered, &m_Mouse);
 
 	m_MousePrev = m_Mouse;
@@ -123,7 +123,7 @@ bool InputManager::OnHandleMessage(const MSG& msg)
 void InputManager::HandleMsgMouse(const MSG& msg)
 {
 	int x = GetXFromLParam(msg.lParam);
-	int y = GetYFromLParam(msg.lParam); // [¿À·ù ¼öÁ¤]
+	int y = GetYFromLParam(msg.lParam); // [ì˜¤ë¥˜ ìˆ˜ì •]
 
 	m_Mouse.pos = { x, y };
 
@@ -146,6 +146,6 @@ void InputManager::HandleMsgMouse(const MSG& msg)
 	{
 		m_Mouse.rightPressed = false;
 		ReleaseCapture();
-	}
+	} 
 
 }

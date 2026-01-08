@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-static uint32_t AddString(std::string table, const std::string& s)
+static uint32_t AddString(std::string& table, const std::string& s)
 {
 	if (s.empty()) return 0;
 

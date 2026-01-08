@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstdint>
 #include <unordered_map>
+#include <iostream>
 
 #include "json.hpp"
 using nlohmann::json;
@@ -123,6 +124,37 @@ namespace
 		}
 
 		return (baseDir / path).lexically_normal();
+	}
+
+	void LogMaterialBinTextures(
+		const std::string& materialBinPath,
+		const std::vector<MatData>& mats,
+		const std::string& stringTable)
+	{
+		for (size_t i = 0; i < mats.size(); ++i)
+		{
+			const MatData& mat = mats[i];
+			std::string materialName = ReadStringAtOffset(stringTable, mat.materialNameOffset);
+			if (materialName.empty())
+			{
+				materialName = "Material_" + std::to_string(i);
+			}
+
+			for (size_t t = 0; t < TEX_MAX; ++t)
+			{
+				const std::string texPathRaw = ReadStringAtOffset(stringTable, mat.texPathOffset[t]);
+				if (texPathRaw.empty())
+				{
+					continue;
+				}
+
+				std::cout << "[MaterialBin] path=" << materialBinPath
+					<< " material=" << materialName
+					<< " slot=" << t
+					<< " texture=" << texPathRaw
+					<< std::endl;
+			}
+		}
 	}
 
 	bool PushUnique(std::vector<TextureHandle>& out, TextureHandle handle)
@@ -275,6 +307,8 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					matStream.read(stringTable.data(), header.stringTableBytes);
 				}
 
+				LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
+
 				materialHandles.reserve(mats.size());
 				materialByName.reserve(mats.size());
 				for (size_t i = 0; i < mats.size(); ++i)
@@ -318,7 +352,6 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 								tex->sRGB = isSRGB;
 								return tex;
 							});
-
 						material.textures[static_cast<size_t>(slot)] = textureHandle;
 						PushUnique(result.textures, textureHandle);
 					}

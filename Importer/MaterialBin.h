@@ -1,5 +1,13 @@
 ﻿#pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <assimp/material.h>
+
 enum class ETextureType : uint8_t { ALBEDO, NORMAL, METALLIC, ROUGHNESS, AO, EMISSIVE, MAX };
 static constexpr size_t TEX_MAX = static_cast<size_t>(ETextureType::MAX);
 
@@ -28,4 +36,9 @@ struct MatData
 #pragma pack(pop)
 
 struct aiScene;
-bool ImportFBXToMaterialBin(const aiScene* scene, const std::string& outMaterialBin);
+bool ImportFBXToMaterialBin(
+	const aiScene* scene,
+	const std::string& outMaterialBin,
+	const std::unordered_map<uint32_t, std::vector<aiTextureType>>& embeddedUsage,
+	const std::unordered_map<std::string, std::string>& externalTextureRemap,
+	const std::unordered_map<ETextureType, std::string>& fallbackTextureMap);
