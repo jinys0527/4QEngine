@@ -34,6 +34,7 @@ bool EditorApplication::Initialize()
 	//ID3D11RenderTargetView* rtvs[] = { m_Engine.GetRenderer().GetD3DRenderTargetView() };
 
 
+
 	return true;
 }
 
@@ -110,6 +111,8 @@ void EditorApplication::RenderImGUI() {
 	DrawHierarchy();
 	DrawInspector();
 
+	RenderSceneView(); //Scene그리기
+
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
 	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget);
 	if (viewportChanged)
@@ -117,7 +120,6 @@ void EditorApplication::RenderImGUI() {
 		UpdateSceneViewport();
 	}
 	
-	RenderSceneView(); //Scene그리기
 	
 	ImGui::Render();  // Gui들그리기
 	
@@ -133,28 +135,29 @@ void EditorApplication::RenderImGUI() {
 // 게임화면 // CCTV 그리기 
 void EditorApplication::RenderSceneView() {
 
-	/*if (!m_SceneRenderTarget.IsValid())
-	{
-		return;
-	}
+	//if (!m_SceneRenderTarget.IsValid())
+	//{
+	//	return;
+	//}
 
-	auto scene = m_SceneManager.GetCurrentScene();
-	if (!scene)
-	{
-		return;
-	}
+	//auto scene = m_SceneManager.GetCurrentScene();
+	//if (!scene)
+	//{
+	//	return;
+	//}
 
-	scene->BuildFrameData(m_FrameData);
+	//scene->BuildFrameData(m_FrameData);
 	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
-	m_Renderer.InitVB(m_FrameData);
-	m_Renderer.InitIB(m_FrameData);
+	//m_Renderer.InitVB(m_FrameData);
+	//m_Renderer.InitIB(m_FrameData);
+
 
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
-	m_Renderer.RenderFrame(m_FrameData);*/
+	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget);
 }
 
 void EditorApplication::DrawHierarchy() {

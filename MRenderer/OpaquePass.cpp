@@ -11,8 +11,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     m_RenderContext.BCBuffer.mProj = context.proj;
     m_RenderContext.BCBuffer.mVP = context.viewProj;
 
-    
 
+    UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 
 
     for (size_t index : GetQueue())
@@ -38,8 +38,21 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                 {
                     const UINT stride = sizeof(RenderData::Vertex);
                     const UINT offset = 0;
+
+                    ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), 1, 0);
+
+                    g_pDXDC->RSSetState(g_RState[RS::SOLID].Get());
+                    g_pDXDC->OMSetDepthStencilState(g_DSState[DS::OFF].Get(), 0);
+
+
                     g_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+                    g_pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
+                    g_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                    g_pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
+                    g_pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
+                    g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
                     g_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+
                     g_pDXDC->DrawIndexed(icount, 0, 0);
 
                 }
@@ -47,10 +60,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         }
 
 
-        ClearBackBuffer(COLOR(0, 0, 1, 1));
 
 
-        Flip();
 
 
 
@@ -58,7 +69,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         //UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
         //g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 
-        
+
     }
 }
-

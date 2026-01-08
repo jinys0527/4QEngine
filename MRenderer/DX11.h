@@ -43,16 +43,58 @@ typedef DXGI_MODE_DESC DISPLAY;
         MessageBox(NULL, buf, L"Error", MB_OK | MB_ICONERROR); \
     }
 
-enum class DS{
-	ON,				//깊이버퍼 ON! (기본값), 스텐실버퍼 OFF.
-	OFF,				//깊이버퍼 OFF!
-	//DS_DEPTH_WRITE_OFF,			//깊이버퍼 쓰기 끄기
+enum class DS {
+    ON,				//깊이버퍼 ON! (기본값), 스텐실버퍼 OFF.
+    OFF,				//깊이버퍼 OFF!
+    //DS_DEPTH_WRITE_OFF,			//깊이버퍼 쓰기 끄기
 
-	MAX,
+    MAX_,
 };
 
+enum class RS {
+    SOLID,				//삼각형 채우기 : Fill Mode - Soild.
+    WIREFRM,				//삼각형 채우기 : Fill Mode - Wireframe.
+    CULLBACK,			//뒷면 컬링 (ON) : BackFaceCulling - "CCW" 
+    WIRECULLBACK,		//와이어 프레임 + 뒷면 컬링 (ON) 
+
+    MAX_
+};
+
+//enum 래퍼 타입
+template<typename T, size_t N>
+struct EnumArray
+{
+    T data[N];
+
+    T& operator[](DS e)
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
+    const T& operator[](DS e) const
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
+    T& operator[](RS e)
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
+    const T& operator[](RS e) const
+    {
+        return data[static_cast<size_t>(e)];
+    }
+};
+
+
 //렌더링 상태 객체들 : 엔진 전체 공유함. "Device.cpp"
-extern ComPtr<ID3D11DepthStencilState> g_DSState[static_cast<int>(DS::MAX)];
+extern EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> g_DSState;
+HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D*& pDSTex, ID3D11DepthStencilView*& pDSView);
+
+//레스터라이져 상태 객체 배열
+extern EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)> g_RState;
+void RasterStateCreate();
 
 
 extern ComPtr<ID3D11Device> g_pDevice;
@@ -119,3 +161,30 @@ void SafeRelease(T*& ptr)
 }
 
 void SetViewPort(int width, int height);
+
+
+//pos, nrm, uv, tan
+HRESULT CreateInputLayout(ID3D11Device* pDev, ID3DBlob* pVScode, ID3D11InputLayout** ppLayout);
+
+
+//임시, 나중에 HLSL 컴파일 하는걸 만들어야함
+int ShaderLoad();
+HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode);
+HRESULT ShaderLoad(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3D11PixelShader** ppPS, ID3DBlob** ppShaderCode);
+HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
+HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS);
+
+
+
+
+//imgui용
+HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
+HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
+HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
+
+extern ID3D11Texture2D*					g_pTexScene;		//장면이 렌더링될 새 렌더타겟용 텍스쳐 (리소스)
+extern ID3D11ShaderResourceView*		g_pTexRvScene;		//장면이 렌더링될 새 렌더타겟용 텍스쳐-리소스뷰 (멥핑용)
+extern ID3D11RenderTargetView*			g_pRTScene;			//장면이 렌더링될 새 렌더타겟뷰 (렌더링용) 
+
+extern ID3D11Texture2D* g_pDSTexScene;	//렌더타겟용 깊이/스텐실 버퍼 (텍스처)
+extern ID3D11DepthStencilView*  g_pDSViewScene;	//렌더타겟용 깊이/스텐실 뷰

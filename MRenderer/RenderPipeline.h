@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include <memory>
 #include <string_view>
@@ -7,7 +7,7 @@
 #include "RenderData.h"
 #include "RenderPass.h"
 
-// ¿©·¯ RenderPass¸¦ ¼ø¼­´ë·Î °ü¸® ¹× ½ÇÇàÇÏ´Â ÆÄÀÌÇÁ¶óÀÎ ÄÁÅ×ÀÌ³Ê
+// ì—¬ëŸ¬ RenderPassë¥¼ ìˆœì„œëŒ€ë¡œ ê´€ë¦¬ ë° ì‹¤í–‰í•˜ëŠ” íŒŒì´í”„ë¼ì¸ ì»¨í…Œì´ë„ˆ
 // 
 class RenderPipeline
 {
