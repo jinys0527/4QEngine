@@ -14,7 +14,15 @@ bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 
 	if (renderTarget.GetShaderResourceView())
 	{
-		ImGui::Image(reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()), clamped, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+		//ImGui::Image(reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()), clamped, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+
+		// ★
+		ImGui::Image(
+			reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()),
+			clamped,
+			ImVec2(1.0f, 0.0f),   
+			ImVec2(0.0f, 1.0f)    
+		);
 	}
 	else
 	{
@@ -25,3 +33,4 @@ bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 
 	return sizeChanged;
 }
+
