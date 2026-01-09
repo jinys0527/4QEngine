@@ -34,16 +34,20 @@ private:
 	//void UpdateLogic();
 	void Update();
 	void UpdateSceneViewport();
+	
+	//Render 관련
 	void Render();
 	void RenderImGUI();
 	void RenderSceneView();
+
+	// 필요한 창 생성
 	void DrawHierarchy();
 	void DrawInspector();
+	void DrawFolderView();
 
 
 	//Gui 관련
 	void CreateDockSpace();
-	void FirstPosition();
 	void SetupEditorDockLayout();
 
 

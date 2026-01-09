@@ -123,6 +123,7 @@ void EditorApplication::RenderImGUI() {
 
 	DrawHierarchy();
 	DrawInspector();
+	DrawFolderView();
 
 	RenderSceneView(); //Scene그리기
 
@@ -155,7 +156,7 @@ void EditorApplication::RenderImGUI() {
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 
-		// main back buffer 상태 복구
+		// main back buffer 상태 복구 // 함수로 묶기
 		ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
 		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr); 
 		SetViewPort(m_width, m_height);
@@ -190,9 +191,13 @@ void EditorApplication::RenderSceneView() {
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget);
 
+
+	// 복구
 	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
 	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
 	SetViewPort(m_width, m_height);
+}
+
 
 void EditorApplication::DrawHierarchy() {
 
@@ -207,7 +212,6 @@ void EditorApplication::DrawHierarchy() {
 		ImGui::End();
 		return;
 	}
-
 		// GameObjects map 가져와
 	for (const auto& [name, Object] : scene->GetGameObjects()) {
 		const bool selected = (m_SelectedObjectName == name);
@@ -215,6 +219,7 @@ void EditorApplication::DrawHierarchy() {
 			m_SelectedObjectName = name;
 		}
 	}
+
 	ImGui::End();
 
 }
@@ -249,9 +254,16 @@ void EditorApplication::DrawInspector() {
 
 		// 여기서 각 Component별 Property와 조작까지 생성?
 	}
+	ImGui::End();
+}
 
+void EditorApplication::DrawFolderView()
+{
+	ImGui::Begin("Folder");
 
+	ImGui::Text("Need Logic");
 
+	ImGui::End();
 }
 
 void EditorApplication::CreateDockSpace()
@@ -271,18 +283,34 @@ void EditorApplication::SetupEditorDockLayout()
 	ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
 	ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
 
-	ImGuiID dockMain = dockspaceID;
-	ImGuiID dockLeft, dockRight, dockBottom;
+	ImGuiID dockMain = dockspaceID; // dockMain을 쪼개서 쓰는 것.
+	ImGuiID dockLeft,
+			dockRight,
+			dockRightA,
+			dockRightB,
+			dockBottom;
 
-	// 분할
+
+
+	// 분할   ( 어떤 영역을, 어느방향에서, 비율만큼, 뗀 영역의 이름, Dockspacemain)
+	// 나눠지는 순서도 중요
 	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, &dockRight, &dockMain);
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.3f, &dockBottom, &dockMain);
 
-	// 창 배치
-	ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
-	ImGui::DockBuilderDockWindow("Inspector", dockRight);
-	ImGui::DockBuilderDockWindow("Viewport", dockMain);
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.20f, &dockRight, &dockMain); //Right 20%
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.2f, &dockBottom, &dockMain);  //Down 20%
+
+	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.50f, &dockRightA, &dockMain); // Right 10%
+	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.50f, &dockRightB, &dockMain);// Right 10%
+	
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.10f, &dockRight, &dockMain);
+	
+	 //Down 30%
+
+	// 창 할당
+	ImGui::DockBuilderDockWindow("Hierarchy", dockRightA);
+	ImGui::DockBuilderDockWindow("Inspector", dockRightB);
+	ImGui::DockBuilderDockWindow("Folder", dockBottom);
+	ImGui::DockBuilderDockWindow("Game", dockMain);
 
 	ImGui::DockBuilderFinish(dockspaceID);
 }
