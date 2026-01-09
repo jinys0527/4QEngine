@@ -34,7 +34,7 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 {
 	if (gameObject->m_Name == "Main Camera")
 	{
-		SetMainCamera(gameObject);
+		//SetMainCamera(gameObject);
 	}
 
 	if (isOpaque) // true -> Opaque / false -> Transparent
@@ -66,9 +66,9 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 
 }
 
-void Scene::SetMainCamera(std::shared_ptr<GameObject> gameObject)
+void Scene::SetMainCamera(std::shared_ptr<CameraObject> cameraObject)
 {
-	m_Camera = dynamic_cast<CameraObject*>(gameObject.get());
+	m_Camera = cameraObject;
 }
 
 

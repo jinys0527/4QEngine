@@ -10,12 +10,6 @@ void DefaultScene::Initialize()
 	auto camera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
 
 	camera->SetName("Main Camera");
-	camera->AddComponent<TransformComponent>();
-
-	if (auto* cameraComp = camera->GetComponent<CameraComponent>())
-	{
-		cameraComp->SetViewportSize(1280.0f, 720.0f);
-	}
 	SetMainCamera(camera); // Main Camera
 
 	auto lightObject = std::make_shared<GameObject>(m_EventDispatcher);

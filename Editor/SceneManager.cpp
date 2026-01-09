@@ -15,9 +15,6 @@ void SceneManager::Initialize()
 	// Editor의 경우 m_Scenes 로 여러개를 들고 있을 필요가 없음.
 	// 자기가 쓰는 Scene 하나만 있으면됨.
 	// 다른 Scene의 경우 경로에서 Scenedata json으로 띄우기만 하면 됨.
-	/*if (m_Scenes.empty()) {
-
-	}*/
 	// 그냥 Default 생성
 	auto emptyScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_SoundManager, m_UIManager);
 	emptyScene->SetName("Untitled Scene");
@@ -66,7 +63,10 @@ void SceneManager::Render()
 
 void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
-		m_CurrentScene = scene;
+	m_CurrentScene = scene;
+	m_Camera = m_CurrentScene->GetMainCamera();
+	//m_Renderer.SetCamera(m_Camera);
+
 }
 
 std::shared_ptr<Scene> SceneManager::GetCurrentScene() const

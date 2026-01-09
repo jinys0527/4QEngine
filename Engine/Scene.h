@@ -55,8 +55,8 @@ public:
 	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetOpaqueObjects     () const { return m_OpaqueObjects;      }
 	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetTransparentObjects() const { return m_TransparentObjects; }
 
-	void SetMainCamera(std::shared_ptr<GameObject> gameObject);
-	CameraObject* GetMainCamera() { return m_Camera; }
+	void SetMainCamera(std::shared_ptr<CameraObject> cameraObject);
+	std::shared_ptr<CameraObject> GetMainCamera() { return m_Camera; }
 
 	void Serialize          (nlohmann::json& j) const;
 	void Deserialize        (const nlohmann::json& j);
@@ -82,7 +82,7 @@ protected:
 	UIManager&      m_UIManager;
 	SceneManager*   m_SceneManager = nullptr;
 	GameManager*    m_GameManager = nullptr;
-	CameraObject*   m_Camera;
+	std::shared_ptr<CameraObject>   m_Camera;
 	std::string     m_Name;
 
 	bool		    m_Pause = false;
