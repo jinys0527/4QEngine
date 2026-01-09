@@ -180,25 +180,13 @@ void Scene::Deserialize(const nlohmann::json& j)
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
 
 
-	auto processWithErase = [&](auto& container, const nlohmann::json& arr)
-		{
-
-
-			ProcessArray(names, arr, container, m_EventDispatcher);
-
-			
-		};
-
-
 	if (goRoot.contains("opaque"))
 	{
-		ProcessArray(jsonNames, goRoot.at("opaque"), m_OpaqueObjects, m_EventDispatcher);
-		eraseMissing(m_OpaqueObjects);
+		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, m_EventDispatcher);
 	}
 	if (goRoot.contains("transparent"))
 	{
-		ProcessArray(jsonNames, goRoot.at("transparent"), m_TransparentObjects, m_EventDispatcher);
-		eraseMissing(m_TransparentObjects);
+		ProcessWithErase(goRoot.at("transparent"), m_TransparentObjects, m_EventDispatcher);
 	}
 	//UI
 }

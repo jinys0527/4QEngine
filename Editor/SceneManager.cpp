@@ -25,6 +25,13 @@ void SceneManager::Update(float deltaTime)
 
 void SceneManager::Render()
 {
+	if (!m_CurrentScene)
+	{
+		return;
+	}
+
+	RenderData::FrameData frameData{};
+	m_CurrentScene->Render(frameData);
 	/*std::vector<RenderInfo> renderInfo;
 	std::vector<UIRenderInfo> uiRenderInfo;
 	std::vector<UITextInfo> uiTextInfo;

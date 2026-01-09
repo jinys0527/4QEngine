@@ -1,4 +1,4 @@
-#include "RenderPass.h"
+﻿#include "RenderPass.h"
 
 void RenderPass::Setup(const RenderData::FrameData& frame)
 {
@@ -17,9 +17,12 @@ void RenderPass::BuildQueue(const RenderData::FrameData& frame)
 
 	for (size_t index = 0; index < frame.renderItems.size(); ++index)
 	{
-		if (ShouldIncludeRenderItem(frame.renderItems[index]))
+		for (const auto& [layer, items] : frame.renderItems)
 		{
-			m_Queue.push_back(index);
+			if (ShouldIncludeRenderItem(items[index]))
+			{
+				m_Queue.push_back(index);
+			}
 		}
 	}
 }

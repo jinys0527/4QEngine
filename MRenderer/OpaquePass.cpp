@@ -17,58 +17,61 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
     for (size_t index : GetQueue())
     {
-        const auto& item = frame.renderItems[index];
-
-        m_RenderContext.BCBuffer.mWorld = item.world;
-
-
-        const auto* vertexBuffers = m_RenderContext.vertexBuffers;
-        const auto* indexBuffers = m_RenderContext.indexBuffers;
-        const auto* indexcounts = m_RenderContext.indexcounts;
-
-        if (vertexBuffers && indexBuffers && item.mesh.IsValid())
+        for (const auto& [layer, items] : frame.renderItems)
         {
-            const UINT bufferIndex = item.mesh.id;
-            if (bufferIndex < vertexBuffers->size() && bufferIndex < indexBuffers->size())
+
+            const auto& item = items[index];
+
+            m_RenderContext.BCBuffer.mWorld = item.world;
+
+
+            const auto* vertexBuffers = m_RenderContext.vertexBuffers;
+            const auto* indexBuffers = m_RenderContext.indexBuffers;
+            const auto* indexcounts = m_RenderContext.indexcounts;
+
+            if (vertexBuffers && indexBuffers && item.mesh.IsValid())
             {
-                ID3D11Buffer* vb = (*vertexBuffers)[bufferIndex].Get();
-                ID3D11Buffer* ib = (*indexBuffers)[bufferIndex].Get();
-                UINT32 icount = (*indexcounts)[bufferIndex];
-                if (vb && ib)
+                const UINT bufferIndex = item.mesh.id;
+                if (bufferIndex < vertexBuffers->size() && bufferIndex < indexBuffers->size())
                 {
-                    const UINT stride = sizeof(RenderData::Vertex);
-                    const UINT offset = 0;
+                    ID3D11Buffer* vb = (*vertexBuffers)[bufferIndex].Get();
+                    ID3D11Buffer* ib = (*indexBuffers)[bufferIndex].Get();
+                    UINT32 icount = (*indexcounts)[bufferIndex];
+                    if (vb && ib)
+                    {
+                        const UINT stride = sizeof(RenderData::Vertex);
+                        const UINT offset = 0;
 
-                    ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), 1, 0);
+                        ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), 1, 0);
 
-                    g_pDXDC->RSSetState(g_RState[RS::SOLID].Get());
-                    g_pDXDC->OMSetDepthStencilState(g_DSState[DS::OFF].Get(), 0);
+                        g_pDXDC->RSSetState(g_RState[RS::SOLID].Get());
+                        g_pDXDC->OMSetDepthStencilState(g_DSState[DS::OFF].Get(), 0);
 
 
-                    g_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-                    g_pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
-                    g_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                    g_pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-                    g_pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-                    g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-                    g_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+                        g_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+                        g_pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
+                        g_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                        g_pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
+                        g_pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
+                        g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+                        g_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 
-                    g_pDXDC->DrawIndexed(icount, 0, 0);
+                        g_pDXDC->DrawIndexed(icount, 0, 0);
 
+                    }
                 }
             }
+
+
+
+
+
+
+
+            //아래 세팅하는건 함수로 빼두자
+            //UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
+            //g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+
         }
-
-
-
-
-
-
-
-        //아래 세팅하는건 함수로 빼두자
-        //UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
-        //g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-
-
     }
 }
