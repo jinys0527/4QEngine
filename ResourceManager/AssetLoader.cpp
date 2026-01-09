@@ -207,7 +207,13 @@ namespace
 
 	RenderData::Vertex ToRenderVertex(const VertexSkinned& in)
 	{
-		return ToRenderVertex(static_cast<const Vertex&>(in));
+		RenderData::Vertex out = ToRenderVertex(static_cast<const Vertex&>(in));
+		for (size_t i = 0; i < 4; ++i)
+		{
+			out.boneIndex[i] = in.boneIndex[i];
+			out.boneWeight[i] = in.boneWeight[i];
+		}
+		return out;
 	}
 
 	RenderData::AnimationClip ParseAnimationJson(const json& j)

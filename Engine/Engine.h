@@ -15,6 +15,7 @@ public:
 	~Engine() = default;
 	
 	void UpdateTime();
+	float GetTime() const;
 	void UpdateInput();
 	void CreateDevice(HWND hwnd);
 
