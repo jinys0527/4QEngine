@@ -134,7 +134,7 @@ void EditorApplication::RenderImGUI() {
 	}
 	
 	
-	RenderSceneView(); //Scene그리기
+	//RenderSceneView(); //Scene그리기
 
 	// DockBuilder
 	static bool dockBuilt = true;
@@ -159,7 +159,7 @@ void EditorApplication::RenderImGUI() {
 
 		// main back buffer 상태 복구
 		ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr); 
 		SetViewPort(m_width, m_height);
 	}
 
@@ -191,6 +191,10 @@ void EditorApplication::RenderSceneView() {
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget);
+
+	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height);
 }
 
 void EditorApplication::DrawHierarchy() {
@@ -255,33 +259,6 @@ void EditorApplication::DrawInspector() {
 
 void EditorApplication::CreateDockSpace()
 {
-	/*static bool dockspaceOpen = true;
-
-	ImGuiWindowFlags windowFlags =
-		ImGuiWindowFlags_MenuBar |
-		ImGuiWindowFlags_NoDocking |
-		ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoNavFocus;
-
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->WorkPos);
-	ImGui::SetNextWindowSize(viewport->WorkSize);
-	ImGui::SetNextWindowViewport(viewport->ID);
-
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-	ImGui::Begin("DockSpaceRoot", &dockspaceOpen, windowFlags);
-	ImGui::PopStyleVar(2);
-
-	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
-	ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
-
-	ImGui::End();*/
 	ImGui::DockSpaceOverViewport(
 		ImGui::GetID("EditorDockSpace"),
 		ImGui::GetMainViewport(),
