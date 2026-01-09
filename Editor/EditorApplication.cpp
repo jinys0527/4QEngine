@@ -6,16 +6,6 @@
 #include "Scene.h"
 #include "DX11.h"
 
-#include "pch.h"
-#include "EditorApplication.h"
-#include "CameraComponent.h"
-#include "GameObject.h"
-#include "Renderer.h"
-#include "Scene.h"
-#include "DX11.h"
-
-
-
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 bool EditorApplication::Initialize()
@@ -43,7 +33,6 @@ bool EditorApplication::Initialize()
 	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
 	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
 	//RT 받기
-
 	//초기 세팅 값으로 창 배치
 
 
@@ -218,7 +207,7 @@ void EditorApplication::DrawHierarchy() {
 
 	// Scene이 없는 경우
 	if (!scene) {
-		ImGui::Text("No Current Scene");
+		ImGui::Text("No Objects");
 		ImGui::End();
 		return;
 	}
@@ -253,7 +242,7 @@ void EditorApplication::DrawInspector() {
 	}
 
 	// hierarchy 에서 선택한 object 
-// Opaque
+	// Opaque
 	const auto& opaqueObjects = scene->GetOpaqueObjects();
 	const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName);
 
@@ -262,7 +251,8 @@ void EditorApplication::DrawInspector() {
 	const auto transparentIt = transparentObjects.find(m_SelectedObjectName);
 
 	// 선택된 오브젝트가 없거나, 실체가 없는 경우
-	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) //second == Object 포인터
+	//second == Object 포인터
+	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) 
 	{
 		ImGui::Text("No Selected GameObject");
 		ImGui::End();

@@ -1,6 +1,7 @@
 ﻿//editor
 #include "pch.h"
 #include "SceneManager.h"
+#include "DefaultScene.h"
 //editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
 {
@@ -9,6 +10,18 @@ void SceneManager::Initialize()
 	/*m_UIManager.Start();
 	m_UIManager.SetCurrentScene("TitleScene");*/
 
+	// 씬없는 경우.. 인데
+	// ★★★★★★★★★★★★★★
+	// Editor의 경우 m_Scenes 로 여러개를 들고 있을 필요가 없음.
+	// 자기가 쓰는 Scene 하나만 있으면됨.
+	// 다른 Scene의 경우 경로에서 Scenedata json으로 띄우기만 하면 됨.
+	// 그냥 Default 생성
+	auto emptyScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_SoundManager, m_UIManager);
+	emptyScene->SetName("Untitled Scene");
+	emptyScene->Initialize();
+
+	// editor는 Current Scene만 띄운다.
+	SetCurrentScene(emptyScene);
 }
 
 void SceneManager::Update(float deltaTime)
@@ -39,25 +52,21 @@ void SceneManager::Render()
 	m_Renderer.Draw(renderInfo, uiRenderInfo, uiTextInfo);*/
 }
 
-std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shared_ptr<Scene> scene)
+//std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shared_ptr<Scene> scene)
+//{
+//	m_Scenes[name] = scene;
+//
+//	//m_Scenes[name]->SetGameManager(&m_GameManager);
+//
+//	return m_Scenes[name];
+//}
+
+void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
-	m_Scenes[name] = scene;
+	m_CurrentScene = scene;
+	m_Camera = m_CurrentScene->GetMainCamera();
+	//m_Renderer.SetCamera(m_Camera);
 
-	//m_Scenes[name]->SetGameManager(&m_GameManager);
-
-	return m_Scenes[name];
-}
-
-void SceneManager::SetCurrentScene(const std::string& name)
-{
-	auto it = m_Scenes.find(name);
-	if (it != m_Scenes.end())
-	{
-		m_CurrentScene = it->second;
-
-		//m_Camera = m_CurrentScene->GetMainCamera();
-		//m_Renderer.SetCamera(m_Camera);
-	}
 }
 
 std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
@@ -67,22 +76,18 @@ std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
 
 void SceneManager::ChangeScene(const std::string& name)
 {
-	if (m_CurrentScene)
-		m_CurrentScene->Leave();
-	auto it = m_Scenes.find(name);
-	if (it != m_Scenes.end())
-	{
-		m_CurrentScene = it->second;
-		m_CurrentScene->Enter();
-		//m_Camera = m_CurrentScene->GetMainCamera();
-		//m_Renderer.SetCamera(m_Camera);
-		m_UIManager.SetCurrentScene(name);
-	}
+
 }
 
 void SceneManager::ChangeScene()
 {
 	ChangeScene(m_ChangeSceneName);
+}
+
+void SceneManager::LoadSceneFromJson()
+{	// 선택했을때 해당 Scene을 Deserialize 해서 
+	// 현재 씬으로
+
 }
 
 void SceneManager::SetChangeScene(std::string name)

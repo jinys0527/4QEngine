@@ -33,6 +33,7 @@ public:
 		}
 	}
 
+	// Property 순회로 변경
 	virtual void Serialize(nlohmann::json& j) const = 0;
 	virtual void Deserialize(const nlohmann::json& j) = 0;
 

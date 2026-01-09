@@ -1,10 +1,11 @@
 ﻿#include "Component.h"
 #include "GameObject.h"
+#include "TransformComponent.h"
 
 
 GameObject::GameObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 {
-	//m_Transform = AddComponent<TransformComponent>();
+	m_Transform = AddComponent<TransformComponent>();
 }
 
 //bool GameObject::IsInView(CameraObject* camera) const
@@ -89,7 +90,8 @@ void GameObject::Serialize(nlohmann::json& j) const
 	{
 		for (const auto& comp : component.second)
 		{
-			const char* typeName = comp->GetTypeName();
+			//기존
+			/*const char* typeName = comp->GetTypeName();
 			if (strcmp(typeName, "TransformComponent") == 0)
 			{
 				nlohmann::json compJson;
@@ -103,7 +105,12 @@ void GameObject::Serialize(nlohmann::json& j) const
 				compJson["type"] = typeName;
 				comp->Serialize(compJson["data"]);
 				j["components"].push_back(compJson);
-			}
+			}*/
+			//Reflection 으로 교체
+			nlohmann::json compJson;
+			compJson["type"] = comp->GetTypeName();
+			comp->Serialize(compJson["data"]);
+			j["components"].push_back(compJson);
 		}
 	}
 }
