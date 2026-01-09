@@ -3,7 +3,7 @@
 
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
-	ImGui::Begin("Scene View");
+	ImGui::Begin("Game");
 
 	ImVec2 available = ImGui::GetContentRegionAvail();
     ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
