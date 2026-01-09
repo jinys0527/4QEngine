@@ -53,7 +53,7 @@ private:
 
 	float m_fFrameCount = 0.0f;
 	UINT64 m_FrameIndex = 0;
-	//ImGuiIO& m_io;  //ImGui 설정상태 
+
 	Engine& m_Engine;
 	SceneManager& m_SceneManager;
 	SoundManager& m_SoundManager;

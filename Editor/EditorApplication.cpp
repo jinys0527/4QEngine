@@ -26,9 +26,10 @@ bool EditorApplication::Initialize()
 	m_SceneManager.Initialize();
 
 	ImGui::CreateContext();
-	ImGuiIO& m_io = ImGui::GetIO();
-	m_io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	m_io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGuiIO& io = ImGui::GetIO();
+	io.IniFilename = nullptr;				// ini 사용 안함
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark(); 
 	ImGui_ImplWin32_Init(m_hwnd);
 	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
@@ -85,8 +86,6 @@ void EditorApplication::Finalize() {
 	//그외 메모리 해제
 }
 
-
-
 void EditorApplication::UpdateInput()
 {
 
@@ -99,27 +98,27 @@ void EditorApplication::Update()
 }
 
 void EditorApplication::Render() {
+	if (!g_pDXDC) return; //★
+	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height);
+
+	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
+
 	m_SceneManager.Render(); // Scene 전체 그리고
+
 	RenderImGUI();
+
 	Flip(); //★
 }
 
 void EditorApplication::RenderImGUI() {
 	//★★
-	
-	if (!g_pDXDC) return; //★
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
 	CreateDockSpace();
-	static bool firstTime = true;
-	if (firstTime)
-	{
-		SetupEditorDockLayout(); // DockBuilder
-		firstTime = false;
-	}
-
 
 	DrawHierarchy();
 	DrawInspector();
@@ -132,22 +131,32 @@ void EditorApplication::RenderImGUI() {
 	}
 	
 	RenderSceneView(); //Scene그리기
-	
+
+	// DockBuilder
+	static bool dockBuilt = true;
+	if (dockBuilt)
+	{
+		//std::cout << "Layout Init" << std::endl;
+		SetupEditorDockLayout(); 
+		dockBuilt = false;
+	}
+
+
 	ImGui::Render();  // Gui들그리기
-	
-	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-	SetViewPort(m_width, m_height);
 
-	
-	ImGuiIO& m_io = ImGui::GetIO();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-	if (m_io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
-		ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+		// main back buffer 상태 복구
+		ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+		SetViewPort(m_width, m_height);
 	}
 
 }
@@ -241,7 +250,7 @@ void EditorApplication::DrawInspector() {
 
 void EditorApplication::CreateDockSpace()
 {
-	static bool dockspaceOpen = true;
+	/*static bool dockspaceOpen = true;
 
 	ImGuiWindowFlags windowFlags =
 		ImGuiWindowFlags_MenuBar |
@@ -267,7 +276,12 @@ void EditorApplication::CreateDockSpace()
 	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
 	ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
 
-	ImGui::End();
+	ImGui::End();*/
+	ImGui::DockSpaceOverViewport(
+		ImGui::GetID("EditorDockSpace"),
+		ImGui::GetMainViewport(),
+		ImGuiDockNodeFlags_PassthruCentralNode
+	);
 }
 
 void EditorApplication::SetupEditorDockLayout()
@@ -275,7 +289,7 @@ void EditorApplication::SetupEditorDockLayout()
 	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
 
 	ImGui::DockBuilderRemoveNode(dockspaceID);
-	ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace);
+	ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
 	ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
 
 	ImGuiID dockMain = dockspaceID;
