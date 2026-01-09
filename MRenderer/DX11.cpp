@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <d3dcompiler.h>
 #include "DX11.h"
 
 ComPtr<ID3D11Device>            g_pDevice;
@@ -14,7 +15,9 @@ BOOL g_bVSync = FALSE;
 
 //Depth/Stencil
 ComPtr<ID3D11DepthStencilView> g_pDSView;
-ComPtr<ID3D11DepthStencilState> g_DSState[static_cast<int>(DS::MAX)];
+EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> g_DSState; 
+EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)> g_RState;
+
 int  DepthStencilStateCreate();
 
 
@@ -34,6 +37,12 @@ DWORD		g_dwAA = 1;
 DWORD		g_dwAF = 1;
 BOOL		g_bMipMap = TRUE;
 
+ID3D11Texture2D*            g_pTexScene = nullptr;			//장면이 렌더링될 새 렌더타겟용 텍스쳐 (리소스)
+ID3D11ShaderResourceView*   g_pTexRvScene = nullptr;		//장면이 렌더링될 새 렌더타겟용 텍스쳐-리소스뷰 (멥핑용)
+ID3D11RenderTargetView*     g_pRTScene = nullptr;			//장면이 렌더링될 새 렌더타겟뷰 (렌더링용) 
+
+ID3D11Texture2D*        g_pDSTexScene  = nullptr;	//렌더타겟용 깊이/스텐실 버퍼 (텍스처)
+ID3D11DepthStencilView* g_pDSViewScene = nullptr;	//렌더타겟용 깊이/스텐실 뷰
 
 
 //bool DXSetup(HWND hWnd)
@@ -59,6 +68,21 @@ bool DXSetup(HWND hWnd, int width, int height)
     g_pDXDC->OMSetRenderTargets(1, g_pRTView.GetAddressOf(), g_pDSView.Get());
     SetViewPort(width, height);
     DepthStencilStateCreate();
+
+
+    DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+    //1. 렌더 타겟용 빈 텍스처로 만들기.	
+    RTTexCreate(960, 800, fmt, &g_pTexScene);
+
+    //2. 렌더타겟뷰 생성.
+    RTViewCreate(fmt, g_pTexScene, &g_pRTScene);
+
+    //3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
+    RTSRViewCreate(fmt, g_pTexScene, &g_pTexRvScene);
+
+    DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
+    DSCreate(960, 800, dsFmt, g_pDSTexScene, g_pDSViewScene);
+
     return true;
 }
 
@@ -172,7 +196,7 @@ void SystemUpdate(float dTime)
     //    g_pDXDC->OMSetDepthStencilState(g_DSState[DS_DEPTH_ON], 0);	//깊이 버퍼 동작 (기본값) 
     //else  g_pDXDC->OMSetDepthStencilState(g_DSState[DS_DEPTH_OFF], 0);	//깊이 버퍼 비활성화 : Z-Test Off + Z-Write Off.
 
-    g_pDXDC->OMSetDepthStencilState(g_DSState[static_cast<int>(DS::OFF)].Get(), 0);
+    g_pDXDC->OMSetDepthStencilState(g_DSState[DS::OFF].Get(), 0);
 
 }
 
@@ -421,10 +445,10 @@ int DepthStencilStateCreate()
     ds.StencilEnable = FALSE;
     ds.DepthEnable = TRUE;				
     ds.StencilEnable = FALSE;				
-    g_pDevice->CreateDepthStencilState(&ds, g_DSState[static_cast<int>(DS::ON)].GetAddressOf());
+    g_pDevice->CreateDepthStencilState(&ds, g_DSState[DS::ON].GetAddressOf());
 
     ds.DepthEnable = FALSE;
-    g_pDevice->CreateDepthStencilState(&ds, g_DSState[static_cast<int>(DS::OFF)].GetAddressOf());
+    g_pDevice->CreateDepthStencilState(&ds, g_DSState[DS::OFF].GetAddressOf());
 
     return S_OK;
 }
@@ -540,6 +564,187 @@ void SetViewPort(int width, int height)
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     g_pDXDC->RSSetViewports(1, &vp);
+}
+
+HRESULT CreateInputLayout(ID3D11Device* pDev, ID3DBlob* pVScode, ID3D11InputLayout** ppLayout)
+{
+    HRESULT hr = S_OK;
+
+    // 정점 입력구조 Input layout
+    D3D11_INPUT_ELEMENT_DESC layout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,       0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,          0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TANGENT",   0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+    UINT numElements = ARRAYSIZE(layout);
+
+    // 정접 입력구조 객체 생성 Create the input layout
+    hr = g_pDevice->CreateInputLayout(layout,
+        numElements,
+        pVScode->GetBufferPointer(),
+        pVScode->GetBufferSize(),
+        ppLayout
+    );
+    if (FAILED(hr))
+    {
+        ERROR_MSG(hr);
+        return hr;
+    }
+
+    return hr;
+
+
+    return E_NOTIMPL;
+}
+
+int ShaderLoad()
+{
+    return 0;
+}
+
+HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
+{
+    HRESULT hr = S_OK;
+    ID3DBlob* pError = nullptr;
+
+    //컴파일 옵션1.
+    UINT Flags = D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;		//열우선 행렬 처리. 구형 DX9 이전까지의 전통적인 방식. 속도가 요구된다면, "행우선" 으로 처리할 것.
+    //UINT Flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;	//행우선 행렬 처리. 열 우선 처리보다 속도의 향상이 있지만, 행렬을 전치한수 GPU 에 공급해야 한다.
+    //UINT Flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
+#ifdef _DEBUG
+    Flags |= D3DCOMPILE_DEBUG;							//디버깅 모드시 옵션 추가.
+#endif
+
+    //셰이더 소스 컴파일.
+    hr = D3DCompileFromFile(FileName,
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,          //#include 도 컴파일
+        EntryPoint,
+        ShaderModel,
+        Flags,						//컴파일 옵션.1
+        0,							//컴파일 옵션2,  Effect 파일 컴파일시 적용됨. 이외에는 무시됨.
+        ppCode,						//[출력] 컴파일된 셰이더 코드.
+        &pError						//[출력] 컴파일 에러 코드.
+    );
+    if (FAILED(hr))
+    {
+        ERROR_MSG(hr);
+    }
+
+    SafeRelease(pError);
+    return hr;
+}
+
+
+
+HRESULT ShaderLoad(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3D11PixelShader** ppPS, ID3DBlob** ppShaderCode)
+{
+    HRESULT hr = S_OK;
+
+
+    ID3D11VertexShader* pVS = nullptr;
+    ID3DBlob* pVSCode = nullptr;
+    hr = Compile((const WCHAR*)filename, "VS_Main", "vs_5_0", &pVSCode);
+    if (FAILED(hr))
+    {
+        MessageBox(NULL, _T("[실패] ShaderLoad :: Vertex Shader 컴파일 실패"), _T("Error"), MB_OK | MB_ICONERROR);
+        return hr;
+    }
+
+    hr = g_pDevice->CreateVertexShader(pVSCode->GetBufferPointer(), pVSCode->GetBufferSize(), nullptr, &pVS);
+    if (FAILED(hr))
+    {
+        SafeRelease(pVSCode);
+        return hr;
+    }
+
+    ID3D11PixelShader* pPS = nullptr;
+    ID3DBlob* pPSCode = nullptr;
+    hr = Compile((const WCHAR*)filename, "PS_Main", "ps_5_0", &pPSCode);
+    if (FAILED(hr))
+    {
+        MessageBox(NULL, _T("[실패] ShaderLoad :: Pixel Shader 컴파일 실패"), _T("Error"), MB_OK | MB_ICONERROR);
+        return hr;
+    }
+
+    hr = g_pDevice->CreatePixelShader(pPSCode->GetBufferPointer(), pPSCode->GetBufferSize(), nullptr, &pPS);
+    if (FAILED(hr))
+    {
+        SafeRelease(pVSCode);
+        SafeRelease(pPSCode);
+        return hr;
+    }
+    SafeRelease(pPSCode);
+
+    *ppVS = pVS;
+    *ppPS = pPS;
+    *ppShaderCode = pVSCode;
+
+    return hr;
+
+}
+
+HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode)
+{
+    HRESULT hr = S_OK;
+
+    ID3D11VertexShader* pVS = nullptr;
+    ID3DBlob* pCode = nullptr;
+
+    hr = Compile((const WCHAR*)filename, "VS_Main", "vs_5_0", &pCode);
+    if (FAILED(hr))
+    {
+        MessageBox(NULL, _T("[실패] Vertex Shader 컴파일 실패"), _T("Error"), MB_OK | MB_ICONERROR);
+        return hr;
+    }
+
+    hr = g_pDevice->CreateVertexShader(
+        pCode->GetBufferPointer(),
+        pCode->GetBufferSize(),
+        nullptr,
+        &pVS);
+
+    if (FAILED(hr))
+    {
+        SafeRelease(pCode);
+        return hr;
+    }
+
+    *ppVS = pVS;
+    *ppVSCode = pCode;
+
+    return hr;
+}
+
+HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS)
+{
+    HRESULT hr = S_OK;
+
+    ID3D11PixelShader* pPS = nullptr;
+    ID3DBlob* pCode = nullptr;
+
+    hr = Compile((const WCHAR*)filename, "PS_Main", "ps_5_0", &pCode);
+    if (FAILED(hr))
+    {
+        MessageBox(NULL, _T("[실패] Pixel Shader 컴파일 실패"), _T("Error"), MB_OK | MB_ICONERROR);
+        return hr;
+    }
+
+    hr = g_pDevice->CreatePixelShader(
+        pCode->GetBufferPointer(),
+        pCode->GetBufferSize(),
+        nullptr,
+        &pPS);
+
+    SafeRelease(pCode);
+
+    if (FAILED(hr))
+        return hr;
+
+    *ppPS = pPS;
+    return hr;
 }
 
 //렌더 타겟용 텍스쳐 만들기
@@ -776,3 +981,41 @@ HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D*& pDS
 
     return hr;
 }
+
+void RasterStateCreate()
+{
+    //[상태객체 1] 기본 렌더링 상태 개체.
+    D3D11_RASTERIZER_DESC rd;
+    rd.FillMode = D3D11_FILL_SOLID;		//삼각형 색상 채우기.(기본값)
+    rd.CullMode = D3D11_CULL_NONE;		//컬링 없음. (기본값은 컬링 Back)		
+    rd.FrontCounterClockwise = false;   //이하 기본값...
+    rd.DepthBias = 0;
+    rd.DepthBiasClamp = 0;
+    rd.SlopeScaledDepthBias = 0;
+    rd.DepthClipEnable = true;
+    rd.ScissorEnable = false;
+    rd.MultisampleEnable = false;
+    rd.AntialiasedLineEnable = false;
+    //레스터라이져 상태 객체 생성.
+    g_pDevice->CreateRasterizerState(&rd, g_RState[RS::SOLID].GetAddressOf());
+
+
+    //[상태객체2] 와이어 프레임 그리기. 
+    rd.FillMode = D3D11_FILL_WIREFRAME;
+    rd.CullMode = D3D11_CULL_NONE;
+    //레스터라이져 객체 생성.
+    g_pDevice->CreateRasterizerState(&rd, g_RState[RS::WIREFRM].GetAddressOf());
+
+    //[상태객체3] 컬링 On! "CCW"
+    rd.FillMode = D3D11_FILL_SOLID;
+    rd.CullMode = D3D11_CULL_BACK;
+    g_pDevice->CreateRasterizerState(&rd, g_RState[RS::CULLBACK].GetAddressOf());
+
+    //[상태객체4] 와이어 프레임 + 컬링 On! "CCW"
+    rd.FillMode = D3D11_FILL_WIREFRAME;
+    rd.CullMode = D3D11_CULL_BACK;
+    g_pDevice->CreateRasterizerState(&rd, g_RState[RS::WIRECULLBACK].GetAddressOf());
+
+}
+
+

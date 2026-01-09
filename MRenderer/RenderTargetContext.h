@@ -23,6 +23,7 @@ public:
 	UINT GetHeight() const { return m_Height; }
 
 	ID3D11ShaderResourceView* GetShaderResourceView() const { return m_ShaderResourceView.Get(); }
+	void SetShaderResourceView(ID3D11ShaderResourceView* view) { m_ShaderResourceView = view; }
 
 private:
 	UINT m_Width = 0;

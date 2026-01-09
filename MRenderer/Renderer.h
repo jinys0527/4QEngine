@@ -3,6 +3,7 @@
 #include "DX11.h"
 #include "Buffers.h"
 #include "RenderPipeline.h"
+#include "RenderTargetContext.h"
 
 // 렌더링 진입점 클래스
 // RenderPipeline을 관리한다.
@@ -17,11 +18,14 @@ public:
 	void Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height);
 	void InitializeTest(HWND hWnd, int width, int height);
 	void RenderFrame(const RenderData::FrameData& frame);
+	void RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext);
 
 	void InitVB(const RenderData::FrameData& frame);
 	void InitIB(const RenderData::FrameData& frame);
 
 private:
+	bool m_bIsInitialized = false;
+
 	RenderPipeline m_Pipeline;
 	AssetLoader& m_AssetLoader;
 
@@ -33,6 +37,11 @@ private:
 	std::vector<ComPtr<ID3D11Buffer>> m_vVertexBuffers;
 	std::vector<ComPtr<ID3D11Buffer>> m_vIndexBuffers ;
 	std::vector<UINT32>				  m_vIndexCounts  ;
-	// RT
-	// 
+	
+	//임시
+	ComPtr<ID3D11InputLayout> m_pInputLayout;
+	//임시 쉐이더코드
+	ComPtr<ID3D11VertexShader> m_pVS;
+	ComPtr<ID3D11PixelShader> m_pPS;
+	ComPtr<ID3DBlob> m_pVSCode;
 };

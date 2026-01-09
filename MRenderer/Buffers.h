@@ -16,10 +16,16 @@ struct BaseConstBuffer
 struct RenderContext
 {
 	BaseConstBuffer				BCBuffer;
-	ComPtr<ID3D11Buffer>		pBCB;
+	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
 
 	std::vector<ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
-	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers	 = nullptr;
-	std::vector<UINT32>* indexcounts				 = nullptr;
-};
+	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
+	std::vector<UINT32>* indexcounts = nullptr;
 
+	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
+
+	ComPtr<ID3D11VertexShader> VS;
+	ComPtr<ID3D11PixelShader> PS;
+	ComPtr<ID3DBlob> VSCode;
+
+};
