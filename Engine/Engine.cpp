@@ -18,6 +18,12 @@ void Engine::UpdateTime()
 	m_GameTimer.Tick();
 }
 
+float Engine::GetTime() const
+{
+	return m_GameTimer.DeltaTime();
+}
+
+
 void Engine::UpdateInput()
 {
 	m_InputManager->Update();

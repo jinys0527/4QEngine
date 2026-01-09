@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <DirectXMath.h>
 #include "ResourceHandle.h"
@@ -22,6 +23,8 @@ namespace RenderData
 		XMFLOAT3 normal  { 0.0f, 0.0f, 0.0f };
 		XMFLOAT2 uv      { 0.0f, 0.0f };
 		XMFLOAT4 tangent { 0.0f, 0.0f, 0.0f, 1.0f };
+		uint16_t boneIndex[4]{ 0, 0, 0, 0 };
+		uint16_t boneWeight[4]{ 0, 0, 0, 0 }; // normalized to 0..65535
 	};
 	
 	struct MeshData
@@ -147,10 +150,18 @@ namespace RenderData
 		UINT64         sortKey = 0;
 	};
 
+	enum RenderLayer
+	{
+		OpaqueItems,
+		TransparentItems,
+		UIItems,
+		Layer_MAX_
+	};
+
 	struct FrameData
 	{
 		FrameContext            context;
-		std::vector<RenderItem> renderItems;
+		std::unordered_map<RenderLayer, std::vector<RenderItem>> renderItems;
 		std::vector<LightData>  lights;
 	};
 }

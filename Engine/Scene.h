@@ -43,10 +43,12 @@ public:
 
 	virtual void FixedUpdate() = 0;
 	virtual void Update     (float deltaTime) = 0;
+	virtual void StateUpdate(float deltaTime);	// Light, Camera, Fog Update 
 	//virtual void Render(std::vector<RenderInfo>& renderInfo, std::vector<UIRenderInfo>& uiRenderInfo, std::vector<UITextInfo>& uiTextInfo) = 0;
+	virtual void Render(RenderData::FrameData& data) const;
 
-	void AddGameObject      (std::shared_ptr<GameObject> gameObject);
-	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject);
+	void AddGameObject      (std::shared_ptr<GameObject> gameObject, bool isOpaque);
+	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject, bool isOpaque);
 
 	// For Editor map 자체 Getter( 수정 불가능 상태 )
 	// 수정 해야하는 경우 양 const 제거 ( Add GameObject 는 editor에서 call 하면, Scene의 add object 작동 editor map 직접 수정 X)
@@ -69,7 +71,8 @@ public:
 	bool GetIsPause         ()           { return m_Pause;  }
 
 protected:
-	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_GameObjects;
+	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_OpaqueObjects;
+	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_TransparentObjects;
 	EventDispatcher& m_EventDispatcher;
 	//D2DRenderer& m_Renderer;
 	//AssetManager& m_AssetManager;
@@ -81,7 +84,7 @@ protected:
 	CameraObject*   m_Camera;
 	std::string     m_Name;
 
-	bool m_Pause;
+	bool		    m_Pause = false;
 private:
 	Scene(const Scene&)            = delete;
 	Scene& operator=(const Scene&) = delete;

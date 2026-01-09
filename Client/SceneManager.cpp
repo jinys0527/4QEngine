@@ -14,16 +14,36 @@ void SceneManager::Update(float deltaTime)
 {
 	if (!m_CurrentScene)
 		return;
+	if (m_CurrentScene->GetIsPause())
+		deltaTime = 0.0f;
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
+
 	if (totalTime >= 0.016f)
 		m_CurrentScene->FixedUpdate();
+
 	m_CurrentScene->Update(deltaTime);
+}
+
+void SceneManager::StateUpdate(float deltaTime)
+{
+	if (!m_CurrentScene)
+		return;
+
+	m_CurrentScene->StateUpdate(deltaTime);
 }
 
 void SceneManager::Render()
 {
+	if (!m_CurrentScene)
+	{
+		return;
+	}
+
+	RenderData::FrameData frameData{};
+	m_CurrentScene->Render(frameData);
+	//m_Renderer.Draw(frameData);
 	/*std::vector<RenderInfo> renderInfo;
 	std::vector<UIRenderInfo> uiRenderInfo;
 	std::vector<UITextInfo> uiTextInfo;
