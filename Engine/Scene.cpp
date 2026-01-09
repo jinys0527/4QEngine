@@ -8,31 +8,62 @@
 #include "CameraComponent.h"
 #include "MeshRenderer.h"
 #include "LightComponent.h"
+#include "TransformComponent.h"
 #include "CameraObject.h"
 
 Scene::~Scene()
 {
-	m_GameObjects.clear();
+	m_OpaqueObjects.clear();
+	m_TransparentObjects.clear();
 	//m_Camera = nullptr; // 필요 시
 }
 
-void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
+// Light, Camera, Fog 등등 GameObject 외의 Scene 구성된 것들 Update
+void Scene::StateUpdate(float deltaTime)
+{
+	// Camera는 BuildFromData를 하면서 자동으로 갱신이 되고있음
+	// Light의 경우 LightObject가 생기고 PointLight 같은 애의 위치가 바뀌면 만들수있을것같음?
+}
+
+void Scene::Render(RenderData::FrameData& frameData) const
+{
+	BuildFrameData(frameData);
+}
+
+void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 {
 	if (gameObject->m_Name == "Camera")
 	{
 		SetMainCamera(gameObject);
 	}
-	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
+
+	if (isOpaque)
+		m_OpaqueObjects[gameObject->m_Name] = std::move(gameObject);
+	else
+		m_TransparentObjects[gameObject->m_Name] = std::move(gameObject);
 }
 
-void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
+void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 {
-	auto it = m_GameObjects.find(gameObject->m_Name);
-	if (it != m_GameObjects.end())
+	if (isOpaque)
 	{
-		//gameObject->GetComponent<TransformComponent>()->DetachFromParent();
-		m_GameObjects.erase(gameObject->m_Name);
+		auto it = m_OpaqueObjects.find(gameObject->m_Name);
+		if (it != m_OpaqueObjects.end())
+		{
+			gameObject->GetComponent<TransformComponent>()->DetachFromParent();
+			m_OpaqueObjects.erase(gameObject->m_Name);
+		}
 	}
+	else
+	{
+		auto it = m_TransparentObjects.find(gameObject->m_Name);
+		if (it != m_TransparentObjects.end())
+		{
+			gameObject->GetComponent<TransformComponent>()->DetachFromParent();
+			m_TransparentObjects.erase(gameObject->m_Name);
+		}
+	}
+
 }
 
 void Scene::SetMainCamera(std::shared_ptr<GameObject> gameObject)
@@ -40,60 +71,83 @@ void Scene::SetMainCamera(std::shared_ptr<GameObject> gameObject)
 	m_Camera = dynamic_cast<CameraObject*>(gameObject.get());
 }
 
+
+// Opaque, Transparent, UI  ex) ["gameObjects"]["opaque"]
 void Scene::Serialize(nlohmann::json& j) const
 {
-	j["gameObjects"] = nlohmann::json::array();
+	j["gameObjects"] = nlohmann::json::object();
+	j["gameObjects"]["opaque"] = nlohmann::json::array();
+	j["gameObjects"]["transparent"] = nlohmann::json::array();
 
 	// map -> vector 복사
-	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> vec(
-		m_GameObjects.begin(), m_GameObjects.end());
+	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> opaque(
+		m_OpaqueObjects.begin(), m_OpaqueObjects.end());
+	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> transparent(
+		m_TransparentObjects.begin(), m_TransparentObjects.end());
+
+	//UI는 나중에
+
+	auto sortPred = [](const auto& a, const auto& b) {
+		auto extractNameAndNumber = [](const std::string& s) -> std::pair<std::string, int> {
+			size_t pos = s.find_first_of("0123456789");
+			if (pos != std::string::npos) {
+				return { s.substr(0, pos), std::stoi(s.substr(pos)) };
+			}
+			return { s, -1 };
+			};
+
+		auto [nameA, numA] = extractNameAndNumber(a.first);
+		auto [nameB, numB] = extractNameAndNumber(b.first);
+
+		if (nameA == nameB) {
+			// 같은 종류일 경우 숫자 비교
+			return numA < numB;
+		}
+		// 이름(문자) 기준 비교
+		return nameA < nameB;
+		};
 
 	// 정렬 (숫자 포함 이름 기준)
-	std::sort(vec.begin(), vec.end(),
-		[](const auto& a, const auto& b) {
-			auto extractNameAndNumber = [](const std::string& s) -> std::pair<std::string, int> {
-				size_t pos = s.find_first_of("0123456789");
-				if (pos != std::string::npos) {
-					return { s.substr(0, pos), std::stoi(s.substr(pos)) };
-				}
-				return { s, -1 };
-				};
-
-			auto [nameA, numA] = extractNameAndNumber(a.first);
-			auto [nameB, numB] = extractNameAndNumber(b.first);
-
-			if (nameA == nameB) {
-				// 같은 종류일 경우 숫자 비교
-				return numA < numB;
-			}
-			// 이름(문자) 기준 비교
-			return nameA < nameB;
-		});
+	std::sort(opaque.begin(), opaque.end(), sortPred);
+	std::sort(transparent.begin(), transparent.end(), sortPred);
 
 	// 정렬된 순서대로 JSON에 저장
-	for (const auto& gameObject : vec)
+	for (const auto& gameObject : opaque)
 	{
 		nlohmann::json gameObjectJson;
 		gameObject.second->Serialize(gameObjectJson);
-		j["gameObjects"].push_back(gameObjectJson);
+		j["gameObjects"]["opaque"].push_back(gameObjectJson);
 	}
+
+	for (const auto& gameObject : transparent)
+	{
+		nlohmann::json gameObjectJson;
+		gameObject.second->Serialize(gameObjectJson);
+		j["gameObjects"]["transparent"].push_back(gameObjectJson);
+	}
+
+	//UI
 }
 
-void Scene::Deserialize(const nlohmann::json& j)
+template<typename ObjectContainer>
+void ProcessWithErase(
+	const nlohmann::json& arr,
+	ObjectContainer& objContainer,
+	EventDispatcher& dispatcher)
 {
-	std::unordered_set<std::string> jsonNames;
-	for (const auto& gameObjectJson : j.at("gameObjects"))
+	std::unordered_set<std::string> names;
+	for (const auto& gameObjectJson : arr)
 	{
-		jsonNames.insert(gameObjectJson.at("name").get<std::string>());
+		names.insert(gameObjectJson.at("name").get<std::string>());
 	}
 
-	// JSON 오브젝트 별로 기존 오브젝트가 있으면 Deserialize, 없으면 새 생성
-	for (const auto& gameObjectJson : j.at("gameObjects"))
+	for (const auto& gameObjectJson : arr)
 	{
-		std::string name = gameObjectJson.at("name");
-		auto it = m_GameObjects.find(name);
-		if (it != m_GameObjects.end())
-		{/*
+		std::string name = gameObjectJson.at("name").get<std::string>();
+
+		auto it = objContainer.find(name);
+		if (it != objContainer.end())
+		{	/*
 			auto sr = it->second->GetComponent<SpriteRenderer>();
 			if(sr)*/
 			//	sr->SetAssetManager(&m_AssetManager);
@@ -101,16 +155,83 @@ void Scene::Deserialize(const nlohmann::json& j)
 			//if (animComp)
 			//	animComp->SetAssetManager(&m_AssetManager);
 			// 기존 오브젝트가 있으면 내부 상태만 갱신
-			/*it->second->Deserialize(gameObjectJson);*/
+			it->second->Deserialize(gameObjectJson);
 		}
 		else
 		{
 			std::shared_ptr<GameObject> gameObject;
 			// 없으면 새로 생성 후 추가
-			gameObject = std::make_shared<GameObject>(m_EventDispatcher);
-			
+			gameObject = std::make_shared<GameObject>(dispatcher);
+
 			gameObject->Deserialize(gameObjectJson);
-			m_GameObjects[name] = std::move(gameObject);
+			objContainer[name] = std::move(gameObject);
+		}
+	}
+
+	for (auto it = objContainer.begin(); it != objContainer.end(); )
+	{
+		if (!names.contains(it->first)) it = objContainer.erase(it);
+		else ++it;
+	}
+}
+
+void Scene::Deserialize(const nlohmann::json& j)
+{
+	const auto& goRoot = j.at("gameObjects"); //GameObject Root
+
+
+	if (goRoot.contains("opaque"))
+	{
+		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, m_EventDispatcher);
+	}
+	if (goRoot.contains("transparent"))
+	{
+		ProcessWithErase(goRoot.at("transparent"), m_TransparentObjects, m_EventDispatcher);
+	}
+	//UI
+}
+
+template <typename ObjectMap>
+void AppendFrameDataFromObjects(
+	const ObjectMap& objects,
+	RenderData::RenderLayer layer,
+	RenderData::FrameData& frameData)
+{
+	for (const auto& [name, gameObject] : objects)
+	{
+		if (!gameObject)
+		{
+			continue;
+		}
+
+		for (const auto* renderer : gameObject->GetComponents<MeshRenderer>())
+		{
+			RenderData::RenderItem item{};
+			if (renderer && renderer->BuildRenderItem(item))
+			{
+				frameData.renderItems[layer].push_back(item);
+			}
+		}
+
+		for (const auto* light : gameObject->GetComponents<LightComponent>())
+		{
+			if (!light)
+			{
+				continue;
+			}
+
+			RenderData::LightData data{};
+			data.type = light->GetType();
+			data.posiiton = light->GetPosition();
+			data.range = light->GetRange();
+			data.diretion = light->GetDirection();
+			data.spotAngle = light->GetSpotAngle();
+			data.color = light->GetColor();
+			data.intensity = light->GetIntensity();
+			data.lightViewProj = light->GetLightViewProj();
+			data.castShadow = light->CastShadow();
+
+			frameData.lights.push_back(data);
 		}
 	}
 }
@@ -128,7 +249,7 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 		context.view = m_Camera->GetViewMatrix();
 		context.proj = m_Camera->GetProjMatrix();
 		const auto viewport = m_Camera->GetViewportSize();
-		context.width  = static_cast<UINT32>(viewport.Width);
+		context.width = static_cast<UINT32>(viewport.Width);
 		context.height = static_cast<UINT32>(viewport.Height);
 		context.cameraPos = m_Camera->GetEye();
 
@@ -138,39 +259,11 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 		XMStoreFloat4x4(&context.viewProj, viewProj);
 	}
 
-	for (const auto& [name, gameObject] : m_GameObjects)
-	{
-		if (!gameObject)
-			continue;
+	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, frameData);
 
-		for (const auto* renderer : gameObject->GetComponents<MeshRenderer>())
-		{
-			RenderData::RenderItem item{};
-			if (renderer && renderer->BuildRenderItem(item))
-			{
-				frameData.renderItems.push_back(item);
-			}
-		}
+	AppendFrameDataFromObjects(m_TransparentObjects, RenderData::RenderLayer::TransparentItems, frameData);
 
-		for (const auto* light : gameObject->GetComponents<LightComponent>())
-		{
-			if (!light)
-				continue;
-
-			RenderData::LightData data{};
-			data.type		   = light->GetType();
-			data.posiiton	   = light->GetPosition();
-			data.range		   = light->GetRange();
-			data.diretion	   = light->GetDirection();
-			data.spotAngle	   = light->GetSpotAngle();
-			data.color         = light->GetColor();
-			data.intensity	   = light->GetIntensity();
-			data.lightViewProj = light->GetLightViewProj();
-			data.castShadow	   = light->CastShadow();
-
-			frameData.lights.push_back(data);
-		}
-	}
+	//UIManager에서 UI Data 가공예정
 }
 
 void Scene::SetGameManager(GameManager* gameManager)

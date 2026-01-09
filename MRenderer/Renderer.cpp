@@ -27,7 +27,6 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 
-	UINT size;
 	CreateDynamicConstantBuffer(g_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
 	//이 아래는 확인용
 	//ClearBackBuffer(COLOR(0, 0, 1, 1));
@@ -68,7 +67,6 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height)
 
 
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
-	UINT size;
 	CreateDynamicConstantBuffer(g_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
 
 	m_RenderContext.VS = m_pVS;
@@ -115,20 +113,23 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 	UINT32 vsize = GetMaxMeshHandleId(frame);
 	m_vVertexBuffers.resize(vsize + 1);
 
-	for (const auto& item : frame.renderItems)
+	for (const auto& [layer, items] : frame.renderItems)
 	{
-		UINT index;
-		index = item.mesh.id;
-		if (m_vVertexBuffers[index] != nullptr)
-			continue;
+		for (const auto& item : items)
+		{
+			UINT index;
+			index = item.mesh.id;
+			if (m_vVertexBuffers[index] != nullptr)
+				continue;
 
-		RenderData::MeshData* mesh =
-			m_AssetLoader.GetMeshes().Get(item.mesh);
+			RenderData::MeshData* mesh =
+				m_AssetLoader.GetMeshes().Get(item.mesh);
 
-		ComPtr<ID3D11Buffer> vb;
-		CreateVertexBuffer(g_pDevice.Get(), mesh->vertices.data(), mesh->vertices.size(), sizeof(RenderData::Vertex), vb.GetAddressOf());
-
-		m_vVertexBuffers[index] = vb;
+			ComPtr<ID3D11Buffer> vb;
+			CreateVertexBuffer(g_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size()), sizeof(RenderData::Vertex), vb.GetAddressOf());
+			 
+			m_vVertexBuffers[index] = vb;
+		}
 	}
 }
 
@@ -139,25 +140,27 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 	m_vIndexBuffers.resize(vsize + 1);
 	m_vIndexCounts.resize(vsize + 1);
 
-	for (const auto& item : frame.renderItems)
+	for (const auto& [layer, items] : frame.renderItems)
 	{
-		UINT index;
-		index = item.mesh.id;
-		if (m_vIndexBuffers[index] != nullptr)
-			continue;
+		for (const auto& item : items)
+		{
+			UINT index;
+			index = item.mesh.id;
+			if (m_vIndexBuffers[index] != nullptr)
+				continue;
 
-		RenderData::MeshData* mesh =
-			m_AssetLoader.GetMeshes().Get(item.mesh);
+			RenderData::MeshData* mesh =
+				m_AssetLoader.GetMeshes().Get(item.mesh);
 
 
-		ComPtr<ID3D11Buffer> ib;
-		CreateIndexBuffer(g_pDevice.Get(), mesh->indices.data(), mesh->indices.size(), ib.GetAddressOf());
-		m_vIndexBuffers[index] = ib;
+			ComPtr<ID3D11Buffer> ib;
+			CreateIndexBuffer(g_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size()), ib.GetAddressOf());
+			m_vIndexBuffers[index] = ib;
 
-		UINT32 cnt = mesh->indices.size();
-		m_vIndexCounts[index] = cnt;
+			UINT32 cnt = static_cast<UINT32>(mesh->indices.size());
+			m_vIndexCounts[index] = cnt;
+		}
 	}
-
 }
 
 void Renderer::CreateGridVB()
@@ -172,8 +175,8 @@ void Renderer::CreateGridVB()
 	XMFLOAT3 cMajor(1, 1, 1), cMinor(0.7f, 0.7f, 0.7f);
 	XMFLOAT3 cAxisX(0.8f, 0.2f, 0.2f), cAxisZ(0.2f, 0.4f, 0.8f);
 
-	for (int i = -N; i <= N; ++i)
-	{
+	for (int i = -N; i <= N; ++i) 
+	{ 
 		float x = i * s;
 		//XMFLOAT3 col = (i == 0) ? cAxisZ : ((i % 5 == 0) ? cMajor : cMinor);
 		v.push_back({ XMFLOAT3(-half, 0, x)});
@@ -256,11 +259,14 @@ void Renderer::DrawGrid()
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame)
 {
 	UINT32 maxId = 0;
-	for (const auto& item : frame.renderItems)
+	for (const auto& [layer, items] : frame.renderItems)
 	{
-		if (item.mesh.IsValid() && item.mesh.id > maxId)
+		for (const auto& item : items)
 		{
-			maxId = item.mesh.id;
+			if (item.mesh.IsValid() && item.mesh.id > maxId)
+			{
+				maxId = item.mesh.id;
+			}
 		}
 	}
 

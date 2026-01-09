@@ -6,6 +6,14 @@
 #include "Scene.h"
 #include "DX11.h"
 
+#include "pch.h"
+#include "EditorApplication.h"
+#include "CameraComponent.h"
+#include "GameObject.h"
+#include "Renderer.h"
+#include "Scene.h"
+#include "DX11.h"
+
 
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -22,7 +30,7 @@ bool EditorApplication::Initialize()
 	///m_hwnd
 	//m_Engine.GetAssetManager().Init(L"../Resource");
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-	m_Renderer.InitializeTest(m_hwnd,m_width,m_height);  // Device 생성
+	m_Renderer.InitializeTest(m_hwnd, m_width, m_height);  // Device 생성
 	m_SceneManager.Initialize();
 
 	ImGui::CreateContext();
@@ -30,7 +38,7 @@ bool EditorApplication::Initialize()
 	io.IniFilename = nullptr;				// ini 사용 안함
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	ImGui::StyleColorsDark(); 
+	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(m_hwnd);
 	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
 	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
@@ -140,7 +148,7 @@ void EditorApplication::RenderImGUI() {
 	if (dockBuilt)
 	{
 		//std::cout << "Layout Init" << std::endl;
-		SetupEditorDockLayout(); 
+		SetupEditorDockLayout();
 		dockBuilt = false;
 	}
 
@@ -158,7 +166,8 @@ void EditorApplication::RenderImGUI() {
 
 		// main back buffer 상태 복구 // 함수로 묶기
 		ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr); 
+		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
 		SetViewPort(m_width, m_height);
 	}
 
@@ -205,15 +214,24 @@ void EditorApplication::DrawHierarchy() {
 	ImGui::Begin("Hierarchy");
 
 	auto scene = m_SceneManager.GetCurrentScene();
-	
+
 	// Scene이 없는 경우
 	if (!scene) {
 		ImGui::Text("No Current Scene");
 		ImGui::End();
 		return;
 	}
-		// GameObjects map 가져와
-	for (const auto& [name, Object] : scene->GetGameObjects()) {
+
+	// GameObjects map 가져와	Opaque
+	for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
+		const bool selected = (m_SelectedObjectName == name);
+		if (ImGui::Selectable(name.c_str(), selected)) {
+			m_SelectedObjectName = name;
+		}
+	}
+
+	//Transparent
+	for (const auto& [name, Object] : scene->GetTransparentObjects()) {
 		const bool selected = (m_SelectedObjectName == name);
 		if (ImGui::Selectable(name.c_str(), selected)) {
 			m_SelectedObjectName = name;
@@ -234,16 +252,23 @@ void EditorApplication::DrawInspector() {
 	}
 
 	// hierarchy 에서 선택한 object 
-	const auto& gameObjects = scene->GetGameObjects();
-	const auto it = gameObjects.find(m_SelectedObjectName);
+// Opaque
+	const auto& opaqueObjects = scene->GetOpaqueObjects();
+	const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName);
+
+	// Transparent
+	const auto& transparentObjects = scene->GetTransparentObjects();
+	const auto transparentIt = transparentObjects.find(m_SelectedObjectName);
 
 	// 선택된 오브젝트가 없거나, 실체가 없는 경우
-	if (it == gameObjects.end() || !it->second) //second == Object 포인터
-	{	
+	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) //second == Object 포인터
+	{
 		ImGui::Text("No Selected GameObject");
 		ImGui::End();
 		return;
 	}
+
+	auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
 
 	ImGui::Text("Name : %s", it->second->GetName().c_str());
 	ImGui::Separator();
@@ -265,6 +290,7 @@ void EditorApplication::DrawFolderView()
 
 	ImGui::End();
 }
+
 
 void EditorApplication::CreateDockSpace()
 {
@@ -345,6 +371,8 @@ void EditorApplication::UpdateSceneViewport()
 		cameraComponent->SetViewportSize(static_cast<float>(width), static_cast<float>(height));
 	}*/
 }
+
+
 
 void EditorApplication::OnResize(int width, int height)
 {

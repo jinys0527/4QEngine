@@ -93,7 +93,12 @@ void GameApplication::UpdateLogic()
 void GameApplication::Update()
 {
 #ifndef _EDITOR
-	m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
+
+	float dTime = m_Engine.GetTime();
+	dTime *= m_GameSpeed;
+	m_SceneManager.StateUpdate(dTime);
+	m_SceneManager.Update(dTime);
+	
 	m_SoundManager.Update();
 	// FixedUpdate
 	{

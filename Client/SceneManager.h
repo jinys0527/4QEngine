@@ -21,6 +21,7 @@ public:
 
 	void Initialize();
 	void Update(float deltaTime);
+	void StateUpdate(float deltaTime);
 	void Render();
 
 	//void SetCamera(CameraObject* camera) { m_Camera = camera; }
@@ -56,7 +57,7 @@ private:
 	SoundManager& m_SoundManager;
 	GameManager& m_GameManager;
 	UIManager& m_UIManager;
-	bool m_ShouldQuit;
+	bool m_ShouldQuit = false;
 
 	std::string m_ChangeSceneName;
 };

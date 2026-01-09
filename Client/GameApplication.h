@@ -46,6 +46,7 @@ private:
 #endif
 
 	float m_fFrameCount;
+	float m_GameSpeed = 1.0f;
 
 	Engine& m_Engine;
 	SceneManager& m_SceneManager;
