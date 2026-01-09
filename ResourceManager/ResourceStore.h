@@ -114,6 +114,12 @@ public:
 		}
 	}
 #endif
+
+	const std::unordered_map<std::string, HandleType>& GetKeyToHandle() const
+	{
+		return m_KeyToHandle;
+	}
+
 private:
 	struct Entry
 	{
