@@ -2,7 +2,6 @@
 #include "Object.h"
 #include <windows.h>
 
-
 class UIObject : public Object
 {
 	friend class UIManager;

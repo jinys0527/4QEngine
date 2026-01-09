@@ -31,8 +31,7 @@ int main()
 	Renderer renderer(assetLoader);
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
-	//ImportFBX("../Dying.fbx", "../test");
-	//ImportFBX("../Unarmed Walk Forward.fbx", "../test");
+	ImportAll();
 
 	EditorApplication app(engine,renderer, sceneManager, soundManager);
 	if (!app.Initialize())

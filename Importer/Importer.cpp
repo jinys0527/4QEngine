@@ -463,6 +463,7 @@ static std::string ExtractClipName(const std::string& filePath, const std::strin
 	return filename;
 }
 
+
 void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 {
 	// ----- 1) 이름/경로 규칙: 단일 진실원천 -----
@@ -575,5 +576,27 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		metaAnims))
 	{
 		std::cout << "No Meta" << std::endl;
+	}
+}
+
+void ImportAll()
+{
+	const fs::path fbxRoot    = "../Resources/FBX";
+	const fs::path outputRoot = "../ResourceOutput";
+
+	if (!fs::exists(fbxRoot) || !fs::is_directory(fbxRoot))
+		return;
+
+	for (const auto& entry : fs::directory_iterator(fbxRoot))
+	{
+		if (!entry.is_regular_file())
+			continue;
+
+		const fs::path& path = entry.path();
+
+		if (path.extension() != ".fbx")
+			continue;
+		std::cout << path.string() << std::endl;
+		ImportFBX(path.string(), outputRoot.string());
 	}
 }

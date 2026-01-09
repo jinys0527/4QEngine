@@ -7,6 +7,7 @@
 #include "DX11.h"
 
 
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 bool EditorApplication::Initialize()
@@ -25,13 +26,17 @@ bool EditorApplication::Initialize()
 	m_SceneManager.Initialize();
 
 	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.IniFilename = nullptr;				// ini 사용 안함
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark(); 
 	ImGui_ImplWin32_Init(m_hwnd);
 	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
 	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
-	
 	//RT 받기
-	//ID3D11RenderTargetView* rtvs[] = { m_Engine.GetRenderer().GetD3DRenderTargetView() };
+
+	//초기 세팅 값으로 창 배치
 
 
 
@@ -82,8 +87,6 @@ void EditorApplication::Finalize() {
 	//그외 메모리 해제
 }
 
-
-
 void EditorApplication::UpdateInput()
 {
 
@@ -96,17 +99,27 @@ void EditorApplication::Update()
 }
 
 void EditorApplication::Render() {
+	if (!g_pDXDC) return; //★
+	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height);
+
+	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
+
 	m_SceneManager.Render(); // Scene 전체 그리고
+
 	RenderImGUI();
+
 	Flip(); //★
 }
 
 void EditorApplication::RenderImGUI() {
 	//★★
-	if (!g_pDXDC) return; //★
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+
+	CreateDockSpace();
 
 	DrawHierarchy();
 	DrawInspector();
@@ -121,18 +134,38 @@ void EditorApplication::RenderImGUI() {
 	}
 	
 	
+	RenderSceneView(); //Scene그리기
+
+	// DockBuilder
+	static bool dockBuilt = true;
+	if (dockBuilt)
+	{
+		//std::cout << "Layout Init" << std::endl;
+		SetupEditorDockLayout(); 
+		dockBuilt = false;
+	}
+
+
 	ImGui::Render();  // Gui들그리기
-	
-	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-	SetViewPort(m_width, m_height);
-	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
+
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+
+		// main back buffer 상태 복구
+		ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+		SetViewPort(m_width, m_height);
+	}
 
 }
 
-// 게임화면 // CCTV 그리기 
+// 게임화면 
 void EditorApplication::RenderSceneView() {
 
 	//if (!m_SceneRenderTarget.IsValid())
@@ -189,7 +222,7 @@ void EditorApplication::DrawInspector() {
 	ImGui::Begin("Inspector");
 	auto scene = m_SceneManager.GetCurrentScene();
 	if (!scene) {
-		ImGui::Text("No Current Scene");
+		ImGui::Text("No Selected Object");
 		ImGui::End();
 		return;
 	}
@@ -218,6 +251,66 @@ void EditorApplication::DrawInspector() {
 
 
 
+}
+
+void EditorApplication::CreateDockSpace()
+{
+	/*static bool dockspaceOpen = true;
+
+	ImGuiWindowFlags windowFlags =
+		ImGuiWindowFlags_MenuBar |
+		ImGuiWindowFlags_NoDocking |
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoBringToFrontOnFocus |
+		ImGuiWindowFlags_NoNavFocus;
+
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
+	ImGui::SetNextWindowViewport(viewport->ID);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+	ImGui::Begin("DockSpaceRoot", &dockspaceOpen, windowFlags);
+	ImGui::PopStyleVar(2);
+
+	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
+	ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
+
+	ImGui::End();*/
+	ImGui::DockSpaceOverViewport(
+		ImGui::GetID("EditorDockSpace"),
+		ImGui::GetMainViewport(),
+		ImGuiDockNodeFlags_PassthruCentralNode
+	);
+}
+
+void EditorApplication::SetupEditorDockLayout()
+{	// 초기 창 셋팅
+	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
+
+	ImGui::DockBuilderRemoveNode(dockspaceID);
+	ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
+	ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
+
+	ImGuiID dockMain = dockspaceID;
+	ImGuiID dockLeft, dockRight, dockBottom;
+
+	// 분할
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, &dockRight, &dockMain);
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.3f, &dockBottom, &dockMain);
+
+	// 창 배치
+	ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
+	ImGui::DockBuilderDockWindow("Inspector", dockRight);
+	ImGui::DockBuilderDockWindow("Viewport", dockMain);
+
+	ImGui::DockBuilderFinish(dockspaceID);
 }
 
 void EditorApplication::UpdateSceneViewport()
