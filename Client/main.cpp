@@ -28,12 +28,7 @@ int main()
     GameManager gameManager(engine.GetEventDispatcher());
     UIManager uiManager(engine.GetEventDispatcher());
 	SceneManager sceneManager(/*engine.GetRenderer(),*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, gameManager, uiManager);
-    ImportFBX("../Dying.fbx", "../test");
-    ImportFBX("../Unarmed Walk Forward.fbx", "../test");
-	ImportFBX("../all.fbx", "../test");
-	ImportFBX("../cycle.fbx", "../test");
-    ImportFBX("../hiroshi.fbx", "../test");
-    ImportFBX("../shinchan.fbx", "../test");
+
 
 #ifdef _EDITOR
     Editor editor(sceneManager);
@@ -50,13 +45,13 @@ int main()
  		return -1;
  	}
     AssetLoader loader;
-
-    AssetLoader::AssetLoadResult result = loader.LoadAsset("../test/Dying/Meta/Dying.asset.json");
-    loader.LoadAsset("../test/Unarmed Walk Forward/Meta/Unarmed Walk Forward.asset.json");
-    loader.LoadAsset("../test/all/Meta/all.asset.json");
-    loader.LoadAsset("../test/cycle/Meta/cycle.asset.json");
-    loader.LoadAsset("../test/hiroshi/Meta/hiroshi.asset.json");
-    loader.LoadAsset("../test/shinchan/Meta/shinchan.asset.json");
+ 
+    AssetLoader::AssetLoadResult result = loader.LoadAsset("../ResourceOutput/Dying/Meta/Dying.asset.json");
+	loader.LoadAsset("../ResourceOutput/Unarmed Walk Forward/Meta/Unarmed Walk Forward.asset.json");
+	loader.LoadAsset("../ResourceOutput/all/Meta/all.asset.json");
+	loader.LoadAsset("../ResourceOutput/cycle/Meta/cycle.asset.json");
+	loader.LoadAsset("../ResourceOutput/hiroshi/Meta/hiroshi.asset.json");
+	loader.LoadAsset("../ResourceOutput/shinchan/Meta/shinchan.asset.json");
 
     // 2) 메쉬/머티리얼 핸들 꺼내기
     //if (!result.meshes.empty())

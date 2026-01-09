@@ -18,7 +18,8 @@ class EditorApplication : public NzWndBase
 
 public:
 	EditorApplication(Engine& engine,Renderer& renderer, SceneManager& sceneManager, SoundManager& soundManager) 
-		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager) {}
+		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager) {
+	}
 
 	virtual ~EditorApplication() = default;
 
@@ -40,6 +41,12 @@ private:
 	void DrawInspector();
 
 
+	//Gui 관련
+	void CreateDockSpace();
+	void FirstPosition();
+	void SetupEditorDockLayout();
+
+
 
 	void OnResize(int width, int height) override;
 	void OnClose() override;
@@ -48,7 +55,6 @@ private:
 	UINT64 m_FrameIndex = 0;
 
 	Engine& m_Engine;
-
 	SceneManager& m_SceneManager;
 	SoundManager& m_SoundManager;
 	//AssetLoader m_AssetLoader;
