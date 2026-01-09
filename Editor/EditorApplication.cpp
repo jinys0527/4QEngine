@@ -252,7 +252,7 @@ void EditorApplication::DrawInspector() {
 	}
 
 	// hierarchy 에서 선택한 object 
-// Opaque
+	// Opaque
 	const auto& opaqueObjects = scene->GetOpaqueObjects();
 	const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName);
 
@@ -261,7 +261,8 @@ void EditorApplication::DrawInspector() {
 	const auto transparentIt = transparentObjects.find(m_SelectedObjectName);
 
 	// 선택된 오브젝트가 없거나, 실체가 없는 경우
-	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) //second == Object 포인터
+	//second == Object 포인터
+	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) 
 	{
 		ImGui::Text("No Selected GameObject");
 		ImGui::End();

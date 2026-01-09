@@ -30,18 +30,16 @@ public:
 
 	//void SetCamera(CameraObject* camera) { m_Camera = camera; }
 	//CameraObject* GetCamera() { return m_Camera; }
-
-	std::shared_ptr<Scene> AddScene(const std::string& name, std::shared_ptr<Scene> scene);
-	void SetCurrentScene(const std::string& name);
+	//std::shared_ptr<Scene> AddScene(const std::string& name, std::shared_ptr<Scene> scene);
+	void SetCurrentScene(std::shared_ptr<Scene> scene);
 	std::shared_ptr<Scene> GetCurrentScene() const;
-
 	void ChangeScene(const std::string& name);
-
 	void ChangeScene();
+	void LoadSceneFromJson();
 
 	void Reset()
 	{
-		m_Scenes.clear();
+		//m_Scenes.clear();
 		m_CurrentScene.reset();
 	}
 
@@ -51,7 +49,7 @@ public:
 	void SetChangeScene(std::string name);
 
 private:
-	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
+	//std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	//CameraObject* m_Camera = nullptr;
 	//D2DRenderer& m_Renderer;
@@ -61,6 +59,7 @@ private:
 	EventDispatcher&  m_EventDispatcher;
 	SoundManager&     m_SoundManager;
 	UIManager&	      m_UIManager;
+
 	bool			  m_ShouldQuit;
-	std::string m_ChangeSceneName;
+	std::string		  m_ChangeSceneName;
 };

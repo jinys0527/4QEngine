@@ -32,12 +32,12 @@ void Scene::Render(RenderData::FrameData& frameData) const
 
 void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 {
-	if (gameObject->m_Name == "Camera")
+	if (gameObject->m_Name == "Main Camera")
 	{
 		SetMainCamera(gameObject);
 	}
 
-	if (isOpaque)
+	if (isOpaque) // true -> Opaque / false -> Transparent
 		m_OpaqueObjects[gameObject->m_Name] = std::move(gameObject);
 	else
 		m_TransparentObjects[gameObject->m_Name] = std::move(gameObject);

@@ -136,6 +136,7 @@ void TransformComponent::OnEvent(EventType type, const void* data)
 
 void TransformComponent::Serialize(nlohmann::json& j) const
 {
+	// 교체
 	j["position"]["x"] = m_Position.x;
 	j["position"]["y"] = m_Position.y;
 	j["position"]["z"] = m_Position.z;
