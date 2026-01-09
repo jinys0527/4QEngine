@@ -134,8 +134,6 @@ void EditorApplication::RenderImGUI() {
 	}
 	
 	
-	RenderSceneView(); //Scene그리기
-
 	// DockBuilder
 	static bool dockBuilt = true;
 	if (dockBuilt)
@@ -191,6 +189,11 @@ void EditorApplication::RenderSceneView() {
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget);
+
+	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
+	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height);
+
 }
 
 void EditorApplication::DrawHierarchy() {
