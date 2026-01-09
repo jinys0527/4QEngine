@@ -269,6 +269,40 @@ namespace
 	}
 }
 
+void AssetLoader::LoadAll()
+{
+	const fs::path assetRoot = "../ResourceOutput";
+	if (!fs::exists(assetRoot) || !fs::is_directory(assetRoot))
+		return;
+
+	for (const auto& dirEntry : fs::directory_iterator(assetRoot))
+	{
+		if (!dirEntry.is_directory())
+			continue;
+
+		fs::path metaDir = dirEntry.path() / "Meta";
+		if (!fs::exists(metaDir) || !fs::is_directory(metaDir))
+			continue;
+
+		for (const auto& fileEntry : fs::directory_iterator(metaDir))
+		{
+			if (!fileEntry.is_regular_file())
+				continue;
+
+			const fs::path& path = fileEntry.path();
+			if (path.extension() != ".json")
+				continue;
+
+			if (path.filename().string().find(".asset.json") == std::string::npos)
+				continue;
+
+			std::cout << path.string() << std::endl;
+
+			LoadAsset(path.string());
+		}
+	}
+}
+
 AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMetaPath)
 {
 	AssetLoadResult result{};

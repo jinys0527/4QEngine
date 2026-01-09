@@ -132,6 +132,7 @@ void EditorApplication::RenderImGUI() {
 	DrawHierarchy();
 	DrawInspector();
 	DrawFolderView();
+	DrawResourceBrowser();
 
 	RenderSceneView(); //Scene그리기
 
@@ -287,6 +288,140 @@ void EditorApplication::DrawFolderView()
 	ImGui::Begin("Folder");
 
 	ImGui::Text("Need Logic");
+
+	ImGui::End();
+}
+
+void EditorApplication::DrawResourceBrowser()
+{
+	ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_Once);
+	ImGui::Begin("Resource Browser");
+
+	if (ImGui::BeginTabBar("ResourceTabs"))
+	{
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		//Meshes
+		if (ImGui::BeginTabItem("Meshes"))
+		{
+			ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& meshes = m_AssetLoader.GetMeshes().GetKeyToHandle();
+			for (const auto& [key, handle] : meshes)
+			{
+				ImGui::Selectable(key.c_str());
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
+					ImGui::Text("Mesh : %s", key.c_str());
+					ImGui::EndDragDropSource();
+				}
+				ImGui::Separator();
+			}
+
+			ImGui::EndChild();
+			
+			ImGui::EndTabItem();
+		}
+
+		//Materials
+		if (ImGui::BeginTabItem("Materials"))
+		{
+			ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& materials = m_AssetLoader.GetMaterials().GetKeyToHandle();
+			for (const auto& [key, handle] : materials)
+			{
+				ImGui::Selectable(key.c_str());
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("RESOURCE_MATERIAL", &handle, sizeof(MaterialHandle));
+					ImGui::Text("Material : %s", key.c_str());
+					ImGui::EndDragDropSource();
+				}
+				ImGui::Separator();
+			}
+
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Textures
+		if (ImGui::BeginTabItem("Textures"))
+		{
+			ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& textures = m_AssetLoader.GetTextures().GetKeyToHandle();
+			for (const auto& [key, handle] : textures)
+			{
+				ImGui::Selectable(key.c_str());
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
+					ImGui::Text("Texture : %s", key.c_str());
+					ImGui::EndDragDropSource();
+				}
+				ImGui::Separator();
+			}
+
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Skeletons
+		if (ImGui::BeginTabItem("Skeletons"))
+		{
+			ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& skeletons = m_AssetLoader.GetSkeletons().GetKeyToHandle();
+			for (const auto& [key, handle] : skeletons)
+			{
+				ImGui::Selectable(key.c_str());
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
+					ImGui::Text("Skeleton : %s", key.c_str());
+					ImGui::EndDragDropSource();
+				}
+				ImGui::Separator();
+			}
+
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Animations
+		if (ImGui::BeginTabItem("Animations"))
+		{
+			ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& animations = m_AssetLoader.GetAnimations().GetKeyToHandle();
+			for (const auto& [key, handle] : animations)
+			{
+				ImGui::Selectable(key.c_str());
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
+					ImGui::Text("Animation : %s", key.c_str());
+					ImGui::EndDragDropSource();
+				}
+				ImGui::Separator();
+			}
+
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		ImGui::EndTabBar();
+	}
 
 	ImGui::End();
 }
