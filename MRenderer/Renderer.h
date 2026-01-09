@@ -44,4 +44,18 @@ private:
 	ComPtr<ID3D11VertexShader> m_pVS;
 	ComPtr<ID3D11PixelShader> m_pPS;
 	ComPtr<ID3DBlob> m_pVSCode;
+
+//그리드
+private:
+	struct VertexPC { XMFLOAT3 pos;};
+
+	ComPtr<ID3D11Buffer> m_GridVB;
+	UINT m_GridVertexCount = 0;
+	std::vector<std::vector<int>> m_GridFlags;  // 0=empty,1=blocked
+	void CreateGridVB();
+	void UpdateGrid(const RenderData::FrameData& frame);
+	void DrawGrid();
+	float m_CellSize = 1.0f;
+	int   m_HalfCells = 20;
+
 };

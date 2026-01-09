@@ -135,8 +135,6 @@ void EditorApplication::RenderImGUI() {
 	}
 	
 	
-	//RenderSceneView(); //Scene그리기
-
 	// DockBuilder
 	static bool dockBuilt = true;
 	if (dockBuilt)
@@ -198,10 +196,8 @@ void EditorApplication::RenderSceneView() {
 	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
 	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
 	SetViewPort(m_width, m_height);
-
-
-
 }
+
 
 void EditorApplication::DrawHierarchy() {
 
