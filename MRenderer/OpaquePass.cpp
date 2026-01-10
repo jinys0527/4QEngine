@@ -11,8 +11,9 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     m_RenderContext.BCBuffer.mProj = context.proj;
     m_RenderContext.BCBuffer.mVP = context.viewProj;
 
+    
 
-    UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 
 
     for (size_t index : GetQueue())
@@ -42,21 +43,18 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                         const UINT stride = sizeof(RenderData::Vertex);
                         const UINT offset = 0;
 
-                        ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), 1, 0);
+                        ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
-                        g_pDXDC->RSSetState(g_RState[RS::SOLID].Get());
-                        g_pDXDC->OMSetDepthStencilState(g_DSState[DS::OFF].Get(), 0);
-
-
-                        g_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-                        g_pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
-                        g_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                        g_pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-                        g_pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-                        g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-                        g_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-
-                        g_pDXDC->DrawIndexed(icount, 0, 0);
+                        m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::SOLID].Get());
+                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
+                        m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+                        m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
+                        m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                        m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
+                        m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
+                        m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+                        m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+                        m_RenderContext.pDXDC->DrawIndexed(icount, 0, 0);
 
                     }
                 }

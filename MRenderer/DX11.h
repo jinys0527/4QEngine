@@ -9,6 +9,7 @@
 #include <tchar.h>
 #include <wrl/client.h>
 #include <memory>
+#include <d3dcompiler.h>
 //#include "DXMath.h"
 #include "DirectXMath.h"
 
@@ -43,22 +44,23 @@ typedef DXGI_MODE_DESC DISPLAY;
         MessageBox(NULL, buf, L"Error", MB_OK | MB_ICONERROR); \
     }
 
+#pragma region 상태
 enum class DS {
-    ON,				//깊이버퍼 ON! (기본값), 스텐실버퍼 OFF.
-    OFF,				//깊이버퍼 OFF!
-    //DS_DEPTH_WRITE_OFF,			//깊이버퍼 쓰기 끄기
+    DEPTH_ON,
+    DEPTH_OFF,
 
     MAX_,
 };
 
 enum class RS {
-    SOLID,				//삼각형 채우기 : Fill Mode - Soild.
-    WIREFRM,				//삼각형 채우기 : Fill Mode - Wireframe.
-    CULLBACK,			//뒷면 컬링 (ON) : BackFaceCulling - "CCW" 
-    WIRECULLBACK,		//와이어 프레임 + 뒷면 컬링 (ON) 
+    SOLID,				//채우기, 컬링 없음
+    WIREFRM,			//Wireframe, 컬링 없음
+    CULLBACK,			//뒷면 컬링 
+    WIRECULLBACK,		//Wireframe, 뒷면 컬링 
 
     MAX_
 };
+
 
 //enum 래퍼 타입
 template<typename T, size_t N>
@@ -87,48 +89,28 @@ struct EnumArray
     }
 };
 
-
-//렌더링 상태 객체들 : 엔진 전체 공유함. "Device.cpp"
-extern EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> g_DSState;
-HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D*& pDSTex, ID3D11DepthStencilView*& pDSView);
-
-//레스터라이져 상태 객체 배열
-extern EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)> g_RState;
-void RasterStateCreate();
+#pragma endregion
 
 
-extern ComPtr<ID3D11Device> g_pDevice;
-extern ComPtr<ID3D11DeviceContext> g_pDXDC;
-extern ComPtr<IDXGISwapChain> g_pSwapChain;
-extern ComPtr<ID3D11RenderTargetView> g_pRTView; 
+
+
+
 
 extern	BOOL 		g_bVSync;
 extern int g_MonitorWidth;
 extern int g_MonitorHeight;
 
 
-//bool DXSetup(HWND hWnd);
-bool DXSetup(HWND hWnd, int width, int height);
-void Draw();
-
-int		ClearBackBuffer(COLOR col);
-int		ClearBackBuffer(UINT flag, COLOR col, float depth = 1.0f, UINT stencil = 0);
-int     Flip();
 
 
-void	GetDeviceInfo();
-HRESULT GetAdapterInfo(DXGI_ADAPTER_DESC1* pAd);
-void	SystemUpdate(float dTime);
+
+int		ClearBackBuffer(COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview);
+int		ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview, float depth = 1.0f, UINT stencil = 0);
+int Flip(IDXGISwapChain* swapchain);
 
 
 
 #pragma region 버퍼 운용함수
-int 	CreateBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppBuff);
-int 	UpdateBuffer(ID3D11Buffer* pBuff, LPVOID pData, UINT size);
-
-int		CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UINT stride, ID3D11Buffer** ppVB);
-int		CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB);
-int		CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
 //ID3D11Buffer*	CreateConstantBuffer(UINT size);
 
 HRESULT CreateDynamicConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
@@ -136,11 +118,6 @@ HRESULT CreateDynamicConstantBuffer(ID3D11Device* pDev, UINT size, LPVOID pData,
 HRESULT UpdateDynamicBuffer(ID3D11DeviceContext* pDXDC, ID3D11Resource* pBuff, LPVOID pData, UINT size);
 
 #pragma endregion
-
-HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
-HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
-HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
-HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D*& pDSTex, ID3D11DepthStencilView*& pDSView);
 
 
 DWORD	AlignCBSize(DWORD size);
@@ -160,31 +137,13 @@ void SafeRelease(T*& ptr)
 	}
 }
 
-void SetViewPort(int width, int height);
-
-
-//pos, nrm, uv, tan
-HRESULT CreateInputLayout(ID3D11Device* pDev, ID3DBlob* pVScode, ID3D11InputLayout** ppLayout);
-
-
-//임시, 나중에 HLSL 컴파일 하는걸 만들어야함
-int ShaderLoad();
-HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode);
-HRESULT ShaderLoad(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3D11PixelShader** ppPS, ID3DBlob** ppShaderCode);
-HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
-HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS);
+void SetViewPort(int width, int height, ID3D11DeviceContext* dxdc);
 
 
 
 
-//imgui용
-HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
-HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
-HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
 
-extern ID3D11Texture2D*					g_pTexScene;		//장면이 렌더링될 새 렌더타겟용 텍스쳐 (리소스)
-extern ID3D11ShaderResourceView*		g_pTexRvScene;		//장면이 렌더링될 새 렌더타겟용 텍스쳐-리소스뷰 (멥핑용)
-extern ID3D11RenderTargetView*			g_pRTScene;			//장면이 렌더링될 새 렌더타겟뷰 (렌더링용) 
-
-extern ID3D11Texture2D* g_pDSTexScene;	//렌더타겟용 깊이/스텐실 버퍼 (텍스처)
-extern ID3D11DepthStencilView*  g_pDSViewScene;	//렌더타겟용 깊이/스텐실 뷰
+HRESULT RTTexCreate(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
+HRESULT RTViewCreate(ID3D11Device* device, DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
+HRESULT RTSRViewCreate(ID3D11Device* device, DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
+HRESULT DSCreate(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);

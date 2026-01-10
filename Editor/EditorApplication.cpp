@@ -20,8 +20,11 @@ bool EditorApplication::Initialize()
 	///m_hwnd
 	//m_Engine.GetAssetManager().Init(L"../Resource");
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-	m_Renderer.InitializeTest(m_hwnd, m_width, m_height);  // Device 생성
+	m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
+	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
 	m_SceneManager.Initialize();
+
+	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -30,11 +33,10 @@ bool EditorApplication::Initialize()
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(m_hwnd);
-	ImGui_ImplDX11_Init(g_pDevice.Get(), g_pDXDC.Get()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
+	ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
 	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
 	//RT 받기
 	//초기 세팅 값으로 창 배치
-
 
 
 	return true;
@@ -96,18 +98,20 @@ void EditorApplication::Update()
 }
 
 void EditorApplication::Render() {
-	if (!g_pDXDC) return; //★
-	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-	SetViewPort(m_width, m_height);
+	if (!m_Engine.GetD3DDXDC()) return; //★
 
-	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f));
+
+	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get()};
+	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
+
+	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
 	m_SceneManager.Render(); // Scene 전체 그리고
 
 	RenderImGUI();
 
-	Flip(); //★
+	Flip(m_Renderer.GetSwapChain().Get()); //★
 }
 
 void EditorApplication::RenderImGUI() {
@@ -155,10 +159,10 @@ void EditorApplication::RenderImGUI() {
 		ImGui::RenderPlatformWindowsDefault();
 
 		// main back buffer 상태 복구 // 함수로 묶기
-		ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-		g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-		SetViewPort(m_width, m_height);
+		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 	}
 
 }
@@ -192,9 +196,9 @@ void EditorApplication::RenderSceneView() {
 
 
 	// 복구
-	ID3D11RenderTargetView* rtvs[] = { g_pRTView.Get() };
-	g_pDXDC->OMSetRenderTargets(1, rtvs, nullptr);
-	SetViewPort(m_width, m_height);
+	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 }
 
 
