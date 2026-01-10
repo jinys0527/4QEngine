@@ -30,14 +30,17 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
             const auto* indexBuffers = m_RenderContext.indexBuffers;
             const auto* indexcounts = m_RenderContext.indexcounts;
 
-            if (vertexBuffers && indexBuffers && item.mesh.IsValid())
+            if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
             {
                 const UINT bufferIndex = item.mesh.id;
-                if (bufferIndex < vertexBuffers->size() && bufferIndex < indexBuffers->size())
+                const auto vbIt = vertexBuffers->find(bufferIndex);
+                const auto ibIt = indexBuffers->find(bufferIndex);
+                const auto countIt = indexcounts->find(bufferIndex);
+                if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
                 {
-                    ID3D11Buffer* vb = (*vertexBuffers)[bufferIndex].Get();
-                    ID3D11Buffer* ib = (*indexBuffers)[bufferIndex].Get();
-                    UINT32 icount = (*indexcounts)[bufferIndex];
+                    ID3D11Buffer* vb = vbIt->second.Get();
+                    ID3D11Buffer* ib = ibIt->second.Get();
+                    UINT32 icount = countIt->second;
                     if (vb && ib)
                     {
                         const UINT stride = sizeof(RenderData::Vertex);
@@ -45,8 +48,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
                         ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
-                        m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::SOLID].Get());
-                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
+                        m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
+                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
                         m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
                         m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
                         m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

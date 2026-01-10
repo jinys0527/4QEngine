@@ -9,9 +9,9 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 	if (m_bIsInitialized)
 		return;
 
-	m_RenderContext.vertexBuffers = &m_vVertexBuffers;
-	m_RenderContext.indexBuffers = &m_vIndexBuffers;
-	m_RenderContext.indexcounts = &m_vIndexCounts;
+	m_RenderContext.vertexBuffers = &m_VertexBuffers;
+	m_RenderContext.indexBuffers = &m_IndexBuffers;
+	m_RenderContext.indexcounts = &m_IndexCounts;
 
 	// Device 생성을 여기서함 (원래는 engine에서 받는 거)
 	//DXSetup(hWnd, width, height, m_pDXDC.Get()); // 멤버함수로 교체
@@ -105,16 +105,12 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 void Renderer::InitVB(const RenderData::FrameData& frame)
 {
-	UINT32 vsize = GetMaxMeshHandleId(frame);
-	m_vVertexBuffers.resize(vsize + 1);
-
 	for (const auto& [layer, items] : frame.renderItems)
 	{
 		for (const auto& item : items)
 		{
-			UINT index;
-			index = item.mesh.id;
-			if (m_vVertexBuffers[index] != nullptr)
+			UINT index = item.mesh.id;
+			if (m_VertexBuffers.find(index) != m_VertexBuffers.end())
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -123,7 +119,7 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 			ComPtr<ID3D11Buffer> vb;
 			CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size()), sizeof(RenderData::Vertex), vb.GetAddressOf());
 			 
-			m_vVertexBuffers[index] = vb;
+			m_VertexBuffers.emplace(index, vb);
 		}
 	}
 }
@@ -131,17 +127,12 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 //보니까 데이터 형식 상 vb와 함수 하나로 합치는게 좋을듯
 void Renderer::InitIB(const RenderData::FrameData& frame)
 {
-	UINT32 vsize = GetMaxMeshHandleId(frame);
-	m_vIndexBuffers.resize(vsize + 1);
-	m_vIndexCounts.resize(vsize + 1);
-
 	for (const auto& [layer, items] : frame.renderItems)
 	{
 		for (const auto& item : items)
 		{
-			UINT index;
-			index = item.mesh.id;
-			if (m_vIndexBuffers[index] != nullptr)
+			UINT index = item.mesh.id;
+			if (m_IndexBuffers.find(index) != m_IndexBuffers.end())
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -150,10 +141,10 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 
 			ComPtr<ID3D11Buffer> ib;
 			CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size()), ib.GetAddressOf());
-			m_vIndexBuffers[index] = ib;
+			m_IndexBuffers.emplace(index, ib);
 
 			UINT32 cnt = static_cast<UINT32>(mesh->indices.size());
-			m_vIndexCounts[index] = cnt;
+			m_IndexCounts.emplace(index, cnt);
 		}
 	}
 }
@@ -165,9 +156,9 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSView = m_pDSView;
 	m_RenderContext.pRTView = m_pRTView;
 
-	m_RenderContext.vertexBuffers = &m_vVertexBuffers;
-	m_RenderContext.indexBuffers = &m_vIndexBuffers;
-	m_RenderContext.indexcounts = &m_vIndexCounts;
+	m_RenderContext.vertexBuffers = &m_VertexBuffers;
+	m_RenderContext.indexBuffers = &m_IndexBuffers;
+	m_RenderContext.indexcounts = &m_IndexCounts;
 
 	m_RenderContext.VS = m_pVS;
 	m_RenderContext.PS = m_pPS;

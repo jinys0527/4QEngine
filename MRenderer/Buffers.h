@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "DX11.h"
-#include <vector>
+#include <unordered_map>
 
 //기본 상수 버퍼
 struct BaseConstBuffer
@@ -27,9 +27,10 @@ struct RenderContext
 	BaseConstBuffer				BCBuffer;
 	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
 
-	std::vector<ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
-	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
-	std::vector<UINT32>* indexcounts = nullptr;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
+	std::unordered_map<UINT, UINT32>* indexcounts = nullptr;
+
 
 	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
 

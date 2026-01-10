@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "DX11.h"
+#include <unordered_map>
 #include "Buffers.h"
 #include "RenderPipeline.h"
 #include "RenderTargetContext.h"
@@ -90,10 +91,10 @@ private:
 
 	//버텍스버퍼들
 	//※ map으로 관리 or 다른 방식 사용. notion issue 참조※
-	std::vector<ComPtr<ID3D11Buffer>> m_vVertexBuffers;
-	std::vector<ComPtr<ID3D11Buffer>> m_vIndexBuffers ;
-	std::vector<UINT32>				  m_vIndexCounts  ;
-	
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_VertexBuffers;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_IndexBuffers;
+	std::unordered_map<UINT, UINT32>				m_IndexCounts;
+
 	//임시
 	ComPtr<ID3D11InputLayout> m_pInputLayout;			
 	//임시 쉐이더코드
