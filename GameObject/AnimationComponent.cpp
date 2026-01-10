@@ -10,6 +10,147 @@
 
 REGISTER_COMPONENT(AnimationComponent);
 
+float ClampTimeToClip(float timeSec, const RenderData::AnimationClip* clip)
+{
+	if (!clip || clip->duration <= 0.0f)
+	{
+		return timeSec;
+	}
+
+	if (timeSec < 0.0f)
+	{
+		return 0.0f;
+	}
+
+	if (timeSec > clip->duration)
+	{
+		return clip->duration;
+	}
+
+	return timeSec;
+}
+
+float UpdatePlaybackTime(
+							float timeSec, 
+							float deltaTime,
+							const RenderData::AnimationClip* clip, 
+							bool  looping, 
+							bool* stopped
+						)
+{
+	float nextTime = timeSec + deltaTime;
+	if (!clip || clip->duration <= 0.0f)
+	{
+		return nextTime;
+	}
+
+	if (looping)
+	{
+		nextTime = fmod(nextTime, clip->duration);
+		if (nextTime < 0.0f)
+		{
+			nextTime += clip->duration;
+		}
+	}
+	else
+	{
+		if (nextTime >= clip->duration)
+		{
+			nextTime = clip->duration;
+			if (stopped)
+			{
+				*stopped = true;
+			}
+		}
+		else if (nextTime < 0.0f)
+		{
+			nextTime = 0.0f;
+		}
+	}
+
+	return nextTime;
+}
+
+void AnimationComponent::Play()
+{
+	m_Playback.playing = true;
+}
+
+void AnimationComponent::Stop()
+{
+	m_Playback.time    = 0.0f;
+	m_Playback.playing = false;
+}
+
+void AnimationComponent::Pause()
+{
+	m_Playback.playing = false;
+}
+
+void AnimationComponent::Resume()
+{
+	m_Playback.playing = true;
+}
+
+void AnimationComponent::SeekTime(float timeSec)
+{
+	const RenderData::AnimationClip* clip = ResolveClip();
+	m_Playback.time = ClampTimeToClip(timeSec, clip);
+}
+
+void AnimationComponent::SeekNormalized(float normalizedTime)
+{
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip || clip->duration <= 0.0f)
+	{
+		m_Playback.time = 0.0f;
+		return;
+	}
+	const float clamped    = ClampTimeToClip(normalizedTime, clip);
+	const float targetTime = clamped * clip->duration;
+	m_Playback.time        = ClampTimeToClip(targetTime, clip);
+}
+
+float AnimationComponent::GetNormalizedTime() const
+{
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip || clip->duration <= 0.0f)
+	{
+		return 0.0f;
+	}
+	return m_Playback.time / clip->duration;
+}
+
+void AnimationComponent::StartBlend(AnimationHandle toClip, float blendTime)
+{
+	const RenderData::AnimationClip* fromClip = ResolveClip(m_ClipHandle);
+	const RenderData::AnimationClip* nextClip = ResolveClip(toClip);
+	if (!nextClip)
+	{
+		return;
+	}
+
+	if (!fromClip || blendTime <= 0.0f)
+	{
+		m_Blend.active     = false;
+		m_ClipHandle       = toClip;
+		m_Playback.time    = 0.0f;
+		m_Playback.playing = true;
+		return;
+	}
+
+	m_Blend.active     = true;
+	m_Blend.fromClip   = m_ClipHandle;
+	m_Blend.toClip     = toClip;
+	m_Blend.duration   = max(blendTime, 0.0001f);
+	m_Blend.elapsed    = 0.0f;
+	m_Blend.fromTime   = m_Playback.time;
+	m_Blend.toTime     = 0.0f;
+
+	//전이 시작 시 타겟 클립 설정
+	m_ClipHandle       = toClip;
+	m_Playback.playing = true;
+}
 
 void AnimationComponent::Update(float deltaTime)
 {
@@ -24,39 +165,65 @@ void AnimationComponent::Update(float deltaTime)
 	if (!skeletal)
 		return;
 
+	
 	const RenderData::Skeleton* skeleton  = ResolveSkeleton(skeletal->GetSkeletonHandle());
-	const RenderData::AnimationClip* clip = ResolveClip();
-	if (!skeleton || !clip || skeleton->bones.empty())
+	if (!skeleton || skeleton->bones.empty())
 		return;
 
-	float nextTime = m_Playback.time + deltaTime * m_Playback.speed;
-	if (clip->duration > 0.0f)
+	const RenderData::AnimationClip* clip = ResolveClip();
+	
+	if (m_Blend.active)
 	{
-		if (m_Playback.looping)						 
+		const RenderData::AnimationClip* fromClip = ResolveClip(m_Blend.fromClip);
+		const RenderData::AnimationClip* toClip   = ResolveClip(m_Blend.toClip);
+		if (!fromClip || !toClip)
 		{
-			nextTime = fmod(nextTime, clip->duration);  // loop
-			if (nextTime < 0.0f)
-			{
-				nextTime += clip->duration;
-			}
+			m_Blend.active = false;
 		}
 		else
 		{
-			if (nextTime >= clip->duration)				// end
+			const float scaledDelta = deltaTime * m_Playback.speed;
+			m_Blend.fromTime = UpdatePlaybackTime(m_Blend.fromTime, scaledDelta, fromClip, m_Playback.looping, nullptr);
+			m_Blend.toTime   = UpdatePlaybackTime(m_Blend.toTime, scaledDelta, toClip, m_Playback.looping, nullptr);
+			m_Blend.elapsed += deltaTime;
+
+			const float alpha = min(m_Blend.elapsed / m_Blend.duration, 1.0f);
+
+			std::vector<LocalPose> fromPoses;
+			std::vector<LocalPose> toPoses;
+			std::vector<LocalPose> blendedPoses;
+			SampleLocalPoses  (*skeleton, *fromClip, m_Blend.fromTime, fromPoses);
+			SampleLocalPoses  (*skeleton, *toClip, m_Blend.toTime, toPoses);
+			BlendLocalPoses   (fromPoses, toPoses, alpha, blendedPoses);
+			BuildPoseFromLocal(*skeleton, blendedPoses);
+
+			m_Playback.time = m_Blend.toTime;
+
+			if (alpha >= 1.0f)
 			{
-				nextTime = clip->duration;
-				m_Playback.playing = false;
-			}
-			else if (nextTime < 0.0f)
-			{
-				nextTime = 0.0f;
+				m_Blend.active = false;
 			}
 		}
 	}
+	else
+	{
+		const RenderData::AnimationClip* clip = ResolveClip();
+		if (!clip)
+			return;
 
-	m_Playback.time = nextTime;
+		bool stopped = false;
+		const float scaledDelta = deltaTime * m_Playback.speed;
+		const float nextTime    = UpdatePlaybackTime(m_Playback.time, scaledDelta, clip, m_Playback.looping, &stopped);
 
-	BuildPose(*skeleton, *clip, m_Playback.time);
+		m_Playback.time = nextTime;
+		if (stopped)
+		{
+			m_Playback.playing = false;
+		}
+
+		BuildPose(*skeleton, *clip, m_Playback.time);
+	}
+
 	skeletal->SetSkinningPalette(m_SkinningPalette);
 }
 
@@ -109,6 +276,16 @@ const RenderData::AnimationClip* AnimationComponent::ResolveClip() const
 	}
 
 	return m_Animations->Get(m_ClipHandle);
+}
+
+const RenderData::AnimationClip* AnimationComponent::ResolveClip(AnimationHandle handle) const
+{
+	if (!handle.IsValid() || !m_Animations)
+	{
+		return nullptr;
+	}
+
+	return m_Animations->Get(handle);
 }
 
 const RenderData::Skeleton* AnimationComponent::ResolveSkeleton(SkeletonHandle handle) const
@@ -171,6 +348,21 @@ AnimationComponent::LocalPose AnimationComponent::SampleTrack(
 	return pose;
 }
 
+void AnimationComponent::SampleLocalPoses(const RenderData::Skeleton& skeleton, const RenderData::AnimationClip& clip, float timeSec, std::vector<LocalPose>& localPoses) const
+{
+	const size_t boneCount = skeleton.bones.size();
+	localPoses.assign(boneCount, LocalPose{});
+
+	for (const auto& track : clip.tracks)
+	{
+		if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) > boneCount)
+			continue;
+
+		localPoses[track.boneIndex] = SampleTrack(track, timeSec);
+	}
+
+}
+
 
 
 void AnimationComponent::BuildPose(
@@ -179,23 +371,26 @@ void AnimationComponent::BuildPose(
 									float timeSec
 								  )
 {
+	std::vector<LocalPose> localPoses;
+	SampleLocalPoses(skeleton, clip, timeSec, localPoses);
+	BuildPoseFromLocal(skeleton, localPoses);
+}
+
+void AnimationComponent::BuildPoseFromLocal(
+											   const RenderData::Skeleton & skeleton,
+											   const std::vector<LocalPose>&localPoses
+										   )
+{
 	const size_t boneCount = skeleton.bones.size();
 	m_LocalPose.resize(boneCount);
 	m_GlobalPose.resize(boneCount);
 	m_SkinningPalette.resize(boneCount);
 
-	std::vector<LocalPose> localPoses(boneCount);
-
-	for (const auto& track : clip.tracks)
-	{
-		if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) >= boneCount)
-			continue;
-		localPoses[track.boneIndex] = SampleTrack(track, timeSec);
-	}
+	const size_t poseCount = localPoses.size();
 
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		const auto& pose = localPoses[i];
+		const LocalPose& pose = i < poseCount ? localPoses[i] : LocalPose{};
 		const auto local = MathUtils::CreateTRS(pose.translation, pose.rotation, pose.scale);
 		DirectX::XMStoreFloat4x4(&m_LocalPose[i], local);
 
@@ -215,5 +410,29 @@ void AnimationComponent::BuildPose(
 		const auto invBind = DirectX::XMLoadFloat4x4(&skeleton.bones[i].inverseBindPose);
 		const auto skin    = DirectX::XMMatrixMultiply(global, invBind);
 		DirectX::XMStoreFloat4x4(&m_SkinningPalette[i], skin);
+	}
+}
+
+void AnimationComponent::BlendLocalPoses(
+											const std::vector<LocalPose>& fromPoses,
+											const std::vector<LocalPose>& toPoses,
+											float alpha,
+											std::vector<LocalPose>& blended
+										) const
+{
+	const size_t boneCount = max(fromPoses.size(), toPoses.size());
+	blended.resize(boneCount);
+	const float clampedAlpha = clamp(alpha, 0.0f, 1.0f);
+
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		const LocalPose& fromPose = i < fromPoses.size() ? fromPoses[i] : LocalPose{};
+		const LocalPose& toPose   = i < toPoses.size()   ? toPoses[i]   : LocalPose{};
+
+		blended[i].translation = MathUtils::Lerp3(fromPose.translation, toPose.translation, clampedAlpha);
+		blended[i].scale	   = MathUtils::Lerp3(fromPose.scale, toPose.scale, clampedAlpha);
+		blended[i].rotation    = MathUtils::Slerp4(fromPose.rotation, toPose.rotation, clampedAlpha);
+		const auto q = XMQuaternionNormalize(XMLoadFloat4(&blended[i].rotation));
+		XMStoreFloat4(&blended[i].rotation, q);
 	}
 }

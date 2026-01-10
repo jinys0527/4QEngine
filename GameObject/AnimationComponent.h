@@ -12,9 +12,6 @@ class AnimationComponent : public Component
 	friend class Editor;
 
 public:
-	static constexpr const char* StaticTypeName = "AnimationComponent";
-	const char* GetTypeName() const override;
-
 	struct PlaybackState
 	{
 		float time    = 0.0f;
@@ -23,11 +20,24 @@ public:
 		bool  playing = true;
 	};
 
+public:
+	static constexpr const char* StaticTypeName = "AnimationComponent";
+	const char* GetTypeName() const override;
+
 	AnimationComponent() = default;
 	virtual ~AnimationComponent() = default;
 
 	void SetClipHandle(AnimationHandle handle) { m_ClipHandle = handle; }
 	AnimationHandle GetClipHandle()			   { return m_ClipHandle;   }
+
+	void  Play             ();
+	void  Stop             ();
+	void  Pause            ();
+	void  Resume           ();
+	void  SeekTime         (float timeSec);
+	void  SeekNormalized   (float normalizedTime);
+	float GetNormalizedTime() const;
+	void  StartBlend       (AnimationHandle toClip, float blendTime);
 
 	void SetAnimationAssetReference(const std::string& assetPath, UINT32 clipIndex)
 	{
@@ -36,7 +46,7 @@ public:
 	}
 
 	const std::string& GetAnimationAssetPath() const { return m_AnimationAssetPath; }
-	UINT32 GetAnimationClipIndex            () const { return m_AnimationClipIndex; }
+	UINT32             GetAnimationClipIndex() const { return m_AnimationClipIndex; }
 
 	void SetResourceStores(ResourceStore<RenderData::Skeleton, SkeletonHandle>* skeletons,
 						   ResourceStore<RenderData::AnimationClip, AnimationHandle>* animations)
@@ -45,17 +55,18 @@ public:
 		m_Animations = animations;
 	}
 
-	PlaybackState& GetPlaybackState      ()       { return m_Playback; }
+	PlaybackState&       GetPlaybackState()       { return m_Playback; }
 	const PlaybackState& GetPlaybackState() const { return m_Playback; }
 
 	const std::vector<DirectX::XMFLOAT4X4>& GetSkinningPalette() const { return m_SkinningPalette; }
 
+	
+	void Update     (float deltaTime) override;
+	void OnEvent    (EventType type, const void* data) override;
 
-	void Update(float deltaTime) override;
-	void OnEvent(EventType type, const void* data) override;
-
-	void Serialize(nlohmann::json& j) const override;
+	void Serialize  (nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
+
 private:
 	struct LocalPose
 	{
@@ -64,17 +75,49 @@ private:
 		DirectX::XMFLOAT3 scale		 { 1.0f, 1.0f, 1.0f };
 	};
 
+	struct BlendState
+	{
+		bool active    = false;
+		AnimationHandle fromClip = AnimationHandle::Invalid();
+		AnimationHandle toClip   = AnimationHandle::Invalid();
+		float duration = 0.0f;
+		float elapsed  = 0.0f;
+		float fromTime = 0.0f;
+		float toTime   = 0.0f;
+	};
+
+private:
 	static LocalPose ToLocalPose(const RenderData::AnimationKeyFrame& key);
 	const RenderData::AnimationClip* ResolveClip    () const;
-	const RenderData::Skeleton*      ResolveSkeleton(SkeletonHandle handle) const;
+	const RenderData::AnimationClip* ResolveClip    (AnimationHandle handle) const;
+	const RenderData::Skeleton*      ResolveSkeleton(SkeletonHandle handle ) const;
 	static LocalPose SampleTrack(const RenderData::AnimationTrack& track, float timeSec);
+	void             SampleLocalPoses
+									   (
+									   	   const RenderData::Skeleton& skeleton,
+									   	   const RenderData::AnimationClip& clip,
+									   	   float timeSec,
+									   	   std::vector<LocalPose>& localPoses
+									   ) const;
 	void             BuildPose
-							 (
-								 const RenderData::Skeleton& skeleton,
-								 const RenderData::AnimationClip& clip,
-								 float timeSec
-							 );
-
+									   (
+										   const RenderData::Skeleton& skeleton,
+										   const RenderData::AnimationClip& clip,
+										   float timeSec
+									   );
+	void             BuildPoseFromLocal
+									   (
+									   	   const RenderData::Skeleton& skeleton,
+									   	   const std::vector<LocalPose>& localPoses
+									   );
+	void             BlendLocalPoses
+									   (
+									   	   const std::vector<LocalPose>& fromPoses,
+									   	   const std::vector<LocalPose>& toPoses,
+									   	   float alpha,
+									   	   std::vector<LocalPose>& blended
+									   ) const;
+private:
 	ResourceStore<RenderData::Skeleton, SkeletonHandle>*       m_Skeletons  = nullptr;
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>* m_Animations = nullptr;
 
@@ -83,6 +126,7 @@ private:
 	UINT32			m_AnimationClipIndex = 0;
 
 	PlaybackState m_Playback{};
+	BlendState    m_Blend{};
 
 	std::vector<DirectX::XMFLOAT4X4> m_LocalPose;
 	std::vector<DirectX::XMFLOAT4X4> m_GlobalPose;

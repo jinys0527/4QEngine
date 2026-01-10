@@ -13,8 +13,8 @@ public:
 	MeshComponent() = default;
 	virtual ~MeshComponent() = default;
 
-	void SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
-	MeshHandle GetMeshHandle() const      { return m_MeshHandle;   }
+	void       SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
+	MeshHandle GetMeshHandle() const            { return m_MeshHandle;   }
 
 	void SetMeshAssetReference(const std::string& assetPath, UINT32 meshIndex)
 	{
@@ -22,8 +22,8 @@ public:
 		m_MeshAssetIndex = meshIndex;
 	}
 
-	const std::string& GetMeshAssetPath() const { return m_MeshAssetPath; }
-	UINT32 GetMeshAssetIndex() const { return m_MeshAssetIndex; }
+	const std::string& GetMeshAssetPath() const  { return m_MeshAssetPath;  }
+	UINT32             GetMeshAssetIndex() const { return m_MeshAssetIndex; }
 
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;

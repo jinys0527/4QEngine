@@ -16,8 +16,8 @@ public:
 	SkeletalMeshRenderer() = default;
 	virtual ~SkeletalMeshRenderer() = default;
 
-	void SetSkeletonHandle(SkeletonHandle handle) { m_SkeletonHandle = handle; }
-	SkeletonHandle GetSkeletonHandle() const      { return m_SkeletonHandle;   }
+	void           SetSkeletonHandle(SkeletonHandle handle) { m_SkeletonHandle = handle; }
+	SkeletonHandle GetSkeletonHandle() const                { return m_SkeletonHandle;   }
 
 	bool BuildRenderItem(RenderData::RenderItem& out) const override;
 
