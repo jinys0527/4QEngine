@@ -89,7 +89,7 @@ bool DXSetup(HWND hWnd, int width, int height)
 
 void Draw()
 {
-    float clearColor[4] = { 0.2f, 0.2f, 0.6f, 1.0f }; // 파란색 배경
+    float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
     g_pDXDC->ClearRenderTargetView(g_pRTView.Get(), clearColor);
 
     g_pSwapChain->Present(1, 0);
