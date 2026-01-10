@@ -3,14 +3,43 @@
 void ShadowPass::Execute(const RenderData::FrameData& frame)
 {
     const auto& context = frame.context;
+    const auto& mainlight = frame.lights[0];
 
     m_RenderContext.BCBuffer.mView = context.view;
     m_RenderContext.BCBuffer.mProj = context.proj;
     m_RenderContext.BCBuffer.mVP = context.viewProj;
 
-    bool isVPUpdated = false;
+    //0번이 전역광이라고 가정...
+    XMMATRIX lightview, lightproj;
+    XMVECTOR maincampos = XMLoadFloat3(&context.cameraPos); //원래는 주인공 위치가 더 좋은데, 일단 카메라 위치로 해도 크게 상관 없을 듯
+    XMVECTOR dir = XMLoadFloat3(&mainlight.diretion);
+    XMVECTOR pos = dir * -10.f + maincampos;
+    XMVECTOR look = maincampos;
+    XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-    frame.lights[0].posiiton
+     lightview = XMMatrixLookAtLH(pos, look, up);
+    //원근 투영
+    //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
+    //직교 투영
+     lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
+
+     //텍스처 좌표 변환
+     XMFLOAT4X4 m = {
+         0.5f,  0.0f, 0.0f, 0.0f,
+         0.0f, -0.5f, 0.0f, 0.0f,
+         0.0f,  0.0f, 1.0f, 0.0f,
+         0.5f,  0.5f, 0.0f, 1.0f
+     };
+
+     XMMATRIX mscale = XMLoadFloat4x4(&m);
+     XMMATRIX mLightTM;
+     mLightTM = lightview * lightproj * mscale;
+
+     //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
+     //XMStoreFloat4x4();
+
+     m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
+     m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
 
     for (size_t index : GetQueue())
     {
@@ -23,7 +52,6 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
             m_RenderContext.BCBuffer.mWorld = item.world;
 
             UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
-
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;
