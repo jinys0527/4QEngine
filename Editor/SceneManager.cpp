@@ -84,13 +84,20 @@ void SceneManager::ChangeScene()
 	ChangeScene(m_ChangeSceneName);
 }
 
-void SceneManager::LoadSceneFromJson()
-{	// 선택했을때 해당 Scene을 Deserialize 해서 
-	// 현재 씬으로
-
-}
-
 void SceneManager::SetChangeScene(std::string name)
 {
 	m_ChangeSceneName = name;
 }
+
+bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
+{	// 선택했을때 해당 Scene을 Deserialize 해서 
+	// 현재 씬으로
+	return true;
+}
+
+bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
+{	
+	return true;
+}
+
+

@@ -8,6 +8,13 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+namespace {
+	//Icon
+	constexpr const char* kFolderIcon = "\xF0\x9F\x93\x81";
+	constexpr const char* kFileIcon	  = "\xF0\x9F\x93\x84";
+}
+
+
 bool EditorApplication::Initialize()
 {
 	const wchar_t* className = L"MIEditor";
@@ -281,7 +288,46 @@ void EditorApplication::DrawFolderView()
 {
 	ImGui::Begin("Folder");
 
-	ImGui::Text("Need Logic");
+	//ImGui::Text("Need Logic");
+	//logic
+	if(!std::filesystem::exists(m_ResourceRoot)) {
+		// resource folder 인식 문제방지
+		ImGui::Text("Resources folder not found: %s", m_ResourceRoot.string().c_str());
+		ImGui::End();
+		return;
+	}
+
+	if (ImGui::Button("Save")) {
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (scene)
+		{
+			std::filesystem::path savePath = m_CurrentScenePath;
+
+			if (savePath.empty())
+			{
+				savePath = m_ResourceRoot / (scene->GetName() + ".json");
+			}
+			if (m_SceneManager.SaveSceneToJson(savePath))
+			{
+				m_CurrentScenePath = savePath;
+			}
+		}
+	}
+		ImGui::SameLine();
+		if (m_CurrentScenePath.empty())
+		{
+			ImGui::Text("Current Scene: None");
+		}
+		else
+		{
+			ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
+		}
+
+		ImGui::Separator();
+
+
+	
+
 
 	ImGui::End();
 }

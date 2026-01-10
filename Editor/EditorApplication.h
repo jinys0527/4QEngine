@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "SceneManager.h"
 #include "SoundManager.h"
+#include <filesystem>
 
 class GameObject;
 
@@ -67,6 +68,12 @@ private:
 	RenderTargetContext m_SceneRenderTarget;
 	EditorViewport m_Viewport;
 
-
+	// Hier
 	std::string m_SelectedObjectName;
+
+	// Floder View 변수
+	std::filesystem::path m_ResourceRoot = "./Resources"; // resource root 지정
+	std::filesystem::path m_SelectedResourcePath;
+
+	std::filesystem::path m_CurrentScenePath;
 };
