@@ -1,6 +1,7 @@
 ﻿#include "ResourceStore.h"
 #include "OpaquePass.h"
 
+#include <algorithm>
 #include <iostream>
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
@@ -24,6 +25,31 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
             const auto& item = items[index];
 
             m_RenderContext.BCBuffer.mWorld = item.world;
+
+            if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
+            {
+                const size_t paletteStart = item.skinningPaletteOffset;
+                const size_t paletteCount = item.skinningPaletteCount;
+                const size_t paletteSize  = frame.skinningPalettes.size();
+                const size_t maxCount     = min(static_cast<size_t>(kMaxSkinningBones), paletteCount);
+                // Clamp
+                const size_t safeCount    = (paletteStart + maxCount <= paletteSize) ? maxCount : (paletteSize > paletteStart ? paletteSize - paletteStart : 0);
+                
+                m_RenderContext.SkinCBuffer.boneCount = static_cast<UINT>(safeCount);
+                for (size_t i = 0; i < safeCount; ++i)
+                {
+                    m_RenderContext.SkinCBuffer.bones[i] = frame.skinningPalettes[paletteStart + i];
+                }
+                UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+                
+				m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pBCB.GetAddressOf());
+            }
+			else if (m_RenderContext.pSkinCB)
+			{
+				m_RenderContext.SkinCBuffer.boneCount = 0;
+				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+                m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+			}
 
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;

@@ -1,5 +1,6 @@
 ﻿#include "AssetLoader.h"
 
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <cstdint>
@@ -57,8 +58,8 @@ namespace
 
 	struct VertexSkinned : Vertex
 	{
-		uint16_t boneIndex[4] = { 0,0,0,0 };
-		uint16_t boneWeight[4] = { 0,0,0,0 }; // normalized to 0..65535
+		std::array<uint16_t, 4> boneIndices{};
+		std::array<float, 4>    boneWeights{};
 	};
 
 	struct MatBinHeader
@@ -199,20 +200,23 @@ namespace
 	{
 		RenderData::Vertex out{};
 		out.position = { in.px, in.py, in.pz };
-		out.normal = { in.nx, in.ny, in.nz };
-		out.uv = { in.u, in.v };
-		out.tangent = { in.tx, in.ty, in.tz, in.handedness };
+		out.normal   = { in.nx, in.ny, in.nz };
+		out.uv       = { in.u, in.v };
+		out.tangent  = { in.tx, in.ty, in.tz, in.handedness };
 		return out;
 	}
 
 	RenderData::Vertex ToRenderVertex(const VertexSkinned& in)
 	{
 		RenderData::Vertex out = ToRenderVertex(static_cast<const Vertex&>(in));
-		for (size_t i = 0; i < 4; ++i)
-		{
-			out.boneIndex[i] = in.boneIndex[i];
-			out.boneWeight[i] = in.boneWeight[i];
-		}
+		out.boneIndices = { in.boneIndices[0], in.boneIndices[1], in.boneIndices[2], in.boneIndices[3] };
+		const float invWeight = 1.0f / 65535.0f;
+		out.boneWeights = {
+			static_cast<float>(in.boneWeights[0]) * invWeight,
+			static_cast<float>(in.boneWeights[1]) * invWeight,
+			static_cast<float>(in.boneWeights[2]) * invWeight,
+			static_cast<float>(in.boneWeights[3]) * invWeight
+		};
 		return out;
 	}
 

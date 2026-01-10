@@ -16,37 +16,38 @@ public:
 	virtual ~MeshRenderer() = default;
 
 	void SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
-	MeshHandle GetMeshHandle() const { return m_MeshHandle; }
+	MeshHandle GetMeshHandle() const      { return m_MeshHandle;   }
 
 	void SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
-	MaterialHandle GetMaterialHandle() const { return m_MaterialHandle; }
+	MaterialHandle GetMaterialHandle() const      { return m_MaterialHandle;   }
 
 	void SetVisible(bool visible) { m_Visible = visible; }
-	bool IsVisible() const { return m_Visible; }
+	bool IsVisible () const       { return m_Visible;    }
 	void SetCastShadow(bool castShadow) { m_CastShadow = castShadow; }
-	bool CastShadow() const { return m_CastShadow; }
+	bool CastShadow   () const          { return m_CastShadow;       }
 	void SetReceiveShadow(bool receiveShadow) { m_ReceiveShadow = receiveShadow; }
-	bool ReceiveShadow() const { return m_ReceiveShadow; }
+	bool ReceiveShadow   () const             { return m_ReceiveShadow;          }
 
 	void  SetRenderLayer(UINT8 layer) { m_RenderLayer = layer; }
-	UINT8 GetRenderLayer() const     { return m_RenderLayer;  }
+	UINT8 GetRenderLayer() const      { return m_RenderLayer;  }
 
-	bool BuildRenderItem(RenderData::RenderItem& out) const;
+	virtual bool BuildRenderItem(RenderData::RenderItem& out) const;
 
-	void Update(float deltaTime) override;
+	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize(nlohmann::json& j) const override;
+	void Serialize  (nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
 private:
-	static UINT64 BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT8 layer);
-	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const;
-	TransformComponent* GetTransform() const;
+	void ResolveHandles       (MeshHandle& mesh, MaterialHandle& material) const;
 
 protected:
-	MeshHandle     m_MeshHandle     = MeshHandle::Invalid();
-	MaterialHandle m_MaterialHandle = MaterialHandle::Invalid();
+	static UINT64 BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT8 layer);
+	TransformComponent* GetTransform() const;
+
+	MeshHandle     m_MeshHandle      = MeshHandle::Invalid();
+	MaterialHandle m_MaterialHandle  = MaterialHandle::Invalid();
 	bool  m_Visible                  = true;
 	bool  m_CastShadow               = true;
 	bool  m_ReceiveShadow            = true;

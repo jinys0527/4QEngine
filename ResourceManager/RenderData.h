@@ -17,14 +17,14 @@ namespace RenderData
 	using DirectX::XMFLOAT4;
 	using DirectX::XMFLOAT4X4;
 
-	struct Vertex
+	struct Vertex 
 	{
 		XMFLOAT3 position{ 0.0f, 0.0f, 0.0f };
 		XMFLOAT3 normal  { 0.0f, 0.0f, 0.0f };
 		XMFLOAT2 uv      { 0.0f, 0.0f };
 		XMFLOAT4 tangent { 0.0f, 0.0f, 0.0f, 1.0f };
-		uint16_t boneIndex[4]{ 0, 0, 0, 0 };
-		uint16_t boneWeight[4]{ 0, 0, 0, 0 }; // normalized to 0..65535
+		std::array<uint16_t, 4> boneIndices{ 0, 0, 0, 0 };
+		std::array<float, 4>    boneWeights{ 0, 0, 0, 0 }; // normalized to 0 ~ 1
 	};
 	
 	struct MeshData
@@ -146,8 +146,11 @@ namespace RenderData
 	{
 		MeshHandle     mesh     = MeshHandle::Invalid();
 		MaterialHandle material = MaterialHandle::Invalid();
+		SkeletonHandle skeleton = SkeletonHandle::Invalid();
 		XMFLOAT4X4     world{};
 		UINT64         sortKey = 0;
+		UINT32		   skinningPaletteOffset = 0;
+		UINT32		   skinningPaletteCount  = 0;
 	};
 
 	enum RenderLayer
@@ -163,5 +166,6 @@ namespace RenderData
 		FrameContext            context;
 		std::unordered_map<RenderLayer, std::vector<RenderItem>> renderItems;
 		std::vector<LightData>  lights;
+		std::vector<XMFLOAT4X4> skinningPalettes;
 	};
 }
