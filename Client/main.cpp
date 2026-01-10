@@ -46,12 +46,7 @@ int main()
  	}
     AssetLoader loader;
  
-    AssetLoader::AssetLoadResult result = loader.LoadAsset("../ResourceOutput/Dying/Meta/Dying.asset.json");
-	loader.LoadAsset("../ResourceOutput/Unarmed Walk Forward/Meta/Unarmed Walk Forward.asset.json");
-	loader.LoadAsset("../ResourceOutput/all/Meta/all.asset.json");
-	loader.LoadAsset("../ResourceOutput/cycle/Meta/cycle.asset.json");
-	loader.LoadAsset("../ResourceOutput/hiroshi/Meta/hiroshi.asset.json");
-	loader.LoadAsset("../ResourceOutput/shinchan/Meta/shinchan.asset.json");
+    loader.LoadAll();
 
     // 2) 메쉬/머티리얼 핸들 꺼내기
     //if (!result.meshes.empty())
