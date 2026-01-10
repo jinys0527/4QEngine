@@ -76,6 +76,7 @@ enum class SS
 
 enum class BS
 {
+    DEFAULT,            //불투명
     ALPHABLEND,         //투명, 반투명
     ADD,                // 빛, 불꽃, 이펙트 등, 색 밝아짐
     MULTIPLY,           //그림자 등, 어두워짐

@@ -138,6 +138,7 @@
     <ClCompile Include="RenderPass.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
     <ClCompile Include="RenderTargetContext.cpp" />
+    <ClCompile Include="ShadowPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="RenderPass.h" />
     <ClInclude Include="RenderPipeline.h" />
     <ClInclude Include="RenderTargetContext.h" />
+    <ClInclude Include="ShadowPass.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\BaseBuffer.hlsl">

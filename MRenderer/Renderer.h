@@ -47,6 +47,8 @@ private:
 	ComPtr<ID3D11Texture2D>         m_pDS;
 	ComPtr<ID3D11DepthStencilView>  m_pDSView;
 
+
+	struct TextureSize { int width, height; };
 	//imgui용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui;
@@ -55,6 +57,9 @@ private:
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Imgui;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Imgui;
 
+	//그림자 매핑용
+	ComPtr<ID3D11Texture2D>				m_pDSTex_Shadow;
+	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Shadow;
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> m_DSState;		//깊이 스텐실 상태
@@ -85,9 +90,6 @@ private:
 
 	RenderPipeline m_Pipeline;
 	AssetLoader& m_AssetLoader;
-
-
-
 
 
 	//렌더링에 필요한 요소들 공유를 위한 소통 창구 

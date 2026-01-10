@@ -23,6 +23,8 @@ struct RenderContext
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	DSState;
 	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)>		RState;
+	EnumArray<ComPtr<ID3D11SamplerState>, static_cast<size_t>(SS::MAX_)>		SState;			//샘플러 상태
+	EnumArray<ComPtr<ID3D11BlendState>, static_cast<size_t>(BS::MAX_)>			BState;			//블렌딩 상태
 
 	BaseConstBuffer				BCBuffer;
 	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
@@ -37,5 +39,9 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
 	ComPtr<ID3DBlob> VSCode;
+
+	//그림자 매핑용
+	ComPtr<ID3D11Texture2D>				pDSTex_Shadow;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Shadow;
 
 };

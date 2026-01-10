@@ -1,9 +1,6 @@
-﻿#include "ResourceStore.h"
-#include "OpaquePass.h"
+﻿#include "ShadowPass.h"
 
-#include <iostream>
-
-void OpaquePass::Execute(const RenderData::FrameData& frame)
+void ShadowPass::Execute(const RenderData::FrameData& frame)
 {
     const auto& context = frame.context;
 
@@ -11,12 +8,13 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     m_RenderContext.BCBuffer.mProj = context.proj;
     m_RenderContext.BCBuffer.mVP = context.viewProj;
 
-    
+    bool isVPUpdated = false;
 
-
+    frame.lights[0].posiiton
 
     for (size_t index : GetQueue())
     {
+
         for (const auto& [layer, items] : frame.renderItems)
         {
 
@@ -66,4 +64,5 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
             }
         }
     }
+
 }

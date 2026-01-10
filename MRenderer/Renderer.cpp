@@ -167,6 +167,11 @@ void Renderer::CreateContext()
 
 	m_RenderContext.RState = m_RState;
 	m_RenderContext.DSState = m_DSState;
+	m_RenderContext.SState = m_SState;
+	m_RenderContext.BState = m_BState;
+
+	m_RenderContext.pDSTex_Shadow = m_pDSTex_Shadow;
+	m_RenderContext.pDSViewScene_Shadow = m_pDSViewScene_Shadow;
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
@@ -622,6 +627,11 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 	DSCreate(960, 800, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
 #pragma endregion
 
+#pragma region ShadowMap
+	TextureSize TSize = { 16384, 16384 };
+	fmt = DXGI_FORMAT_R32_TYPELESS;
+	DSCreate(TSize.width, TSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
+#pragma endregion
 
 
 }
@@ -934,6 +944,20 @@ HRESULT Renderer::CreateBlendState()
 	D3D11_BLEND_DESC bd = {};
 	D3D11_RENDER_TARGET_BLEND_DESC rtb = {};
 
+	rtb.BlendEnable = FALSE;
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = FALSE;
+	bd.IndependentBlendEnable = FALSE;
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::DEFAULT].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	rtb = {};
 	rtb.BlendEnable = TRUE;
 	rtb.SrcBlend = D3D11_BLEND_SRC_ALPHA;
 	rtb.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
@@ -943,6 +967,7 @@ HRESULT Renderer::CreateBlendState()
 	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
+	bd = {};
 	bd.RenderTarget[0] = rtb;
 	bd.AlphaToCoverageEnable = FALSE;
 	bd.IndependentBlendEnable = FALSE;
@@ -955,6 +980,7 @@ HRESULT Renderer::CreateBlendState()
 	}
 
 
+	rtb = {};
 	rtb.BlendEnable = TRUE;
 	rtb.SrcBlend = D3D11_BLEND_SRC_ALPHA;
 	rtb.DestBlend = D3D11_BLEND_ONE;
@@ -964,7 +990,10 @@ HRESULT Renderer::CreateBlendState()
 	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
+	bd = {};
 	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = FALSE;
+	bd.IndependentBlendEnable = FALSE;
 
 	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ADD].GetAddressOf());
 	if (FAILED(hr))
@@ -974,6 +1003,7 @@ HRESULT Renderer::CreateBlendState()
 	}
 
 
+	rtb = {};
 	rtb.BlendEnable = TRUE;
 	rtb.SrcBlend = D3D11_BLEND_DEST_COLOR;
 	rtb.DestBlend = D3D11_BLEND_ZERO;
@@ -982,7 +1012,11 @@ HRESULT Renderer::CreateBlendState()
 	rtb.DestBlendAlpha = D3D11_BLEND_ZERO;
 	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd = {};
 	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = FALSE;
+	bd.IndependentBlendEnable = FALSE;
 
 	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::MULTIPLY].GetAddressOf());
 	if (FAILED(hr))
