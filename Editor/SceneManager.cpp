@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "SceneManager.h"
 #include "DefaultScene.h"
+#include "json.hpp"
+#include <fstream>
 //editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
 {
@@ -52,14 +54,6 @@ void SceneManager::Render()
 	m_Renderer.Draw(renderInfo, uiRenderInfo, uiTextInfo);*/
 }
 
-//std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shared_ptr<Scene> scene)
-//{
-//	m_Scenes[name] = scene;
-//
-//	//m_Scenes[name]->SetGameManager(&m_GameManager);
-//
-//	return m_Scenes[name];
-//}
 
 void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
@@ -92,12 +86,49 @@ void SceneManager::SetChangeScene(std::string name)
 bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 {	// 선택했을때 해당 Scene을 Deserialize 해서 
 	// 현재 씬으로
+	if (filePath.empty())
+	{
+		return false;
+	}
+
+	std::ifstream ifs(filePath);
+	if (!ifs.is_open())
+	{
+		return false;
+	}
+
+	nlohmann::json j;
+	ifs >> j;
+
+	auto loadedScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_SoundManager, m_UIManager);
+	loadedScene->SetName(filePath.stem().string());
+	loadedScene->Initialize();
+	loadedScene->Deserialize(j);
+	SetCurrentScene(loadedScene);
+	m_CurrentScenePath = filePath;
+
 	return true;
 }
 
 bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 {	
+	// 같은 이름이 있는경우 그냥 덮어쓰기 할것
+	if (!m_CurrentScene)
+	{
+		return false;
+	}
+
+	std::ofstream ofs(filePath);
+	if (!ofs.is_open())
+	{
+		return false;
+	}
+
+	nlohmann::json j;
+	m_CurrentScene->Serialize(j);
+	ofs << j.dump(4);
 	return true;
+	
 }
 
 

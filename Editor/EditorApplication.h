@@ -72,7 +72,8 @@ private:
 	std::string m_SelectedObjectName;
 
 	// Floder View 변수
-	std::filesystem::path m_ResourceRoot = "./Resources"; // resource root 지정
+	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음
+	std::filesystem::path m_ResourceRoot = "../Resources"; 
 	std::filesystem::path m_SelectedResourcePath;
 
 	std::filesystem::path m_CurrentScenePath;

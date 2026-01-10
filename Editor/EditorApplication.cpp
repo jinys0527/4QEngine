@@ -2,18 +2,39 @@
 #include "EditorApplication.h"
 #include "CameraComponent.h"
 #include "GameObject.h"
+#include "Reflection.h"
 #include "Renderer.h"
 #include "Scene.h"
 #include "DX11.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-namespace {
-	//Icon
-	constexpr const char* kFolderIcon = "\xF0\x9F\x93\x81";
-	constexpr const char* kFileIcon	  = "\xF0\x9F\x93\x84";
+// util
+// Check 
+bool SceneHasObjectName(const Scene& scene, const std::string& name)
+{  
+	const auto& opaqueObjects = scene.GetOpaqueObjects();
+	const auto& transparentObjects = scene.GetTransparentObjects();
+	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
 }
 
+// 이름 중복방지(넘버링)
+std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName)
+{
+	if (!SceneHasObjectName(scene, baseName))
+	{
+		return baseName;
+	}
+	for (int index = 1; index < 10000; ++index)
+	{
+		std::string candidate = baseName + std::to_string(index);
+		if (!SceneHasObjectName(scene, candidate))
+		{
+			return candidate;
+		}
+	}
+	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
+}
 
 bool EditorApplication::Initialize()
 {
@@ -44,7 +65,6 @@ bool EditorApplication::Initialize()
 	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
 	//RT 받기
 	//초기 세팅 값으로 창 배치
-
 
 	return true;
 }
@@ -216,13 +236,23 @@ void EditorApplication::DrawHierarchy() {
 
 	auto scene = m_SceneManager.GetCurrentScene();
 
-	// Scene이 없는 경우
-	if (!scene) {
+	// Scene이 없는 경우는 이젠 없음
+	/*if (!scene) {
 		ImGui::Text("No Objects");
 		ImGui::End();
 		return;
+	}*/
+
+	// hier창 우클릭 생성, 오브젝트에서 우클릭 Delete 필요( 추후 수정) 
+	if (ImGui::Button("Add GameObject")) // Button
+	{
+		const std::string name = MakeUniqueObjectName(*scene, "GameObject");
+		scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
+		//scene->CreateGameObject(name, false);
+		m_SelectedObjectName = name;
 	}
 
+	ImGui::Separator();
 	// GameObjects map 가져와	Opaque
 	for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
 		const bool selected = (m_SelectedObjectName == name);
@@ -281,6 +311,46 @@ void EditorApplication::DrawInspector() {
 
 		// 여기서 각 Component별 Property와 조작까지 생성?
 	}
+
+	if (ImGui::Button("Add Component"))
+	{
+		ImGui::OpenPopup("AddComponentPopup");
+	}
+
+	if (ImGui::BeginPopup("AddComponentPopup"))
+	{
+		// Logic
+		const auto existingTypes = it->second->GetComponentTypeNames();
+		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
+		for (const auto& typeName : typeNames)
+		{
+			const bool hasType = std::find(existingTypes.begin(), existingTypes.end(), typeName) != existingTypes.end();
+			const bool disallowDuplicate = (typeName == "TransformComponent");
+			const bool disabled = hasType && disallowDuplicate;
+
+			if (disabled)
+			{
+				ImGui::BeginDisabled();
+			}
+
+			if (ImGui::MenuItem(typeName.c_str()))
+			{
+				auto comp = ComponentFactory::Instance().Create(typeName);
+				if (comp)
+				{
+					it->second->AddComponent(std::move(comp));
+				}
+			}
+
+			if (disabled)
+			{
+				ImGui::EndDisabled();
+			}
+		}
+		ImGui::EndPopup();
+	} // 
+
+
 	ImGui::End();
 }
 
@@ -324,11 +394,57 @@ void EditorApplication::DrawFolderView()
 		}
 
 		ImGui::Separator();
+		const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
+			{
+				std::vector<std::filesystem::directory_entry> entries;
+				for (const auto& entry : std::filesystem::directory_iterator(dir))
+				{
+					entries.push_back(entry);
+				}
 
+				std::sort(entries.begin(), entries.end(),
+					[](const auto& a, const auto& b)
+					{
+						if (a.is_directory() != b.is_directory())
+						{
+							return a.is_directory() > b.is_directory();
+						}
+						return a.path().filename().string() < b.path().filename().string();
+					});
 
-	
+				for (const auto& entry : entries)
+				{
+					const auto name = entry.path().filename().string();
+					if (entry.is_directory())
+					{
+						const std::string label =  name;
+						const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+						if (ImGui::TreeNodeEx(label.c_str(), flags))
+						{
+							self(self, entry.path());
+							ImGui::TreePop();
+						}
+					}
+					else
+					{
+						const std::string label =  name;
+						const bool selected = (m_SelectedResourcePath == entry.path());
+						if (ImGui::Selectable(label.c_str(), selected))
+						{
+							m_SelectedResourcePath = entry.path();
+							if (entry.path().extension() == ".json")
+							{
+								if (m_SceneManager.LoadSceneFromJson(entry.path()))
+								{
+									m_CurrentScenePath = entry.path();
+								}
+							}
+						}
+					}
+				}
+			};
 
-
+		drawDirectory(drawDirectory, m_ResourceRoot);
 	ImGui::End();
 }
 

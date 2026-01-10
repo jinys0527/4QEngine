@@ -68,6 +68,14 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 
 }
 
+std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name, bool isOpaque)
+{
+	auto gameObject = std::make_shared<GameObject>(m_EventDispatcher);
+	gameObject->SetName(name);
+	AddGameObject(gameObject, isOpaque);
+	return gameObject;
+}
+
 void Scene::SetMainCamera(std::shared_ptr<CameraObject> cameraObject)
 {
 	m_Camera = cameraObject;

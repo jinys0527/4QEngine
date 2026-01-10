@@ -61,6 +61,7 @@ private:
 	SoundManager&     m_SoundManager;
 	UIManager&	      m_UIManager;
 
+	std::filesystem::path m_CurrentScenePath;
 	bool			  m_ShouldQuit;
 	std::string		  m_ChangeSceneName;
 };

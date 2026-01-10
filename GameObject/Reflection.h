@@ -114,11 +114,13 @@ using namespace MathUtils;
 		static ComponentRegistry& Instance();
 
 		void Register(ComponentTypeInfo* info);
-
+		vector<string> GetTypeNames() const; // 등론된 이름 전체 return
 		ComponentTypeInfo* Find(const string& name) {
 			auto it = m_Types.find(name);
 			return (it != m_Types.end()) ? it->second : nullptr;
 		}
+
+
 		void Check() {
 			//개발 확인용
 			for (const auto& [name, typeInfo] : m_Types) {
