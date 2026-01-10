@@ -110,11 +110,13 @@ void EditorApplication::Update()
 
 void EditorApplication::Render() {
 	if (!m_Engine.GetD3DDXDC()) return; //★
+
+
 	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get()};
 	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
 	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
-	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), rtvs[0]);
+	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
 	m_SceneManager.Render(); // Scene 전체 그리고
 

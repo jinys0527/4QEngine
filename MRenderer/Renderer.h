@@ -25,6 +25,7 @@ public:
 
 	ComPtr<ID3D11RenderTargetView>	GetRTView() { return m_pRTView; }
 	ComPtr<IDXGISwapChain>			GetSwapChain() { return m_pSwapChain; }
+
 //DX Set
 private:
 	void	DXSetup(HWND hWnd, int width, int height);
@@ -94,7 +95,7 @@ private:
 	std::vector<UINT32>				  m_vIndexCounts  ;
 	
 	//임시
-	ComPtr<ID3D11InputLayout> m_pInputLayout;
+	ComPtr<ID3D11InputLayout> m_pInputLayout;			
 	//임시 쉐이더코드
 	ComPtr<ID3D11VertexShader> m_pVS;
 	ComPtr<ID3D11PixelShader> m_pPS;
@@ -107,6 +108,8 @@ private:
 	struct VertexPC { XMFLOAT3 pos;};
 
 	ComPtr<ID3D11Buffer> m_GridVB;
+	ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
+
 	UINT m_GridVertexCount = 0;
 	std::vector<std::vector<int>> m_GridFlags;  // 0=empty,1=blocked
 	void CreateGridVB();

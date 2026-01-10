@@ -28,7 +28,7 @@ int ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11Rende
 
 int Flip(IDXGISwapChain* swapchain)
 {
-    swapchain->Present(0, 0);			//수직 동기화 0:끔, 1:켬
+    swapchain->Present(FALSE, 0);			//수직 동기화 0:끔, 1:켬
 
     return 0;
 }
