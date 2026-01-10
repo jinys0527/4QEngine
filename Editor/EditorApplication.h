@@ -17,8 +17,8 @@ class EditorApplication : public NzWndBase
 {
 
 public:
-	EditorApplication(Engine& engine,Renderer& renderer, SceneManager& sceneManager, SoundManager& soundManager) 
-		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager) {
+	EditorApplication(Engine& engine,Renderer& renderer, SceneManager& sceneManager, SoundManager& soundManager, AssetLoader& assetLoader) 
+		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager), m_AssetLoader(assetLoader) {
 	}
 
 	virtual ~EditorApplication() = default;
@@ -44,7 +44,7 @@ private:
 	void DrawHierarchy();
 	void DrawInspector();
 	void DrawFolderView();
-
+	void DrawResourceBrowser();
 
 	//Gui 관련
 	void CreateDockSpace();
@@ -61,7 +61,7 @@ private:
 	Engine& m_Engine;
 	SceneManager& m_SceneManager;
 	SoundManager& m_SoundManager;
-	//AssetLoader m_AssetLoader;
+	AssetLoader&  m_AssetLoader;
 	Renderer& m_Renderer;
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext m_SceneRenderTarget;

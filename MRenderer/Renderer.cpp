@@ -88,11 +88,11 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 {
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.Get());
 
-	SetViewPort(960, 800, m_pDXDC.Get());
-	float clearColor[4] = { 0.f, 0.f, 1.f, 1.f };
-	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui.Get(), clearColor);
-	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
 
+	SetViewPort(960, 800);
+	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
+	g_pDXDC->ClearRenderTargetView(g_pRTScene, clearColor);
+	g_pDXDC->ClearDepthStencilView(g_pDSViewScene, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
 
 	//그리드
 	UpdateGrid(frame);
@@ -868,7 +868,7 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 	XMFLOAT3		g_vUp(0.0f, 1.0f, 0.0f);		//카메라 상방 벡터1.(Direction)
 
 	// 투영 변환 정보. 
-	float g_fFov = XMConvertToRadians(45);	//기본 FOV 앵글. Field of View (Y) 
+	float g_fFov = XMConvertToRadians(45);	//기본 FOV 앵글. Field of View (Y)
 
 	XMVECTOR eye = XMLoadFloat3(&g_vEye);	//카메라 위치 
 	XMVECTOR lookat = XMLoadFloat3(&g_vLookAt);	//바라보는 곳.위치.

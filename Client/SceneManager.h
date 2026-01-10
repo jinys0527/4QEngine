@@ -10,6 +10,8 @@
 #include "GameManager.h"
 #include "UIManager.h"
 
+class CameraObject;
+
 class SceneManager
 {
 	friend class Editor;
@@ -24,8 +26,8 @@ public:
 	void StateUpdate(float deltaTime);
 	void Render();
 
-	//void SetCamera(CameraObject* camera) { m_Camera = camera; }
-	//CameraObject* GetCamera() { return m_Camera; }
+	void SetCamera(CameraObject* camera) { m_Camera = camera; }
+	CameraObject* GetCamera() { return m_Camera; }
 
 	std::shared_ptr<Scene> AddScene(const std::string& name, std::shared_ptr<Scene> scene);
 	void SetCurrentScene(const std::string& name);
@@ -49,7 +51,7 @@ public:
 private:
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
-	//CameraObject* m_Camera = nullptr;
+	CameraObject* m_Camera = nullptr;
 	//D2DRenderer& m_Renderer;
 	//AssetManager& m_AssetManager;
 	//SoundAssetManager& m_SoundAssetManager;

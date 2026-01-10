@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "json.hpp"
 
+class TransformComponent;
 
 class GameObject : public Object 
 {
@@ -34,6 +35,6 @@ public:
 	GameObject& operator=(GameObject&&)      = delete;
 
 protected:
-	//TransformComponent* m_Transform;
+	TransformComponent* m_Transform;
 };
 

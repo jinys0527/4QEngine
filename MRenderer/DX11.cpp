@@ -12,7 +12,28 @@
 
 int ClearBackBuffer(COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview)
 {
-    dxdc->ClearRenderTargetView(rtview, (float*)&col);
+    float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+    g_pDXDC->ClearRenderTargetView(g_pRTView.Get(), clearColor);
+
+    g_pSwapChain->Present(1, 0);
+}
+
+void DXRelease()
+{
+    if (g_pDXDC)
+    {
+        g_pDXDC->ClearState();
+    }
+    g_pRTView->Release();
+    g_pSwapChain->Release();
+    g_pDXDC->Release();
+    g_pDevice->Release();
+
+}
+
+int ClearBackBuffer(COLOR col)
+{
+    g_pDXDC->ClearRenderTargetView(g_pRTView.Get(), (float*)&col);
 
     return S_OK;
 }

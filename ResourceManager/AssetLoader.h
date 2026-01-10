@@ -18,8 +18,8 @@ public:
 		std::vector<AnimationHandle> animations;
 	};
 
-	AssetLoadResult LoadAsset(const std::string& assetMetaPath);
-
+	void LoadAll();
+	
 	ResourceStore<RenderData::MeshData, MeshHandle>& GetMeshes() { return m_Meshes; }
 	ResourceStore<RenderData::MaterialData, MaterialHandle>& GetMaterials() { return m_Materials; }
 	ResourceStore<RenderData::TextureData, TextureHandle>& GetTextures() { return m_Textures; }
@@ -27,6 +27,8 @@ public:
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>& GetAnimations() { return m_Animations; }
 
 private:
+	AssetLoadResult LoadAsset(const std::string& assetMetaPath);
+
 	ResourceStore<RenderData::MeshData, MeshHandle> m_Meshes;
 	ResourceStore<RenderData::MaterialData, MaterialHandle> m_Materials;
 	ResourceStore<RenderData::TextureData, TextureHandle> m_Textures;
