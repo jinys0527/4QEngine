@@ -11,7 +11,7 @@ bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
 	if (!m_Visible)
 		return false;
 
-	MeshHandle mesh = MeshHandle::Invalid();
+	MeshHandle     mesh     = MeshHandle::Invalid();
 	MaterialHandle material = MaterialHandle::Invalid();
 	ResolveHandles(mesh, material);
 
@@ -22,10 +22,10 @@ bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
 	if (!transform)
 		return false;
 
-	out.mesh = mesh;
+	out.mesh     = mesh;
 	out.material = material;
-	out.world = transform->GetWorldMatrix();
-	out.sortKey = BuildSortKey(mesh, material, m_RenderLayer);
+	out.world    = transform->GetWorldMatrix();
+	out.sortKey  = BuildSortKey(mesh, material, m_RenderLayer);
 	return true;
 }
 
@@ -77,7 +77,7 @@ UINT64 MeshRenderer::BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT
 
 void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const
 {
-	mesh = m_MeshHandle;
+	mesh     = m_MeshHandle;
 	material = m_MaterialHandle;
 
 	const Object* owner = GetOwner();

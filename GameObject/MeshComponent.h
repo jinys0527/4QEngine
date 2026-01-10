@@ -31,9 +31,9 @@ public:
 	void Serialize(nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 protected:
-	MeshHandle m_MeshHandle;
+	MeshHandle  m_MeshHandle;
 	std::string m_MeshAssetPath;
-	UINT32 m_MeshAssetIndex = 0;
+	UINT32      m_MeshAssetIndex = 0;
 };
 
 

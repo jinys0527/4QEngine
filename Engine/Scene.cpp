@@ -9,6 +9,8 @@
 #include "MeshRenderer.h"
 #include "LightComponent.h"
 #include "TransformComponent.h"
+#include "SkeletalMeshComponent.h"
+#include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
 
 Scene::~Scene()
@@ -213,6 +215,44 @@ void AppendFrameDataFromObjects(
 			}
 		}
 
+		// object 단위로 미리 계산
+		UINT32 paletteOffset = 0;
+		UINT32 paletteCount = 0;
+		bool hasPalette     = false;
+
+		if (const auto* skeletal = gameObject->GetComponent<SkeletalMeshComponent>())
+		{
+			const auto& palette = skeletal->GetSkinningPalette();
+			if (!palette.empty())
+			{
+				paletteOffset = (UINT32)frameData.skinningPalettes.size();
+				paletteCount  = (UINT32)palette.size();
+				frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
+				hasPalette    = true;
+			}
+		}
+
+		for (const auto* renderer : gameObject->GetComponents<SkeletalMeshRenderer>())
+		{
+			RenderData::RenderItem item{};
+			if (!renderer || !renderer->BuildRenderItem(item))
+				continue;
+
+			if (const auto* skeletal = gameObject->GetComponent<SkeletalMeshComponent>())
+			{
+				item.skeleton = skeletal->GetSkeletonHandle();
+			}
+
+			if (hasPalette)
+			{
+				item.skinningPaletteOffset = paletteOffset;
+				item.skinningPaletteCount  = paletteCount;
+			}
+
+			frameData.renderItems[layer].push_back(item);
+		}
+
+
 		for (const auto* light : gameObject->GetComponents<LightComponent>())
 		{
 			if (!light)
@@ -240,6 +280,7 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 {
 	frameData.renderItems.clear();
 	frameData.lights.clear();
+	frameData.skinningPalettes.clear();
 
 	RenderData::FrameContext& context = frameData.context;
 	context = RenderData::FrameContext{};
