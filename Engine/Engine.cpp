@@ -11,6 +11,7 @@ void Engine::Initailize()
 	//m_SoundAssetManager = std::make_unique<SoundAssetManager>();
 
 	m_GameTimer.Reset();
+	
 }
 
 void Engine::UpdateTime()

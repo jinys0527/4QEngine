@@ -15,19 +15,19 @@ bool RenderTargetContext::Create(UINT width, UINT height, DXGI_FORMAT colorForma
 	m_DepthFormat = depthFormat;
 
 	ID3D11Texture2D* colorTex = nullptr;
-	if (FAILED(RTTexCreate(width, height, colorFormat, &colorTex)))
+	if (FAILED( RTTexCreate(m_pDevice.Get(), width, height, colorFormat, &colorTex)))
 	{
 		return false;
 	}
 	m_ColorTexture.Attach(colorTex);
 
-	if (FAILED(RTViewCreate(colorFormat, m_ColorTexture.Get(), m_RenderTargetView.GetAddressOf())))
+	if (FAILED(RTViewCreate(m_pDevice.Get(), colorFormat, m_ColorTexture.Get(), m_RenderTargetView.GetAddressOf())))
 	{
 		Reset();
 		return false;
 	}
 
-	if (FAILED(RTSRViewCreate(colorFormat, m_ColorTexture.Get(), m_ShaderResourceView.GetAddressOf())))
+	if (FAILED(RTSRViewCreate(m_pDevice.Get(), colorFormat, m_ColorTexture.Get(), m_ShaderResourceView.GetAddressOf())))
 	{
 		Reset();
 		return false;
@@ -35,7 +35,8 @@ bool RenderTargetContext::Create(UINT width, UINT height, DXGI_FORMAT colorForma
 
 	ID3D11Texture2D* depthTex = nullptr;
 	ID3D11DepthStencilView* dsv = nullptr;
-	if (FAILED(DSCreate(width, height, depthFormat, depthTex, dsv)))
+
+	if (FAILED(DSCreate(m_pDevice.Get(), width, height, depthFormat, &depthTex, &dsv)))
 	{
 		Reset();
 		return false;
@@ -80,8 +81,8 @@ void RenderTargetContext::Bind() const
 	}
 
 	ID3D11RenderTargetView* rtvs[] = { m_RenderTargetView.Get() };
-	g_pDXDC->OMSetRenderTargets(1, rtvs, m_DepthStencilView.Get());
-	SetViewPort(static_cast<int>(m_Width), static_cast<int>(m_Height));
+	m_pDXDC->OMSetRenderTargets(1, rtvs, m_DepthStencilView.Get());
+	SetViewPort(static_cast<int>(m_Width), static_cast<int>(m_Height), m_pDXDC.Get());
 }
 
 void RenderTargetContext::Clear(const COLOR& color, float depth, UINT stencil) const
@@ -91,6 +92,6 @@ void RenderTargetContext::Clear(const COLOR& color, float depth, UINT stencil) c
 		return;
 	}
 
-	g_pDXDC->ClearRenderTargetView(m_RenderTargetView.Get(), reinterpret_cast<const float*>(&color));
-	g_pDXDC->ClearDepthStencilView(m_DepthStencilView.Get(), D3D11_CLEAR_DEPTH, depth, stencil);
+	m_pDXDC->ClearRenderTargetView(m_RenderTargetView.Get(), reinterpret_cast<const float*>(&color));
+	m_pDXDC->ClearDepthStencilView(m_DepthStencilView.Get(), D3D11_CLEAR_DEPTH, depth, stencil);
 }

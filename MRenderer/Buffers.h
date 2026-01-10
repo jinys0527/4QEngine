@@ -15,6 +15,15 @@ struct BaseConstBuffer
 
 struct RenderContext
 {
+	ComPtr<ID3D11Device>            pDevice;
+	ComPtr<ID3D11DeviceContext>     pDXDC;
+	ComPtr<ID3D11RenderTargetView>	pRTView;
+	ComPtr<ID3D11DepthStencilView>  pDSView;
+
+
+	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	DSState;
+	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)>		RState;
+
 	BaseConstBuffer				BCBuffer;
 	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
 
