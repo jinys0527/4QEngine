@@ -18,6 +18,14 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
 }
 
+// 이름 변경용 helper 
+void CopyStringToBuffer(const std::string& value, std::array<char, 256>& buffer)
+{
+	std::snprintf(buffer.data(), buffer.size(), "%s", value.c_str());
+}
+//////////////////////
+// 
+// 
 // 이름 중복방지(넘버링)
 std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName)
 {
@@ -34,6 +42,98 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 		}
 	}
 	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
+}
+
+bool DrawComponentPropertyEditor(Component* component, const Property& property)
+{	// 각 Property별 배치 Layout은 정해줘야 함
+	const std::type_info& typeInfo = property.GetTypeInfo();
+
+	if (typeInfo == typeid(int))
+	{
+		int value = 0;
+		property.GetValue(component, &value);
+		if (ImGui::InputInt(property.GetName().c_str(), &value))
+		{
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	if (typeInfo == typeid(float))
+	{
+		float value = 0.0f;
+		property.GetValue(component, &value);
+		if (ImGui::InputFloat(property.GetName().c_str(), &value))
+		{
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	if (typeInfo == typeid(bool))
+	{
+		bool value = false;
+		property.GetValue(component, &value);
+		if (ImGui::Checkbox(property.GetName().c_str(), &value))
+		{
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	if (typeInfo == typeid(XMFLOAT2))
+	{
+		XMFLOAT2 value{};
+		property.GetValue(component, &value);
+		float data[2] = { value.x, value.y };
+		if (ImGui::InputFloat2(property.GetName().c_str(), data))
+		{
+			value.x = data[0];
+			value.y = data[1];
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	if (typeInfo == typeid(XMFLOAT3))
+	{
+		XMFLOAT3 value{};
+		property.GetValue(component, &value);
+		float data[3] = { value.x, value.y, value.z };
+		if (ImGui::InputFloat3(property.GetName().c_str(), data))
+		{
+			value.x = data[0];
+			value.y = data[1];
+			value.z = data[2];
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	if (typeInfo == typeid(XMFLOAT4))
+	{
+		XMFLOAT4 value{};
+		property.GetValue(component, &value);
+		float data[4] = { value.x, value.y, value.z, value.w };
+		if (ImGui::InputFloat4(property.GetName().c_str(), data))
+		{
+			value.x = data[0];
+			value.y = data[1];
+			value.z = data[2];
+			value.w = data[3];
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
+	return false;
 }
 
 bool EditorApplication::Initialize()
@@ -237,11 +337,35 @@ void EditorApplication::DrawHierarchy() {
 	auto scene = m_SceneManager.GetCurrentScene();
 
 	// Scene이 없는 경우는 이젠 없음
-	/*if (!scene) {
-		ImGui::Text("No Objects");
+	if (!scene) {
+		ImGui::Text("Scene Loading Fail");
 		ImGui::End();
 		return;
-	}*/
+	}
+
+	if (scene->GetName() != m_LastSceneName)
+	{
+		CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
+		m_LastSceneName = scene->GetName();
+	}
+	// Scene 이름 변경
+	ImGui::Text("Scene");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-1);
+	ImGui::InputText("##SceneName", m_SceneNameBuffer.data(), m_SceneNameBuffer.size());
+	if (ImGui::IsItemDeactivatedAfterEdit())
+	{
+		std::string newName = m_SceneNameBuffer.data();
+		if (!newName.empty() && newName != scene->GetName())
+		{
+			scene->SetName(newName);
+			m_LastSceneName = newName;
+		}
+		else
+		{
+			CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
+		}
+	}
 
 	// hier창 우클릭 생성, 오브젝트에서 우클릭 Delete 필요( 추후 수정) 
 	if (ImGui::Button("Add GameObject")) // Button
@@ -253,19 +377,50 @@ void EditorApplication::DrawHierarchy() {
 	}
 
 	ImGui::Separator();
+	std::vector<std::string> pendingDeletes;
+
 	// GameObjects map 가져와	Opaque
 	for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
+		ImGui::PushID(name.c_str());
 		const bool selected = (m_SelectedObjectName == name);
 		if (ImGui::Selectable(name.c_str(), selected)) {
 			m_SelectedObjectName = name;
 		}
+		if (ImGui::BeginPopupContextItem("ObjectContext"))
+		{
+			if (ImGui::MenuItem("Delete"))
+			{
+				pendingDeletes.push_back(name);
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::PopID();
 	}
 
 	//Transparent
 	for (const auto& [name, Object] : scene->GetTransparentObjects()) {
+		ImGui::PushID(name.c_str());
 		const bool selected = (m_SelectedObjectName == name);
 		if (ImGui::Selectable(name.c_str(), selected)) {
 			m_SelectedObjectName = name;
+		}
+		if (ImGui::BeginPopupContextItem("ObjectContext"))
+		{
+			if (ImGui::MenuItem("Delete"))
+			{
+				pendingDeletes.push_back(name);
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::PopID();
+	}
+
+	for (const auto& name : pendingDeletes)
+	{
+		scene->RemoveGameObjectByName(name);
+		if (m_SelectedObjectName == name)
+		{
+			m_SelectedObjectName.clear();
 		}
 	}
 
@@ -274,6 +429,7 @@ void EditorApplication::DrawHierarchy() {
 }
 
 void EditorApplication::DrawInspector() {
+
 	ImGui::Begin("Inspector");
 	auto scene = m_SceneManager.GetCurrentScene();
 	if (!scene) {
@@ -302,15 +458,69 @@ void EditorApplication::DrawInspector() {
 
 	auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
 
-	ImGui::Text("Name : %s", it->second->GetName().c_str());
+	if (m_LastSelectedObjectName != m_SelectedObjectName)
+	{
+		CopyStringToBuffer(it->second->GetName(), m_ObjectNameBuffer);
+		m_LastSelectedObjectName = m_SelectedObjectName;
+	}
+
+	ImGui::Text("Name");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-1);
+	ImGui::InputText("##ObjectName", m_ObjectNameBuffer.data(), m_ObjectNameBuffer.size());
+	if (ImGui::IsItemDeactivatedAfterEdit())
+	{
+		std::string newName = m_ObjectNameBuffer.data();
+		if (!newName.empty() && newName != it->second->GetName())
+		{
+			const std::string currentName = it->second->GetName();
+			if (scene->RenameGameObject(currentName, newName))
+			{
+				m_SelectedObjectName = newName;
+				m_LastSelectedObjectName = newName;
+			}
+			else
+			{
+				CopyStringToBuffer(it->second->GetName(), m_ObjectNameBuffer);
+			}
+		}
+		else
+		{
+			CopyStringToBuffer(it->second->GetName(), m_ObjectNameBuffer);
+		}
+	}
 	ImGui::Separator();
 	ImGui::Text("Components");
+	ImGui::Separator();
+
 
 	for (const auto& typeName : it->second->GetComponentTypeNames()) {
-		ImGui::BulletText("%s", typeName.c_str());
-
 		// 여기서 각 Component별 Property와 조작까지 생성?
+		ImGui::PushID(typeName.c_str());
+		const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
+		if (ImGui::TreeNodeEx(typeName.c_str(), flags))
+		{
+			Component* component = it->second->GetComponentByTypeName(typeName);
+			auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
+			if (component && typeInfo)
+			{
+				for (const auto& prop : typeInfo->properties)
+				{	
+					// 한 Property에 대한 것
+					DrawComponentPropertyEditor(component, *prop);
+				}
+				ImGui::Separator();
+			}
+			else
+			{
+				ImGui::TextDisabled("Component data unavailable.");
+			}
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
 	}
+
+	
 
 	if (ImGui::Button("Add Component"))
 	{
@@ -582,7 +792,6 @@ void EditorApplication::DrawResourceBrowser()
 	ImGui::End();
 }
 
-
 void EditorApplication::CreateDockSpace()
 {
 	ImGui::DockSpaceOverViewport(
@@ -613,11 +822,11 @@ void EditorApplication::SetupEditorDockLayout()
 	// 나눠지는 순서도 중요
 	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
 
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.20f, &dockRight, &dockMain); //Right 20%
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockMain); //Right 20%
 	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.2f, &dockBottom, &dockMain);  //Down 20%
 
-	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.50f, &dockRightA, &dockMain); // Right 10%
-	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.50f, &dockRightB, &dockMain);// Right 10%
+	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.40f, &dockRightA, &dockMain); // Right 10%
+	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.60f, &dockRightB, &dockMain);// Right 10%
 	
 	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.10f, &dockRight, &dockMain);
 	

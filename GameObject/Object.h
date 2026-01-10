@@ -76,6 +76,9 @@ public:
 
 	std::vector<std::string> GetComponentTypeNames() const;
 
+	Component* GetComponentByTypeName(const std::string& typeName, int index = 0) const;
+	std::vector<Component*> GetComponentsByTypeName(const std::string& typeName) const;
+
 	virtual void Update(float deltaTime);
 
 	virtual void FixedUpdate();

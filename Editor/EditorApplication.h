@@ -11,6 +11,7 @@
 #include "SceneManager.h"
 #include "SoundManager.h"
 #include <filesystem>
+#include <array>
 
 class GameObject;
 
@@ -71,9 +72,15 @@ private:
 	// Hier
 	std::string m_SelectedObjectName;
 
+	//이름 변경 관련
+	std::string m_LastSelectedObjectName;
+	std::string m_LastSceneName;
+	std::array<char, 256> m_ObjectNameBuffer;
+	std::array<char, 256> m_SceneNameBuffer;
+
 	// Floder View 변수
 	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음
-	std::filesystem::path m_ResourceRoot = "../Resources"; 
+	std::filesystem::path m_ResourceRoot = "../Resources/Scenes"; 
 	std::filesystem::path m_SelectedResourcePath;
 
 	std::filesystem::path m_CurrentScenePath;

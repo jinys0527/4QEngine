@@ -60,6 +60,10 @@ public:
 	void SetMainCamera(std::shared_ptr<CameraObject> cameraObject);
 	std::shared_ptr<CameraObject> GetMainCamera() { return m_Camera; }
 
+	bool RemoveGameObjectByName(const std::string& name);
+	bool RenameGameObject(const std::string& currentName, const std::string& newName);
+	bool HasGameObjectName(const std::string& name) const;
+
 	void Serialize          (nlohmann::json& j) const;
 	void Deserialize        (const nlohmann::json& j);
 	void BuildFrameData(RenderData::FrameData& frameData) const;
