@@ -45,14 +45,16 @@ typedef DXGI_MODE_DESC DISPLAY;
     }
 
 #pragma region 상태
-enum class DS {
+enum class DS 
+{
     DEPTH_ON,
     DEPTH_OFF,
 
     MAX_,
 };
 
-enum class RS {
+enum class RS 
+{
     SOLID,				//채우기, 컬링 없음
     WIREFRM,			//Wireframe, 컬링 없음
     CULLBACK,			//뒷면 컬링 
@@ -61,7 +63,25 @@ enum class RS {
     MAX_
 };
 
+enum class SS
+{
+    WRAP,
+    MIRROR,
+    CLAMP,
+    BORDER,
+    BORDER_SHADOW,
 
+    MAX_
+};
+
+enum class BS
+{
+    ALPHABLEND,         //투명, 반투명
+    ADD,                // 빛, 불꽃, 이펙트 등, 색 밝아짐
+    MULTIPLY,           //그림자 등, 어두워짐
+
+    MAX_
+};
 //enum 래퍼 타입
 template<typename T, size_t N>
 struct EnumArray
@@ -87,6 +107,27 @@ struct EnumArray
     {
         return data[static_cast<size_t>(e)];
     }
+
+    T& operator[](SS e)
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
+    const T& operator[](SS e) const
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
+    T& operator[](BS e)
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
+    const T& operator[](BS e) const
+    {
+        return data[static_cast<size_t>(e)];
+    }
+
 };
 
 #pragma endregion

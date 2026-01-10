@@ -33,8 +33,10 @@ private:
 	HRESULT CreateDeviceSwapChain(HWND hWnd);
 	HRESULT CreateRenderTarget();
 	HRESULT CreateDepthStencil(int width, int height);
-	void	CreateDepthStencilState();
-	void	CreateRasterState();
+	HRESULT	CreateDepthStencilState();
+	HRESULT	CreateRasterState();
+	HRESULT	CreateSamplerState();
+	HRESULT CreateBlendState();
 
 	DWORD m_dwAA = 1;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
 
@@ -57,6 +59,8 @@ private:
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> m_DSState;		//깊이 스텐실 상태
 	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)> m_RState;			//래스터라이저 상태
+	EnumArray<ComPtr<ID3D11SamplerState>, static_cast<size_t>(SS::MAX_)> m_SState;			//샘플러 상태
+	EnumArray<ComPtr<ID3D11BlendState>, static_cast<size_t>(BS::MAX_)> m_BState;			//블렌딩 상태
 
 private:
 	void CreateContext();

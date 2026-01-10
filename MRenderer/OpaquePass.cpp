@@ -13,7 +13,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
     
 
-    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 
 
     for (size_t index : GetQueue())
@@ -24,6 +23,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
             const auto& item = items[index];
 
             m_RenderContext.BCBuffer.mWorld = item.world;
+
+            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
@@ -62,17 +63,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                     }
                 }
             }
-
-
-
-
-
-
-
-            //아래 세팅하는건 함수로 빼두자
-            //UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
-            //g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-
         }
     }
 }

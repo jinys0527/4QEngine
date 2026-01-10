@@ -605,6 +605,7 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView.GetAddressOf(), m_pDSView.Get());
 	SetViewPort(width, height, m_pDXDC.Get());
 	CreateDepthStencilState();
+	CreateSamplerState();
 
 #pragma region Imgui RenderTarget
 	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -755,8 +756,10 @@ HRESULT Renderer::CreateDepthStencil(int width, int height)
 	return hr;
 }
 
-void Renderer::CreateDepthStencilState()
+HRESULT Renderer::CreateDepthStencilState()
 {
+	HRESULT hr;
+
 	D3D11_DEPTH_STENCIL_DESC  ds;
 	ds.DepthEnable = TRUE;
 	ds.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -764,49 +767,231 @@ void Renderer::CreateDepthStencilState()
 	ds.StencilEnable = FALSE;
 	ds.DepthEnable = TRUE;
 	ds.StencilEnable = FALSE;
-	m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_ON].GetAddressOf());
-
-	ds.DepthEnable = FALSE;
-	m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_OFF].GetAddressOf());
-}
-
-void Renderer::CreateRasterState()
-{
+	hr = m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_ON].GetAddressOf());
+	if (FAILED(hr))
 	{
-		//[상태객체 1] 기본 렌더링 상태 개체.
-		D3D11_RASTERIZER_DESC rd;
-		rd.FillMode = D3D11_FILL_SOLID;		//삼각형 색상 채우기.(기본값)
-		rd.CullMode = D3D11_CULL_NONE;		//컬링 없음. (기본값은 컬링 Back)		
-		rd.FrontCounterClockwise = false;   //이하 기본값...
-		rd.DepthBias = 0;
-		rd.DepthBiasClamp = 0;
-		rd.SlopeScaledDepthBias = 0;
-		rd.DepthClipEnable = true;
-		rd.ScissorEnable = false;
-		rd.MultisampleEnable = false;
-		rd.AntialiasedLineEnable = false;
-		//레스터라이져 상태 객체 생성.
-		m_pDevice->CreateRasterizerState(&rd, m_RState[RS::SOLID].GetAddressOf());
-
-
-		//[상태객체2] 와이어 프레임 그리기. 
-		rd.FillMode = D3D11_FILL_WIREFRAME;
-		rd.CullMode = D3D11_CULL_NONE;
-		//레스터라이져 객체 생성.
-		m_pDevice->CreateRasterizerState(&rd, m_RState[RS::WIREFRM].GetAddressOf());
-
-		//[상태객체3] 컬링 On! "CCW"
-		rd.FillMode = D3D11_FILL_SOLID;
-		rd.CullMode = D3D11_CULL_BACK;
-		m_pDevice->CreateRasterizerState(&rd, m_RState[RS::CULLBACK].GetAddressOf());
-
-		//[상태객체4] 와이어 프레임 + 컬링 On! "CCW"
-		rd.FillMode = D3D11_FILL_WIREFRAME;
-		rd.CullMode = D3D11_CULL_BACK;
-		m_pDevice->CreateRasterizerState(&rd, m_RState[RS::WIRECULLBACK].GetAddressOf());
-
+		ERROR_MSG(hr);
+		return hr;
 	}
 
+
+	ds.DepthEnable = FALSE;
+	hr = m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_OFF].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	return hr;
+}
+
+HRESULT Renderer::CreateRasterState()
+{
+	HRESULT hr;
+
+	//[상태객체 1] 기본 렌더링 상태 개체.
+	D3D11_RASTERIZER_DESC rd;
+	rd.FillMode = D3D11_FILL_SOLID;		//삼각형 색상 채우기.(기본값)
+	rd.CullMode = D3D11_CULL_NONE;		//컬링 없음. (기본값은 컬링 Back)		
+	rd.FrontCounterClockwise = false;   //이하 기본값...
+	rd.DepthBias = 0;
+	rd.DepthBiasClamp = 0;
+	rd.SlopeScaledDepthBias = 0;
+	rd.DepthClipEnable = true;
+	rd.ScissorEnable = false;
+	rd.MultisampleEnable = false;
+	rd.AntialiasedLineEnable = false;
+	//레스터라이져 상태 객체 생성.
+	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::SOLID].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	//[상태객체2] 와이어 프레임 그리기. 
+	rd.FillMode = D3D11_FILL_WIREFRAME;
+	rd.CullMode = D3D11_CULL_NONE;
+	//레스터라이져 객체 생성.
+	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::WIREFRM].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	//[상태객체3] 컬링 On! "CCW"
+	rd.FillMode = D3D11_FILL_SOLID;
+	rd.CullMode = D3D11_CULL_BACK;
+	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::CULLBACK].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	//[상태객체4] 와이어 프레임 + 컬링 On! "CCW"
+	rd.FillMode = D3D11_FILL_WIREFRAME;
+	rd.CullMode = D3D11_CULL_BACK;
+	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::WIRECULLBACK].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	
+
+}
+
+HRESULT Renderer::CreateSamplerState()
+{
+	HRESULT hr;
+	//셈플러 정보 설정.(이하 기본값)
+	D3D11_SAMPLER_DESC sd = {};
+	//ZeroMemory(&sd, sizeof(D3D11_SAMPLER_DESC));
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.Filter = D3D11_FILTER_ANISOTROPIC;
+	sd.MaxAnisotropy = 8;
+	sd.MinLOD = 0;
+	sd.MaxLOD = D3D11_FLOAT32_MAX;
+	sd.MipLODBias = 0;
+	sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sd.BorderColor[0] = 0;
+	sd.BorderColor[1] = 0;
+	sd.BorderColor[2] = 0;
+	sd.BorderColor[3] = 1;
+
+	hr = m_pDevice->CreateSamplerState(&sd, m_SState[SS::WRAP].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_MIRROR;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_MIRROR;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_MIRROR;
+	hr = m_pDevice->CreateSamplerState(&sd, m_SState[SS::MIRROR].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	hr = m_pDevice->CreateSamplerState(&sd, m_SState[SS::CLAMP].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	hr = m_pDevice->CreateSamplerState(&sd, m_SState[SS::BORDER].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	sd.BorderColor[0] = 1;
+	sd.BorderColor[1] = 1;
+	sd.BorderColor[2] = 1;
+	sd.BorderColor[3] = 1;
+
+	hr = m_pDevice->CreateSamplerState(&sd, m_SState[SS::BORDER_SHADOW].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	return hr;
+}
+
+HRESULT Renderer::CreateBlendState()
+{
+	HRESULT hr;
+
+	D3D11_BLEND_DESC bd = {};
+	D3D11_RENDER_TARGET_BLEND_DESC rtb = {};
+
+	rtb.BlendEnable = TRUE;
+	rtb.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtb.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rtb.BlendOp = D3D11_BLEND_OP_ADD;
+	rtb.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtb.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = FALSE;
+	bd.IndependentBlendEnable = FALSE;
+
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ALPHABLEND].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	rtb.BlendEnable = TRUE;
+	rtb.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtb.DestBlend = D3D11_BLEND_ONE;
+	rtb.BlendOp = D3D11_BLEND_OP_ADD;
+	rtb.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtb.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd.RenderTarget[0] = rtb;
+
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ADD].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	rtb.BlendEnable = TRUE;
+	rtb.SrcBlend = D3D11_BLEND_DEST_COLOR;
+	rtb.DestBlend = D3D11_BLEND_ZERO;
+	rtb.BlendOp = D3D11_BLEND_OP_ADD;
+	rtb.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtb.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	bd.RenderTarget[0] = rtb;
+
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::MULTIPLY].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	return hr;
 }
 
 void Renderer::CreateGridVB()
