@@ -2,6 +2,7 @@
 #include <functional>
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 using StateFunc = std::function<void()>;
 using StateFuncFloat = std::function<void(float)>;
@@ -15,6 +16,7 @@ struct State
 struct Transition
 {
 	std::string from, to, onEvent;
+	int priority = 0;
 };
 
 class FSM
@@ -41,9 +43,14 @@ public:
 
 	State& GetState(const StateID& id) { return m_States.at(id); }
 
-	void AddTransition(const std::string& from, const std::string& to, const std::string& evt)
+	void AddTransition(const StateID& from, const StateID& to, const std::string& evt)
 	{
-		m_Transitions[from][evt] = to;
+		AddTransition(from, to, evt, 0);
+	}
+	
+	void AddTransition(const StateID& from, const StateID& to, const std::string& evt, int priority)
+	{
+		m_Transitions[from][evt].push_back({ from, to, evt, priority });
 	}
 
 	void Update(float deltaTime);
@@ -63,7 +70,7 @@ public:
 
 private:
 	std::unordered_map<StateID, State> m_States;
-	std::unordered_map <StateID, std::unordered_map <std::string, StateID>> m_Transitions;
+	std::unordered_map <StateID, std::unordered_map <std::string, std::vector<Transition>>> m_Transitions;
 	StateID m_CurrentState;
 };
 

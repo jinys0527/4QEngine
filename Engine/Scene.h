@@ -49,6 +49,8 @@ public:
 
 	void AddGameObject      (std::shared_ptr<GameObject> gameObject, bool isOpaque);
 	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject, bool isOpaque);
+	std::shared_ptr<GameObject> CreateGameObject(const std::string& name, bool isOpaque = true);
+
 
 	// For Editor map 자체 Getter( 수정 불가능 상태 )
 	// 수정 해야하는 경우 양 const 제거 ( Add GameObject 는 editor에서 call 하면, Scene의 add object 작동 editor map 직접 수정 X)
@@ -57,6 +59,10 @@ public:
 
 	void SetMainCamera(std::shared_ptr<CameraObject> cameraObject);
 	std::shared_ptr<CameraObject> GetMainCamera() { return m_Camera; }
+
+	bool RemoveGameObjectByName(const std::string& name);
+	bool RenameGameObject(const std::string& currentName, const std::string& newName);
+	bool HasGameObjectName(const std::string& name) const;
 
 	void Serialize          (nlohmann::json& j) const;
 	void Deserialize        (const nlohmann::json& j);

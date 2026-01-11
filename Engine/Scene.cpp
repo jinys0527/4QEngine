@@ -9,6 +9,8 @@
 #include "MeshRenderer.h"
 #include "LightComponent.h"
 #include "TransformComponent.h"
+#include "SkeletalMeshComponent.h"
+#include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
 
 Scene::~Scene()
@@ -65,6 +67,77 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 	}
 
 }
+
+std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name, bool isOpaque)
+{
+	auto gameObject = std::make_shared<GameObject>(m_EventDispatcher);
+	gameObject->SetName(name);
+	AddGameObject(gameObject, isOpaque);
+	return gameObject;
+}
+
+
+bool Scene::RemoveGameObjectByName(const std::string& name)
+{
+	auto opaqueIt = m_OpaqueObjects.find(name);
+	if (opaqueIt != m_OpaqueObjects.end())
+	{
+		RemoveGameObject(opaqueIt->second, true);
+		return true;
+	}
+
+	auto transparentIt = m_TransparentObjects.find(name);
+	if (transparentIt != m_TransparentObjects.end())
+	{
+		RemoveGameObject(transparentIt->second, false);
+		return true;
+	}
+
+	return false;
+}
+
+bool Scene::RenameGameObject(const std::string& currentName, const std::string& newName)
+{
+	if (currentName == newName || newName.empty())
+	{
+		return false;
+	}
+
+	if (HasGameObjectName(newName))
+	{
+		return false;
+	}
+
+	// 계속 2번 동작 해야됨
+	auto opaqueNode = m_OpaqueObjects.extract(currentName);
+	if (!opaqueNode.empty())
+	{
+		opaqueNode.key() = newName;
+		opaqueNode.mapped()->SetName(newName);
+		m_OpaqueObjects.insert(std::move(opaqueNode));
+		return true;
+	}
+
+	auto transparentNode = m_TransparentObjects.extract(currentName);
+	if (!transparentNode.empty())
+	{
+		transparentNode.key() = newName;
+		transparentNode.mapped()->SetName(newName);
+		m_TransparentObjects.insert(std::move(transparentNode));
+		return true;
+	}
+
+	return false;
+}
+
+bool Scene::HasGameObjectName(const std::string& name) const
+{
+	return m_OpaqueObjects.find(name) != m_OpaqueObjects.end()
+		|| m_TransparentObjects.find(name) != m_TransparentObjects.end();
+}
+
+
+
 
 void Scene::SetMainCamera(std::shared_ptr<CameraObject> cameraObject)
 {
@@ -213,6 +286,44 @@ void AppendFrameDataFromObjects(
 			}
 		}
 
+		// object 단위로 미리 계산
+		UINT32 paletteOffset = 0;
+		UINT32 paletteCount = 0;
+		bool hasPalette     = false;
+
+		if (const auto* skeletal = gameObject->GetComponent<SkeletalMeshComponent>())
+		{
+			const auto& palette = skeletal->GetSkinningPalette();
+			if (!palette.empty())
+			{
+				paletteOffset = (UINT32)frameData.skinningPalettes.size();
+				paletteCount  = (UINT32)palette.size();
+				frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
+				hasPalette    = true;
+			}
+		}
+
+		for (const auto* renderer : gameObject->GetComponents<SkeletalMeshRenderer>())
+		{
+			RenderData::RenderItem item{};
+			if (!renderer || !renderer->BuildRenderItem(item))
+				continue;
+
+			if (const auto* skeletal = gameObject->GetComponent<SkeletalMeshComponent>())
+			{
+				item.skeleton = skeletal->GetSkeletonHandle();
+			}
+
+			if (hasPalette)
+			{
+				item.skinningPaletteOffset = paletteOffset;
+				item.skinningPaletteCount  = paletteCount;
+			}
+
+			frameData.renderItems[layer].push_back(item);
+		}
+
+
 		for (const auto* light : gameObject->GetComponents<LightComponent>())
 		{
 			if (!light)
@@ -240,6 +351,7 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 {
 	frameData.renderItems.clear();
 	frameData.lights.clear();
+	frameData.skinningPalettes.clear();
 
 	RenderData::FrameContext& context = frameData.context;
 	context = RenderData::FrameContext{};

@@ -43,6 +43,15 @@
     <ClCompile Include="ComponentRegistration.cpp">
       <Filter>Components\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SkeletalMeshComponent.cpp">
+      <Filter>Components\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationComponent.cpp">
+      <Filter>Components\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletalMeshRenderer.cpp">
+      <Filter>Components\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component.h">
@@ -94,6 +103,16 @@
     <ClInclude Include="Serializer.h">
       <Filter>Reflection\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationComponent.h">
+      <Filter>Components\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletalMeshComponent.h">
+      <Filter>Components\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletalMeshRenderer.h">
+      <Filter>Components\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimBlendCurveFunction.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">

@@ -463,6 +463,70 @@ static std::string ExtractClipName(const std::string& filePath, const std::strin
 	return filename;
 }
 
+static void DebugDumpAssimpScene(const aiScene* scene)
+{
+	if (!scene || !scene->mRootNode)
+	{
+		printf("[ASSIMP] scene or root null\n");
+		return;
+	}
+
+	printf("[ASSIMP] meshes=%u animations=%u root=%s\n",
+		scene->mNumMeshes,
+		scene->mNumAnimations,
+		scene->mRootNode->mName.C_Str());
+
+	for (unsigned m = 0; m < scene->mNumMeshes; ++m)
+	{
+		const aiMesh* mesh = scene->mMeshes[m];
+		if (!mesh) continue;
+		printf("  mesh[%u] bones=%u verts=%u\n", m, mesh->mNumBones, mesh->mNumVertices);
+	}
+
+	for (unsigned a = 0; a < scene->mNumAnimations; ++a)
+	{
+		const aiAnimation* anim = scene->mAnimations[a];
+		if (!anim) continue;
+		printf("  anim[%u] name=%s channels=%u duration=%f ticks=%f\n",
+			a,
+			anim->mName.C_Str(),
+			anim->mNumChannels,
+			(float)anim->mDuration,
+			(float)anim->mTicksPerSecond);
+
+		const unsigned dumpCount = std::min(5u, anim->mNumChannels);
+		for (unsigned c = 0; c < dumpCount; ++c)
+		{
+			const aiNodeAnim* ch = anim->mChannels[c];
+			if (!ch) continue;
+			printf("    ch[%u] node=%s posKeys=%u rotKeys=%u scaleKeys=%u\n",
+				c,
+				ch->mNodeName.C_Str(),
+				ch->mNumPositionKeys,
+				ch->mNumRotationKeys,
+				ch->mNumScalingKeys);
+		}
+	}
+
+	// node name dump (limited)
+	struct StackItem { const aiNode* n; int depth; };
+	std::vector<StackItem> st;
+	st.push_back({ scene->mRootNode, 0 });
+
+	unsigned printed = 0;
+	while (!st.empty() && printed < 200)
+	{
+		auto [n, d] = st.back();
+		st.pop_back();
+		if (!n) continue;
+
+		printf("  node d=%d name=%s children=%u\n", d, n->mName.C_Str(), n->mNumChildren);
+		++printed;
+
+		for (int i = (int)n->mNumChildren - 1; i >= 0; --i)
+			st.push_back({ n->mChildren[i], d + 1 });
+	}
+}
 
 void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 {
@@ -470,13 +534,14 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	const fs::path fbxPath = fs::u8path(FBXPath);
 	const std::string assetName = SanitizeName(fbxPath.stem().u8string());
 
-	const fs::path baseDir = fs::u8path(outDir) / assetName; // asset 폴더(진짜 루트)
-	const fs::path meshesDir = baseDir / "Meshes";
-	const fs::path animsDir = baseDir / "Anims";
-	const fs::path matsDir = baseDir / "Mats";
-	const fs::path texDir = baseDir / "Textures";
-	const fs::path skelDir = baseDir / "Skels";
-	const fs::path metaDir = baseDir / "Meta";
+	const fs::path baseDir     = fs::u8path(outDir) / assetName; // asset 폴더(진짜 루트)
+	const fs::path meshesDir   = baseDir / "Meshes";
+	const fs::path animsDir    = baseDir / "Anims";
+	const fs::path matsDir     = baseDir / "Mats";
+	const fs::path texDir      = baseDir / "Textures";
+	const fs::path skelDir     = baseDir / "Skels";
+	const fs::path metaDir     = baseDir / "Meta";
+	const fs::path skelMetaDir = baseDir / "SkelMeta";
 
 	EnsureDir(meshesDir);
 	EnsureDir(animsDir);
@@ -484,14 +549,17 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	EnsureDir(texDir);
 	EnsureDir(skelDir);
 	EnsureDir(metaDir);
+	EnsureDir(skelMetaDir);
 
-	const fs::path skelBinPath = skelDir / (assetName + ".skelbin");
-	const fs::path matBinPath = matsDir / (assetName + ".matbin");
-	const fs::path metaPath = metaDir / (assetName + ".asset.json");
+	const fs::path skelBinPath  = skelDir     / (assetName + ".skelbin");
+	const fs::path matBinPath   = matsDir     / (assetName + ".matbin");
+	const fs::path metaPath     = metaDir     / (assetName + ".asset.json");
+	const fs::path skelMetaPath = skelMetaDir / (assetName + ".skelmeta.json");
 
 
 	// ----- 2) Assimp load -----
 	Assimp::Importer importer;
+	importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 0.01f);
 
 	// DX11 / LH 기준
 	const aiScene* scene = importer.ReadFile(
@@ -499,20 +567,42 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		aiProcess_Triangulate			|			// 모든 면을 삼각형으로 반환
 		aiProcess_GenNormals			|			// 노멀 생성
 		aiProcess_CalcTangentSpace		|			// 탄젠트 공간 계산
+		aiProcess_GlobalScale			|
 		aiProcess_JoinIdenticalVertices |			// 중복 정점 제거
 		aiProcess_ConvertToLeftHanded				// LH 변환
 	);
 
 	if (!scene) return ;
-
+#ifdef _DEBUG
+	DebugDumpAssimpScene(scene);   // ← 여기
+#endif
+	
 	// ----- 3) Import pipeline -----
 	const auto embeddedUsage = CollectEmbeddedTextureUsage(scene);
 	WriteEmbeddedTextures(scene, texDir, embeddedUsage);
 	const auto externalTextureRemap = CollectExternalTextureRemap(scene, fbxPath.parent_path(), texDir);
 	const auto fallbackTextureMap = CollectFallbackTextures(texDir);
+
+	nlohmann::json skeletonMeta = nlohmann::json::object();
+	if (fs::exists(skelMetaPath))
+	{
+		std::ifstream skelMetaStream(skelMetaPath);
+		if (skelMetaStream)
+		{
+			try
+			{
+				skelMetaStream >> skeletonMeta;
+			}
+			catch (const std::exception&)
+			{
+				skeletonMeta = nlohmann::json::object();
+			}
+		}
+	}
+
 	std::unordered_map<std::string, uint32_t> boneMap;
 	// Skeleton (없으면 boneMap 비거나 skel 파일 안 만들어도 됨)
-	if (!ImportFBXToSkelBin(scene, ToGenericString(skelBinPath), boneMap))
+	if (!ImportFBXToSkelBin(scene, ToGenericString(skelBinPath), boneMap, skeletonMeta))
 	{
 		std::cout << "No Skel" << std::endl;
 	}
@@ -559,6 +649,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	{
 		std::cout << "No Mat" << std::endl;
 	}
+
 	// ----- 4) Write meta -----
 	// meta는 Meta 폴더에 있으므로, 런타임 기준(metaDir)에서 asset 루트(baseDir)로 올라가게 baseDir=".."
 	// textureDir은 asset 루트 기준 "Textures"로 통일
@@ -573,9 +664,20 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		RelToBase(baseDir, matBinPath),		// matBin	상대경로
 		RelToBase(baseDir, skelBinPath),	// skelBin	상대경로
 		metaMeshes,
-		metaAnims))
+		metaAnims,
+		skeletonMeta))
 	{
 		std::cout << "No Meta" << std::endl;
+	}
+
+	// Debug용 skeletonMeta
+	if (!skeletonMeta.is_null() && !skeletonMeta.empty())
+	{
+		std::ofstream skelMetaOut(skelMetaPath);
+		if (skelMetaOut)
+		{
+			skelMetaOut << skeletonMeta.dump(2);
+		}
 	}
 }
 
@@ -596,7 +698,10 @@ void ImportAll()
 
 		if (path.extension() != ".fbx")
 			continue;
+
+#ifdef _DEBUG
 		std::cout << path.string() << std::endl;
+#endif
 		ImportFBX(path.string(), outputRoot.string());
 	}
 }

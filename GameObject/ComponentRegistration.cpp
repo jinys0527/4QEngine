@@ -6,6 +6,10 @@
 #include "MeshComponent.h"
 #include "MeshRenderer.h"
 #include "UIComponent.h"
+#include "AnimationComponent.h"
+#include "SkeletalMeshComponent.h"
+#include "SkeletalMeshRenderer.h"
+
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -20,6 +24,9 @@ extern "C" {
 	void Link_MeshComponent();
 	void Link_LightComponent();
 	void Link_UIComponent();
+	void Link_AnimationComponent();
+	void Link_SkeletalMeshComponent();
+	void Link_SkeletalMeshRenderer();
 }
 //해당 함수는 client.exe에서 한번 호출로 component들의 obj 를 가져올 명분제공
 void LinkEngineComponents() {
@@ -31,5 +38,7 @@ void LinkEngineComponents() {
 	Link_MeshComponent();
 	Link_LightComponent();
 	Link_UIComponent();
-
+	Link_AnimationComponent();
+	Link_SkeletalMeshComponent();
+	Link_SkeletalMeshRenderer();
 }

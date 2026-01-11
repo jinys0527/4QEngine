@@ -1,5 +1,6 @@
 ﻿#include "AssetLoader.h"
 
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <cstdint>
@@ -57,8 +58,8 @@ namespace
 
 	struct VertexSkinned : Vertex
 	{
-		uint16_t boneIndex[4] = { 0,0,0,0 };
-		uint16_t boneWeight[4] = { 0,0,0,0 }; // normalized to 0..65535
+		std::array<uint16_t, 4> boneIndices{};
+		std::array<float, 4>    boneWeights{};
 	};
 
 	struct MatBinHeader
@@ -85,18 +86,21 @@ namespace
 
 	struct SkelBinHeader
 	{
-		uint32_t magic = 0x534B454C; // "SKEL"
-		uint16_t version = 1;
-		uint16_t boneCount = 0;
+		uint32_t magic            = 0x534B454C; // "SKEL"
+		uint16_t version          = 2;
+		uint16_t boneCount        = 0;
 		uint32_t stringTableBytes = 0;
+
+		uint32_t upperCount		  = 0;
+		uint32_t lowerCount		  = 0;
 	};
 
 	struct BoneBin
 	{
 		uint32_t nameOffset = 0;
 		int32_t  parentIndex = -1;
-		float inverseBindPose[16]; // Row-Major
-		float localBind[16];
+		float	 inverseBindPose[16]; // Row-Major
+		float	 localBind[16];
 	};
 #pragma pack(pop)
 
@@ -148,11 +152,13 @@ namespace
 					continue;
 				}
 
+#ifdef _DEBUG
 				std::cout << "[MaterialBin] path=" << materialBinPath
 					<< " material=" << materialName
 					<< " slot=" << t
 					<< " texture=" << texPathRaw
 					<< std::endl;
+#endif
 			}
 		}
 	}
@@ -199,20 +205,23 @@ namespace
 	{
 		RenderData::Vertex out{};
 		out.position = { in.px, in.py, in.pz };
-		out.normal = { in.nx, in.ny, in.nz };
-		out.uv = { in.u, in.v };
-		out.tangent = { in.tx, in.ty, in.tz, in.handedness };
+		out.normal   = { in.nx, in.ny, in.nz };
+		out.uv       = { in.u, in.v };
+		out.tangent  = { in.tx, in.ty, in.tz, in.handedness };
 		return out;
 	}
 
 	RenderData::Vertex ToRenderVertex(const VertexSkinned& in)
 	{
 		RenderData::Vertex out = ToRenderVertex(static_cast<const Vertex&>(in));
-		for (size_t i = 0; i < 4; ++i)
-		{
-			out.boneIndex[i] = in.boneIndex[i];
-			out.boneWeight[i] = in.boneWeight[i];
-		}
+		out.boneIndices = { in.boneIndices[0], in.boneIndices[1], in.boneIndices[2], in.boneIndices[3] };
+		const float invWeight = 1.0f / 65535.0f;
+		out.boneWeights = {
+			static_cast<float>(in.boneWeights[0]) * invWeight,
+			static_cast<float>(in.boneWeights[1]) * invWeight,
+			static_cast<float>(in.boneWeights[2]) * invWeight,
+			static_cast<float>(in.boneWeights[3]) * invWeight
+		};
 		return out;
 	}
 
@@ -296,8 +305,9 @@ void AssetLoader::LoadAll()
 			if (path.filename().string().find(".asset.json") == std::string::npos)
 				continue;
 
+#ifdef _DEBUG
 			std::cout << path.string() << std::endl;
-
+#endif
 			LoadAsset(path.string());
 		}
 	}
@@ -347,7 +357,9 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					matStream.read(stringTable.data(), header.stringTableBytes);
 				}
 
+#ifdef _DEBUG
 				LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
+#endif // _DEBUG
 
 				materialHandles.reserve(mats.size());
 				materialByName.reserve(mats.size());
@@ -438,8 +450,20 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					RenderData::Bone out{};
 					out.name = ReadStringAtOffset(stringTable, bone.nameOffset);
 					out.parentIndex = bone.parentIndex;
+					std::memcpy(&out.bindPose, bone.localBind, sizeof(float) * 16);
 					std::memcpy(&out.inverseBindPose, bone.inverseBindPose, sizeof(float) * 16);
 					skeleton.bones.push_back(std::move(out));
+				}
+
+				if (header.upperCount > 0)
+				{
+					std::vector<int32_t> indices(header.upperCount);
+					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
+				}
+				if (header.lowerCount > 0)
+				{
+					std::vector<int32_t> indices(header.lowerCount);
+					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
 				}
 
 				result.skeleton = m_Skeletons.Load(skelPath.generic_string(), [skeleton]()
