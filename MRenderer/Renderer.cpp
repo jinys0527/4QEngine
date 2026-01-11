@@ -71,7 +71,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	CreateInputLayout();
 
-	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
@@ -641,6 +641,15 @@ HRESULT Renderer::RTCubeSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3
 
 	return hr;
 
+}
+
+HRESULT Renderer::ResetRenderTarget(int width, int height)
+{
+	HRESULT hr;
+
+	//m_pSwapChain->ResizeBuffers()활용해서 전부 내리고 새로 만들면 됨
+
+	return hr;
 }
 
 void Renderer::DXSetup(HWND hWnd, int width, int height)

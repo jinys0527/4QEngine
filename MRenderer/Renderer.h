@@ -28,6 +28,8 @@ public:
 	ComPtr<IDXGISwapChain>			GetSwapChain() { return m_pSwapChain; }
 
 //DX Set
+public :
+	HRESULT ResetRenderTarget(int width, int height);			//화면크기 바꿨을 때 렌더타겟도 그에 맞게 초기화
 private:
 	void	DXSetup(HWND hWnd, int width, int height);
 	HRESULT CreateDeviceSwapChain(HWND hWnd);
@@ -64,6 +66,12 @@ private:
 	//DepthPass용
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Depth;
+
+	//PostPass용
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Post;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Post;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Post;
+
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> m_DSState;		//깊이 스텐실 상태

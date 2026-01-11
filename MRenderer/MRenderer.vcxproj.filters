@@ -16,6 +16,15 @@
     <Filter Include="HLSL">
       <UniqueIdentifier>{6d4d7610-882a-4f02-bf5c-4318dae2c4bc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderPass">
+      <UniqueIdentifier>{58c2f194-66d7-4392-a877-cc32a67ef6a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass\Header Files">
+      <UniqueIdentifier>{5de57f90-8bff-44ea-a4f3-4e1fe5b24d4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass\Source Files">
+      <UniqueIdentifier>{54b687b2-7415-42a4-845d-bf75f32fc623}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DX11.cpp">
@@ -24,13 +33,7 @@
     <ClCompile Include="DXMath.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpaquePass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RenderPipeline.cpp">
@@ -39,20 +42,26 @@
     <ClCompile Include="RenderTargetContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowPass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DepthPass.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TransparentPass.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="OpaquePass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PostPass.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TransparentPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIPass.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,13 +74,7 @@
     <ClInclude Include="DXMath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpaquePass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RenderPipeline.h">
@@ -80,20 +83,26 @@
     <ClInclude Include="RenderTargetContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShadowPass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DepthPass.h">
-      <Filter>Header Files</Filter>
+      <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TransparentPass.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="OpaquePass.h">
+      <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PostPass.h">
-      <Filter>Header Files</Filter>
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransparentPass.h">
+      <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIPass.h">
-      <Filter>Header Files</Filter>
+      <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
