@@ -457,10 +457,11 @@ void EditorApplication::DrawInspector() {
 	}
 
 	auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
+	auto selectedObject = it->second;
 
 	if (m_LastSelectedObjectName != m_SelectedObjectName)
 	{
-		CopyStringToBuffer(it->second->GetName(), m_ObjectNameBuffer);
+		CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
 		m_LastSelectedObjectName = m_SelectedObjectName;
 	}
 
@@ -471,7 +472,7 @@ void EditorApplication::DrawInspector() {
 	if (ImGui::IsItemDeactivatedAfterEdit())
 	{
 		std::string newName = m_ObjectNameBuffer.data();
-		if (!newName.empty() && newName != it->second->GetName())
+		if (!newName.empty() && newName != selectedObject->GetName())
 		{
 			const std::string currentName = it->second->GetName();
 			if (scene->RenameGameObject(currentName, newName))
@@ -481,12 +482,12 @@ void EditorApplication::DrawInspector() {
 			}
 			else
 			{
-				CopyStringToBuffer(it->second->GetName(), m_ObjectNameBuffer);
+				CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
 			}
 		}
 		else
 		{
-			CopyStringToBuffer(it->second->GetName(), m_ObjectNameBuffer);
+			CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
 		}
 	}
 	ImGui::Separator();
@@ -494,14 +495,35 @@ void EditorApplication::DrawInspector() {
 	ImGui::Separator();
 
 
-	for (const auto& typeName : it->second->GetComponentTypeNames()) {
+	for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
 		// 여기서 각 Component별 Property와 조작까지 생성?
 		ImGui::PushID(typeName.c_str());
 		const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
-		if (ImGui::TreeNodeEx(typeName.c_str(), flags))
+		const bool nodeOpen = ImGui::TreeNodeEx(typeName.c_str(), flags);
+		if (ImGui::BeginPopupContextItem("ComponentContext"))
 		{
-			Component* component = it->second->GetComponentByTypeName(typeName);
+			const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
+			if (!canRemove)
+			{
+				ImGui::BeginDisabled();
+			}
+
+			//삭제
+			if (ImGui::MenuItem("Remove Component"))
+			{
+				selectedObject->RemoveComponentByTypeName(typeName);
+			}
+			if (!canRemove)
+			{
+				ImGui::EndDisabled();
+			}
+			ImGui::EndPopup();
+		}
+		if (nodeOpen)
+		{
+			Component* component = selectedObject->GetComponentByTypeName(typeName);
 			auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
+			
 			if (component && typeInfo)
 			{
 				for (const auto& prop : typeInfo->properties)
@@ -515,6 +537,7 @@ void EditorApplication::DrawInspector() {
 			{
 				ImGui::TextDisabled("Component data unavailable.");
 			}
+
 			ImGui::TreePop();
 		}
 		ImGui::PopID();
@@ -530,7 +553,7 @@ void EditorApplication::DrawInspector() {
 	if (ImGui::BeginPopup("AddComponentPopup"))
 	{
 		// Logic
-		const auto existingTypes = it->second->GetComponentTypeNames();
+		const auto existingTypes = selectedObject->GetComponentTypeNames(); //
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
 		for (const auto& typeName : typeNames)
 		{
@@ -548,7 +571,7 @@ void EditorApplication::DrawInspector() {
 				auto comp = ComponentFactory::Instance().Create(typeName);
 				if (comp)
 				{
-					it->second->AddComponent(std::move(comp));
+					selectedObject->AddComponent(std::move(comp));
 				}
 			}
 
@@ -647,6 +670,9 @@ void EditorApplication::DrawFolderView()
 								if (m_SceneManager.LoadSceneFromJson(entry.path()))
 								{
 									m_CurrentScenePath = entry.path();
+									m_SelectedObjectName.clear();
+									m_LastSelectedObjectName.clear();
+									m_ObjectNameBuffer.fill('\0');
 								}
 							}
 						}

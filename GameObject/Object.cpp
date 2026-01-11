@@ -50,6 +50,28 @@ std::vector<Component*> Object::GetComponentsByTypeName(const std::string& typeN
 	return result;
 }
 
+bool Object::RemoveComponentByTypeName(const std::string& typeName, int index)
+{
+	auto it = m_Components.find(typeName);
+	if (it == m_Components.end())
+	{
+		return false;
+	}
+
+	auto& vec = it->second;
+	if (index < 0 || index >= static_cast<int>(vec.size()))
+	{
+		return false;
+	}
+
+	vec.erase(vec.begin() + index);
+	if (vec.empty())
+	{
+		m_Components.erase(it);
+	}
+	return true;
+}
+
 void Object::Update(float deltaTime)
 {
 	for (auto it = m_Components.begin(); it != m_Components.end(); it++)

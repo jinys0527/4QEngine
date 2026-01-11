@@ -78,6 +78,7 @@ public:
 
 	Component* GetComponentByTypeName(const std::string& typeName, int index = 0) const;
 	std::vector<Component*> GetComponentsByTypeName(const std::string& typeName) const;
+	bool RemoveComponentByTypeName(const std::string& typeName, int index = 0); // 삭제
 
 	virtual void Update(float deltaTime);
 
