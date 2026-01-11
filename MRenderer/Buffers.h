@@ -19,8 +19,8 @@ struct RenderContext
 
 	ComPtr<ID3D11Device>            pDevice;
 	ComPtr<ID3D11DeviceContext>     pDXDC;
-	ComPtr<ID3D11RenderTargetView>	pRTView;
-	ComPtr<ID3D11DepthStencilView>  pDSView;
+	ComPtr<ID3D11RenderTargetView>	pRTView;		//메인 렌더 타겟
+	ComPtr<ID3D11DepthStencilView>  pDSView;		//메인 뎁스 스텐실뷰
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	DSState;

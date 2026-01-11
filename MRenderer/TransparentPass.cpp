@@ -1,9 +1,6 @@
-﻿#include "ResourceStore.h"
-#include "OpaquePass.h"
+﻿#include "TransparentPass.h"
 
-#include <iostream>
-
-void OpaquePass::Execute(const RenderData::FrameData& frame)
+void TransparentPass::Execute(const RenderData::FrameData& frame)
 {
     const auto& context = frame.context;
 
@@ -11,7 +8,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     m_RenderContext.BCBuffer.mProj = context.proj;
     m_RenderContext.BCBuffer.mVP = context.viewProj;
 
-    
+
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
     m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
@@ -50,7 +47,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                         const UINT offset = 0;
 
 
-                        m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::DEFAULT].Get(), NULL, 0xFFFFFFFF);
+                        m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::ALPHABLEND].Get(), NULL, 0xFFFFFFFF);
                         m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
                         m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
                         m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);

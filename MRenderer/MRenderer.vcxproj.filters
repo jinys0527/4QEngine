@@ -45,6 +45,9 @@
     <ClCompile Include="DepthPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TransparentPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DepthPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransparentPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

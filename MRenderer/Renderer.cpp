@@ -2,6 +2,7 @@
 #include "OpaquePass.h"
 #include "ShadowPass.h"
 #include "DepthPass.h"
+#include "TransparentPass.h"
 #include "RenderTargetContext.h"
 
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
@@ -72,6 +73,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
 
 	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
 
@@ -110,6 +112,8 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_Pipeline.Execute(frame);
 
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
+
+	ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_pDXDC.Get(), m_pRTView.Get(), m_pDSViewScene_Depth.Get(), 1, 0);
 }
 
 void Renderer::InitVB(const RenderData::FrameData& frame)
