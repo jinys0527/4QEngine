@@ -3,6 +3,7 @@
 #include "ShadowPass.h"
 #include "DepthPass.h"
 #include "TransparentPass.h"
+#include "PostPass.h"
 #include "RenderTargetContext.h"
 
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
@@ -74,6 +75,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
 	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
 

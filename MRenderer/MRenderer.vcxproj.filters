@@ -48,6 +48,12 @@
     <ClCompile Include="TransparentPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PostPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -81,6 +87,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TransparentPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PostPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

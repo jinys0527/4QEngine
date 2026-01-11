@@ -135,12 +135,14 @@
     <ClCompile Include="DX11.cpp" />
     <ClCompile Include="DXMath.cpp" />
     <ClCompile Include="OpaquePass.cpp" />
+    <ClCompile Include="PostPass.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RenderPass.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
     <ClCompile Include="RenderTargetContext.cpp" />
     <ClCompile Include="ShadowPass.cpp" />
     <ClCompile Include="TransparentPass.cpp" />
+    <ClCompile Include="UIPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h" />
@@ -148,12 +150,14 @@
     <ClInclude Include="DX11.h" />
     <ClInclude Include="DXMath.h" />
     <ClInclude Include="OpaquePass.h" />
+    <ClInclude Include="PostPass.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderPass.h" />
     <ClInclude Include="RenderPipeline.h" />
     <ClInclude Include="RenderTargetContext.h" />
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="TransparentPass.h" />
+    <ClInclude Include="UIPass.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\BaseBuffer.hlsl">
