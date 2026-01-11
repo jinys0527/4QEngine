@@ -1,21 +1,27 @@
 ﻿#pragma once
 
+#include "json.hpp"
+
 #pragma pack(push, 1)
 struct SkelBinHeader
 {
-	uint32_t magic = 0x534B454C; // "SKEL"
-	uint16_t version = 1;
-	uint16_t boneCount = 0;
-	uint32_t stringTableBytes = 0;
+	uint32_t magic                  = 0x534B454C; // "SKEL"
+	uint16_t version                = 2;
+	uint16_t boneCount              = 0;
+	uint32_t stringTableBytes       = 0;
+							        
+	uint32_t upperCount		        = 0;
+	uint32_t lowerCount		        = 0;
 };
 
 struct BoneBin
 {
-	uint32_t nameOffset = 0;
+	uint32_t nameOffset  = 0;
 	int32_t  parentIndex = -1;
 	float	 inverseBindPose[16]; // Row-Major
 	float	 localBind[16];	      // aiNode local transform
 };
+
 #pragma pack(pop)
 
 struct SkeletonBuildResult
@@ -30,4 +36,5 @@ SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene);
 bool ImportFBXToSkelBin(
 	const aiScene* scene,
 	const std::string& outSkelBin,
-	std::unordered_map<std::string, uint32_t>& outBoneNameToIndex);
+	std::unordered_map<std::string, uint32_t>& outBoneNameToIndex,
+	nlohmann::json& skeletonMeta);
