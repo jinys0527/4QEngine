@@ -15,21 +15,21 @@ public:
 	MeshRenderer() = default;
 	virtual ~MeshRenderer() = default;
 
-	void SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
-	MeshHandle GetMeshHandle() const      { return m_MeshHandle;   }
+	void       SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
+	MeshHandle GetMeshHandle() const            { return m_MeshHandle;   }
 
-	void SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
-	MaterialHandle GetMaterialHandle() const      { return m_MaterialHandle;   }
+	void           SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
+	MaterialHandle GetMaterialHandle() const                { return m_MaterialHandle;   }
 
-	void SetVisible(bool visible) { m_Visible = visible; }
-	bool IsVisible () const       { return m_Visible;    }
-	void SetCastShadow(bool castShadow) { m_CastShadow = castShadow; }
-	bool CastShadow   () const          { return m_CastShadow;       }
+	void SetVisible      (bool visible)       { m_Visible = visible; }
+	bool IsVisible       () const             { return m_Visible;    }
+	void SetCastShadow   (bool castShadow)    { m_CastShadow = castShadow; }
+	bool CastShadow      () const             { return m_CastShadow;       }
 	void SetReceiveShadow(bool receiveShadow) { m_ReceiveShadow = receiveShadow; }
 	bool ReceiveShadow   () const             { return m_ReceiveShadow;          }
 
-	void  SetRenderLayer(UINT8 layer) { m_RenderLayer = layer; }
-	UINT8 GetRenderLayer() const      { return m_RenderLayer;  }
+	void  SetRenderLayer (UINT8 layer)        { m_RenderLayer = layer; }
+	UINT8 GetRenderLayer () const             { return m_RenderLayer;  }
 
 	virtual bool BuildRenderItem(RenderData::RenderItem& out) const;
 

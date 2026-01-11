@@ -96,12 +96,23 @@ namespace RenderData
 	{
 		std::string name;
 		INT32       parentIndex = -1;
+		XMFLOAT4X4  bindPose{};
 		XMFLOAT4X4  inverseBindPose{};
+	};
+
+	struct RetargetOffset
+	{
+		XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
+		XMFLOAT4 rotation	{ 0.0f, 0.0f, 0.0f, 1.0f };
+		XMFLOAT3 scale		{ 1.0f, 1.0f, 1.0f };
 	};
 
 	struct Skeleton
 	{
-		std::vector<Bone> bones;
+		std::vector<Bone>			bones;
+		std::vector<int>			upperBodyBones;
+		std::vector<int>			lowerBodyBones;
+		std::vector<RetargetOffset> retargetOffsets;
 	};
 
 	struct AnimationKeyFrame

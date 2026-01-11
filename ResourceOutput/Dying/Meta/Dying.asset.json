@@ -19,5 +19,9 @@
   "path": {
     "baseDir": "..",
     "textureDir": "Textures"
+  },
+  "skeletonMeta": {
+    "lowerBodyBones": [],
+    "upperBodyBones": []
   }
 }

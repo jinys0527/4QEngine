@@ -131,7 +131,11 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 	else
 	{
 		infl.resize(mesh->mNumVertices);
+
+#ifdef _DEBUG
 		std::cout << mesh->mNumVertices << "\n";
+#endif
+		
 	
 		//aiBone -> vertex influences 누적
 		for (uint32_t b = 0; b < mesh->mNumBones; ++b)

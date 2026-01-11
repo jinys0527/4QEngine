@@ -13,8 +13,8 @@ public:
 	MaterialComponent() = default;
 	virtual ~MaterialComponent() = default;
 
-	void SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
-	MaterialHandle GetMaterialHandle() const      { return m_MaterialHandle;   }
+	void           SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
+	MaterialHandle GetMaterialHandle() const                { return m_MaterialHandle;   }
 
 	void SetMaterialAssetReference(const std::string& assetPath, UINT32 materialIndex)
 	{
@@ -22,8 +22,8 @@ public:
 		m_MaterialAssetIndex = materialIndex;
 	}
 
-	const std::string& GetMaterialAssetPath() const { return m_MaterialAssetPath; }
-	UINT32 GetMaterialAssetIndex() const { return m_MaterialAssetIndex; }
+	const std::string& GetMaterialAssetPath () const { return m_MaterialAssetPath;  }
+	UINT32             GetMaterialAssetIndex() const { return m_MaterialAssetIndex; }
 
 
 	void SetOverrides(const RenderData::MaterialData& overrides);

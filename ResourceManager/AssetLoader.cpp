@@ -86,18 +86,21 @@ namespace
 
 	struct SkelBinHeader
 	{
-		uint32_t magic = 0x534B454C; // "SKEL"
-		uint16_t version = 1;
-		uint16_t boneCount = 0;
+		uint32_t magic            = 0x534B454C; // "SKEL"
+		uint16_t version          = 2;
+		uint16_t boneCount        = 0;
 		uint32_t stringTableBytes = 0;
+
+		uint32_t upperCount		  = 0;
+		uint32_t lowerCount		  = 0;
 	};
 
 	struct BoneBin
 	{
 		uint32_t nameOffset = 0;
 		int32_t  parentIndex = -1;
-		float inverseBindPose[16]; // Row-Major
-		float localBind[16];
+		float	 inverseBindPose[16]; // Row-Major
+		float	 localBind[16];
 	};
 #pragma pack(pop)
 
@@ -149,11 +152,13 @@ namespace
 					continue;
 				}
 
+#ifdef _DEBUG
 				std::cout << "[MaterialBin] path=" << materialBinPath
 					<< " material=" << materialName
 					<< " slot=" << t
 					<< " texture=" << texPathRaw
 					<< std::endl;
+#endif
 			}
 		}
 	}
@@ -300,8 +305,9 @@ void AssetLoader::LoadAll()
 			if (path.filename().string().find(".asset.json") == std::string::npos)
 				continue;
 
+#ifdef _DEBUG
 			std::cout << path.string() << std::endl;
-
+#endif
 			LoadAsset(path.string());
 		}
 	}
@@ -351,7 +357,9 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					matStream.read(stringTable.data(), header.stringTableBytes);
 				}
 
+#ifdef _DEBUG
 				LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
+#endif // _DEBUG
 
 				materialHandles.reserve(mats.size());
 				materialByName.reserve(mats.size());
@@ -442,8 +450,20 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					RenderData::Bone out{};
 					out.name = ReadStringAtOffset(stringTable, bone.nameOffset);
 					out.parentIndex = bone.parentIndex;
+					std::memcpy(&out.bindPose, bone.localBind, sizeof(float) * 16);
 					std::memcpy(&out.inverseBindPose, bone.inverseBindPose, sizeof(float) * 16);
 					skeleton.bones.push_back(std::move(out));
+				}
+
+				if (header.upperCount > 0)
+				{
+					std::vector<int32_t> indices(header.upperCount);
+					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
+				}
+				if (header.lowerCount > 0)
+				{
+					std::vector<int32_t> indices(header.lowerCount);
+					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
 				}
 
 				result.skeleton = m_Skeletons.Load(skelPath.generic_string(), [skeleton]()

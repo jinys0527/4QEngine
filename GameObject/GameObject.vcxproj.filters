@@ -112,6 +112,7 @@
     <ClInclude Include="SkeletalMeshRenderer.h">
       <Filter>Components\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnimBlendCurveFunction.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">

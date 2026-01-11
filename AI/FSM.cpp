@@ -1,4 +1,5 @@
 ﻿#include "FSM.h"
+#include <algorithm>
 
 void FSM::Update(float deltaTime)
 {
@@ -32,7 +33,13 @@ void FSM::Trigger(const std::string& evt)
 		auto it2 = it->second.find(evt);
 		if (it2 != it->second.end())
 		{
-			ChangeState(it2->second);
+			const auto& transition = it2->second;
+			if (!transition.empty())
+			{
+				const auto top = std::max_element(transition.begin(), transition.end(),
+					[](const Transition& a, const Transition& b) { return a.priority > b.priority; });
+				ChangeState(top->to);
+			}
 		}
 	}
 }

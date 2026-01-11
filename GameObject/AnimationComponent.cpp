@@ -10,6 +10,340 @@
 
 REGISTER_COMPONENT(AnimationComponent);
 
+// 클립 유효 범위 내로 시간을 강제
+// - clip이 없거나 duration이 0이면 그대로 반환
+// - 음수 방지, 끝 시간 초과 방지
+float ClampTimeToClip(float timeSec, const RenderData::AnimationClip* clip)
+{
+	if (!clip || clip->duration <= 0.0f)
+	{
+		return timeSec;
+	}
+
+	if (timeSec < 0.0f)
+	{
+		return 0.0f;
+	}
+
+	if (timeSec > clip->duration)
+	{
+		return clip->duration;
+	}
+
+	return timeSec;
+}
+
+
+// deltaTime을 적용한 다음 재생 시간을 계산
+// - looping: duration 기준으로 fmod 처리
+// - non-looping: 끝 도달 시 정지 플래그 설정
+// - stopped 포인터는 non-looping 종료 감지용
+float UpdatePlaybackTime(
+							float timeSec, 
+							float deltaTime,
+							const RenderData::AnimationClip* clip, 
+							bool  looping, 
+							bool* stopped
+						)
+{
+	float nextTime = timeSec + deltaTime;
+	if (!clip || clip->duration <= 0.0f)
+	{
+		return nextTime;
+	}
+
+	if (looping)
+	{
+		nextTime = fmod(nextTime, clip->duration);
+		if (nextTime < 0.0f)
+		{
+			nextTime += clip->duration;
+		}
+	}
+	else
+	{
+		if (nextTime >= clip->duration)
+		{
+			nextTime = clip->duration;
+			if (stopped)
+			{
+				*stopped = true;
+			}
+		}
+		else if (nextTime < 0.0f)
+		{
+			nextTime = 0.0f;
+		}
+	}
+
+	return nextTime;
+}
+
+void AnimationComponent::Play()
+{
+	m_Playback.playing = true;
+}
+
+void AnimationComponent::Stop()
+{
+	m_Playback.time    = 0.0f;
+	m_Playback.playing = false;
+}
+
+void AnimationComponent::Pause()
+{
+	m_Playback.playing = false;
+}
+
+void AnimationComponent::Resume()
+{
+	m_Playback.playing = true;
+}
+
+void AnimationComponent::SeekTime(float timeSec)
+{
+	const RenderData::AnimationClip* clip = ResolveClip();
+	m_Playback.time = ClampTimeToClip(timeSec, clip);
+}
+
+void AnimationComponent::SeekNormalized(float normalizedTime)
+{
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip || clip->duration <= 0.0f)
+	{
+		m_Playback.time = 0.0f;
+		return;
+	}
+	const float clamped    = ClampTimeToClip(normalizedTime, clip);
+	const float targetTime = clamped * clip->duration;
+	m_Playback.time        = ClampTimeToClip(targetTime, clip);
+}
+
+float AnimationComponent::GetNormalizedTime() const
+{
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip || clip->duration <= 0.0f)
+	{
+		return 0.0f;
+	}
+	return m_Playback.time / clip->duration;
+}
+
+
+void AnimationComponent::StartBlend(AnimationHandle toClip, float blendTime)
+{
+	const RenderData::AnimationClip* fromClip = ResolveClip(m_ClipHandle);
+	const RenderData::AnimationClip* nextClip = ResolveClip(toClip);
+	if (!nextClip)
+	{
+		return;
+	}
+
+	if (!fromClip || blendTime <= 0.0f)
+	{
+		m_Blend.active     = false;
+		m_ClipHandle       = toClip;
+		m_Playback.time    = 0.0f;
+		m_Playback.playing = true;
+		return;
+	}
+
+	m_Blend.active     = true;
+	m_Blend.fromClip   = m_ClipHandle;
+	m_Blend.toClip     = toClip;
+	m_Blend.duration   = max(blendTime, 0.0001f);
+	m_Blend.elapsed    = 0.0f;
+	m_Blend.fromTime   = m_Playback.time;
+	m_Blend.toTime     = 0.0f;
+
+	//전이 시작 시 타겟 클립 설정
+	m_ClipHandle       = toClip;
+	m_Playback.playing = true;
+}
+
+void AnimationComponent::StartBlend(
+									AnimationHandle toClip, 
+									float blendTime,
+									BlendType blendType, 
+									std::function<float(float)> curveFn
+								   )
+{
+	const RenderData::AnimationClip* fromClip = ResolveClip(m_ClipHandle);
+	const RenderData::AnimationClip* nextClip = ResolveClip(toClip);
+	if (!nextClip)
+	{
+		return;
+	}
+
+	if (!fromClip || blendTime <= 0.0f)
+	{
+		m_Blend.active = false;
+		m_ClipHandle = toClip;
+		m_Playback.time = 0.0f;
+		m_Playback.playing = true;
+		return;
+	}
+
+	m_Blend.active     = true;
+	m_Blend.fromClip   = m_ClipHandle;
+	m_Blend.toClip     = toClip;
+	m_Blend.duration   = max(blendTime, 0.0001f);
+	m_Blend.elapsed    = 0.0f;
+	m_Blend.fromTime   = m_Playback.time;
+	m_Blend.toTime     = 0.0f;
+	m_Blend.blendType  = blendType;
+	m_Blend.curveFn    = std::move(curveFn);
+
+	//전이 시작 시 타겟 클립 설정
+	m_ClipHandle       = toClip;
+	m_Playback.playing = true;
+}
+
+void AnimationComponent::SetBoneMask(const std::vector<float>& weights)
+{
+	m_BoneMaskWeights = weights;
+	m_BoneMaskSource = BoneMaskSource::None;
+	m_AutoBoneMaskApplied = true;
+}
+
+void AnimationComponent::SetBoneMaskFromIndices(size_t boneCount, const std::vector<int>& indices, float weight, float defaultWeight)
+{
+	m_BoneMaskWeights.assign(boneCount, defaultWeight);
+	for (int index : indices)
+	{
+		if (index < 0)
+			continue;
+
+		const size_t boneIndex = static_cast<size_t>(index);
+		if (boneIndex < m_BoneMaskWeights.size())
+		{
+			m_BoneMaskWeights[boneIndex] = weight;
+		}
+	}
+	m_BoneMaskSource      = BoneMaskSource::None;
+	m_AutoBoneMaskApplied = true;
+}
+
+void AnimationComponent::ClearBoneMask()
+{
+	m_BoneMaskWeights.clear();
+	m_BoneMaskSource = BoneMaskSource::None;
+	m_AutoBoneMaskApplied = false;
+}
+
+void AnimationComponent::SetRetargetOffsets(const std::vector<RetargetOffset>& offsets)
+{
+	m_RetargetOffsets.clear();
+	m_RetargetOffsets.reserve(offsets.size());
+	for (const auto& offset : offsets)
+	{
+		m_RetargetOffsets.push_back(ToLocalPose(offset));
+	}
+	m_UseSkeletonRetargetOffsets = false;
+	m_AutoRetargetApplied		 = true;
+}
+
+void AnimationComponent::SetRetargetOffsets(const std::vector<RenderData::RetargetOffset>& offsets)
+{
+	m_RetargetOffsets.clear();
+	m_RetargetOffsets.reserve(offsets.size());
+	for (const auto& offset : offsets)
+	{
+		m_RetargetOffsets.push_back(ToLocalPose(offset));
+	}
+	m_UseSkeletonRetargetOffsets = false;
+	m_AutoRetargetApplied = true;
+}
+
+void AnimationComponent::ClearRetargetOffsets()
+{
+	m_RetargetOffsets.clear(); 
+	m_AutoRetargetApplied = false;
+}
+
+void AnimationComponent::SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind, 
+												 const std::vector<DirectX::XMFLOAT4X4>& targetBind)
+{
+	const size_t boneCount = max(sourceBind.size(), targetBind.size());
+	if (boneCount == 0)
+	{
+		ClearRetargetOffsets();
+		return;
+	}
+
+	std::vector<RetargetOffset> offsets;
+	offsets.reserve(boneCount);
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		const auto source	    = DirectX::XMLoadFloat4x4(&sourceBind[i]);
+		const auto target	    = DirectX::XMLoadFloat4x4(&targetBind[i]);
+		const auto sourceInv    = DirectX::XMMatrixInverse(nullptr, source);
+		const auto offsetMatrix = DirectX::XMMatrixMultiply(target, sourceInv);
+
+		DirectX::XMVECTOR scale;
+		DirectX::XMVECTOR rotation;
+		DirectX::XMVECTOR translation;
+		DirectX::XMMatrixDecompose(&scale, &rotation, &translation, offsetMatrix);
+
+		RetargetOffset offset{};
+		DirectX::XMStoreFloat3(&offset.translation, translation);
+		DirectX::XMStoreFloat4(&offset.rotation,    rotation);
+		DirectX::XMStoreFloat3(&offset.scale,       scale);
+		offsets.push_back(offset);
+	}
+
+	SetRetargetOffsets(offsets);
+}
+
+void AnimationComponent::SetRetargetFromSkeletonHandles(SkeletonHandle sourceHandle, SkeletonHandle targetHandle)
+{
+	const RenderData::Skeleton* sourceSkeleton = ResolveSkeleton(sourceHandle);
+	const RenderData::Skeleton* targetSkeleton = ResolveSkeleton(targetHandle);
+	if (!sourceSkeleton || !targetSkeleton)
+		return;
+
+	const size_t boneCount = min(sourceSkeleton->bones.size(), targetSkeleton->bones.size());
+	std::vector<DirectX::XMFLOAT4X4> sourceBind;
+	std::vector<DirectX::XMFLOAT4X4> targetBind;
+	sourceBind.reserve(boneCount);
+	targetBind.reserve(boneCount);
+
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		sourceBind.push_back(sourceSkeleton->bones[i].bindPose);
+		targetBind.push_back(targetSkeleton->bones[i].bindPose);
+	}
+
+	SetRetargetFromBindPose(sourceBind, targetBind);
+}
+
+void AnimationComponent::UseSkeletonUpperBodyMask(float weight, float defaultWeight)
+{
+	m_BoneMaskSource		= BoneMaskSource::UpperBody;
+	m_BoneMaskWeight		= weight;
+	m_BoneMaskDefaultWeight = defaultWeight;
+	m_AutoBoneMaskApplied   = false;
+}
+
+void AnimationComponent::UseSkeletonLowerBodyMask(float weight, float defaultWeight)
+{
+	m_BoneMaskSource		= BoneMaskSource::LowerBody;
+	m_BoneMaskWeight		= weight;
+	m_BoneMaskDefaultWeight = defaultWeight;
+	m_AutoBoneMaskApplied   = false;
+}
+
+void AnimationComponent::ClearSkeletonMask()
+{
+	m_BoneMaskSource	  = BoneMaskSource::None;
+	m_AutoBoneMaskApplied = false;
+}
+
+void AnimationComponent::UseSkeletonRetargetOffsets(bool enable)
+{
+	m_UseSkeletonRetargetOffsets = enable;
+	m_AutoRetargetApplied		 = false;
+}
 
 void AnimationComponent::Update(float deltaTime)
 {
@@ -24,39 +358,73 @@ void AnimationComponent::Update(float deltaTime)
 	if (!skeletal)
 		return;
 
+	
 	const RenderData::Skeleton* skeleton  = ResolveSkeleton(skeletal->GetSkeletonHandle());
-	const RenderData::AnimationClip* clip = ResolveClip();
-	if (!skeleton || !clip || skeleton->bones.empty())
+	if (!skeleton || skeleton->bones.empty())
 		return;
 
-	float nextTime = m_Playback.time + deltaTime * m_Playback.speed;
-	if (clip->duration > 0.0f)
+	EnsureAutoBoneMask		 (*skeleton);
+	EnsureAutoRetargetOffsets(*skeleton);
+	
+	if (m_Blend.active)
 	{
-		if (m_Playback.looping)						 
+		const RenderData::AnimationClip* fromClip = ResolveClip(m_Blend.fromClip);
+		const RenderData::AnimationClip* toClip   = ResolveClip(m_Blend.toClip);
+		if (!fromClip || !toClip)
 		{
-			nextTime = fmod(nextTime, clip->duration);  // loop
-			if (nextTime < 0.0f)
-			{
-				nextTime += clip->duration;
-			}
+			m_Blend.active = false;
 		}
 		else
 		{
-			if (nextTime >= clip->duration)				// end
+			const float scaledDelta = deltaTime * m_Playback.speed;
+			m_Blend.fromTime = UpdatePlaybackTime(m_Blend.fromTime, scaledDelta, fromClip, m_Playback.looping, nullptr);
+			m_Blend.toTime   = UpdatePlaybackTime(m_Blend.toTime, scaledDelta, toClip, m_Playback.looping, nullptr);
+			m_Blend.elapsed += deltaTime;
+
+			const float linear = min(m_Blend.elapsed / m_Blend.duration, 1.0f);
+			float alpha = linear;
+
+			if (m_Blend.blendType == BlendType::Curve && m_Blend.curveFn)
 			{
-				nextTime = clip->duration;
-				m_Playback.playing = false;
+				alpha = clamp(m_Blend.curveFn(linear), 0.0f, 1.0f);
 			}
-			else if (nextTime < 0.0f)
+
+			std::vector<LocalPose> fromPoses;
+			std::vector<LocalPose> toPoses;
+			std::vector<LocalPose> blendedPoses;
+			SampleLocalPoses    (*skeleton, *fromClip, m_Blend.fromTime, fromPoses);
+			SampleLocalPoses    (*skeleton, *toClip, m_Blend.toTime, toPoses);
+			BlendLocalPoses     (fromPoses, toPoses, alpha, blendedPoses);
+			ApplyRetargetOffsets(blendedPoses);
+			BuildPoseFromLocal  (*skeleton, blendedPoses);
+
+			m_Playback.time = m_Blend.toTime;
+
+			if (alpha >= 1.0f)
 			{
-				nextTime = 0.0f;
+				m_Blend.active = false;
 			}
 		}
 	}
+	else
+	{
+		const RenderData::AnimationClip* clip = ResolveClip();
+		if (!clip)
+			return;
 
-	m_Playback.time = nextTime;
+		bool stopped = false;
+		const float scaledDelta = deltaTime * m_Playback.speed;
+		const float nextTime    = UpdatePlaybackTime(m_Playback.time, scaledDelta, clip, m_Playback.looping, &stopped);
 
-	BuildPose(*skeleton, *clip, m_Playback.time);
+		m_Playback.time = nextTime;
+		if (stopped)
+		{
+			m_Playback.playing = false;
+		}
+
+		BuildPose(*skeleton, *clip, m_Playback.time);
+	}
+
 	skeletal->SetSkinningPalette(m_SkinningPalette);
 }
 
@@ -92,6 +460,24 @@ void AnimationComponent::Deserialize(const nlohmann::json& j)
 	}
 }
 
+AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RetargetOffset& offset)
+{
+	AnimationComponent::LocalPose pose{};
+	pose.translation = offset.translation;
+	pose.rotation    = offset.rotation;
+	pose.scale       = offset.scale;
+	return pose;
+}
+
+AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RenderData::RetargetOffset& offset)
+{
+	AnimationComponent::LocalPose pose{};
+	pose.translation = offset.translation;
+	pose.rotation    = offset.rotation;
+	pose.scale       = offset.scale;
+	return pose;
+}
+
 AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RenderData::AnimationKeyFrame& key)
 {
 	AnimationComponent::LocalPose pose{};
@@ -109,6 +495,16 @@ const RenderData::AnimationClip* AnimationComponent::ResolveClip() const
 	}
 
 	return m_Animations->Get(m_ClipHandle);
+}
+
+const RenderData::AnimationClip* AnimationComponent::ResolveClip(AnimationHandle handle) const
+{
+	if (!handle.IsValid() || !m_Animations)
+	{
+		return nullptr;
+	}
+
+	return m_Animations->Get(handle);
 }
 
 const RenderData::Skeleton* AnimationComponent::ResolveSkeleton(SkeletonHandle handle) const
@@ -171,6 +567,21 @@ AnimationComponent::LocalPose AnimationComponent::SampleTrack(
 	return pose;
 }
 
+void AnimationComponent::SampleLocalPoses(const RenderData::Skeleton& skeleton, const RenderData::AnimationClip& clip, float timeSec, std::vector<LocalPose>& localPoses) const
+{
+	const size_t boneCount = skeleton.bones.size();
+	localPoses.assign(boneCount, LocalPose{});
+
+	for (const auto& track : clip.tracks)
+	{
+		if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) > boneCount)
+			continue;
+
+		localPoses[track.boneIndex] = SampleTrack(track, timeSec);
+	}
+
+}
+
 
 
 void AnimationComponent::BuildPose(
@@ -179,23 +590,27 @@ void AnimationComponent::BuildPose(
 									float timeSec
 								  )
 {
+	std::vector<LocalPose> localPoses;
+	SampleLocalPoses    (skeleton, clip, timeSec, localPoses);
+	ApplyRetargetOffsets(localPoses);
+	BuildPoseFromLocal  (skeleton, localPoses);
+}
+
+void AnimationComponent::BuildPoseFromLocal(
+											   const RenderData::Skeleton & skeleton,
+											   const std::vector<LocalPose>&localPoses
+										   )
+{
 	const size_t boneCount = skeleton.bones.size();
 	m_LocalPose.resize(boneCount);
 	m_GlobalPose.resize(boneCount);
 	m_SkinningPalette.resize(boneCount);
 
-	std::vector<LocalPose> localPoses(boneCount);
-
-	for (const auto& track : clip.tracks)
-	{
-		if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) >= boneCount)
-			continue;
-		localPoses[track.boneIndex] = SampleTrack(track, timeSec);
-	}
+	const size_t poseCount = localPoses.size();
 
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		const auto& pose = localPoses[i];
+		const LocalPose& pose = i < poseCount ? localPoses[i] : LocalPose{};
 		const auto local = MathUtils::CreateTRS(pose.translation, pose.rotation, pose.scale);
 		DirectX::XMStoreFloat4x4(&m_LocalPose[i], local);
 
@@ -216,4 +631,83 @@ void AnimationComponent::BuildPose(
 		const auto skin    = DirectX::XMMatrixMultiply(global, invBind);
 		DirectX::XMStoreFloat4x4(&m_SkinningPalette[i], skin);
 	}
+}
+
+void AnimationComponent::BlendLocalPoses(
+											const std::vector<LocalPose>& fromPoses,
+											const std::vector<LocalPose>& toPoses,
+											float alpha,
+											std::vector<LocalPose>& blended
+										) const
+{
+	const size_t boneCount = max(fromPoses.size(), toPoses.size());
+	blended.resize(boneCount);
+	const float clampedAlpha = clamp(alpha, 0.0f, 1.0f);
+
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		const LocalPose& fromPose = i < fromPoses.size() ? fromPoses[i] : LocalPose{};
+		const LocalPose& toPose   = i < toPoses.size()   ? toPoses[i]   : LocalPose{};
+
+		const float mask = (i < m_BoneMaskWeights.size()) ?  m_BoneMaskWeights[i] : 1.0f;	// 상하체 블렌드용 마스크
+		const float weightedAlpha = std::clamp(clampedAlpha * mask, 0.0f, 1.0f);			// 마스크만큼 곱해져서 블렌드 안하면 원본
+
+		blended[i].translation = MathUtils::Lerp3(fromPose.translation, toPose.translation, weightedAlpha);
+		blended[i].scale	   = MathUtils::Lerp3(fromPose.scale, toPose.scale, weightedAlpha);
+		blended[i].rotation    = MathUtils::Slerp4(fromPose.rotation, toPose.rotation, weightedAlpha);
+		const auto q = XMQuaternionNormalize(XMLoadFloat4(&blended[i].rotation));
+		XMStoreFloat4(&blended[i].rotation, q);
+	}
+}
+
+void AnimationComponent::ApplyRetargetOffsets(std::vector<LocalPose>& localPoses) const
+{
+	if (m_RetargetOffsets.empty())
+		return;
+
+	const size_t boneCount = min(localPoses.size(), m_RetargetOffsets.size());
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		const LocalPose& offset = m_RetargetOffsets[i];
+		localPoses[i].translation.x += offset.translation.x;
+		localPoses[i].translation.y += offset.translation.y;
+		localPoses[i].translation.z += offset.translation.z;
+
+		const auto baseRotation   = DirectX::XMLoadFloat4(&localPoses[i].rotation);
+		const auto offsetRotation = DirectX::XMLoadFloat4(&offset.rotation);
+		const auto combined       = DirectX::XMQuaternionNormalize(DirectX::XMQuaternionMultiply(offsetRotation, baseRotation));
+		DirectX::XMStoreFloat4(&localPoses[i].rotation, combined);
+
+		localPoses[i].scale.x *= offset.scale.x;
+		localPoses[i].scale.y *= offset.scale.y;
+		localPoses[i].scale.z *= offset.scale.z;
+	}
+}
+
+void AnimationComponent::EnsureAutoBoneMask(const RenderData::Skeleton& skeleton)
+{
+	if (m_BoneMaskSource == BoneMaskSource::None || m_AutoBoneMaskApplied)	//Mask 안하거나 자동일때
+		return;
+
+	const auto& indices = (m_BoneMaskSource == BoneMaskSource::UpperBody)
+		? skeleton.upperBodyBones
+		: skeleton.lowerBodyBones;
+
+	if (indices.empty())
+		return;
+
+	SetBoneMaskFromIndices(skeleton.bones.size(), indices, m_BoneMaskWeight, m_BoneMaskDefaultWeight);
+	m_AutoBoneMaskApplied = true;
+}
+
+void AnimationComponent::EnsureAutoRetargetOffsets(const RenderData::Skeleton& skeleton)
+{
+	if (!m_UseSkeletonRetargetOffsets || m_AutoRetargetApplied)	// 자동으로 적용되거나 Retarget을 안할때
+		return;
+
+	if (skeleton.retargetOffsets.empty())
+		return;
+
+	SetRetargetOffsets(skeleton.retargetOffsets);
+	m_AutoRetargetApplied = true;
 }
