@@ -20,6 +20,7 @@
     const char* TYPE::GetTypeName() const { return #TYPE; } \
     static bool TYPE##_Registered = [](){ \
 		std::cout << "Registering component: " << #TYPE << std::endl;\
+        ComponentFactory::Instance().Register(#TYPE, [](){ return std::make_unique<TYPE>(); }); \
         ComponentRegistry::Instance().Register(&TYPE##_TypeInfo); \
         return true; \
     }();

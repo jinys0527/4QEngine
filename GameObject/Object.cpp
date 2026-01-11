@@ -15,6 +15,63 @@ std::vector<std::string> Object::GetComponentTypeNames() const
 	return names;
 }
 
+Component* Object::GetComponentByTypeName(const std::string& typeName, int index) const
+{
+	auto it = m_Components.find(typeName);
+	if (it == m_Components.end())
+	{
+		return nullptr;
+	}
+
+	const auto& vec = it->second;
+	if (index < 0 || index >= static_cast<int>(vec.size()))
+	{
+		return nullptr;
+	}
+
+	return vec[index].get();
+}
+
+std::vector<Component*> Object::GetComponentsByTypeName(const std::string& typeName) const
+{
+	std::vector<Component*> result;
+	auto it = m_Components.find(typeName);
+	if (it == m_Components.end())
+	{
+		return result;
+	}
+
+	result.reserve(it->second.size());
+	for (const auto& comp : it->second)
+	{
+		result.push_back(comp.get());
+	}
+
+	return result;
+}
+
+bool Object::RemoveComponentByTypeName(const std::string& typeName, int index)
+{
+	auto it = m_Components.find(typeName);
+	if (it == m_Components.end())
+	{
+		return false;
+	}
+
+	auto& vec = it->second;
+	if (index < 0 || index >= static_cast<int>(vec.size()))
+	{
+		return false;
+	}
+
+	vec.erase(vec.begin() + index);
+	if (vec.empty())
+	{
+		m_Components.erase(it);
+	}
+	return true;
+}
+
 void Object::Update(float deltaTime)
 {
 	for (auto it = m_Components.begin(); it != m_Components.end(); it++)

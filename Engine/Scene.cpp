@@ -68,6 +68,77 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 
 }
 
+std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name, bool isOpaque)
+{
+	auto gameObject = std::make_shared<GameObject>(m_EventDispatcher);
+	gameObject->SetName(name);
+	AddGameObject(gameObject, isOpaque);
+	return gameObject;
+}
+
+
+bool Scene::RemoveGameObjectByName(const std::string& name)
+{
+	auto opaqueIt = m_OpaqueObjects.find(name);
+	if (opaqueIt != m_OpaqueObjects.end())
+	{
+		RemoveGameObject(opaqueIt->second, true);
+		return true;
+	}
+
+	auto transparentIt = m_TransparentObjects.find(name);
+	if (transparentIt != m_TransparentObjects.end())
+	{
+		RemoveGameObject(transparentIt->second, false);
+		return true;
+	}
+
+	return false;
+}
+
+bool Scene::RenameGameObject(const std::string& currentName, const std::string& newName)
+{
+	if (currentName == newName || newName.empty())
+	{
+		return false;
+	}
+
+	if (HasGameObjectName(newName))
+	{
+		return false;
+	}
+
+	// 계속 2번 동작 해야됨
+	auto opaqueNode = m_OpaqueObjects.extract(currentName);
+	if (!opaqueNode.empty())
+	{
+		opaqueNode.key() = newName;
+		opaqueNode.mapped()->SetName(newName);
+		m_OpaqueObjects.insert(std::move(opaqueNode));
+		return true;
+	}
+
+	auto transparentNode = m_TransparentObjects.extract(currentName);
+	if (!transparentNode.empty())
+	{
+		transparentNode.key() = newName;
+		transparentNode.mapped()->SetName(newName);
+		m_TransparentObjects.insert(std::move(transparentNode));
+		return true;
+	}
+
+	return false;
+}
+
+bool Scene::HasGameObjectName(const std::string& name) const
+{
+	return m_OpaqueObjects.find(name) != m_OpaqueObjects.end()
+		|| m_TransparentObjects.find(name) != m_TransparentObjects.end();
+}
+
+
+
+
 void Scene::SetMainCamera(std::shared_ptr<CameraObject> cameraObject)
 {
 	m_Camera = cameraObject;
