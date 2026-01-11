@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <functional>
+#include <typeinfo>
 #include "MathHelper.h"
 #include "Serializer.h"
 #include "Component.h"
@@ -23,7 +24,9 @@ using namespace MathUtils;
 		const string& GetName() const { return m_Name; }
 
 		//virtual void DrawEditor(Component* c) const;
-
+		virtual const std::type_info& GetTypeInfo() const = 0;
+		virtual void GetValue(Component* c, void* outValue) const = 0;
+		virtual void SetValue(Component* c, const void* inValue) const = 0;
 		virtual void Serialize(Component* c, nlohmann::json& j) const = 0;
 		virtual void DeSerialize(Component* c, const nlohmann::json& j) const = 0;
 
@@ -81,6 +84,20 @@ using namespace MathUtils;
 		{
 		}
 
+		const std::type_info& GetTypeInfo() const override {
+			return typeid(Value);
+		}
+
+		void GetValue(Component* c, void* outValue) const override {
+			T* obj = static_cast<T*>(c);
+			*static_cast<Value*>(outValue) = (obj->*m_Get)();
+		}
+
+		void SetValue(Component* c, const void* inValue) const override {
+			T* obj = static_cast<T*>(c);
+			(obj->*m_Set)(*static_cast<const Value*>(inValue));
+		}
+
 		void Serialize(Component* c, nlohmann::json& j) const override {
 			T* obj = static_cast<T*>(c);
 			Serializer<Value>::ToJson(j[GetName()], (obj->*m_Get)());
@@ -114,11 +131,13 @@ using namespace MathUtils;
 		static ComponentRegistry& Instance();
 
 		void Register(ComponentTypeInfo* info);
-
+		vector<string> GetTypeNames() const; // 등론된 이름 전체 return
 		ComponentTypeInfo* Find(const string& name) {
 			auto it = m_Types.find(name);
 			return (it != m_Types.end()) ? it->second : nullptr;
 		}
+
+
 		void Check() {
 			//개발 확인용
 			for (const auto& [name, typeInfo] : m_Types) {

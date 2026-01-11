@@ -13,6 +13,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "d3d11.lib")
