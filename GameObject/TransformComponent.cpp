@@ -135,26 +135,36 @@ void TransformComponent::OnEvent(EventType type, const void* data)
 {
 }
 
-void TransformComponent::Serialize(nlohmann::json& j) const
-{
-	// 교체
-	j["position"]["x"] = m_Position.x;
-	j["position"]["y"] = m_Position.y;
-	j["position"]["z"] = m_Position.z;
-
-	j["rotation"]["x"] = m_Rotation.x;
-	j["rotation"]["y"] = m_Rotation.y;
-	j["rotation"]["z"] = m_Rotation.z;
-	j["rotation"]["w"] = m_Rotation.w;
-	
-	j["scale"]["x"] = m_Scale.x;
-	j["scale"]["y"] = m_Scale.y;
-	j["scale"]["z"] = m_Scale.z;
-}
+//void TransformComponent::Serialize(nlohmann::json& j) const
+//{
+//	// 교체
+//	/*j["position"]["x"] = m_Position.x;
+//	j["position"]["y"] = m_Position.y;
+//	j["position"]["z"] = m_Position.z;
+//
+//	j["rotation"]["x"] = m_Rotation.x;
+//	j["rotation"]["y"] = m_Rotation.y;
+//	j["rotation"]["z"] = m_Rotation.z;
+//	j["rotation"]["w"] = m_Rotation.w;
+//	
+//	j["scale"]["x"] = m_Scale.x;
+//	j["scale"]["y"] = m_Scale.y;
+//	j["scale"]["z"] = m_Scale.z;*/
+//	auto* typeInfo = ComponentRegistry::Instance().Find(TransformComponent::StaticTypeName);
+//	if (!typeInfo)
+//	{
+//		return;
+//	}
+//
+//	for (const auto& prop : typeInfo->properties)
+//	{
+//		prop->Serialize(const_cast<TransformComponent*>(this), j);
+//	}
+//}
 
 void TransformComponent::Deserialize(const nlohmann::json& j)
 {
-	m_Position.x = j["position"]["x"];
+	/*m_Position.x = j["position"]["x"];
 	m_Position.y = j["position"]["y"];
 	m_Position.z = j["position"]["z"];
 
@@ -165,8 +175,8 @@ void TransformComponent::Deserialize(const nlohmann::json& j)
 
 	m_Scale.x = j["scale"]["x"];
 	m_Scale.y = j["scale"]["y"];
-	m_Scale.z = j["scale"]["z"];
-
+	m_Scale.z = j["scale"]["z"];*/
+	Component::Deserialize(j);
 	UpdateMatrices();
 }
 

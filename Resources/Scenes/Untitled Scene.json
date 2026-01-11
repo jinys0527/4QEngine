@@ -4,45 +4,25 @@
             {
                 "components": [
                     {
-                        "data": null,
-                        "type": "UIComponent"
-                    },
-                    {
                         "data": {
-                            "position": {
+                            "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "rotation": {
+                            "Rotation": {
                                 "w": 0.0,
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                            "Scale": {
+                                "x": 55.0,
+                                "y": 55.0,
+                                "z": 55.0
                             }
                         },
                         "type": "TransformComponent"
-                    },
-                    {
-                        "data": {
-                            "overrides": {
-                                "baseColor": {
-                                    "w": 1.0,
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
-                                },
-                                "enabled": false,
-                                "metallic": 0.0,
-                                "roughness": 1.0
-                            }
-                        },
-                        "type": "MaterialComponent"
                     }
                 ],
                 "name": "GameObject"
@@ -53,18 +33,18 @@
                 "components": [
                     {
                         "data": {
-                            "position": {
+                            "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "rotation": {
+                            "Rotation": {
                                 "w": 0.0,
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "scale": {
+                            "Scale": {
                                 "x": 1.0,
                                 "y": 1.0,
                                 "z": 1.0
@@ -74,18 +54,18 @@
                     },
                     {
                         "data": {
-                            "position": {
+                            "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "rotation": {
+                            "Rotation": {
                                 "w": 0.0,
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "scale": {
+                            "Scale": {
                                 "x": 1.0,
                                 "y": 1.0,
                                 "z": 1.0
