@@ -8,6 +8,7 @@ REGISTER_PROPERTY(TransformComponent, Position)
 REGISTER_PROPERTY(TransformComponent, Rotation)
 REGISTER_PROPERTY(TransformComponent, Scale)
 
+
 void TransformComponent::SetParent(TransformComponent* newParent)
 {
 	assert(newParent != this);

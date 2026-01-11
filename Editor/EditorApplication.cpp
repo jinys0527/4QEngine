@@ -84,6 +84,21 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property)
 		return false;
 	}
 
+	if (typeInfo == typeid(std::string))
+	{
+		std::string value;
+		property.GetValue(component, &value);
+		std::array<char, 256> buffer{};
+		CopyStringToBuffer(value, buffer);
+		if (ImGui::InputText(property.GetName().c_str(), buffer.data(), buffer.size()))
+		{
+			std::string updatedValue(buffer.data());
+			property.SetValue(component, &updatedValue);
+			return true;
+		}
+		return false;
+	}
+
 	if (typeInfo == typeid(XMFLOAT2))
 	{
 		XMFLOAT2 value{};
@@ -515,7 +530,7 @@ void EditorApplication::DrawInspector() {
 			}
 			if (!canRemove)
 			{
-				ImGui::EndDisabled();
+				ImGui::EndDisabled(); 
 			}
 			ImGui::EndPopup();
 		}

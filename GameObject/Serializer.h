@@ -32,6 +32,12 @@ struct Serializer<bool> {
 };
 
 template<>
+struct Serializer<std::string> {
+	static void ToJson(nlohmann::json& j, const std::string& v) { j = v; }
+	static void FromJson(const nlohmann::json& j, std::string& v) { v = j.get<std::string>(); }
+};
+
+template<>
 struct Serializer<XMFLOAT2> {
 	static void ToJson(nlohmann::json& j, const XMFLOAT2& v) {
 		j = { {"x", v.x}, {"y", v.y}};
@@ -43,6 +49,27 @@ struct Serializer<XMFLOAT2> {
 		
 	}
 };
+//예시 인데 이러면 모든 구조체 마다 다 작성해야함.
+//struct MyStruct { int a; float b; };
+//
+//template<>
+//struct Serializer<MyStruct> {
+//	static void ToJson(nlohmann::json& j, const MyStruct& v) {
+//		j = { {"a", v.a}, {"b", v.b} };
+//	}
+//	static void FromJson(const nlohmann::json& j, MyStruct& v) {
+//		v.a = j.at("a").get<int>();
+//		v.b = j.at("b").get<float>();
+//	}
+//};
+
+//enum class MyEnum { A, B };
+//
+//template<>
+//struct Serializer<MyEnum> {
+//	static void ToJson(nlohmann::json& j, const MyEnum& v) { j = static_cast<int>(v); }
+//	static void FromJson(const nlohmann::json& j, MyEnum& v) { v = static_cast<MyEnum>(j.get<int>()); }
+//};
 
 template<>
 struct Serializer<XMFLOAT3> {
