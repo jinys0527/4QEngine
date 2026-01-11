@@ -134,6 +134,7 @@ struct EnumArray
 #pragma endregion
 
 
+struct TextureSize { int width, height; };
 
 
 

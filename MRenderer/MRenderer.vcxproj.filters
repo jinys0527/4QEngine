@@ -42,6 +42,9 @@
     <ClCompile Include="ShadowPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DepthPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -71,6 +74,9 @@
     <ClInclude Include="ShadowPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DepthPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\BaseBuffer.hlsl">
@@ -83,6 +89,9 @@
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="fx\Demo_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_VS_POS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

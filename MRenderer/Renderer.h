@@ -48,7 +48,6 @@ private:
 	ComPtr<ID3D11DepthStencilView>  m_pDSView;
 
 
-	struct TextureSize { int width, height; };
 	//imgui용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui;
@@ -60,6 +59,11 @@ private:
 	//그림자 매핑용
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Shadow;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Shadow;
+	TextureSize							m_ShadowTextureSize = { 0,0 };
+
+	//DepthPass용
+	ComPtr<ID3D11Texture2D>				m_pDSTex_Depth;
+	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Depth;
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> m_DSState;		//깊이 스텐실 상태
@@ -88,6 +92,8 @@ private:
 private:
 	bool m_bIsInitialized = false;
 
+	TextureSize m_WindowSize = { 0,0 };
+
 	RenderPipeline m_Pipeline;
 	AssetLoader& m_AssetLoader;
 
@@ -109,13 +115,18 @@ private:
 	ComPtr<ID3DBlob> m_pVSCode;
 
 
+	//Shadow, Depth용
+	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
+	ComPtr<ID3D11VertexShader> m_pVS_P;
+	ComPtr<ID3DBlob> m_pVSCode_P;
+
 
 //그리드
 private:
 	struct VertexPC { XMFLOAT3 pos;};
 
 	ComPtr<ID3D11Buffer> m_GridVB;
-	ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
+	//ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
 
 	UINT m_GridVertexCount = 0;
 	std::vector<std::vector<int>> m_GridFlags;  // 0=empty,1=blocked

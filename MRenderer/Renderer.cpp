@@ -1,5 +1,7 @@
 ﻿#include "Renderer.h"
 #include "OpaquePass.h"
+#include "ShadowPass.h"
+#include "DepthPass.h"
 #include "RenderTargetContext.h"
 
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
@@ -52,6 +54,8 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	if (m_bIsInitialized)
 		return;
 
+	m_WindowSize.width = width;		m_WindowSize.height = height;
+
 	m_pDevice = device;
 	m_pDXDC = dxdc;
 
@@ -61,9 +65,14 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+
 	CreateInputLayout();
 
+	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
+
 	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
 
 	CreateContext();
@@ -89,7 +98,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.Get());
 
 
-	SetViewPort(960, 800, m_pDXDC.Get());
+	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
 	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
 	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui.Get(), clearColor);
 	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
@@ -151,6 +160,8 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 
 void Renderer::CreateContext()
 {
+	m_RenderContext.WindowSize = m_WindowSize;
+
 	m_RenderContext.pDevice = m_pDevice;
 	m_RenderContext.pDXDC = m_pDXDC;
 	m_RenderContext.pDSView = m_pDSView;
@@ -165,6 +176,10 @@ void Renderer::CreateContext()
 	m_RenderContext.VSCode = m_pVSCode;
 	m_RenderContext.inputLayout = m_pInputLayout;
 
+	m_RenderContext.VS_P = m_pVS_P;
+	m_RenderContext.VSCode_P = m_pVSCode_P;
+	m_RenderContext.InputLayout_P = m_pInputLayout_P;
+
 	m_RenderContext.RState = m_RState;
 	m_RenderContext.DSState = m_DSState;
 	m_RenderContext.SState = m_SState;
@@ -172,6 +187,7 @@ void Renderer::CreateContext()
 
 	m_RenderContext.pDSTex_Shadow = m_pDSTex_Shadow;
 	m_RenderContext.pDSViewScene_Shadow = m_pDSViewScene_Shadow;
+	m_RenderContext.ShadowTextureSize = m_ShadowTextureSize;
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
@@ -291,6 +307,27 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG(hr);
 		return hr;
 	}
+
+
+	D3D11_INPUT_ELEMENT_DESC layout2[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	numElements = ARRAYSIZE(layout2);
+
+	// 정접 입력구조 객체 생성 Create the input layout
+	hr = m_pDevice->CreateInputLayout(layout2,
+		numElements,
+		m_pVSCode_P->GetBufferPointer(),
+		m_pVSCode_P->GetBufferSize(),
+		m_pInputLayout_P.GetAddressOf()
+	);
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
 
 	return hr;
 }
@@ -615,7 +652,7 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 #pragma region Imgui RenderTarget
 	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
-	RTTexCreate(960, 800, fmt, m_pRTScene_Imgui.GetAddressOf());
+	RTTexCreate(width, height, fmt, m_pRTScene_Imgui.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
@@ -624,15 +661,20 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
 
 	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
-	DSCreate(960, 800, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
+	DSCreate(width, height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
 #pragma endregion
 
 #pragma region ShadowMap
-	TextureSize TSize = { 16384, 16384 };
+	m_ShadowTextureSize = { 16384, 16384 };
 	fmt = DXGI_FORMAT_R32_TYPELESS;
-	DSCreate(TSize.width, TSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
+	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
 #pragma endregion
 
+#pragma region Depth
+	fmt = DXGI_FORMAT_R32_TYPELESS;
+	DSCreate(width, height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
+
+#pragma endregion
 
 }
 
@@ -855,7 +897,7 @@ HRESULT Renderer::CreateRasterState()
 	}
 
 	
-
+	return hr;
 }
 
 HRESULT Renderer::CreateSamplerState()
@@ -1078,7 +1120,7 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 	XMFLOAT3		g_vUp(0.0f, 1.0f, 0.0f);		//카메라 상방 벡터1.(Direction)
 
 	// 투영 변환 정보. 
-	float g_fFov = XMConvertToRadians(45);	//기본 FOV 앵글. Field of View (Y)
+	constexpr float Fov = XMConvertToRadians(45.0f);	//기본 FOV 앵글. Field of View (Y)
 
 	XMVECTOR eye = XMLoadFloat3(&g_vEye);	//카메라 위치 
 	XMVECTOR lookat = XMLoadFloat3(&g_vLookAt);	//바라보는 곳.위치.
@@ -1086,7 +1128,7 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 	// 뷰 변환 행렬 생성 :  View Transform 
 	XMMATRIX mView = XMMatrixLookAtLH(eye, lookat, up);
 
-	XMMATRIX mProj = XMMatrixPerspectiveFovLH(g_fFov, 960.f / 800.f, 1, 300);
+	XMMATRIX mProj = XMMatrixPerspectiveFovLH(Fov, 960.f / 800.f, 1, 300);
 
 	XMStoreFloat4x4(&tm, mView);
 	m_RenderContext.BCBuffer.mView = tm;
@@ -1108,11 +1150,11 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 
 void Renderer::DrawGrid()
 {
-	m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
+	m_pDXDC->IASetInputLayout(m_pInputLayout_P.Get());
 	m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	UINT strideC = sizeof(VertexPC), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);
-	m_pDXDC->VSSetShader(m_pVS.Get(), nullptr, 0);
+	m_pDXDC->VSSetShader(m_pVS_P.Get(), nullptr, 0);
 	m_pDXDC->PSSetShader(m_pPS.Get(), nullptr, 0);
 	m_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 	

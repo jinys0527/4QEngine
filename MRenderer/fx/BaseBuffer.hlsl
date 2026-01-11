@@ -6,7 +6,12 @@ cbuffer BaseBuffer : register(b0)
     matrix mVP;
 };
 
-struct VSInput
+struct VSInput_P
+{
+    float3 pos : POSITION;
+};
+
+struct VSInput_PNUT
 {
     float3 pos : POSITION;
     float3 nrm : NORMAL;
