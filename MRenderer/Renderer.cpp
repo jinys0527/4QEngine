@@ -647,7 +647,7 @@ HRESULT Renderer::RTCubeSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3
 
 HRESULT Renderer::ResetRenderTarget(int width, int height)
 {
-	HRESULT hr;
+	HRESULT hr = S_OK;
 
 	//m_pSwapChain->ResizeBuffers()활용해서 전부 내리고 새로 만들면 됨
 

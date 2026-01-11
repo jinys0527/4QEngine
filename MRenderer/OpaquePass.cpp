@@ -68,27 +68,35 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                     ID3D11Buffer* vb = vbIt->second.Get();
                     ID3D11Buffer* ib = ibIt->second.Get();
                     UINT32 icount = countIt->second;
-                    if (vb && ib)
-                    {
-                        const UINT stride = sizeof(RenderData::Vertex);
-                        const UINT offset = 0;
-
-
-                        m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::DEFAULT].Get(), NULL, 0xFFFFFFFF);
-                        m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
-                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
-                        m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-                        m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
-                        m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                        m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-                        m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-                        m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-                        m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-                        m_RenderContext.pDXDC->DrawIndexed(icount, 0, 0);
-
-                    }
+                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, icount);
                 }
             }
         }
     }
+}
+
+void OpaquePass::DrawMesh(
+    ID3D11DeviceContext* dc,
+    ID3D11Buffer* vb,
+    ID3D11Buffer* ib,
+    UINT indexCount
+)
+{
+    const UINT stride = sizeof(RenderData::Vertex);
+    const UINT offset = 0;
+
+    dc->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+    dc->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
+    dc->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
+
+    dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+    dc->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+    dc->IASetInputLayout(m_RenderContext.inputLayout.Get());
+    dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
+    dc->PSSetShader(nullptr, nullptr, 0);
+    dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+
+    dc->DrawIndexed(indexCount, 0, 0);
 }
