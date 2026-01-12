@@ -43,6 +43,7 @@ private:
 	void RenderSceneView();
 
 	// 필요한 창 생성
+	void DrawMainMenuBar();
 	void DrawHierarchy();
 	void DrawInspector();
 	void DrawFolderView();
@@ -84,4 +85,10 @@ private:
 	std::filesystem::path m_SelectedResourcePath;
 
 	std::filesystem::path m_CurrentScenePath;
+
+	std::filesystem::path m_PendingDeletePath;
+	std::filesystem::path m_PendingSavePath;
+
+	bool m_OpenSaveConfirm = false;
+	bool m_OpenDeleteConfirm = false;
 };

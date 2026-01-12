@@ -14,6 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "d3d11.lib")

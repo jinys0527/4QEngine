@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "Scene.h"
 #include "DX11.h"
+#include "json.hpp"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -43,9 +44,9 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 	}
 	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
 }
-
+// 각 Property별 배치 Layout설정, 정해줘야 함
 bool DrawComponentPropertyEditor(Component* component, const Property& property)
-{	// 각 Property별 배치 Layout은 정해줘야 함
+{	
 	const std::type_info& typeInfo = property.GetTypeInfo();
 
 	if (typeInfo == typeid(int))
@@ -256,6 +257,7 @@ void EditorApplication::Render() {
 	Flip(m_Renderer.GetSwapChain().Get()); //★
 }
 
+// ImGUI 창그리기
 void EditorApplication::RenderImGUI() {
 	//★★
 	ImGui_ImplDX11_NewFrame();
@@ -263,7 +265,7 @@ void EditorApplication::RenderImGUI() {
 	ImGui::NewFrame();
 
 	CreateDockSpace();
-
+	DrawMainMenuBar();
 	DrawHierarchy();
 	DrawInspector();
 	DrawFolderView();
@@ -336,13 +338,23 @@ void EditorApplication::RenderSceneView() {
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget);
 
-
 	// 복구
 	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
 	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
 	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 }
 
+
+void EditorApplication::DrawMainMenuBar()
+{
+	if (ImGui::BeginMainMenuBar())
+	{
+		auto scene = m_SceneManager.GetCurrentScene();
+		const char* sceneName = scene ? scene->GetName().c_str() : "None";
+		ImGui::Text("Scene: %s", sceneName);
+		ImGui::EndMainMenuBar();
+	}
+}
 
 void EditorApplication::DrawHierarchy() {
 
@@ -368,13 +380,24 @@ void EditorApplication::DrawHierarchy() {
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(-1);
 	ImGui::InputText("##SceneName", m_SceneNameBuffer.data(), m_SceneNameBuffer.size());
+
 	if (ImGui::IsItemDeactivatedAfterEdit())
 	{
+		std::string oldName = scene->GetName();
 		std::string newName = m_SceneNameBuffer.data();
 		if (!newName.empty() && newName != scene->GetName())
 		{
 			scene->SetName(newName);
 			m_LastSceneName = newName;
+			if (!m_CurrentScenePath.empty() && m_CurrentScenePath.stem() == oldName)
+			{
+				std::filesystem::path renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
+				if (m_SelectedResourcePath == m_CurrentScenePath)
+				{
+					m_SelectedResourcePath = renamedPath;
+				}
+				m_CurrentScenePath = renamedPath;
+			}
 		}
 		else
 		{
@@ -608,13 +631,54 @@ void EditorApplication::DrawFolderView()
 
 	//ImGui::Text("Need Logic");
 	//logic
-	if(!std::filesystem::exists(m_ResourceRoot)) {
+	if (!std::filesystem::exists(m_ResourceRoot)) {
 		// resource folder 인식 문제방지
 		ImGui::Text("Resources folder not found: %s", m_ResourceRoot.string().c_str());
 		ImGui::End();
 		return;
 	}
 
+	auto createNewScene = [&]()
+		{
+			const std::string baseName = "NewScene";
+			std::filesystem::path newPath;
+			for (int index = 0; index < 10000; ++index)
+			{
+				std::string name = (index == 0) ? baseName : baseName + std::to_string(index);
+				newPath = m_ResourceRoot / (name + ".json");
+				if (!std::filesystem::exists(newPath))
+				{
+					break;
+				}
+			}
+
+			nlohmann::json j;
+			j["gameObjects"] = nlohmann::json::object();
+			j["gameObjects"]["opaque"] = nlohmann::json::array();
+			j["gameObjects"]["transparent"] = nlohmann::json::array();
+
+			std::ofstream out(newPath);
+			if (out)
+			{
+				out << j.dump(4);
+				out.close();
+				if (m_SceneManager.LoadSceneFromJson(newPath))
+				{
+					m_CurrentScenePath = newPath;
+					m_SelectedResourcePath = newPath;
+					m_SelectedObjectName.clear();
+					m_LastSelectedObjectName.clear();
+					m_ObjectNameBuffer.fill('\0');
+				}
+			}
+		};
+
+	if (ImGui::Button("New Scene"))
+	{
+		createNewScene();
+	}
+
+	ImGui::SameLine();
 	if (ImGui::Button("Save")) {
 		auto scene = m_SceneManager.GetCurrentScene();
 		if (scene)
@@ -625,79 +689,205 @@ void EditorApplication::DrawFolderView()
 			{
 				savePath = m_ResourceRoot / (scene->GetName() + ".json");
 			}
-			if (m_SceneManager.SaveSceneToJson(savePath))
-			{
-				m_CurrentScenePath = savePath;
-			}
+			m_PendingSavePath = savePath;
+			m_OpenSaveConfirm = true;
+			m_PendingSavePath = savePath;
+			m_OpenSaveConfirm = true;
 		}
 	}
-		ImGui::SameLine();
-		if (m_CurrentScenePath.empty())
-		{
-			ImGui::Text("Current Scene: None");
-		}
-		else
-		{
-			ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
-		}
 
-		ImGui::Separator();
-		const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
+	ImGui::SameLine();
+	const bool canDelete = !m_SelectedResourcePath.empty() && m_SelectedResourcePath.extension() == ".json";
+	if (!canDelete)
+	{
+		ImGui::BeginDisabled();
+	}
+	if (ImGui::Button("Delete"))
+	{
+		m_PendingDeletePath = m_SelectedResourcePath;
+		m_OpenDeleteConfirm = true;
+	}
+	if (!canDelete)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ImGui::SameLine();
+	if (m_CurrentScenePath.empty())
+	{
+		ImGui::Text("Current Scene: None");
+	}
+	else
+	{
+		ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
+	}
+
+	if (m_OpenSaveConfirm)
+	{
+		ImGui::OpenPopup("Confirm Save");
+		m_OpenSaveConfirm = false;
+	}
+
+	if (m_OpenDeleteConfirm)
+	{
+		ImGui::OpenPopup("Confirm Delete");
+		m_OpenDeleteConfirm = false;
+	}
+
+	if (ImGui::BeginPopupContextWindow("FolderContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+	{
+		if (ImGui::MenuItem("New Scene"))
+		{
+			createNewScene();
+		}
+		ImGui::EndPopup();
+	}
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Save scene \"%s\"?", m_PendingSavePath.filename().string().c_str());
+		if (ImGui::Button("Save"))
+		{
+			if (m_SceneManager.SaveSceneToJson(m_PendingSavePath))
 			{
-				std::vector<std::filesystem::directory_entry> entries;
-				for (const auto& entry : std::filesystem::directory_iterator(dir))
+				m_CurrentScenePath = m_PendingSavePath;
+				m_SelectedResourcePath = m_PendingSavePath;
+			}
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Confirm Delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		
+		if (ImGui::Button("Delete"))
+		{
+			std::error_code error;
+			std::filesystem::remove(m_PendingDeletePath, error);
+			if (!error)
+			{
+				if (m_CurrentScenePath == m_PendingDeletePath)
 				{
-					entries.push_back(entry);
+					m_CurrentScenePath.clear();
 				}
-
-				std::sort(entries.begin(), entries.end(),
-					[](const auto& a, const auto& b)
-					{
-						if (a.is_directory() != b.is_directory())
-						{
-							return a.is_directory() > b.is_directory();
-						}
-						return a.path().filename().string() < b.path().filename().string();
-					});
-
-				for (const auto& entry : entries)
+				if (m_SelectedResourcePath == m_PendingDeletePath)
 				{
-					const auto name = entry.path().filename().string();
-					if (entry.is_directory())
+					m_SelectedResourcePath.clear();
+				}
+			}
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	ImGui::Separator();
+
+	const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
+		{
+			std::vector<std::filesystem::directory_entry> entries;
+			for (const auto& entry : std::filesystem::directory_iterator(dir))
+			{
+				entries.push_back(entry);
+			}
+
+			std::sort(entries.begin(), entries.end(),
+				[](const auto& a, const auto& b)
+				{
+					if (a.is_directory() != b.is_directory())
 					{
-						const std::string label =  name;
-						const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-						if (ImGui::TreeNodeEx(label.c_str(), flags))
-						{
-							self(self, entry.path());
-							ImGui::TreePop();
-						}
+						return a.is_directory() > b.is_directory();
+					}
+					return a.path().filename().string() < b.path().filename().string();
+				});
+
+			for (const auto& entry : entries)
+			{
+				const auto name = entry.path().filename().string();
+				if (entry.is_directory())
+				{
+					const std::string label = name;
+					const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+					if (ImGui::TreeNodeEx(label.c_str(), flags))
+					{
+						self(self, entry.path());
+						ImGui::TreePop();
+					}
+				}
+				else
+				{
+					const std::string label = name;
+					const bool selected = (m_SelectedResourcePath == entry.path());
+					const bool isSceneFile = entry.path().extension() == ".json";
+					ImGui::PushID(label.c_str());
+					if (isSceneFile && selected)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+					}
+
+					bool clicked = false;
+					if (isSceneFile)
+					{
+						clicked = ImGui::Button(label.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
 					}
 					else
 					{
-						const std::string label =  name;
-						const bool selected = (m_SelectedResourcePath == entry.path());
-						if (ImGui::Selectable(label.c_str(), selected))
+						clicked = ImGui::Selectable(label.c_str(), selected);
+					}
+
+					if (isSceneFile && selected)
+					{
+						ImGui::PopStyleColor(3);
+					}
+
+					if (ImGui::BeginPopupContextItem("SceneItemContext"))
+					{
+						if (isSceneFile && ImGui::MenuItem("Delete"))
 						{
-							m_SelectedResourcePath = entry.path();
-							if (entry.path().extension() == ".json")
+							m_PendingDeletePath = entry.path();
+							m_OpenDeleteConfirm = true;
+						}
+						ImGui::EndPopup();
+					}
+
+					if (clicked)
+					{
+						m_SelectedResourcePath = entry.path();
+						if (entry.path().extension() == ".json")
+						{
+							if (m_SceneManager.LoadSceneFromJson(entry.path()))
 							{
-								if (m_SceneManager.LoadSceneFromJson(entry.path()))
-								{
-									m_CurrentScenePath = entry.path();
-									m_SelectedObjectName.clear();
-									m_LastSelectedObjectName.clear();
-									m_ObjectNameBuffer.fill('\0');
-								}
+								m_CurrentScenePath = entry.path();
+								m_SelectedObjectName.clear();
+								m_LastSelectedObjectName.clear();
+								m_ObjectNameBuffer.fill('\0');
 							}
 						}
 					}
+					ImGui::PopID();
 				}
-			};
+			}
+		};
 
-		drawDirectory(drawDirectory, m_ResourceRoot);
+	drawDirectory(drawDirectory, m_ResourceRoot);
 	ImGui::End();
 }
+
 
 void EditorApplication::DrawResourceBrowser()
 {
@@ -842,8 +1032,9 @@ void EditorApplication::CreateDockSpace()
 	);
 }
 
+// 초기 창 셋팅
 void EditorApplication::SetupEditorDockLayout()
-{	// 초기 창 셋팅
+{	
 	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
 
 	ImGui::DockBuilderRemoveNode(dockspaceID);
