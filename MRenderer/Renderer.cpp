@@ -100,6 +100,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext)
 {
+	//메인 카메라로 draw
+	m_IsEditCam = false;
+	m_RenderContext.isEditCam = m_IsEditCam;
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.Get());
 
 
@@ -115,6 +118,27 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_Pipeline.Execute(frame);
 
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
+
+
+	//edit카메라로 draw
+	m_IsEditCam = true;
+	m_RenderContext.isEditCam = m_IsEditCam;
+
+	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui_edit.GetAddressOf(), m_pDSViewScene_Imgui_edit.Get());
+
+
+	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
+	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor);
+	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui_edit.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+
+	//그리드
+	UpdateGrid(frame);
+	DrawGrid();
+
+	m_Pipeline.Execute(frame);
+
+	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
+
 
 	ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_pDXDC.Get(), m_pRTView.Get(), m_pDSViewScene_Depth.Get(), 1, 0);
 }
@@ -823,43 +847,14 @@ HRESULT Renderer::CreateRenderTarget()
 HRESULT Renderer::CreateRenderTarget_Other()
 {
 	HRESULT hr = S_OK;
-#pragma region Imgui RenderTarget
-	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
-	//1. 렌더 타겟용 빈 텍스처로 만들기.	
-	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
-
-	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
-
-	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
-	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
-
-	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
-	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
-#pragma endregion
+	ReCreateRenderTarget();
 
 #pragma region ShadowMap
 	m_ShadowTextureSize = { 16384, 16384 };
-	fmt = DXGI_FORMAT_R32_TYPELESS;
+	DXGI_FORMAT fmt = DXGI_FORMAT_R32_TYPELESS;
 	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
 #pragma endregion
 
-#pragma region Depth
-	fmt = DXGI_FORMAT_R32_TYPELESS;
-	DSCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
-
-#pragma endregion
-
-#pragma region Post
-	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Post.GetAddressOf());
-
-	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_Post.Get(), m_pRTView_Post.GetAddressOf());
-
-	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
-	RTSRViewCreate(fmt, m_pRTScene_Post.Get(), m_pTexRvScene_Post.GetAddressOf());
-
-#pragma endregion
 
 	return hr;
 }
@@ -871,15 +866,19 @@ HRESULT Renderer::ReCreateRenderTarget()
 	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
+	RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
+	RTSRViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pTexRvScene_Imgui_edit.GetAddressOf());
 
 	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
 	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
+	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui_edit.GetAddressOf(), m_pDSViewScene_Imgui_edit.GetAddressOf());
 #pragma endregion
 
 

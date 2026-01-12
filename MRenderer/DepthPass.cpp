@@ -7,9 +7,9 @@ void DepthPass::Execute(const RenderData::FrameData& frame)
         return;
     const auto& mainlight = frame.lights[0];
 
-    m_RenderContext.BCBuffer.mView = context.view;
-    m_RenderContext.BCBuffer.mProj = context.proj;
-    m_RenderContext.BCBuffer.mVP = context.viewProj;
+    m_RenderContext.BCBuffer.mView = context.gameCamera.view;
+    m_RenderContext.BCBuffer.mProj = context.gameCamera.proj;
+    m_RenderContext.BCBuffer.mVP = context.gameCamera.viewProj;
 
 
     m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Depth.Get());

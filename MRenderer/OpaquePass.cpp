@@ -8,15 +8,26 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
     const auto& context = frame.context;
 
-    m_RenderContext.BCBuffer.mView = context.view;
-    m_RenderContext.BCBuffer.mProj = context.proj;
-    m_RenderContext.BCBuffer.mVP = context.viewProj;
+    if (!m_RenderContext.isEditCam)
+    {
+        m_RenderContext.BCBuffer.mView = context.gameCamera.view;
+        m_RenderContext.BCBuffer.mProj = context.gameCamera.proj;
+        m_RenderContext.BCBuffer.mVP = context.gameCamera.viewProj;
+    }
+    else if (m_RenderContext.isEditCam)
+    {
+        m_RenderContext.BCBuffer.mView = context.editorCamera.view;
+        m_RenderContext.BCBuffer.mProj = context.editorCamera.proj;
+        m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
+    }
+
+    m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+
 
     
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
-    m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
     for (size_t index : GetQueue())
     {

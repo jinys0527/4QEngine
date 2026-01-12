@@ -35,7 +35,7 @@ private:
 	HRESULT CreateDeviceSwapChain(HWND hWnd);
 	HRESULT CreateRenderTarget();
 	HRESULT CreateRenderTarget_Other();
-	HRESULT ReCreateRenderTarget();
+	HRESULT ReCreateRenderTarget();							//스크린에 영향받는 것들
 	HRESULT CreateDepthStencil(int width, int height);
 	HRESULT	CreateDepthStencilState();
 	HRESULT	CreateRasterState();
@@ -54,12 +54,20 @@ private:
 
 
 	//imgui용
+	bool m_IsEditCam = false;
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Imgui;
 
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Imgui;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Imgui;
+
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui_edit;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui_edit;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Imgui_edit;
+
+	ComPtr<ID3D11Texture2D>				m_pDSTex_Imgui_edit;
+	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Imgui_edit;
 
 	//그림자 매핑용
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Shadow;

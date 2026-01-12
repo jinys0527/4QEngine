@@ -137,19 +137,25 @@ namespace RenderData
 		std::vector<AnimationTrack> tracks;
 	};
 
+	struct CameraContext
+	{
+		UINT32        width = 0;
+		UINT32        height = 0;
+		XMFLOAT4X4    view{};
+		XMFLOAT4X4    proj{};
+		XMFLOAT4X4    viewProj{};
+		XMFLOAT3      cameraPos{ 0.0f, 0.0f,0.0f };
+		FLOAT         exposure = 1.0f;
+		XMFLOAT3      ambientColor{ 0.0f,0.0f,0.0f };
+	};
+
 
 	struct FrameContext
 	{
 		UINT32       frameIndex = 0;
 		FLOAT        deltaTime = 0.0f;
-		UINT32       width  = 0;
-		UINT32       height = 0;
-		XMFLOAT4X4   view{};
-		XMFLOAT4X4   proj{};
-		XMFLOAT4X4   viewProj{};
-		XMFLOAT3     cameraPos{ 0.0f, 0.0f,0.0f };
-		FLOAT        exposure = 1.0f;
-		XMFLOAT3     ambientColor{ 0.0f,0.0f,0.0f };
+		CameraContext editorCamera{};
+		CameraContext gameCamera{};
 		FLOAT        padding = 0.0f;
 	};
 

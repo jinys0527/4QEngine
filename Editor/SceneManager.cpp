@@ -58,7 +58,7 @@ void SceneManager::Render()
 void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
 	m_CurrentScene = scene;
-	m_Camera = m_CurrentScene->GetMainCamera();
+	m_Camera = m_CurrentScene->GetGameCamera();
 	//m_Renderer.SetCamera(m_Camera);
 
 }

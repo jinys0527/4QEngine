@@ -81,6 +81,8 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3DBlob> VSCode_P;
 
+	bool isEditCam = false;
+
 
 	//그림자 매핑용
 	ComPtr<ID3D11Texture2D>				pDSTex_Shadow;

@@ -139,9 +139,14 @@ bool Scene::HasGameObjectName(const std::string& name) const
 
 
 
-void Scene::SetMainCamera(std::shared_ptr<CameraObject> cameraObject)
+void Scene::SetGameCamera(std::shared_ptr<CameraObject> cameraObject)
 {
-	m_Camera = cameraObject;
+	m_GameCamera = cameraObject;
+}
+
+void Scene::SetEditorCamera(std::shared_ptr<CameraObject> cameraObject)
+{
+	m_EditorCamera = cameraObject;
 }
 
 
@@ -356,19 +361,36 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	RenderData::FrameContext& context = frameData.context;
 	context = RenderData::FrameContext{};
 
-	if (m_Camera)
+	// 게임 카메라
+	if (m_GameCamera)
 	{
-		context.view = m_Camera->GetViewMatrix();
-		context.proj = m_Camera->GetProjMatrix();
-		const auto viewport = m_Camera->GetViewportSize();
-		context.width = static_cast<UINT32>(viewport.Width);
-		context.height = static_cast<UINT32>(viewport.Height);
-		context.cameraPos = m_Camera->GetEye();
+		context.gameCamera.view = m_GameCamera->GetViewMatrix();
+		context.gameCamera.proj = m_GameCamera->GetProjMatrix();
+		const auto viewport = m_GameCamera->GetViewportSize();
+		context.gameCamera.width = static_cast<UINT32>(viewport.Width);
+		context.gameCamera.height = static_cast<UINT32>(viewport.Height);
+		context.gameCamera.cameraPos = m_GameCamera->GetEye();
 
-		const auto view = XMLoadFloat4x4(&context.view);
-		const auto proj = XMLoadFloat4x4(&context.proj);
+		const auto view = XMLoadFloat4x4(&context.gameCamera.view);
+		const auto proj = XMLoadFloat4x4(&context.gameCamera.proj);
 		const auto viewProj = XMMatrixMultiply(view, proj);
-		XMStoreFloat4x4(&context.viewProj, viewProj);
+		XMStoreFloat4x4(&context.gameCamera.viewProj, viewProj);
+	}
+
+	//에디터 nullptr
+	if (m_EditorCamera)
+	{
+		context.editorCamera.view = m_EditorCamera->GetViewMatrix();
+		context.editorCamera.proj = m_EditorCamera->GetProjMatrix();
+		const auto viewport = m_EditorCamera->GetViewportSize();
+		context.editorCamera.width = static_cast<UINT32>(viewport.Width);
+		context.editorCamera.height = static_cast<UINT32>(viewport.Height);
+		context.editorCamera.cameraPos = m_EditorCamera->GetEye();
+
+		const auto view = XMLoadFloat4x4(&context.editorCamera.view);
+		const auto proj = XMLoadFloat4x4(&context.editorCamera.proj);
+		const auto viewProj = XMMatrixMultiply(view, proj);
+		XMStoreFloat4x4(&context.editorCamera.viewProj, viewProj);
 	}
 
 	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, frameData);
