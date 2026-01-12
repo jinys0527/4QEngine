@@ -109,7 +109,7 @@ void OpaquePass::DrawMesh(
     dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-    dc->PSSetShader(nullptr, nullptr, 0);
+    dc->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
     dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 
     //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?

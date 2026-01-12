@@ -574,7 +574,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 
 	if (!scene) return ;
 #ifdef _DEBUG
-	DebugDumpAssimpScene(scene);   // ← 여기
+	//DebugDumpAssimpScene(scene);   // ← 여기
 #endif
 	
 	// ----- 3) Import pipeline -----
@@ -700,7 +700,7 @@ void ImportAll()
 			continue;
 
 #ifdef _DEBUG
-		std::cout << path.string() << std::endl;
+	//	std::cout << path.string() << std::endl;
 #endif
 		ImportFBX(path.string(), outputRoot.string());
 	}

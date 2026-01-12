@@ -4,6 +4,8 @@
 #include "CameraComponent.h"
 #include "LightComponent.h"
 #include "TransformComponent.h"
+#include "MeshRenderer.h"
+
 
 void DefaultScene::Initialize()
 {
@@ -19,7 +21,6 @@ void DefaultScene::Initialize()
 
 	auto lightObject = std::make_shared<GameObject>(m_EventDispatcher);
 	lightObject->SetName("DirectionalLight");
-	lightObject->AddComponent<TransformComponent>();
 	if (auto* light = lightObject->AddComponent<LightComponent>())
 	{
 		light->SetType(RenderData::LightType::Directional);
