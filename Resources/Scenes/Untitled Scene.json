@@ -90,13 +90,13 @@
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": 1.0,
+                            "Intensity": 0.0,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "Range": 0.0,
+                            "Range": 423.0,
                             "SpotAngle": 0.0
                         },
                         "type": "LightComponent"

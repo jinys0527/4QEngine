@@ -97,7 +97,6 @@ private:
 
 	XMFLOAT4X4 m_LocalMatrix;
 	XMFLOAT4X4 m_WorldMatrix;
-
 	bool m_IsDirty = true;
 
 };

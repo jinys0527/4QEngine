@@ -51,6 +51,7 @@ struct Serializer<XMFLOAT2> {
 };
 //예시 인데 이러면 모든 구조체 마다 다 작성해야함.
 //struct MyStruct { int a; float b; };
+// MyStruct2 
 //
 //template<>
 //struct Serializer<MyStruct> {

@@ -387,7 +387,7 @@ void EditorApplication::DrawHierarchy() {
 	{
 		const std::string name = MakeUniqueObjectName(*scene, "GameObject");
 		scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
-		//scene->CreateGameObject(name, false);
+		//scene->CreateGameObject(name, false); //transparent
 		m_SelectedObjectName = name;
 	}
 
