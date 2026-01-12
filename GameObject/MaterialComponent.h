@@ -16,7 +16,7 @@ public:
 	void           SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
 	MaterialHandle GetMaterialHandle() const                { return m_MaterialHandle;   }
 
-	void SetMaterialAssetReference(const std::string& assetPath, UINT32 materialIndex)
+	void SetMaterialAssetPath(const std::string& assetPath, UINT32 materialIndex)
 	{
 		m_MaterialAssetPath = assetPath;
 		m_MaterialAssetIndex = materialIndex;
