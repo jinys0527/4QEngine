@@ -369,7 +369,7 @@ void EditorApplication::Render() {
 
 	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
-	m_SceneManager.Render(); // Scene 전체 그리고
+	//m_SceneManager.Render(); // Scene 전체 그리고
 
 	RenderImGUI();
 
@@ -386,11 +386,13 @@ void EditorApplication::RenderImGUI() {
 	CreateDockSpace();
 	DrawMainMenuBar();
 	DrawHierarchy();
+	
 	DrawInspector();
+	RenderSceneView();
 	DrawFolderView();
 	DrawResourceBrowser();
 
-	RenderSceneView(); //Scene그리기
+	 //Scene그리기
 
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
 	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget_edit);
@@ -450,17 +452,27 @@ void EditorApplication::RenderSceneView() {
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
 
+<<<<<<< HEAD
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 	m_SceneRenderTarget_edit.Bind();
 	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+=======
+	//m_SceneRenderTarget.Bind();
+	//m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+	//
+	//m_SceneRenderTarget_edit.Bind();
+	//m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+	//
+	//m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+>>>>>>> a58584e (Component)
 
 	auto scene = m_SceneManager.GetCurrentScene();
-	if (scene)
-	{
-		scene->Render(m_FrameData);
-	}
+	//if (scene)
+	//{
+	//	scene->Render(m_FrameData);
+	//}
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
@@ -481,7 +493,16 @@ void EditorApplication::RenderSceneView() {
 	{
 		cameraComponent->SetViewport({static_cast<float>(m_width), static_cast<float>(m_height)});
 	}
+	//scene->Render(m_FrameData);
 
+	m_SceneRenderTarget.Bind();
+	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_SceneRenderTarget_edit.Bind();
+	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+	scene->Render(m_FrameData);
 	// 복구
 	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
 	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
@@ -684,21 +705,21 @@ void EditorApplication::DrawInspector() {
 		const bool nodeOpen = ImGui::TreeNodeEx(typeName.c_str(), flags);
 		if (ImGui::BeginPopupContextItem("ComponentContext"))
 		{
-			const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
-			if (!canRemove)
+			//const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
+			/*if (!canRemove)
 			{
 				ImGui::BeginDisabled();
-			}
+			}*/
 
 			//삭제
 			if (ImGui::MenuItem("Remove Component"))
 			{
 				selectedObject->RemoveComponentByTypeName(typeName);
 			}
-			if (!canRemove)
+		/*	if (!canRemove)
 			{
 				ImGui::EndDisabled(); 
-			}
+			}*/
 			ImGui::EndPopup();
 		}
 		if (nodeOpen)
@@ -1339,22 +1360,6 @@ void EditorApplication::UpdateEditorCamera()
 		if (ImGui::IsKeyDown(ImGuiKey_Q))
 		{
 			moveVec = XMVectorSubtract(moveVec, upVec);
-		}
-
-		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
-		{
-			moveVec = XMVector3Normalize(moveVec);
-			const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
-			eyeVec = XMVectorAdd(eyeVec, scaledMove);
-			lookVec = XMVectorAdd(lookVec, scaledMove);
-			updated = true;
-		}
-	}
-
-	if (io.MouseDown[2])
-	{
-		const float panSpeed = 0.01f;
-		const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
 		const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
 		const XMVECTOR pan = XMVectorAdd(panRight, panUp);
 		eyeVec = XMVectorAdd(eyeVec, pan);

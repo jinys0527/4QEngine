@@ -159,8 +159,17 @@ void Scene::Serialize(nlohmann::json& j) const
 	j["editor"] = nlohmann::json::object();
 	if (m_EditorCamera)
 	{
+		auto writeVec3 = [](nlohmann::json& target, const XMFLOAT3& value)
+			{
+				target["x"] = value.x;
+				target["y"] = value.y;
+				target["z"] = value.z;
+			};
 		nlohmann::json editorCameraJson;
-		m_EditorCamera->Serialize(editorCameraJson);
+		writeVec3(editorCameraJson["eye"], m_EditorCamera->GetEye());
+		writeVec3(editorCameraJson["look"], m_EditorCamera->GetLook());
+		writeVec3(editorCameraJson["up"], m_EditorCamera->GetUp());
+
 		j["editor"]["EditorCamera"] = editorCameraJson;
 	}
 	//
@@ -262,11 +271,47 @@ void ProcessWithErase(
 void Scene::Deserialize(const nlohmann::json& j)
 {
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
-	const auto& editorRoot = j.at("editor");
-
-	if (editorRoot.contains("EditorCamera")) {
-		
+	const nlohmann::json* editorRoot = nullptr;
+	if (j.contains("editor"))
+	{
+		editorRoot = &j.at("editor");
 	}
+	if (editorRoot && editorRoot->contains("EditorCamera"))
+	{
+		if (m_EditorCamera)
+		{
+			if (auto* cameraComp = m_EditorCamera->GetComponent<CameraComponent>())
+			{
+				const auto& editorCameraJson = editorRoot->at("EditorCamera");
+				auto readVec3 = [](const nlohmann::json& source, const XMFLOAT3& fallback)
+					{
+						XMFLOAT3 result = fallback;
+						result.x = source.value("x", result.x);
+						result.y = source.value("y", result.y);
+						result.z = source.value("z", result.z);
+						return result;
+					};
+
+				XMFLOAT3 eye = m_EditorCamera->GetEye();
+				XMFLOAT3 look = m_EditorCamera->GetLook();
+				XMFLOAT3 up = m_EditorCamera->GetUp();
+				if (editorCameraJson.contains("eye"))
+				{
+					eye = readVec3(editorCameraJson.at("eye"), eye);
+				}
+				if (editorCameraJson.contains("look"))
+				{
+					look = readVec3(editorCameraJson.at("look"), look);
+				}
+				if (editorCameraJson.contains("up"))
+				{
+					up = readVec3(editorCameraJson.at("up"), up);
+				}
+				cameraComp->SetEyeLookUp(eye, look, up);
+			}
+		}
+	}
+
 	if (goRoot.contains("opaque"))
 	{
 		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, m_EventDispatcher);
