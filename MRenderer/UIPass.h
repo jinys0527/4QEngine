@@ -1,6 +1,21 @@
 ﻿#pragma once
 #include "RenderPass.h"
 
+// Input: 
+// - FrameData: UI object           
+// - ShaderResourceView: None
+// - Depthview: None
+// - Viewport: ScreenSize
+// - BlendState: DEFAULT or nullptr             //현재는 DEFAULT
+// - RasterizeState: SOLID                      //안전을 위해
+// - DepthStencilState: Depth OFF, StencilOFF
+// - InputLayout: pos, uv                       //적용 안됨
+// output:
+// - RenderTarget: m_RenderContext.pRTView (main RT)
+// - Depthview: None
+//
+
+
 class UIPass : public RenderPass
 {
 public:

@@ -64,11 +64,13 @@ private:
 	//그림자 매핑용
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Shadow;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Shadow;
+	ComPtr<ID3D11ShaderResourceView>	m_pShadowRV;
 	TextureSize							m_ShadowTextureSize = { 0,0 };
 
 	//DepthPass용
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Depth;
+	ComPtr<ID3D11ShaderResourceView>	m_pDepthRV;
 
 	//PostPass용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Post;

@@ -169,32 +169,37 @@ void Renderer::CreateContext()
 {
 	m_RenderContext.WindowSize = m_WindowSize;
 
-	m_RenderContext.pDevice = m_pDevice;
-	m_RenderContext.pDXDC = m_pDXDC;
-	m_RenderContext.pDSView = m_pDSView;
-	m_RenderContext.pRTView = m_pRTView;
+	m_RenderContext.pDevice					= m_pDevice;
+	m_RenderContext.pDXDC					= m_pDXDC;
+	m_RenderContext.pDSView					= m_pDSView;
+	m_RenderContext.pRTView					= m_pRTView;
 
-	m_RenderContext.vertexBuffers = &m_VertexBuffers;
-	m_RenderContext.indexBuffers = &m_IndexBuffers;
-	m_RenderContext.indexcounts = &m_IndexCounts;
+	m_RenderContext.vertexBuffers			= &m_VertexBuffers;
+	m_RenderContext.indexBuffers			= &m_IndexBuffers;
+	m_RenderContext.indexcounts				= &m_IndexCounts;
 
-	m_RenderContext.VS = m_pVS;
-	m_RenderContext.PS = m_pPS;
-	m_RenderContext.VSCode = m_pVSCode;
-	m_RenderContext.inputLayout = m_pInputLayout;
+	m_RenderContext.VS						= m_pVS;
+	m_RenderContext.PS						= m_pPS;
+	m_RenderContext.VSCode					= m_pVSCode;
+	m_RenderContext.inputLayout				= m_pInputLayout;
 
-	m_RenderContext.VS_P = m_pVS_P;
-	m_RenderContext.VSCode_P = m_pVSCode_P;
-	m_RenderContext.InputLayout_P = m_pInputLayout_P;
+	m_RenderContext.VS_P					= m_pVS_P;
+	m_RenderContext.VSCode_P				= m_pVSCode_P;
+	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
 
-	m_RenderContext.RState = m_RState;
-	m_RenderContext.DSState = m_DSState;
-	m_RenderContext.SState = m_SState;
-	m_RenderContext.BState = m_BState;
+	m_RenderContext.RState					= m_RState;
+	m_RenderContext.DSState					= m_DSState;
+	m_RenderContext.SState					= m_SState;
+	m_RenderContext.BState					= m_BState;
 
-	m_RenderContext.pDSTex_Shadow = m_pDSTex_Shadow;
-	m_RenderContext.pDSViewScene_Shadow = m_pDSViewScene_Shadow;
-	m_RenderContext.ShadowTextureSize = m_ShadowTextureSize;
+	m_RenderContext.pDSTex_Shadow			= m_pDSTex_Shadow;
+	m_RenderContext.pDSViewScene_Shadow		= m_pDSViewScene_Shadow;
+	m_RenderContext.pShadowRV				= m_pShadowRV;
+	m_RenderContext.ShadowTextureSize		= m_ShadowTextureSize;
+
+	m_RenderContext.pDSTex_Depth			= m_pDSTex_Depth;
+	m_RenderContext.pDSViewScene_Depth		= m_pDSViewScene_Depth;
+	m_RenderContext.pDepthRV				= m_pDepthRV;
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {

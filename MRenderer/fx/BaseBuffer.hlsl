@@ -21,9 +21,25 @@ struct Light
 
 cbuffer LightBuffer : register(b1)
 {
-    Light lights[16];
-    int lightCount;
+    Light   lights[16];
+    uint    lightcount;
+    float3  lightpadding;
 }
+
+cbuffer SkinningBuffer : register(b2)
+{
+    matrix  bones[128];
+    uint    count;
+    float3  skinningpadding;
+}
+
+
+
+
+
+
+
+
 
 struct VSInput_P
 {

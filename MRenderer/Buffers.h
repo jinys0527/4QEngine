@@ -30,7 +30,7 @@ constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
 {
 	Light	lights[MAX_LIGHTS];
-	INT		lightCount;
+	UINT	lightCount;
 	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
@@ -85,10 +85,12 @@ struct RenderContext
 	//그림자 매핑용
 	ComPtr<ID3D11Texture2D>				pDSTex_Shadow;
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Shadow;
+	ComPtr<ID3D11ShaderResourceView>	pShadowRV;
 	TextureSize							ShadowTextureSize = { 0,0 };
 
 	//DepthPass용
 	ComPtr<ID3D11Texture2D>				pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
+	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 
 };

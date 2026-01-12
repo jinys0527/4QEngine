@@ -50,7 +50,12 @@ enum class DS
     DEPTH_ON,
     DEPTH_OFF,
 
+
     MAX_,
+
+
+    DEPTH_ON_STENCIL_OFF = DEPTH_ON,
+    DEPTH_OFF_STENCIL_OFF = DEPTH_OFF,
 };
 
 enum class RS 

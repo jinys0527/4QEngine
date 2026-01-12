@@ -1,6 +1,20 @@
 ﻿#pragma once
 #include "RenderPass.h"
 
+// Input: 
+// - FrameData: None            //적용 안됨 PostPass.cpp의 ★을 참고
+// - ShaderResourceView: None
+// - Depthview: None
+// - Viewport: ScreenSize
+// - BlendState: ADD
+// - RasterizeState: CULLBACK
+// - DepthStencilState: Depth OFF, StencilOFF
+// - InputLayout: pos, uv           //적용 안됨
+// output:
+// - RenderTarget: m_RenderContext.pRTView (main RT)
+// - Depthview: None
+//
+
 class PostPass : public RenderPass
 {
 public:

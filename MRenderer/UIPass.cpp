@@ -55,7 +55,7 @@ void UIPass::Execute(const RenderData::FrameData& frame)
 
                         m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::DEFAULT].Get(), NULL, 0xFFFFFFFF);
                         m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::SOLID].Get());         //안전을 위해 SOLID
-                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
+                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
                         m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
                         m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
                         m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
