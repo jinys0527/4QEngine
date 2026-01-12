@@ -121,5 +121,8 @@
     <FxCompile Include="fx\Demo_VS_POS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="fx\Lights.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
