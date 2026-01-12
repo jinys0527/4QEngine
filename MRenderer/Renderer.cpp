@@ -649,7 +649,35 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 {
 	HRESULT hr = S_OK;
 
-	//m_pSwapChain->ResizeBuffers()활용해서 전부 내리고 새로 만들면 됨
+	//Unbind → Release → ResizeBuffers → Recreate → Viewport → Camera
+
+
+	// 1.GPU 파이프라인 타겟 해제
+	m_pDXDC->OMSetRenderTargets(0, nullptr, nullptr);
+	m_pDXDC->Flush(); // 안전
+
+	// 2.기존 화면 크기 의존 리소스 전부 Release
+	ReleaseScreenSizeResource();
+
+	// 3.SwapChain ResizeBuffers 호출
+	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN,0);
+
+
+	// 4. 새 BackBuffer 획득 & RTV 재생성
+	ComPtr<ID3D11Texture2D> backBuffer;
+	m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+
+	m_pDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_pRTView);
+
+	// 5. 화면 크기 기반 렌더 타겟 전부 재생성
+	ReCreateRenderTarget();
+
+
+	// 6. Viewport 재설정
+	SetViewPort(width, height, m_pDXDC.Get());
+
+
+	// 7. ResizeTarget, 전체화면 전환 시, 디스플레이 모드 변경 시
 
 	return hr;
 }
@@ -666,33 +694,7 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 	CreateDepthStencilState();
 	CreateSamplerState();
 
-#pragma region Imgui RenderTarget
-	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
-	//1. 렌더 타겟용 빈 텍스처로 만들기.	
-	RTTexCreate(width, height, fmt, m_pRTScene_Imgui.GetAddressOf());
-
-	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
-
-	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
-	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
-
-	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
-	DSCreate(width, height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
-#pragma endregion
-
-#pragma region ShadowMap
-	m_ShadowTextureSize = { 16384, 16384 };
-	fmt = DXGI_FORMAT_R32_TYPELESS;
-	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
-#pragma endregion
-
-#pragma region Depth
-	fmt = DXGI_FORMAT_R32_TYPELESS;
-	DSCreate(width, height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
-
-#pragma endregion
-
+	CreateRenderTarget_Other();
 }
 
 HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
@@ -779,10 +781,94 @@ HRESULT Renderer::CreateRenderTarget()
 		return hr;
 	}
 
-	//backBuffer->Release();
+
 
 	return hr;
 
+}
+
+HRESULT Renderer::CreateRenderTarget_Other()
+{
+	HRESULT hr = S_OK;
+#pragma region Imgui RenderTarget
+	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//1. 렌더 타겟용 빈 텍스처로 만들기.	
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
+
+	//2. 렌더타겟뷰 생성.
+	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
+
+	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
+	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
+
+	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
+	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
+#pragma endregion
+
+#pragma region ShadowMap
+	m_ShadowTextureSize = { 16384, 16384 };
+	fmt = DXGI_FORMAT_R32_TYPELESS;
+	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
+#pragma endregion
+
+#pragma region Depth
+	fmt = DXGI_FORMAT_R32_TYPELESS;
+	DSCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
+
+#pragma endregion
+
+#pragma region Post
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Post.GetAddressOf());
+
+	//2. 렌더타겟뷰 생성.
+	RTViewCreate(fmt, m_pRTScene_Post.Get(), m_pRTView_Post.GetAddressOf());
+
+	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
+	RTSRViewCreate(fmt, m_pRTScene_Post.Get(), m_pTexRvScene_Post.GetAddressOf());
+
+#pragma endregion
+
+	return hr;
+}
+
+HRESULT Renderer::ReCreateRenderTarget()
+{
+	HRESULT hr = S_OK;
+#pragma region Imgui RenderTarget
+	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//1. 렌더 타겟용 빈 텍스처로 만들기.	
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
+
+	//2. 렌더타겟뷰 생성.
+	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
+
+	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
+	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
+
+	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
+	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
+#pragma endregion
+
+
+#pragma region Depth
+	fmt = DXGI_FORMAT_R32_TYPELESS;
+	DSCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
+
+#pragma endregion
+
+
+#pragma region Post
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Post.GetAddressOf());
+
+	//2. 렌더타겟뷰 생성.
+	RTViewCreate(fmt, m_pRTScene_Post.Get(), m_pRTView_Post.GetAddressOf());
+
+	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
+	RTSRViewCreate(fmt, m_pRTScene_Post.Get(), m_pTexRvScene_Post.GetAddressOf());
+
+#pragma endregion
+
+	return hr;
 }
 
 HRESULT Renderer::CreateDepthStencil(int width, int height)
@@ -1083,6 +1169,27 @@ HRESULT Renderer::CreateBlendState()
 		ERROR_MSG(hr);
 		return hr;
 	}
+
+	return hr;
+}
+
+HRESULT Renderer::ReleaseScreenSizeResource()
+{
+	HRESULT hr = S_OK;
+
+	m_pRTView.Reset();
+	m_pDS.Reset();
+	m_pDSView.Reset();
+	m_pRTScene_Imgui.Reset();
+	m_pTexRvScene_Imgui.Reset();
+	m_pRTView_Imgui.Reset();
+	m_pDSTex_Imgui.Reset();
+	m_pDSViewScene_Imgui.Reset();
+	m_pDSTex_Depth.Reset();
+	m_pDSViewScene_Depth.Reset();
+	m_pRTScene_Post.Reset();
+	m_pTexRvScene_Post.Reset();
+	m_pRTView_Post.Reset();
 
 	return hr;
 }

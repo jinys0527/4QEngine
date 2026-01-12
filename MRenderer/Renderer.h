@@ -29,16 +29,19 @@ public:
 
 //DX Set
 public :
-	HRESULT ResetRenderTarget(int width, int height);			//화면크기 바꿨을 때 렌더타겟도 그에 맞게 초기화
+	HRESULT ResetRenderTarget(int width, int height);			//화면크기 바꿨을 때 렌더타겟도 그에 맞게 초기화, 테스트 아직 못함
 private:
 	void	DXSetup(HWND hWnd, int width, int height);
 	HRESULT CreateDeviceSwapChain(HWND hWnd);
 	HRESULT CreateRenderTarget();
+	HRESULT CreateRenderTarget_Other();
+	HRESULT ReCreateRenderTarget();
 	HRESULT CreateDepthStencil(int width, int height);
 	HRESULT	CreateDepthStencilState();
 	HRESULT	CreateRasterState();
 	HRESULT	CreateSamplerState();
 	HRESULT CreateBlendState();
+	HRESULT ReleaseScreenSizeResource();						//화면 크기 영향 받는 리소스 해제
 
 	DWORD m_dwAA = 1;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
 
