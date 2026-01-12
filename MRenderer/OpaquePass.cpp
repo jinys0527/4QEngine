@@ -8,14 +8,26 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
     const auto& context = frame.context;
 
-    m_RenderContext.BCBuffer.mView = context.view;
-    m_RenderContext.BCBuffer.mProj = context.proj;
-    m_RenderContext.BCBuffer.mVP = context.viewProj;
+    if (!m_RenderContext.isEditCam)
+    {
+        m_RenderContext.BCBuffer.mView = context.gameCamera.view;
+        m_RenderContext.BCBuffer.mProj = context.gameCamera.proj;
+        m_RenderContext.BCBuffer.mVP = context.gameCamera.viewProj;
+    }
+    else if (m_RenderContext.isEditCam)
+    {
+        m_RenderContext.BCBuffer.mView = context.editorCamera.view;
+        m_RenderContext.BCBuffer.mProj = context.editorCamera.proj;
+        m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
+    }
+
+    m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+
 
     
-
-    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
-
+    //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
+    //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
     for (size_t index : GetQueue())
     {
@@ -55,47 +67,54 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;
             const auto* indexcounts = m_RenderContext.indexcounts;
+            BOOL castshadow = frame.lights[index].castShadow;
 
-            if (vertexBuffers && indexBuffers && item.mesh.IsValid())
+            if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
             {
                 const UINT bufferIndex = item.mesh.id;
-                if (bufferIndex < vertexBuffers->size() && bufferIndex < indexBuffers->size())
+                const auto vbIt = vertexBuffers->find(bufferIndex);
+                const auto ibIt = indexBuffers->find(bufferIndex);
+                const auto countIt = indexcounts->find(bufferIndex);
+
+                if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
                 {
-                    ID3D11Buffer* vb = (*vertexBuffers)[bufferIndex].Get();
-                    ID3D11Buffer* ib = (*indexBuffers)[bufferIndex].Get();
-                    UINT32 icount = (*indexcounts)[bufferIndex];
-                    if (vb && ib)
-                    {
-                        const UINT stride = sizeof(RenderData::Vertex);
-                        const UINT offset = 0;
-
-                        ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
-
-                        m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::SOLID].Get());
-                        m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
-                        m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-                        m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
-                        m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                        m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-                        m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-                        m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-                        m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-                        m_RenderContext.pDXDC->DrawIndexed(icount, 0, 0);
-
-                    }
+                    ID3D11Buffer* vb = vbIt->second.Get();
+                    ID3D11Buffer* ib = ibIt->second.Get();
+                    UINT32 icount = countIt->second;
+                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, icount, castshadow);
                 }
             }
-
-
-
-
-
-
-
-            //아래 세팅하는건 함수로 빼두자
-            //UpdateDynamicBuffer(g_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
-            //g_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-
         }
     }
+}
+
+void OpaquePass::DrawMesh(
+    ID3D11DeviceContext* dc,
+    ID3D11Buffer* vb,
+    ID3D11Buffer* ib,
+    UINT indexCount,
+    BOOL castshadow
+)
+{
+    const UINT stride = sizeof(RenderData::Vertex);
+    const UINT offset = 0;
+
+    dc->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+    dc->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
+    dc->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
+
+    dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+    dc->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+    dc->IASetInputLayout(m_RenderContext.inputLayout.Get());
+    dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
+    dc->PSSetShader(nullptr, nullptr, 0);
+    dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+
+    //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?
+    SetShaderResource(dc);
+    SetSamplerState(dc);
+
+    dc->DrawIndexed(indexCount, 0, 0);
 }

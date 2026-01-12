@@ -4,6 +4,7 @@
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
 	ImGui::Begin("Game");
+	m_IsHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 	ImVec2 available = ImGui::GetContentRegionAvail();
     ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
@@ -20,9 +21,8 @@ bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 		ImGui::Image(
 			reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()),
 			clamped,
-			ImVec2(1.0f, 0.0f),   
-			ImVec2(0.0f, 1.0f)    
-		);
+			ImVec2(1.0f, 0.0f),
+			ImVec2(0.0f, 1.0f));
 	}
 	else
 	{

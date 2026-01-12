@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "DX11.h"
-#include <vector>
+#include <unordered_map>
 
 //기본 상수 버퍼
 struct BaseConstBuffer
@@ -11,6 +11,27 @@ struct BaseConstBuffer
 	XMFLOAT4X4 mVP    = XMFLOAT4X4{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
 
+};
+
+struct Light
+{
+	XMFLOAT3   vPos{ 0.0f, 0.0f, 0.0f };
+	FLOAT      Range = 0.0f;
+	XMFLOAT3   vDir{ 0.0f, -1.0f, 0.0f };
+	FLOAT      SpotAngle = 0.0f;
+	XMFLOAT3   Color{ 1.0f, 1.0f, 1.0f };
+	FLOAT      Intensity = 1.0f;
+	XMFLOAT4X4 mLightViewProj{};
+	UINT       CastShadow = TRUE;
+	FLOAT      padding[3]{ 0.0f, 0.0f, 0.0f };
+};
+
+constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
+struct LightConstBuffer
+{
+	Light	lights[MAX_LIGHTS];
+	UINT	lightCount;
+	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
 constexpr size_t kMaxSkinningBones = 128;
@@ -25,28 +46,53 @@ struct SkinningConstBuffer
 
 struct RenderContext
 {
+	TextureSize						WindowSize = { 0,0 };
+
 	ComPtr<ID3D11Device>            pDevice;
 	ComPtr<ID3D11DeviceContext>     pDXDC;
-	ComPtr<ID3D11RenderTargetView>	pRTView;
-	ComPtr<ID3D11DepthStencilView>  pDSView;
+	ComPtr<ID3D11RenderTargetView>	pRTView;		//메인 렌더 타겟
+	ComPtr<ID3D11DepthStencilView>  pDSView;		//메인 뎁스 스텐실뷰
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	DSState;
 	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)>		RState;
+	EnumArray<ComPtr<ID3D11SamplerState>, static_cast<size_t>(SS::MAX_)>		SState;			//샘플러 상태
+	EnumArray<ComPtr<ID3D11BlendState>, static_cast<size_t>(BS::MAX_)>			BState;			//블렌딩 상태
 
 	BaseConstBuffer				BCBuffer;
 	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
 	SkinningConstBuffer			SkinCBuffer;
 	ComPtr<ID3D11Buffer>		pSkinCB;
+	LightConstBuffer			LightCBuffer;
+	ComPtr<ID3D11Buffer>		pLightCB;
 
-	std::vector<ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
-	std::vector<ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
-	std::vector<UINT32>* indexcounts = nullptr;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
+	std::unordered_map<UINT, UINT32>* indexcounts = nullptr;
+
 
 	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
 	ComPtr<ID3DBlob> VSCode;
+
+	ComPtr<ID3D11InputLayout> InputLayout_P;
+	ComPtr<ID3D11VertexShader> VS_P;
+	ComPtr<ID3DBlob> VSCode_P;
+
+	bool isEditCam = false;
+
+
+	//그림자 매핑용
+	ComPtr<ID3D11Texture2D>				pDSTex_Shadow;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Shadow;
+	ComPtr<ID3D11ShaderResourceView>	pShadowRV;
+	TextureSize							ShadowTextureSize = { 0,0 };
+
+	//DepthPass용
+	ComPtr<ID3D11Texture2D>				pDSTex_Depth;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
+	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 
 };
