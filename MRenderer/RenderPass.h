@@ -22,6 +22,9 @@ public:
 	virtual void Setup(const RenderData::FrameData& frame);
 	virtual void Execute(const RenderData::FrameData& frame) = 0;		//여기서 Draw까지 호출
 
+	void SetShaderResource(ID3D11DeviceContext* dc);
+	void SetSamplerState(ID3D11DeviceContext* dc);
+
 protected:
 	virtual bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const;
 	const std::vector<size_t>& GetQueue() const { return m_Queue; }

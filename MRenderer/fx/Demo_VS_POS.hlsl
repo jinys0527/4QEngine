@@ -1,6 +1,6 @@
 #include "BaseBuffer.hlsl"
 
-VSOutput VS_Main(VSInput_PNUT input)
+VSOutput VS_Main(VSInput_P input)
 {
     VSOutput o;
 

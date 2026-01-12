@@ -6,7 +6,47 @@ cbuffer BaseBuffer : register(b0)
     matrix mVP;
 };
 
-struct VSInput
+struct Light
+{
+    float3 Pos;
+    float Range;
+    float3 Dir;
+    float SpotAngle;
+    float3 Color;
+    float Intensity;
+    matrix mVP;
+    bool CastShadow;
+    float3 padding;
+};
+
+cbuffer LightBuffer : register(b1)
+{
+    Light   lights[16];
+    uint    lightcount;
+    float3  lightpadding;
+}
+
+cbuffer SkinningBuffer : register(b2)
+{
+    matrix  bones[128];
+    uint    count;
+    float3  skinningpadding;
+}
+
+
+
+
+
+
+
+
+
+struct VSInput_P
+{
+    float3 pos : POSITION;
+};
+
+struct VSInput_PNUT
 {
     float3 pos : POSITION;
     float3 nrm : NORMAL;
@@ -18,3 +58,12 @@ struct VSOutput
 {
     float4 pos : SV_POSITION;
 };
+
+
+
+//ShaderResourceView
+Texture2D g_ShadowMap : register(t0);
+
+
+//Sampler State
+SamplerState smpBorderShadow : register(s0);

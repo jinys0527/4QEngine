@@ -12,6 +12,8 @@ public:
 	bool Draw(const RenderTargetContext& renderTarget); 
 	const ImVec2& GetViewportSize() const { return m_ViewportSize; }
 
+	bool IsHovered() const { return m_IsHovered; }
 private:
 	ImVec2 m_ViewportSize{ 0.0f, 0.0f };
+	bool m_IsHovered = false;
 };

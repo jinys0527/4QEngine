@@ -36,13 +36,15 @@ private:
 	//void UpdateLogic();
 	void Update();
 	void UpdateSceneViewport();
-	
+	void UpdateEditorCamera();
+
 	//Render 관련
 	void Render();
 	void RenderImGUI();
 	void RenderSceneView();
 
 	// 필요한 창 생성
+	void DrawMainMenuBar();
 	void DrawHierarchy();
 	void DrawInspector();
 	void DrawFolderView();
@@ -67,6 +69,7 @@ private:
 	Renderer& m_Renderer;
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext m_SceneRenderTarget;
+	RenderTargetContext m_SceneRenderTarget_edit;
 	EditorViewport m_Viewport;
 
 	// Hier
@@ -84,4 +87,10 @@ private:
 	std::filesystem::path m_SelectedResourcePath;
 
 	std::filesystem::path m_CurrentScenePath;
+
+	std::filesystem::path m_PendingDeletePath;
+	std::filesystem::path m_PendingSavePath;
+
+	bool m_OpenSaveConfirm = false;
+	bool m_OpenDeleteConfirm = false;
 };

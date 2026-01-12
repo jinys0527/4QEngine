@@ -57,8 +57,11 @@ public:
 	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetOpaqueObjects     () const { return m_OpaqueObjects;      }
 	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetTransparentObjects() const { return m_TransparentObjects; }
 
-	void SetMainCamera(std::shared_ptr<CameraObject> cameraObject);
-	std::shared_ptr<CameraObject> GetMainCamera() { return m_Camera; }
+	void SetGameCamera(std::shared_ptr<CameraObject> cameraObject);
+	std::shared_ptr<CameraObject> GetGameCamera() { return m_GameCamera; }
+
+	void SetEditorCamera(std::shared_ptr<CameraObject> cameraObject);
+	std::shared_ptr<CameraObject> GetEditorCamera() { return m_EditorCamera; }
 
 	bool RemoveGameObjectByName(const std::string& name);
 	bool RenameGameObject(const std::string& currentName, const std::string& newName);
@@ -88,7 +91,8 @@ protected:
 	UIManager&      m_UIManager;
 	SceneManager*   m_SceneManager = nullptr;
 	GameManager*    m_GameManager = nullptr;
-	std::shared_ptr<CameraObject>   m_Camera;
+	std::shared_ptr<CameraObject>   m_GameCamera;
+	std::shared_ptr<CameraObject>   m_EditorCamera;
 	std::string     m_Name;
 
 	bool		    m_Pause = false;
