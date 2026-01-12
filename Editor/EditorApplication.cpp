@@ -16,7 +16,7 @@
 #include "json.hpp"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+#define DRAG_SPEED 0.01f
 // util
 // Check 
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
@@ -60,7 +60,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	{
 		int value = 0;
 		property.GetValue(component, &value);
-		if (ImGui::InputInt(property.GetName().c_str(), &value))
+		if (ImGui::DragInt(property.GetName().c_str(), &value, DRAG_SPEED))
 		{
 			property.SetValue(component, &value);
 			return true;
@@ -72,7 +72,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	{
 		float value = 0.0f;
 		property.GetValue(component, &value);
-		if (ImGui::InputFloat(property.GetName().c_str(), &value))
+		if (ImGui::DragFloat(property.GetName().c_str(), &value, DRAG_SPEED))
 		{
 			property.SetValue(component, &value);
 			return true;
@@ -112,7 +112,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		XMFLOAT2 value{};
 		property.GetValue(component, &value);
 		float data[2] = { value.x, value.y };
-		if (ImGui::InputFloat2(property.GetName().c_str(), data))
+		if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
 		{
 			value.x = data[0];
 			value.y = data[1];
@@ -127,7 +127,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		XMFLOAT3 value{};
 		property.GetValue(component, &value);
 		float data[3] = { value.x, value.y, value.z };
-		if (ImGui::InputFloat3(property.GetName().c_str(), data))
+		if (ImGui::DragFloat3(property.GetName().c_str(), data, DRAG_SPEED))
 		{
 			value.x = data[0];
 			value.y = data[1];
@@ -143,7 +143,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		XMFLOAT4 value{};
 		property.GetValue(component, &value);
 		float data[4] = { value.x, value.y, value.z, value.w };
-		if (ImGui::InputFloat4(property.GetName().c_str(), data))
+		if (ImGui::DragFloat4(property.GetName().c_str(), data, DRAG_SPEED))
 		{
 			value.x = data[0];
 			value.y = data[1];
