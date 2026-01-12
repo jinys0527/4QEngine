@@ -67,6 +67,7 @@ private:
 	Renderer& m_Renderer;
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext m_SceneRenderTarget;
+	RenderTargetContext m_SceneRenderTarget_edit;
 	EditorViewport m_Viewport;
 
 	// Hier

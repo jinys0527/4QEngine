@@ -153,6 +153,7 @@ bool EditorApplication::Initialize()
 	m_SceneManager.Initialize();
 
 	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -257,12 +258,11 @@ void EditorApplication::RenderImGUI() {
 	RenderSceneView(); //Scene그리기
 
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
-	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget);
+	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget_edit);
 	if (viewportChanged)
 	{
 		UpdateSceneViewport();
 	}
-	
 	
 	// DockBuilder
 	static bool dockBuilt = true;
@@ -319,7 +319,10 @@ void EditorApplication::RenderSceneView() {
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
-	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget);
+	m_SceneRenderTarget_edit.Bind();
+	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
 
 	// 복구

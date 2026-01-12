@@ -98,7 +98,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 	Flip(m_pSwapChain.Get());
 }
 
-void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext)
+void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
 	//메인 카메라로 draw
 	m_IsEditCam = false;
@@ -137,7 +137,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	m_Pipeline.Execute(frame);
 
-	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
+	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
 
 
 	ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_pDXDC.Get(), m_pRTView.Get(), m_pDSViewScene_Depth.Get(), 1, 0);
@@ -588,7 +588,7 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Textu
 	hr = m_pDevice->CreateTexture2D(&td, NULL, pDSTex);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] DS / CreateTexture 실패"));
+		ERROR_MSG(hr);
 		return hr;
 	}
 
@@ -606,7 +606,7 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Textu
 	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] DS / CreateDepthStencilView 실패"));
+		ERROR_MSG(hr);
 		return hr;
 	}
 
@@ -633,7 +633,7 @@ HRESULT Renderer::RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D
 	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, &pTex);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateTexture2D 실패"));
+		ERROR_MSG(hr);
 		return hr;
 	}
 
@@ -662,7 +662,7 @@ HRESULT Renderer::CubeRTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D1
 	HRESULT hr = m_pDevice->CreateRenderTargetView(pTex, &rd, &pRTView);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateRenderTargetView 실패"));
+		ERROR_MSG(hr);
 		return hr;
 	}
 
@@ -691,7 +691,7 @@ HRESULT Renderer::RTCubeSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3
 	HRESULT hr = m_pDevice->CreateShaderResourceView(pTex, &sd, &pTexRV);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateShaderResourceView 실패"));
+		ERROR_MSG(hr);
 		return hr;
 	}
 
@@ -851,7 +851,7 @@ HRESULT Renderer::CreateRenderTarget_Other()
 
 #pragma region ShadowMap
 	m_ShadowTextureSize = { 16384, 16384 };
-	DXGI_FORMAT fmt = DXGI_FORMAT_R32_TYPELESS;
+	DXGI_FORMAT fmt = DXGI_FORMAT_D32_FLOAT;
 	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
 #pragma endregion
 
@@ -883,7 +883,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 
 #pragma region Depth
-	fmt = DXGI_FORMAT_R32_TYPELESS;
+	fmt = DXGI_FORMAT_D32_FLOAT;
 	DSCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
 
 #pragma endregion
@@ -912,7 +912,7 @@ HRESULT Renderer::CreateDepthStencil(int width, int height)
 	td.Height = height;
 	td.MipLevels = 1;
 	td.ArraySize = 1;
-	td.Format = DXGI_FORMAT_D32_FLOAT;
+	td.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 	td.SampleDesc.Count = m_dwAA;
 	td.SampleDesc.Quality = 0;
 	td.Usage = D3D11_USAGE_DEFAULT;
@@ -1265,9 +1265,6 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 {
 	const auto& context = frame.context;
 
-	//m_RenderContext.BCBuffer.mView = context.view;
-	//m_RenderContext.BCBuffer.mProj = context.proj;
-	//m_RenderContext.BCBuffer.mVP = context.viewProj;
 
 	XMFLOAT4X4 tm;
 
@@ -1284,7 +1281,12 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 	// 뷰 변환 행렬 생성 :  View Transform 
 	XMMATRIX mView = XMMatrixLookAtLH(eye, lookat, up);
 
+	if (m_IsEditCam)
+		mView = XMLoadFloat4x4(&context.editorCamera.view);
+
 	XMMATRIX mProj = XMMatrixPerspectiveFovLH(Fov, 960.f / 800.f, 1, 300);
+	if (m_IsEditCam)
+		mProj = XMLoadFloat4x4(&context.editorCamera.proj);
 
 	XMStoreFloat4x4(&tm, mView);
 	m_RenderContext.BCBuffer.mView = tm;
