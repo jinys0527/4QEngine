@@ -340,7 +340,7 @@ void AppendFrameDataFromObjects(
 			data.color = light->GetColor();
 			data.intensity = light->GetIntensity();
 			data.lightViewProj = light->GetLightViewProj();
-			data.castShadow = light->CastShadow();
+			data.castShadow = light->GetCastShadow();
 
 			frameData.lights.push_back(data);
 		}

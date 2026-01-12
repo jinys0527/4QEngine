@@ -4,10 +4,6 @@
             {
                 "components": [
                     {
-                        "data": null,
-                        "type": "UIComponent"
-                    },
-                    {
                         "data": {
                             "Position": {
                                 "x": 0.0,
@@ -30,9 +26,7 @@
                     }
                 ],
                 "name": "GameObject"
-            }
-        ],
-        "transparent": [
+            },
             {
                 "components": [
                     {
@@ -55,7 +49,12 @@
                             }
                         },
                         "type": "TransformComponent"
-                    },
+                    }
+                ],
+                "name": "GameObject1"
+            },
+            {
+                "components": [
                     {
                         "data": {
                             "Position": {
@@ -76,34 +75,63 @@
                             }
                         },
                         "type": "TransformComponent"
-                    },
+                    }
+                ],
+                "name": "GameObject2"
+            },
+            {
+                "components": [
                     {
                         "data": {
-                            "CastShadow": true,
-                            "Color": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "Direction": {
-                                "x": 0.0,
-                                "y": -1.0,
-                                "z": 0.0
-                            },
-                            "Intensity": 1.0,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "Range": 0.0,
-                            "SpotAngle": 0.0
+                            "Rotation": {
+                                "w": 0.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
                         },
-                        "type": "LightComponent"
+                        "type": "TransformComponent"
                     }
                 ],
-                "name": "DirectionalLight"
+                "name": "GameObject3"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Rotation": {
+                                "w": 0.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    }
+                ],
+                "name": "GameObject4"
             }
-        ]
+        ],
+        "transparent": []
     }
 }
