@@ -77,10 +77,10 @@ private:
 
 
 
-	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)> m_DSState;		//깊이 스텐실 상태
-	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)> m_RState;			//래스터라이저 상태
-	EnumArray<ComPtr<ID3D11SamplerState>, static_cast<size_t>(SS::MAX_)> m_SState;			//샘플러 상태
-	EnumArray<ComPtr<ID3D11BlendState>, static_cast<size_t>(BS::MAX_)> m_BState;			//블렌딩 상태
+	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	m_DSState;		//깊이 스텐실 상태
+	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)>		m_RState;		//래스터라이저 상태
+	EnumArray<ComPtr<ID3D11SamplerState>, static_cast<size_t>(SS::MAX_)>		m_SState;		//샘플러 상태
+	EnumArray<ComPtr<ID3D11BlendState>, static_cast<size_t>(BS::MAX_)>			m_BState;		//블렌딩 상태
 
 private:
 	void CreateContext();
@@ -90,9 +90,10 @@ private:
 	HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
 	HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS);
 	HRESULT CreateInputLayout();			//일단 하나만, 나중에 레이아웃 추가되면 함수를 추가하든 여기서 추가하든 하면될듯
-	int CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UINT stride, ID3D11Buffer** ppVB);
-	int CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB);
-	int CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
+	HRESULT CreateConstBuffer();
+	HRESULT CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UINT stride, ID3D11Buffer** ppVB);
+	HRESULT CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB);
+	HRESULT CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
 	HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
 	HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);

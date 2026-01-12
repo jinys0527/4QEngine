@@ -78,8 +78,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
-	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
-	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(SkinningConstBuffer), m_RenderContext.pSkinCB.GetAddressOf());
+	CreateConstBuffer();
 
 	CreateContext();
 
@@ -340,7 +339,36 @@ HRESULT Renderer::CreateInputLayout()
 	return hr;
 }
 
-int Renderer::CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UINT stride, ID3D11Buffer** ppVB)
+HRESULT Renderer::CreateConstBuffer()
+{
+	HRESULT hr = S_OK;
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(SkinningConstBuffer), m_RenderContext.pSkinCB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(LightConstBuffer), m_RenderContext.pLightCB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+
+	return hr;
+}
+
+HRESULT Renderer::CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UINT stride, ID3D11Buffer** ppVB)
 {
 	HRESULT hr = S_OK;
 
@@ -364,10 +392,10 @@ int Renderer::CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UI
 
 	*ppVB = pVB;
 
-	return S_OK;
+	return hr;
 }
 
-int Renderer::CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB)
+HRESULT Renderer::CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB)
 {
 	HRESULT hr = S_OK;
 
@@ -392,10 +420,10 @@ int Renderer::CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3
 
 	*ppIB = pIB;
 
-	return S_OK;
+	return hr;
 }
 
-int Renderer::CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB)
+HRESULT Renderer::CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB)
 {
 	HRESULT hr = S_OK;
 
@@ -416,7 +444,7 @@ int Renderer::CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer**
 
 	*ppCB = pCB;
 
-	return S_OK;
+	return hr;
 }
 
 HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)

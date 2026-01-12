@@ -13,6 +13,27 @@ struct BaseConstBuffer
 
 };
 
+struct Light
+{
+	XMFLOAT3   vPos{ 0.0f, 0.0f, 0.0f };
+	FLOAT      Range = 0.0f;
+	XMFLOAT3   vDir{ 0.0f, -1.0f, 0.0f };
+	FLOAT      SpotAngle = 0.0f;
+	XMFLOAT3   Color{ 1.0f, 1.0f, 1.0f };
+	FLOAT      Intensity = 1.0f;
+	XMFLOAT4X4 mLightViewProj{};
+	BOOL       CastShadow = true;
+	FLOAT      padding[3];
+};
+
+constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
+struct LightConstBuffer
+{
+	Light	lights[MAX_LIGHTS];
+	INT		lightCount;
+	FLOAT   padding[3];
+};
+
 constexpr size_t kMaxSkinningBones = 128;
 
 struct SkinningConstBuffer
@@ -42,6 +63,8 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
 	SkinningConstBuffer			SkinCBuffer;
 	ComPtr<ID3D11Buffer>		pSkinCB;
+	LightConstBuffer			LightCBuffer;
+	ComPtr<ID3D11Buffer>		pLightCB;
 
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
