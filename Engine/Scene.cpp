@@ -152,7 +152,20 @@ void Scene::SetEditorCamera(std::shared_ptr<CameraObject> cameraObject)
 
 // Opaque, Transparent, UI  ex) ["gameObjects"]["opaque"]
 void Scene::Serialize(nlohmann::json& j) const
-{
+{	
+	//
+	// Scene의 Editor 설정 값들
+	// Editor 카메라 설정값기억(editor에서만 사용)
+	j["editor"] = nlohmann::json::object();
+	if (m_EditorCamera)
+	{
+		nlohmann::json editorCameraJson;
+		m_EditorCamera->Serialize(editorCameraJson);
+		j["editor"]["EditorCamera"] = editorCameraJson;
+	}
+	//
+	//	GameObject 영역
+	//
 	j["gameObjects"] = nlohmann::json::object();
 	j["gameObjects"]["opaque"] = nlohmann::json::array();
 	j["gameObjects"]["transparent"] = nlohmann::json::array();
@@ -225,14 +238,7 @@ void ProcessWithErase(
 
 		auto it = objContainer.find(name);
 		if (it != objContainer.end())
-		{	/*
-			auto sr = it->second->GetComponent<SpriteRenderer>();
-			if(sr)*/
-			//	sr->SetAssetManager(&m_AssetManager);
-			/*auto animComp = it->second->GetComponent<AnimationComponent>();*/
-			//if (animComp)
-			//	animComp->SetAssetManager(&m_AssetManager);
-			// 기존 오브젝트가 있으면 내부 상태만 갱신
+		{	
 			it->second->Deserialize(gameObjectJson);
 		}
 		else
@@ -256,8 +262,11 @@ void ProcessWithErase(
 void Scene::Deserialize(const nlohmann::json& j)
 {
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
+	const auto& editorRoot = j.at("editor");
 
-
+	if (editorRoot.contains("EditorCamera")) {
+		
+	}
 	if (goRoot.contains("opaque"))
 	{
 		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, m_EventDispatcher);
