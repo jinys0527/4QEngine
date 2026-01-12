@@ -5,6 +5,7 @@
 #include "ResourceHandle.h"
 #include "ResourceStore.h"
 #include <functional>
+#include "ResourceRefs.h"
 
 class SkeletalMeshComponent;
 
@@ -41,6 +42,27 @@ public:
 		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
 		DirectX::XMFLOAT4 rotation   { 0.0f, 0.0f, 0.0f, 1.0f };
 		DirectX::XMFLOAT3 scale      { 1.0f, 1.0f, 1.0f };
+	};
+
+private:
+	struct LocalPose
+	{
+		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
+		DirectX::XMFLOAT4 rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+		DirectX::XMFLOAT3 scale{ 1.0f, 1.0f, 1.0f };
+	};
+
+	struct BlendState
+	{
+		bool active = false;
+		AnimationHandle fromClip = AnimationHandle::Invalid();
+		AnimationHandle toClip = AnimationHandle::Invalid();
+		float duration = 0.0f;
+		float elapsed = 0.0f;
+		float fromTime = 0.0f;
+		float toTime = 0.0f;
+		BlendType blendType = BlendType::Linear;
+		BlendCurveFn curveFn = nullptr;	// Curve일 때만 유효
 	};
 
 public:
@@ -127,14 +149,8 @@ public:
 	void UseSkeletonLowerBodyMask  (float weight = 1.0f, float defaultWeight = 0.0f);
 	void ClearSkeletonMask		   ();
 
-	void SetAnimationAssetReference(const std::string& assetPath, UINT32 clipIndex)
-	{
-		m_AnimationAssetPath = assetPath;
-		m_AnimationClipIndex = clipIndex;
-	}
-
-	const std::string& GetAnimationAssetPath() const { return m_AnimationAssetPath; }
-	UINT32             GetAnimationClipIndex() const { return m_AnimationClipIndex; }
+	void LoadSetAnimation(const AnimationRef& animationRef) { m_Animation = animationRef; }
+	const AnimationRef& GetAnimation() const			    { return m_Animation;		  }
 
 	void SetResourceStores(ResourceStore<RenderData::Skeleton, SkeletonHandle>* skeletons,
 						   ResourceStore<RenderData::AnimationClip, AnimationHandle>* animations)
@@ -143,9 +159,17 @@ public:
 		m_Animations = animations;
 	}
 
-	PlaybackState&       GetPlaybackState()       { return m_Playback; }
-	const PlaybackState& GetPlaybackState() const { return m_Playback; }
-
+	const PlaybackState& GetPlayback() const { return m_Playback; }
+	const BlendState& GetBlend() const { return m_Blend; }
+	const std::vector<float>& GetBoneMaskWeights() const { return m_BoneMaskWeights; }
+	const std::vector<LocalPose>& GetRetargetOffsets() const { return m_RetargetOffsets; }
+	const BoneMaskSource& GetBoneMaskSource() const { return m_BoneMaskSource; }
+	const float& GetBoneMaskWeight() const { return m_BoneMaskWeight; }
+	const float& GetBoneMaskDefaultWeight() const { return m_BoneMaskDefaultWeight; }
+	const bool& GetAutoBoneMaskApplied() const { return m_AutoBoneMaskApplied; }
+	
+	const std::vector<DirectX::XMFLOAT4X4>& GetLocalPose      () const { return m_LocalPose;       }
+	const std::vector<DirectX::XMFLOAT4X4>& GetGlobalPose     () const { return m_GlobalPose;      }
 	const std::vector<DirectX::XMFLOAT4X4>& GetSkinningPalette() const { return m_SkinningPalette; }
 
 	
@@ -158,33 +182,6 @@ public:
 
 	/// 컴포넌트 이벤트를 처리한다. (현재 구현은 비어있음)
 	void OnEvent(EventType type, const void* data) override;
-
-	/// 상태를 JSON으로 직렬화한다.
-	void Serialize(nlohmann::json& j) const override;
-
-	/// JSON에서 상태를 역직렬화한다.
-	void Deserialize(const nlohmann::json& j) override;
-
-private:
-	struct LocalPose
-	{
-		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
-		DirectX::XMFLOAT4 rotation   { 0.0f, 0.0f, 0.0f, 1.0f };
-		DirectX::XMFLOAT3 scale		 { 1.0f, 1.0f, 1.0f };
-	};
-
-	struct BlendState
-	{
-		bool active    = false;
-		AnimationHandle fromClip = AnimationHandle::Invalid();
-		AnimationHandle toClip   = AnimationHandle::Invalid();
-		float duration = 0.0f;
-		float elapsed  = 0.0f;
-		float fromTime = 0.0f;
-		float toTime   = 0.0f;
-		BlendType blendType = BlendType::Linear;
-		BlendCurveFn curveFn = nullptr;	// Curve일 때만 유효
-	};
 
 private:
 	void SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind,
@@ -241,8 +238,7 @@ private:
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>* m_Animations = nullptr;
 
 	AnimationHandle                  m_ClipHandle = AnimationHandle::Invalid();
-	std::string		                 m_AnimationAssetPath;
-	UINT32			                 m_AnimationClipIndex = 0;
+	AnimationRef					 m_Animation;
 						             
 	PlaybackState                    m_Playback{};
 	BlendState                       m_Blend{};

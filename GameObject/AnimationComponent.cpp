@@ -9,6 +9,20 @@
 #include "ReflectionMacro.h"
 
 REGISTER_COMPONENT(AnimationComponent);
+REGISTER_PROPERTY_HANDLE(AnimationComponent, ClipHandle)
+REGISTER_PROPERTY_READONLY_LOADABLE(AnimationComponent, Animation)
+REGISTER_PROPERTY_READONLY(AnimationComponent, Playback)
+REGISTER_PROPERTY_READONLY(AnimationComponent, Blend)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeights)
+REGISTER_PROPERTY_READONLY(AnimationComponent, RetargetOffsets)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskSource)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeight)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskDefaultWeight)
+REGISTER_PROPERTY_READONLY(AnimationComponent, AutoBoneMaskApplied)
+REGISTER_PROPERTY_READONLY(AnimationComponent, LocalPose)
+REGISTER_PROPERTY_READONLY(AnimationComponent, GlobalPose)
+REGISTER_PROPERTY_READONLY(AnimationComponent, SkinningPalette)
+
 
 // 클립 유효 범위 내로 시간을 강제
 // - clip이 없거나 duration이 0이면 그대로 반환
@@ -411,33 +425,6 @@ void AnimationComponent::OnEvent(EventType type, const void* data)
 {
 }
 
-void AnimationComponent::Serialize(nlohmann::json& j) const
-{
-	if (!m_AnimationAssetPath.empty())
-	{
-		j["animation"]["assetPath"] = m_AnimationAssetPath;
-		j["animation"]["clipIndex"] = m_AnimationClipIndex;
-	}
-
-	j["animation"]["time"]    = m_Playback.time;
-	j["animation"]["speed"]   = m_Playback.speed;
-	j["animation"]["looping"] = m_Playback.looping;
-	j["animation"]["playing"] = m_Playback.playing;
-}
-
-void AnimationComponent::Deserialize(const nlohmann::json& j)
-{
-	if (j.contains("animation"))
-	{
-		const auto& anim     = j.at("animation");
-		m_AnimationAssetPath = anim.value("assetPath", std::string{});
-		m_AnimationClipIndex = anim.value("clipIndex", 0u);
-		m_Playback.time      = anim.value("time", 0.0f);
-		m_Playback.speed     = anim.value("speed", 1.0f);
-		m_Playback.looping   = anim.value("looping", true);
-		m_Playback.playing   = anim.value("playing", true);
-	}
-}
 
 AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RetargetOffset& offset)
 {

@@ -141,7 +141,6 @@ namespace RenderData
 		XMFLOAT3      ambientColor{ 0.0f,0.0f,0.0f };
 	};
 
-
 	struct FrameContext
 	{
 		UINT32       frameIndex = 0;

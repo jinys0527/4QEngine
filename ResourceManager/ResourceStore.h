@@ -120,6 +120,16 @@ public:
 		return m_KeyToHandle;
 	}
 
+	const std::string* GetKey(HandleType handle) const
+	{
+		if (!IsAlive(handle))
+		{
+			return nullptr;
+		}
+
+		return &m_Entries[handle.id].key;
+	}
+
 private:
 	struct Entry
 	{

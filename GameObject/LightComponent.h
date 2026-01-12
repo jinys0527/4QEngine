@@ -38,7 +38,7 @@ public:
 	void  SetLightViewProj(const XMFLOAT4X4& viewProj){ m_LightViewProj = viewProj; }
 	const XMFLOAT4X4& GetLightViewProj() const        { return m_LightViewProj;     }
 
-	void SetCastShadow(bool castShadow) { m_CastShadow = castShadow; }
+	void SetCastShadow			(bool castShadow) { m_CastShadow = castShadow; }
 	const bool& GetCastShadow   () const          { return m_CastShadow;       }
 
 	void Update (float deltaTime) override;

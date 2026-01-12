@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Component.h"
 #include "RenderData.h"
+#include "ResourceRefs.h"
 
 class MaterialComponent : public Component
 {
@@ -13,17 +14,15 @@ public:
 	MaterialComponent() = default;
 	virtual ~MaterialComponent() = default;
 
-	void           SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
-	MaterialHandle GetMaterialHandle() const                { return m_MaterialHandle;   }
+	void				  SetMaterialHandle(const MaterialHandle& handle) { m_MaterialHandle = handle; }
+	const MaterialHandle& GetMaterialHandle() const						  { return m_MaterialHandle;   }
 
-	void SetMaterialAssetPath(const std::string& assetPath, UINT32 materialIndex)
+	void LoadSetMaterial(const MaterialRef& materialRef)
 	{
-		m_MaterialAssetPath = assetPath;
-		m_MaterialAssetIndex = materialIndex;
+		m_Material = materialRef;
 	}
 
-	const std::string& GetMaterialAssetPath () const { return m_MaterialAssetPath;  }
-	UINT32             GetMaterialAssetIndex() const { return m_MaterialAssetIndex; }
+	const MaterialRef& GetMaterial () const { return m_Material;  }
 
 
 	void SetOverrides(const RenderData::MaterialData& overrides);
@@ -34,15 +33,11 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize(nlohmann::json& j) const override;
-	void Deserialize(const nlohmann::json& j) override;
-
 protected:
-	MaterialHandle m_MaterialHandle;
-	std::string m_MaterialAssetPath;
-	UINT32 m_MaterialAssetIndex = 0;
+	MaterialHandle			 m_MaterialHandle;
+	MaterialRef				 m_Material;
 	RenderData::MaterialData m_Overrides;
-	bool m_UseOverrides = false;
+	bool					 m_UseOverrides = false;
 };
 
 
