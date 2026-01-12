@@ -56,6 +56,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;
             const auto* indexcounts = m_RenderContext.indexcounts;
+            BOOL castshadow = frame.lights[index].castShadow;
 
             if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
             {
@@ -63,12 +64,13 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                 const auto vbIt = vertexBuffers->find(bufferIndex);
                 const auto ibIt = indexBuffers->find(bufferIndex);
                 const auto countIt = indexcounts->find(bufferIndex);
+
                 if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
                 {
                     ID3D11Buffer* vb = vbIt->second.Get();
                     ID3D11Buffer* ib = ibIt->second.Get();
                     UINT32 icount = countIt->second;
-                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, icount);
+                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, icount, castshadow);
                 }
             }
         }
@@ -79,7 +81,8 @@ void OpaquePass::DrawMesh(
     ID3D11DeviceContext* dc,
     ID3D11Buffer* vb,
     ID3D11Buffer* ib,
-    UINT indexCount
+    UINT indexCount,
+    BOOL castshadow
 )
 {
     const UINT stride = sizeof(RenderData::Vertex);
@@ -97,6 +100,10 @@ void OpaquePass::DrawMesh(
     dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
     dc->PSSetShader(nullptr, nullptr, 0);
     dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+
+    //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?
+    SetShaderResource(dc);
+    SetSamplerState(dc);
 
     dc->DrawIndexed(indexCount, 0, 0);
 }

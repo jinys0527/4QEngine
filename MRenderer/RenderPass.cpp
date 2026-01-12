@@ -5,6 +5,16 @@ void RenderPass::Setup(const RenderData::FrameData& frame)
 	BuildQueue(frame);
 }
 
+void RenderPass::SetShaderResource(ID3D11DeviceContext* dc)
+{
+	dc->PSSetShaderResources(0, 1, m_RenderContext.pShadowRV.GetAddressOf());
+}
+
+void RenderPass::SetSamplerState(ID3D11DeviceContext* dc)
+{
+	dc->PSSetSamplers(0, 1, m_RenderContext.SState[SS::BORDER_SHADOW].GetAddressOf());
+}
+
 bool RenderPass::ShouldIncludeRenderItem(const RenderData::RenderItem& /*item*/) const
 {
 	return true;

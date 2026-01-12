@@ -58,3 +58,12 @@ struct VSOutput
 {
     float4 pos : SV_POSITION;
 };
+
+
+
+//ShaderResourceView
+Texture2D g_ShadowMap : register(t0);
+
+
+//Sampler State
+SamplerState smpBorderShadow : register(s0);
