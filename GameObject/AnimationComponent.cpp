@@ -239,26 +239,12 @@ void AnimationComponent::SetRetargetOffsets(const std::vector<RetargetOffset>& o
 	{
 		m_RetargetOffsets.push_back(ToLocalPose(offset));
 	}
-	m_UseSkeletonRetargetOffsets = false;
-	m_AutoRetargetApplied		 = true;
 }
 
-void AnimationComponent::SetRetargetOffsets(const std::vector<RenderData::RetargetOffset>& offsets)
-{
-	m_RetargetOffsets.clear();
-	m_RetargetOffsets.reserve(offsets.size());
-	for (const auto& offset : offsets)
-	{
-		m_RetargetOffsets.push_back(ToLocalPose(offset));
-	}
-	m_UseSkeletonRetargetOffsets = false;
-	m_AutoRetargetApplied = true;
-}
 
 void AnimationComponent::ClearRetargetOffsets()
 {
 	m_RetargetOffsets.clear(); 
-	m_AutoRetargetApplied = false;
 }
 
 void AnimationComponent::SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind, 
@@ -339,12 +325,6 @@ void AnimationComponent::ClearSkeletonMask()
 	m_AutoBoneMaskApplied = false;
 }
 
-void AnimationComponent::UseSkeletonRetargetOffsets(bool enable)
-{
-	m_UseSkeletonRetargetOffsets = enable;
-	m_AutoRetargetApplied		 = false;
-}
-
 void AnimationComponent::Update(float deltaTime)
 {
 	if (!m_Playback.playing)
@@ -364,7 +344,6 @@ void AnimationComponent::Update(float deltaTime)
 		return;
 
 	EnsureAutoBoneMask		 (*skeleton);
-	EnsureAutoRetargetOffsets(*skeleton);
 	
 	if (m_Blend.active)
 	{
@@ -461,15 +440,6 @@ void AnimationComponent::Deserialize(const nlohmann::json& j)
 }
 
 AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RetargetOffset& offset)
-{
-	AnimationComponent::LocalPose pose{};
-	pose.translation = offset.translation;
-	pose.rotation    = offset.rotation;
-	pose.scale       = offset.scale;
-	return pose;
-}
-
-AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RenderData::RetargetOffset& offset)
 {
 	AnimationComponent::LocalPose pose{};
 	pose.translation = offset.translation;
@@ -698,16 +668,4 @@ void AnimationComponent::EnsureAutoBoneMask(const RenderData::Skeleton& skeleton
 
 	SetBoneMaskFromIndices(skeleton.bones.size(), indices, m_BoneMaskWeight, m_BoneMaskDefaultWeight);
 	m_AutoBoneMaskApplied = true;
-}
-
-void AnimationComponent::EnsureAutoRetargetOffsets(const RenderData::Skeleton& skeleton)
-{
-	if (!m_UseSkeletonRetargetOffsets || m_AutoRetargetApplied)	// 자동으로 적용되거나 Retarget을 안할때
-		return;
-
-	if (skeleton.retargetOffsets.empty())
-		return;
-
-	SetRetargetOffsets(skeleton.retargetOffsets);
-	m_AutoRetargetApplied = true;
 }

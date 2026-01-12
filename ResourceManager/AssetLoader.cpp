@@ -459,11 +459,13 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 				{
 					std::vector<int32_t> indices(header.upperCount);
 					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
+					skeleton.upperBodyBones.assign(indices.begin(), indices.end());
 				}
 				if (header.lowerCount > 0)
 				{
 					std::vector<int32_t> indices(header.lowerCount);
 					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
+					skeleton.lowerBodyBones.assign(indices.begin(), indices.end());
 				}
 
 				result.skeleton = m_Skeletons.Load(skelPath.generic_string(), [skeleton]()

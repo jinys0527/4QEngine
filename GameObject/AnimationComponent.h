@@ -117,8 +117,6 @@ public:
 	/// 각 본에 대해 translation/rotation/scale 오프셋을 누적 적용한다.
 	void SetRetargetOffsets(const std::vector<RetargetOffset>& offsets);
 
-	void SetRetargetOffsets(const std::vector<RenderData::RetargetOffset>& offsets);
-
 	/// 리타게팅 오프셋을 제거한다.
 	void ClearRetargetOffsets();
 
@@ -128,7 +126,6 @@ public:
 	void UseSkeletonUpperBodyMask  (float weight = 1.0f, float defaultWeight = 0.0f);
 	void UseSkeletonLowerBodyMask  (float weight = 1.0f, float defaultWeight = 0.0f);
 	void ClearSkeletonMask		   ();
-	void UseSkeletonRetargetOffsets(bool enable = true);
 
 	void SetAnimationAssetReference(const std::string& assetPath, UINT32 clipIndex)
 	{
@@ -196,8 +193,6 @@ private:
 	/// 리타게팅 오프셋을 LocalPose로 변환한다.
 	static LocalPose ToLocalPose(const RetargetOffset& offset);
 
-	static LocalPose ToLocalPose(const RenderData::RetargetOffset& offset);
-
 	/// 키프레임을 LocalPose로 변환한다.
 	static LocalPose ToLocalPose(const RenderData::AnimationKeyFrame& key);
 
@@ -241,7 +236,6 @@ private:
 	void ApplyRetargetOffsets(std::vector<LocalPose>& localPoses) const;
 
 	void EnsureAutoBoneMask		  (const RenderData::Skeleton& skeleton);
-	void EnsureAutoRetargetOffsets(const RenderData::Skeleton& skeleton);
 private:
 	ResourceStore<RenderData::Skeleton, SkeletonHandle>*       m_Skeletons  = nullptr;
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>* m_Animations = nullptr;
@@ -258,8 +252,6 @@ private:
 	float							 m_BoneMaskWeight			  = 1.0f;
 	float						     m_BoneMaskDefaultWeight	  = 0.0f;
 	bool						     m_AutoBoneMaskApplied		  = false;
-	bool							 m_UseSkeletonRetargetOffsets = false;
-	bool						     m_AutoRetargetApplied		  = false;
 
 	std::vector<DirectX::XMFLOAT4X4> m_LocalPose;
 	std::vector<DirectX::XMFLOAT4X4> m_GlobalPose;
