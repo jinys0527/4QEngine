@@ -242,6 +242,7 @@
     <ClInclude Include="AnimBlendCurveFunction.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraObject.h" />
+    <ClInclude Include="CameraSettings.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="CoreTypes.h" />
     <ClInclude Include="GameObject.h" />

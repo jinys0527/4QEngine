@@ -18,7 +18,7 @@ public:
 	static constexpr const char* StaticTypeName = "TransformComponent";
 	const char* GetTypeName() const override;
 
-	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 0), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
+	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 1), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
 	{
 		m_LocalMatrix = Identity();
 		m_WorldMatrix = Identity();
@@ -87,7 +87,7 @@ private:
 
 private:
 	XMFLOAT3 m_Position = { 0.0f, 0.0f, 0.0f };
-	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 0.0f };
+	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
 	XMFLOAT3 m_Scale    = { 1.0f, 1.0f, 1.0f };
 
 	XMFLOAT3 m_Pivot    = { 0.0f, 0.0f, 0.0f };

@@ -5,6 +5,15 @@
 #include "Object.h"
 #include "ReflectionMacro.h"
 REGISTER_COMPONENT(MeshRenderer)
+REGISTER_PROPERTY_HANDLE(MeshRenderer, MeshHandle)
+REGISTER_PROPERTY_HANDLE(MeshRenderer, MaterialHandle)
+REGISTER_PROPERTY_READONLY_LOADABLE(MeshRenderer, Mesh)
+REGISTER_PROPERTY_READONLY_LOADABLE(MeshRenderer, Material)
+REGISTER_PROPERTY(MeshRenderer, Visible)
+REGISTER_PROPERTY(MeshRenderer, CastShadow)
+REGISTER_PROPERTY(MeshRenderer, ReceiveShadow)
+REGISTER_PROPERTY(MeshRenderer, RenderLayer)
+
 
 bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
 {
@@ -35,22 +44,6 @@ void MeshRenderer::Update(float deltaTime)
 
 void MeshRenderer::OnEvent(EventType type, const void* data)
 {
-}
-
-void MeshRenderer::Serialize(nlohmann::json& j) const
-{
-	j["visible"]                = m_Visible;
-	j["castShadow"]             = m_CastShadow;
-	j["receiveShadow"]          = m_ReceiveShadow;
-	j["renderLayer"]            = m_RenderLayer;
-}
-
-void MeshRenderer::Deserialize(const nlohmann::json& j)
-{
-	m_Visible       = j.value("visible", true);
-	m_CastShadow    = j.value("castShadow", true);
-	m_ReceiveShadow = j.value("receiveShadow", true);
-	m_RenderLayer   = static_cast<UINT8>(j.value("renderLayer", 0));
 }
 
 

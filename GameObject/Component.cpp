@@ -10,7 +10,14 @@ EventDispatcher& Component::GetEventDispatcher() const
 void Component::Serialize(nlohmann::json& j) const {
 	auto* typeInfo = ComponentRegistry::Instance().Find(GetTypeName());
 	if (!typeInfo) return;
-	for (const auto& prop : typeInfo->properties) {
+
+	auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
+
+	for (const auto& prop : props) {
+		if (!prop->IsSerializable())
+		{
+			continue;
+		}
 		prop->Serialize(const_cast<Component*>(this), j);
 	}
 }
@@ -19,7 +26,14 @@ void Component::Deserialize(const nlohmann::json& j) {
 
 	auto* typeInfo = ComponentRegistry::Instance().Find(GetTypeName());
 	if (!typeInfo) return;
-	for (const auto& prop : typeInfo->properties) {
+
+	auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
+
+	for (const auto& prop : props) {
+		if (!prop->IsSerializable())
+		{
+			continue;
+		}
 		prop->DeSerialize(this, j);
 	}
 }

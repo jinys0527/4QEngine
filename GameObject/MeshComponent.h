@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Component.h"
 #include "ResourceHandle.h"
+#include "ResourceRefs.h"
 
 class MeshComponent : public Component
 {
@@ -13,27 +14,23 @@ public:
 	MeshComponent() = default;
 	virtual ~MeshComponent() = default;
 
-	void       SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
-	MeshHandle GetMeshHandle() const            { return m_MeshHandle;   }
+	void			  SetMeshHandle(const MeshHandle& handle) { m_MeshHandle = handle; }
+	const MeshHandle& GetMeshHandle() const					  { return m_MeshHandle;   }
 
-	void SetMeshAssetReference(const std::string& assetPath, UINT32 meshIndex)
+	void LoadSetMesh(const MeshRef& meshRef)
 	{
-		m_MeshAssetPath = assetPath;
-		m_MeshAssetIndex = meshIndex;
+		m_Mesh = meshRef;
 	}
 
-	const std::string& GetMeshAssetPath() const  { return m_MeshAssetPath;  }
-	UINT32             GetMeshAssetIndex() const { return m_MeshAssetIndex; }
+	const MeshRef& GetMesh() const { return m_Mesh; }
+
 
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize(nlohmann::json& j) const override;
-	void Deserialize(const nlohmann::json& j) override;
 protected:
 	MeshHandle  m_MeshHandle;
-	std::string m_MeshAssetPath;
-	UINT32      m_MeshAssetIndex = 0;
+	MeshRef		   m_Mesh;
 };
 
 

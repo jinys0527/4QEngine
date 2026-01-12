@@ -112,7 +112,12 @@
     <ClInclude Include="SkeletalMeshRenderer.h">
       <Filter>Components\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AnimBlendCurveFunction.h" />
+    <ClInclude Include="AnimBlendCurveFunction.h">
+      <Filter>Components\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraSettings.h">
+      <Filter>Components\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">
@@ -141,6 +146,9 @@
     </Filter>
     <Filter Include="Reflection\Source Files">
       <UniqueIdentifier>{8c211b32-5e0f-4eb8-b840-2ce14980ebaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Utils">
+      <UniqueIdentifier>{5cf8f405-2299-4f82-95bd-4b61ddd3ca6f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

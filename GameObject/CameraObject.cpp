@@ -7,7 +7,7 @@ CameraObject::CameraObject(EventDispatcher eventDispatcher, float width, float h
 	m_CameraComp = GetComponent<CameraComponent>();
 	if (m_CameraComp)
 	{
-		m_CameraComp->SetViewportSize(width, height);
+		m_CameraComp->SetViewport({width, height});
 	}
 }
 
@@ -21,7 +21,7 @@ XMFLOAT4X4 CameraObject::GetProjMatrix()
 	return m_CameraComp->GetProjMatrix();
 }
 
-CameraComponent::Viewport CameraObject::GetViewportSize() const
+Viewport CameraObject::GetViewportSize() const
 {
-	return m_CameraComp->GetViewportSize();
+	return m_CameraComp->GetViewport();
 }

@@ -2,6 +2,7 @@
 
 #include "MeshRenderer.h"
 #include "RenderData.h"
+#include "ResourceRefs.h"
 
 class TransformComponent;
 
@@ -19,6 +20,9 @@ public:
 	void           SetSkeletonHandle(SkeletonHandle handle) { m_SkeletonHandle = handle; }
 	SkeletonHandle GetSkeletonHandle() const                { return m_SkeletonHandle;   }
 
+	void LoadSetSkeleton(const SkeletonRef& skeletonRef) { m_Skeleton = skeletonRef; }
+	const SkeletonRef& GetSkeleton() const				  { return m_Skeleton;        }
+
 	bool BuildRenderItem(RenderData::RenderItem& out) const override;
 
 	void Update (float deltaTime) override;
@@ -29,5 +33,6 @@ private:
 
 protected:
 	SkeletonHandle m_SkeletonHandle  = SkeletonHandle::Invalid();
+	SkeletonRef    m_Skeleton;
 };
 

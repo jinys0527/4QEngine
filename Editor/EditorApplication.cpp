@@ -2,6 +2,12 @@
 #include "EditorApplication.h"
 #include "CameraObject.h"
 #include "CameraComponent.h"
+#include "MeshComponent.h"
+#include "MeshRenderer.h"
+#include "MaterialComponent.h"
+#include "SkeletalMeshComponent.h"
+#include "SkeletalMeshRenderer.h"
+#include "AnimationComponent.h"
 #include "GameObject.h"
 #include "Reflection.h"
 #include "Renderer.h"
@@ -45,9 +51,9 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 	}
 	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
 }
-// 각 Property별 배치 Layout설정, 정해줘야 함
-bool DrawComponentPropertyEditor(Component* component, const Property& property)
-{	
+
+bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
+{	// 각 Property별 배치 Layout은 정해줘야 함
 	const std::type_info& typeInfo = property.GetTypeInfo();
 
 	if (typeInfo == typeid(int))
@@ -148,6 +154,117 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property)
 		}
 		return false;
 	}
+
+	if (typeInfo == typeid(MeshHandle))
+	{
+		MeshHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetMeshes().GetKey(value);
+		const std::string display = key ? *key : std::string("<None>");
+		const std::string buttonLabel = display + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MESH"))
+			{
+				const MeshHandle dropped = *static_cast<const MeshHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+
+				if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
+				{
+					const std::string* droppedKey = assetLoader.GetMeshes().GetKey(dropped);
+					//meshComponent->SetMeshAssetReference(droppedKey ? *droppedKey : std::string{}, 0u);
+				}
+
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	if (typeInfo == typeid(MaterialHandle))
+	{
+		MaterialHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetMaterials().GetKey(value);
+		const std::string display = key ? *key : std::string("<None>");
+		const std::string buttonLabel = display + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
+			{
+				const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+
+				if (auto* materialComponent = dynamic_cast<MaterialComponent*>(component))
+				{
+					const std::string* droppedKey = assetLoader.GetMaterials().GetKey(dropped);
+					//materialComponent->SetMaterialAssetPath(droppedKey ? *droppedKey : std::string{}, 0u);
+				}
+
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	if (typeInfo == typeid(TextureHandle))
+	{
+		TextureHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetTextures().GetKey(value);
+		const std::string display = key ? *key : std::string("<None>");
+		const std::string buttonLabel = display + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+			{
+				const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 
 	ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
 	return false;
@@ -342,13 +459,18 @@ void EditorApplication::RenderSceneView() {
 	m_SceneRenderTarget_edit.Bind();
 	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
-	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
-
 	auto scene = m_SceneManager.GetCurrentScene();
 	if (scene)
 	{
 		scene->Render(m_FrameData);
 	}
+
+	m_Renderer.InitVB(m_FrameData);
+	m_Renderer.InitIB(m_FrameData);
+
+	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+
+	
 
 	if (!scene)
 	{
@@ -363,7 +485,7 @@ void EditorApplication::RenderSceneView() {
 
 	if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
 	{
-		cameraComponent->SetViewportSize(static_cast<float>(m_width), static_cast<float>(m_height));
+		cameraComponent->SetViewport({static_cast<float>(m_width), static_cast<float>(m_height)});
 	}
 
 	// 복구
@@ -592,10 +714,12 @@ void EditorApplication::DrawInspector() {
 			
 			if (component && typeInfo)
 			{
-				for (const auto& prop : typeInfo->properties)
+				auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
+
+				for (const auto& prop : props)
 				{	
 					// 한 Property에 대한 것
-					DrawComponentPropertyEditor(component, *prop);
+					DrawComponentPropertyEditor(component, *prop, m_AssetLoader);
 				}
 				ImGui::Separator();
 			}
