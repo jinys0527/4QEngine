@@ -25,9 +25,9 @@ public:
 	ResourceStore<RenderData::TextureData, TextureHandle>& GetTextures() { return m_Textures; }
 	ResourceStore<RenderData::Skeleton, SkeletonHandle>& GetSkeletons() { return m_Skeletons; }
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>& GetAnimations() { return m_Animations; }
-
-private:
 	AssetLoadResult LoadAsset(const std::string& assetMetaPath);
+private:
+	
 
 	ResourceStore<RenderData::MeshData, MeshHandle> m_Meshes;
 	ResourceStore<RenderData::MaterialData, MaterialHandle> m_Materials;

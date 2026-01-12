@@ -54,7 +54,7 @@ protected:
 	float	   m_Intensity = 0.0f;
 	float      m_Range = 0.0f;
 	float      m_SpotAngle = 0.0f;
-	XMFLOAT3   m_Direction    {};
+	XMFLOAT3   m_Direction    {1, 0, 0};
 	XMFLOAT4X4 m_LightViewProj{};
 	bool       m_CastShadow = true;
 };

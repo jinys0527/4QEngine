@@ -449,9 +449,6 @@ void EditorApplication::RenderSceneView() {
 	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
-	//m_Renderer.InitVB(m_FrameData);
-	//m_Renderer.InitIB(m_FrameData);
-
 
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
@@ -464,9 +461,6 @@ void EditorApplication::RenderSceneView() {
 	{
 		scene->Render(m_FrameData);
 	}
-
-	m_Renderer.InitVB(m_FrameData);
-	m_Renderer.InitIB(m_FrameData);
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 

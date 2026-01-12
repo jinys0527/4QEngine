@@ -58,8 +58,8 @@ namespace
 
 	struct VertexSkinned : Vertex
 	{
-		std::array<uint16_t, 4> boneIndices{};
-		std::array<float, 4>    boneWeights{};
+		uint16_t boneIndex [4] = { 0, 0, 0, 0 };
+		uint16_t boneWeight[4] = { 0, 0, 0, 0 };
 	};
 
 	struct MatBinHeader
@@ -153,11 +153,11 @@ namespace
 				}
 
 #ifdef _DEBUG
-				std::cout << "[MaterialBin] path=" << materialBinPath
-					<< " material=" << materialName
-					<< " slot=" << t
-					<< " texture=" << texPathRaw
-					<< std::endl;
+// 				std::cout << "[MaterialBin] path=" << materialBinPath
+// 					<< " material=" << materialName
+// 					<< " slot=" << t
+// 					<< " texture=" << texPathRaw
+// 					<< std::endl;
 #endif
 			}
 		}
@@ -214,16 +214,79 @@ namespace
 	RenderData::Vertex ToRenderVertex(const VertexSkinned& in)
 	{
 		RenderData::Vertex out = ToRenderVertex(static_cast<const Vertex&>(in));
-		out.boneIndices = { in.boneIndices[0], in.boneIndices[1], in.boneIndices[2], in.boneIndices[3] };
+		out.boneIndices = { in.boneIndex[0], in.boneIndex[1], in.boneIndex[2], in.boneIndex[3] };
 		const float invWeight = 1.0f / 65535.0f;
 		out.boneWeights = {
-			static_cast<float>(in.boneWeights[0]) * invWeight,
-			static_cast<float>(in.boneWeights[1]) * invWeight,
-			static_cast<float>(in.boneWeights[2]) * invWeight,
-			static_cast<float>(in.boneWeights[3]) * invWeight
+			static_cast<float>(in.boneWeight[0])* invWeight,
+			static_cast<float>(in.boneWeight[1])* invWeight,
+			static_cast<float>(in.boneWeight[2])* invWeight,
+			static_cast<float>(in.boneWeight[3])* invWeight
 		};
 		return out;
 	}
+
+#ifdef _DEBUG
+	void WriteMeshBinLoadDebugJson(
+		const fs::path& meshPath,
+		const MeshBinHeader& header,
+		const std::vector<SubMeshBin>& subMeshes,
+		const RenderData::MeshData& meshData)
+	{
+		json root;
+		root["path"] = meshPath.generic_string();
+		root["header"] = {
+			{"magic", header.magic},
+			{"version", header.version},
+			{"flags", header.flags},
+			{"vertexCount", header.vertexCount},
+			{"indexCount", header.indexCount},
+			{"subMeshCount", header.subMeshCount},
+			{"stringTableBytes", header.stringTableBytes},
+			{"bounds", {
+				{"min", { header.bounds.min[0], header.bounds.min[1], header.bounds.min[2] }},
+				{"max", { header.bounds.max[0], header.bounds.max[1], header.bounds.max[2] }}
+			}}
+		};
+
+		root["subMeshes"] = json::array();
+		for (const auto& subMesh : subMeshes)
+		{
+			root["subMeshes"].push_back({
+				{"indexStart", subMesh.indexStart},
+				{"indexCount", subMesh.indexCount},
+				{"materialNameOffset", subMesh.materialNameOffset},
+				{"bounds", {
+					{"min", { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] }},
+					{"max", { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] }}
+				}}
+				});
+		}
+
+		root["isSkinned"] = meshData.hasSkinning ? true : false;
+		root["vertices"] = json::array();
+		for (const auto& v : meshData.vertices)
+		{
+			root["vertices"].push_back({
+				{"pos", { v.position.x, v.position.y, v.position.z }},
+				{"normal", { v.normal.x, v.normal.y, v.normal.z }},
+				{"uv", { v.uv.x, v.uv.y }},
+				{"tangent", { v.tangent.x, v.tangent.y, v.tangent.z, v.tangent.w }},
+				{"boneIndex", { v.boneIndices[0], v.boneIndices[1], v.boneIndices[2], v.boneIndices[3] }},
+				{"boneWeight", { v.boneWeights[0], v.boneWeights[1], v.boneWeights[2], v.boneWeights[3] }}
+				});
+		}
+
+		root["indices"] = meshData.indices;
+
+		fs::path debugPath = meshPath;
+		debugPath += ".load.debug.json";
+		std::ofstream ofs(debugPath);
+		if (ofs)
+		{
+			ofs << root.dump(2);
+		}
+	}
+#endif
 
 	RenderData::AnimationClip ParseAnimationJson(const json& j)
 	{
@@ -306,7 +369,7 @@ void AssetLoader::LoadAll()
 				continue;
 
 #ifdef _DEBUG
-			std::cout << path.string() << std::endl;
+		//	std::cout << path.string() << std::endl;
 #endif
 			LoadAsset(path.string());
 		}
@@ -358,7 +421,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 				}
 
 #ifdef _DEBUG
-				LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
+		//		LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
 #endif // _DEBUG
 
 				materialHandles.reserve(mats.size());
@@ -506,12 +569,63 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			RenderData::MeshData meshData{};
 			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
 
+			meshData.vertices.reserve(header.vertexCount);
+			if (meshData.hasSkinning)
+			{
+				std::vector<VertexSkinned> vertices(header.vertexCount);
+				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(VertexSkinned) * vertices.size());
+				for (const auto& v : vertices)
+				{
+					meshData.vertices.push_back(ToRenderVertex(v));
+				}
+			}
+			else
+			{
+				std::vector<Vertex> vertices(header.vertexCount);
+				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(Vertex) * vertices.size());
+				for (const auto& v : vertices)
+				{
+					meshData.vertices.push_back(ToRenderVertex(v));
+				}
+			}
+
+			meshData.indices.resize(header.indexCount);
+			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
+
+#ifdef _DEBUG
+// 			std::cout << "[MeshBin] load mesh=" << meshPath.filename().string()
+// 				<< " verts=" << meshData.vertices.size()
+// 				<< " indices=" << meshData.indices.size()
+// 				<< " skinned=" << meshData.hasSkinning
+// 				<< std::endl;
+// 			for (auto i = 0; i < meshData.vertices.size(); ++i)
+// 			{
+// 				const auto& v = meshData.vertices[i];
+// 				std::cout << "[MeshBin] v" << i
+// 					<< " pos=(" << v.position.x << "," << v.position.y << "," << v.position.z << ")"
+// 					<< " n=(" << v.normal.x << "," << v.normal.y << "," << v.normal.z << ")"
+// 					<< " uv=(" << v.uv.x << "," << v.uv.y << ")"
+// 					<< " t=(" << v.tangent.x << "," << v.tangent.y << "," << v.tangent.z << "," << v.tangent.w << ")"
+// 					<< std::endl;
+// 			}
+// 			for (size_t i = 0; i + 2 < meshData.indices.size(); i += 3)
+// 			{
+// 				std::cout << "[MeshBin] tri" << (i / 3)
+// 					<< " idx=(" << meshData.indices[i] << "," << meshData.indices[i + 1] << "," << meshData.indices[i + 2] << ")"
+// 					<< std::endl;
+// 			}
+#endif
+
 			std::string stringTable;
 			if (header.stringTableBytes > 0)
 			{
 				stringTable.resize(header.stringTableBytes);
 				meshStream.read(stringTable.data(), header.stringTableBytes);
 			}
+
+#ifdef _DEBUG
+			WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+#endif
 
 			meshData.subMeshes.reserve(subMeshes.size());
 			for (const auto& subMesh : subMeshes)
@@ -536,30 +650,6 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 
 				meshData.subMeshes.push_back(out);
 			}
-
-
-			meshData.vertices.reserve(header.vertexCount);
-			if (meshData.hasSkinning)
-			{
-				std::vector<VertexSkinned> vertices(header.vertexCount);
-				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(VertexSkinned) * vertices.size());
-				for (const auto& v : vertices)
-				{
-					meshData.vertices.push_back(ToRenderVertex(v));
-				}
-			}
-			else
-			{
-				std::vector<Vertex> vertices(header.vertexCount);
-				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(Vertex) * vertices.size());
-				for (const auto& v : vertices)
-				{
-					meshData.vertices.push_back(ToRenderVertex(v));
-				}
-			}
-
-			meshData.indices.resize(header.indexCount);
-			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
 
 			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
 				{
