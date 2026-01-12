@@ -6,6 +6,25 @@ cbuffer BaseBuffer : register(b0)
     matrix mVP;
 };
 
+struct Light
+{
+    float3 Pos;
+    float Range;
+    float3 Dir;
+    float SpotAngle;
+    float3 Color;
+    float Intensity;
+    matrix mVP;
+    bool CastShadow;
+    float3 padding;
+};
+
+cbuffer LightBuffer : register(b1)
+{
+    Light lights[16];
+    int lightCount;
+}
+
 struct VSInput_P
 {
     float3 pos : POSITION;

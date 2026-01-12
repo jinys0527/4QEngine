@@ -22,8 +22,8 @@ struct Light
 	XMFLOAT3   Color{ 1.0f, 1.0f, 1.0f };
 	FLOAT      Intensity = 1.0f;
 	XMFLOAT4X4 mLightViewProj{};
-	BOOL       CastShadow = true;
-	FLOAT      padding[3];
+	UINT       CastShadow = TRUE;
+	FLOAT      padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
@@ -31,7 +31,7 @@ struct LightConstBuffer
 {
 	Light	lights[MAX_LIGHTS];
 	INT		lightCount;
-	FLOAT   padding[3];
+	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
 constexpr size_t kMaxSkinningBones = 128;
