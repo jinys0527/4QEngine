@@ -66,7 +66,7 @@ public:
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize  (nlohmann::json& j) const override;
+	//void Serialize  (nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
 	std::vector<TransformComponent*>& GetChildrens()
@@ -97,7 +97,6 @@ private:
 
 	XMFLOAT4X4 m_LocalMatrix;
 	XMFLOAT4X4 m_WorldMatrix;
-
 	bool m_IsDirty = true;
 
 };

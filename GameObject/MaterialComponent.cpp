@@ -2,7 +2,7 @@
 #include "ReflectionMacro.h"
 
 REGISTER_COMPONENT(MaterialComponent);
-
+REGISTER_PROPERTY(MaterialComponent, MaterialAssetPath)
 void MaterialComponent::SetOverrides(const RenderData::MaterialData& overrides)
 {
 	m_Overrides = overrides;

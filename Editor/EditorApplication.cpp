@@ -84,6 +84,21 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property)
 		return false;
 	}
 
+	if (typeInfo == typeid(std::string))
+	{
+		std::string value;
+		property.GetValue(component, &value);
+		std::array<char, 256> buffer{};
+		CopyStringToBuffer(value, buffer);
+		if (ImGui::InputText(property.GetName().c_str(), buffer.data(), buffer.size()))
+		{
+			std::string updatedValue(buffer.data());
+			property.SetValue(component, &updatedValue);
+			return true;
+		}
+		return false;
+	}
+
 	if (typeInfo == typeid(XMFLOAT2))
 	{
 		XMFLOAT2 value{};
@@ -372,7 +387,7 @@ void EditorApplication::DrawHierarchy() {
 	{
 		const std::string name = MakeUniqueObjectName(*scene, "GameObject");
 		scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
-		//scene->CreateGameObject(name, false);
+		//scene->CreateGameObject(name, false); //transparent
 		m_SelectedObjectName = name;
 	}
 
@@ -515,7 +530,7 @@ void EditorApplication::DrawInspector() {
 			}
 			if (!canRemove)
 			{
-				ImGui::EndDisabled();
+				ImGui::EndDisabled(); 
 			}
 			ImGui::EndPopup();
 		}
