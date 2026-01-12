@@ -1293,7 +1293,7 @@ void EditorApplication::UpdateEditorCamera()
 	if (io.MouseDown[1])
 	{
 		const float rotationSpeed = 0.005f;
-		const float yaw = -io.MouseDelta.x * rotationSpeed;
+		const float yaw = io.MouseDelta.x * rotationSpeed;
 		const float pitch = io.MouseDelta.y * rotationSpeed;
 
 		if (yaw != 0.0f || pitch != 0.0f)
@@ -1324,11 +1324,11 @@ void EditorApplication::UpdateEditorCamera()
 		{
 			moveVec = XMVectorSubtract(moveVec, forwardVec);
 		}
-		if (ImGui::IsKeyDown(ImGuiKey_A))
+		if (ImGui::IsKeyDown(ImGuiKey_D))
 		{
 			moveVec = XMVectorAdd(moveVec, rightVec);
 		}
-		if (ImGui::IsKeyDown(ImGuiKey_D))
+		if (ImGui::IsKeyDown(ImGuiKey_A))
 		{
 			moveVec = XMVectorSubtract(moveVec, rightVec);
 		}

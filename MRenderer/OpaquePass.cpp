@@ -21,7 +21,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
     }
 
-    m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+    //m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
 
@@ -36,7 +36,17 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
             const auto& item = items[index];
 
-            m_RenderContext.BCBuffer.mWorld = item.world;
+            XMMATRIX mscale = XMMatrixScaling(100, 100, 100);
+            XMMATRIX mtm = XMMatrixIdentity();
+            mtm = XMLoadFloat4x4(&item.world);
+
+            mtm =  mscale * mtm;
+            XMFLOAT4X4 tm;
+            XMStoreFloat4x4(&tm, mtm);
+
+            m_RenderContext.BCBuffer.mWorld = tm;
+
+            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
 
             if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
             {

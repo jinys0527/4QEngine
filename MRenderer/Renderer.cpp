@@ -72,11 +72,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	CreateInputLayout();
 
-	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
-	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
+	//m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
 	CreateConstBuffer();
 
@@ -128,9 +128,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui_edit.GetAddressOf(), m_pDSViewScene_Imgui_edit.Get());
 
-
+	float clearColor2[4] = { 1.f, 0.21f, 0.21f, 1.f };
 	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
-	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor);
+	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor2);
 	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui_edit.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
 
 	//그리드
