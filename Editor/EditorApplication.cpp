@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "EditorApplication.h"
+#include "CameraObject.h"
 #include "CameraComponent.h"
 #include "GameObject.h"
 #include "Reflection.h"
@@ -264,6 +265,8 @@ void EditorApplication::RenderImGUI() {
 		UpdateSceneViewport();
 	}
 	
+	UpdateEditorCamera();
+
 	// DockBuilder
 	static bool dockBuilt = true;
 	if (dockBuilt)
@@ -323,6 +326,28 @@ void EditorApplication::RenderSceneView() {
 	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (scene)
+	{
+		scene->Render(m_FrameData);
+	}
+
+	if (!scene)
+	{
+		return;
+	}
+
+	auto editorCamera = scene->GetEditorCamera();
+	if (!editorCamera)
+	{
+		return;
+	}
+
+	if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
+	{
+		cameraComponent->SetViewportSize(static_cast<float>(m_width), static_cast<float>(m_height));
+	}
 
 
 	// 복구
@@ -901,7 +926,136 @@ void EditorApplication::UpdateSceneViewport()
 	}*/
 }
 
+void EditorApplication::UpdateEditorCamera()
+{
+	if (!m_Viewport.IsHovered())
+	{
+		return;
+	}
 
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	auto camera = scene->GetEditorCamera();
+	if (!camera)
+	{
+		return;
+	}
+
+	auto* cameraComponent = camera->GetComponent<CameraComponent>();
+	if (!cameraComponent)
+	{
+		return;
+	}
+
+	ImGuiIO& io = ImGui::GetIO();
+	const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
+
+	XMFLOAT3 eye = cameraComponent->GetEye();
+	XMFLOAT3 look = cameraComponent->GetLook();
+	XMFLOAT3 up = cameraComponent->GetUp();
+
+	XMVECTOR eyeVec = XMLoadFloat3(&eye);
+	XMVECTOR lookVec = XMLoadFloat3(&look);
+	XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
+	XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
+	XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
+
+	bool updated = false;
+
+	if (io.MouseDown[1])
+	{
+		const float rotationSpeed = 0.005f;
+		const float yaw = -io.MouseDelta.x * rotationSpeed;
+		const float pitch = io.MouseDelta.y * rotationSpeed;
+
+		if (yaw != 0.0f || pitch != 0.0f)
+		{
+			XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+			const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
+			const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
+			XMMATRIX transform = pitchRotation * yawRotation;
+			forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
+			rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
+			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+
+			lookVec = XMVectorAdd(eyeVec, forwardVec);
+			updated = true;
+
+		}
+
+		const float baseSpeed = 6.0f;
+		const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
+		const float moveSpeed = baseSpeed * speedMultiplier;
+
+		XMVECTOR moveVec = XMVectorZero();
+		if (ImGui::IsKeyDown(ImGuiKey_W))
+		{
+			moveVec = XMVectorAdd(moveVec, forwardVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_S))
+		{
+			moveVec = XMVectorSubtract(moveVec, forwardVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_A))
+		{
+			moveVec = XMVectorAdd(moveVec, rightVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_D))
+		{
+			moveVec = XMVectorSubtract(moveVec, rightVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_E))
+		{
+			moveVec = XMVectorAdd(moveVec, upVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_Q))
+		{
+			moveVec = XMVectorSubtract(moveVec, upVec);
+		}
+
+		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
+		{
+			moveVec = XMVector3Normalize(moveVec);
+			const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
+			eyeVec = XMVectorAdd(eyeVec, scaledMove);
+			lookVec = XMVectorAdd(lookVec, scaledMove);
+			updated = true;
+		}
+	}
+
+	if (io.MouseDown[2])
+	{
+		const float panSpeed = 0.01f;
+		const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
+		const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
+		const XMVECTOR pan = XMVectorAdd(panRight, panUp);
+		eyeVec = XMVectorAdd(eyeVec, pan);
+		lookVec = XMVectorAdd(lookVec, pan);
+		updated = true;
+	}
+
+	if (io.MouseWheel != 0.0f)
+	{
+		const float zoomSpeed = 4.0f;
+		const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
+		eyeVec = XMVectorAdd(eyeVec, dolly);
+		lookVec = XMVectorAdd(lookVec, dolly);
+		updated = true;
+	}
+
+	if (updated)
+	{
+		upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+		XMStoreFloat3(&eye, eyeVec);
+		XMStoreFloat3(&look, lookVec);
+		XMStoreFloat3(&up, upVec);
+		cameraComponent->SetEyeLookUp(eye, look, up);
+	}
+}
 
 void EditorApplication::OnResize(int width, int height)
 {

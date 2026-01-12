@@ -7,10 +7,15 @@
 
 void DefaultScene::Initialize()
 {
-	auto camera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
+	auto gamecamera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
 
-	camera->SetName("Main Camera");
-	SetGameCamera(camera); // Main Camera
+	gamecamera->SetName("Main Camera");
+	SetGameCamera(gamecamera); // Main Camera
+
+	auto editorCamera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
+	editorCamera->SetName("Editor Camera");
+	SetEditorCamera(editorCamera);
+
 
 	auto lightObject = std::make_shared<GameObject>(m_EventDispatcher);
 	lightObject->SetName("DirectionalLight");
@@ -64,6 +69,12 @@ void DefaultScene::Update(float deltaTime)
 	// 투명 끝나고 -> 불투명 Update 하면. Logic에서 문제 생길 수 도 
 	// 문제 생기는 경우
 	// Upcasting 하던가, GameObject 자체에 멤버로 투명 불투병 bool 갖고, 이거 따라서 분류해서 Render 주던가
+
+	if (m_EditorCamera)
+	{
+		m_EditorCamera->Update(deltaTime);
+	}
+
 
 	for (const auto& [name, gameObject] : m_OpaqueObjects)
 	{

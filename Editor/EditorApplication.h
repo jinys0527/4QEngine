@@ -36,7 +36,8 @@ private:
 	//void UpdateLogic();
 	void Update();
 	void UpdateSceneViewport();
-	
+	void UpdateEditorCamera();
+
 	//Render 관련
 	void Render();
 	void RenderImGUI();
