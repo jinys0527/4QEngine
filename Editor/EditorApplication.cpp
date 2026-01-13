@@ -395,8 +395,10 @@ void EditorApplication::RenderImGUI() {
 	 //Scene그리기
 
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
-	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget_edit);
-	if (viewportChanged)
+	const bool gameViewportChanged = m_GameViewport.Draw(m_SceneRenderTarget);
+	const bool editorViewportChanged = m_EditorViewport.Draw(m_SceneRenderTarget_edit);
+	
+	if (editorViewportChanged || gameViewportChanged)
 	{
 		UpdateSceneViewport();
 	}
@@ -427,7 +429,7 @@ void EditorApplication::RenderImGUI() {
 		// main back buffer 상태 복구 // 함수로 묶기
 		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
 		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+		//m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
 		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 	}
 
@@ -451,8 +453,6 @@ void EditorApplication::RenderSceneView() {
 	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
-
-
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -461,10 +461,10 @@ void EditorApplication::RenderSceneView() {
 
 
 	auto scene = m_SceneManager.GetCurrentScene();
-	//if (scene)
-	//{
-	//	scene->Render(m_FrameData);
-	//}
+	if (scene)
+	{
+		scene->Render(m_FrameData);
+	}
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
@@ -483,7 +483,11 @@ void EditorApplication::RenderSceneView() {
 
 	if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
 	{
-		cameraComponent->SetViewport({static_cast<float>(m_width), static_cast<float>(m_height)});
+		const ImVec2 editorSize = m_EditorViewport.GetViewportSize();
+		if (editorSize.x > 0.0f && editorSize.y > 0.0f)
+		{
+			cameraComponent->SetViewport({ editorSize.x, editorSize.y });
+		}
 	}
 	//scene->Render(m_FrameData);
 
@@ -1228,6 +1232,7 @@ void EditorApplication::SetupEditorDockLayout()
 	ImGui::DockBuilderDockWindow("Inspector", dockRightB);
 	ImGui::DockBuilderDockWindow("Folder", dockBottom);
 	ImGui::DockBuilderDockWindow("Game", dockMain);
+	ImGui::DockBuilderDockWindow("Editor", dockMain);
 
 	ImGui::DockBuilderFinish(dockspaceID);
 }
@@ -1235,15 +1240,12 @@ void EditorApplication::SetupEditorDockLayout()
 void EditorApplication::UpdateSceneViewport()
 {
 	// m_Veiwport = editor Viewport
-	const ImVec2 size = m_Viewport.GetViewportSize();
-	const UINT width = static_cast<UINT>(size.x);
-	const UINT height = static_cast<UINT>(size.y);
-	if (width == 0 || height == 0)
-	{
-		return;
-	}
-
-	/*m_SceneRenderTarget.Resize(width, height);
+	const ImVec2 editorSize = m_EditorViewport.GetViewportSize();
+	const ImVec2 gameSize = m_GameViewport.GetViewportSize();
+	const UINT editorWidth = static_cast<UINT>(editorSize.x);
+	const UINT editorHeight = static_cast<UINT>(editorSize.y);
+	const UINT gameWidth = static_cast<UINT>(gameSize.x);
+	const UINT gameHeight = static_cast<UINT>(gameSize.y);
 
 	auto scene = m_SceneManager.GetCurrentScene();
 	if (!scene)
@@ -1251,21 +1253,34 @@ void EditorApplication::UpdateSceneViewport()
 		return;
 	}
 
-	auto* camera = scene->GetMainCamera();
-	if (!camera)
+	if (editorWidth != 0 && editorHeight != 0)
 	{
 		return;
+		if (auto editorCamera = scene->GetEditorCamera())
+		{
+			if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
+			{
+				cameraComponent->SetViewport({ static_cast<float>(editorWidth), static_cast<float>(editorHeight) });
+			}
+		}
 	}
 
-	if (auto* cameraComponent = camera->GetComponent<CameraComponent>())
+	if (gameWidth != 0 && gameHeight != 0)
 	{
-		cameraComponent->SetViewportSize(static_cast<float>(width), static_cast<float>(height));
-	}*/
+		if (auto gameCamera = scene->GetGameCamera())
+		{
+			if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
+			{
+				cameraComponent->SetViewport({ static_cast<float>(gameWidth), static_cast<float>(gameHeight) });
+			}
+		}
+	}
+
 }
 
 void EditorApplication::UpdateEditorCamera()
 {
-	if (!m_Viewport.IsHovered())
+	if (!m_EditorViewport.IsHovered())
 	{
 		return;
 	}

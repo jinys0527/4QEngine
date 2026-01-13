@@ -20,7 +20,9 @@ class EditorApplication : public NzWndBase
 
 public:
 	EditorApplication(Engine& engine,Renderer& renderer, SceneManager& sceneManager, SoundManager& soundManager, AssetLoader& assetLoader) 
-		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager), m_AssetLoader(assetLoader) {
+		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager), m_AssetLoader(assetLoader)
+		, m_EditorViewport("Editor")
+		, m_GameViewport("Game"){
 	}
 
 	virtual ~EditorApplication() = default;
@@ -70,7 +72,8 @@ private:
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext m_SceneRenderTarget;
 	RenderTargetContext m_SceneRenderTarget_edit;
-	EditorViewport m_Viewport;
+	EditorViewport m_EditorViewport;
+	EditorViewport m_GameViewport;
 
 	// Hier
 	std::string m_SelectedObjectName;
