@@ -1,0 +1,78 @@
+{
+    "gameObjects": {
+        "opaque": [],
+        "transparent": [
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Rotation": {
+                                "w": 0.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Rotation": {
+                                "w": 0.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Color": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "Direction": {
+                                "x": 0.0,
+                                "y": -1.0,
+                                "z": 0.0
+                            },
+                            "Intensity": 1.0,
+                            "Position": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "Range": 0.0,
+                            "SpotAngle": 0.0
+                        },
+                        "type": "LightComponent"
+                    }
+                ],
+                "name": "DirectionalLight"
+            }
+        ]
+    }
+}
