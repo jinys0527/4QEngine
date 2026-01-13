@@ -1306,7 +1306,7 @@ void EditorApplication::UpdateEditorCamera()
 	if (io.MouseDown[1])
 	{
 		const float rotationSpeed = 0.003f;
-		const float yaw = -io.MouseDelta.x * rotationSpeed;
+		const float yaw = io.MouseDelta.x * rotationSpeed;
 		const float pitch = io.MouseDelta.y * rotationSpeed;
 
 		if (yaw != 0.0f || pitch != 0.0f)
