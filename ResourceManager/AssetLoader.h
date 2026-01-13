@@ -22,6 +22,7 @@ public:
 
 	void LoadAll();
 	
+
 	const AssetLoadResult* GetAsset(const std::string& assetMetaPath) const;
 	MaterialHandle ResolveMaterial (const std::string& assetMetaPath, UINT32 index) const;
 	bool GetMaterialAssetReference (MaterialHandle handle, std::string& outPath, UINT32& outIndex) const;
@@ -30,6 +31,7 @@ public:
 	bool GetSkeletonAssetReference (SkeletonHandle handle, std::string& outPath, UINT32& outIndex) const;
 	bool GetAnimationAssetReference(AnimationHandle handle, std::string& outPath, UINT32& outIndex) const;
 
+	const ResourceStore<RenderData::MeshData, MeshHandle>& GetMeshes() const { return m_Meshes; }
 	ResourceStore<RenderData::MeshData, MeshHandle>& GetMeshes() { return m_Meshes; }
 	ResourceStore<RenderData::MaterialData, MaterialHandle>& GetMaterials() { return m_Materials; }
 	ResourceStore<RenderData::TextureData, TextureHandle>& GetTextures() { return m_Textures; }

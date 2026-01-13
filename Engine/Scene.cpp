@@ -276,10 +276,13 @@ template<typename PushFn>
 static void EmitSubMeshes(
 	const RenderData::MeshData& meshData,
 	const RenderData::RenderItem& baseItem,
+	const std::vector<MaterialRef>* overrides,
+	const AssetLoader& assetLoader,
 	PushFn&& push)
 {
 	if (!meshData.subMeshes.empty())
 	{
+		size_t subMeshIndex = 0;
 		for (const auto& sm : meshData.subMeshes)
 		{
 			RenderData::RenderItem item = baseItem;
@@ -292,7 +295,21 @@ static void EmitSubMeshes(
 			if (sm.material.IsValid())
 				item.material = sm.material;
 
+			if (overrides && subMeshIndex < overrides->size())
+			{
+				const auto& overrideRef = overrides->at(subMeshIndex);
+				if (!overrideRef.assetPath.empty())
+				{
+					const MaterialHandle overrideHandle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
+					if (overrideHandle.IsValid())
+					{
+						item.material = overrideHandle;
+					}
+				}
+			}
+
 			push(std::move(item));
+			++subMeshIndex;
 		}
 	}
 	else
@@ -301,6 +318,20 @@ static void EmitSubMeshes(
 		item.useSubMesh = false;
 		item.indexStart = 0;
 		item.indexCount = static_cast<UINT32>(meshData.indices.size());
+
+		if (overrides && !overrides->empty())
+		{
+			const auto& overrideRef = overrides->front();
+			if (!overrideRef.assetPath.empty())
+			{
+				const MaterialHandle overrideHandle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
+				if (overrideHandle.IsValid())
+				{
+					item.material = overrideHandle;
+				}
+			}
+		}
+
 		push(std::move(item));
 	}
 }
@@ -309,7 +340,8 @@ static bool BuildStaticBaseItem(
 	const Object& obj,
 	MeshRenderer& renderer,
 	RenderData::RenderLayer layer,
-	RenderData::RenderItem& outItem
+	RenderData::RenderItem& outItem,
+	const MeshComponent*& outMeshComponent
 )
 {
 	RenderData::RenderItem item{};
@@ -332,6 +364,7 @@ static bool BuildStaticBaseItem(
 	}
 
 	outItem = std::move(item);
+	outMeshComponent = meshComp;
 	return true;
 }
 
@@ -359,7 +392,8 @@ static bool BuildSkeletalBaseItem(
 	SkeletalMeshRenderer& renderer,
 	RenderData::RenderLayer layer,
 	RenderData::FrameData& frameData,
-	RenderData::RenderItem& outItem
+	RenderData::RenderItem& outItem,
+	const MeshComponent*& outMeshComponent
 )
 {
 	RenderData::RenderItem item{};
@@ -388,6 +422,7 @@ static bool BuildSkeletalBaseItem(
 	item.skinningPaletteCount = paletteCount;
 
 	outItem = std::move(item);
+	outMeshComponent = skelComp;
 	return true;
 }
 
@@ -416,6 +451,7 @@ template <typename ObjectMap>
 void AppendFrameDataFromObjects(
 	const ObjectMap& objects,
 	RenderData::RenderLayer layer,
+	const AssetLoader& assetLoader,
 	RenderData::FrameData& frameData)
 {
 	for (const auto& [name, gameObject] : objects)
@@ -439,13 +475,15 @@ void AppendFrameDataFromObjects(
 					if (!renderer) continue;
 
 					RenderData::RenderItem baseItem{};
-					if (!BuildSkeletalBaseItem(*gameObject, *renderer, layer, frameData, baseItem))
+					const MeshComponent* meshComponent = nullptr;
+					if (!BuildSkeletalBaseItem(*gameObject, *renderer, layer, frameData, baseItem, meshComponent))
 						continue;
 
-					const auto* meshData = m_AssetLoader.GetMeshes().Get(baseItem.mesh);
+					const auto* meshData = assetLoader.GetMeshes().Get(baseItem.mesh);
 					if (!meshData) continue;
 
-					EmitSubMeshes(*meshData, baseItem,
+					const auto* overrides = meshComponent ? &meshComponent->GetSubMeshMaterialOverrides() : nullptr;
+					EmitSubMeshes(*meshData, baseItem, overrides, assetLoader,
 						[&](RenderData::RenderItem&& item)
 						{
 							frameData.renderItems[layer].push_back(std::move(item));
@@ -465,13 +503,15 @@ void AppendFrameDataFromObjects(
 				if (!renderer) continue;
 
 				RenderData::RenderItem baseItem{};
-				if (!BuildStaticBaseItem(*gameObject, *renderer, layer, baseItem))
+				const MeshComponent* meshComponent = nullptr;
+				if (!BuildStaticBaseItem(*gameObject, *renderer, layer, baseItem, meshComponent))
 					continue;
 
-				const auto* meshData = m_AssetLoader.GetMeshes().Get(baseItem.mesh);
+				auto* meshData = assetLoader.GetMeshes().Get(baseItem.mesh);
 				if (!meshData) continue;
 
-				EmitSubMeshes(*meshData, baseItem,
+				const auto* overrides = meshComponent ? &meshComponent->GetSubMeshMaterialOverrides() : nullptr;
+				EmitSubMeshes(*meshData, baseItem, overrides, assetLoader,
 					[&](RenderData::RenderItem&& item)
 					{
 						frameData.renderItems[layer].push_back(std::move(item));
@@ -536,9 +576,9 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 		BuildCameraData(m_EditorCamera, frameData, false);
 	}
 
-	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, frameData);
+	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, m_AssetLoader, frameData);
 
-	AppendFrameDataFromObjects(m_TransparentObjects, RenderData::RenderLayer::TransparentItems, frameData);
+	AppendFrameDataFromObjects(m_TransparentObjects, RenderData::RenderLayer::TransparentItems, m_AssetLoader, frameData);
 
 	//UIManager에서 UI Data 가공예정
 }

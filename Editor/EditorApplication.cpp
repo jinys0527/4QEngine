@@ -52,6 +52,89 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
 }
 
+
+bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& assetLoader)
+{
+	const MeshHandle meshHandle = meshComponent.GetMeshHandle();
+	const auto* meshData = assetLoader.GetMeshes().Get(meshHandle);
+	if (!meshData)
+	{
+		ImGui::TextDisabled("SubMesh Overrides (mesh not loaded)");
+		return false;
+	}
+
+	const size_t subMeshCount = meshData->subMeshes.empty() ? 1 : meshData->subMeshes.size();
+	const auto& overrides = meshComponent.GetSubMeshMaterialOverrides();
+	bool changed = false;
+
+	if (ImGui::TreeNode("SubMesh Overrides"))
+	{
+		for (size_t i = 0; i < subMeshCount; ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("SubMesh %zu", i);
+			ImGui::SameLine();
+
+			std::string display = "<None>";
+			if (i < overrides.size())
+			{
+				const auto& overrideRef = overrides[i];
+				if (!overrideRef.assetPath.empty())
+				{
+					const MaterialHandle handle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
+					if (handle.IsValid())
+					{
+						if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
+						{
+							display = *key;
+						}
+						else
+						{
+							display = overrideRef.assetPath;
+						}
+					}
+					else
+					{
+						display = overrideRef.assetPath;
+					}
+				}
+			}
+
+			const std::string buttonLabel = display + "##SubMeshOverride";
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
+				{
+					const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
+					std::string assetPath;
+					UINT32 assetIndex = 0;
+					if (assetLoader.GetMaterialAssetReference(dropped, assetPath, assetIndex))
+					{
+						meshComponent.SetSubMeshMaterialOverride(i, MaterialRef{ assetPath, assetIndex });
+						changed = true;
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Clear"))
+			{
+				meshComponent.ClearSubMeshMaterialOverride(i);
+				changed = true;
+			}
+
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
+
+	return changed;
+}
+
 bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
 {	// 각 Property별 배치 Layout은 정해줘야 함
 	const std::type_info& typeInfo = property.GetTypeInfo();
@@ -745,6 +828,11 @@ void EditorApplication::DrawInspector() {
 				{	
 					// 한 Property에 대한 것
 					DrawComponentPropertyEditor(component, *prop, m_AssetLoader);
+				}
+
+				if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
+				{
+					DrawSubMeshOverridesEditor(*meshComponent, m_AssetLoader);
 				}
 				ImGui::Separator();
 			}

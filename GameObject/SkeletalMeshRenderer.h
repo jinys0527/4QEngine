@@ -31,6 +31,5 @@ private:
 protected:
 	SkeletonHandle m_SkeletonHandle  = SkeletonHandle::Invalid();
 	SkeletonRef    m_Skeleton;
-	int            m_SkeletalMeshComponentIndex = 0;
 };
 

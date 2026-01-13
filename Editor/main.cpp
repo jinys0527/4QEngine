@@ -28,7 +28,7 @@ int main()
 	UIManager uiManager(engine.GetEventDispatcher());
 	AssetLoader assetLoader;
 	Renderer renderer(assetLoader);
-	SceneManager sceneManager(/*renderer,*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, uiManager);
+	SceneManager sceneManager(/*renderer,*/ engine.GetEventDispatcher(), assetLoader, /* engine.GetSoundAssetManager(), */ soundManager, uiManager);
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
 	ImportAll();

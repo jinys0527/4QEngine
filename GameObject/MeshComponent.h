@@ -24,13 +24,18 @@ public:
 
 	const MeshRef& GetMesh() const { return m_Mesh; }
 
+	const std::vector<MaterialRef>& GetSubMeshMaterialOverrides() const { return m_SubMeshMaterialOverrides; }
+	void SetSubMeshMaterialOverrides(const std::vector<MaterialRef>& overrides);
+	void SetSubMeshMaterialOverride(size_t index, const MaterialRef& overrideRef);
+	void ClearSubMeshMaterialOverride(size_t index);
 
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
 protected:
 	MeshHandle  m_MeshHandle;
-	MeshRef		   m_Mesh;
+	MeshRef		m_Mesh;
+	std::vector<MaterialRef> m_SubMeshMaterialOverrides;
 };
 
 

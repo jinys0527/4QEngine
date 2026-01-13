@@ -5,6 +5,7 @@
 #include <string>
 #include "Scene.h"
 #include "EventDispatcher.h"
+#include "AssetLoader.h"
 #include "SoundManager.h"
 #include "UIManager.h"
 #include "Renderer.h"
@@ -16,12 +17,16 @@ class SceneManager
 	friend class Editor;
 public:
 	SceneManager( /*Renderer& renderer, */EventDispatcher& eventDispatcher,
-		/*AssetManager& assetManager, SoundAssetManager& soundAssetManager,*/
-		SoundManager& soundManager, UIManager& uiManager) : 
+		AssetLoader& assetLoader, 
+		/*SoundAssetManager& soundAssetManager, */
+		SoundManager& soundManager, 
+		UIManager& uiManager) : 
 		/*m_Renderer(renderer),*/
 		m_EventDispatcher(eventDispatcher),
+		m_AssetLoader(assetLoader),
 		m_SoundManager(soundManager), 
-		m_UIManager(uiManager) { }
+		m_UIManager(uiManager), 
+		m_ShouldQuit(false) { }
 
 
 	~SceneManager() = default;
@@ -56,10 +61,11 @@ private:
 	std::shared_ptr<Scene> m_CurrentScene;
 	std::shared_ptr<CameraObject> m_Camera = nullptr;
 	//Renderer& m_Renderer;
-	//AssetManager& m_AssetManager;
+	
 	//SoundAssetManager& m_SoundAssetManager;
 
 	EventDispatcher&  m_EventDispatcher;
+	AssetLoader&      m_AssetLoader;
 	SoundManager&     m_SoundManager;
 	UIManager&	      m_UIManager;
 

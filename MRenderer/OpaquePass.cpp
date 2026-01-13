@@ -89,9 +89,10 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                 {
                     ID3D11Buffer* vb  = vbIt->second.Get();
                     ID3D11Buffer* ib  = ibIt->second.Get();
-                    UINT32 indexCount = countIt->second;
-                    UINT32 indexStart = item.indexStart;
-                    bool useSubMesh   = item.useSubMesh;
+					const UINT32 fullCount = countIt->second;
+					const bool useSubMesh = item.useSubMesh;
+					const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
+					const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
                     DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, useSubMesh, indexCount, indexStart, castshadow);
                 }
             }

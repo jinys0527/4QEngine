@@ -33,7 +33,7 @@ void UIPass::Execute(const RenderData::FrameData& frame)
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;
-            const auto* indexcounts = m_RenderContext.indexcounts;
+            const auto* indexcounts = m_RenderContext.indexCounts;
 
             if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
             {
@@ -45,7 +45,7 @@ void UIPass::Execute(const RenderData::FrameData& frame)
                 {
                     ID3D11Buffer* vb = vbIt->second.Get();
                     ID3D11Buffer* ib = ibIt->second.Get();
-                    UINT32 icount = countIt->second;
+                    UINT32 indexCount = countIt->second;
                     if (vb && ib)
                     {
                         const UINT stride = sizeof(RenderData::Vertex);
@@ -63,7 +63,7 @@ void UIPass::Execute(const RenderData::FrameData& frame)
                         m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
                         m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
                         m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-                        m_RenderContext.pDXDC->DrawIndexed(icount, 0, 0);
+                        m_RenderContext.pDXDC->DrawIndexed(indexCount, 0, 0);
 
                     }
                 }

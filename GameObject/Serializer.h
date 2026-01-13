@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <string>
+#include <vector>
 #include "json.hpp"
 #include "RenderData.h"
 #include "ResourceRefs.h"
@@ -152,7 +153,30 @@ struct Serializer<AssetRef> {
 	}
 };
 
+template<>
+struct Serializer<std::vector<AssetRef>> {
+	static void ToJson(nlohmann::json& j, const std::vector<AssetRef>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v) {
+			nlohmann::json entry;
+			Serializer<AssetRef>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
 
+	static void FromJson(const nlohmann::json& j, std::vector<AssetRef>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			AssetRef item{};
+			Serializer<AssetRef>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
 
 // TextureHandle
 template<>
