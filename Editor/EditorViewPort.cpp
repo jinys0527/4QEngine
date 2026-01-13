@@ -3,7 +3,7 @@
 
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
-	ImGui::Begin("Game");
+	ImGui::Begin(m_WindowName.c_str());
 	m_IsHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 	ImVec2 available = ImGui::GetContentRegionAvail();

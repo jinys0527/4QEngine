@@ -1315,26 +1315,35 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 {
 	const auto& context = frame.context;
 
+	XMFLOAT3 g_vEye = context.gameCamera.cameraPos;
+	XMFLOAT4X4 view = context.gameCamera.view;
+	XMFLOAT4X4 proj = context.gameCamera.proj;
+	XMFLOAT4X4 vp = context.gameCamera.viewProj;
+
 
 	XMFLOAT4X4 tm;
 
-	XMFLOAT3		g_vEye(0.0f, 10.0f, -6.0f);		//카메라 위치1.(Position)
+	// 
+	//XMFLOAT3		g_vEye(0.0f, 10.0f, -6.0f);		//카메라 위치1.(Position)
 	XMFLOAT3		g_vLookAt(0.0f, 0.0f, 0.0f);	//바라보는 곳1.(Position)
 	XMFLOAT3		g_vUp(0.0f, 1.0f, 0.0f);		//카메라 상방 벡터1.(Direction)
 
 	// 투영 변환 정보. 
-	constexpr float Fov = XMConvertToRadians(45.0f);	//기본 FOV 앵글. Field of View (Y)
+	//constexpr float Fov = XMConvertToRadians(45.0f);	//기본 FOV 앵글. Field of View (Y)
 
 	XMVECTOR eye = XMLoadFloat3(&g_vEye);	//카메라 위치 
 	XMVECTOR lookat = XMLoadFloat3(&g_vLookAt);	//바라보는 곳.위치.
 	XMVECTOR up = XMLoadFloat3(&g_vUp);		//카메라 상방 벡터.	
 	// 뷰 변환 행렬 생성 :  View Transform 
-	XMMATRIX mView = XMMatrixLookAtLH(eye, lookat, up);
+	//XMMATRIX mView = XMMatrixLookAtLH(eye, lookat, up);
+
+	XMMATRIX mView = XMLoadFloat4x4(&view);
 
 	if (m_IsEditCam)
 		mView = XMLoadFloat4x4(&context.editorCamera.view);
 
-	XMMATRIX mProj = XMMatrixPerspectiveFovLH(Fov, 960.f / 800.f, 1, 300);
+	//XMMATRIX mProj = XMMatrixPerspectiveFovLH(Fov, 960.f / 800.f, 1, 300);
+	XMMATRIX mProj = XMLoadFloat4x4(&proj);
 	if (m_IsEditCam)
 		mProj = XMLoadFloat4x4(&context.editorCamera.proj);
 

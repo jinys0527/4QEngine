@@ -67,20 +67,20 @@ public:
 		return m_Viewport;
 	}
 
-	void SetEye(const XMFLOAT3& eye)   { m_Eye = eye;  }
+	void SetEye(const XMFLOAT3& eye) { m_Eye = eye;  m_ViewDirty = true; }
 	const XMFLOAT3& GetEye() const     { return m_Eye; }
 
-	void SetLook(const XMFLOAT3& look) { m_Look = look; }
+	void SetLook(const XMFLOAT3& look) { m_Look = look; m_ViewDirty = true;	}
 	const XMFLOAT3& GetLook() const    { return m_Look; }
 
-	void SetUp(const XMFLOAT3& up)  { m_Up = up;     }
+	void SetUp(const XMFLOAT3& up) { m_Up = up; m_ViewDirty = true; }
 	const XMFLOAT3& GetUp  () const { return m_Up;   }
 
-	void SetPerspective(const PerspectiveParams& persp) { m_Perspective = persp; }
+	void SetPerspective(const PerspectiveParams& persp) { m_Perspective = persp; m_ProjDirty = true;}
 	const PerspectiveParams& GetPerspective() const		{ return m_Perspective;  }
-	void SetOrtho(const OrthoParams& ortho) { m_Ortho = ortho; }
+	void SetOrtho(const OrthoParams& ortho) { m_Ortho = ortho; m_ProjDirty = true; }
 	const OrthoParams& GetOrtho() const     { return m_Ortho;  }
-	void SetOrthoOffCenter(const OrthoOffCenterParams& orthoOC) { m_OrthoOffCenter = orthoOC; }
+	void SetOrthoOffCenter(const OrthoOffCenterParams& orthoOC) { m_OrthoOffCenter = orthoOC; m_ProjDirty = true; }
 	const OrthoOffCenterParams& GetOrthoOffCenter() const		{ return m_OrthoOffCenter;    }
 
 	// Get할때만 계산해서 받아옴
