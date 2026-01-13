@@ -36,11 +36,9 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
             const auto& item = items[index];
 
-            XMMATRIX mscale = XMMatrixScaling(100, 100, 100);
             XMMATRIX mtm = XMMatrixIdentity();
             mtm = XMLoadFloat4x4(&item.world);
 
-            mtm =  mscale * mtm;
             XMFLOAT4X4 tm;
             XMStoreFloat4x4(&tm, mtm);
 

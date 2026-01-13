@@ -31,10 +31,9 @@ int main()
 	SceneManager sceneManager(/*renderer,*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, uiManager);
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
-	//ImportAll();
-	//assetLoader.LoadAll();
-	ImportFBX("../Resources/FBX/Dying.fbx", "../ResourceOutput");
-	assetLoader.LoadAsset("../ResourceOutput/Dying/Meta/Dying.asset.json");
+	ImportAll();
+	assetLoader.LoadAll();
+	
 
 	EditorApplication app(engine, renderer, sceneManager, soundManager, assetLoader);
 	if (!app.Initialize())
