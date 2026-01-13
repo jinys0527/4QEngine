@@ -1,3 +1,6 @@
+#ifndef BASEBUFFER_HLSL
+#define BASEBUFFER_HLSL
+
 cbuffer BaseBuffer : register(b0)
 {
     matrix mWorld;
@@ -61,9 +64,12 @@ struct VSInput_PNUT
     float4 T : TANGENT;
 };
 
+//아웃풋
+
 struct VSOutput
 {
     float4 pos : SV_POSITION;
+    float4 nrm : NORMAL;
 };
 
 struct VSOutput_PU
@@ -79,3 +85,6 @@ Texture2D g_RTView : register(t0);
 
 //Sampler State
 SamplerState smpClamp : register(s0);
+
+
+#endif

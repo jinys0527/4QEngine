@@ -16,7 +16,9 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     XMVECTOR look = maincampos;
     XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-     lightview = XMMatrixLookAtLH(pos, look, up);
+    if (XMVector4Equal(pos, look)) return;
+
+    lightview = XMMatrixLookAtLH(pos, look, up);
     //원근 투영
     //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
     //직교 투영
