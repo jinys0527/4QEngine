@@ -35,7 +35,7 @@ protected:
 	bool m_ViewDirty = true;
 	bool m_ProjDirty = true;
 
-	XMFLOAT3 m_Eye  { 0.0f, 0.0f, -5.0f };
+	XMFLOAT3 m_Eye  { 0.0f, 3.0f, -5.0f };
 	//Look : 방향벡터 X, Target Point
 	XMFLOAT3 m_Look { 0.0f, 0.0f,  0.0f };
 	XMFLOAT3 m_Up   { 0.0f, 1.0f,  0.0f };
@@ -61,6 +61,8 @@ public:
 	// 화면 크기 들어오면 aspect 갱신
 	void SetViewport(const Viewport& viewport);
 	const Viewport& GetViewport() const
+	
+
 	{
 		return m_Viewport;
 	}
@@ -86,7 +88,7 @@ public:
 	XMFLOAT4X4 GetProjMatrix  ();
 
 	void SetEyeLookUp(const XMFLOAT3& eye, const XMFLOAT3& look, const XMFLOAT3& up);
-	
+
 
 	void SetPerspectiveProj   (const float fov, const float aspect, const float nearZ, const float farZ);
 	void SetOrthoProj         (const float width, const float height, const float nearZ, const float farZ);

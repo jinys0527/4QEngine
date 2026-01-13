@@ -152,7 +152,29 @@ void Scene::SetEditorCamera(std::shared_ptr<CameraObject> cameraObject)
 
 // Opaque, Transparent, UI  ex) ["gameObjects"]["opaque"]
 void Scene::Serialize(nlohmann::json& j) const
-{
+{	
+	//
+	// Scene의 Editor 설정 값들
+	// Editor 카메라 설정값기억(editor에서만 사용)
+	j["editor"] = nlohmann::json::object();
+	if (m_EditorCamera)
+	{
+		auto writeVec3 = [](nlohmann::json& target, const XMFLOAT3& value)
+			{
+				target["x"] = value.x;
+				target["y"] = value.y;
+				target["z"] = value.z;
+			};
+		nlohmann::json editorCameraJson;
+		writeVec3(editorCameraJson["eye"], m_EditorCamera->GetEye());
+		writeVec3(editorCameraJson["look"], m_EditorCamera->GetLook());
+		writeVec3(editorCameraJson["up"], m_EditorCamera->GetUp());
+
+		j["editor"]["EditorCamera"] = editorCameraJson;
+	}
+	//
+	//	GameObject 영역
+	//
 	j["gameObjects"] = nlohmann::json::object();
 	j["gameObjects"]["opaque"] = nlohmann::json::array();
 	j["gameObjects"]["transparent"] = nlohmann::json::array();
@@ -225,14 +247,7 @@ void ProcessWithErase(
 
 		auto it = objContainer.find(name);
 		if (it != objContainer.end())
-		{	/*
-			auto sr = it->second->GetComponent<SpriteRenderer>();
-			if(sr)*/
-			//	sr->SetAssetManager(&m_AssetManager);
-			/*auto animComp = it->second->GetComponent<AnimationComponent>();*/
-			//if (animComp)
-			//	animComp->SetAssetManager(&m_AssetManager);
-			// 기존 오브젝트가 있으면 내부 상태만 갱신
+		{	
 			it->second->Deserialize(gameObjectJson);
 		}
 		else
@@ -256,7 +271,47 @@ void ProcessWithErase(
 void Scene::Deserialize(const nlohmann::json& j)
 {
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
+	const nlohmann::json* editorRoot = nullptr;
+	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
+	if (j.contains("editor"))
+	{
+		editorRoot = &j.at("editor");
+	}
+	if (editorRoot && editorRoot->contains("EditorCamera"))
+	{
+		if (m_EditorCamera)
+		{
+			if (auto* cameraComp = m_EditorCamera->GetComponent<CameraComponent>())
+			{
+				const auto& editorCameraJson = editorRoot->at("EditorCamera");
+				auto readVec3 = [](const nlohmann::json& source, const XMFLOAT3& fallback)
+					{
+						XMFLOAT3 result = fallback;
+						result.x = source.value("x", result.x);
+						result.y = source.value("y", result.y);
+						result.z = source.value("z", result.z);
+						return result;
+					};
 
+				XMFLOAT3 eye = m_EditorCamera->GetEye();
+				XMFLOAT3 look = m_EditorCamera->GetLook();
+				XMFLOAT3 up = m_EditorCamera->GetUp();
+				if (editorCameraJson.contains("eye"))
+				{
+					eye = readVec3(editorCameraJson.at("eye"), eye);
+				}
+				if (editorCameraJson.contains("look"))
+				{
+					look = readVec3(editorCameraJson.at("look"), look);
+				}
+				if (editorCameraJson.contains("up"))
+				{
+					up = readVec3(editorCameraJson.at("up"), up);
+				}
+				cameraComp->SetEyeLookUp(eye, look, up);
+			}
+		}
+	}
 
 	if (goRoot.contains("opaque"))
 	{

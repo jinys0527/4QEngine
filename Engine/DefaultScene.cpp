@@ -13,10 +13,13 @@ void DefaultScene::Initialize()
 
 	gamecamera->SetName("Main Camera");
 	SetGameCamera(gamecamera); // Main Camera
+	AddGameObject(gamecamera, true);
 
+	//editorCam
 	auto editorCamera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
 	editorCamera->SetName("Editor Camera");
 	SetEditorCamera(editorCamera);
+	AddGameObject(editorCamera, true);
 
 
 	auto lightObject = std::make_shared<GameObject>(m_EventDispatcher);

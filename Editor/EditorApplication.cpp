@@ -16,7 +16,7 @@
 #include "json.hpp"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+#define DRAG_SPEED 0.01f
 // util
 // Check 
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
@@ -60,7 +60,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	{
 		int value = 0;
 		property.GetValue(component, &value);
-		if (ImGui::InputInt(property.GetName().c_str(), &value))
+		if (ImGui::DragInt(property.GetName().c_str(), &value, DRAG_SPEED))
 		{
 			property.SetValue(component, &value);
 			return true;
@@ -72,7 +72,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	{
 		float value = 0.0f;
 		property.GetValue(component, &value);
-		if (ImGui::InputFloat(property.GetName().c_str(), &value))
+		if (ImGui::DragFloat(property.GetName().c_str(), &value, DRAG_SPEED))
 		{
 			property.SetValue(component, &value);
 			return true;
@@ -112,7 +112,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		XMFLOAT2 value{};
 		property.GetValue(component, &value);
 		float data[2] = { value.x, value.y };
-		if (ImGui::InputFloat2(property.GetName().c_str(), data))
+		if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
 		{
 			value.x = data[0];
 			value.y = data[1];
@@ -127,7 +127,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		XMFLOAT3 value{};
 		property.GetValue(component, &value);
 		float data[3] = { value.x, value.y, value.z };
-		if (ImGui::InputFloat3(property.GetName().c_str(), data))
+		if (ImGui::DragFloat3(property.GetName().c_str(), data, DRAG_SPEED))
 		{
 			value.x = data[0];
 			value.y = data[1];
@@ -143,7 +143,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		XMFLOAT4 value{};
 		property.GetValue(component, &value);
 		float data[4] = { value.x, value.y, value.z, value.w };
-		if (ImGui::InputFloat4(property.GetName().c_str(), data))
+		if (ImGui::DragFloat4(property.GetName().c_str(), data, DRAG_SPEED))
 		{
 			value.x = data[0];
 			value.y = data[1];
@@ -367,9 +367,9 @@ void EditorApplication::Render() {
 	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
 	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
-	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
+	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
-	m_SceneManager.Render(); // Scene 전체 그리고
+	//m_SceneManager.Render(); // Scene 전체 그리고
 
 	RenderImGUI();
 
@@ -386,11 +386,13 @@ void EditorApplication::RenderImGUI() {
 	CreateDockSpace();
 	DrawMainMenuBar();
 	DrawHierarchy();
+	
 	DrawInspector();
+	RenderSceneView();
 	DrawFolderView();
 	DrawResourceBrowser();
 
-	RenderSceneView(); //Scene그리기
+	 //Scene그리기
 
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
 	const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget_edit);
@@ -450,17 +452,19 @@ void EditorApplication::RenderSceneView() {
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
 
+
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 	m_SceneRenderTarget_edit.Bind();
 	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
+
 	auto scene = m_SceneManager.GetCurrentScene();
-	if (scene)
-	{
-		scene->Render(m_FrameData);
-	}
+	//if (scene)
+	//{
+	//	scene->Render(m_FrameData);
+	//}
 
 	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
@@ -481,7 +485,16 @@ void EditorApplication::RenderSceneView() {
 	{
 		cameraComponent->SetViewport({static_cast<float>(m_width), static_cast<float>(m_height)});
 	}
+	//scene->Render(m_FrameData);
 
+	m_SceneRenderTarget.Bind();
+	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_SceneRenderTarget_edit.Bind();
+	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+	scene->Render(m_FrameData);
 	// 복구
 	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
 	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
@@ -684,21 +697,21 @@ void EditorApplication::DrawInspector() {
 		const bool nodeOpen = ImGui::TreeNodeEx(typeName.c_str(), flags);
 		if (ImGui::BeginPopupContextItem("ComponentContext"))
 		{
-			const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
-			if (!canRemove)
+			//const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
+			/*if (!canRemove)
 			{
 				ImGui::BeginDisabled();
-			}
+			}*/
 
 			//삭제
 			if (ImGui::MenuItem("Remove Component"))
 			{
 				selectedObject->RemoveComponentByTypeName(typeName);
 			}
-			if (!canRemove)
+		/*	if (!canRemove)
 			{
 				ImGui::EndDisabled(); 
-			}
+			}*/
 			ImGui::EndPopup();
 		}
 		if (nodeOpen)
@@ -736,14 +749,14 @@ void EditorApplication::DrawInspector() {
 
 	if (ImGui::BeginPopup("AddComponentPopup"))
 	{
-		// Logic
+		// Logic 
 		const auto existingTypes = selectedObject->GetComponentTypeNames(); //
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
 		for (const auto& typeName : typeNames)
 		{
 			const bool hasType = std::find(existingTypes.begin(), existingTypes.end(), typeName) != existingTypes.end();
-			const bool disallowDuplicate = (typeName == "TransformComponent");
-			const bool disabled = hasType && disallowDuplicate;
+			//const bool disallowDuplicate = (typeName == "TransformComponent");
+			const bool disabled = hasType /*&& disallowDuplicate*/;
 
 			if (disabled)
 			{
@@ -1292,8 +1305,8 @@ void EditorApplication::UpdateEditorCamera()
 
 	if (io.MouseDown[1])
 	{
-		const float rotationSpeed = 0.005f;
-		const float yaw = io.MouseDelta.x * rotationSpeed;
+		const float rotationSpeed = 0.003f;
+		const float yaw = -io.MouseDelta.x * rotationSpeed;
 		const float pitch = io.MouseDelta.y * rotationSpeed;
 
 		if (yaw != 0.0f || pitch != 0.0f)
@@ -1340,7 +1353,6 @@ void EditorApplication::UpdateEditorCamera()
 		{
 			moveVec = XMVectorSubtract(moveVec, upVec);
 		}
-
 		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
 		{
 			moveVec = XMVector3Normalize(moveVec);
