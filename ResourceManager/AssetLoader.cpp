@@ -364,6 +364,16 @@ namespace
 	}
 }
 
+void AssetLoader::SetActive(AssetLoader* loader)
+{
+	s_ActiveLoader = loader;
+}
+
+AssetLoader* AssetLoader::GetActive()
+{
+	return s_ActiveLoader;
+}
+
 void AssetLoader::LoadAll()
 {
 	const fs::path assetRoot = "../ResourceOutput";
@@ -412,6 +422,11 @@ const AssetLoader::AssetLoadResult* AssetLoader::GetAsset(const std::string& ass
 
 MaterialHandle AssetLoader::ResolveMaterial(const std::string& assetMetaPath, UINT32 index) const
 {
+	if (assetMetaPath.empty())
+	{
+		return MaterialHandle::Invalid();
+	}
+
 	const auto* asset = GetAsset(assetMetaPath);
 	if (!asset)
 	{
@@ -424,6 +439,90 @@ MaterialHandle AssetLoader::ResolveMaterial(const std::string& assetMetaPath, UI
 	}
 
 	return asset->materials[index];
+}
+
+MeshHandle AssetLoader::ResolveMesh(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return MeshHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return MeshHandle::Invalid();
+	}
+
+	if (index >= asset->meshes.size())
+	{
+		return MeshHandle::Invalid();
+	}
+
+	return asset->meshes[index];
+}
+
+TextureHandle AssetLoader::ResolveTexture(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return TextureHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return TextureHandle::Invalid();
+	}
+
+	if (index >= asset->textures.size())
+	{
+		return TextureHandle::Invalid();
+	}
+
+	return asset->textures[index];
+}
+
+SkeletonHandle AssetLoader::ResolveSkeleton(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return SkeletonHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return SkeletonHandle::Invalid();
+	}
+
+	if (index != 0u)
+	{
+		return SkeletonHandle::Invalid();
+	}
+
+	return asset->skeleton;
+}
+
+AnimationHandle AssetLoader::ResolveAnimation(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return AnimationHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return AnimationHandle::Invalid();
+	}
+
+	if (index >= asset->animations.size())
+	{
+		return AnimationHandle::Invalid();
+	}
+
+	return asset->animations[index];
 }
 
 bool AssetLoader::GetMaterialAssetReference(MaterialHandle handle, std::string& outPath, UINT32& outIndex) const
@@ -754,7 +853,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			}
 
 #ifdef _DEBUG
-			WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
 #endif
 
 			meshData.subMeshes.reserve(subMeshes.size());

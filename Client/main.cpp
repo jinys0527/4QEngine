@@ -45,6 +45,7 @@ int main()
  		return -1;
  	}
     AssetLoader loader;
+    AssetLoader::SetActive(&loader);
  
     loader.LoadAll();
 

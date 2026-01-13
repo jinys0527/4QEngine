@@ -5,6 +5,7 @@
 #include "RenderData.h"
 #include "ResourceRefs.h"
 #include "CameraSettings.h"
+#include "AssetLoader.h"
 #include "ResourceHandle.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
@@ -178,18 +179,133 @@ struct Serializer<std::vector<AssetRef>> {
 	}
 };
 
-// TextureHandle
+// Handle
+template<>
+struct Serializer<MeshHandle> {
+	static void ToJson(nlohmann::json& j, const MeshHandle& v) {
+		MeshRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetMeshAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<MeshRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, MeshHandle& v) {
+		MeshRef ref{};
+		Serializer<MeshRef>::FromJson(j, ref);
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			v = loader->ResolveMesh(ref.assetPath, ref.assetIndex);
+		}
+		else
+		{
+			v = MeshHandle::Invalid();
+		}
+	}
+};
+
+template<>
+struct Serializer<MaterialHandle> {
+	static void ToJson(nlohmann::json& j, const MaterialHandle& v) {
+		MaterialRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetMaterialAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<MaterialRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, MaterialHandle& v) {
+		MaterialRef ref{};
+		Serializer<MaterialRef>::FromJson(j, ref);
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			v = loader->ResolveMaterial(ref.assetPath, ref.assetIndex);
+		}
+		else
+		{
+			v = MaterialHandle::Invalid();
+		}
+	}
+};
+
 template<>
 struct Serializer<TextureHandle> {
 	static void ToJson(nlohmann::json& j, const TextureHandle& v) {
-		
+		TextureRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetTextureAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<TextureRef>::ToJson(j, ref);
 	}
 
 	static void FromJson(const nlohmann::json& j, TextureHandle& v) {
-
+		TextureRef ref{};
+		Serializer<TextureRef>::FromJson(j, ref);
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			v = loader->ResolveTexture(ref.assetPath, ref.assetIndex);
+		}
+		else
+		{
+			v = TextureHandle::Invalid();
+		}
 	}
 };
-// ShaderHandle
+
+
+
+template<>
+struct Serializer<SkeletonHandle> {
+	static void ToJson(nlohmann::json& j, const SkeletonHandle& v) {
+		SkeletonRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetSkeletonAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<SkeletonRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, SkeletonHandle& v) {
+		SkeletonRef ref{};
+		Serializer<SkeletonRef>::FromJson(j, ref);
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			v = loader->ResolveSkeleton(ref.assetPath, ref.assetIndex);
+		}
+		else
+		{
+			v = SkeletonHandle::Invalid();
+		}
+	}
+};
+
+template<>
+struct Serializer<AnimationHandle> {
+	static void ToJson(nlohmann::json& j, const AnimationHandle& v) {
+		AnimationRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetAnimationAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<AnimationRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, AnimationHandle& v) {
+		AnimationRef ref{};
+		Serializer<AnimationRef>::FromJson(j, ref);
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			v = loader->ResolveAnimation(ref.assetPath, ref.assetIndex);
+		}
+		else
+		{
+			v = AnimationHandle::Invalid();
+		}
+	}
+};
 
 // MaterialData
 template<>

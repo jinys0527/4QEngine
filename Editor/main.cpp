@@ -27,6 +27,7 @@ int main()
 	SoundManager soundManager;
 	UIManager uiManager(engine.GetEventDispatcher());
 	AssetLoader assetLoader;
+	AssetLoader::SetActive(&assetLoader);
 	Renderer renderer(assetLoader);
 	SceneManager sceneManager(/*renderer,*/ engine.GetEventDispatcher(), assetLoader, /* engine.GetSoundAssetManager(), */ soundManager, uiManager);
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음

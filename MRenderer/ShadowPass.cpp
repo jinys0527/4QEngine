@@ -16,35 +16,35 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     XMVECTOR look = maincampos;
     XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-     lightview = XMMatrixLookAtLH(pos, look, up);
+    lightview = XMMatrixLookAtLH(pos, look, up);
     //원근 투영
     //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
     //직교 투영
-     lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
+    lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
 
-     //텍스처 좌표 변환
-     XMFLOAT4X4 m = {
-         0.5f,  0.0f, 0.0f, 0.0f,
-         0.0f, -0.5f, 0.0f, 0.0f,
-         0.0f,  0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f, 0.0f, 1.0f
-     };
+    //텍스처 좌표 변환
+    XMFLOAT4X4 m = {
+        0.5f,  0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f,  0.0f, 1.0f, 0.0f,
+        0.5f,  0.5f, 0.0f, 1.0f
+    };
 
-     XMMATRIX mscale = XMLoadFloat4x4(&m);
-     XMMATRIX mLightTM;
-     mLightTM = lightview * lightproj * mscale;
+    XMMATRIX mscale = XMLoadFloat4x4(&m);
+    XMMATRIX mLightTM;
+    mLightTM = lightview * lightproj * mscale;
 
-     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mView, lightview);
-     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mProj, lightproj);
-     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mVP, lightview * lightproj);
+    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mView, lightview);
+    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mProj, lightproj);
+    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mVP, lightview * lightproj);
 
 
-     //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
-     //XMStoreFloat4x4();
+    //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
+    //XMStoreFloat4x4();
 
-     m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
-     m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
-     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
+    m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
+    m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
+    SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
     for (size_t index : GetQueue())
     {
         for (const auto& [layer, items] : frame.renderItems)

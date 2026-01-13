@@ -6,35 +6,7 @@
   },
   "meshes": [
     {
-      "file": "Meshes/cycle_mesh_0_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_1_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_2_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_3_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_4_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_5_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_6_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/cycle_mesh_7_static.meshbin",
+      "file": "Meshes/cycle.meshbin",
       "isSkinned": false
     }
   ],

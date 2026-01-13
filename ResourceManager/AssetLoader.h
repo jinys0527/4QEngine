@@ -11,6 +11,9 @@
 class AssetLoader
 {
 public:
+	static void SetActive(AssetLoader* loader);
+	static AssetLoader* GetActive();
+
 	struct AssetLoadResult
 	{
 		std::vector<MeshHandle>		 meshes;
@@ -24,7 +27,11 @@ public:
 	
 
 	const AssetLoadResult* GetAsset(const std::string& assetMetaPath) const;
-	MaterialHandle ResolveMaterial (const std::string& assetMetaPath, UINT32 index) const;
+	MaterialHandle  ResolveMaterial (const std::string& assetMetaPath, UINT32 index) const;
+	MeshHandle		ResolveMesh(const std::string& assetMetaPath, UINT32 index) const;
+	TextureHandle   ResolveTexture(const std::string& assetMetaPath, UINT32 index) const;
+	SkeletonHandle  ResolveSkeleton(const std::string& assetMetaPath, UINT32 index) const;
+	AnimationHandle ResolveAnimation(const std::string& assetMetaPath, UINT32 index) const;
 	bool GetMaterialAssetReference (MaterialHandle handle, std::string& outPath, UINT32& outIndex) const;
 	bool GetMeshAssetReference     (MeshHandle handle, std::string& outPath, UINT32& outIndex) const;
 	bool GetTextureAssetReference  (TextureHandle handle, std::string& outPath, UINT32& outIndex) const;
@@ -53,5 +60,7 @@ private:
 	std::unordered_map<uint64_t, TextureRef>		 m_TextureRefs;
 	std::unordered_map<uint64_t, SkeletonRef>		 m_SkeletonRefs;
 	std::unordered_map<uint64_t, AnimationRef>		 m_AnimationRefs;
+
+	inline static AssetLoader* s_ActiveLoader = nullptr;
 };
 
