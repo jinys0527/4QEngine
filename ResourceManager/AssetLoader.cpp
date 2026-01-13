@@ -201,6 +201,29 @@ namespace
 		}
 	}
 
+	template <typename HandleType>
+	uint64_t MakeHandleKey(const HandleType& handle)
+	{
+		return (static_cast<uint64_t>(handle.generation) << 32) | handle.id;
+	}
+
+	template <typename HandleType>
+	void StoreReferenceIfMissing(
+		std::unordered_map<uint64_t, AssetRef>& out,
+		const HandleType& handle,
+		const std::string& assetMetaPath,
+		UINT32 index
+	)
+	{
+		const uint64_t key = MakeHandleKey(handle);
+		if (out.find(key) != out.end())
+		{
+			return;
+		}
+		
+		out.emplace(key, AssetRef{ assetMetaPath, index });
+	}
+
 	RenderData::Vertex ToRenderVertex(const Vertex& in)
 	{
 		RenderData::Vertex out{};
@@ -376,6 +399,99 @@ void AssetLoader::LoadAll()
 	}
 }
 
+const AssetLoader::AssetLoadResult* AssetLoader::GetAsset(const std::string& assetMetaPath) const
+{
+	auto it = m_AssetsByPath.find(assetMetaPath);
+	if (it == m_AssetsByPath.end())
+	{
+		return nullptr;
+	}
+
+	return &it->second;
+}
+
+MaterialHandle AssetLoader::ResolveMaterial(const std::string& assetMetaPath, UINT32 index) const
+{
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return MaterialHandle::Invalid();
+	}
+
+	if (index >= asset->materials.size())
+	{
+		return MaterialHandle::Invalid();
+	}
+
+	return asset->materials[index];
+}
+
+bool AssetLoader::GetMaterialAssetReference(MaterialHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_MaterialRefs.find(MakeHandleKey(handle));
+	if (it == m_MaterialRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetMeshAssetReference(MeshHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_MeshRefs.find(MakeHandleKey(handle));
+	if (it == m_MeshRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetTextureAssetReference(TextureHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_TextureRefs.find(MakeHandleKey(handle));
+	if (it == m_TextureRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetSkeletonAssetReference(SkeletonHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_SkeletonRefs.find(MakeHandleKey(handle));
+	if (it == m_SkeletonRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetAnimationAssetReference(AnimationHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_AnimationRefs.find(MakeHandleKey(handle));
+	if (it == m_AnimationRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+
 AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMetaPath)
 {
 	AssetLoadResult result{};
@@ -468,7 +584,11 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 								return tex;
 							});
 						material.textures[static_cast<size_t>(slot)] = textureHandle;
-						PushUnique(result.textures, textureHandle);
+						if (PushUnique(result.textures, textureHandle))
+						{
+							const UINT32 textureIndex = static_cast<UINT32>(result.textures.size() - 1);
+							StoreReferenceIfMissing(m_TextureRefs, textureHandle, assetMetaPath, textureIndex);
+						}
 					}
 
 					const std::string materialKey = materialPath.generic_string() + ":" + materialName;
@@ -480,6 +600,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					materialHandles.push_back(handle);
 					materialByName.emplace(materialName, handle);
 					result.materials.push_back(handle);
+					StoreReferenceIfMissing(m_MaterialRefs, handle, assetMetaPath, static_cast<UINT32>(i));
 				}
 			}
 		}
@@ -535,6 +656,11 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					{
 						return std::make_unique<RenderData::Skeleton>(skeleton);
 					});
+
+				if (result.skeleton.IsValid())
+				{
+					StoreReferenceIfMissing(m_SkeletonRefs, result.skeleton, assetMetaPath, 0u);
+				}
 			}
 		}
 	}
@@ -543,9 +669,11 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 	{
 		for (const auto& meshJson : meta["meshes"])
 		{
+			UINT32 meshIndex = 0;
 			const std::string meshFile = meshJson.value("file", "");
 			if (meshFile.empty())
 			{
+				++meshIndex;
 				continue;
 			}
 
@@ -553,6 +681,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			std::ifstream meshStream(meshPath, std::ios::binary);
 			if (!meshStream)
 			{
+				++meshIndex;
 				continue;
 			}
 
@@ -560,6 +689,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			meshStream.read(reinterpret_cast<char*>(&header), sizeof(header));
 			if (header.magic != kMeshMagic)
 			{
+				++meshIndex;
 				continue;
 			}
 
@@ -656,16 +786,24 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					return std::make_unique<RenderData::MeshData>(meshData);
 				});
 			result.meshes.push_back(handle);
+
+			if (handle.IsValid())
+			{
+				StoreReferenceIfMissing(m_MeshRefs, handle, assetMetaPath, meshIndex);
+			}
+			++meshIndex;
 		}
 	}
 
 	if (meta.contains("animations") && meta["animations"].is_array())
 	{
+		UINT32 animationIndex = 0;
 		for (const auto& animJson : meta["animations"])
 		{
 			const std::string animFile = animJson.value("file", "");
 			if (animFile.empty())
 			{
+				++animationIndex;
 				continue;
 			}
 
@@ -673,6 +811,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			std::ifstream animStream(animPath);
 			if (!animStream)
 			{
+				++animationIndex;
 				continue;
 			}
 
@@ -686,8 +825,14 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 				});
 
 			result.animations.push_back(handle);
+			if (handle.IsValid())
+			{
+				StoreReferenceIfMissing(m_AnimationRefs, handle, assetMetaPath, animationIndex);
+			}
+			++animationIndex;
 		}
 	}
 
+	m_AssetsByPath[assetMetaPath] = result;
 	return result;
 }

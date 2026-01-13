@@ -1,12 +1,14 @@
 ﻿#include "pch.h"
 #include "Scene.h"
 #include "json.hpp"
+#include "Object.h"
 #include "GameObject.h"
 #include "UIObject.h"
 #include "GameManager.h"
 #include <unordered_set>
 #include "CameraComponent.h"
 #include "MeshRenderer.h"
+#include "MaterialComponent.h"
 #include "LightComponent.h"
 #include "TransformComponent.h"
 #include "SkeletalMeshComponent.h"
@@ -269,6 +271,147 @@ void Scene::Deserialize(const nlohmann::json& j)
 	//UI
 }
 
+
+template<typename PushFn>
+static void EmitSubMeshes(
+	const RenderData::MeshData& meshData,
+	const RenderData::RenderItem& baseItem,
+	PushFn&& push)
+{
+	if (!meshData.subMeshes.empty())
+	{
+		for (const auto& sm : meshData.subMeshes)
+		{
+			RenderData::RenderItem item = baseItem;
+
+			item.useSubMesh = true;
+			item.indexStart = sm.indexStart;
+			item.indexCount = sm.indexCount;
+
+			// submesh material override
+			if (sm.material.IsValid())
+				item.material = sm.material;
+
+			push(std::move(item));
+		}
+	}
+	else
+	{
+		RenderData::RenderItem item = baseItem;
+		item.useSubMesh = false;
+		item.indexStart = 0;
+		item.indexCount = static_cast<UINT32>(meshData.indices.size());
+		push(std::move(item));
+	}
+}
+
+static bool BuildStaticBaseItem(
+	const Object& obj,
+	MeshRenderer& renderer,
+	RenderData::RenderLayer layer,
+	RenderData::RenderItem& outItem
+)
+{
+	RenderData::RenderItem item{};
+
+	if (!renderer.BuildRenderItem(item))
+		return false;
+
+	// mesh: MeshComponent
+	const auto* meshComp = obj.GetComponent<MeshComponent>();
+	if (!meshComp) return false;
+
+	item.mesh = meshComp->GetMeshHandle();
+	if (!item.mesh.IsValid()) return false;
+
+	// material: renderer가 준 값이 없으면 MaterialComponent에서
+	if (!item.material.IsValid())
+	{
+		if (const auto* matComp = obj.GetComponent<MaterialComponent>())
+			item.material = matComp->GetMaterialHandle();
+	}
+
+	outItem = std::move(item);
+	return true;
+}
+
+static void AppendSkinningPaletteIfAny(
+	const SkeletalMeshComponent& skelComp,
+	RenderData::FrameData& frameData,
+	UINT32& outOffset,
+	UINT32& outCount
+)
+{
+	outOffset = 0;
+	outCount  = 0;
+
+	const auto& palette = skelComp.GetSkinningPalette();
+	if (palette.empty())
+		return;
+
+	outOffset = static_cast<UINT32>(frameData.skinningPalettes.size());
+	outCount  = static_cast<UINT32>(palette.size());
+	frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
+}
+
+static bool BuildSkeletalBaseItem(
+	const Object& obj,
+	SkeletalMeshRenderer& renderer,
+	RenderData::RenderLayer layer,
+	RenderData::FrameData& frameData,
+	RenderData::RenderItem& outItem
+)
+{
+	RenderData::RenderItem item{};
+	if (!renderer.BuildRenderItem(item))
+		return false;
+
+	const auto* skelComp = obj.GetComponent<SkeletalMeshComponent>();
+	if (!skelComp) return false;
+
+	item.mesh	  = skelComp->GetMeshHandle();
+	item.skeleton = skelComp->GetSkeletonHandle();
+	if (!item.mesh.IsValid()) return false;
+
+	// material resolve
+	if (!item.material.IsValid())
+	{
+		if (const auto* matComp = obj.GetComponent<MaterialComponent>())
+			item.material = matComp->GetMaterialHandle();
+	}
+
+	// palette append (오브젝트 단위 1번)
+	UINT32 paletteOffset = 0, paletteCount = 0;
+	AppendSkinningPaletteIfAny(*skelComp, frameData, paletteOffset, paletteCount);
+
+	item.skinningPaletteOffset = paletteOffset;
+	item.skinningPaletteCount = paletteCount;
+
+	outItem = std::move(item);
+	return true;
+}
+
+static void AppendLights(const Object& obj, RenderData::FrameData& frameData)
+{
+	for (const auto* light : obj.GetComponents<LightComponent>())
+	{
+		if (!light) continue;
+
+		RenderData::LightData data{};
+		data.type          = light->GetType();
+		data.posiiton      = light->GetPosition();
+		data.range         = light->GetRange();
+		data.diretion      = light->GetDirection();
+		data.spotAngle     = light->GetSpotAngle();
+		data.color         = light->GetColor();
+		data.intensity     = light->GetIntensity();
+		data.lightViewProj = light->GetLightViewProj();
+		data.castShadow    = light->GetCastShadow();
+
+		frameData.lights.push_back(data);
+	}
+}
+
 template <typename ObjectMap>
 void AppendFrameDataFromObjects(
 	const ObjectMap& objects,
@@ -282,73 +425,93 @@ void AppendFrameDataFromObjects(
 			continue;
 		}
 
-		for (const auto* renderer : gameObject->GetComponents<MeshRenderer>())
+		// 라이트는 무조건 처리
+		AppendLights(*gameObject, frameData);
+
+		// Skeletal 우선
 		{
-			RenderData::RenderItem item{};
-			if (renderer && renderer->BuildRenderItem(item))
+			auto skelRenderers = gameObject->GetComponents<SkeletalMeshRenderer>();
+			if (!skelRenderers.empty())
 			{
-				frameData.renderItems[layer].push_back(item);
-			}
-		}
+				// 오브젝트에 SkeletalMeshRenderer가 여러 개 붙는 정책이면 for로 전부 처리
+				for (auto* renderer : skelRenderers)
+				{
+					if (!renderer) continue;
 
-		// object 단위로 미리 계산
-		UINT32 paletteOffset = 0;
-		UINT32 paletteCount = 0;
-		bool hasPalette     = false;
+					RenderData::RenderItem baseItem{};
+					if (!BuildSkeletalBaseItem(*gameObject, *renderer, layer, frameData, baseItem))
+						continue;
 
-		if (const auto* skeletal = gameObject->GetComponent<SkeletalMeshComponent>())
-		{
-			const auto& palette = skeletal->GetSkinningPalette();
-			if (!palette.empty())
-			{
-				paletteOffset = (UINT32)frameData.skinningPalettes.size();
-				paletteCount  = (UINT32)palette.size();
-				frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
-				hasPalette    = true;
-			}
-		}
+					const auto* meshData = m_AssetLoader.GetMeshes().Get(baseItem.mesh);
+					if (!meshData) continue;
 
-		for (const auto* renderer : gameObject->GetComponents<SkeletalMeshRenderer>())
-		{
-			RenderData::RenderItem item{};
-			if (!renderer || !renderer->BuildRenderItem(item))
-				continue;
+					EmitSubMeshes(*meshData, baseItem,
+						[&](RenderData::RenderItem&& item)
+						{
+							frameData.renderItems[layer].push_back(std::move(item));
+						});
+				}
 
-			if (const auto* skeletal = gameObject->GetComponent<SkeletalMeshComponent>())
-			{
-				item.skeleton = skeletal->GetSkeletonHandle();
-			}
-
-			if (hasPalette)
-			{
-				item.skinningPaletteOffset = paletteOffset;
-				item.skinningPaletteCount  = paletteCount;
-			}
-
-			frameData.renderItems[layer].push_back(item);
-		}
-
-
-		for (const auto* light : gameObject->GetComponents<LightComponent>())
-		{
-			if (!light)
-			{
+				// Skeletal 경로 탔으면 Static은 안 탐
 				continue;
 			}
-
-			RenderData::LightData data{};
-			data.type = light->GetType();
-			data.posiiton = light->GetPosition();
-			data.range = light->GetRange();
-			data.diretion = light->GetDirection();
-			data.spotAngle = light->GetSpotAngle();
-			data.color = light->GetColor();
-			data.intensity = light->GetIntensity();
-			data.lightViewProj = light->GetLightViewProj();
-			data.castShadow = light->GetCastShadow();
-
-			frameData.lights.push_back(data);
 		}
+
+		// (4) Static
+		{
+			auto meshRenderers = gameObject->GetComponents<MeshRenderer>();
+			for (auto* renderer : meshRenderers)
+			{
+				if (!renderer) continue;
+
+				RenderData::RenderItem baseItem{};
+				if (!BuildStaticBaseItem(*gameObject, *renderer, layer, baseItem))
+					continue;
+
+				const auto* meshData = m_AssetLoader.GetMeshes().Get(baseItem.mesh);
+				if (!meshData) continue;
+
+				EmitSubMeshes(*meshData, baseItem,
+					[&](RenderData::RenderItem&& item)
+					{
+						frameData.renderItems[layer].push_back(std::move(item));
+					});
+			}
+		}
+	}
+}
+
+void BuildCameraData(const std::shared_ptr<CameraObject>& camera, RenderData::FrameData& frameData, bool isGame = true)
+{
+	RenderData::FrameContext& context = frameData.context;
+
+	if(isGame)
+	{
+		context.gameCamera.view		 = camera->GetViewMatrix();
+		context.gameCamera.proj      = camera->GetProjMatrix();
+		const auto viewport			 = camera->GetViewportSize();
+		context.gameCamera.width	 = static_cast<UINT32>(viewport.Width);
+		context.gameCamera.height	 = static_cast<UINT32>(viewport.Height);
+		context.gameCamera.cameraPos = camera->GetEye();
+	
+		const auto view = XMLoadFloat4x4(&context.gameCamera.view);
+		const auto proj = XMLoadFloat4x4(&context.gameCamera.proj);
+		const auto viewProj = XMMatrixMultiply(view, proj);
+		XMStoreFloat4x4(&context.gameCamera.viewProj, viewProj);
+	}
+	else
+	{
+		context.editorCamera.view      = camera->GetViewMatrix();
+		context.editorCamera.proj      = camera->GetProjMatrix();
+		const auto viewport			   = camera->GetViewportSize();
+		context.editorCamera.width	   = static_cast<UINT32>(viewport.Width);
+		context.editorCamera.height	   = static_cast<UINT32>(viewport.Height);
+		context.editorCamera.cameraPos = camera->GetEye();
+	
+		const auto view = XMLoadFloat4x4(&context.editorCamera.view);
+		const auto proj = XMLoadFloat4x4(&context.editorCamera.proj);
+		const auto viewProj = XMMatrixMultiply(view, proj);
+		XMStoreFloat4x4(&context.editorCamera.viewProj, viewProj);
 	}
 }
 
@@ -364,33 +527,13 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	// 게임 카메라
 	if (m_GameCamera)
 	{
-		context.gameCamera.view = m_GameCamera->GetViewMatrix();
-		context.gameCamera.proj = m_GameCamera->GetProjMatrix();
-		const auto viewport = m_GameCamera->GetViewportSize();
-		context.gameCamera.width = static_cast<UINT32>(viewport.Width);
-		context.gameCamera.height = static_cast<UINT32>(viewport.Height);
-		context.gameCamera.cameraPos = m_GameCamera->GetEye();
-
-		const auto view = XMLoadFloat4x4(&context.gameCamera.view);
-		const auto proj = XMLoadFloat4x4(&context.gameCamera.proj);
-		const auto viewProj = XMMatrixMultiply(view, proj);
-		XMStoreFloat4x4(&context.gameCamera.viewProj, viewProj);
+		BuildCameraData(m_GameCamera, frameData, true);
 	}
 
 	//에디터 nullptr
 	if (m_EditorCamera)
 	{
-		context.editorCamera.view = m_EditorCamera->GetViewMatrix();
-		context.editorCamera.proj = m_EditorCamera->GetProjMatrix();
-		const auto viewport = m_EditorCamera->GetViewportSize();
-		context.editorCamera.width = static_cast<UINT32>(viewport.Width);
-		context.editorCamera.height = static_cast<UINT32>(viewport.Height);
-		context.editorCamera.cameraPos = m_EditorCamera->GetEye();
-
-		const auto view = XMLoadFloat4x4(&context.editorCamera.view);
-		const auto proj = XMLoadFloat4x4(&context.editorCamera.proj);
-		const auto viewProj = XMMatrixMultiply(view, proj);
-		XMStoreFloat4x4(&context.editorCamera.viewProj, viewProj);
+		BuildCameraData(m_EditorCamera, frameData, false);
 	}
 
 	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, frameData);

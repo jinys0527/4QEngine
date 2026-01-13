@@ -5,8 +5,6 @@
 #include "Object.h"
 #include "ReflectionMacro.h"
 REGISTER_COMPONENT(MeshRenderer)
-REGISTER_PROPERTY_HANDLE(MeshRenderer, MeshHandle)
-REGISTER_PROPERTY_HANDLE(MeshRenderer, MaterialHandle)
 REGISTER_PROPERTY_READONLY_LOADABLE(MeshRenderer, Mesh)
 REGISTER_PROPERTY_READONLY_LOADABLE(MeshRenderer, Material)
 REGISTER_PROPERTY(MeshRenderer, Visible)

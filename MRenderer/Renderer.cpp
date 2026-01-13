@@ -15,7 +15,7 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 
 	m_RenderContext.vertexBuffers = &m_VertexBuffers;
 	m_RenderContext.indexBuffers = &m_IndexBuffers;
-	m_RenderContext.indexcounts = &m_IndexCounts;
+	m_RenderContext.indexCounts = &m_IndexCounts;
 
 	// Device 생성을 여기서함 (원래는 engine에서 받는 거)
 	//DXSetup(hWnd, width, height, m_pDXDC.Get()); // 멤버함수로 교체
@@ -249,7 +249,7 @@ void Renderer::CreateContext()
 
 	m_RenderContext.vertexBuffers			= &m_VertexBuffers;
 	m_RenderContext.indexBuffers			= &m_IndexBuffers;
-	m_RenderContext.indexcounts				= &m_IndexCounts;
+	m_RenderContext.indexCounts				= &m_IndexCounts;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;

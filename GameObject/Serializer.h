@@ -139,72 +139,16 @@ struct Serializer<ProjectionMode> {
 	}
 };
 
-// ResourceRef
-
+// AssetRef
 template<> 
-struct Serializer<MeshRef> {
-	static void ToJson(nlohmann::json& j, const MeshRef& v) {
-		j["assetPath"] = v.assetPath;
-		j["assetIndex"] = v.assetIndex;
-	}
-	static void FromJson(const nlohmann::json& j, MeshRef& v) {
-		v.assetPath = j.value("assetPath", std::string{});
-		v.assetIndex = j.value("assetIndex", 0u);
-	}
-};
-
-template<>
-struct Serializer<MaterialRef> {
-	static void ToJson(nlohmann::json& j, const MaterialRef& v) {
-		j["assetPath"] = v.assetPath;
-		j["assetIndex"] = v.assetIndex;
-	}
-
-	static void FromJson(const nlohmann::json& j, MaterialRef& v) {
-		v.assetPath  = j.value("assetPath", std::string{});
-		v.assetIndex = j.value("assetIndex", 0u);
-	}
-};
-
-
-template<>
-struct Serializer<TextureRef> {
-	static void ToJson(nlohmann::json& j, const TextureRef& v) {
+struct Serializer<AssetRef> {
+	static void ToJson(nlohmann::json& j, const AssetRef& v) {
 		j["assetPath"]  = v.assetPath;
 		j["assetIndex"] = v.assetIndex;
 	}
-
-	static void FromJson(const nlohmann::json& j, TextureRef& v) {
+	static void FromJson(const nlohmann::json& j, AssetRef& v) {
 		v.assetPath  = j.value("assetPath", std::string{});
 		v.assetIndex = j.value("assetIndex", 0u);
-	}
-};
-
-
-template<>
-struct Serializer<SkeletonRef> {
-	static void ToJson(nlohmann::json& j, const SkeletonRef& v) {
-		j["skeleton"]["assetPath"]  = v.assetPath;
-		j["skeleton"]["assetIndex"] = v.assetIndex;
-	}
-
-	static void FromJson(const nlohmann::json& j, SkeletonRef& v) {
-		v.assetPath  = j["skeleton"].value("assetPath", std::string{});
-		v.assetIndex = j["skeleton"].value("assetIndex", 0u);
-	}
-};
-
-
-template<>
-struct Serializer<AnimationRef> {
-	static void ToJson(nlohmann::json& j, const AnimationRef& v) {
-		j["animation"]["assetPath"]  = v.assetPath;
-		j["animation"]["assetIndex"] = v.assetIndex;
-	}
-
-	static void FromJson(const nlohmann::json& j, AnimationRef& v) {
-		v.assetPath  = j["animation"].value("assetPath", std::string{});
-		v.assetIndex = j["animation"].value("assetIndex", 0u);
 	}
 };
 

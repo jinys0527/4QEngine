@@ -33,7 +33,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     {
         for (const auto& [layer, items] : frame.renderItems)
         {
-
             const auto& item = items[index];
 
             XMMATRIX mtm = XMMatrixIdentity();
@@ -73,23 +72,27 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
-            const auto* indexBuffers = m_RenderContext.indexBuffers;
-            const auto* indexcounts = m_RenderContext.indexcounts;
+            const auto* indexBuffers  = m_RenderContext.indexBuffers;
+            const auto* indexCounts   = m_RenderContext.indexCounts;
+            
+          
             BOOL castshadow = frame.lights[index].castShadow;
 
-            if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
+            if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
             {
                 const UINT bufferIndex = item.mesh.id;
                 const auto vbIt = vertexBuffers->find(bufferIndex);
                 const auto ibIt = indexBuffers->find(bufferIndex);
-                const auto countIt = indexcounts->find(bufferIndex);
+                const auto countIt = indexCounts->find(bufferIndex);
 
-                if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
+                if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexCounts->end())
                 {
-                    ID3D11Buffer* vb = vbIt->second.Get();
-                    ID3D11Buffer* ib = ibIt->second.Get();
-                    UINT32 icount = countIt->second;
-                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, icount, castshadow);
+                    ID3D11Buffer* vb  = vbIt->second.Get();
+                    ID3D11Buffer* ib  = ibIt->second.Get();
+                    UINT32 indexCount = countIt->second;
+                    UINT32 indexStart = item.indexStart;
+                    bool useSubMesh   = item.useSubMesh;
+                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, useSubMesh, indexCount, indexStart, castshadow);
                 }
             }
         }
@@ -100,7 +103,9 @@ void OpaquePass::DrawMesh(
     ID3D11DeviceContext* dc,
     ID3D11Buffer* vb,
     ID3D11Buffer* ib,
+    BOOL useSubMesh,
     UINT indexCount,
+    UINT indexStart,
     BOOL castshadow
 )
 {
@@ -124,5 +129,12 @@ void OpaquePass::DrawMesh(
     SetShaderResource(dc);
     SetSamplerState(dc);
 
-    dc->DrawIndexed(indexCount, 0, 0);
+	if (useSubMesh)
+	{
+        dc->DrawIndexed(indexCount, indexStart, 0);
+	}
+	else
+	{
+        dc->DrawIndexed(indexCount, 0, 0);
+	}
 }

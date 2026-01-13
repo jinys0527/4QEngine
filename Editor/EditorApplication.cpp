@@ -265,6 +265,37 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		return false;
 	}
 
+	if (typeInfo == typeid(SkeletonHandle))
+	{
+		SkeletonHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetSkeletons().GetKey(value);
+		const std::string display = key ? *key : std::string("<None>");
+		const std::string buttonLabel = display + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+			{
+				const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
 	return false;
