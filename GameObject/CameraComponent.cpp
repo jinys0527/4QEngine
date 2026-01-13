@@ -8,6 +8,8 @@ REGISTER_PROPERTY(CameraComponent, Viewport)
 REGISTER_PROPERTY(CameraComponent, Perspective)
 REGISTER_PROPERTY(CameraComponent, Ortho)
 REGISTER_PROPERTY(CameraComponent, OrthoOffCenter)
+
+
 void CameraComponent::RebuildViewIfDirty()
 {
 	if (!m_ViewDirty) return;

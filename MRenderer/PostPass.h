@@ -28,4 +28,8 @@ protected:
         // 예: 투명/블렌딩 제외 같은 조건
         return false;
     }
+
+    void QuadDraw();
+
+
 };

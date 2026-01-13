@@ -18,16 +18,16 @@
 	#include <type_traits>
 	#include <utility>
 
-	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-	// util
-	// Check 
-	bool SceneHasObjectName(const Scene& scene, const std::string& name)
-	{  
-		const auto& opaqueObjects = scene.GetOpaqueObjects();
-		const auto& transparentObjects = scene.GetTransparentObjects();
-		return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
-	}
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#define DRAG_SPEED 0.01f
+// util
+// Check 
+bool SceneHasObjectName(const Scene& scene, const std::string& name)
+{  
+	const auto& opaqueObjects = scene.GetOpaqueObjects();
+	const auto& transparentObjects = scene.GetTransparentObjects();
+	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
+}
 
 	// 이름 변경용 helper 
 	void CopyStringToBuffer(const std::string& value, std::array<char, 256>& buffer)
@@ -805,9 +805,9 @@
 		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
 		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
-		ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
+	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
-		m_SceneManager.Render(); // Scene 전체 그리고
+	//m_SceneManager.Render(); // Scene 전체 그리고
 
 		RenderImGUI();
 
@@ -821,21 +821,25 @@
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		CreateDockSpace();
-		DrawMainMenuBar();
-		DrawHierarchy();
-		DrawInspector();
-		DrawFolderView();
-		DrawResourceBrowser();
+	CreateDockSpace();
+	DrawMainMenuBar();
+	DrawHierarchy();
+	
+	DrawInspector();
+	RenderSceneView();
+	DrawFolderView();
+	DrawResourceBrowser();
 
-		RenderSceneView(); //Scene그리기
+	 //Scene그리기
 
-		//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
-		const bool viewportChanged = m_Viewport.Draw(m_SceneRenderTarget_edit);
-		if (viewportChanged)
-		{
-			UpdateSceneViewport();
-		}
+	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
+	const bool gameViewportChanged = m_GameViewport.Draw(m_SceneRenderTarget);
+	const bool editorViewportChanged = m_EditorViewport.Draw(m_SceneRenderTarget_edit);
+	
+	if (editorViewportChanged || gameViewportChanged)
+	{
+		UpdateSceneViewport();
+	}
 	
 		UpdateEditorCamera();
 
@@ -860,12 +864,12 @@
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 
-			// main back buffer 상태 복구 // 함수로 묶기
-			ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
-			m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-			m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-			SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
-		}
+		// main back buffer 상태 복구 // 함수로 묶기
+		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+		//m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
+	}
 
 	}
 
@@ -887,18 +891,18 @@
 		m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 		m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
-
-		m_SceneRenderTarget.Bind();
-		m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+	m_SceneRenderTarget.Bind();
+	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 		m_SceneRenderTarget_edit.Bind();
 		m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (scene)
-		{
-			scene->Render(m_FrameData);
-		}
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (scene)
+	{
+		scene->Render(m_FrameData);
+	}
 
 		m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
@@ -915,16 +919,29 @@
 			return;
 		}
 
-		if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
+	if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
+	{
+		const ImVec2 editorSize = m_EditorViewport.GetViewportSize();
+		if (editorSize.x > 0.0f && editorSize.y > 0.0f)
 		{
-			cameraComponent->SetViewport({static_cast<float>(m_width), static_cast<float>(m_height)});
+			cameraComponent->SetViewport({ editorSize.x, editorSize.y });
 		}
-
-		// 복구
-		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
-		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 	}
+	//scene->Render(m_FrameData);
+
+	m_SceneRenderTarget.Bind();
+	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_SceneRenderTarget_edit.Bind();
+	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+
+	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+	scene->Render(m_FrameData);
+	// 복구
+	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
+}
 
 
 	void EditorApplication::DrawMainMenuBar()
@@ -1115,34 +1132,34 @@
 		ImGui::Separator();
 
 
-		for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
-			// 여기서 각 Component별 Property와 조작까지 생성?
-			ImGui::PushID(typeName.c_str());
-			const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
-			const bool nodeOpen = ImGui::TreeNodeEx(typeName.c_str(), flags);
-			if (ImGui::BeginPopupContextItem("ComponentContext"))
+	for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
+		// 여기서 각 Component별 Property와 조작까지 생성?
+		ImGui::PushID(typeName.c_str());
+		const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
+		const bool nodeOpen = ImGui::TreeNodeEx(typeName.c_str(), flags);
+		if (ImGui::BeginPopupContextItem("ComponentContext"))
+		{
+			//const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
+			/*if (!canRemove)
 			{
-				const bool canRemove = (typeName != "TransformComponent"); //일단 Trasnsform은 삭제 막아둠
-				if (!canRemove)
-				{
-					ImGui::BeginDisabled();
-				}
+				ImGui::BeginDisabled();
+			}*/
 
-				//삭제
-				if (ImGui::MenuItem("Remove Component"))
-				{
-					selectedObject->RemoveComponentByTypeName(typeName);
-				}
-				if (!canRemove)
-				{
-					ImGui::EndDisabled(); 
-				}
-				ImGui::EndPopup();
-			}
-			if (nodeOpen)
+			//삭제
+			if (ImGui::MenuItem("Remove Component"))
 			{
-				Component* component = selectedObject->GetComponentByTypeName(typeName);
-				auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
+				selectedObject->RemoveComponentByTypeName(typeName);
+			}
+		/*	if (!canRemove)
+			{
+				ImGui::EndDisabled(); 
+			}*/
+			ImGui::EndPopup();
+		}
+		if (nodeOpen)
+		{
+			Component* component = selectedObject->GetComponentByTypeName(typeName);
+			auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
 			
 				if (component && typeInfo)
 				{
@@ -1176,16 +1193,16 @@
 			ImGui::OpenPopup("AddComponentPopup");
 		}
 
-		if (ImGui::BeginPopup("AddComponentPopup"))
+	if (ImGui::BeginPopup("AddComponentPopup"))
+	{
+		// Logic 
+		const auto existingTypes = selectedObject->GetComponentTypeNames(); //
+		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
+		for (const auto& typeName : typeNames)
 		{
-			// Logic
-			const auto existingTypes = selectedObject->GetComponentTypeNames(); //
-			const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
-			for (const auto& typeName : typeNames)
-			{
-				const bool hasType = std::find(existingTypes.begin(), existingTypes.end(), typeName) != existingTypes.end();
-				const bool disallowDuplicate = (typeName == "TransformComponent");
-				const bool disabled = hasType && disallowDuplicate;
+			const bool hasType = std::find(existingTypes.begin(), existingTypes.end(), typeName) != existingTypes.end();
+			//const bool disallowDuplicate = (typeName == "TransformComponent");
+			const bool disabled = hasType /*&& disallowDuplicate*/;
 
 				if (disabled)
 				{
@@ -1652,27 +1669,25 @@
 	
 		 //Down 30%
 
-		// 창 할당
-		ImGui::DockBuilderDockWindow("Hierarchy", dockRightA);
-		ImGui::DockBuilderDockWindow("Inspector", dockRightB);
-		ImGui::DockBuilderDockWindow("Folder", dockBottom);
-		ImGui::DockBuilderDockWindow("Game", dockMain);
+	// 창 할당
+	ImGui::DockBuilderDockWindow("Hierarchy", dockRightA);
+	ImGui::DockBuilderDockWindow("Inspector", dockRightB);
+	ImGui::DockBuilderDockWindow("Folder", dockBottom);
+	ImGui::DockBuilderDockWindow("Game", dockMain);
+	ImGui::DockBuilderDockWindow("Editor", dockMain);
 
 		ImGui::DockBuilderFinish(dockspaceID);
 	}
 
-	void EditorApplication::UpdateSceneViewport()
-	{
-		// m_Veiwport = editor Viewport
-		const ImVec2 size = m_Viewport.GetViewportSize();
-		const UINT width = static_cast<UINT>(size.x);
-		const UINT height = static_cast<UINT>(size.y);
-		if (width == 0 || height == 0)
-		{
-			return;
-		}
-
-		/*m_SceneRenderTarget.Resize(width, height);
+void EditorApplication::UpdateSceneViewport()
+{
+	// m_Veiwport = editor Viewport
+	const ImVec2 editorSize = m_EditorViewport.GetViewportSize();
+	const ImVec2 gameSize = m_GameViewport.GetViewportSize();
+	const UINT editorWidth = static_cast<UINT>(editorSize.x);
+	const UINT editorHeight = static_cast<UINT>(editorSize.y);
+	const UINT gameWidth = static_cast<UINT>(gameSize.x);
+	const UINT gameHeight = static_cast<UINT>(gameSize.y);
 
 		auto scene = m_SceneManager.GetCurrentScene();
 		if (!scene)
@@ -1680,24 +1695,37 @@
 			return;
 		}
 
-		auto* camera = scene->GetMainCamera();
-		if (!camera)
+	if (editorWidth != 0 && editorHeight != 0)
+	{
+		return;
+		if (auto editorCamera = scene->GetEditorCamera())
 		{
-			return;
+			if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
+			{
+				cameraComponent->SetViewport({ static_cast<float>(editorWidth), static_cast<float>(editorHeight) });
+			}
 		}
-
-		if (auto* cameraComponent = camera->GetComponent<CameraComponent>())
-		{
-			cameraComponent->SetViewportSize(static_cast<float>(width), static_cast<float>(height));
-		}*/
 	}
 
-	void EditorApplication::UpdateEditorCamera()
+	if (gameWidth != 0 && gameHeight != 0)
 	{
-		if (!m_Viewport.IsHovered())
+		if (auto gameCamera = scene->GetGameCamera())
 		{
-			return;
+			if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
+			{
+				cameraComponent->SetViewport({ static_cast<float>(gameWidth), static_cast<float>(gameHeight) });
+			}
 		}
+	}
+
+}
+
+void EditorApplication::UpdateEditorCamera()
+{
+	if (!m_EditorViewport.IsHovered())
+	{
+		return;
+	}
 
 		auto scene = m_SceneManager.GetCurrentScene();
 		if (!scene)
@@ -1732,11 +1760,11 @@
 
 		bool updated = false;
 
-		if (io.MouseDown[1])
-		{
-			const float rotationSpeed = 0.005f;
-			const float yaw = io.MouseDelta.x * rotationSpeed;
-			const float pitch = io.MouseDelta.y * rotationSpeed;
+	if (io.MouseDown[1])
+	{
+		const float rotationSpeed = 0.003f;
+		const float yaw = io.MouseDelta.x * rotationSpeed;
+		const float pitch = io.MouseDelta.y * rotationSpeed;
 
 			if (yaw != 0.0f || pitch != 0.0f)
 			{
@@ -1757,41 +1785,40 @@
 			const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
 			const float moveSpeed = baseSpeed * speedMultiplier;
 
-			XMVECTOR moveVec = XMVectorZero();
-			if (ImGui::IsKeyDown(ImGuiKey_W))
-			{
-				moveVec = XMVectorAdd(moveVec, forwardVec);
-			}
-			if (ImGui::IsKeyDown(ImGuiKey_S))
-			{
-				moveVec = XMVectorSubtract(moveVec, forwardVec);
-			}
-			if (ImGui::IsKeyDown(ImGuiKey_D))
-			{
-				moveVec = XMVectorAdd(moveVec, rightVec);
-			}
-			if (ImGui::IsKeyDown(ImGuiKey_A))
-			{
-				moveVec = XMVectorSubtract(moveVec, rightVec);
-			}
-			if (ImGui::IsKeyDown(ImGuiKey_E))
-			{
-				moveVec = XMVectorAdd(moveVec, upVec);
-			}
-			if (ImGui::IsKeyDown(ImGuiKey_Q))
-			{
-				moveVec = XMVectorSubtract(moveVec, upVec);
-			}
-
-			if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
-			{
-				moveVec = XMVector3Normalize(moveVec);
-				const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
-				eyeVec = XMVectorAdd(eyeVec, scaledMove);
-				lookVec = XMVectorAdd(lookVec, scaledMove);
-				updated = true;
-			}
+		XMVECTOR moveVec = XMVectorZero();
+		if (ImGui::IsKeyDown(ImGuiKey_W))
+		{
+			moveVec = XMVectorAdd(moveVec, forwardVec);
 		}
+		if (ImGui::IsKeyDown(ImGuiKey_S))
+		{
+			moveVec = XMVectorSubtract(moveVec, forwardVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_D))
+		{
+			moveVec = XMVectorAdd(moveVec, rightVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_A))
+		{
+			moveVec = XMVectorSubtract(moveVec, rightVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_E))
+		{
+			moveVec = XMVectorAdd(moveVec, upVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_Q))
+		{
+			moveVec = XMVectorSubtract(moveVec, upVec);
+		}
+		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
+		{
+			moveVec = XMVector3Normalize(moveVec);
+			const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
+			eyeVec = XMVectorAdd(eyeVec, scaledMove);
+			lookVec = XMVectorAdd(lookVec, scaledMove);
+			updated = true;
+		}
+	}
 
 		if (io.MouseDown[2])
 		{

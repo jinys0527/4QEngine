@@ -3,11 +3,11 @@
 
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
-	ImGui::Begin("Game");
+	ImGui::Begin(m_WindowName.c_str());
 	m_IsHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 	ImVec2 available = ImGui::GetContentRegionAvail();
-    ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
+	ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
 
 	const bool sizeChanged = (static_cast<int>(clamped.x) != static_cast<int>(m_ViewportSize.x))
 		|| (static_cast<int>(clamped.y) != static_cast<int>(m_ViewportSize.y));
