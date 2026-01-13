@@ -9,6 +9,20 @@
 #include "ReflectionMacro.h"
 
 REGISTER_COMPONENT(AnimationComponent);
+REGISTER_PROPERTY_HANDLE(AnimationComponent, ClipHandle)
+REGISTER_PROPERTY_READONLY_LOADABLE(AnimationComponent, Animation)
+REGISTER_PROPERTY_READONLY(AnimationComponent, Playback)
+REGISTER_PROPERTY_READONLY(AnimationComponent, Blend)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeights)
+REGISTER_PROPERTY_READONLY(AnimationComponent, RetargetOffsets)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskSource)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeight)
+REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskDefaultWeight)
+REGISTER_PROPERTY_READONLY(AnimationComponent, AutoBoneMaskApplied)
+REGISTER_PROPERTY_READONLY(AnimationComponent, LocalPose)
+REGISTER_PROPERTY_READONLY(AnimationComponent, GlobalPose)
+REGISTER_PROPERTY_READONLY(AnimationComponent, SkinningPalette)
+
 
 // 클립 유효 범위 내로 시간을 강제
 // - clip이 없거나 duration이 0이면 그대로 반환
@@ -239,26 +253,12 @@ void AnimationComponent::SetRetargetOffsets(const std::vector<RetargetOffset>& o
 	{
 		m_RetargetOffsets.push_back(ToLocalPose(offset));
 	}
-	m_UseSkeletonRetargetOffsets = false;
-	m_AutoRetargetApplied		 = true;
 }
 
-void AnimationComponent::SetRetargetOffsets(const std::vector<RenderData::RetargetOffset>& offsets)
-{
-	m_RetargetOffsets.clear();
-	m_RetargetOffsets.reserve(offsets.size());
-	for (const auto& offset : offsets)
-	{
-		m_RetargetOffsets.push_back(ToLocalPose(offset));
-	}
-	m_UseSkeletonRetargetOffsets = false;
-	m_AutoRetargetApplied = true;
-}
 
 void AnimationComponent::ClearRetargetOffsets()
 {
 	m_RetargetOffsets.clear(); 
-	m_AutoRetargetApplied = false;
 }
 
 void AnimationComponent::SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind, 
@@ -339,12 +339,6 @@ void AnimationComponent::ClearSkeletonMask()
 	m_AutoBoneMaskApplied = false;
 }
 
-void AnimationComponent::UseSkeletonRetargetOffsets(bool enable)
-{
-	m_UseSkeletonRetargetOffsets = enable;
-	m_AutoRetargetApplied		 = false;
-}
-
 void AnimationComponent::Update(float deltaTime)
 {
 	if (!m_Playback.playing)
@@ -364,7 +358,6 @@ void AnimationComponent::Update(float deltaTime)
 		return;
 
 	EnsureAutoBoneMask		 (*skeleton);
-	EnsureAutoRetargetOffsets(*skeleton);
 	
 	if (m_Blend.active)
 	{
@@ -432,44 +425,8 @@ void AnimationComponent::OnEvent(EventType type, const void* data)
 {
 }
 
-void AnimationComponent::Serialize(nlohmann::json& j) const
-{
-	if (!m_AnimationAssetPath.empty())
-	{
-		j["animation"]["assetPath"] = m_AnimationAssetPath;
-		j["animation"]["clipIndex"] = m_AnimationClipIndex;
-	}
-
-	j["animation"]["time"]    = m_Playback.time;
-	j["animation"]["speed"]   = m_Playback.speed;
-	j["animation"]["looping"] = m_Playback.looping;
-	j["animation"]["playing"] = m_Playback.playing;
-}
-
-void AnimationComponent::Deserialize(const nlohmann::json& j)
-{
-	if (j.contains("animation"))
-	{
-		const auto& anim     = j.at("animation");
-		m_AnimationAssetPath = anim.value("assetPath", std::string{});
-		m_AnimationClipIndex = anim.value("clipIndex", 0u);
-		m_Playback.time      = anim.value("time", 0.0f);
-		m_Playback.speed     = anim.value("speed", 1.0f);
-		m_Playback.looping   = anim.value("looping", true);
-		m_Playback.playing   = anim.value("playing", true);
-	}
-}
 
 AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RetargetOffset& offset)
-{
-	AnimationComponent::LocalPose pose{};
-	pose.translation = offset.translation;
-	pose.rotation    = offset.rotation;
-	pose.scale       = offset.scale;
-	return pose;
-}
-
-AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RenderData::RetargetOffset& offset)
 {
 	AnimationComponent::LocalPose pose{};
 	pose.translation = offset.translation;
@@ -698,16 +655,4 @@ void AnimationComponent::EnsureAutoBoneMask(const RenderData::Skeleton& skeleton
 
 	SetBoneMaskFromIndices(skeleton.bones.size(), indices, m_BoneMaskWeight, m_BoneMaskDefaultWeight);
 	m_AutoBoneMaskApplied = true;
-}
-
-void AnimationComponent::EnsureAutoRetargetOffsets(const RenderData::Skeleton& skeleton)
-{
-	if (!m_UseSkeletonRetargetOffsets || m_AutoRetargetApplied)	// 자동으로 적용되거나 Retarget을 안할때
-		return;
-
-	if (skeleton.retargetOffsets.empty())
-		return;
-
-	SetRetargetOffsets(skeleton.retargetOffsets);
-	m_AutoRetargetApplied = true;
 }

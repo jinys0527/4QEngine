@@ -18,7 +18,7 @@ public:
 	static constexpr const char* StaticTypeName = "TransformComponent";
 	const char* GetTypeName() const override;
 
-	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 0), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
+	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 1), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
 	{
 		m_LocalMatrix = Identity();
 		m_WorldMatrix = Identity();
@@ -66,7 +66,7 @@ public:
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize  (nlohmann::json& j) const override;
+	//void Serialize  (nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
 	std::vector<TransformComponent*>& GetChildrens()
@@ -87,7 +87,7 @@ private:
 
 private:
 	XMFLOAT3 m_Position = { 0.0f, 0.0f, 0.0f };
-	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 0.0f };
+	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
 	XMFLOAT3 m_Scale    = { 1.0f, 1.0f, 1.0f };
 
 	XMFLOAT3 m_Pivot    = { 0.0f, 0.0f, 0.0f };
@@ -97,7 +97,6 @@ private:
 
 	XMFLOAT4X4 m_LocalMatrix;
 	XMFLOAT4X4 m_WorldMatrix;
-
 	bool m_IsDirty = true;
 
 };

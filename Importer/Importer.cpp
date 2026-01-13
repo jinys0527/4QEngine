@@ -559,7 +559,6 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 
 	// ----- 2) Assimp load -----
 	Assimp::Importer importer;
-	importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 0.01f);
 
 	// DX11 / LH 기준
 	const aiScene* scene = importer.ReadFile(
@@ -567,14 +566,14 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		aiProcess_Triangulate			|			// 모든 면을 삼각형으로 반환
 		aiProcess_GenNormals			|			// 노멀 생성
 		aiProcess_CalcTangentSpace		|			// 탄젠트 공간 계산
-		aiProcess_GlobalScale			|
+		aiProcess_GlobalScale			|			// CM화
 		aiProcess_JoinIdenticalVertices |			// 중복 정점 제거
 		aiProcess_ConvertToLeftHanded				// LH 변환
 	);
 
 	if (!scene) return ;
 #ifdef _DEBUG
-	DebugDumpAssimpScene(scene);   // ← 여기
+	//DebugDumpAssimpScene(scene);   // ← 여기
 #endif
 	
 	// ----- 3) Import pipeline -----
@@ -700,7 +699,7 @@ void ImportAll()
 			continue;
 
 #ifdef _DEBUG
-		std::cout << path.string() << std::endl;
+	//	std::cout << path.string() << std::endl;
 #endif
 		ImportFBX(path.string(), outputRoot.string());
 	}

@@ -21,7 +21,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
     }
 
-    m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+    //m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
 
@@ -36,7 +36,15 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
             const auto& item = items[index];
 
-            m_RenderContext.BCBuffer.mWorld = item.world;
+            XMMATRIX mtm = XMMatrixIdentity();
+            mtm = XMLoadFloat4x4(&item.world);
+
+            XMFLOAT4X4 tm;
+            XMStoreFloat4x4(&tm, mtm);
+
+            m_RenderContext.BCBuffer.mWorld = tm;
+
+            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
 
             if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
             {
@@ -109,7 +117,7 @@ void OpaquePass::DrawMesh(
     dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-    dc->PSSetShader(nullptr, nullptr, 0);
+    dc->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
     dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 
     //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?

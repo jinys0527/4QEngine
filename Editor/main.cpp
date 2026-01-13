@@ -26,13 +26,14 @@ int main()
 	Engine engine;
 	SoundManager soundManager;
 	UIManager uiManager(engine.GetEventDispatcher());
-	SceneManager sceneManager(engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, uiManager);
 	AssetLoader assetLoader;
 	Renderer renderer(assetLoader);
+	SceneManager sceneManager(/*renderer,*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, uiManager);
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
 	ImportAll();
 	assetLoader.LoadAll();
+	
 
 	EditorApplication app(engine, renderer, sceneManager, soundManager, assetLoader);
 	if (!app.Initialize())

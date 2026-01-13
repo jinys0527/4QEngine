@@ -72,11 +72,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	CreateInputLayout();
 
-	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
-	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
+	//m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
 	CreateConstBuffer();
 
@@ -94,12 +94,14 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
 {
+	EnsureMeshBuffers(frame);
 	m_Pipeline.Execute(frame);
 	Flip(m_pSwapChain.Get());
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
+	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
@@ -126,9 +128,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui_edit.GetAddressOf(), m_pDSViewScene_Imgui_edit.Get());
 
-
+	float clearColor2[4] = { 1.f, 0.21f, 0.21f, 1.f };
 	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
-	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor);
+	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor2);
 	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui_edit.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
 
 	//그리드
@@ -157,9 +159,10 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 				m_AssetLoader.GetMeshes().Get(item.mesh);
 
 			ComPtr<ID3D11Buffer> vb;
-			CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size()), sizeof(RenderData::Vertex), vb.GetAddressOf());
+			CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
 			 
 			m_VertexBuffers.emplace(index, vb);
+			m_MeshGenerations[index] = item.mesh.generation;
 		}
 	}
 }
@@ -180,11 +183,57 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 
 
 			ComPtr<ID3D11Buffer> ib;
-			CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size()), ib.GetAddressOf());
+			CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
 			m_IndexBuffers.emplace(index, ib);
 
 			UINT32 cnt = static_cast<UINT32>(mesh->indices.size());
 			m_IndexCounts.emplace(index, cnt);
+			m_MeshGenerations[index] = item.mesh.generation;
+		}
+	}
+}
+
+void Renderer::EnsureMeshBuffers(const RenderData::FrameData& frame)
+{
+	for (const auto& [layer, items] : frame.renderItems)
+	{
+		for (const auto& item : items)
+		{
+			if (!item.mesh.IsValid())
+			{
+				continue;
+			}
+
+			RenderData::MeshData* mesh = m_AssetLoader.GetMeshes().Get(item.mesh);
+			if (!mesh)
+			{
+				continue;
+			}
+
+			const UINT index = item.mesh.id;
+			const UINT32 generation = item.mesh.generation;
+			const auto genIt = m_MeshGenerations.find(index);
+			const bool needsUpdate = genIt == m_MeshGenerations.end() || genIt->second != generation;
+
+			if (needsUpdate || m_VertexBuffers.find(index) == m_VertexBuffers.end())
+			{
+				ComPtr<ID3D11Buffer> vb;
+				CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
+				m_VertexBuffers[index] = vb;
+			}
+
+			if (needsUpdate || m_IndexBuffers.find(index) == m_IndexBuffers.end())
+			{
+				ComPtr<ID3D11Buffer> ib;
+				CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
+				m_IndexBuffers[index] = ib;
+				m_IndexCounts[index] = static_cast<UINT32>(mesh->indices.size());
+			}
+
+			if (needsUpdate)
+			{
+				m_MeshGenerations[index] = generation;
+			}
 		}
 	}
 }
@@ -750,6 +799,7 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 	SetViewPort(width, height, m_pDXDC.Get());
 	CreateDepthStencilState();
 	CreateSamplerState();
+	CreateRasterState();
 
 	CreateRenderTarget_Other();
 }

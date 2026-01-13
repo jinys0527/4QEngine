@@ -3,6 +3,13 @@
 #include "BinHelper.h"
 #include "iostream"
 
+#include <filesystem>
+#include <fstream>
+
+#include "json.hpp"
+using nlohmann::json;
+namespace fs = std::filesystem;
+
 struct Influence
 {
 	uint32_t bone = 0;
@@ -91,12 +98,98 @@ static void SaveVertex(const aiMesh* mesh, uint32_t i, Vertex& v)
 	}
 }
 
+#ifdef _DEBUG
+static void WriteMeshBinDebugJson(
+	const fs::path& outPath,
+	const MeshBinHeader& header,
+	const SubMeshBin& subMesh,
+	const std::vector<Vertex>& vertices,
+	const std::vector<VertexSkinned>& verticesSkinned,
+	const std::vector<uint32_t>& indices,
+	bool isSkinned)
+{
+	json root;
+	root["path"] = outPath.generic_string();
+	root["header"] = {
+		{"magic", header.magic},
+		{"version", header.version},
+		{"flags", header.flags},
+		{"vertexCount", header.vertexCount},
+		{"indexCount", header.indexCount},
+		{"subMeshCount", header.subMeshCount},
+		{"stringTableBytes", header.stringTableBytes},
+		{"bounds", {
+			{"min", { header.bounds.min[0], header.bounds.min[1], header.bounds.min[2] }},
+			{"max", { header.bounds.max[0], header.bounds.max[1], header.bounds.max[2] }}
+		}}
+	};
+	root["subMeshes"] = json::array();
+	root["subMeshes"].push_back({
+		{"indexStart", subMesh.indexStart},
+		{"indexCount", subMesh.indexCount},
+		{"materialNameOffset", subMesh.materialNameOffset},
+		{"bounds", {
+			{"min", { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] }},
+			{"max", { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] }}
+		}}
+		});
+
+	root["isSkinned"] = isSkinned;
+	root["vertices"] = json::array();
+	if (isSkinned)
+	{
+		for (const auto& v : verticesSkinned)
+		{
+			root["vertices"].push_back({
+				{"pos", { v.px, v.py, v.pz }},
+				{"normal", { v.nx, v.ny, v.nz }},
+				{"uv", { v.u, v.v }},
+				{"tangent", { v.tx, v.ty, v.tz, v.handedness }},
+				{"boneIndex", { v.boneIndex[0], v.boneIndex[1], v.boneIndex[2], v.boneIndex[3] }},
+				{"boneWeight", { v.boneWeight[0], v.boneWeight[1], v.boneWeight[2], v.boneWeight[3] }}
+				});
+		}
+	}
+	else
+	{
+		for (const auto& v : vertices)
+		{
+			root["vertices"].push_back({
+				{"pos", { v.px, v.py, v.pz }},
+				{"normal", { v.nx, v.ny, v.nz }},
+				{"uv", { v.u, v.v }},
+				{"tangent", { v.tx, v.ty, v.tz, v.handedness }}
+				});
+		}
+	}
+
+	root["indices"] = indices;
+
+	fs::path debugPath = outPath;
+	debugPath += ".write.debug.json";
+	std::ofstream ofs(debugPath);
+	if (ofs)
+	{
+		ofs << root.dump(2);
+	}
+}
+#endif
+
 bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& outPath,
-						  const std::unordered_map<std::string, uint32_t>* boneNameToIndex //skinned
+	const std::unordered_map<std::string, uint32_t>* boneNameToIndex //skinned
 )
 {
 	const aiMesh* mesh = scene->mMeshes[m];
 	if (!mesh) return false;
+
+// #ifdef _DEBUG
+// 	std::cout << "[MeshBin] write mesh=" << m
+// 		<< " verts=" << mesh->mNumVertices
+// 		<< " faces=" << mesh->mNumFaces
+// 		<< " skinned=" << (mesh->HasBones() && mesh->mNumBones > 0)
+// 		<< " path=" << outPath
+// 		<< std::endl;
+// #endif
 
 	const bool isSkinned = mesh->HasBones() && mesh->mNumBones > 0;
 
@@ -126,17 +219,25 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 			SaveVertex(mesh, i, v);
 			AABBExpand(bounds, v.px, v.py, v.pz);
 			vertices.push_back(v);
+// 
+// #ifdef _DEBUG
+// 			std::cout << "[MeshBin] v" << i
+// 				<< " pos=(" << v.px << "," << v.py << "," << v.pz << ")"
+// 				<< " n=(" << v.nx << "," << v.ny << "," << v.nz << ")"
+// 				<< " uv=(" << v.u << "," << v.v << ")"
+// 				<< " t=(" << v.tx << "," << v.ty << "," << v.tz << "," << v.handedness << ")"
+// 				<< std::endl;
+// #endif
 		}
 	}
 	else
 	{
 		infl.resize(mesh->mNumVertices);
 
-#ifdef _DEBUG
-		std::cout << mesh->mNumVertices << "\n";
-#endif
-		
-	
+// #ifdef _DEBUG
+// 		std::cout << mesh->mNumVertices << "\n";
+// #endif
+
 		//aiBone -> vertex influences 누적
 		for (uint32_t b = 0; b < mesh->mNumBones; ++b)
 		{
@@ -156,16 +257,14 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 			{
 				const aiVertexWeight& vw = bone->mWeights[w];
 				if (vw.mVertexId >= mesh->mNumVertices) continue;
-				infl[vw.mVertexId].push_back({boneIndex, vw.mWeight});
+				infl[vw.mVertexId].push_back({ boneIndex, vw.mWeight });
 			}
 		}
 
 		for (auto& v : infl) NormalizeTop4(v);
 
-
 		verticesSkinned.reserve(mesh->mNumVertices);
 		// TODO: influences 누적 -> VertexSkinned.boneIndex/weight 채우기
-
 
 		for (uint32_t i = 0; i < mesh->mNumVertices; ++i)
 		{
@@ -176,14 +275,25 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 			const auto& inf = infl[i];
 			for (size_t k = 0; k < inf.size(); ++k)
 			{
-				v.boneIndex[k]  = (uint16_t)inf[k].bone;
+				v.boneIndex[k] = (uint16_t)inf[k].bone;
 				v.boneWeight[k] = ToU16Norm(inf[k].weight);
 			}
 
 			verticesSkinned.push_back(v);
+
+// #ifdef _DEBUG
+// 			std::cout << "[MeshBin] v" << i
+// 				<< " pos=(" << v.px << "," << v.py << "," << v.pz << ")"
+// 				<< " n=(" << v.nx << "," << v.ny << "," << v.nz << ")"
+// 				<< " uv=(" << v.u << "," << v.v << ")"
+// 				<< " t=(" << v.tx << "," << v.ty << "," << v.tz << "," << v.handedness << ")"
+// 				<< " bones=(" << v.boneIndex[0] << "," << v.boneIndex[1] << "," << v.boneIndex[2] << "," << v.boneIndex[3] << ")"
+// 				<< " weights=(" << v.boneWeight[0] << "," << v.boneWeight[1] << "," << v.boneWeight[2] << "," << v.boneWeight[3] << ")"
+// 				<< std::endl;
+// 			
+// #endif
 		}
 	}
-
 
 	for (uint32_t f = 0; f < mesh->mNumFaces; ++f)
 	{
@@ -194,6 +304,15 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 		indices.push_back(static_cast<uint32_t>(face.mIndices[1]));
 		indices.push_back(static_cast<uint32_t>(face.mIndices[2]));
 	}
+
+#ifdef _DEBUG
+// 	for (size_t i = 0; i + 2 < indices.size(); i += 3)
+// 	{
+// 		std::cout << "[MeshBin] tri" << (i / 3)
+// 			<< " idx=(" << indices[i] << "," << indices[i + 1] << "," << indices[i + 2] << ")"
+// 			<< std::endl;
+// 	}
+#endif
 
 	const uint32_t materialIndex = mesh->mMaterialIndex;
 	std::string materialName;
@@ -239,14 +358,18 @@ bool WriteAiMeshToMeshBin(const aiScene* scene, uint32_t m, const std::string& o
 	header.stringTableBytes = static_cast<uint32_t>(stringTable.size());
 	header.bounds = bounds;
 
+#ifdef _DEBUG
+	WriteMeshBinDebugJson(fs::path(outPath), header, sm, vertices, verticesSkinned, indices, isSkinned);
+#endif
+
 	//저장
 	std::ofstream ofs(outPath, std::ios::binary);
 	if (!ofs) return false;
 
 	ofs.write(reinterpret_cast<const char*>(&header), sizeof(header));
 	ofs.write(reinterpret_cast<const char*>(&sm), sizeof(sm));
-	isSkinned ? ofs.write(reinterpret_cast<const char*>(verticesSkinned.data()), sizeof(VertexSkinned) * verticesSkinned.size()) 
-			  : ofs.write(reinterpret_cast<const char*>(vertices.data()), sizeof(Vertex) * vertices.size());
+	isSkinned ? ofs.write(reinterpret_cast<const char*>(verticesSkinned.data()), sizeof(VertexSkinned) * verticesSkinned.size())
+		: ofs.write(reinterpret_cast<const char*>(vertices.data()), sizeof(Vertex) * vertices.size());
 	ofs.write(reinterpret_cast<const char*>(indices.data()), sizeof(uint32_t) * indices.size());
 	if (!stringTable.empty())
 	{
@@ -269,7 +392,7 @@ bool ImportFBXToMeshBin(
 
 	outMeshFiles.clear();
 	outMeshFiles.reserve(scene->mNumMeshes);
-	
+
 	for (uint32_t m = 0; m < scene->mNumMeshes; ++m)
 	{
 		const aiMesh* mesh = scene->mMeshes[m];
@@ -287,6 +410,6 @@ bool ImportFBXToMeshBin(
 
 		outMeshFiles.push_back(file);
 	}
-	
+
 	return true;
 }

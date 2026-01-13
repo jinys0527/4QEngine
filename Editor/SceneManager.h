@@ -7,6 +7,7 @@
 #include "EventDispatcher.h"
 #include "SoundManager.h"
 #include "UIManager.h"
+#include "Renderer.h"
 
 class CameraObject;
 // editor 용으로 수정 필요
@@ -14,9 +15,10 @@ class SceneManager
 {
 	friend class Editor;
 public:
-	SceneManager(/*D2DRenderer& renderer, */EventDispatcher& eventDispatcher,
+	SceneManager( /*Renderer& renderer, */EventDispatcher& eventDispatcher,
 		/*AssetManager& assetManager, SoundAssetManager& soundAssetManager,*/
 		SoundManager& soundManager, UIManager& uiManager) : 
+		/*m_Renderer(renderer),*/
 		m_EventDispatcher(eventDispatcher),
 		m_SoundManager(soundManager), 
 		m_UIManager(uiManager) { }
@@ -53,7 +55,7 @@ private:
 	//std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	std::shared_ptr<CameraObject> m_Camera = nullptr;
-	//D2DRenderer& m_Renderer;
+	//Renderer& m_Renderer;
 	//AssetManager& m_AssetManager;
 	//SoundAssetManager& m_SoundAssetManager;
 

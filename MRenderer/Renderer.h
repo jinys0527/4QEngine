@@ -23,6 +23,7 @@ public:
 
 	void InitVB(const RenderData::FrameData& frame);
 	void InitIB(const RenderData::FrameData& frame);
+	void EnsureMeshBuffers(const RenderData::FrameData& frame);
 
 	ComPtr<ID3D11RenderTargetView>	GetRTView() { return m_pRTView; }
 	ComPtr<IDXGISwapChain>			GetSwapChain() { return m_pSwapChain; }
@@ -128,6 +129,7 @@ private:
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_VertexBuffers;
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_IndexBuffers;
 	std::unordered_map<UINT, UINT32>				m_IndexCounts;
+	std::unordered_map<UINT, UINT32>				m_MeshGenerations;
 
 	//임시
 	ComPtr<ID3D11InputLayout> m_pInputLayout;			

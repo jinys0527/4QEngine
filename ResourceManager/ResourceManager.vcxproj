@@ -130,6 +130,7 @@
     <ClInclude Include="AssetLoader.h" />
     <ClInclude Include="RenderData.h" />
     <ClInclude Include="ResourceHandle.h" />
+    <ClInclude Include="ResourceRefs.h" />
     <ClInclude Include="ResourceStore.h" />
   </ItemGroup>
   <ItemGroup>

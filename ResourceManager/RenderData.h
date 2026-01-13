@@ -100,19 +100,11 @@ namespace RenderData
 		XMFLOAT4X4  inverseBindPose{};
 	};
 
-	struct RetargetOffset
-	{
-		XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
-		XMFLOAT4 rotation	{ 0.0f, 0.0f, 0.0f, 1.0f };
-		XMFLOAT3 scale		{ 1.0f, 1.0f, 1.0f };
-	};
-
 	struct Skeleton
 	{
 		std::vector<Bone>			bones;
 		std::vector<int>			upperBodyBones;
 		std::vector<int>			lowerBodyBones;
-		std::vector<RetargetOffset> retargetOffsets;
 	};
 
 	struct AnimationKeyFrame
@@ -148,7 +140,6 @@ namespace RenderData
 		FLOAT         exposure = 1.0f;
 		XMFLOAT3      ambientColor{ 0.0f,0.0f,0.0f };
 	};
-
 
 	struct FrameContext
 	{

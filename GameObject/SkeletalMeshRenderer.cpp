@@ -4,7 +4,9 @@
 #include "MaterialComponent.h"
 #include "Object.h"
 #include "ReflectionMacro.h"
-REGISTER_COMPONENT(SkeletalMeshRenderer)
+REGISTER_COMPONENT_DERIVED(SkeletalMeshRenderer, MeshRenderer)
+REGISTER_PROPERTY_HANDLE(SkeletalMeshRenderer, SkeletonHandle)
+REGISTER_PROPERTY_READONLY_LOADABLE(SkeletalMeshRenderer, Skeleton)
 
 bool SkeletalMeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
 {

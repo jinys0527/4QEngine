@@ -3,6 +3,7 @@
 #include "MeshComponent.h"
 #include "RenderData.h"
 #include "ResourceHandle.h"
+#include "ResourceRefs.h"
 
 class SkeletalMeshComponent : public MeshComponent
 {
@@ -18,14 +19,8 @@ public:
 	void           SetSkeletonHandle(SkeletonHandle handle) { m_SkeletonHandle = handle; }
 	SkeletonHandle GetSkeletonHandle() const                { return m_SkeletonHandle;   }
 
-	void SetSkeletonAssetReference(const std::string& assetPath, UINT32 skeletonIndex)
-	{
-		m_SkeletonAssetPath = assetPath;
-		m_SkeletonAssetIndex = skeletonIndex;
-	}
-
-	const std::string& GetSkeletonAssetPath () const { return m_SkeletonAssetPath;  }
-	UINT32             GetSkeletonAssetIndex() const { return m_SkeletonAssetIndex; }
+	void LoadSetSkeleton(const SkeletonRef& skeletonRef) { m_Skeleton = skeletonRef; }
+	const SkeletonRef& GetSkeleton() const				  { return m_Skeleton;        }
 
 	void SetSkinningPalette(const std::vector<DirectX::XMFLOAT4X4>& palette)
 	{
@@ -38,13 +33,10 @@ public:
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize  (nlohmann::json& j) const override;
-	void Deserialize(const nlohmann::json& j) override;
 protected:
 	SkeletonHandle m_SkeletonHandle = SkeletonHandle::Invalid();
 
-	std::string m_SkeletonAssetPath;
-	UINT32      m_SkeletonAssetIndex = 0;
+	SkeletonRef    m_Skeleton;
 
 	std::vector<DirectX::XMFLOAT4X4> m_SkinningPalette;
 };
