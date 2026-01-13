@@ -126,11 +126,20 @@ private:
 	RenderContext m_RenderContext;
 
 	//버텍스버퍼들
-	//※ map으로 관리 or 다른 방식 사용. notion issue 참조※
+	//※ map으로 관리 or 다른 방식 사용. notion issue 참조※	해결
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_VertexBuffers;
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_IndexBuffers;
 	std::unordered_map<UINT, UINT32>				m_IndexCounts;
 	std::unordered_map<UINT, UINT32>				m_MeshGenerations;
+
+	//상수 버퍼
+	ComPtr<ID3D11Buffer>		m_pBCB;
+	BaseConstBuffer				m_BCBuffer;
+	ComPtr<ID3D11Buffer>		m_pSkinCB;
+	SkinningConstBuffer			m_SkinCBuffer;
+	ComPtr<ID3D11Buffer>		m_pLightCB;
+	LightConstBuffer			m_LightCBuffer;
+
 
 	//임시
 	ComPtr<ID3D11InputLayout> m_pInputLayout;			

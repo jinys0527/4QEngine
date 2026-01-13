@@ -256,6 +256,14 @@ void Renderer::CreateContext()
 	m_RenderContext.vertexBuffers			= &m_VertexBuffers;
 	m_RenderContext.indexBuffers			= &m_IndexBuffers;
 	m_RenderContext.indexcounts				= &m_IndexCounts;
+	
+	m_RenderContext.pBCB					= m_pBCB;
+	m_RenderContext.BCBuffer				= m_BCBuffer;
+	m_RenderContext.pSkinCB					= m_pSkinCB;
+	m_RenderContext.SkinCBuffer				= m_SkinCBuffer;
+	m_RenderContext.pLightCB				= m_pLightCB;		
+	m_RenderContext.LightCBuffer			= m_LightCBuffer;
+
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
@@ -485,21 +493,21 @@ HRESULT Renderer::CreateConstBuffer()
 {
 	HRESULT hr = S_OK;
 
-	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_pBCB.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ERROR_MSG(hr);
 		return hr;
 	}
 
-	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(SkinningConstBuffer), m_RenderContext.pSkinCB.GetAddressOf());
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(SkinningConstBuffer), m_pSkinCB.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ERROR_MSG(hr);
 		return hr;
 	}
 
-	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(LightConstBuffer), m_RenderContext.pLightCB.GetAddressOf());
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(LightConstBuffer), m_pLightCB.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ERROR_MSG(hr);

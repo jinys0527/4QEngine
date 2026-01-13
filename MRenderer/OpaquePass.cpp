@@ -27,6 +27,25 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
     }
 
+    //빛 상수 버퍼 set
+    if (!frame.lights.empty())
+    {
+        const auto& light = frame.lights[0];
+        Light dirlight;
+        dirlight.vDir = light.diretion;
+        dirlight.Color = light.color;
+        dirlight.Intensity = light.intensity;
+        dirlight.mLightViewProj = light.lightViewProj;
+        dirlight.CastShadow = light.castShadow;
+
+        m_RenderContext.LightCBuffer.lights[0] = dirlight;
+
+        UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(BaseConstBuffer));
+
+    }
+
+
+
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
@@ -124,7 +143,11 @@ void OpaquePass::DrawMesh(
 
     dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
     dc->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
+
     dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+    dc->PSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+    dc->VSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
+    dc->PSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
 
     //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?
     //SetShaderResource(dc);
