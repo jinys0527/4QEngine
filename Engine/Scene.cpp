@@ -272,6 +272,7 @@ void Scene::Deserialize(const nlohmann::json& j)
 {
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
 	const nlohmann::json* editorRoot = nullptr;
+	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
 	if (j.contains("editor"))
 	{
 		editorRoot = &j.at("editor");

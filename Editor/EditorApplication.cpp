@@ -367,7 +367,7 @@ void EditorApplication::Render() {
 	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
 	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
-	ClearBackBuffer(COLOR(0.1f, 0.1f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
+	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
 	//m_SceneManager.Render(); // Scene 전체 그리고
 
@@ -452,21 +452,13 @@ void EditorApplication::RenderSceneView() {
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
 
-<<<<<<< HEAD
+
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 	m_SceneRenderTarget_edit.Bind();
 	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
-=======
-	//m_SceneRenderTarget.Bind();
-	//m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
-	//
-	//m_SceneRenderTarget_edit.Bind();
-	//m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
-	//
-	//m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
->>>>>>> a58584e (Component)
+
 
 	auto scene = m_SceneManager.GetCurrentScene();
 	//if (scene)
@@ -757,14 +749,14 @@ void EditorApplication::DrawInspector() {
 
 	if (ImGui::BeginPopup("AddComponentPopup"))
 	{
-		// Logic
+		// Logic 
 		const auto existingTypes = selectedObject->GetComponentTypeNames(); //
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
 		for (const auto& typeName : typeNames)
 		{
 			const bool hasType = std::find(existingTypes.begin(), existingTypes.end(), typeName) != existingTypes.end();
-			const bool disallowDuplicate = (typeName == "TransformComponent");
-			const bool disabled = hasType && disallowDuplicate;
+			//const bool disallowDuplicate = (typeName == "TransformComponent");
+			const bool disabled = hasType /*&& disallowDuplicate*/;
 
 			if (disabled)
 			{
@@ -1360,6 +1352,21 @@ void EditorApplication::UpdateEditorCamera()
 		if (ImGui::IsKeyDown(ImGuiKey_Q))
 		{
 			moveVec = XMVectorSubtract(moveVec, upVec);
+		}
+		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
+		{
+			moveVec = XMVector3Normalize(moveVec);
+			const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
+			eyeVec = XMVectorAdd(eyeVec, scaledMove);
+			lookVec = XMVectorAdd(lookVec, scaledMove);
+			updated = true;
+		}
+	}
+
+	if (io.MouseDown[2])
+	{
+		const float panSpeed = 0.01f;
+		const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
 		const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
 		const XMVECTOR pan = XMVectorAdd(panRight, panUp);
 		eyeVec = XMVectorAdd(eyeVec, pan);

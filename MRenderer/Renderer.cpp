@@ -128,7 +128,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui_edit.GetAddressOf(), m_pDSViewScene_Imgui_edit.Get());
 
-	float clearColor2[4] = { 1.f, 0.21f, 0.21f, 1.f };
+	float clearColor2[4] = { 0.21f, 0.21f, 0.21f, 1.f };
 	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
 	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor2);
 	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui_edit.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼

@@ -88,17 +88,7 @@ public:
 	XMFLOAT4X4 GetProjMatrix  ();
 
 	void SetEyeLookUp(const XMFLOAT3& eye, const XMFLOAT3& look, const XMFLOAT3& up);
-	
-<<<<<<< HEAD
-=======
-	void SetEye(const XMFLOAT3& eye)	{ m_Eye = eye; }
-	void SetLook(const XMFLOAT3& look)  { m_Look = look; }
-	void SetUp(const XMFLOAT3& up)		{ m_Up = up; }
-	
-	const XMFLOAT3& GetEye () const { return m_Eye;  }
-	const XMFLOAT3& GetLook() const { return m_Look; }
-	const XMFLOAT3& GetUp  () const { return m_Up;   }
->>>>>>> d24f3cc (CameraSetting)
+
 
 	void SetPerspectiveProj   (const float fov, const float aspect, const float nearZ, const float farZ);
 	void SetOrthoProj         (const float width, const float height, const float nearZ, const float farZ);
