@@ -81,8 +81,22 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3DBlob> VSCode_P;
 
-	bool isEditCam = false;
 
+	//imgui용 == Scene Draw용
+	bool isEditCam = false;
+	ComPtr<ID3D11Texture2D>				pRTScene_Imgui;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Imgui;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Imgui;
+
+	ComPtr<ID3D11Texture2D>				pDSTex_Imgui;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Imgui;
+
+	ComPtr<ID3D11Texture2D>				pRTScene_Imgui_edit;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Imgui_edit;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Imgui_edit;
+
+	ComPtr<ID3D11Texture2D>				pDSTex_Imgui_edit;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Imgui_edit;
 
 	//그림자 매핑용
 	ComPtr<ID3D11Texture2D>				pDSTex_Shadow;
@@ -95,4 +109,5 @@ struct RenderContext
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 
+	std::function<void()> DrawFullscreenQuad;
 };

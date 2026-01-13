@@ -1,10 +1,11 @@
-﻿#include "Renderer.h"
-#include "OpaquePass.h"
+﻿#include "OpaquePass.h"
 #include "ShadowPass.h"
 #include "DepthPass.h"
 #include "TransparentPass.h"
 #include "PostPass.h"
 #include "RenderTargetContext.h"
+
+#include "Renderer.h"
 
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
 
@@ -70,13 +71,16 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
+
 	CreateInputLayout();
 
-	//m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
-	//m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
+	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
-	//m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
-	//m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
 	CreateConstBuffer();
 
@@ -86,6 +90,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	CreateGridVB();
 	const int gridSize = m_HalfCells * 2 + 1;
 	m_GridFlags.assign(gridSize, std::vector<int>(gridSize, 0));
+
+	//Quad
+	CreateQuadVB();
+	CreateQuadIB();
 
 
 	m_bIsInitialized = true;
@@ -105,19 +113,17 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
-	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.Get());
-
-
-	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
 	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
 	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui.Get(), clearColor);
-	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+
+	m_Pipeline.Execute(frame);
 
 	//그리드
+	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
 	UpdateGrid(frame);
 	DrawGrid();
 	
-	m_Pipeline.Execute(frame);
 
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
 
@@ -126,18 +132,18 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_IsEditCam = true;
 	m_RenderContext.isEditCam = m_IsEditCam;
 
-	m_pDXDC->OMSetRenderTargets(1, m_pRTView_Imgui_edit.GetAddressOf(), m_pDSViewScene_Imgui_edit.Get());
 
-	float clearColor2[4] = { 1.f, 0.21f, 0.21f, 1.f };
-	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
+	float clearColor2[4] = { 0.21f, 0.21f, 0.21f, 1.f };
 	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor2);
-	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Imgui_edit.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+
+	m_Pipeline.Execute(frame);
 
 	//그리드
+	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
 	UpdateGrid(frame);
 	DrawGrid();
 
-	m_Pipeline.Execute(frame);
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
 
@@ -265,6 +271,20 @@ void Renderer::CreateContext()
 	m_RenderContext.SState					= m_SState;
 	m_RenderContext.BState					= m_BState;
 
+	m_RenderContext.pRTScene_Imgui			= m_pRTScene_Imgui;
+	m_RenderContext.pTexRvScene_Imgui		= m_pTexRvScene_Imgui;
+	m_RenderContext.pRTView_Imgui			= m_pRTView_Imgui;
+
+	m_RenderContext.pDSTex_Imgui			= m_pDSTex_Imgui;
+	m_RenderContext.pDSViewScene_Imgui		= m_pDSViewScene_Imgui;
+
+	m_RenderContext.pRTScene_Imgui_edit		= m_pRTScene_Imgui_edit;
+	m_RenderContext.pTexRvScene_Imgui_edit	= m_pTexRvScene_Imgui_edit;
+	m_RenderContext.pRTView_Imgui_edit		= m_pRTView_Imgui_edit;
+
+	m_RenderContext.pDSTex_Imgui_edit		= m_pDSTex_Imgui_edit;
+	m_RenderContext.pDSViewScene_Imgui_edit = m_pDSViewScene_Imgui_edit;
+
 	m_RenderContext.pDSTex_Shadow			= m_pDSTex_Shadow;
 	m_RenderContext.pDSViewScene_Shadow		= m_pDSViewScene_Shadow;
 	m_RenderContext.pShadowRV				= m_pShadowRV;
@@ -273,6 +293,27 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSTex_Depth			= m_pDSTex_Depth;
 	m_RenderContext.pDSViewScene_Depth		= m_pDSViewScene_Depth;
 	m_RenderContext.pDepthRV				= m_pDepthRV;
+
+	//DrawQuad함수
+	m_RenderContext.DrawFullscreenQuad =
+		[this]()
+		{
+			UINT stride = sizeof(RenderData::Vertex_PU);
+			UINT offset = 0;
+
+			ID3D11Buffer* vb = m_QuadVertexBuffers.Get();
+			ID3D11Buffer* ib = m_QuadIndexBuffers.Get();
+
+			m_pDXDC->IASetInputLayout(m_pQuadInputLayout.Get());
+			m_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+			m_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			m_pDXDC->VSSetShader(m_pVS_Quad.Get(), nullptr, 0);
+			m_pDXDC->PSSetShader(m_pPS_Quad.Get(), nullptr, 0);
+
+
+			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
+		};
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
@@ -412,6 +453,29 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG(hr);
 		return hr;
 	}
+
+
+	D3D11_INPUT_ELEMENT_DESC layout3[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,          0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+	};
+	numElements = ARRAYSIZE(layout3);
+
+	// 정접 입력구조 객체 생성 Create the input layout
+	hr = m_pDevice->CreateInputLayout(layout3,
+		numElements,
+		m_pVSCode_Quad->GetBufferPointer(),
+		m_pVSCode_Quad->GetBufferSize(),
+		m_pQuadInputLayout.GetAddressOf()
+	);
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
 
 
 	return hr;
@@ -914,6 +978,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 	HRESULT hr = S_OK;
 #pragma region Imgui RenderTarget
 	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
@@ -1282,7 +1347,7 @@ void Renderer::CreateGridVB()
 	const float s = m_CellSize;
 	const float half = N * s;
 
-	std::vector<VertexPC> v;
+	std::vector<VertexP> v;
 	v.reserve((N * 2 + 1) * 4);
 
 	XMFLOAT3 cMajor(1, 1, 1), cMinor(0.7f, 0.7f, 0.7f);
@@ -1305,7 +1370,7 @@ void Renderer::CreateGridVB()
 
 	D3D11_BUFFER_DESC bd{};
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.ByteWidth = UINT(v.size() * sizeof(VertexPC));
+	bd.ByteWidth = UINT(v.size() * sizeof(VertexP));
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
 	D3D11_SUBRESOURCE_DATA sd{ v.data(), 0, 0 };
 	m_pDevice->CreateBuffer(&bd, &sd, m_GridVB.GetAddressOf());
@@ -1360,7 +1425,7 @@ void Renderer::DrawGrid()
 {
 	m_pDXDC->IASetInputLayout(m_pInputLayout_P.Get());
 	m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	UINT strideC = sizeof(VertexPC), offsetC = 0;
+	UINT strideC = sizeof(VertexP), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);
 	m_pDXDC->VSSetShader(m_pVS_P.Get(), nullptr, 0);
 	m_pDXDC->PSSetShader(m_pPS.Get(), nullptr, 0);
@@ -1368,6 +1433,17 @@ void Renderer::DrawGrid()
 	
 	m_pDXDC->Draw(m_GridVertexCount, 0);
 
+}
+
+void Renderer::CreateQuadVB()
+{
+	CreateVertexBuffer(m_pDevice.Get(), quadVertices.data(), static_cast<UINT>(quadVertices.size() * sizeof(RenderData::Vertex_PU)), sizeof(RenderData::Vertex_PU), m_QuadVertexBuffers.GetAddressOf());
+}
+
+void Renderer::CreateQuadIB()
+{
+	m_QuadIndexCounts = quadIndices.size();
+	CreateIndexBuffer(m_pDevice.Get(), quadIndices.data(), static_cast<UINT>(quadIndices.size() * sizeof(UINT)), m_QuadIndexBuffers.GetAddressOf());
 }
 
 //핸들 개수 최대값 가져오는 함수

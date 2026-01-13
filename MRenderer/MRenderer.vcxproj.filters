@@ -124,5 +124,11 @@
     <FxCompile Include="fx\Lights.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="fx\Quad_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Quad_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
