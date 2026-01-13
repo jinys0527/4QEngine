@@ -46,15 +46,16 @@ private:
 
 	DWORD m_dwAA = 1;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
 
-	ComPtr<ID3D11Device>            m_pDevice;
-	ComPtr<ID3D11DeviceContext>     m_pDXDC;
-	ComPtr<IDXGISwapChain>			m_pSwapChain;
-	ComPtr<ID3D11RenderTargetView>	m_pRTView;
-	ComPtr<ID3D11Texture2D>         m_pDS;
-	ComPtr<ID3D11DepthStencilView>  m_pDSView;
+	ComPtr<ID3D11Device>				m_pDevice;
+	ComPtr<ID3D11DeviceContext>			m_pDXDC;
+	ComPtr<IDXGISwapChain>				m_pSwapChain;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView;
+	ComPtr<ID3D11Texture2D>				m_pDS;
+	ComPtr<ID3D11DepthStencilView>		m_pDSView;
 
 
-	//imgui용
+
+	//imgui용 == Scene Draw용
 	bool m_IsEditCam = false;
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui;
@@ -147,7 +148,7 @@ private:
 
 //그리드
 private:
-	struct VertexPC { XMFLOAT3 pos;};
+	struct VertexP { XMFLOAT3 pos;};
 
 	ComPtr<ID3D11Buffer> m_GridVB;
 	//ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
@@ -160,4 +161,32 @@ private:
 	float m_CellSize = 1.0f;
 	int   m_HalfCells = 20;
 
+	//쿼드
+protected:
+	std::vector<RenderData::Vertex_PU> quadVertices =
+	{
+		{ { -0.999f,  0.999f, 0.0f }, { 0.0f, 0.0f } }, // LT
+		{ {  0.999f,  0.999f, 0.0f }, { 1.0f, 0.0f } }, // RT
+		{ { -0.999f, -0.999f, 0.0f }, { 0.0f, 1.0f } }, // LB
+		{ {  0.999f, -0.999f, 0.0f }, { 1.0f, 1.0f } }, // RB
+	};
+
+	std::vector<uint32_t> quadIndices =
+	{
+		0, 1, 2,
+		2, 1, 3
+	};
+
+	ComPtr<ID3D11InputLayout>	m_pQuadInputLayout;
+	ComPtr<ID3D11Buffer>		m_QuadVertexBuffers;
+	ComPtr<ID3D11Buffer>		m_QuadIndexBuffers;
+	UINT						m_QuadIndexCounts;
+
+	ComPtr<ID3D11VertexShader> m_pVS_Quad;
+	ComPtr<ID3D11PixelShader> m_pPS_Quad;
+	ComPtr<ID3DBlob> m_pVSCode_Quad;
+
+
+	void CreateQuadVB();
+	void CreateQuadIB();
 };

@@ -13,15 +13,21 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         m_RenderContext.BCBuffer.mView = context.gameCamera.view;
         m_RenderContext.BCBuffer.mProj = context.gameCamera.proj;
         m_RenderContext.BCBuffer.mVP = context.gameCamera.viewProj;
+
+        m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+
     }
     else if (m_RenderContext.isEditCam)
     {
         m_RenderContext.BCBuffer.mView = context.editorCamera.view;
         m_RenderContext.BCBuffer.mProj = context.editorCamera.proj;
         m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
+
+        m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+
     }
 
-    //m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+    //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
 
@@ -121,8 +127,8 @@ void OpaquePass::DrawMesh(
     dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 
     //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?
-    SetShaderResource(dc);
-    SetSamplerState(dc);
+    //SetShaderResource(dc);
+    //SetSamplerState(dc);
 
     dc->DrawIndexed(indexCount, 0, 0);
 }
