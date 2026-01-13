@@ -2,6 +2,7 @@
 #include "Component.h"
 #include "ResourceHandle.h"
 #include "ResourceRefs.h"
+#include "AssetLoader.h"
 
 class MeshComponent : public Component
 {
@@ -14,7 +15,17 @@ public:
 	MeshComponent() = default;
 	virtual ~MeshComponent() = default;
 
-	void			  SetMeshHandle(const MeshHandle& handle) { m_MeshHandle = handle; }
+	void			  SetMeshHandle(const MeshHandle& handle) 
+	{ 
+		m_MeshHandle = handle; 
+
+		// 파생값 갱신 (읽기전용 표시용)
+		MeshRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+			loader->GetMeshAssetReference(handle, ref.assetPath, ref.assetIndex);
+
+		LoadSetMesh(ref); // 또는 내부 갱신 함수
+	}
 	const MeshHandle& GetMeshHandle() const					  { return m_MeshHandle;   }
 
 	void LoadSetMesh(const MeshRef& meshRef)

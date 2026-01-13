@@ -449,7 +449,6 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
 					{
 						const std::string* droppedKey = assetLoader.GetMeshes().GetKey(dropped);
-						//meshComponent->SetMeshAssetReference(droppedKey ? *droppedKey : std::string{}, 0u);
 					}
 
 					updated = true;
@@ -488,7 +487,6 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 					if (auto* materialComponent = dynamic_cast<MaterialComponent*>(component))
 					{
 						const std::string* droppedKey = assetLoader.GetMaterials().GetKey(dropped);
-						//materialComponent->SetMaterialAssetPath(droppedKey ? *droppedKey : std::string{}, 0u);
 					}
 
 					updated = true;
@@ -1170,10 +1168,10 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 						DrawComponentPropertyEditor(component, *prop, m_AssetLoader);
 					}
 
-// 					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
-// 					{
-// 						DrawSubMeshOverridesEditor(*meshComponent, m_AssetLoader);
-// 					}
+  					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
+  					{
+  						DrawSubMeshOverridesEditor(*meshComponent, m_AssetLoader);
+  					}
 					ImGui::Separator();
 				}
 				else

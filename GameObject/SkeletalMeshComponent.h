@@ -5,6 +5,7 @@
 #include "ResourceHandle.h"
 #include "ResourceRefs.h"
 
+
 class SkeletalMeshComponent : public MeshComponent
 {
 	friend class Editor;
@@ -16,13 +17,23 @@ public:
 	SkeletalMeshComponent() = default;
 	virtual ~SkeletalMeshComponent() = default;
 
-	void           SetSkeletonHandle(SkeletonHandle handle) { m_SkeletonHandle = handle; }
-	SkeletonHandle GetSkeletonHandle() const                { return m_SkeletonHandle;   }
+	void  SetSkeletonHandle(const SkeletonHandle& handle)		   
+	{ 
+		m_SkeletonHandle = handle; 
+
+		// 파생값 갱신 (읽기전용 표시용)
+		SkeletonRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+			loader->GetSkeletonAssetReference(handle, ref.assetPath, ref.assetIndex);
+
+		LoadSetSkeleton(ref); // 또는 내부 갱신 함수
+	}
+	const SkeletonHandle& GetSkeletonHandle() const                { return m_SkeletonHandle;   }
 
 	void LoadSetSkeleton(const SkeletonRef& skeletonRef) { m_Skeleton = skeletonRef; }
 	const SkeletonRef& GetSkeleton() const				  { return m_Skeleton;        }
 
-	void SetSkinningPalette(const std::vector<DirectX::XMFLOAT4X4>& palette)
+	void LoadSetSkinningPalette(const std::vector<DirectX::XMFLOAT4X4>& palette)
 	{
 		m_SkinningPalette = palette;
 	}

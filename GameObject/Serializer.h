@@ -194,14 +194,16 @@ struct Serializer<MeshHandle> {
 	static void FromJson(const nlohmann::json& j, MeshHandle& v) {
 		MeshRef ref{};
 		Serializer<MeshRef>::FromJson(j, ref);
-		if (auto* loader = AssetLoader::GetActive())
-		{
-			v = loader->ResolveMesh(ref.assetPath, ref.assetIndex);
-		}
-		else
+		if (ref.assetPath.empty())
 		{
 			v = MeshHandle::Invalid();
+			return;
 		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveMesh(ref.assetPath, ref.assetIndex);
+		else
+			v = MeshHandle::Invalid();
 	}
 };
 
@@ -219,14 +221,16 @@ struct Serializer<MaterialHandle> {
 	static void FromJson(const nlohmann::json& j, MaterialHandle& v) {
 		MaterialRef ref{};
 		Serializer<MaterialRef>::FromJson(j, ref);
-		if (auto* loader = AssetLoader::GetActive())
-		{
-			v = loader->ResolveMaterial(ref.assetPath, ref.assetIndex);
-		}
-		else
+		if (ref.assetPath.empty())
 		{
 			v = MaterialHandle::Invalid();
+			return;
 		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveMaterial(ref.assetPath, ref.assetIndex);
+		else
+			v = MaterialHandle::Invalid();
 	}
 };
 
@@ -244,14 +248,16 @@ struct Serializer<TextureHandle> {
 	static void FromJson(const nlohmann::json& j, TextureHandle& v) {
 		TextureRef ref{};
 		Serializer<TextureRef>::FromJson(j, ref);
-		if (auto* loader = AssetLoader::GetActive())
-		{
-			v = loader->ResolveTexture(ref.assetPath, ref.assetIndex);
-		}
-		else
+		if (ref.assetPath.empty())
 		{
 			v = TextureHandle::Invalid();
+			return;
 		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveTexture(ref.assetPath, ref.assetIndex);
+		else
+			v = TextureHandle::Invalid();
 	}
 };
 
@@ -271,14 +277,16 @@ struct Serializer<SkeletonHandle> {
 	static void FromJson(const nlohmann::json& j, SkeletonHandle& v) {
 		SkeletonRef ref{};
 		Serializer<SkeletonRef>::FromJson(j, ref);
-		if (auto* loader = AssetLoader::GetActive())
-		{
-			v = loader->ResolveSkeleton(ref.assetPath, ref.assetIndex);
-		}
-		else
+		if (ref.assetPath.empty())
 		{
 			v = SkeletonHandle::Invalid();
+			return;
 		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveSkeleton(ref.assetPath, ref.assetIndex);
+		else
+			v = SkeletonHandle::Invalid();
 	}
 };
 
@@ -296,14 +304,16 @@ struct Serializer<AnimationHandle> {
 	static void FromJson(const nlohmann::json& j, AnimationHandle& v) {
 		AnimationRef ref{};
 		Serializer<AnimationRef>::FromJson(j, ref);
-		if (auto* loader = AssetLoader::GetActive())
-		{
-			v = loader->ResolveAnimation(ref.assetPath, ref.assetIndex);
-		}
-		else
+		if (ref.assetPath.empty())
 		{
 			v = AnimationHandle::Invalid();
+			return;
 		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveAnimation(ref.assetPath, ref.assetIndex);
+		else
+			v = AnimationHandle::Invalid();
 	}
 };
 
@@ -366,5 +376,29 @@ struct Serializer<XMFLOAT4> {
 		v.w = j["w"];
 	}
 };
+
+template<>
+struct Serializer<XMFLOAT4X4> {
+	static void ToJson(nlohmann::json& j, const XMFLOAT4X4& v) {
+
+	}
+
+	static void FromJson(const nlohmann::json& j, XMFLOAT4X4& v) {
+
+	}
+};
+
+template<>
+struct Serializer<std::vector<XMFLOAT4X4>> {
+	static void ToJson(nlohmann::json& j, const std::vector<XMFLOAT4X4>& v) {
+
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<XMFLOAT4X4>& v) {
+
+	}
+};
+
+
 
 // Draw ??

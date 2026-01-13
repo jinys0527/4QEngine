@@ -2,6 +2,7 @@
 #include "Component.h"
 #include "RenderData.h"
 #include "ResourceRefs.h"
+#include "AssetLoader.h"
 
 class MaterialComponent : public Component
 {
@@ -14,7 +15,16 @@ public:
 	MaterialComponent() = default;
 	virtual ~MaterialComponent() = default;
 
-	void				  SetMaterialHandle(const MaterialHandle& handle) { m_MaterialHandle = handle; }
+	void				  SetMaterialHandle(const MaterialHandle& handle)
+	{ 
+		m_MaterialHandle = handle;
+		// 파생값 갱신 (읽기전용 표시용)
+		MaterialRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+			loader->GetMaterialAssetReference(handle, ref.assetPath, ref.assetIndex);
+
+		LoadSetMaterial(ref); // 또는 내부 갱신 함수
+	}
 	const MaterialHandle& GetMaterialHandle() const						  { return m_MaterialHandle;   }
 
 	void LoadSetMaterial(const MaterialRef& materialRef)
