@@ -34,6 +34,7 @@ namespace RenderData
 			UINT32 indexStart = 0;
 			UINT32 indexCount = 0;
 			MaterialHandle material = MaterialHandle::Invalid();
+			std::string name;
 		};
 
 		std::vector<Vertex>   vertices;

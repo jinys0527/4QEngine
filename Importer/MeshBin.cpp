@@ -131,6 +131,7 @@ static void WriteMeshBinDebugJson(
 		{"indexStart", subMesh.indexStart},
 		{"indexCount", subMesh.indexCount},
 		{"materialNameOffset", subMesh.materialNameOffset},
+		{"nameOffset", subMesh.nameOffset},
 		{"bounds", {
 			{"min", { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] }},
 			{"max", { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] }}
@@ -373,7 +374,14 @@ bool ImportFBXToMeshBin(
 			materialName = "Material_" + std::to_string(materialIndex);
 		}
 
+		std::string meshName = mesh->mName.C_Str();
+		if (meshName.empty())
+		{
+			meshName = "SubMesh_" + std::to_string(m);
+		}
+
 		subMesh.materialNameOffset = GetStringOffset(stringTable, stringOffsets, materialName);
+		subMesh.nameOffset = GetStringOffset(stringTable, stringOffsets, meshName);
 		subMeshes.push_back(subMesh);
 
 		vertexBase += mesh->mNumVertices;

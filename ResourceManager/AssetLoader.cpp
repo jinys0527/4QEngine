@@ -45,6 +45,7 @@ namespace
 		uint32_t indexStart;
 		uint32_t indexCount;
 		uint32_t materialNameOffset;
+		uint32_t nameOffset;
 		AABBf    bounds{};
 	};
 
@@ -278,6 +279,7 @@ namespace
 				{"indexStart", subMesh.indexStart},
 				{"indexCount", subMesh.indexCount},
 				{"materialNameOffset", subMesh.materialNameOffset},
+				{"nameOffset", subMesh.nameOffset},
 				{"bounds", {
 					{"min", { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] }},
 					{"max", { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] }}
@@ -793,7 +795,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			}
 
 			std::vector<SubMeshBin> subMeshes(header.subMeshCount);
-			meshStream.read(reinterpret_cast<char*>(subMeshes.data()), sizeof(SubMeshBin) * subMeshes.size());
+			meshStream.read(reinterpret_cast<char*>(subMeshes.data()), sizeof(SubMeshBin)* subMeshes.size());
 
 			RenderData::MeshData meshData{};
 			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
@@ -864,6 +866,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 				out.indexCount = subMesh.indexCount;
 
 				const std::string materialName = ReadStringAtOffset(stringTable, subMesh.materialNameOffset);
+				out.name = ReadStringAtOffset(stringTable, subMesh.nameOffset);
 				if (!materialName.empty())
 				{
 					auto it = materialByName.find(materialName);
