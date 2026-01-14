@@ -116,7 +116,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                         if (!h.IsValid())
                             continue;
 
-                        const auto tIt = textures->find(h.id);
+                        const auto tIt = textures->find(h);
                         if (tIt == textures->end())
                             continue;
 
@@ -130,10 +130,10 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
 				{
-					const UINT bufferIndex = item.mesh.id;
-					const auto vbIt = vertexBuffers->find(bufferIndex);
-					const auto ibIt = indexBuffers->find(bufferIndex);
-					const auto countIt = indexCounts->find(bufferIndex);
+                    const MeshHandle bufferHandle = item.mesh;
+                    const auto vbIt = vertexBuffers->find(bufferHandle);
+                    const auto ibIt = indexBuffers->find(bufferHandle);
+                    const auto countIt = indexCounts->find(bufferHandle);
 
 					if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexCounts->end())
 					{

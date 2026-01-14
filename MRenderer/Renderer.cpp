@@ -7,6 +7,35 @@
 
 #include "Renderer.h"
 
+#include <algorithm>
+
+namespace
+{
+	template <typename MapType>
+	void EraseById(MapType& map, UINT32 id)
+	{
+		for (auto it = map.begin(); it != map.end();)
+		{
+			if (it->first.id == id)
+			{
+				it = map.erase(it);
+				continue;
+			}
+
+			++it;
+		}
+	}
+
+	template <typename MapType>
+	auto FindById(MapType& map, UINT32 id)
+	{
+		return std::find_if(map.begin(), map.end(), [id](const auto& pair)
+			{
+				return pair.first.id == id;
+			});
+	}
+}
+
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
 
 void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height)
@@ -164,8 +193,8 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 	{
 		for (const auto& item : items)
 		{
-			UINT index = item.mesh.id;
-			if (m_VertexBuffers.find(index) != m_VertexBuffers.end())
+			const MeshHandle handle = item.mesh;
+			if (m_VertexBuffers.find(handle) != m_VertexBuffers.end())
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -173,9 +202,12 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 
 			ComPtr<ID3D11Buffer> vb;
 			CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
-			 
-			m_VertexBuffers.emplace(index, vb);
-			m_MeshGenerations[index] = item.mesh.generation;
+
+
+			EraseById(m_VertexBuffers, handle.id);
+			EraseById(m_MeshGenerations, handle.id);
+			m_VertexBuffers.emplace(handle, vb);
+			m_MeshGenerations[handle] = handle.generation;
 		}
 	}
 }
@@ -187,8 +219,8 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 	{
 		for (const auto& item : items)
 		{
-			UINT index = item.mesh.id;
-			if (m_IndexBuffers.find(index) != m_IndexBuffers.end())
+			const MeshHandle handle = item.mesh;
+			if (m_IndexBuffers.find(handle) != m_IndexBuffers.end())
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -197,11 +229,14 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 
 			ComPtr<ID3D11Buffer> ib;
 			CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
-			m_IndexBuffers.emplace(index, ib);
+			EraseById(m_IndexBuffers, handle.id);
+			EraseById(m_IndexCounts, handle.id);
+			EraseById(m_MeshGenerations, handle.id);
+			m_IndexBuffers.emplace(handle, ib);
 
 			UINT32 cnt = static_cast<UINT32>(mesh->indices.size());
-			m_IndexCounts.emplace(index, cnt);
-			m_MeshGenerations[index] = item.mesh.generation;
+			m_IndexCounts.emplace(handle, cnt);
+			m_MeshGenerations[handle] = handle.generation;
 		}
 	}
 }
@@ -223,29 +258,33 @@ void Renderer::EnsureMeshBuffers(const RenderData::FrameData& frame)
 				continue;
 			}
 
-			const UINT index = item.mesh.id;
-			const UINT32 generation = item.mesh.generation;
-			const auto genIt = m_MeshGenerations.find(index);
-			const bool needsUpdate = genIt == m_MeshGenerations.end() || genIt->second != generation;
+			const MeshHandle handle = item.mesh;
+			const UINT32 generation = handle.generation;
+			const auto genIt = FindById(m_MeshGenerations, handle.id);
+			const bool needsUpdate = genIt == m_MeshGenerations.end() || genIt->first.generation != generation;
 
-			if (needsUpdate || m_VertexBuffers.find(index) == m_VertexBuffers.end())
+			if (needsUpdate || m_VertexBuffers.find(handle) == m_VertexBuffers.end()) 
 			{
 				ComPtr<ID3D11Buffer> vb;
 				CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
-				m_VertexBuffers[index] = vb;
+				EraseById(m_VertexBuffers, handle.id);
+				m_VertexBuffers[handle] = vb;
 			}
 
-			if (needsUpdate || m_IndexBuffers.find(index) == m_IndexBuffers.end())
+			if (needsUpdate || m_IndexBuffers.find(handle) == m_IndexBuffers.end()) 
 			{
 				ComPtr<ID3D11Buffer> ib;
 				CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
-				m_IndexBuffers[index] = ib;
-				m_IndexCounts[index] = static_cast<UINT32>(mesh->indices.size());
+				EraseById(m_IndexBuffers, handle.id);
+				EraseById(m_IndexCounts, handle.id);
+				m_IndexBuffers[handle] = ib;
+				m_IndexCounts[handle] = static_cast<UINT32>(mesh->indices.size());
 			}
 
 			if (needsUpdate)
 			{
-				m_MeshGenerations[index] = generation;
+				EraseById(m_MeshGenerations, handle.id);
+				m_MeshGenerations[handle] = generation;
 			}
 		}
 	}
@@ -262,7 +301,7 @@ void Renderer::InitTexture()
 			continue;
 
 		// 이미 로딩된 SRV면 스킵
-		if (m_Textures.find(handle.id) != m_Textures.end())
+		if (m_Textures.find(handle) != m_Textures.end())
 			continue;
 
 		ComPtr<ID3D11ShaderResourceView> srv;
@@ -278,7 +317,7 @@ void Renderer::InitTexture()
 		}
 
 		// handle.id를 키로 SRV 저장
-		m_Textures[handle.id] = srv;
+		m_Textures[handle] = srv;
 	}
 }
 

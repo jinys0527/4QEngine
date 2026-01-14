@@ -37,10 +37,10 @@ void UIPass::Execute(const RenderData::FrameData& frame)
 
             if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
             {
-                const UINT bufferIndex = item.mesh.id;
-                const auto vbIt = vertexBuffers->find(bufferIndex);
-                const auto ibIt = indexBuffers->find(bufferIndex);
-                const auto countIt = indexcounts->find(bufferIndex);
+                const MeshHandle bufferHandle = item.mesh;
+                const auto vbIt = vertexBuffers->find(bufferHandle);
+                const auto ibIt = indexBuffers->find(bufferHandle);
+                const auto countIt = indexcounts->find(bufferHandle);
                 if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
                 {
                     ID3D11Buffer* vb = vbIt->second.Get();

@@ -88,3 +88,24 @@ using TextureHandle   = TypedHandle<TextureTag>;
 using ShaderHandle    = TypedHandle<ShaderTag>;
 using SkeletonHandle  = TypedHandle<SkeletonTag>;
 using AnimationHandle = TypedHandle<AnimationTag>;
+
+namespace std
+{
+	template <>
+	struct hash<ResourceHandle>
+	{
+		size_t operator()(const ResourceHandle& handle) const noexcept
+		{
+			return (static_cast<size_t>(handle.id) << 32) ^ handle.generation;
+		}
+	};
+
+	template <typename Tag>
+	struct hash<TypedHandle<Tag>>
+	{
+		size_t operator()(const TypedHandle<Tag>& handle) const noexcept
+		{
+			return (static_cast<size_t>(handle.id) << 32) ^ handle.generation;
+		}
+	};
+}
