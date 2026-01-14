@@ -22,9 +22,23 @@ public:
 	virtual void Setup(const RenderData::FrameData& frame);
 	virtual void Execute(const RenderData::FrameData& frame) = 0;		//여기서 Draw까지 호출
 
-	void SetShaderResource(ID3D11DeviceContext* dc);
-	void SetSamplerState(ID3D11DeviceContext* dc);
+	void SetBlendState(BS state);
+	void SetDepthStencilState(DS state);
+	void SetRasterizerState(RS state);
+	void SetSamplerState();
 
+	virtual void SetDirLight(const RenderData::FrameData& frame);
+	virtual void SetVertex(const RenderData::RenderItem& item);
+	virtual void DrawMesh(
+		ID3D11Buffer* vb,
+		ID3D11Buffer* ib,
+		ID3D11InputLayout* layout,
+		ID3D11VertexShader* vs,
+		ID3D11PixelShader* ps,
+		BOOL useSubMesh,
+		UINT indexCount,
+		UINT indexStart
+	);
 protected:
 	virtual bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const;
 	const std::vector<size_t>& GetQueue() const { return m_Queue; }

@@ -22,7 +22,6 @@ public:
     std::string_view GetName() const override { return "Opaque"; }
 
     void Execute(const RenderData::FrameData& frame) override;
-    void DrawMesh(ID3D11DeviceContext* dc, ID3D11Buffer* vb, ID3D11Buffer* ib, BOOL useSubMesh, UINT indexCount, UINT indexStart, BOOL castshadow);
 protected:
     bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const override
     {

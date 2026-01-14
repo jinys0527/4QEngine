@@ -5,14 +5,116 @@ void RenderPass::Setup(const RenderData::FrameData& frame)
 	BuildQueue(frame);
 }
 
-void RenderPass::SetShaderResource(ID3D11DeviceContext* dc)
+
+
+void RenderPass::SetBlendState(BS state)
 {
-	dc->PSSetShaderResources(0, 1, m_RenderContext.pShadowRV.GetAddressOf());
+	//if (state == BS::MAX_) // 예시: MAX_를 '기본 상태' 용도로 쓰고 싶다면
+	//{
+	//	m_RenderContext.pDXDC->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+	//	return;
+	//}
+	m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[state].Get(), nullptr, 0xFFFFFFFF);
 }
 
-void RenderPass::SetSamplerState(ID3D11DeviceContext* dc)
+void RenderPass::SetDepthStencilState(DS state)
 {
-	dc->PSSetSamplers(0, 1, m_RenderContext.SState[SS::BORDER_SHADOW].GetAddressOf());
+	m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[state].Get(), 0);
+}
+
+void RenderPass::SetRasterizerState(RS state)
+{
+	m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[state].Get());
+}
+
+void RenderPass::SetSamplerState()
+{
+}
+
+void RenderPass::SetDirLight(const RenderData::FrameData& frame)
+{
+	if (!frame.lights.empty())
+	{
+		const auto& light = frame.lights[0];
+		Light dirlight;
+		dirlight.vDir = light.diretion;
+		dirlight.Color = light.color;
+		dirlight.Intensity = light.intensity;
+		dirlight.mLightViewProj = light.lightViewProj;
+		dirlight.CastShadow = light.castShadow;
+
+		m_RenderContext.LightCBuffer.lights[0] = dirlight;
+
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(BaseConstBuffer));
+
+	}
+
+}
+
+void RenderPass::SetVertex(const RenderData::RenderItem& item)
+{
+	const auto* vertexBuffers = m_RenderContext.vertexBuffers;
+	const auto* indexBuffers = m_RenderContext.indexBuffers;
+	const auto* indexCounts = m_RenderContext.indexCounts;
+	const auto* textures = m_RenderContext.textures;
+
+	if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
+	{
+		const MeshHandle bufferHandle = item.mesh;
+		const auto vbIt = vertexBuffers->find(bufferHandle);
+		const auto ibIt = indexBuffers->find(bufferHandle);
+		const auto countIt = indexCounts->find(bufferHandle);
+
+		if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexCounts->end())
+		{
+			ID3D11Buffer* vb = vbIt->second.Get();
+			ID3D11Buffer* ib = ibIt->second.Get();
+			const UINT32 fullCount = countIt->second;
+			const bool useSubMesh = item.useSubMesh;
+			const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
+			const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
+		}
+	}
+}
+
+void RenderPass::DrawMesh(
+	ID3D11Buffer* vb,
+	ID3D11Buffer* ib,
+	ID3D11InputLayout* layout,
+	ID3D11VertexShader* vs,
+	ID3D11PixelShader* ps,
+	BOOL useSubMesh,
+	UINT indexCount,
+	UINT indexStart
+)
+{
+	const UINT stride = sizeof(RenderData::Vertex);
+	const UINT offset = 0;
+
+	ID3D11DeviceContext* dc = m_RenderContext.pDXDC.Get();
+
+	dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+	dc->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+	dc->IASetInputLayout(layout);
+	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	dc->VSSetShader(vs, nullptr, 0);
+	dc->PSSetShader(ps, nullptr, 0);
+
+	dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+	dc->PSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+	dc->VSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
+	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
+
+
+	if (useSubMesh)
+	{
+		dc->DrawIndexed(indexCount, indexStart, 0);
+	}
+	else
+	{
+		dc->DrawIndexed(indexCount, 0, 0);
+	}
 }
 
 bool RenderPass::ShouldIncludeRenderItem(const RenderData::RenderItem& /*item*/) const

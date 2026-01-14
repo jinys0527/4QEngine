@@ -23,6 +23,13 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
 
     }
 
+    SetDirLight(frame);
+
+    SetBlendState(BS::ALPHABLEND);
+    SetRasterizerState(RS::CULLBACK);
+    SetDepthStencilState(DS::DEPTH_ON);
+
+
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
@@ -53,27 +60,12 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                     {
                         ID3D11Buffer* vb = vbIt->second.Get();
                         ID3D11Buffer* ib = ibIt->second.Get();
+                        const UINT32 fullCount = countIt->second;
                         const bool useSubMesh = item.useSubMesh;
-                        const UINT32 indexCount = useSubMesh ? item.indexCount : countIt->second;
+                        const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
                         const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
-                        if (vb && ib)
-                        {
-                            const UINT stride = sizeof(RenderData::Vertex);
-                            const UINT offset = 0;
 
-
-                            m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::ALPHABLEND].Get(), NULL, 0xFFFFFFFF);
-                            m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
-                            m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
-                            m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-                            m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
-                            m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                            m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-                            m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-                            m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-                            m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-                            m_RenderContext.pDXDC->DrawIndexed(indexCount, indexStart, 0);
-                        }
+                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
                     }
                 }
             }
