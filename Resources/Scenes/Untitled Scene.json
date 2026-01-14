@@ -7,14 +7,14 @@
                 "z": -1.152115821838379
             },
             "look": {
-                "x": -0.08865383267402649,
-                "y": 1.0390281677246094,
-                "z": -0.269791841506958
+                "x": -0.12933209538459778,
+                "y": 0.9854789972305298,
+                "z": -0.25722503662109375
             },
             "up": {
-                "x": 0.04568347707390785,
-                "y": 0.9951081275939941,
-                "z": 0.08759535849094391
+                "x": 0.06465872377157211,
+                "y": 0.9883279204368591,
+                "z": 0.13793900609016418
             }
         }
     },
@@ -51,9 +51,9 @@
                                 "z": -1.152115821838379
                             },
                             "Look": {
-                                "x": -0.08865383267402649,
-                                "y": 1.0390281677246094,
-                                "z": -0.269791841506958
+                                "x": -0.12933209538459778,
+                                "y": 0.9854789972305298,
+                                "z": -0.25722503662109375
                             },
                             "Ortho": {
                                 "height": 10.0,
@@ -66,16 +66,16 @@
                                 "top": 1.0
                             },
                             "Perspective": {
-                                "aspect": 1.7846534252166748,
+                                "aspect": 1.818411111831665,
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": 0.04568347707390785,
-                                "y": 0.9951081275939941,
-                                "z": 0.08759535849094391
+                                "x": 0.06465872377157211,
+                                "y": 0.9883279204368591,
+                                "z": 0.13793900609016418
                             },
                             "Viewport": {
-                                "height": 808.0,
+                                "height": 793.0,
                                 "width": 1442.0
                             }
                         },
@@ -109,6 +109,19 @@
                     },
                     {
                         "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                            }
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -126,26 +139,13 @@
                     },
                     {
                         "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                            }
-                        },
-                        "type": "MeshComponent"
-                    },
-                    {
-                        "data": {
                             "Material": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
                             },
                             "MaterialHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
                             },
                             "Overrides": {
                                 "overrides": {
@@ -267,14 +267,14 @@
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": 1.0,
+                            "Intensity": 1.526030659985657e+20,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "Range": 0.0,
-                            "SpotAngle": 0.0
+                            "Range": 1.526030659985657e+20,
+                            "SpotAngle": 1.526030659985657e+20
                         },
                         "type": "LightComponent"
                     }

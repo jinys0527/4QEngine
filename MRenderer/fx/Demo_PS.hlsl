@@ -9,7 +9,7 @@ float4 PS_Main(VSOutput i) : SV_TARGET
     
     final = DirectLight(i.nrm);
     
-    //final = albedo * final;
+    final = albedo * final;
     
     return final;
 }

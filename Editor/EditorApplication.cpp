@@ -892,14 +892,17 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		//m_Engine.GetAssetManager().Init(L"../Resource");
 		//m_Engine.GetSoundAssetManager().Init(L"../Sound");
 		m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
-		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
-		m_SceneManager.Initialize();
 
 		ImportAll();
 		m_AssetLoader = &m_Services.Get<AssetLoader>();
 		m_AssetLoader->LoadAll();
 		m_SoundManager = &m_Services.Get<SoundManager>();
 		m_SoundManager->Init();
+
+		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
+		m_SceneManager.Initialize();
+
+		
 
 		m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 		m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());

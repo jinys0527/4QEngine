@@ -372,8 +372,8 @@ static void EmitSubMeshes(
 			item.indexStart = sm.indexStart;
 			item.indexCount = sm.indexCount;
 
-			// submesh material override
-			if (sm.material.IsValid())
+			// submesh material override + 에디터에서 수정하면 갱신되도록
+			if (!item.material.IsValid() && sm.material.IsValid())
 				item.material = sm.material;
 
 			if (overrides && subMeshIndex < overrides->size())
