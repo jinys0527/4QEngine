@@ -6,39 +6,7 @@
   },
   "meshes": [
     {
-      "file": "Meshes/shinchan_mesh_0_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_1_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_2_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_3_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_4_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_5_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_6_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_7_static.meshbin",
-      "isSkinned": false
-    },
-    {
-      "file": "Meshes/shinchan_mesh_8_static.meshbin",
+      "file": "Meshes/shinchan.meshbin",
       "isSkinned": false
     }
   ],

@@ -2,32 +2,14 @@
 #include <string>
 #include <windows.h>
 
-struct MeshRef
+struct AssetRef
 {
 	std::string assetPath;
 	UINT32      assetIndex = 0;
 };
 
-struct MaterialRef
-{
-	std::string assetPath;
-	UINT32      assetIndex = 0;
-};
-
-struct TextureRef
-{
-	std::string assetPath;
-	UINT32      assetIndex = 0;
-};
-
-struct SkeletonRef
-{
-	std::string assetPath;
-	UINT32      assetIndex = 0;
-};
-
-struct AnimationRef
-{
-	std::string assetPath;
-	UINT32      assetIndex = 0;
-};
+using MeshRef      = AssetRef;
+using MaterialRef  = AssetRef;
+using TextureRef   = AssetRef;
+using SkeletonRef  = AssetRef;
+using AnimationRef = AssetRef;

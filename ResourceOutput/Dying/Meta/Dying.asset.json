@@ -11,8 +11,8 @@
   },
   "meshes": [
     {
-      "file": "Meshes/Dying_mesh_0_skinned.meshbin",
-      "isSkinned": true
+      "file": "Meshes/Dying.meshbin",
+      "isSkinned": false
     }
   ],
   "name": "Dying",

@@ -11,8 +11,8 @@
   },
   "meshes": [
     {
-      "file": "Meshes/Unarmed Walk Forward_mesh_0_skinned.meshbin",
-      "isSkinned": true
+      "file": "Meshes/Unarmed Walk Forward.meshbin",
+      "isSkinned": false
     }
   ],
   "name": "Unarmed Walk Forward",

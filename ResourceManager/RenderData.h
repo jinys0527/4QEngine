@@ -40,6 +40,7 @@ namespace RenderData
 			UINT32 indexStart = 0;
 			UINT32 indexCount = 0;
 			MaterialHandle material = MaterialHandle::Invalid();
+			std::string name;
 		};
 
 		std::vector<Vertex>   vertices;
@@ -165,6 +166,9 @@ namespace RenderData
 		UINT64         sortKey = 0;
 		UINT32		   skinningPaletteOffset = 0;
 		UINT32		   skinningPaletteCount  = 0;
+		UINT32		   indexStart = 0;
+		UINT32		   indexCount = 0;
+		bool		   useSubMesh = false;
 	};
 
 	enum RenderLayer

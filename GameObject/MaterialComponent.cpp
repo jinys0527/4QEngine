@@ -9,7 +9,7 @@ REGISTER_PROPERTY_READONLY_LOADABLE(MaterialComponent, Material)
 void MaterialComponent::SetOverrides(const RenderData::MaterialData& overrides)
 {
 	m_Overrides = overrides;
-	m_UseOverrides = true;
+	m_UseOverrides = true;	
 }
 
 void MaterialComponent::ClearOverrides()

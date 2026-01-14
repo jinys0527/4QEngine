@@ -1,19 +1,22 @@
-﻿#include "pch.h"
-#include "EditorApplication.h"
-#include "CameraObject.h"
-#include "CameraComponent.h"
-#include "MeshComponent.h"
-#include "MeshRenderer.h"
-#include "MaterialComponent.h"
-#include "SkeletalMeshComponent.h"
-#include "SkeletalMeshRenderer.h"
-#include "AnimationComponent.h"
-#include "GameObject.h"
-#include "Reflection.h"
-#include "Renderer.h"
-#include "Scene.h"
-#include "DX11.h"
-#include "json.hpp"
+﻿	#include "pch.h"
+	#include "EditorApplication.h"
+	#include "CameraObject.h"
+	#include "CameraComponent.h"
+	#include "MeshComponent.h"
+	#include "MeshRenderer.h"
+	#include "MaterialComponent.h"
+	#include "SkeletalMeshComponent.h"
+	#include "SkeletalMeshRenderer.h"
+	#include "AnimationComponent.h"
+	#include "GameObject.h"
+	#include "Reflection.h"
+	#include "Renderer.h"
+	#include "Scene.h"
+	#include "DX11.h"
+	#include "json.hpp"
+	#include <algorithm>
+	#include <type_traits>
+	#include <utility>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #define DRAG_SPEED 0.01f
@@ -26,362 +29,961 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
 }
 
-// 이름 변경용 helper 
-void CopyStringToBuffer(const std::string& value, std::array<char, 256>& buffer)
-{
-	std::snprintf(buffer.data(), buffer.size(), "%s", value.c_str());
-}
-//////////////////////
-// 
-// 
-// 이름 중복방지(넘버링)
-std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName)
-{
-	if (!SceneHasObjectName(scene, baseName))
+	// 이름 변경용 helper 
+	void CopyStringToBuffer(const std::string& value, std::array<char, 256>& buffer)
 	{
-		return baseName;
+		std::snprintf(buffer.data(), buffer.size(), "%s", value.c_str());
 	}
-	for (int index = 1; index < 10000; ++index)
+	//////////////////////
+	// 
+	// 
+	// 이름 중복방지(넘버링)
+	std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName)
 	{
-		std::string candidate = baseName + std::to_string(index);
-		if (!SceneHasObjectName(scene, candidate))
+		if (!SceneHasObjectName(scene, baseName))
 		{
-			return candidate;
+			return baseName;
 		}
-	}
-	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
-}
-
-bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
-{	// 각 Property별 배치 Layout은 정해줘야 함
-	const std::type_info& typeInfo = property.GetTypeInfo();
-
-	if (typeInfo == typeid(int))
-	{
-		int value = 0;
-		property.GetValue(component, &value);
-		if (ImGui::DragInt(property.GetName().c_str(), &value, DRAG_SPEED))
+		for (int index = 1; index < 10000; ++index)
 		{
-			property.SetValue(component, &value);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(float))
-	{
-		float value = 0.0f;
-		property.GetValue(component, &value);
-		if (ImGui::DragFloat(property.GetName().c_str(), &value, DRAG_SPEED))
-		{
-			property.SetValue(component, &value);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(bool))
-	{
-		bool value = false;
-		property.GetValue(component, &value);
-		if (ImGui::Checkbox(property.GetName().c_str(), &value))
-		{
-			property.SetValue(component, &value);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(std::string))
-	{
-		std::string value;
-		property.GetValue(component, &value);
-		std::array<char, 256> buffer{};
-		CopyStringToBuffer(value, buffer);
-		if (ImGui::InputText(property.GetName().c_str(), buffer.data(), buffer.size()))
-		{
-			std::string updatedValue(buffer.data());
-			property.SetValue(component, &updatedValue);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(XMFLOAT2))
-	{
-		XMFLOAT2 value{};
-		property.GetValue(component, &value);
-		float data[2] = { value.x, value.y };
-		if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
-		{
-			value.x = data[0];
-			value.y = data[1];
-			property.SetValue(component, &value);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(XMFLOAT3))
-	{
-		XMFLOAT3 value{};
-		property.GetValue(component, &value);
-		float data[3] = { value.x, value.y, value.z };
-		if (ImGui::DragFloat3(property.GetName().c_str(), data, DRAG_SPEED))
-		{
-			value.x = data[0];
-			value.y = data[1];
-			value.z = data[2];
-			property.SetValue(component, &value);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(XMFLOAT4))
-	{
-		XMFLOAT4 value{};
-		property.GetValue(component, &value);
-		float data[4] = { value.x, value.y, value.z, value.w };
-		if (ImGui::DragFloat4(property.GetName().c_str(), data, DRAG_SPEED))
-		{
-			value.x = data[0];
-			value.y = data[1];
-			value.z = data[2];
-			value.w = data[3];
-			property.SetValue(component, &value);
-			return true;
-		}
-		return false;
-	}
-
-	if (typeInfo == typeid(MeshHandle))
-	{
-		MeshHandle value{};
-		property.GetValue(component, &value);
-
-		const std::string* key = assetLoader.GetMeshes().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
-
-		ImGui::TextUnformatted(property.GetName().c_str());
-		ImGui::SameLine();
-		ImGui::Button(buttonLabel.c_str());
-
-		if (ImGui::BeginDragDropTarget())
-		{
-			bool updated = false;
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MESH"))
+			std::string candidate = baseName + std::to_string(index);
+			if (!SceneHasObjectName(scene, candidate))
 			{
-				const MeshHandle dropped = *static_cast<const MeshHandle*>(payload->Data);
-				property.SetValue(component, &dropped);
+				return candidate;
+			}
+		}
+		//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
+	}
 
-				if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
+
+	bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& assetLoader)
+	{
+		const MeshHandle meshHandle = meshComponent.GetMeshHandle();
+		if (!meshHandle.IsValid())
+		{
+			ImGui::TextDisabled("SubMesh Overrides (mesh not set)");
+			return false;
+		}
+
+		const auto* meshData = assetLoader.GetMeshes().Get(meshHandle);
+		if (!meshData)
+		{
+			ImGui::TextDisabled("SubMesh Overrides (mesh not loaded)");
+			return false;
+		}
+
+		const size_t subMeshCount = meshData->subMeshes.empty() ? 1 : meshData->subMeshes.size();
+		const auto& overrides = meshComponent.GetSubMeshMaterialOverrides();
+		bool changed = false;
+
+		auto resolveMaterialDisplay = [&assetLoader](const MaterialHandle& handle) -> std::string
+			{
+				if (!handle.IsValid())
+					return {};
+				if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
+					return *key;
+				return {};
+			};
+
+
+		if (ImGui::TreeNode("SubMesh Overrides"))
+		{
+			for (size_t i = 0; i < subMeshCount; ++i)
+			{
+				ImGui::PushID(static_cast<int>(i));
+				ImGui::AlignTextToFramePadding();
+				std::string subMeshName;
+				MaterialHandle baseMaterial = MaterialHandle::Invalid();
+				if (!meshData->subMeshes.empty())
 				{
-					const std::string* droppedKey = assetLoader.GetMeshes().GetKey(dropped);
-					//meshComponent->SetMeshAssetReference(droppedKey ? *droppedKey : std::string{}, 0u);
+					if (i < meshData->subMeshes.size())
+					{
+						subMeshName  = meshData->subMeshes[i].name;
+						baseMaterial = meshData->subMeshes[i].material;
+					}
+				}
+				else
+				{
+					if (const auto* owner = meshComponent.GetOwner())
+					{
+						if (const auto* materialComponent = owner->GetComponent<MaterialComponent>())
+							baseMaterial = materialComponent->GetMaterialHandle();
+					}
 				}
 
-				updated = true;
-			}
-			ImGui::EndDragDropTarget();
-			if (updated)
-			{
-				return true;
-			}
-		}
+				std::string baseDisplay = resolveMaterialDisplay(baseMaterial);
+				if (!subMeshName.empty())
+					ImGui::Text("%s", subMeshName.c_str());
+				else
+					ImGui::Text("SubMesh %zu", i);
+				ImGui::SameLine();
 
-		return false;
-	}
-
-	if (typeInfo == typeid(MaterialHandle))
-	{
-		MaterialHandle value{};
-		property.GetValue(component, &value);
-
-		const std::string* key = assetLoader.GetMaterials().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
-
-		ImGui::TextUnformatted(property.GetName().c_str());
-		ImGui::SameLine();
-		ImGui::Button(buttonLabel.c_str());
-
-		if (ImGui::BeginDragDropTarget())
-		{
-			bool updated = false;
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
-			{
-				const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
-				property.SetValue(component, &dropped);
-
-				if (auto* materialComponent = dynamic_cast<MaterialComponent*>(component))
+				std::string display = "<None>";
+				if (i < overrides.size())
 				{
-					const std::string* droppedKey = assetLoader.GetMaterials().GetKey(dropped);
-					//materialComponent->SetMaterialAssetPath(droppedKey ? *droppedKey : std::string{}, 0u);
+					const auto& overrideRef = overrides[i];
+					if (!overrideRef.assetPath.empty())
+					{
+						const MaterialHandle handle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
+						if (handle.IsValid())
+						{
+							if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
+							{
+								display = *key;
+							}
+							else
+							{
+								display = overrideRef.assetPath;
+							}
+						}
+						else
+						{
+							display = overrideRef.assetPath;
+						}
+					}
 				}
 
-				updated = true;
+				if (display == "<None>" && !baseDisplay.empty())
+					display = baseDisplay;
+
+				const std::string buttonLabel = display + "##SubMeshOverride";
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
+					{
+						const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
+						std::string assetPath;
+						UINT32 assetIndex = 0;
+						if (assetLoader.GetMaterialAssetReference(dropped, assetPath, assetIndex))
+						{
+							meshComponent.SetSubMeshMaterialOverride(i, MaterialRef{ assetPath, assetIndex });
+							changed = true;
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear"))
+				{
+					meshComponent.ClearSubMeshMaterialOverride(i);
+					changed = true;
+				}
+
+				ImGui::PopID();
 			}
-			ImGui::EndDragDropTarget();
-			if (updated)
-			{
-				return true;
-			}
+			ImGui::TreePop();
 		}
 
-		return false;
+		return changed;
 	}
 
-	if (typeInfo == typeid(TextureHandle))
-	{
-		TextureHandle value{};
-		property.GetValue(component, &value);
-
-		const std::string* key = assetLoader.GetTextures().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
-
-		ImGui::TextUnformatted(property.GetName().c_str());
-		ImGui::SameLine();
-		ImGui::Button(buttonLabel.c_str());
-
-		if (ImGui::BeginDragDropTarget())
+	bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
+	{	// 각 Property별 배치 Layout은 정해줘야 함
+		using PlaybackStateType   = std::decay_t<decltype(std::declval<AnimationComponent>().GetPlayback())>;
+		using BoneMaskSourceType  = std::decay_t<decltype(std::declval<AnimationComponent>().GetBoneMaskSource())>;
+		using RetargetOffsetsType = std::decay_t<decltype(std::declval<AnimationComponent>().GetRetargetOffsets())>;
+		const std::type_info& typeInfo = property.GetTypeInfo();
+	
+		if (typeInfo == typeid(int))
 		{
-			bool updated = false;
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+			int value = 0;
+			property.GetValue(component, &value);
+			if (ImGui::InputInt(property.GetName().c_str(), &value))
 			{
-				const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
-				property.SetValue(component, &dropped);
-				updated = true;
-			}
-			ImGui::EndDragDropTarget();
-			if (updated)
-			{
+				property.SetValue(component, &value);
 				return true;
 			}
+			return false;
 		}
 
+		if (typeInfo == typeid(float))
+		{
+			float value = 0.0f;
+			property.GetValue(component, &value);
+			if (ImGui::InputFloat(property.GetName().c_str(), &value))
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(bool))
+		{
+			bool value = false;
+			property.GetValue(component, &value);
+			if (ImGui::Checkbox(property.GetName().c_str(), &value))
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(std::string))
+		{
+			std::string value;
+			property.GetValue(component, &value);
+			std::array<char, 256> buffer{};
+			CopyStringToBuffer(value, buffer);
+			if (ImGui::InputText(property.GetName().c_str(), buffer.data(), buffer.size()))
+			{
+				std::string updatedValue(buffer.data());
+				property.SetValue(component, &updatedValue);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(XMFLOAT2))
+		{
+			XMFLOAT2 value{};
+			property.GetValue(component, &value);
+			float data[2] = { value.x, value.y };
+			if (ImGui::InputFloat2(property.GetName().c_str(), data))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(XMFLOAT3))
+		{
+			XMFLOAT3 value{};
+			property.GetValue(component, &value);
+			float data[3] = { value.x, value.y, value.z };
+			if (ImGui::InputFloat3(property.GetName().c_str(), data))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				value.z = data[2];
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(XMFLOAT4))
+		{
+			XMFLOAT4 value{};
+			property.GetValue(component, &value);
+			float data[4] = { value.x, value.y, value.z, value.w };
+			if (ImGui::InputFloat4(property.GetName().c_str(), data))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				value.z = data[2];
+				value.w = data[3];
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		// 카메라
+		if (typeInfo == typeid(Viewport))
+		{
+			Viewport value{};
+			property.GetValue(component, &value);
+			float data[2] = { value.Width, value.Height };
+			if (ImGui::InputFloat2(property.GetName().c_str(), data))
+			{
+				value.Width = data[0];
+				value.Height = data[1];
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(PerspectiveParams))
+		{
+			PerspectiveParams value{};
+			property.GetValue(component, &value);
+			bool updated = false;
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Indent();
+			ImGui::PushID(property.GetName().c_str());
+			updated |= ImGui::InputFloat("Fov", &value.Fov);
+			updated |= ImGui::InputFloat("Aspect", &value.Aspect);
+			ImGui::PopID();
+			ImGui::Unindent();
+			if (updated)
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(OrthoParams))
+		{
+			OrthoParams value{};
+			property.GetValue(component, &value);
+			bool updated = false;
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Indent();
+			ImGui::PushID(property.GetName().c_str());
+			updated |= ImGui::InputFloat("Width", &value.Width);
+			updated |= ImGui::InputFloat("Height", &value.Height);
+			ImGui::PopID();
+			ImGui::Unindent();
+			if (updated)
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(OrthoOffCenterParams))
+		{
+			OrthoOffCenterParams value{};
+			property.GetValue(component, &value);
+			bool updated = false;
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Indent();
+			ImGui::PushID(property.GetName().c_str());
+			updated |= ImGui::InputFloat("Left", &value.Left);
+			updated |= ImGui::InputFloat("Right", &value.Right);
+			updated |= ImGui::InputFloat("Bottom", &value.Bottom);
+			updated |= ImGui::InputFloat("Top", &value.Top);
+			ImGui::PopID();
+			ImGui::Unindent();
+			if (updated)
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+
+		// Render Layer
+		if (typeInfo == typeid(UINT8))
+		{
+			UINT8 value = 0;
+			property.GetValue(component, &value);
+			if (property.GetName() == "RenderLayer")
+			{
+				static constexpr const char* kLayers[] = { "Opaque", "Transparent", "UI" };
+				int current = static_cast<int>(value);
+				if (ImGui::Combo(property.GetName().c_str(), &current, kLayers, IM_ARRAYSIZE(kLayers)))
+				{
+					const UINT8 updated = static_cast<UINT8>(std::clamp(current, 0, 2));
+					property.SetValue(component, &updated);
+					return true;
+				}
+				return false;
+			}
+
+			if (ImGui::InputScalar(property.GetName().c_str(), ImGuiDataType_U8, &value))
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+
+		// AssetPath + AssetIndex
+		if (typeInfo == typeid(AssetRef))
+		{
+			AssetRef value{};
+			property.GetValue(component, &value);
+
+			std::string label = property.GetName();
+			label += ": ";
+			if (!value.assetPath.empty())
+			{
+				label += value.assetPath + " [" + std::to_string(value.assetIndex) + "]";
+			}
+			else
+			{
+				label += "<None>";
+			}
+			ImGui::TextUnformatted(label.c_str());
+			return false;
+		}
+
+		if (typeInfo == typeid(XMFLOAT4X4))
+		{
+			XMFLOAT4X4 value{};
+			property.GetValue(component, &value);
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._11, value._12, value._13, value._14);
+			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._21, value._22, value._23, value._24);
+			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._31, value._32, value._33, value._34);
+			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._41, value._42, value._43, value._44);
+			return false;
+		}
+
+
+		if (typeInfo == typeid(MeshHandle))
+		{
+			MeshHandle value{};
+			property.GetValue(component, &value);
+
+			const std::string* key = assetLoader.GetMeshes().GetKey(value);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##" + property.GetName();
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				bool updated = false;
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MESH"))
+				{
+					const MeshHandle dropped = *static_cast<const MeshHandle*>(payload->Data);
+					property.SetValue(component, &dropped);
+
+					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
+					{
+						const std::string* droppedKey = assetLoader.GetMeshes().GetKey(dropped);
+					}
+
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+				if (updated)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if (typeInfo == typeid(MaterialHandle))
+		{
+			MaterialHandle value{};
+			property.GetValue(component, &value);
+
+			const std::string* key = assetLoader.GetMaterials().GetKey(value);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##" + property.GetName();
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				bool updated = false;
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
+				{
+					const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
+					property.SetValue(component, &dropped);
+
+					if (auto* materialComponent = dynamic_cast<MaterialComponent*>(component))
+					{
+						const std::string* droppedKey = assetLoader.GetMaterials().GetKey(dropped);
+					}
+
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+				if (updated)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if (typeInfo == typeid(TextureHandle))
+		{
+			TextureHandle value{};
+			property.GetValue(component, &value);
+
+			const std::string* key = assetLoader.GetTextures().GetKey(value);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##" + property.GetName();
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				bool updated = false;
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+				{
+					const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
+					property.SetValue(component, &dropped);
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+				if (updated)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if (typeInfo == typeid(AnimationHandle))
+		{
+			AnimationHandle value{};
+			property.GetValue(component, &value);
+
+			const std::string* key = assetLoader.GetAnimations().GetKey(value);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##" + property.GetName();
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				bool updated = false;
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+				{
+					const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+					property.SetValue(component, &dropped);
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+				if (updated)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+
+		if (typeInfo == typeid(SkeletonHandle))
+		{
+			SkeletonHandle value{};
+			property.GetValue(component, &value);
+
+			const std::string* key = assetLoader.GetSkeletons().GetKey(value);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##" + property.GetName();
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				bool updated = false;
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SKELETON"))
+				{
+					const SkeletonHandle dropped = *static_cast<const SkeletonHandle*>(payload->Data);
+					property.SetValue(component, &dropped);
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+				if (updated)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		
+
+		if (typeInfo == typeid(RenderData::MaterialData))
+		{
+			RenderData::MaterialData value{};
+			property.GetValue(component, &value);
+
+			bool updated = false;
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Indent();
+			ImGui::PushID(property.GetName().c_str());
+
+			updated |= ImGui::ColorEdit4("Base Color", &value.baseColor.x);
+			updated |= ImGui::DragFloat("Metallic", &value.metallic, 0.01f, 0.0f, 1.0f);
+			updated |= ImGui::DragFloat("Roughness", &value.roughness, 0.01f, 0.0f, 1.0f);
+
+			// Texture slots
+			static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
+			static_assert(std::size(kTextureLabels) == static_cast<size_t>(RenderData::MaterialTextureSlot::TEX_MAX));
+
+			for (size_t i = 0; i < value.textures.size(); ++i)
+			{
+				TextureHandle handle = value.textures[i];
+				const std::string* key = assetLoader.GetTextures().GetKey(handle);
+				const std::string display = key ? *key : std::string("<None>");
+				const std::string buttonLabel = display + "##MaterialTexture";
+
+				ImGui::TextUnformatted(kTextureLabels[i]);
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+					{
+						const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
+						value.textures[i] = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##Texture"))
+				{
+					value.textures[i] = TextureHandle::Invalid();
+					updated = true;
+				}
+			}
+
+			// Shader handle
+			{
+				ShaderHandle shader = value.shader;
+				//const std::string* key = assetLoader.GetShaders().GetKey(shader);
+				//const std::string display = key ? *key : std::string("<None>");
+				const std::string display = "<None>";
+				const std::string buttonLabel = display + "##MaterialShader";
+
+				ImGui::TextUnformatted("Shader");
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER"))
+					{
+						const ShaderHandle dropped = *static_cast<const ShaderHandle*>(payload->Data);
+						value.shader = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##Shader"))
+				{
+					value.shader = ShaderHandle::Invalid();
+					updated = true;
+				}
+			}
+
+			ImGui::PopID();
+			ImGui::Unindent();
+
+			if (updated)
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+
+		if (typeInfo == typeid(std::vector<float>))
+		{
+			std::vector<float> value;
+			property.GetValue(component, &value);
+			ImGui::Text("%s: %zu entries", property.GetName().c_str(), value.size());
+			return false;
+		}
+
+		if (typeInfo == typeid(std::vector<DirectX::XMFLOAT4X4>))
+		{
+			std::vector<DirectX::XMFLOAT4X4> value;
+			property.GetValue(component, &value);
+			ImGui::Text("%s: %zu matrices", property.GetName().c_str(), value.size());
+			return false;
+		}
+
+
+		if (typeInfo == typeid(PlaybackStateType))
+		{
+			PlaybackStateType value{};
+			property.GetValue(component, &value);
+			ImGui::Text("%s: time %.3f, speed %.2f, looping %s, playing %s",
+				property.GetName().c_str(),
+				value.time,
+				value.speed,
+				value.looping ? "true" : "false",
+				value.playing ? "true" : "false");
+			return false;
+		}
+
+		if (typeInfo == typeid(AnimationComponent::BlendState))
+		{
+			AnimationComponent::BlendState value{};
+			property.GetValue(component, &value);
+
+			bool updated = false;
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Indent();
+			ImGui::PushID(property.GetName().c_str());
+
+			// active
+			updated |= ImGui::Checkbox("Active", &value.active);
+
+			// fromClip
+			{
+				const std::string* key = assetLoader.GetAnimations().GetKey(value.fromClip);
+				const std::string display = key ? *key : std::string("<None>");
+				const std::string buttonLabel = display + "##BlendFromClip";
+
+				ImGui::TextUnformatted("From Clip");
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+					{
+						const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+						value.fromClip = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##BlendFromClip"))
+				{
+					value.fromClip = AnimationHandle::Invalid();
+					updated = true;
+				}
+			}
+
+			// toClip
+			{
+				const std::string* key = assetLoader.GetAnimations().GetKey(value.toClip);
+				const std::string display = key ? *key : std::string("<None>");
+				const std::string buttonLabel = display + "##BlendToClip";
+
+				ImGui::TextUnformatted("To Clip");
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+					{
+						const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+						value.toClip = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##BlendToClip"))
+				{
+					value.toClip = AnimationHandle::Invalid();
+					updated = true;
+				}
+			}
+
+			// duration / elapsed / fromTime / toTime
+			updated |= ImGui::InputFloat("Duration", &value.duration);
+			updated |= ImGui::InputFloat("Elapsed", &value.elapsed);
+			updated |= ImGui::InputFloat("From Time", &value.fromTime);
+			updated |= ImGui::InputFloat("To Time", &value.toTime);
+
+			// blendType (enum)
+			{
+				// enum -> int combo
+				// BlendType 정의에 맞게 라벨/개수 수정 필요
+				// 여기선 Linear, EaseIn, EaseOut, EaseInOut, Curve 가정
+				static constexpr const char* kBlendTypeLabels[] =
+				{
+					"Linear",
+					"EaseIn",
+					"EaseOut",
+					"EaseInOut",
+					"Curve"
+				};
+
+				int current = static_cast<int>(value.blendType);
+				if (ImGui::Combo("Blend Type", &current, kBlendTypeLabels, IM_ARRAYSIZE(kBlendTypeLabels)))
+				{
+					value.blendType = static_cast<AnimationComponent::BlendType>(current);
+					updated = true;
+				}
+			}
+
+			// curveFn: function pointer -> edit 불가 (표시만)
+			{
+				const bool hasCurve = (value.curveFn != nullptr);
+				ImGui::Text("Curve Fn: %s", hasCurve ? "Set" : "None");
+				// 필요하면 주소 표시 (디버그용)
+				// ImGui::Text("Curve Fn Ptr: 0x%p", reinterpret_cast<void*>(value.curveFn));
+			}
+
+			ImGui::PopID();
+			ImGui::Unindent();
+
+			if (updated)
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
+			return false;
+		}
+
+		if (typeInfo == typeid(BoneMaskSourceType))
+		{
+			BoneMaskSourceType value{};
+			property.GetValue(component, &value);
+			const char* label = "None";
+			switch (value)
+			{
+			case AnimationComponent::BoneMaskSource::UpperBody:
+				label = "UpperBody";
+				break;
+			case AnimationComponent::BoneMaskSource::LowerBody:
+				label = "LowerBody";
+				break;
+			default:
+				break;
+			}
+			ImGui::Text("%s: %s", property.GetName().c_str(), label);
+			return false;
+		}
+
+		if (typeInfo == typeid(RetargetOffsetsType))
+		{
+			RetargetOffsetsType value;
+			property.GetValue(component, &value);
+			ImGui::Text("%s: %zu offsets", property.GetName().c_str(), value.size());
+			return false;
+		}
+
+		ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
 		return false;
 	}
 
-
-	ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
-	return false;
-}
-
-bool EditorApplication::Initialize()
-{
-	const wchar_t* className = L"MIEditor";
-	const wchar_t* windowName = L"MIEditor";
-
-	if (false == Create(className, windowName, 1920, 1080))
+	bool EditorApplication::Initialize()
 	{
-		return false;
-	}
-	///m_hwnd
-	//m_Engine.GetAssetManager().Init(L"../Resource");
-	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-	m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
-	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
-	m_SceneManager.Initialize();
+		const wchar_t* className = L"MIEditor";
+		const wchar_t* windowName = L"MIEditor";
 
-	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
-	m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
-
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.IniFilename = nullptr;				// ini 사용 안함
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(m_hwnd);
-	ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
-	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
-	//RT 받기
-	//초기 세팅 값으로 창 배치
-
-	return true;
-}
-
-
-bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
-	{
-		return true; // ImGui가 메시지를 처리했으면 true 반환
-	}
-}
-
-
-
-void EditorApplication::Run() {
-	//실행 루프
-	MSG msg = { 0 };
-	while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
-
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-			// Window Message 해석
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+		if (false == Create(className, windowName, 1920, 1080))
+		{
+			return false;
 		}
-		else {
-			m_Engine.UpdateTime();
-			Update();
-			m_Engine.UpdateInput();
-			//UpdateLogic();  //★
-			Render();
+		///m_hwnd
+		//m_Engine.GetAssetManager().Init(L"../Resource");
+		//m_Engine.GetSoundAssetManager().Init(L"../Sound");
+		m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
+		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
+		m_SceneManager.Initialize();
 
+		m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+		m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		io.IniFilename = nullptr;				// ini 사용 안함
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		ImGui::StyleColorsDark();
+		ImGui_ImplWin32_Init(m_hwnd);
+		ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
+		//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
+		//RT 받기
+		//초기 세팅 값으로 창 배치
+
+		return true;
+	}
+
+
+	bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+	{
+		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
+		{
+			return true; // ImGui가 메시지를 처리했으면 true 반환
 		}
 	}
-}
 
 
 
-void EditorApplication::Finalize() {
-	__super::Destroy();
+	void EditorApplication::Run() {
+		//실행 루프
+		MSG msg = { 0 };
+		while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
 
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+				// Window Message 해석
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			else {
+				m_Engine.UpdateTime();
+				Update();
+				m_Engine.UpdateInput();
+				//UpdateLogic();  //★
+				Render();
 
-	//그외 메모리 해제
-}
-
-void EditorApplication::UpdateInput()
-{
-
-}
-
-void EditorApplication::Update()
-{
-	m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
-	m_SoundManager.Update();
-}
-
-void EditorApplication::Render() {
-	if (!m_Engine.GetD3DDXDC()) return; //★
+			}
+		}
+	}
 
 
-	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get()};
-	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
+
+	void EditorApplication::Finalize() {
+		__super::Destroy();
+
+		ImGui_ImplDX11_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
+
+		//그외 메모리 해제
+	}
+
+	void EditorApplication::UpdateInput()
+	{
+
+	}
+
+	void EditorApplication::Update()
+	{
+		m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
+		m_SoundManager.Update();
+	}
+
+	void EditorApplication::Render() {
+		if (!m_Engine.GetD3DDXDC()) return; //★
+
+
+		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get()};
+		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
 	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
 	//m_SceneManager.Render(); // Scene 전체 그리고
 
-	RenderImGUI();
+		RenderImGUI();
 
-	Flip(m_Renderer.GetSwapChain().Get()); //★
-}
+		Flip(m_Renderer.GetSwapChain().Get()); //★
+	}
 
-// ImGUI 창그리기
-void EditorApplication::RenderImGUI() {
-	//★★
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
+	// ImGUI 창그리기
+	void EditorApplication::RenderImGUI() {
+		//★★
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
 	CreateDockSpace();
 	DrawMainMenuBar();
@@ -403,28 +1005,28 @@ void EditorApplication::RenderImGUI() {
 		UpdateSceneViewport();
 	}
 	
-	UpdateEditorCamera();
+		UpdateEditorCamera();
 
-	// DockBuilder
-	static bool dockBuilt = true;
-	if (dockBuilt)
-	{
-		//std::cout << "Layout Init" << std::endl;
-		SetupEditorDockLayout();
-		dockBuilt = false;
-	}
+		// DockBuilder
+		static bool dockBuilt = true;
+		if (dockBuilt)
+		{
+			//std::cout << "Layout Init" << std::endl;
+			SetupEditorDockLayout();
+			dockBuilt = false;
+		}
 
 
-	ImGui::Render();  // Gui들그리기
+		ImGui::Render();  // Gui들그리기
 
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-	ImGuiIO& io = ImGui::GetIO();
+		ImGuiIO& io = ImGui::GetIO();
 
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
 
 		// main back buffer 상태 복구 // 함수로 묶기
 		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
@@ -433,31 +1035,31 @@ void EditorApplication::RenderImGUI() {
 		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 	}
 
-}
+	}
 
-// 게임화면 
-void EditorApplication::RenderSceneView() {
+	// 게임화면 
+	void EditorApplication::RenderSceneView() {
 
-	//if (!m_SceneRenderTarget.IsValid())
-	//{
-	//	return;
-	//}
+		//if (!m_SceneRenderTarget.IsValid())
+		//{
+		//	return;
+		//}
 
-	//auto scene = m_SceneManager.GetCurrentScene();
-	//if (!scene)
-	//{
-	//	return;
-	//}
+		//auto scene = m_SceneManager.GetCurrentScene();
+		//if (!scene)
+		//{
+		//	return;
+		//}
 
-	//scene->BuildFrameData(m_FrameData);
-	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
-	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
+		//scene->BuildFrameData(m_FrameData);
+		m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
+		m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
-	m_SceneRenderTarget_edit.Bind();
-	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+		m_SceneRenderTarget_edit.Bind();
+		m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 
 	auto scene = m_SceneManager.GetCurrentScene();
@@ -466,20 +1068,20 @@ void EditorApplication::RenderSceneView() {
 		scene->Render(m_FrameData);
 	}
 
-	m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+		m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
 	
 
-	if (!scene)
-	{
-		return;
-	}
+		if (!scene)
+		{
+			return;
+		}
 
-	auto editorCamera = scene->GetEditorCamera();
-	if (!editorCamera)
-	{
-		return;
-	}
+		auto editorCamera = scene->GetEditorCamera();
+		if (!editorCamera)
+		{
+			return;
+		}
 
 	if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
 	{
@@ -506,192 +1108,192 @@ void EditorApplication::RenderSceneView() {
 }
 
 
-void EditorApplication::DrawMainMenuBar()
-{
-	if (ImGui::BeginMainMenuBar())
+	void EditorApplication::DrawMainMenuBar()
 	{
-		auto scene = m_SceneManager.GetCurrentScene();
-		const char* sceneName = scene ? scene->GetName().c_str() : "None";
-		ImGui::Text("Scene: %s", sceneName);
-		ImGui::EndMainMenuBar();
-	}
-}
-
-void EditorApplication::DrawHierarchy() {
-
-
-	ImGui::Begin("Hierarchy");
-
-	auto scene = m_SceneManager.GetCurrentScene();
-
-	// Scene이 없는 경우는 이젠 없음
-	if (!scene) {
-		ImGui::Text("Scene Loading Fail");
-		ImGui::End();
-		return;
-	}
-
-	if (scene->GetName() != m_LastSceneName)
-	{
-		CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
-		m_LastSceneName = scene->GetName();
-	}
-	// Scene 이름 변경
-	ImGui::Text("Scene");
-	ImGui::SameLine();
-	ImGui::SetNextItemWidth(-1);
-	ImGui::InputText("##SceneName", m_SceneNameBuffer.data(), m_SceneNameBuffer.size());
-
-	if (ImGui::IsItemDeactivatedAfterEdit())
-	{
-		std::string oldName = scene->GetName();
-		std::string newName = m_SceneNameBuffer.data();
-		if (!newName.empty() && newName != scene->GetName())
+		if (ImGui::BeginMainMenuBar())
 		{
-			scene->SetName(newName);
-			m_LastSceneName = newName;
-			if (!m_CurrentScenePath.empty() && m_CurrentScenePath.stem() == oldName)
-			{
-				std::filesystem::path renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
-				if (m_SelectedResourcePath == m_CurrentScenePath)
-				{
-					m_SelectedResourcePath = renamedPath;
-				}
-				m_CurrentScenePath = renamedPath;
-			}
+			auto scene = m_SceneManager.GetCurrentScene();
+			const char* sceneName = scene ? scene->GetName().c_str() : "None";
+			ImGui::Text("Scene: %s", sceneName);
+			ImGui::EndMainMenuBar();
 		}
-		else
+	}
+
+	void EditorApplication::DrawHierarchy() {
+
+
+		ImGui::Begin("Hierarchy");
+
+		auto scene = m_SceneManager.GetCurrentScene();
+
+		// Scene이 없는 경우는 이젠 없음
+		if (!scene) {
+			ImGui::Text("Scene Loading Fail");
+			ImGui::End();
+			return;
+		}
+
+		if (scene->GetName() != m_LastSceneName)
 		{
 			CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
+			m_LastSceneName = scene->GetName();
 		}
-	}
+		// Scene 이름 변경
+		ImGui::Text("Scene");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(-1);
+		ImGui::InputText("##SceneName", m_SceneNameBuffer.data(), m_SceneNameBuffer.size());
 
-	// hier창 우클릭 생성, 오브젝트에서 우클릭 Delete 필요( 추후 수정) 
-	if (ImGui::Button("Add GameObject")) // Button
-	{
-		const std::string name = MakeUniqueObjectName(*scene, "GameObject");
-		scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
-		//scene->CreateGameObject(name, false); //transparent
-		m_SelectedObjectName = name;
-	}
+		if (ImGui::IsItemDeactivatedAfterEdit())
+		{
+			std::string oldName = scene->GetName();
+			std::string newName = m_SceneNameBuffer.data();
+			if (!newName.empty() && newName != scene->GetName())
+			{
+				scene->SetName(newName);
+				m_LastSceneName = newName;
+				if (!m_CurrentScenePath.empty() && m_CurrentScenePath.stem() == oldName)
+				{
+					std::filesystem::path renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
+					if (m_SelectedResourcePath == m_CurrentScenePath)
+					{
+						m_SelectedResourcePath = renamedPath;
+					}
+					m_CurrentScenePath = renamedPath;
+				}
+			}
+			else
+			{
+				CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
+			}
+		}
 
-	ImGui::Separator();
-	std::vector<std::string> pendingDeletes;
-
-	// GameObjects map 가져와	Opaque
-	for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
-		ImGui::PushID(name.c_str());
-		const bool selected = (m_SelectedObjectName == name);
-		if (ImGui::Selectable(name.c_str(), selected)) {
+		// hier창 우클릭 생성, 오브젝트에서 우클릭 Delete 필요( 추후 수정) 
+		if (ImGui::Button("Add GameObject")) // Button
+		{
+			const std::string name = MakeUniqueObjectName(*scene, "GameObject");
+			scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
+			//scene->CreateGameObject(name, false); //transparent
 			m_SelectedObjectName = name;
 		}
-		if (ImGui::BeginPopupContextItem("ObjectContext"))
-		{
-			if (ImGui::MenuItem("Delete"))
-			{
-				pendingDeletes.push_back(name);
+
+		ImGui::Separator();
+		std::vector<std::string> pendingDeletes;
+
+		// GameObjects map 가져와	Opaque
+		for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
+			ImGui::PushID(name.c_str());
+			const bool selected = (m_SelectedObjectName == name);
+			if (ImGui::Selectable(name.c_str(), selected)) {
+				m_SelectedObjectName = name;
 			}
-			ImGui::EndPopup();
-		}
-		ImGui::PopID();
-	}
-
-	//Transparent
-	for (const auto& [name, Object] : scene->GetTransparentObjects()) {
-		ImGui::PushID(name.c_str());
-		const bool selected = (m_SelectedObjectName == name);
-		if (ImGui::Selectable(name.c_str(), selected)) {
-			m_SelectedObjectName = name;
-		}
-		if (ImGui::BeginPopupContextItem("ObjectContext"))
-		{
-			if (ImGui::MenuItem("Delete"))
+			if (ImGui::BeginPopupContextItem("ObjectContext"))
 			{
-				pendingDeletes.push_back(name);
+				if (ImGui::MenuItem("Delete"))
+				{
+					pendingDeletes.push_back(name);
+				}
+				ImGui::EndPopup();
 			}
-			ImGui::EndPopup();
+			ImGui::PopID();
 		}
-		ImGui::PopID();
-	}
 
-	for (const auto& name : pendingDeletes)
-	{
-		scene->RemoveGameObjectByName(name);
-		if (m_SelectedObjectName == name)
-		{
-			m_SelectedObjectName.clear();
-		}
-	}
-
-	ImGui::End();
-
-}
-
-void EditorApplication::DrawInspector() {
-
-	ImGui::Begin("Inspector");
-	auto scene = m_SceneManager.GetCurrentScene();
-	if (!scene) {
-		ImGui::Text("No Selected Object");
-		ImGui::End();
-		return;
-	}
-
-	// hierarchy 에서 선택한 object 
-	// Opaque
-	const auto& opaqueObjects = scene->GetOpaqueObjects();
-	const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName);
-
-	// Transparent
-	const auto& transparentObjects = scene->GetTransparentObjects();
-	const auto transparentIt = transparentObjects.find(m_SelectedObjectName);
-
-	// 선택된 오브젝트가 없거나, 실체가 없는 경우
-	//second == Object 포인터
-	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) 
-	{
-		ImGui::Text("No Selected GameObject");
-		ImGui::End();
-		return;
-	}
-
-	auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
-	auto selectedObject = it->second;
-
-	if (m_LastSelectedObjectName != m_SelectedObjectName)
-	{
-		CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
-		m_LastSelectedObjectName = m_SelectedObjectName;
-	}
-
-	ImGui::Text("Name");
-	ImGui::SameLine();
-	ImGui::SetNextItemWidth(-1);
-	ImGui::InputText("##ObjectName", m_ObjectNameBuffer.data(), m_ObjectNameBuffer.size());
-	if (ImGui::IsItemDeactivatedAfterEdit())
-	{
-		std::string newName = m_ObjectNameBuffer.data();
-		if (!newName.empty() && newName != selectedObject->GetName())
-		{
-			const std::string currentName = it->second->GetName();
-			if (scene->RenameGameObject(currentName, newName))
+		//Transparent
+		for (const auto& [name, Object] : scene->GetTransparentObjects()) {
+			ImGui::PushID(name.c_str());
+			const bool selected = (m_SelectedObjectName == name);
+			if (ImGui::Selectable(name.c_str(), selected)) {
+				m_SelectedObjectName = name;
+			}
+			if (ImGui::BeginPopupContextItem("ObjectContext"))
 			{
-				m_SelectedObjectName = newName;
-				m_LastSelectedObjectName = newName;
+				if (ImGui::MenuItem("Delete"))
+				{
+					pendingDeletes.push_back(name);
+				}
+				ImGui::EndPopup();
+			}
+			ImGui::PopID();
+		}
+
+		for (const auto& name : pendingDeletes)
+		{
+			scene->RemoveGameObjectByName(name);
+			if (m_SelectedObjectName == name)
+			{
+				m_SelectedObjectName.clear();
+			}
+		}
+
+		ImGui::End();
+
+	}
+
+	void EditorApplication::DrawInspector() {
+
+		ImGui::Begin("Inspector");
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene) {
+			ImGui::Text("No Selected Object");
+			ImGui::End();
+			return;
+		}
+
+		// hierarchy 에서 선택한 object 
+		// Opaque
+		const auto& opaqueObjects = scene->GetOpaqueObjects();
+		const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName);
+
+		// Transparent
+		const auto& transparentObjects = scene->GetTransparentObjects();
+		const auto transparentIt = transparentObjects.find(m_SelectedObjectName);
+
+		// 선택된 오브젝트가 없거나, 실체가 없는 경우
+		//second == Object 포인터
+		if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) 
+		{
+			ImGui::Text("No Selected GameObject");
+			ImGui::End();
+			return;
+		}
+
+		auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
+		auto selectedObject = it->second;
+
+		if (m_LastSelectedObjectName != m_SelectedObjectName)
+		{
+			CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
+			m_LastSelectedObjectName = m_SelectedObjectName;
+		}
+
+		ImGui::Text("Name");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(-1);
+		ImGui::InputText("##ObjectName", m_ObjectNameBuffer.data(), m_ObjectNameBuffer.size());
+		if (ImGui::IsItemDeactivatedAfterEdit())
+		{
+			std::string newName = m_ObjectNameBuffer.data();
+			if (!newName.empty() && newName != selectedObject->GetName())
+			{
+				const std::string currentName = it->second->GetName();
+				if (scene->RenameGameObject(currentName, newName))
+				{
+					m_SelectedObjectName = newName;
+					m_LastSelectedObjectName = newName;
+				}
+				else
+				{
+					CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
+				}
 			}
 			else
 			{
 				CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
 			}
 		}
-		else
-		{
-			CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
-		}
-	}
-	ImGui::Separator();
-	ImGui::Text("Components");
-	ImGui::Separator();
+		ImGui::Separator();
+		ImGui::Text("Components");
+		ImGui::Separator();
 
 
 	for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
@@ -723,33 +1325,37 @@ void EditorApplication::DrawInspector() {
 			Component* component = selectedObject->GetComponentByTypeName(typeName);
 			auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
 			
-			if (component && typeInfo)
-			{
-				auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
+				if (component && typeInfo)
+				{
+					auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
 
-				for (const auto& prop : props)
-				{	
-					// 한 Property에 대한 것
-					DrawComponentPropertyEditor(component, *prop, m_AssetLoader);
+					for (const auto& prop : props)
+					{	
+						DrawComponentPropertyEditor(component, *prop, m_AssetLoader);
+					}
+
+  					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
+  					{
+  						DrawSubMeshOverridesEditor(*meshComponent, m_AssetLoader);
+  					}
+					ImGui::Separator();
 				}
-				ImGui::Separator();
-			}
-			else
-			{
-				ImGui::TextDisabled("Component data unavailable.");
-			}
+				else
+				{
+					ImGui::TextDisabled("Component data unavailable.");
+				}
 
-			ImGui::TreePop();
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
 		}
-		ImGui::PopID();
-	}
 
 	
 
-	if (ImGui::Button("Add Component"))
-	{
-		ImGui::OpenPopup("AddComponentPopup");
-	}
+		if (ImGui::Button("Add Component"))
+		{
+			ImGui::OpenPopup("AddComponentPopup");
+		}
 
 	if (ImGui::BeginPopup("AddComponentPopup"))
 	{
@@ -762,470 +1368,470 @@ void EditorApplication::DrawInspector() {
 			//const bool disallowDuplicate = (typeName == "TransformComponent");
 			const bool disabled = hasType /*&& disallowDuplicate*/;
 
-			if (disabled)
-			{
-				ImGui::BeginDisabled();
-			}
-
-			if (ImGui::MenuItem(typeName.c_str()))
-			{
-				auto comp = ComponentFactory::Instance().Create(typeName);
-				if (comp)
+				if (disabled)
 				{
-					selectedObject->AddComponent(std::move(comp));
+					ImGui::BeginDisabled();
+				}
+
+				if (ImGui::MenuItem(typeName.c_str()))
+				{
+					auto comp = ComponentFactory::Instance().Create(typeName);
+					if (comp)
+					{
+						selectedObject->AddComponent(std::move(comp));
+					}
+				}
+
+				if (disabled)
+				{
+					ImGui::EndDisabled();
 				}
 			}
-
-			if (disabled)
-			{
-				ImGui::EndDisabled();
-			}
-		}
-		ImGui::EndPopup();
-	} // 
+			ImGui::EndPopup();
+		} // 
 
 
-	ImGui::End();
-}
-
-void EditorApplication::DrawFolderView()
-{
-	ImGui::Begin("Folder");
-
-	//ImGui::Text("Need Logic");
-	//logic
-	if (!std::filesystem::exists(m_ResourceRoot)) {
-		// resource folder 인식 문제방지
-		ImGui::Text("Resources folder not found: %s", m_ResourceRoot.string().c_str());
 		ImGui::End();
-		return;
 	}
 
-	auto createNewScene = [&]()
-		{
-			const std::string baseName = "NewScene";
-			std::filesystem::path newPath;
-			for (int index = 0; index < 10000; ++index)
-			{
-				std::string name = (index == 0) ? baseName : baseName + std::to_string(index);
-				newPath = m_ResourceRoot / (name + ".json");
-				if (!std::filesystem::exists(newPath))
-				{
-					break;
-				}
-			}
-
-			nlohmann::json j;
-			j["gameObjects"] = nlohmann::json::object();
-			j["gameObjects"]["opaque"] = nlohmann::json::array();
-			j["gameObjects"]["transparent"] = nlohmann::json::array();
-
-			std::ofstream out(newPath);
-			if (out)
-			{
-				out << j.dump(4);
-				out.close();
-				if (m_SceneManager.LoadSceneFromJson(newPath))
-				{
-					m_CurrentScenePath = newPath;
-					m_SelectedResourcePath = newPath;
-					m_SelectedObjectName.clear();
-					m_LastSelectedObjectName.clear();
-					m_ObjectNameBuffer.fill('\0');
-				}
-			}
-		};
-
-	if (ImGui::Button("New Scene"))
+	void EditorApplication::DrawFolderView()
 	{
-		createNewScene();
-	}
+		ImGui::Begin("Folder");
 
-	ImGui::SameLine();
-	if (ImGui::Button("Save")) {
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (scene)
-		{
-			std::filesystem::path savePath = m_CurrentScenePath;
-
-			if (savePath.empty())
-			{
-				savePath = m_ResourceRoot / (scene->GetName() + ".json");
-			}
-			m_PendingSavePath = savePath;
-			m_OpenSaveConfirm = true;
-			m_PendingSavePath = savePath;
-			m_OpenSaveConfirm = true;
+		//ImGui::Text("Need Logic");
+		//logic
+		if (!std::filesystem::exists(m_ResourceRoot)) {
+			// resource folder 인식 문제방지
+			ImGui::Text("Resources folder not found: %s", m_ResourceRoot.string().c_str());
+			ImGui::End();
+			return;
 		}
-	}
 
-	ImGui::SameLine();
-	const bool canDelete = !m_SelectedResourcePath.empty() && m_SelectedResourcePath.extension() == ".json";
-	if (!canDelete)
-	{
-		ImGui::BeginDisabled();
-	}
-	if (ImGui::Button("Delete"))
-	{
-		m_PendingDeletePath = m_SelectedResourcePath;
-		m_OpenDeleteConfirm = true;
-	}
-	if (!canDelete)
-	{
-		ImGui::EndDisabled();
-	}
+		auto createNewScene = [&]()
+			{
+				const std::string baseName = "NewScene";
+				std::filesystem::path newPath;
+				for (int index = 0; index < 10000; ++index)
+				{
+					std::string name = (index == 0) ? baseName : baseName + std::to_string(index);
+					newPath = m_ResourceRoot / (name + ".json");
+					if (!std::filesystem::exists(newPath))
+					{
+						break;
+					}
+				}
 
-	ImGui::SameLine();
-	if (m_CurrentScenePath.empty())
-	{
-		ImGui::Text("Current Scene: None");
-	}
-	else
-	{
-		ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
-	}
+				nlohmann::json j;
+				j["gameObjects"] = nlohmann::json::object();
+				j["gameObjects"]["opaque"] = nlohmann::json::array();
+				j["gameObjects"]["transparent"] = nlohmann::json::array();
 
-	if (m_OpenSaveConfirm)
-	{
-		ImGui::OpenPopup("Confirm Save");
-		m_OpenSaveConfirm = false;
-	}
+				std::ofstream out(newPath);
+				if (out)
+				{
+					out << j.dump(4);
+					out.close();
+					if (m_SceneManager.LoadSceneFromJson(newPath))
+					{
+						m_CurrentScenePath = newPath;
+						m_SelectedResourcePath = newPath;
+						m_SelectedObjectName.clear();
+						m_LastSelectedObjectName.clear();
+						m_ObjectNameBuffer.fill('\0');
+					}
+				}
+			};
 
-	if (m_OpenDeleteConfirm)
-	{
-		ImGui::OpenPopup("Confirm Delete");
-		m_OpenDeleteConfirm = false;
-	}
-
-	if (ImGui::BeginPopupContextWindow("FolderContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
-	{
-		if (ImGui::MenuItem("New Scene"))
+		if (ImGui::Button("New Scene"))
 		{
 			createNewScene();
 		}
-		ImGui::EndPopup();
-	}
 
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Text("Save scene \"%s\"?", m_PendingSavePath.filename().string().c_str());
-		if (ImGui::Button("Save"))
-		{
-			if (m_SceneManager.SaveSceneToJson(m_PendingSavePath))
-			{
-				m_CurrentScenePath = m_PendingSavePath;
-				m_SelectedResourcePath = m_PendingSavePath;
-			}
-			ImGui::CloseCurrentPopup();
-		}
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
-		{
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::EndPopup();
-	}
+		if (ImGui::Button("Save")) {
+			auto scene = m_SceneManager.GetCurrentScene();
+			if (scene)
+			{
+				std::filesystem::path savePath = m_CurrentScenePath;
 
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Confirm Delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		
+				if (savePath.empty())
+				{
+					savePath = m_ResourceRoot / (scene->GetName() + ".json");
+				}
+				m_PendingSavePath = savePath;
+				m_OpenSaveConfirm = true;
+				m_PendingSavePath = savePath;
+				m_OpenSaveConfirm = true;
+			}
+		}
+
+		ImGui::SameLine();
+		const bool canDelete = !m_SelectedResourcePath.empty() && m_SelectedResourcePath.extension() == ".json";
+		if (!canDelete)
+		{
+			ImGui::BeginDisabled();
+		}
 		if (ImGui::Button("Delete"))
 		{
-			std::error_code error;
-			std::filesystem::remove(m_PendingDeletePath, error);
-			if (!error)
-			{
-				if (m_CurrentScenePath == m_PendingDeletePath)
-				{
-					m_CurrentScenePath.clear();
-				}
-				if (m_SelectedResourcePath == m_PendingDeletePath)
-				{
-					m_SelectedResourcePath.clear();
-				}
-			}
-			ImGui::CloseCurrentPopup();
+			m_PendingDeletePath = m_SelectedResourcePath;
+			m_OpenDeleteConfirm = true;
 		}
+		if (!canDelete)
+		{
+			ImGui::EndDisabled();
+		}
+
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
+		if (m_CurrentScenePath.empty())
 		{
-			ImGui::CloseCurrentPopup();
+			ImGui::Text("Current Scene: None");
 		}
-		ImGui::EndPopup();
-	}
-
-	ImGui::Separator();
-
-	const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
+		else
 		{
-			std::vector<std::filesystem::directory_entry> entries;
-			for (const auto& entry : std::filesystem::directory_iterator(dir))
+			ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
+		}
+
+		if (m_OpenSaveConfirm)
+		{
+			ImGui::OpenPopup("Confirm Save");
+			m_OpenSaveConfirm = false;
+		}
+
+		if (m_OpenDeleteConfirm)
+		{
+			ImGui::OpenPopup("Confirm Delete");
+			m_OpenDeleteConfirm = false;
+		}
+
+		if (ImGui::BeginPopupContextWindow("FolderContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+		{
+			if (ImGui::MenuItem("New Scene"))
 			{
-				entries.push_back(entry);
+				createNewScene();
 			}
+			ImGui::EndPopup();
+		}
 
-			std::sort(entries.begin(), entries.end(),
-				[](const auto& a, const auto& b)
-				{
-					if (a.is_directory() != b.is_directory())
-					{
-						return a.is_directory() > b.is_directory();
-					}
-					return a.path().filename().string() < b.path().filename().string();
-				});
-
-			for (const auto& entry : entries)
+		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("Save scene \"%s\"?", m_PendingSavePath.filename().string().c_str());
+			if (ImGui::Button("Save"))
 			{
-				const auto name = entry.path().filename().string();
-				if (entry.is_directory())
+				if (m_SceneManager.SaveSceneToJson(m_PendingSavePath))
 				{
-					const std::string label = name;
-					const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-					if (ImGui::TreeNodeEx(label.c_str(), flags))
+					m_CurrentScenePath = m_PendingSavePath;
+					m_SelectedResourcePath = m_PendingSavePath;
+				}
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		if (ImGui::BeginPopupModal("Confirm Delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+		
+			if (ImGui::Button("Delete"))
+			{
+				std::error_code error;
+				std::filesystem::remove(m_PendingDeletePath, error);
+				if (!error)
+				{
+					if (m_CurrentScenePath == m_PendingDeletePath)
 					{
-						self(self, entry.path());
-						ImGui::TreePop();
+						m_CurrentScenePath.clear();
+					}
+					if (m_SelectedResourcePath == m_PendingDeletePath)
+					{
+						m_SelectedResourcePath.clear();
 					}
 				}
-				else
-				{
-					const std::string label = name;
-					const bool selected = (m_SelectedResourcePath == entry.path());
-					const bool isSceneFile = entry.path().extension() == ".json";
-					ImGui::PushID(label.c_str());
-					if (isSceneFile && selected)
-					{
-						ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-					}
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
 
-					bool clicked = false;
-					if (isSceneFile)
+		ImGui::Separator();
+
+		const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
+			{
+				std::vector<std::filesystem::directory_entry> entries;
+				for (const auto& entry : std::filesystem::directory_iterator(dir))
+				{
+					entries.push_back(entry);
+				}
+
+				std::sort(entries.begin(), entries.end(),
+					[](const auto& a, const auto& b)
 					{
-						clicked = ImGui::Button(label.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
+						if (a.is_directory() != b.is_directory())
+						{
+							return a.is_directory() > b.is_directory();
+						}
+						return a.path().filename().string() < b.path().filename().string();
+					});
+
+				for (const auto& entry : entries)
+				{
+					const auto name = entry.path().filename().string();
+					if (entry.is_directory())
+					{
+						const std::string label = name;
+						const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+						if (ImGui::TreeNodeEx(label.c_str(), flags))
+						{
+							self(self, entry.path());
+							ImGui::TreePop();
+						}
 					}
 					else
 					{
-						clicked = ImGui::Selectable(label.c_str(), selected);
-					}
-
-					if (isSceneFile && selected)
-					{
-						ImGui::PopStyleColor(3);
-					}
-
-					if (ImGui::BeginPopupContextItem("SceneItemContext"))
-					{
-						if (isSceneFile && ImGui::MenuItem("Delete"))
+						const std::string label = name;
+						const bool selected = (m_SelectedResourcePath == entry.path());
+						const bool isSceneFile = entry.path().extension() == ".json";
+						ImGui::PushID(label.c_str());
+						if (isSceneFile && selected)
 						{
-							m_PendingDeletePath = entry.path();
-							m_OpenDeleteConfirm = true;
+							ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+							ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
 						}
-						ImGui::EndPopup();
-					}
 
-					if (clicked)
-					{
-						m_SelectedResourcePath = entry.path();
-						if (entry.path().extension() == ".json")
+						bool clicked = false;
+						if (isSceneFile)
 						{
-							if (m_SceneManager.LoadSceneFromJson(entry.path()))
+							clicked = ImGui::Button(label.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
+						}
+						else
+						{
+							clicked = ImGui::Selectable(label.c_str(), selected);
+						}
+
+						if (isSceneFile && selected)
+						{
+							ImGui::PopStyleColor(3);
+						}
+
+						if (ImGui::BeginPopupContextItem("SceneItemContext"))
+						{
+							if (isSceneFile && ImGui::MenuItem("Delete"))
 							{
-								m_CurrentScenePath = entry.path();
-								m_SelectedObjectName.clear();
-								m_LastSelectedObjectName.clear();
-								m_ObjectNameBuffer.fill('\0');
+								m_PendingDeletePath = entry.path();
+								m_OpenDeleteConfirm = true;
+							}
+							ImGui::EndPopup();
+						}
+
+						if (clicked)
+						{
+							m_SelectedResourcePath = entry.path();
+							if (entry.path().extension() == ".json")
+							{
+								if (m_SceneManager.LoadSceneFromJson(entry.path()))
+								{
+									m_CurrentScenePath = entry.path();
+									m_SelectedObjectName.clear();
+									m_LastSelectedObjectName.clear();
+									m_ObjectNameBuffer.fill('\0');
+								}
 							}
 						}
+						ImGui::PopID();
 					}
-					ImGui::PopID();
 				}
-			}
-		};
+			};
 
-	drawDirectory(drawDirectory, m_ResourceRoot);
-	ImGui::End();
-}
-
-
-void EditorApplication::DrawResourceBrowser()
-{
-	ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_Once);
-	ImGui::Begin("Resource Browser");
-
-	if (ImGui::BeginTabBar("ResourceTabs"))
-	{
-		ImVec2 avail = ImGui::GetContentRegionAvail();
-		//Meshes
-		if (ImGui::BeginTabItem("Meshes"))
-		{
-			ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-			const auto& meshes = m_AssetLoader.GetMeshes().GetKeyToHandle();
-			for (const auto& [key, handle] : meshes)
-			{
-				ImGui::Selectable(key.c_str());
-
-				if (ImGui::BeginDragDropSource())
-				{
-					ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
-					ImGui::Text("Mesh : %s", key.c_str());
-					ImGui::EndDragDropSource();
-				}
-				ImGui::Separator();
-			}
-
-			ImGui::EndChild();
-			
-			ImGui::EndTabItem();
-		}
-
-		//Materials
-		if (ImGui::BeginTabItem("Materials"))
-		{
-			ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-			const auto& materials = m_AssetLoader.GetMaterials().GetKeyToHandle();
-			for (const auto& [key, handle] : materials)
-			{
-				ImGui::Selectable(key.c_str());
-
-				if (ImGui::BeginDragDropSource())
-				{
-					ImGui::SetDragDropPayload("RESOURCE_MATERIAL", &handle, sizeof(MaterialHandle));
-					ImGui::Text("Material : %s", key.c_str());
-					ImGui::EndDragDropSource();
-				}
-				ImGui::Separator();
-			}
-
-			ImGui::EndChild();
-
-			ImGui::EndTabItem();
-		}
-
-		//Textures
-		if (ImGui::BeginTabItem("Textures"))
-		{
-			ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-			const auto& textures = m_AssetLoader.GetTextures().GetKeyToHandle();
-			for (const auto& [key, handle] : textures)
-			{
-				ImGui::Selectable(key.c_str());
-
-				if (ImGui::BeginDragDropSource())
-				{
-					ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
-					ImGui::Text("Texture : %s", key.c_str());
-					ImGui::EndDragDropSource();
-				}
-				ImGui::Separator();
-			}
-
-			ImGui::EndChild();
-
-			ImGui::EndTabItem();
-		}
-
-		//Skeletons
-		if (ImGui::BeginTabItem("Skeletons"))
-		{
-			ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-			const auto& skeletons = m_AssetLoader.GetSkeletons().GetKeyToHandle();
-			for (const auto& [key, handle] : skeletons)
-			{
-				ImGui::Selectable(key.c_str());
-
-				if (ImGui::BeginDragDropSource())
-				{
-					ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
-					ImGui::Text("Skeleton : %s", key.c_str());
-					ImGui::EndDragDropSource();
-				}
-				ImGui::Separator();
-			}
-
-			ImGui::EndChild();
-
-			ImGui::EndTabItem();
-		}
-
-		//Animations
-		if (ImGui::BeginTabItem("Animations"))
-		{
-			ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-			const auto& animations = m_AssetLoader.GetAnimations().GetKeyToHandle();
-			for (const auto& [key, handle] : animations)
-			{
-				ImGui::Selectable(key.c_str());
-
-				if (ImGui::BeginDragDropSource())
-				{
-					ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
-					ImGui::Text("Animation : %s", key.c_str());
-					ImGui::EndDragDropSource();
-				}
-				ImGui::Separator();
-			}
-
-			ImGui::EndChild();
-
-			ImGui::EndTabItem();
-		}
-
-		ImGui::EndTabBar();
+		drawDirectory(drawDirectory, m_ResourceRoot);
+		ImGui::End();
 	}
 
-	ImGui::End();
-}
 
-void EditorApplication::CreateDockSpace()
-{
-	ImGui::DockSpaceOverViewport(
-		ImGui::GetID("EditorDockSpace"),
-		ImGui::GetMainViewport(),
-		ImGuiDockNodeFlags_PassthruCentralNode
-	);
-}
+	void EditorApplication::DrawResourceBrowser()
+	{
+		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_Once);
+		ImGui::Begin("Resource Browser");
 
-// 초기 창 셋팅
-void EditorApplication::SetupEditorDockLayout()
-{	
-	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
+		if (ImGui::BeginTabBar("ResourceTabs"))
+		{
+			ImVec2 avail = ImGui::GetContentRegionAvail();
+			//Meshes
+			if (ImGui::BeginTabItem("Meshes"))
+			{
+				ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-	ImGui::DockBuilderRemoveNode(dockspaceID);
-	ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
-	ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
+				const auto& meshes = m_AssetLoader.GetMeshes().GetKeyToHandle();
+				for (const auto& [key, handle] : meshes)
+				{
+					ImGui::Selectable(key.c_str());
 
-	ImGuiID dockMain = dockspaceID; // dockMain을 쪼개서 쓰는 것.
-	ImGuiID dockLeft,
-			dockRight,
-			dockRightA,
-			dockRightB,
-			dockBottom;
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
+						ImGui::Text("Mesh : %s", key.c_str());
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+				}
+
+				ImGui::EndChild();
+			
+				ImGui::EndTabItem();
+			}
+
+			//Materials
+			if (ImGui::BeginTabItem("Materials"))
+			{
+				ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& materials = m_AssetLoader.GetMaterials().GetKeyToHandle();
+				for (const auto& [key, handle] : materials)
+				{
+					ImGui::Selectable(key.c_str());
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_MATERIAL", &handle, sizeof(MaterialHandle));
+						ImGui::Text("Material : %s", key.c_str());
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Textures
+			if (ImGui::BeginTabItem("Textures"))
+			{
+				ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& textures = m_AssetLoader.GetTextures().GetKeyToHandle();
+				for (const auto& [key, handle] : textures)
+				{
+					ImGui::Selectable(key.c_str());
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
+						ImGui::Text("Texture : %s", key.c_str());
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Skeletons
+			if (ImGui::BeginTabItem("Skeletons"))
+			{
+				ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& skeletons = m_AssetLoader.GetSkeletons().GetKeyToHandle();
+				for (const auto& [key, handle] : skeletons)
+				{
+					ImGui::Selectable(key.c_str());
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
+						ImGui::Text("Skeleton : %s", key.c_str());
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Animations
+			if (ImGui::BeginTabItem("Animations"))
+			{
+				ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& animations = m_AssetLoader.GetAnimations().GetKeyToHandle();
+				for (const auto& [key, handle] : animations)
+				{
+					ImGui::Selectable(key.c_str());
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
+						ImGui::Text("Animation : %s", key.c_str());
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			ImGui::EndTabBar();
+		}
+
+		ImGui::End();
+	}
+
+	void EditorApplication::CreateDockSpace()
+	{
+		ImGui::DockSpaceOverViewport(
+			ImGui::GetID("EditorDockSpace"),
+			ImGui::GetMainViewport(),
+			ImGuiDockNodeFlags_PassthruCentralNode
+		);
+	}
+
+	// 초기 창 셋팅
+	void EditorApplication::SetupEditorDockLayout()
+	{	
+		ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
+
+		ImGui::DockBuilderRemoveNode(dockspaceID);
+		ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
+
+		ImGuiID dockMain = dockspaceID; // dockMain을 쪼개서 쓰는 것.
+		ImGuiID dockLeft,
+				dockRight,
+				dockRightA,
+				dockRightB,
+				dockBottom;
 
 
 
-	// 분할   ( 어떤 영역을, 어느방향에서, 비율만큼, 뗀 영역의 이름, Dockspacemain)
-	// 나눠지는 순서도 중요
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
+		// 분할   ( 어떤 영역을, 어느방향에서, 비율만큼, 뗀 영역의 이름, Dockspacemain)
+		// 나눠지는 순서도 중요
+		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
 
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockMain); //Right 20%
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.2f, &dockBottom, &dockMain);  //Down 20%
+		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockMain); //Right 20%
+		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.2f, &dockBottom, &dockMain);  //Down 20%
 
-	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.40f, &dockRightA, &dockMain); // Right 10%
-	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.60f, &dockRightB, &dockMain);// Right 10%
+		ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.40f, &dockRightA, &dockMain); // Right 10%
+		ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.60f, &dockRightB, &dockMain);// Right 10%
 	
-	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.10f, &dockRight, &dockMain);
+		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.10f, &dockRight, &dockMain);
 	
-	 //Down 30%
+		 //Down 30%
 
 	// 창 할당
 	ImGui::DockBuilderDockWindow("Hierarchy", dockRightA);
@@ -1234,8 +1840,8 @@ void EditorApplication::SetupEditorDockLayout()
 	ImGui::DockBuilderDockWindow("Game", dockMain);
 	ImGui::DockBuilderDockWindow("Editor", dockMain);
 
-	ImGui::DockBuilderFinish(dockspaceID);
-}
+		ImGui::DockBuilderFinish(dockspaceID);
+	}
 
 void EditorApplication::UpdateSceneViewport()
 {
@@ -1247,11 +1853,11 @@ void EditorApplication::UpdateSceneViewport()
 	const UINT gameWidth = static_cast<UINT>(gameSize.x);
 	const UINT gameHeight = static_cast<UINT>(gameSize.y);
 
-	auto scene = m_SceneManager.GetCurrentScene();
-	if (!scene)
-	{
-		return;
-	}
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
 
 	if (editorWidth != 0 && editorHeight != 0)
 	{
@@ -1285,38 +1891,38 @@ void EditorApplication::UpdateEditorCamera()
 		return;
 	}
 
-	auto scene = m_SceneManager.GetCurrentScene();
-	if (!scene)
-	{
-		return;
-	}
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
 
-	auto camera = scene->GetEditorCamera();
-	if (!camera)
-	{
-		return;
-	}
+		auto camera = scene->GetEditorCamera();
+		if (!camera)
+		{
+			return;
+		}
 
-	auto* cameraComponent = camera->GetComponent<CameraComponent>();
-	if (!cameraComponent)
-	{
-		return;
-	}
+		auto* cameraComponent = camera->GetComponent<CameraComponent>();
+		if (!cameraComponent)
+		{
+			return;
+		}
 
-	ImGuiIO& io = ImGui::GetIO();
-	const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
+		ImGuiIO& io = ImGui::GetIO();
+		const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
 
-	XMFLOAT3 eye = cameraComponent->GetEye();
-	XMFLOAT3 look = cameraComponent->GetLook();
-	XMFLOAT3 up = cameraComponent->GetUp();
+		XMFLOAT3 eye = cameraComponent->GetEye();
+		XMFLOAT3 look = cameraComponent->GetLook();
+		XMFLOAT3 up = cameraComponent->GetUp();
 
-	XMVECTOR eyeVec = XMLoadFloat3(&eye);
-	XMVECTOR lookVec = XMLoadFloat3(&look);
-	XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
-	XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
-	XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
+		XMVECTOR eyeVec = XMLoadFloat3(&eye);
+		XMVECTOR lookVec = XMLoadFloat3(&look);
+		XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
+		XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
+		XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
 
-	bool updated = false;
+		bool updated = false;
 
 	if (io.MouseDown[1])
 	{
@@ -1324,24 +1930,24 @@ void EditorApplication::UpdateEditorCamera()
 		const float yaw = io.MouseDelta.x * rotationSpeed;
 		const float pitch = io.MouseDelta.y * rotationSpeed;
 
-		if (yaw != 0.0f || pitch != 0.0f)
-		{
-			XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-			const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
-			const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
-			XMMATRIX transform = pitchRotation * yawRotation;
-			forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
-			rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
-			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+			if (yaw != 0.0f || pitch != 0.0f)
+			{
+				XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+				const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
+				const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
+				XMMATRIX transform = pitchRotation * yawRotation;
+				forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
+				rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
+				upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
 
-			lookVec = XMVectorAdd(eyeVec, forwardVec);
-			updated = true;
+				lookVec = XMVectorAdd(eyeVec, forwardVec);
+				updated = true;
 
-		}
+			}
 
-		const float baseSpeed = 6.0f;
-		const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
-		const float moveSpeed = baseSpeed * speedMultiplier;
+			const float baseSpeed = 6.0f;
+			const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
+			const float moveSpeed = baseSpeed * speedMultiplier;
 
 		XMVECTOR moveVec = XMVectorZero();
 		if (ImGui::IsKeyDown(ImGuiKey_W))
@@ -1378,42 +1984,42 @@ void EditorApplication::UpdateEditorCamera()
 		}
 	}
 
-	if (io.MouseDown[2])
-	{
-		const float panSpeed = 0.01f;
-		const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
-		const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
-		const XMVECTOR pan = XMVectorAdd(panRight, panUp);
-		eyeVec = XMVectorAdd(eyeVec, pan);
-		lookVec = XMVectorAdd(lookVec, pan);
-		updated = true;
+		if (io.MouseDown[2])
+		{
+			const float panSpeed = 0.01f;
+			const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
+			const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
+			const XMVECTOR pan = XMVectorAdd(panRight, panUp);
+			eyeVec = XMVectorAdd(eyeVec, pan);
+			lookVec = XMVectorAdd(lookVec, pan);
+			updated = true;
+		}
+
+		if (io.MouseWheel != 0.0f)
+		{
+			const float zoomSpeed = 4.0f;
+			const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
+			eyeVec = XMVectorAdd(eyeVec, dolly);
+			lookVec = XMVectorAdd(lookVec, dolly);
+			updated = true;
+		}
+
+		if (updated)
+		{
+			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+			XMStoreFloat3(&eye, eyeVec);
+			XMStoreFloat3(&look, lookVec);
+			XMStoreFloat3(&up, upVec);
+			cameraComponent->SetEyeLookUp(eye, look, up);
+		}
 	}
 
-	if (io.MouseWheel != 0.0f)
+	void EditorApplication::OnResize(int width, int height)
 	{
-		const float zoomSpeed = 4.0f;
-		const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
-		eyeVec = XMVectorAdd(eyeVec, dolly);
-		lookVec = XMVectorAdd(lookVec, dolly);
-		updated = true;
+		__super::OnResize(width, height);
 	}
 
-	if (updated)
+	void EditorApplication::OnClose()
 	{
-		upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
-		XMStoreFloat3(&eye, eyeVec);
-		XMStoreFloat3(&look, lookVec);
-		XMStoreFloat3(&up, upVec);
-		cameraComponent->SetEyeLookUp(eye, look, up);
+		m_SceneManager.RequestQuit();
 	}
-}
-
-void EditorApplication::OnResize(int width, int height)
-{
-	__super::OnResize(width, height);
-}
-
-void EditorApplication::OnClose()
-{
-	m_SceneManager.RequestQuit();
-}

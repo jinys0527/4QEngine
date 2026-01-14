@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include "RenderData.h"
+#include "AssetLoader.h"
 //#include "D2DRenderer.h"
 //#include "AssetManager.h"
 //#include "SoundAssetManager.h"
@@ -22,13 +23,13 @@ public:
 	friend class Editor;
 
 	Scene(EventDispatcher& eventDispatcher, 
-		/*AssetManager& assetManager,*/ 
+		AssetLoader& assetLoader, 
 		//SoundAssetManager& soundAssetManager, 
 		SoundManager& soundManager, 
 		//D2DRenderer& renderer, 
 		UIManager& uiManager) 
 		: m_EventDispatcher(eventDispatcher), 
-		//m_AssetManager(assetManager), 
+		m_AssetLoader(assetLoader),
 		//m_SoundAssetManager(soundAssetManager), 
 		m_SoundManager(soundManager), 
 		//m_Renderer(renderer), 
@@ -85,7 +86,7 @@ protected:
 	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_TransparentObjects;
 	EventDispatcher& m_EventDispatcher;
 	//D2DRenderer& m_Renderer;
-	//AssetManager& m_AssetManager;
+	AssetLoader& m_AssetLoader;
 	//SoundAssetManager& m_SoundAssetManager;
 	SoundManager&   m_SoundManager;
 	UIManager&      m_UIManager;

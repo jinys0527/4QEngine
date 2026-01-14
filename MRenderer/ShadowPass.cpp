@@ -22,31 +22,31 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     //원근 투영
     //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
     //직교 투영
-     lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
+    lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
 
-     //텍스처 좌표 변환
-     XMFLOAT4X4 m = {
-         0.5f,  0.0f, 0.0f, 0.0f,
-         0.0f, -0.5f, 0.0f, 0.0f,
-         0.0f,  0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f, 0.0f, 1.0f
-     };
+    //텍스처 좌표 변환
+    XMFLOAT4X4 m = {
+        0.5f,  0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f,  0.0f, 1.0f, 0.0f,
+        0.5f,  0.5f, 0.0f, 1.0f
+    };
 
-     XMMATRIX mscale = XMLoadFloat4x4(&m);
-     XMMATRIX mLightTM;
-     mLightTM = lightview * lightproj * mscale;
+    XMMATRIX mscale = XMLoadFloat4x4(&m);
+    XMMATRIX mLightTM;
+    mLightTM = lightview * lightproj * mscale;
 
-     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mView, lightview);
-     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mProj, lightproj);
-     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mVP, lightview * lightproj);
+    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mView, lightview);
+    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mProj, lightproj);
+    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mVP, lightview * lightproj);
 
 
-     //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
-     //XMStoreFloat4x4();
+    //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
+    //XMStoreFloat4x4();
 
-     m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
-     m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
-     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
+    m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
+    m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
+    SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
     for (size_t index : GetQueue())
     {
         for (const auto& [layer, items] : frame.renderItems)
@@ -59,7 +59,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;
-            const auto* indexcounts = m_RenderContext.indexcounts;
+            const auto* indexcounts = m_RenderContext.indexCounts;
 
             if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
             {
@@ -71,7 +71,9 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
                 {
                     ID3D11Buffer* vb = vbIt->second.Get();
                     ID3D11Buffer* ib = ibIt->second.Get();
-                    UINT32 icount = countIt->second;
+					const bool useSubMesh = item.useSubMesh;
+					const UINT32 indexCount = useSubMesh ? item.indexCount : countIt->second;
+					const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
                     if (vb && ib)
                     {
                         const UINT stride = sizeof(RenderData::Vertex);
@@ -91,7 +93,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
                         m_RenderContext.pDXDC->PSSetShader(nullptr, nullptr, 0);
                         m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
                         m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-                        m_RenderContext.pDXDC->DrawIndexed(icount, 0, 0);
+                        m_RenderContext.pDXDC->DrawIndexed(indexCount, indexStart, 0);
                     }
                 }
             }

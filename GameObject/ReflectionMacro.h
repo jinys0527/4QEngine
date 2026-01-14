@@ -74,13 +74,13 @@
     return true;\
     }();
 
-// 핸들 전용 (저장/로드 안함)
+// 핸들 전용 (AssetRef로 저장/로드)
 #define REGISTER_PROPERTY_HANDLE(TYPE, NAME)\
     static bool TYPE##_##NAME##_registered = [](){\
     using RawReturn = decltype(std::declval<TYPE>().Get##NAME());\
     using ValueType = std::remove_cvref_t<RawReturn>; \
     TYPE##_TypeInfo.properties.emplace_back(\
-    std::make_unique<AccessorProperty<TYPE, ValueType, false>>(\
+    std::make_unique<AccessorProperty<TYPE, ValueType, true>>(\
     #NAME, &TYPE::Get##NAME, &TYPE::Set##NAME\
     )\
     );\

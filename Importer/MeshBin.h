@@ -29,6 +29,7 @@ struct SubMeshBin
     uint32_t indexStart;
     uint32_t indexCount;
     uint32_t materialNameOffset;
+    uint32_t nameOffset;
     AABBf    bounds{};
 };
 

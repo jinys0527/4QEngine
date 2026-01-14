@@ -58,64 +58,68 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     {
         for (const auto& [layer, items] : frame.renderItems)
         {
-
-            const auto& item = items[index];
-
-            XMMATRIX mtm = XMMatrixIdentity();
-            mtm = XMLoadFloat4x4(&item.world);
-
-            XMFLOAT4X4 tm;
-            XMStoreFloat4x4(&tm, mtm);
-
-            m_RenderContext.BCBuffer.mWorld = tm;
-
-            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
-
-            if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
+            for (const auto& item : items)
             {
-                const size_t paletteStart = item.skinningPaletteOffset;
-                const size_t paletteCount = item.skinningPaletteCount;
-                const size_t paletteSize  = frame.skinningPalettes.size();
-                const size_t maxCount     = min(static_cast<size_t>(kMaxSkinningBones), paletteCount);
-                // Clamp
-                const size_t safeCount    = (paletteStart + maxCount <= paletteSize) ? maxCount : (paletteSize > paletteStart ? paletteSize - paletteStart : 0);
-                
-                m_RenderContext.SkinCBuffer.boneCount = static_cast<UINT>(safeCount);
-                for (size_t i = 0; i < safeCount; ++i)
-                {
-                    m_RenderContext.SkinCBuffer.bones[i] = frame.skinningPalettes[paletteStart + i];
-                }
-                UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
-                
-				m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pBCB.GetAddressOf());
-            }
-			else if (m_RenderContext.pSkinCB)
-			{
-				m_RenderContext.SkinCBuffer.boneCount = 0;
-				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
-                m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
-			}
+				XMMATRIX mtm = XMMatrixIdentity();
+				mtm = XMLoadFloat4x4(&item.world);
+
+				XMFLOAT4X4 tm;
+				XMStoreFloat4x4(&tm, mtm);
+
+				m_RenderContext.BCBuffer.mWorld = tm;
+
+				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
+
+				if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
+				{
+					const size_t paletteStart = item.skinningPaletteOffset;
+					const size_t paletteCount = item.skinningPaletteCount;
+					const size_t paletteSize = frame.skinningPalettes.size();
+					const size_t maxCount = min(static_cast<size_t>(kMaxSkinningBones), paletteCount);
+					// Clamp
+					const size_t safeCount = (paletteStart + maxCount <= paletteSize) ? maxCount : (paletteSize > paletteStart ? paletteSize - paletteStart : 0);
+
+					m_RenderContext.SkinCBuffer.boneCount = static_cast<UINT>(safeCount);
+					for (size_t i = 0; i < safeCount; ++i)
+					{
+						m_RenderContext.SkinCBuffer.bones[i] = frame.skinningPalettes[paletteStart + i];
+					}
+					UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+
+					m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+				}
+				else if (m_RenderContext.pSkinCB)
+				{
+					m_RenderContext.SkinCBuffer.boneCount = 0;
+					UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+					m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+				}
+
+				const auto* vertexBuffers = m_RenderContext.vertexBuffers;
+				const auto* indexBuffers = m_RenderContext.indexBuffers;
+				const auto* indexCounts = m_RenderContext.indexCounts;
 
 
-            const auto* vertexBuffers = m_RenderContext.vertexBuffers;
-            const auto* indexBuffers = m_RenderContext.indexBuffers;
-            const auto* indexcounts = m_RenderContext.indexcounts;
-            BOOL castshadow = frame.lights[index].castShadow;
+				BOOL castshadow = frame.lights[index].castShadow;
 
-            if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
-            {
-                const UINT bufferIndex = item.mesh.id;
-                const auto vbIt = vertexBuffers->find(bufferIndex);
-                const auto ibIt = indexBuffers->find(bufferIndex);
-                const auto countIt = indexcounts->find(bufferIndex);
+				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
+				{
+					const UINT bufferIndex = item.mesh.id;
+					const auto vbIt = vertexBuffers->find(bufferIndex);
+					const auto ibIt = indexBuffers->find(bufferIndex);
+					const auto countIt = indexCounts->find(bufferIndex);
 
-                if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
-                {
-                    ID3D11Buffer* vb = vbIt->second.Get();
-                    ID3D11Buffer* ib = ibIt->second.Get();
-                    UINT32 icount = countIt->second;
-                    DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, icount, castshadow);
-                }
+					if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexCounts->end())
+					{
+						ID3D11Buffer* vb = vbIt->second.Get();
+						ID3D11Buffer* ib = ibIt->second.Get();
+						const UINT32 fullCount = countIt->second;
+						const bool useSubMesh = item.useSubMesh;
+						const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
+						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
+						DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, useSubMesh, indexCount, indexStart, castshadow);
+					}
+				}
             }
         }
     }
@@ -125,7 +129,9 @@ void OpaquePass::DrawMesh(
     ID3D11DeviceContext* dc,
     ID3D11Buffer* vb,
     ID3D11Buffer* ib,
+    BOOL useSubMesh,
     UINT indexCount,
+    UINT indexStart,
     BOOL castshadow
 )
 {
@@ -153,5 +159,12 @@ void OpaquePass::DrawMesh(
     //SetShaderResource(dc);
     //SetSamplerState(dc);
 
-    dc->DrawIndexed(indexCount, 0, 0);
+	if (useSubMesh)
+	{
+        dc->DrawIndexed(indexCount, indexStart, 0);
+	}
+	else
+	{
+        dc->DrawIndexed(indexCount, 0, 0);
+	}
 }

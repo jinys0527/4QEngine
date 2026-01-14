@@ -16,12 +16,6 @@ public:
 	MeshRenderer() = default;
 	virtual ~MeshRenderer() = default;
 
-	void			  SetMeshHandle(const MeshHandle& handle) { m_MeshHandle = handle; }
-	const MeshHandle& GetMeshHandle() const					  { return m_MeshHandle;   }
-
-	void				  SetMaterialHandle(const MaterialHandle& handle) { m_MaterialHandle = handle; }
-	const MaterialHandle& GetMaterialHandle() const						  { return m_MaterialHandle; }
-
 	void LoadSetMesh(const MeshRef& meshRef)
 	{
 		m_Mesh= meshRef;
@@ -56,7 +50,7 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 private:
-	void ResolveHandles       (MeshHandle& mesh, MaterialHandle& material) const;
+	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const;
 
 protected:
 	static UINT64 BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT8 layer);

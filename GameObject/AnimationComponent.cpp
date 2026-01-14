@@ -418,7 +418,7 @@ void AnimationComponent::Update(float deltaTime)
 		BuildPose(*skeleton, *clip, m_Playback.time);
 	}
 
-	skeletal->SetSkinningPalette(m_SkinningPalette);
+	skeletal->LoadSetSkinningPalette(m_SkinningPalette);
 }
 
 void AnimationComponent::OnEvent(EventType type, const void* data)

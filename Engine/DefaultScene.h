@@ -5,9 +5,9 @@
 class DefaultScene : public Scene {
 
 public:
-	DefaultScene(EventDispatcher& eventDispatcher, SoundManager& soundManager,
+	DefaultScene(EventDispatcher& eventDispatcher, AssetLoader& assetLoader, SoundManager& soundManager,
 			   UIManager& uiManager) :
-				Scene(eventDispatcher, soundManager, uiManager) {}
+				Scene(eventDispatcher, assetLoader, soundManager, uiManager) {}
 
 	virtual ~DefaultScene() = default;
 

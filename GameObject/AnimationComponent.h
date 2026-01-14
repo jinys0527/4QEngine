@@ -6,6 +6,7 @@
 #include "ResourceStore.h"
 #include <functional>
 #include "ResourceRefs.h"
+#include "AssetLoader.h"
 
 class SkeletalMeshComponent;
 
@@ -44,14 +45,6 @@ public:
 		DirectX::XMFLOAT3 scale      { 1.0f, 1.0f, 1.0f };
 	};
 
-private:
-	struct LocalPose
-	{
-		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
-		DirectX::XMFLOAT4 rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
-		DirectX::XMFLOAT3 scale{ 1.0f, 1.0f, 1.0f };
-	};
-
 	struct BlendState
 	{
 		bool active = false;
@@ -65,6 +58,15 @@ private:
 		BlendCurveFn curveFn = nullptr;	// Curve일 때만 유효
 	};
 
+private:
+	struct LocalPose
+	{
+		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
+		DirectX::XMFLOAT4 rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+		DirectX::XMFLOAT3 scale{ 1.0f, 1.0f, 1.0f };
+	};
+
+
 public:
 	static constexpr const char* StaticTypeName = "AnimationComponent";
 	const char* GetTypeName() const override;
@@ -72,8 +74,19 @@ public:
 	AnimationComponent() = default;
 	virtual ~AnimationComponent() = default;
 
-	void SetClipHandle(AnimationHandle handle) { m_ClipHandle = handle; }
-	AnimationHandle GetClipHandle()			   { return m_ClipHandle;   }
+	void SetClipHandle(const AnimationHandle& handle)  
+	{
+		m_ClipHandle = handle; 
+
+		// 파생값 갱신 (읽기전용 표시용)
+		AnimationRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+			loader->GetAnimationAssetReference(handle, ref.assetPath, ref.assetIndex);
+
+		LoadSetAnimation(ref); // 또는 내부 갱신 함수
+	}
+
+	const AnimationHandle& GetClipHandle()			   { return m_ClipHandle;   }
 
 	/// 재생을 시작/재개한다.
 	/// playing 플래그만 true로 변경한다.

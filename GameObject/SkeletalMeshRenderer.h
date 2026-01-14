@@ -17,9 +17,6 @@ public:
 	SkeletalMeshRenderer() = default;
 	virtual ~SkeletalMeshRenderer() = default;
 
-	void           SetSkeletonHandle(SkeletonHandle handle) { m_SkeletonHandle = handle; }
-	SkeletonHandle GetSkeletonHandle() const                { return m_SkeletonHandle;   }
-
 	void LoadSetSkeleton(const SkeletonRef& skeletonRef) { m_Skeleton = skeletonRef; }
 	const SkeletonRef& GetSkeleton() const				  { return m_Skeleton;        }
 
@@ -29,7 +26,7 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 private:
-	void ResolveHandles		  (MeshHandle& mesh, MaterialHandle& material, SkeletonHandle& skeleton) const;
+	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material, SkeletonHandle& skeleton) const;
 
 protected:
 	SkeletonHandle m_SkeletonHandle  = SkeletonHandle::Invalid();

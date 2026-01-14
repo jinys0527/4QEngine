@@ -6,12 +6,8 @@
   },
   "meshes": [
     {
-      "file": "Meshes/SKM_Manny_Simple_mesh_0_skinned.meshbin",
-      "isSkinned": true
-    },
-    {
-      "file": "Meshes/SKM_Manny_Simple_mesh_1_skinned.meshbin",
-      "isSkinned": true
+      "file": "Meshes/SKM_Manny_Simple.meshbin",
+      "isSkinned": false
     }
   ],
   "name": "SKM_Manny_Simple",

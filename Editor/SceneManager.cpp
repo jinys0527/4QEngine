@@ -18,7 +18,7 @@ void SceneManager::Initialize()
 	// 자기가 쓰는 Scene 하나만 있으면됨.
 	// 다른 Scene의 경우 경로에서 Scenedata json으로 띄우기만 하면 됨.
 	// 그냥 Default 생성
-	auto emptyScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_SoundManager, m_UIManager);
+	auto emptyScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_AssetLoader, m_SoundManager, m_UIManager);
 	emptyScene->SetName("Untitled Scene");
 	emptyScene->Initialize();
 
@@ -100,7 +100,7 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	nlohmann::json j;
 	ifs >> j;
 
-	auto loadedScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_SoundManager, m_UIManager);
+	auto loadedScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_AssetLoader, m_SoundManager, m_UIManager);
 	loadedScene->SetName(filePath.stem().string());
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);
