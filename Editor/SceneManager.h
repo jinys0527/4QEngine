@@ -4,11 +4,10 @@
 #include <unordered_map>
 #include <string>
 #include "Scene.h"
-#include "EventDispatcher.h"
-#include "AssetLoader.h"
-#include "SoundManager.h"
-#include "UIManager.h"
-#include "Renderer.h"
+
+class ServiceRegistry;
+class UIManager;
+class InputManager;
 
 class CameraObject;
 // editor 용으로 수정 필요
@@ -16,18 +15,9 @@ class SceneManager
 {
 	friend class Editor;
 public:
-	SceneManager( /*Renderer& renderer, */EventDispatcher& eventDispatcher,
-		AssetLoader& assetLoader, 
-		/*SoundAssetManager& soundAssetManager, */
-		SoundManager& soundManager, 
-		UIManager& uiManager) : 
-		/*m_Renderer(renderer),*/
-		m_EventDispatcher(eventDispatcher),
-		m_AssetLoader(assetLoader),
-		m_SoundManager(soundManager), 
-		m_UIManager(uiManager), 
+	SceneManager(ServiceRegistry& serviceRegistry) : 
+		m_Services(serviceRegistry),
 		m_ShouldQuit(false) { }
-
 
 	~SceneManager() = default;
 
@@ -57,19 +47,15 @@ public:
 	void SetChangeScene(std::string name);
 
 private:
+	ServiceRegistry& m_Services;
+
 	//std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	std::shared_ptr<CameraObject> m_Camera = nullptr;
-	//Renderer& m_Renderer;
 	
-	//SoundAssetManager& m_SoundAssetManager;
-
-	EventDispatcher&  m_EventDispatcher;
-	AssetLoader&      m_AssetLoader;
-	SoundManager&     m_SoundManager;
-	UIManager&	      m_UIManager;
-
+	InputManager*		  m_InputManager;
+	UIManager*			  m_UIManager;
 	std::filesystem::path m_CurrentScenePath;
-	bool			  m_ShouldQuit;
-	std::string		  m_ChangeSceneName;
+	bool				  m_ShouldQuit;
+	std::string			  m_ChangeSceneName;
 };

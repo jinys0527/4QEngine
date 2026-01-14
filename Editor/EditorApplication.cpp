@@ -1,20 +1,28 @@
-﻿	#include "pch.h"
-	#include "EditorApplication.h"
-	#include "CameraObject.h"
-	#include "CameraComponent.h"
-	#include "MeshComponent.h"
-	#include "MeshRenderer.h"
-	#include "MaterialComponent.h"
-	#include "SkeletalMeshComponent.h"
-	#include "SkeletalMeshRenderer.h"
-	#include "AnimationComponent.h"
-	#include "GameObject.h"
-	#include "Reflection.h"
-	#include "Renderer.h"
-	#include "Scene.h"
-	#include "DX11.h"
-	#include "Util.h"
-	#include "json.hpp"
+﻿#include "pch.h"
+#include "EditorApplication.h"
+#include "CameraObject.h"
+#include "CameraComponent.h"
+#include "MeshComponent.h"
+#include "MeshRenderer.h"
+#include "MaterialComponent.h"
+#include "SkeletalMeshComponent.h"
+#include "SkeletalMeshRenderer.h"
+#include "AnimationComponent.h"
+#include "GameObject.h"
+#include "Reflection.h"
+#include "ServiceRegistry.h"
+#include "AssetLoader.h"
+#include "Renderer.h"
+#include "SceneManager.h"
+#include "SoundManager.h"
+#include "Scene.h"
+#include "DX11.h"
+#include "Importer.h"
+#include "Util.h"
+#include "json.hpp"
+#include <algorithm>
+#include <type_traits>
+#include <utility>
 
 
 #define DRAG_SPEED 0.01f
@@ -884,8 +892,17 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		//m_Engine.GetAssetManager().Init(L"../Resource");
 		//m_Engine.GetSoundAssetManager().Init(L"../Sound");
 		m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
+
+		ImportAll();
+		m_AssetLoader = &m_Services.Get<AssetLoader>();
+		m_AssetLoader->LoadAll();
+		m_SoundManager = &m_Services.Get<SoundManager>();
+		m_SoundManager->Init();
+
 		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
 		m_SceneManager.Initialize();
+
+		
 
 		m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 		m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
@@ -912,6 +929,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		{
 			return true; // ImGui가 메시지를 처리했으면 true 반환
 		}
+
+		return false;
 	}
 
 
@@ -957,7 +976,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 	void EditorApplication::Update()
 	{
 		m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
-		m_SoundManager.Update();
+		m_SoundManager->Update();
 	}
 
 	void EditorApplication::Render() {
@@ -1330,12 +1349,12 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 					for (const auto& prop : props)
 					{	
-						DrawComponentPropertyEditor(component, *prop, m_AssetLoader);
+						DrawComponentPropertyEditor(component, *prop, *m_AssetLoader);
 					}
 
   					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
   					{
-  						DrawSubMeshOverridesEditor(*meshComponent, m_AssetLoader);
+  						DrawSubMeshOverridesEditor(*meshComponent, *m_AssetLoader);
   					}
 					ImGui::Separator();
 				}
@@ -1670,7 +1689,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			{
 				ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-				const auto& meshes = m_AssetLoader.GetMeshes().GetKeyToHandle();
+				const auto& meshes = m_AssetLoader->GetMeshes().GetKeyToHandle();
 				for (const auto& [key, handle] : meshes)
 				{
 					ImGui::Selectable(key.c_str());
@@ -1694,7 +1713,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			{
 				ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-				const auto& materials = m_AssetLoader.GetMaterials().GetKeyToHandle();
+				const auto& materials = m_AssetLoader->GetMaterials().GetKeyToHandle();
 				for (const auto& [key, handle] : materials)
 				{
 					ImGui::Selectable(key.c_str());
@@ -1718,7 +1737,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			{
 				ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-				const auto& textures = m_AssetLoader.GetTextures().GetKeyToHandle();
+				const auto& textures = m_AssetLoader->GetTextures().GetKeyToHandle();
 				for (const auto& [key, handle] : textures)
 				{
 					ImGui::Selectable(key.c_str());
@@ -1742,7 +1761,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			{
 				ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-				const auto& skeletons = m_AssetLoader.GetSkeletons().GetKeyToHandle();
+				const auto& skeletons = m_AssetLoader->GetSkeletons().GetKeyToHandle();
 				for (const auto& [key, handle] : skeletons)
 				{
 					ImGui::Selectable(key.c_str());
@@ -1766,7 +1785,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			{
 				ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-				const auto& animations = m_AssetLoader.GetAnimations().GetKeyToHandle();
+				const auto& animations = m_AssetLoader->GetAnimations().GetKeyToHandle();
 				for (const auto& [key, handle] : animations)
 				{
 					ImGui::Selectable(key.c_str());

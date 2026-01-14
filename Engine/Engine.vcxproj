@@ -183,7 +183,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -199,7 +199,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -218,7 +218,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -236,7 +236,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -256,6 +256,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="ServiceRegistry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.cpp" />
@@ -284,6 +285,9 @@
     <ProjectReference Include="..\Event\Event.vcxproj">
       <Project>{f19d0681-a873-4297-bb00-e750294995e9}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\MRenderer\MRenderer.vcxproj">
+      <Project>{ecf85aec-9479-462b-b801-b7b6645d0b09}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\ResourceManager\ResourceManager.vcxproj">
       <Project>{bc2c9dcb-3118-45b6-a6ef-087337daa9cb}</Project>
     </ProjectReference>
@@ -291,7 +295,17 @@
       <Project>{325c5192-b1ee-455d-9f9e-d0aec399023b}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets" Condition="Exists('..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets'))" />
+  </Target>
 </Project>
