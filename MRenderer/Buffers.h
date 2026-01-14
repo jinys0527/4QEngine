@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DX11.h"
+#include "RenderData.h"
 #include "ResourceHandle.h"
 #include <unordered_map>
 #include <functional>

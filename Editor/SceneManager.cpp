@@ -24,6 +24,7 @@ void SceneManager::Initialize()
 	m_InputManager = &m_Services.Get<InputManager>();
 	m_UIManager = &m_Services.Get<UIManager>();
 	auto emptyScene = std::make_shared<DefaultScene>(m_Services);
+	emptyScene->SetSceneManager(this);
 	emptyScene->SetName("Untitled Scene");
 	emptyScene->Initialize();
 
@@ -62,10 +63,13 @@ void SceneManager::Render()
 
 void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
+	auto oldScene = m_CurrentScene;
+
 	m_CurrentScene = scene;
 	m_Camera = m_CurrentScene->GetGameCamera();
-	m_InputManager->SetEventDispatcher(&scene->GetEventDispatcher());
-	m_UIManager->SetEventDispatcher(&scene->GetEventDispatcher());
+
+	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	//m_Renderer.SetCamera(m_Camera);
 
 }

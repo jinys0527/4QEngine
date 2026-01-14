@@ -18,6 +18,7 @@
 #include "Scene.h"
 #include "DX11.h"
 #include "Importer.h"
+#include "Util.h"
 #include "json.hpp"
 #include <algorithm>
 #include <type_traits>
@@ -925,6 +926,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		{
 			return true; // ImGui가 메시지를 처리했으면 true 반환
 		}
+
+		return false;
 	}
 
 
