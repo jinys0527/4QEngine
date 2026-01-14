@@ -191,7 +191,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 		{
 			int value = 0;
 			property.GetValue(component, &value);
-			if (ImGui::InputInt(property.GetName().c_str(), &value))
+			if (ImGui::DragInt(property.GetName().c_str(), &value))
 			{
 				property.SetValue(component, &value);
 				return true;
@@ -203,7 +203,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 		{
 			float value = 0.0f;
 			property.GetValue(component, &value);
-			if (ImGui::InputFloat(property.GetName().c_str(), &value))
+			if (ImGui::DragFloat(property.GetName().c_str(), &value))
 			{
 				property.SetValue(component, &value);
 				return true;
@@ -243,7 +243,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			XMFLOAT2 value{};
 			property.GetValue(component, &value);
 			float data[2] = { value.x, value.y };
-			if (ImGui::InputFloat2(property.GetName().c_str(), data))
+			if (ImGui::DragFloat2(property.GetName().c_str(), data))
 			{
 				value.x = data[0];
 				value.y = data[1];
@@ -258,7 +258,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			XMFLOAT3 value{};
 			property.GetValue(component, &value);
 			float data[3] = { value.x, value.y, value.z };
-			if (ImGui::InputFloat3(property.GetName().c_str(), data))
+			if (ImGui::DragFloat3(property.GetName().c_str(), data))
 			{
 				value.x = data[0];
 				value.y = data[1];
@@ -274,7 +274,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			XMFLOAT4 value{};
 			property.GetValue(component, &value);
 			float data[4] = { value.x, value.y, value.z, value.w };
-			if (ImGui::InputFloat4(property.GetName().c_str(), data))
+			if (ImGui::DragFloat4(property.GetName().c_str(), data))
 			{
 				value.x = data[0];
 				value.y = data[1];
@@ -292,7 +292,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			Viewport value{};
 			property.GetValue(component, &value);
 			float data[2] = { value.Width, value.Height };
-			if (ImGui::InputFloat2(property.GetName().c_str(), data))
+			if (ImGui::DragFloat2(property.GetName().c_str(), data))
 			{
 				value.Width = data[0];
 				value.Height = data[1];
@@ -383,7 +383,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 				return false;
 			}
 
-			if (ImGui::InputScalar(property.GetName().c_str(), ImGuiDataType_U8, &value))
+			if (ImGui::DragScalar(property.GetName().c_str(), ImGuiDataType_U8, &value))
 			{
 				property.SetValue(component, &value);
 				return true;
