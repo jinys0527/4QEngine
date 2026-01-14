@@ -161,6 +161,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     <ClInclude Include="pch.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EditorApplication.cpp">
@@ -205,6 +206,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AI\AI.vcxproj">
