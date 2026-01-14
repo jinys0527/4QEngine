@@ -598,6 +598,8 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			return false;
 		}
 
+		
+
 		if (typeInfo == typeid(RenderData::MaterialData))
 		{
 			RenderData::MaterialData value{};
@@ -607,11 +609,15 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			ImGui::TextUnformatted(property.GetName().c_str());
 			ImGui::Indent();
 			ImGui::PushID(property.GetName().c_str());
+
 			updated |= ImGui::ColorEdit4("Base Color", &value.baseColor.x);
 			updated |= ImGui::DragFloat("Metallic", &value.metallic, 0.01f, 0.0f, 1.0f);
 			updated |= ImGui::DragFloat("Roughness", &value.roughness, 0.01f, 0.0f, 1.0f);
 
+			// Texture slots
 			static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
+			static_assert(std::size(kTextureLabels) == static_cast<size_t>(RenderData::MaterialTextureSlot::TEX_MAX));
+
 			for (size_t i = 0; i < value.textures.size(); ++i)
 			{
 				TextureHandle handle = value.textures[i];
@@ -622,6 +628,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 				ImGui::TextUnformatted(kTextureLabels[i]);
 				ImGui::SameLine();
 				ImGui::Button(buttonLabel.c_str());
+
 				if (ImGui::BeginDragDropTarget())
 				{
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
@@ -632,7 +639,46 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 					}
 					ImGui::EndDragDropTarget();
 				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##Texture"))
+				{
+					value.textures[i] = TextureHandle::Invalid();
+					updated = true;
+				}
 			}
+
+			// Shader handle
+			{
+				ShaderHandle shader = value.shader;
+				//const std::string* key = assetLoader.GetShaders().GetKey(shader);
+				//const std::string display = key ? *key : std::string("<None>");
+				const std::string display = "<None>";
+				const std::string buttonLabel = display + "##MaterialShader";
+
+				ImGui::TextUnformatted("Shader");
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER"))
+					{
+						const ShaderHandle dropped = *static_cast<const ShaderHandle*>(payload->Data);
+						value.shader = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##Shader"))
+				{
+					value.shader = ShaderHandle::Invalid();
+					updated = true;
+				}
+			}
+
 			ImGui::PopID();
 			ImGui::Unindent();
 
@@ -643,6 +689,7 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 			}
 			return false;
 		}
+
 
 		if (typeInfo == typeid(std::vector<float>))
 		{
@@ -671,6 +718,125 @@ bool SceneHasObjectName(const Scene& scene, const std::string& name)
 				value.speed,
 				value.looping ? "true" : "false",
 				value.playing ? "true" : "false");
+			return false;
+		}
+
+		if (typeInfo == typeid(AnimationComponent::BlendState))
+		{
+			AnimationComponent::BlendState value{};
+			property.GetValue(component, &value);
+
+			bool updated = false;
+
+			ImGui::TextUnformatted(property.GetName().c_str());
+			ImGui::Indent();
+			ImGui::PushID(property.GetName().c_str());
+
+			// active
+			updated |= ImGui::Checkbox("Active", &value.active);
+
+			// fromClip
+			{
+				const std::string* key = assetLoader.GetAnimations().GetKey(value.fromClip);
+				const std::string display = key ? *key : std::string("<None>");
+				const std::string buttonLabel = display + "##BlendFromClip";
+
+				ImGui::TextUnformatted("From Clip");
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+					{
+						const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+						value.fromClip = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##BlendFromClip"))
+				{
+					value.fromClip = AnimationHandle::Invalid();
+					updated = true;
+				}
+			}
+
+			// toClip
+			{
+				const std::string* key = assetLoader.GetAnimations().GetKey(value.toClip);
+				const std::string display = key ? *key : std::string("<None>");
+				const std::string buttonLabel = display + "##BlendToClip";
+
+				ImGui::TextUnformatted("To Clip");
+				ImGui::SameLine();
+				ImGui::Button(buttonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+					{
+						const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+						value.toClip = dropped;
+						updated = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##BlendToClip"))
+				{
+					value.toClip = AnimationHandle::Invalid();
+					updated = true;
+				}
+			}
+
+			// duration / elapsed / fromTime / toTime
+			updated |= ImGui::InputFloat("Duration", &value.duration);
+			updated |= ImGui::InputFloat("Elapsed", &value.elapsed);
+			updated |= ImGui::InputFloat("From Time", &value.fromTime);
+			updated |= ImGui::InputFloat("To Time", &value.toTime);
+
+			// blendType (enum)
+			{
+				// enum -> int combo
+				// BlendType 정의에 맞게 라벨/개수 수정 필요
+				// 여기선 Linear, EaseIn, EaseOut, EaseInOut, Curve 가정
+				static constexpr const char* kBlendTypeLabels[] =
+				{
+					"Linear",
+					"EaseIn",
+					"EaseOut",
+					"EaseInOut",
+					"Curve"
+				};
+
+				int current = static_cast<int>(value.blendType);
+				if (ImGui::Combo("Blend Type", &current, kBlendTypeLabels, IM_ARRAYSIZE(kBlendTypeLabels)))
+				{
+					value.blendType = static_cast<AnimationComponent::BlendType>(current);
+					updated = true;
+				}
+			}
+
+			// curveFn: function pointer -> edit 불가 (표시만)
+			{
+				const bool hasCurve = (value.curveFn != nullptr);
+				ImGui::Text("Curve Fn: %s", hasCurve ? "Set" : "None");
+				// 필요하면 주소 표시 (디버그용)
+				// ImGui::Text("Curve Fn Ptr: 0x%p", reinterpret_cast<void*>(value.curveFn));
+			}
+
+			ImGui::PopID();
+			ImGui::Unindent();
+
+			if (updated)
+			{
+				property.SetValue(component, &value);
+				return true;
+			}
 			return false;
 		}
 

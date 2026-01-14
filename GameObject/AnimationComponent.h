@@ -45,14 +45,6 @@ public:
 		DirectX::XMFLOAT3 scale      { 1.0f, 1.0f, 1.0f };
 	};
 
-private:
-	struct LocalPose
-	{
-		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
-		DirectX::XMFLOAT4 rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
-		DirectX::XMFLOAT3 scale{ 1.0f, 1.0f, 1.0f };
-	};
-
 	struct BlendState
 	{
 		bool active = false;
@@ -65,6 +57,15 @@ private:
 		BlendType blendType = BlendType::Linear;
 		BlendCurveFn curveFn = nullptr;	// Curve일 때만 유효
 	};
+
+private:
+	struct LocalPose
+	{
+		DirectX::XMFLOAT3 translation{ 0.0f, 0.0f, 0.0f };
+		DirectX::XMFLOAT4 rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+		DirectX::XMFLOAT3 scale{ 1.0f, 1.0f, 1.0f };
+	};
+
 
 public:
 	static constexpr const char* StaticTypeName = "AnimationComponent";
