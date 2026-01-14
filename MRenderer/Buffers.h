@@ -110,4 +110,7 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 
 	std::function<void()> DrawFullscreenQuad;
+	std::function<void()> DrawGrid;
+	std::function<void(const RenderData::FrameData& f)> UpdateGrid;
+
 };

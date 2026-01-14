@@ -120,9 +120,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_Pipeline.Execute(frame);
 
 	//그리드
-	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	UpdateGrid(frame);
-	DrawGrid();
+	//m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+	//UpdateGrid(frame);
+	//DrawGrid();
 	
 
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
@@ -140,9 +140,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_Pipeline.Execute(frame);
 
 	//그리드
-	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	UpdateGrid(frame);
-	DrawGrid();
+	//m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+	//UpdateGrid(frame);
+	//DrawGrid();
 
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
@@ -322,6 +322,19 @@ void Renderer::CreateContext()
 
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
 		};
+
+	m_RenderContext.DrawGrid =
+		[this]()
+		{
+			DrawGrid();
+		};
+
+	m_RenderContext.UpdateGrid =
+		[this](const RenderData::FrameData& frame)
+		{
+			UpdateGrid(frame);
+		};
+
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
