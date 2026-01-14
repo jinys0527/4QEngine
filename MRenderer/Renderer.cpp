@@ -9,6 +9,7 @@
 
 #include <algorithm>
 
+//맵 순회하면서 지우거나 찾는 헬퍼 함수
 namespace
 {
 	template <typename MapType>
@@ -194,7 +195,8 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 		for (const auto& item : items)
 		{
 			const MeshHandle handle = item.mesh;
-			if (m_VertexBuffers.find(handle) != m_VertexBuffers.end())
+			const auto existingIt = FindById(m_VertexBuffers, handle.id);
+			if (existingIt != m_VertexBuffers.end() && existingIt->first.generation == handle.generation)		//이미 있고 세대도 같다면 안만듦
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -220,7 +222,8 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 		for (const auto& item : items)
 		{
 			const MeshHandle handle = item.mesh;
-			if (m_IndexBuffers.find(handle) != m_IndexBuffers.end())
+			const auto existingIt = FindById(m_IndexBuffers, handle.id);
+			if (existingIt != m_IndexBuffers.end() && existingIt->first.generation == handle.generation)
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -301,7 +304,8 @@ void Renderer::InitTexture()
 			continue;
 
 		// 이미 로딩된 SRV면 스킵
-		if (m_Textures.find(handle) != m_Textures.end())
+		const auto existingIt = FindById(m_Textures, handle.id);
+		if (existingIt != m_Textures.end() && existingIt->first.generation == handle.generation)
 			continue;
 
 		ComPtr<ID3D11ShaderResourceView> srv;

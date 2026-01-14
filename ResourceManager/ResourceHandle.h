@@ -89,6 +89,8 @@ using ShaderHandle    = TypedHandle<ShaderTag>;
 using SkeletonHandle  = TypedHandle<SkeletonTag>;
 using AnimationHandle = TypedHandle<AnimationTag>;
 
+
+//핸들을 unordered_map의키로 사용할 수 있게 해주는 해시 함수
 namespace std
 {
 	template <>
