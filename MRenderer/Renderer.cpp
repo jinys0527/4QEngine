@@ -207,9 +207,7 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 
 
 			EraseById(m_VertexBuffers, handle.id);
-			EraseById(m_MeshGenerations, handle.id);
 			m_VertexBuffers.emplace(handle, vb);
-			m_MeshGenerations[handle] = handle.generation;
 		}
 	}
 }
@@ -234,12 +232,10 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 			CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
 			EraseById(m_IndexBuffers, handle.id);
 			EraseById(m_IndexCounts, handle.id);
-			EraseById(m_MeshGenerations, handle.id);
 			m_IndexBuffers.emplace(handle, ib);
 
 			UINT32 cnt = static_cast<UINT32>(mesh->indices.size());
 			m_IndexCounts.emplace(handle, cnt);
-			m_MeshGenerations[handle] = handle.generation;
 		}
 	}
 }
@@ -250,45 +246,71 @@ void Renderer::EnsureMeshBuffers(const RenderData::FrameData& frame)
 	{
 		for (const auto& item : items)
 		{
-			if (!item.mesh.IsValid())
+			const MeshHandle handle = item.mesh;
+
+			if (!handle.IsValid())
 			{
 				continue;
 			}
 
-			RenderData::MeshData* mesh = m_AssetLoader.GetMeshes().Get(item.mesh);
+			RenderData::MeshData* mesh = m_AssetLoader.GetMeshes().Get(handle);
 			if (!mesh)
 			{
 				continue;
 			}
 
-			const MeshHandle handle = item.mesh;
-			const UINT32 generation = handle.generation;
-			const auto genIt = FindById(m_MeshGenerations, handle.id);
-			const bool needsUpdate = genIt == m_MeshGenerations.end() || genIt->first.generation != generation;
+			//VB 존재여부 및 세대 체크
+			const auto vbIt = FindById(m_VertexBuffers, handle.id);
+			const bool vbAlive = (vbIt != m_VertexBuffers.end());
+			const bool vbSameGen = (vbAlive && vbIt->first.generation == handle.generation);
 
-			if (needsUpdate || m_VertexBuffers.find(handle) == m_VertexBuffers.end()) 
+			//IB 존재여부 및 세대 체크
+			const auto ibIt = FindById(m_IndexBuffers, handle.id);
+			const bool ibAlive = (ibIt != m_IndexBuffers.end());
+			const bool ibSameGen = (ibAlive && ibIt->first.generation == handle.generation);
+
+			//IndexCount 존재여부 및 세대 체크
+			const auto cntIt = FindById(m_IndexCounts, handle.id);
+			const bool cntAlive = (cntIt != m_IndexCounts.end());
+			const bool cntSameGen = (cntAlive && cntIt->first.generation == handle.generation);
+
+			// 하나라도 세대가 다르면 업데이트 필요
+			const bool needsUpdate = !(vbSameGen && ibSameGen && cntSameGen);
+
+			// VB 갱신 
+			if (!vbSameGen)
 			{
 				ComPtr<ID3D11Buffer> vb;
-				CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
+				CreateVertexBuffer(
+					m_pDevice.Get(),
+					mesh->vertices.data(),
+					static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)),
+					sizeof(RenderData::Vertex),
+					vb.GetAddressOf()
+				);
+
 				EraseById(m_VertexBuffers, handle.id);
-				m_VertexBuffers[handle] = vb;
+				m_VertexBuffers.emplace(handle, vb);
 			}
 
-			if (needsUpdate || m_IndexBuffers.find(handle) == m_IndexBuffers.end()) 
+			//  IB + Count 갱신 
+			if (!ibSameGen || !cntSameGen)
 			{
 				ComPtr<ID3D11Buffer> ib;
-				CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
+				CreateIndexBuffer(
+					m_pDevice.Get(),
+					mesh->indices.data(),
+					static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)),
+					ib.GetAddressOf()
+				);
+
 				EraseById(m_IndexBuffers, handle.id);
 				EraseById(m_IndexCounts, handle.id);
-				m_IndexBuffers[handle] = ib;
-				m_IndexCounts[handle] = static_cast<UINT32>(mesh->indices.size());
+
+				m_IndexBuffers.emplace(handle, ib);
+				m_IndexCounts.emplace(handle, static_cast<UINT32>(mesh->indices.size()));
 			}
 
-			if (needsUpdate)
-			{
-				EraseById(m_MeshGenerations, handle.id);
-				m_MeshGenerations[handle] = generation;
-			}
 		}
 	}
 }
@@ -299,29 +321,40 @@ void Renderer::InitTexture()
 
 	for (const auto& [key, handle] : textures.GetKeyToHandle())
 	{
+		if (!handle.IsValid())
+			continue;
+
 		const auto* texData = textures.Get(handle);
 		if (!texData)
 			continue;
 
-		// 이미 로딩된 SRV면 스킵
+		// id로 캐시 조회
 		const auto existingIt = FindById(m_Textures, handle.id);
-		if (existingIt != m_Textures.end() && existingIt->first.generation == handle.generation)
+		const bool alive = (existingIt != m_Textures.end());
+		const bool sameGen = (alive && existingIt->first.generation == handle.generation);
+
+		// 이미 있고 세대도 같으면 스킵
+		if (sameGen)
 			continue;
+
+		// 세대가 다르면 기존 id 항목 삭제
+		if (alive && !sameGen)
+		{
+			EraseById(m_Textures, handle.id);
+		}
 
 		ComPtr<ID3D11ShaderResourceView> srv;
 
-		// 문자열을 wchar_t로 변환 (DirectXTK는 wchar_t 경로)
 		std::wstring wpath(texData->path.begin(), texData->path.end());
 
 		HRESULT hr = TexturesLoad(texData, wpath.c_str(), srv.GetAddressOf());
 		if (FAILED(hr))
 		{
-			// TexturesLoad 안에서 ERROR_MSG 처리했으니 여기선 스킵만 해도 됨
 			continue;
 		}
 
-		// handle.id를 키로 SRV 저장
-		m_Textures[handle] = srv;
+		// 새 핸들(새 generation)로 저장
+		m_Textures.emplace(handle, srv);
 	}
 }
 
@@ -1606,7 +1639,7 @@ void Renderer::CreateQuadVB()
 
 void Renderer::CreateQuadIB()
 {
-	m_QuadIndexCounts = quadIndices.size();
+	m_QuadIndexCounts = static_cast<UINT>(quadIndices.size());
 	CreateIndexBuffer(m_pDevice.Get(), quadIndices.data(), static_cast<UINT>(quadIndices.size() * sizeof(UINT)), m_QuadIndexBuffers.GetAddressOf());
 }
 

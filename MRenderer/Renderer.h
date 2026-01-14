@@ -132,8 +132,7 @@ private:
 	//※ map으로 관리 or 다른 방식 사용. notion issue 참조※	해결
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>				m_VertexBuffers;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>				m_IndexBuffers;
-	std::unordered_map<MeshHandle, UINT32>							m_IndexCounts;
-	std::unordered_map<MeshHandle, UINT32>							m_MeshGenerations;
+	std::unordered_map<MeshHandle, UINT32>								m_IndexCounts;
 	std::unordered_map<TextureHandle, ComPtr<ID3D11ShaderResourceView>>	m_Textures;
 
 	//상수 버퍼
