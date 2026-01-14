@@ -183,7 +183,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -199,7 +199,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -218,7 +218,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -236,7 +236,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Client;$(SolutionDir)AI;$(SolutionDir)SoundSystem;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)ResourceManager;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -256,6 +256,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="ServiceRegistry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.cpp" />
@@ -283,6 +284,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Event\Event.vcxproj">
       <Project>{f19d0681-a873-4297-bb00-e750294995e9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\MRenderer\MRenderer.vcxproj">
+      <Project>{ecf85aec-9479-462b-b801-b7b6645d0b09}</Project>
     </ProjectReference>
     <ProjectReference Include="..\ResourceManager\ResourceManager.vcxproj">
       <Project>{bc2c9dcb-3118-45b6-a6ef-087337daa9cb}</Project>

@@ -3,24 +3,27 @@
 #include "NzWndBase.h"
 #include <memory>
 #include <string>
-#include "AssetLoader.h"
 #include "EditorViewport.h"
 #include "Engine.h"
 #include "RenderTargetContext.h" 
-#include "Renderer.h"
-#include "SceneManager.h"
-#include "SoundManager.h"
+#include "RenderData.h"
+
 #include <filesystem>
 #include <array>
 
+class ServiceRegistry;
+class Renderer;
+class SceneManager;
 class GameObject;
+class AssetLoader;
+class SoundManager;
 
 class EditorApplication : public NzWndBase
 {
 
 public:
-	EditorApplication(Engine& engine,Renderer& renderer, SceneManager& sceneManager, SoundManager& soundManager, AssetLoader& assetLoader) 
-		: NzWndBase(), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager), m_SoundManager(soundManager), m_AssetLoader(assetLoader)
+	EditorApplication(ServiceRegistry& serviceRegistry, Engine& engine,Renderer& renderer, SceneManager& sceneManager) 
+		: NzWndBase(), m_Services(serviceRegistry), m_Engine(engine),m_Renderer(renderer), m_SceneManager(sceneManager)
 		, m_EditorViewport("Editor")
 		, m_GameViewport("Game"){
 	}
@@ -64,16 +67,17 @@ private:
 	float m_fFrameCount = 0.0f;
 	UINT64 m_FrameIndex = 0;
 
-	Engine& m_Engine;
-	SceneManager& m_SceneManager;
-	SoundManager& m_SoundManager;
-	AssetLoader&  m_AssetLoader;
-	Renderer& m_Renderer;
+	ServiceRegistry&      m_Services;
+	Engine&			      m_Engine;
+	SceneManager&         m_SceneManager;
+	Renderer&             m_Renderer;
+	AssetLoader*		  m_AssetLoader;
+	SoundManager*		  m_SoundManager;
 	RenderData::FrameData m_FrameData;
-	RenderTargetContext m_SceneRenderTarget;
-	RenderTargetContext m_SceneRenderTarget_edit;
-	EditorViewport m_EditorViewport;
-	EditorViewport m_GameViewport;
+	RenderTargetContext   m_SceneRenderTarget;
+	RenderTargetContext   m_SceneRenderTarget_edit;
+	EditorViewport        m_EditorViewport;
+	EditorViewport        m_GameViewport;
 
 	// Hier
 	std::string m_SelectedObjectName;

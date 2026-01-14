@@ -6,6 +6,9 @@
 #include "UIObject.h"
 #include "GameManager.h"
 #include <unordered_set>
+#include "ServiceRegistry.h"
+#include "EventDispatcher.h"
+#include "AssetLoader.h"
 #include "CameraComponent.h"
 #include "MeshRenderer.h"
 #include "MaterialComponent.h"
@@ -14,6 +17,12 @@
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
+
+Scene::Scene(ServiceRegistry& serviceRegistry) : m_Services(serviceRegistry) 
+{ 
+	m_AssetLoader = &m_Services.Get<AssetLoader>(); 
+}
+
 
 Scene::~Scene()
 {
@@ -36,6 +45,11 @@ void Scene::Render(RenderData::FrameData& frameData) const
 
 void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 {
+	if (!gameObject)
+		return;
+
+	gameObject->SetScene(this);
+
 	if (gameObject->m_Name == "Main Camera")
 	{
 		//SetMainCamera(gameObject);
@@ -49,12 +63,16 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 
 void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 {
+	if(!gameObject) return;
+
 	if (isOpaque)
 	{
 		auto it = m_OpaqueObjects.find(gameObject->m_Name);
 		if (it != m_OpaqueObjects.end())
 		{
-			gameObject->GetComponent<TransformComponent>()->DetachFromParent();
+			if (auto* trans = gameObject->GetComponent<TransformComponent>())
+				trans->DetachFromParent();
+			gameObject->SetScene(nullptr);
 			m_OpaqueObjects.erase(gameObject->m_Name);
 		}
 	}
@@ -63,7 +81,9 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 		auto it = m_TransparentObjects.find(gameObject->m_Name);
 		if (it != m_TransparentObjects.end())
 		{
-			gameObject->GetComponent<TransformComponent>()->DetachFromParent();
+			if (auto* trans = gameObject->GetComponent<TransformComponent>())
+				trans->DetachFromParent();
+			gameObject->SetScene(nullptr);
 			m_TransparentObjects.erase(gameObject->m_Name);
 		}
 	}
@@ -72,8 +92,9 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 
 std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name, bool isOpaque)
 {
-	auto gameObject = std::make_shared<GameObject>(m_EventDispatcher);
+	auto gameObject = std::make_shared<GameObject>(GetEventDispatcher());
 	gameObject->SetName(name);
+
 	AddGameObject(gameObject, isOpaque);
 	return gameObject;
 }
@@ -235,7 +256,8 @@ template<typename ObjectContainer>
 void ProcessWithErase(
 	const nlohmann::json& arr,
 	ObjectContainer& objContainer,
-	EventDispatcher& dispatcher)
+	EventDispatcher& dispatcher,
+	Scene* ownerScene)
 {
 	std::unordered_set<std::string> names;
 	for (const auto& gameObjectJson : arr)
@@ -250,6 +272,7 @@ void ProcessWithErase(
 		auto it = objContainer.find(name);
 		if (it != objContainer.end())
 		{	
+			it->second->SetScene(ownerScene);
 			it->second->Deserialize(gameObjectJson);
 		}
 		else
@@ -257,7 +280,7 @@ void ProcessWithErase(
 			std::shared_ptr<GameObject> gameObject;
 			// 없으면 새로 생성 후 추가
 			gameObject = std::make_shared<GameObject>(dispatcher);
-
+			gameObject->SetScene(ownerScene);
 			gameObject->Deserialize(gameObjectJson);
 			objContainer[name] = std::move(gameObject);
 		}
@@ -265,7 +288,10 @@ void ProcessWithErase(
 
 	for (auto it = objContainer.begin(); it != objContainer.end(); )
 	{
-		if (!names.contains(it->first)) it = objContainer.erase(it);
+		if (!names.contains(it->first)) {
+			it->second->SetScene(nullptr);
+			it = objContainer.erase(it);
+		}
 		else ++it;
 	}
 }
@@ -317,11 +343,11 @@ void Scene::Deserialize(const nlohmann::json& j)
 
 	if (goRoot.contains("opaque"))
 	{
-		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, m_EventDispatcher);
+		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, GetEventDispatcher(), this);
 	}
 	if (goRoot.contains("transparent"))
 	{
-		ProcessWithErase(goRoot.at("transparent"), m_TransparentObjects, m_EventDispatcher);
+		ProcessWithErase(goRoot.at("transparent"), m_TransparentObjects, GetEventDispatcher(), this);
 	}
 	//UI
 }
@@ -631,9 +657,9 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 		BuildCameraData(m_EditorCamera, frameData, false);
 	}
 
-	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, m_AssetLoader, frameData);
+	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, *m_AssetLoader, frameData);
 
-	AppendFrameDataFromObjects(m_TransparentObjects, RenderData::RenderLayer::TransparentItems, m_AssetLoader, frameData);
+	AppendFrameDataFromObjects(m_TransparentObjects, RenderData::RenderLayer::TransparentItems, *m_AssetLoader, frameData);
 
 	//UIManager에서 UI Data 가공예정
 }

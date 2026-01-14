@@ -366,6 +366,26 @@ namespace
 	}
 }
 
+AssetLoader::AssetLoader()
+{
+	SetActive(this);
+}
+
+AssetLoader::~AssetLoader()
+{
+	m_Meshes.Clear();
+	m_Materials.Clear();
+	m_Textures.Clear();
+	m_Skeletons.Clear();
+	m_Animations.Clear();
+	m_AssetsByPath.clear();
+	m_MeshRefs.clear();
+	m_MaterialRefs.clear();
+	m_TextureRefs.clear();
+	m_SkeletonRefs.clear();
+	m_AnimationRefs.clear();
+}
+
 void AssetLoader::SetActive(AssetLoader* loader)
 {
 	s_ActiveLoader = loader;

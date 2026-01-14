@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "DX11.h"
 #include <unordered_map>
+#include <functional>
 
 //기본 상수 버퍼
 struct BaseConstBuffer

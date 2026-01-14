@@ -6,17 +6,39 @@
 
 UIManager::~UIManager()
 {
-
+	Reset();
 }
 
 void UIManager::Start()
 {
-	m_EventDispatcher.AddListener(EventType::Pressed, this);
-	m_EventDispatcher.AddListener(EventType::Hovered, this);
-	m_EventDispatcher.AddListener(EventType::Dragged, this);
-	m_EventDispatcher.AddListener(EventType::Released, this);
+	
 }
 
+void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
+{
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Pressed))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Pressed, this);
+	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Hovered))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Hovered, this);
+	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Dragged))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Dragged, this);
+	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Released))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Released, this);
+	}
+
+	m_EventDispatcher = eventDispatcher;
+	m_EventDispatcher->AddListener(EventType::Pressed, this);
+	m_EventDispatcher->AddListener(EventType::Hovered, this);
+	m_EventDispatcher->AddListener(EventType::Dragged, this);
+	m_EventDispatcher->AddListener(EventType::Released, this);
+}
 
 bool UIManager::IsFullScreenUIActive() const
 {
@@ -169,10 +191,6 @@ void UIManager::RefreshUIListForCurrentScene()
 
 void UIManager::Reset()
 {
-	m_EventDispatcher.RemoveListener(EventType::Pressed, this);
-	m_EventDispatcher.RemoveListener(EventType::Hovered, this);
-	m_EventDispatcher.RemoveListener(EventType::Dragged, this);
-	m_EventDispatcher.RemoveListener(EventType::Released, this);
 	m_UIObjects.clear();
 	m_ActiveUI = nullptr;
 }

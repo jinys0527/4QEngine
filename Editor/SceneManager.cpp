@@ -4,11 +4,14 @@
 #include "DefaultScene.h"
 #include "json.hpp"
 #include <fstream>
+#include "Renderer.h"
+#include "ServiceRegistry.h"
+#include "InputManager.h"
+#include "UIManager.h"
+
 //editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
 {
-	m_SoundManager.Init();
-
 	/*m_UIManager.Start();
 	m_UIManager.SetCurrentScene("TitleScene");*/
 
@@ -18,7 +21,9 @@ void SceneManager::Initialize()
 	// 자기가 쓰는 Scene 하나만 있으면됨.
 	// 다른 Scene의 경우 경로에서 Scenedata json으로 띄우기만 하면 됨.
 	// 그냥 Default 생성
-	auto emptyScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_AssetLoader, m_SoundManager, m_UIManager);
+	m_InputManager = &m_Services.Get<InputManager>();
+	m_UIManager = &m_Services.Get<UIManager>();
+	auto emptyScene = std::make_shared<DefaultScene>(m_Services);
 	emptyScene->SetName("Untitled Scene");
 	emptyScene->Initialize();
 
@@ -59,6 +64,8 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
 	m_CurrentScene = scene;
 	m_Camera = m_CurrentScene->GetGameCamera();
+	m_InputManager->SetEventDispatcher(&scene->GetEventDispatcher());
+	m_UIManager->SetEventDispatcher(&scene->GetEventDispatcher());
 	//m_Renderer.SetCamera(m_Camera);
 
 }
@@ -100,7 +107,7 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	nlohmann::json j;
 	ifs >> j;
 
-	auto loadedScene = std::make_shared<DefaultScene>(m_EventDispatcher, m_AssetLoader, m_SoundManager, m_UIManager);
+	auto loadedScene = std::make_shared<DefaultScene>(m_Services);
 	loadedScene->SetName(filePath.stem().string());
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);

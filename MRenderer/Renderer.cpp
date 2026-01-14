@@ -1459,7 +1459,7 @@ void Renderer::CreateQuadVB()
 
 void Renderer::CreateQuadIB()
 {
-	m_QuadIndexCounts = quadIndices.size();
+	m_QuadIndexCounts = static_cast<UINT>(quadIndices.size());
 	CreateIndexBuffer(m_pDevice.Get(), quadIndices.data(), static_cast<UINT>(quadIndices.size() * sizeof(UINT)), m_QuadIndexBuffers.GetAddressOf());
 }
 
