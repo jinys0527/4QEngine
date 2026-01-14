@@ -7,6 +7,36 @@
 
 #include "Renderer.h"
 
+#include <algorithm>
+
+//맵 순회하면서 지우거나 찾는 헬퍼 함수
+namespace
+{
+	template <typename MapType>
+	void EraseById(MapType& map, UINT32 id)
+	{
+		for (auto it = map.begin(); it != map.end();)
+		{
+			if (it->first.id == id)
+			{
+				it = map.erase(it);
+				continue;
+			}
+
+			++it;
+		}
+	}
+
+	template <typename MapType>
+	auto FindById(MapType& map, UINT32 id)
+	{
+		return std::find_if(map.begin(), map.end(), [id](const auto& pair)
+			{
+				return pair.first.id == id;
+			});
+	}
+}
+
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
 
 void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height)
@@ -84,7 +114,14 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	CreateConstBuffer();
 
+	InitTexture();
+	
+	
+	
+	
 	CreateContext();
+
+	
 
 	//그리드
 	CreateGridVB();
@@ -120,9 +157,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_Pipeline.Execute(frame);
 
 	//그리드
-	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	UpdateGrid(frame);
-	DrawGrid();
+	//m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+	//UpdateGrid(frame);
+	//DrawGrid();
 	
 
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
@@ -140,9 +177,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_Pipeline.Execute(frame);
 
 	//그리드
-	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	UpdateGrid(frame);
-	DrawGrid();
+	//m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+	//UpdateGrid(frame);
+	//DrawGrid();
 
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
@@ -157,8 +194,9 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 	{
 		for (const auto& item : items)
 		{
-			UINT index = item.mesh.id;
-			if (m_VertexBuffers.find(index) != m_VertexBuffers.end())
+			const MeshHandle handle = item.mesh;
+			const auto existingIt = FindById(m_VertexBuffers, handle.id);
+			if (existingIt != m_VertexBuffers.end() && existingIt->first.generation == handle.generation)		//이미 있고 세대도 같다면 안만듦
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -166,9 +204,10 @@ void Renderer::InitVB(const RenderData::FrameData& frame)
 
 			ComPtr<ID3D11Buffer> vb;
 			CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
-			 
-			m_VertexBuffers.emplace(index, vb);
-			m_MeshGenerations[index] = item.mesh.generation;
+
+
+			EraseById(m_VertexBuffers, handle.id);
+			m_VertexBuffers.emplace(handle, vb);
 		}
 	}
 }
@@ -180,8 +219,9 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 	{
 		for (const auto& item : items)
 		{
-			UINT index = item.mesh.id;
-			if (m_IndexBuffers.find(index) != m_IndexBuffers.end())
+			const MeshHandle handle = item.mesh;
+			const auto existingIt = FindById(m_IndexBuffers, handle.id);
+			if (existingIt != m_IndexBuffers.end() && existingIt->first.generation == handle.generation)
 				continue;
 
 			RenderData::MeshData* mesh =
@@ -190,11 +230,12 @@ void Renderer::InitIB(const RenderData::FrameData& frame)
 
 			ComPtr<ID3D11Buffer> ib;
 			CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
-			m_IndexBuffers.emplace(index, ib);
+			EraseById(m_IndexBuffers, handle.id);
+			EraseById(m_IndexCounts, handle.id);
+			m_IndexBuffers.emplace(handle, ib);
 
 			UINT32 cnt = static_cast<UINT32>(mesh->indices.size());
-			m_IndexCounts.emplace(index, cnt);
-			m_MeshGenerations[index] = item.mesh.generation;
+			m_IndexCounts.emplace(handle, cnt);
 		}
 	}
 }
@@ -205,42 +246,115 @@ void Renderer::EnsureMeshBuffers(const RenderData::FrameData& frame)
 	{
 		for (const auto& item : items)
 		{
-			if (!item.mesh.IsValid())
+			const MeshHandle handle = item.mesh;
+
+			if (!handle.IsValid())
 			{
 				continue;
 			}
 
-			RenderData::MeshData* mesh = m_AssetLoader.GetMeshes().Get(item.mesh);
+			RenderData::MeshData* mesh = m_AssetLoader.GetMeshes().Get(handle);
 			if (!mesh)
 			{
 				continue;
 			}
 
-			const UINT index = item.mesh.id;
-			const UINT32 generation = item.mesh.generation;
-			const auto genIt = m_MeshGenerations.find(index);
-			const bool needsUpdate = genIt == m_MeshGenerations.end() || genIt->second != generation;
+			//VB 존재여부 및 세대 체크
+			const auto vbIt = FindById(m_VertexBuffers, handle.id);
+			const bool vbAlive = (vbIt != m_VertexBuffers.end());
+			const bool vbSameGen = (vbAlive && vbIt->first.generation == handle.generation);
 
-			if (needsUpdate || m_VertexBuffers.find(index) == m_VertexBuffers.end())
+			//IB 존재여부 및 세대 체크
+			const auto ibIt = FindById(m_IndexBuffers, handle.id);
+			const bool ibAlive = (ibIt != m_IndexBuffers.end());
+			const bool ibSameGen = (ibAlive && ibIt->first.generation == handle.generation);
+
+			//IndexCount 존재여부 및 세대 체크
+			const auto cntIt = FindById(m_IndexCounts, handle.id);
+			const bool cntAlive = (cntIt != m_IndexCounts.end());
+			const bool cntSameGen = (cntAlive && cntIt->first.generation == handle.generation);
+
+			// 하나라도 세대가 다르면 업데이트 필요
+			const bool needsUpdate = !(vbSameGen && ibSameGen && cntSameGen);
+
+			// VB 갱신 
+			if (!vbSameGen)
 			{
 				ComPtr<ID3D11Buffer> vb;
-				CreateVertexBuffer(m_pDevice.Get(), mesh->vertices.data(), static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), vb.GetAddressOf());
-				m_VertexBuffers[index] = vb;
+				CreateVertexBuffer(
+					m_pDevice.Get(),
+					mesh->vertices.data(),
+					static_cast<UINT>(mesh->vertices.size() * sizeof(RenderData::Vertex)),
+					sizeof(RenderData::Vertex),
+					vb.GetAddressOf()
+				);
+
+				EraseById(m_VertexBuffers, handle.id);
+				m_VertexBuffers.emplace(handle, vb);
 			}
 
-			if (needsUpdate || m_IndexBuffers.find(index) == m_IndexBuffers.end())
+			//  IB + Count 갱신 
+			if (!ibSameGen || !cntSameGen)
 			{
 				ComPtr<ID3D11Buffer> ib;
-				CreateIndexBuffer(m_pDevice.Get(), mesh->indices.data(), static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)), ib.GetAddressOf());
-				m_IndexBuffers[index] = ib;
-				m_IndexCounts[index] = static_cast<UINT32>(mesh->indices.size());
+				CreateIndexBuffer(
+					m_pDevice.Get(),
+					mesh->indices.data(),
+					static_cast<UINT>(mesh->indices.size() * sizeof(uint32_t)),
+					ib.GetAddressOf()
+				);
+
+				EraseById(m_IndexBuffers, handle.id);
+				EraseById(m_IndexCounts, handle.id);
+
+				m_IndexBuffers.emplace(handle, ib);
+				m_IndexCounts.emplace(handle, static_cast<UINT32>(mesh->indices.size()));
 			}
 
-			if (needsUpdate)
-			{
-				m_MeshGenerations[index] = generation;
-			}
 		}
+	}
+}
+
+void Renderer::InitTexture()
+{
+	const auto& textures = m_AssetLoader.GetTextures();
+
+	for (const auto& [key, handle] : textures.GetKeyToHandle())
+	{
+		if (!handle.IsValid())
+			continue;
+
+		const auto* texData = textures.Get(handle);
+		if (!texData)
+			continue;
+
+		// id로 캐시 조회
+		const auto existingIt = FindById(m_Textures, handle.id);
+		const bool alive = (existingIt != m_Textures.end());
+		const bool sameGen = (alive && existingIt->first.generation == handle.generation);
+
+		// 이미 있고 세대도 같으면 스킵
+		if (sameGen)
+			continue;
+
+		// 세대가 다르면 기존 id 항목 삭제
+		if (alive && !sameGen)
+		{
+			EraseById(m_Textures, handle.id);
+		}
+
+		ComPtr<ID3D11ShaderResourceView> srv;
+
+		std::wstring wpath(texData->path.begin(), texData->path.end());
+
+		HRESULT hr = TexturesLoad(texData, wpath.c_str(), srv.GetAddressOf());
+		if (FAILED(hr))
+		{
+			continue;
+		}
+
+		// 새 핸들(새 generation)로 저장
+		m_Textures.emplace(handle, srv);
 	}
 }
 
@@ -256,6 +370,7 @@ void Renderer::CreateContext()
 	m_RenderContext.vertexBuffers			= &m_VertexBuffers;
 	m_RenderContext.indexBuffers			= &m_IndexBuffers;
 	m_RenderContext.indexCounts				= &m_IndexCounts;
+	m_RenderContext.textures				= &m_Textures;
 	
 	m_RenderContext.pBCB					= m_pBCB;
 	m_RenderContext.BCBuffer				= m_BCBuffer;
@@ -322,6 +437,19 @@ void Renderer::CreateContext()
 
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
 		};
+
+	m_RenderContext.DrawGrid =
+		[this]()
+		{
+			DrawGrid();
+		};
+
+	m_RenderContext.UpdateGrid =
+		[this](const RenderData::FrameData& frame)
+		{
+			UpdateGrid(frame);
+		};
+
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
@@ -415,6 +543,58 @@ HRESULT Renderer::LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppP
 	*ppPS = pPS;
 	return hr;
 }
+
+HRESULT Renderer::TexturesLoad(const RenderData::TextureData* texData, const wchar_t* filename, ID3D11ShaderResourceView** textureRV)
+{
+	HRESULT hr = S_OK;
+
+	// 텍스처 로드 : DXTK (WIC) 사용 ★
+	if (texData->sRGB)
+	{
+		hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+			D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+			0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_SRGB_DEFAULT,
+			nullptr, textureRV);
+		if (FAILED(hr))
+		{
+			hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+				D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+				0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+				nullptr, textureRV);
+			if (FAILED(hr))
+			{
+				ERROR_MSG(hr);
+				return hr;
+
+			}
+		}
+	}
+	else
+	{
+		hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+			D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+			0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+			nullptr, textureRV);
+		if (FAILED(hr))
+		{
+			hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+				D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+				0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+				nullptr, textureRV);
+			if (FAILED(hr))
+			{
+				ERROR_MSG(hr);
+				return hr;
+
+			}
+		}
+	}
+	
+
+	return hr;
+}
+
+
 HRESULT Renderer::CreateInputLayout()
 {
 	HRESULT hr = S_OK;

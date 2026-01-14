@@ -382,7 +382,7 @@ static void TryAssignFallbackTexture(
 		return;
 	}
 
-	out.emplace(slot, ToGenericString(fs::path("Textures") / filePath.filename()));
+	out.emplace(slot, ToGenericString(filePath.filename()));
 }
 
 static std::unordered_map<ETextureType, std::string> CollectFallbackTextures(const fs::path& texDir)

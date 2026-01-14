@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DX11.h"
+#include "ResourceHandle.h"
 #include <unordered_map>
 #include <functional>
 
@@ -67,10 +68,10 @@ struct RenderContext
 	LightConstBuffer			LightCBuffer;
 	ComPtr<ID3D11Buffer>		pLightCB;
 
-	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
-	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
-	std::unordered_map<UINT, UINT32>* indexCounts = nullptr;
-
+	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
+	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
+	std::unordered_map<MeshHandle, UINT32>*									indexCounts		= nullptr;
+	std::unordered_map<TextureHandle, ComPtr<ID3D11ShaderResourceView>>*	textures		= nullptr;
 
 	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
 
@@ -111,4 +112,7 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 
 	std::function<void()> DrawFullscreenQuad;
+	std::function<void()> DrawGrid;
+	std::function<void(const RenderData::FrameData& f)> UpdateGrid;
+
 };

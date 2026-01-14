@@ -15,5 +15,6 @@ VSOutput VS_Main(VSInput_PNUT input)
 
     o.pos = pos;
     o.nrm = nrm;
+    o.uv = input.uv;
     return o;
 }
