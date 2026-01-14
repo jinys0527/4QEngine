@@ -84,7 +84,14 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	CreateConstBuffer();
 
+	InitTexture();
+	
+	
+	
+	
 	CreateContext();
+
+	
 
 	//그리드
 	CreateGridVB();
@@ -244,6 +251,37 @@ void Renderer::EnsureMeshBuffers(const RenderData::FrameData& frame)
 	}
 }
 
+void Renderer::InitTexture()
+{
+	const auto& textures = m_AssetLoader.GetTextures();
+
+	for (const auto& [key, handle] : textures.GetKeyToHandle())
+	{
+		const auto* texData = textures.Get(handle);
+		if (!texData)
+			continue;
+
+		// 이미 로딩된 SRV면 스킵
+		if (m_Textures.find(handle.id) != m_Textures.end())
+			continue;
+
+		ComPtr<ID3D11ShaderResourceView> srv;
+
+		// 문자열을 wchar_t로 변환 (DirectXTK는 wchar_t 경로)
+		std::wstring wpath(texData->path.begin(), texData->path.end());
+
+		HRESULT hr = TexturesLoad(texData, wpath.c_str(), srv.GetAddressOf());
+		if (FAILED(hr))
+		{
+			// TexturesLoad 안에서 ERROR_MSG 처리했으니 여기선 스킵만 해도 됨
+			continue;
+		}
+
+		// handle.id를 키로 SRV 저장
+		m_Textures[handle.id] = srv;
+	}
+}
+
 void Renderer::CreateContext()
 {
 	m_RenderContext.WindowSize = m_WindowSize;
@@ -256,6 +294,7 @@ void Renderer::CreateContext()
 	m_RenderContext.vertexBuffers			= &m_VertexBuffers;
 	m_RenderContext.indexBuffers			= &m_IndexBuffers;
 	m_RenderContext.indexCounts				= &m_IndexCounts;
+	m_RenderContext.textures				= &m_Textures;
 	
 	m_RenderContext.pBCB					= m_pBCB;
 	m_RenderContext.BCBuffer				= m_BCBuffer;
@@ -428,6 +467,58 @@ HRESULT Renderer::LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppP
 	*ppPS = pPS;
 	return hr;
 }
+
+HRESULT Renderer::TexturesLoad(const RenderData::TextureData* texData, const wchar_t* filename, ID3D11ShaderResourceView** textureRV)
+{
+	HRESULT hr = S_OK;
+
+	// 텍스처 로드 : DXTK (WIC) 사용 ★
+	if (texData->sRGB)
+	{
+		hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+			D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+			0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_SRGB_DEFAULT,
+			nullptr, textureRV);
+		if (FAILED(hr))
+		{
+			hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+				D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+				0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+				nullptr, textureRV);
+			if (FAILED(hr))
+			{
+				ERROR_MSG(hr);
+				return hr;
+
+			}
+		}
+	}
+	else
+	{
+		hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+			D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+			0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+			nullptr, textureRV);
+		if (FAILED(hr))
+		{
+			hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+				D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+				0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+				nullptr, textureRV);
+			if (FAILED(hr))
+			{
+				ERROR_MSG(hr);
+				return hr;
+
+			}
+		}
+	}
+	
+
+	return hr;
+}
+
+
 HRESULT Renderer::CreateInputLayout()
 {
 	HRESULT hr = S_OK;

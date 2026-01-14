@@ -70,6 +70,7 @@ struct VSOutput
 {
     float4 pos : SV_POSITION;
     float4 nrm : NORMAL;
+    float2 uv : TEXCOORD0;
 };
 
 struct VSOutput_PU
@@ -82,6 +83,13 @@ struct VSOutput_PU
 
 //ShaderResourceView
 Texture2D g_RTView : register(t0);
+
+Texture2D g_Albedo : register(t11);
+Texture2D g_Normal : register(t12);
+Texture2D g_Metalic : register(t13);
+Texture2D g_Roughness : register(t14);
+Texture2D g_AO : register(t15);
+Texture2D g_Env : register(t16);
 
 //Sampler State
 SamplerState smpClamp : register(s0);

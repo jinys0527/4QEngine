@@ -24,6 +24,7 @@ public:
 	void InitVB(const RenderData::FrameData& frame);
 	void InitIB(const RenderData::FrameData& frame);
 	void EnsureMeshBuffers(const RenderData::FrameData& frame);
+	void InitTexture();
 
 	ComPtr<ID3D11RenderTargetView>	GetRTView() { return m_pRTView; }
 	ComPtr<IDXGISwapChain>			GetSwapChain() { return m_pSwapChain; }
@@ -101,6 +102,7 @@ private:
 	HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode);
 	HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
 	HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS);
+	HRESULT TexturesLoad(const RenderData::TextureData* texData, const wchar_t* filename, ID3D11ShaderResourceView** textureRV);
 	HRESULT CreateInputLayout();			//일단 하나만, 나중에 레이아웃 추가되면 함수를 추가하든 여기서 추가하든 하면될듯
 	HRESULT CreateConstBuffer();
 	HRESULT CreateVertexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, UINT stride, ID3D11Buffer** ppVB);
@@ -126,11 +128,13 @@ private:
 	RenderContext m_RenderContext;
 
 	//버텍스버퍼들
+	// ResourceHandle -> id, generation
 	//※ map으로 관리 or 다른 방식 사용. notion issue 참조※	해결
-	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_VertexBuffers;
-	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>	m_IndexBuffers;
-	std::unordered_map<UINT, UINT32>				m_IndexCounts;
-	std::unordered_map<UINT, UINT32>				m_MeshGenerations;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>				m_VertexBuffers;
+	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>				m_IndexBuffers;
+	std::unordered_map<UINT, UINT32>							m_IndexCounts;
+	std::unordered_map<UINT, UINT32>							m_MeshGenerations;
+	std::unordered_map<UINT, ComPtr<ID3D11ShaderResourceView>>	m_Textures;
 
 	//상수 버퍼
 	ComPtr<ID3D11Buffer>		m_pBCB;

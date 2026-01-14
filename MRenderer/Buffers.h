@@ -69,6 +69,7 @@ struct RenderContext
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* vertexBuffers = nullptr;
 	std::unordered_map<UINT, ComPtr<ID3D11Buffer>>* indexBuffers = nullptr;
 	std::unordered_map<UINT, UINT32>* indexCounts = nullptr;
+	std::unordered_map<UINT, ComPtr<ID3D11ShaderResourceView>>* textures = nullptr;
 
 
 	ComPtr<ID3D11InputLayout> inputLayout = nullptr;

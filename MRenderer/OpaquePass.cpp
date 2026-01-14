@@ -99,9 +99,34 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				const auto* vertexBuffers = m_RenderContext.vertexBuffers;
 				const auto* indexBuffers = m_RenderContext.indexBuffers;
 				const auto* indexCounts = m_RenderContext.indexCounts;
-
+                const auto* textures = m_RenderContext.textures;
 
 				BOOL castshadow = frame.lights[index].castShadow;
+
+
+                if (textures && item.material.IsValid())
+                {
+                    RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
+                    if (!mat)
+                        continue;
+
+                    for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
+                    {
+                        const TextureHandle h = mat->textures[slot];
+                        if (!h.IsValid())
+                            continue;
+
+                        const auto tIt = textures->find(h.id);
+                        if (tIt == textures->end())
+                            continue;
+
+                        ID3D11ShaderResourceView* srv = tIt->second.Get();
+
+                       
+                        m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
+                    }
+                }
+
 
 				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
 				{
@@ -118,6 +143,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						const bool useSubMesh = item.useSubMesh;
 						const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
 						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
+
 						DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, useSubMesh, indexCount, indexStart, castshadow);
 					}
 				}
