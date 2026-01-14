@@ -327,6 +327,44 @@ struct Serializer<RenderData::MaterialData> {
 		j["overrides"]["baseColor"]["a"] = v.baseColor.w;
 		j["overrides"]["metallic"]       = v.metallic;
 		j["overrides"]["roughness"]      = v.roughness;
+
+		// textures: TextureHandle[] -> TextureRef[] 로 저장
+		auto& outTex = j["overrides"]["textures"];
+		outTex = nlohmann::json::array();
+
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			for (const auto& h : v.textures)
+			{
+				TextureRef ref{};
+				if (h.IsValid())
+				{
+					loader->GetTextureAssetReference(h, ref.assetPath, ref.assetIndex);
+				}
+				nlohmann::json refJ;
+				Serializer<TextureRef>::ToJson(refJ, ref);
+				outTex.push_back(std::move(refJ));
+			}
+		}
+		else
+		{
+			// 로더 없으면 빈 ref로 맞춰서 길이는 유지
+			for (size_t i = 0; i < v.textures.size(); ++i)
+			{
+				nlohmann::json refJ;
+				Serializer<TextureRef>::ToJson(refJ, TextureRef{});
+				outTex.push_back(std::move(refJ));
+			}
+		}
+
+// 		// shader도 같은 방식 (ShaderHandle serializer가 없다면 ShaderRef로)
+// 		ShaderRef sref{};
+// 		if (auto* loader = AssetLoader::GetActive())
+// 		{
+// 			if (v.shader.IsValid())
+// 				loader->GetShaderAssetReference(v.shader, sref.assetPath, sref.assetIndex); // 함수 필요
+// 		}
+// 		Serializer<ShaderRef>::ToJson(j["overrides"]["shader"], sref);
 	}
 
 	static void FromJson(const nlohmann::json& j, RenderData::MaterialData& v) {
@@ -336,6 +374,42 @@ struct Serializer<RenderData::MaterialData> {
 		v.baseColor.w = j["overrides"]["baseColor"].value("a", 1.0f);
 		v.metallic    = j["overrides"].value("metallic", 0.0f);
 		v.roughness   = j["overrides"].value("roughness", 1.0f);
+
+		// textures: TextureRef[] -> TextureHandle[] 로 복원
+		if (j["overrides"].contains("textures") && j["overrides"]["textures"].is_array())
+		{
+			const auto& arr = j["overrides"]["textures"];
+			const size_t count = min(arr.size(), v.textures.size());
+
+			for (size_t i = 0; i < count; ++i)
+			{
+				TextureRef ref{};
+				Serializer<TextureRef>::FromJson(arr[i], ref);
+
+				if (ref.assetPath.empty())
+				{
+					v.textures[i] = TextureHandle::Invalid();
+					continue;
+				}
+
+				if (auto* loader = AssetLoader::GetActive())
+					v.textures[i] = loader->ResolveTexture(ref.assetPath, ref.assetIndex);
+				else
+					v.textures[i] = TextureHandle::Invalid();
+			}
+		}
+
+		// shader도 동일
+// 		if (ovr.contains("shader"))
+// 		{
+// 			ShaderRef sref{};
+// 			Serializer<ShaderRef>::FromJson(ovr["shader"], sref);
+// 
+// 			if (auto* loader = AssetLoader::GetActive())
+// 				v.shader = loader->ResolveShader(sref.assetPath, sref.assetIndex); // 함수 필요
+// 			else
+// 				v.shader = ShaderHandle::Invalid();
+// 		}
 	}
 };
 

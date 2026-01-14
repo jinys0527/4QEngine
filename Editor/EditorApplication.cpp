@@ -1692,15 +1692,19 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 				const auto& meshes = m_AssetLoader->GetMeshes().GetKeyToHandle();
 				for (const auto& [key, handle] : meshes)
 				{
-					ImGui::Selectable(key.c_str());
+					const std::string* displayName = m_AssetLoader->GetMeshes().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
 
 					if (ImGui::BeginDragDropSource())
 					{
 						ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
-						ImGui::Text("Mesh : %s", key.c_str());
+						ImGui::Text("Mesh : %s", name);
 						ImGui::EndDragDropSource();
 					}
 					ImGui::Separator();
+					ImGui::PopID();
 				}
 
 				ImGui::EndChild();
@@ -1716,15 +1720,19 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 				const auto& materials = m_AssetLoader->GetMaterials().GetKeyToHandle();
 				for (const auto& [key, handle] : materials)
 				{
-					ImGui::Selectable(key.c_str());
+					const std::string* displayName = m_AssetLoader->GetMaterials().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
 
 					if (ImGui::BeginDragDropSource())
 					{
 						ImGui::SetDragDropPayload("RESOURCE_MATERIAL", &handle, sizeof(MaterialHandle));
-						ImGui::Text("Material : %s", key.c_str());
+						ImGui::Text("Material : %s", name);
 						ImGui::EndDragDropSource();
 					}
-					ImGui::Separator();
+					ImGui::Separator(); 
+					ImGui::PopID();
 				}
 
 				ImGui::EndChild();
@@ -1740,15 +1748,19 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 				const auto& textures = m_AssetLoader->GetTextures().GetKeyToHandle();
 				for (const auto& [key, handle] : textures)
 				{
-					ImGui::Selectable(key.c_str());
+					const std::string* displayName = m_AssetLoader->GetTextures().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
 
 					if (ImGui::BeginDragDropSource())
 					{
 						ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
-						ImGui::Text("Texture : %s", key.c_str());
+						ImGui::Text("Texture : %s", name);
 						ImGui::EndDragDropSource();
 					}
 					ImGui::Separator();
+					ImGui::PopID();
 				}
 
 				ImGui::EndChild();
@@ -1764,15 +1776,19 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 				const auto& skeletons = m_AssetLoader->GetSkeletons().GetKeyToHandle();
 				for (const auto& [key, handle] : skeletons)
 				{
-					ImGui::Selectable(key.c_str());
+					const std::string* displayName = m_AssetLoader->GetSkeletons().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
 
 					if (ImGui::BeginDragDropSource())
 					{
 						ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
-						ImGui::Text("Skeleton : %s", key.c_str());
+						ImGui::Text("Skeleton : %s", name);
 						ImGui::EndDragDropSource();
 					}
 					ImGui::Separator();
+					ImGui::PopID();
 				}
 
 				ImGui::EndChild();
@@ -1788,15 +1804,19 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 				const auto& animations = m_AssetLoader->GetAnimations().GetKeyToHandle();
 				for (const auto& [key, handle] : animations)
 				{
-					ImGui::Selectable(key.c_str());
+					const std::string* displayName = m_AssetLoader->GetAnimations().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
 
 					if (ImGui::BeginDragDropSource())
 					{
 						ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
-						ImGui::Text("Animation : %s", key.c_str());
+						ImGui::Text("Animation : %s", name);
 						ImGui::EndDragDropSource();
 					}
 					ImGui::Separator();
+					ImGui::PopID();
 				}
 
 				ImGui::EndChild();

@@ -1,5 +1,9 @@
 ﻿#include "MeshComponent.h"
 #include "ReflectionMacro.h"
+#include "Object.h"
+#include "Scene.h"
+#include "ServiceRegistry.h"
+
 REGISTER_COMPONENT(MeshComponent);
 REGISTER_PROPERTY_HANDLE(MeshComponent, MeshHandle)
 REGISTER_PROPERTY_READONLY_LOADABLE(MeshComponent, Mesh)

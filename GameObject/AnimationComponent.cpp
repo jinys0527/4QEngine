@@ -10,7 +10,7 @@
 
 REGISTER_COMPONENT(AnimationComponent);
 REGISTER_PROPERTY_HANDLE(AnimationComponent, ClipHandle)
-REGISTER_PROPERTY_READONLY_LOADABLE(AnimationComponent, Animation)
+REGISTER_PROPERTY_READONLY(AnimationComponent, Animation)
 REGISTER_PROPERTY_READONLY(AnimationComponent, Playback)
 REGISTER_PROPERTY_READONLY(AnimationComponent, Blend)
 REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeights)
@@ -261,7 +261,51 @@ void AnimationComponent::ClearRetargetOffsets()
 	m_RetargetOffsets.clear(); 
 }
 
-void AnimationComponent::SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind, 
+void AnimationComponent::RefreshDerivedAfterClipChanged()
+{
+	// 1) 블렌딩 상태 초기화 (클립 바뀌면 기존 블렌드는 의미 없음)
+	m_Blend = BlendState{};               // active=false, fn=nullptr 포함
+
+	// 2) 재생 상태 리셋/클램프
+	const RenderData::AnimationClip* clip = ResolveClip();
+	m_Playback.time = 0.0f;
+	// 재생중으로 만들지 정책 선택: 에디터 드랍이면 true가 자연스러움
+	m_Playback.playing = (clip != nullptr);
+
+	// 3) BoneMask 자동 상태 정리 (정책대로)
+    // - Upper/Lower를 유지할 거면 AutoApplied=false로 두고 다음 Update에서 재생성되게
+    // - None이면 기존 weights를 유지하거나, 리셋하거나 정책 선택
+	if (m_BoneMaskSource != BoneMaskSource::None)
+	{
+		m_AutoBoneMaskApplied = false;
+		// weights는 다음 Update의 EnsureAutoBoneMask가 채움
+		m_BoneMaskWeights.clear();
+	}
+
+	// 4) 포즈/팔레트 정리 (이 값들은 디버그/표시용 파생값)
+	m_LocalPose.clear();
+	m_GlobalPose.clear();
+	m_SkinningPalette.clear();
+
+	// 5) 즉시 1회 계산해서 에디터에서 바로 보이게 (선택)
+	// - owner/skeletal/skeleton/clip이 있으면 바로 BuildPose 수행
+	Object* owner = GetOwner();
+	if (!owner) return;
+
+	auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+	if (!skeletal) return;
+
+	const RenderData::Skeleton* skel = ResolveSkeleton(skeletal->GetSkeletonHandle());
+	if (!skel || skel->bones.empty() || !clip) return;
+
+	EnsureAutoBoneMask(*skel);
+	BuildPose(*skel, *clip, m_Playback.time);
+
+	// 스켈레탈에 팔레트 반영
+	skeletal->LoadSetSkinningPalette(m_SkinningPalette);
+}
+
+void AnimationComponent::SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind,
 												 const std::vector<DirectX::XMFLOAT4X4>& targetBind)
 {
 	const size_t boneCount = max(sourceBind.size(), targetBind.size());
