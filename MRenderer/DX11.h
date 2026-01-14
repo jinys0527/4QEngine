@@ -12,6 +12,8 @@
 #include <d3dcompiler.h>
 //#include "DXMath.h"
 #include "DirectXMath.h"
+#include <WICTextureLoader.h>
+#include <DDSTextureLoader.h>
 
 using Microsoft::WRL::ComPtr;
 
