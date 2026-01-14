@@ -12,7 +12,7 @@ public:
 	~EditorViewport() = default;
 
 	bool Draw(const RenderTargetContext& renderTarget); 
-	const ImVec2& GetViewportSize() const { return m_ViewportSize; }
+	const ImVec2& GetViewportSize() const { return m_ViewportSize;}
 
 	bool IsHovered() const { return m_IsHovered; }
 private:

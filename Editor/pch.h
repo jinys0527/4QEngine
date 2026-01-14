@@ -1,6 +1,5 @@
 ﻿#pragma once
 //Editor
-
 #include<windows.h>
 #include<objbase.h>
 #include <stdio.h>
@@ -15,6 +14,10 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <type_traits>
+#include <utility>
+#include <cmath>
+
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "d3d11.lib")
