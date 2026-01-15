@@ -122,8 +122,20 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 		{
 			if (!handle.IsValid())
 				return {};
-			if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
-				return *key;
+
+			// displayName 우선
+			if (const std::string* displayName = assetLoader.GetMaterials().GetDisplayName(handle))
+			{
+				if (!displayName->empty())
+					return *displayName;
+			}
+
+			if (const std::string* key = assetLoader.GetMaterials().GetKey(handle))
+			{
+				if (!key->empty())
+					return *key;
+			}
+
 			return {};
 		};
 
@@ -160,7 +172,8 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 				ImGui::Text("SubMesh %zu", i);
 			ImGui::SameLine();
 
-			std::string display = "<None>";
+			// override display 결정
+			std::string overrideDisplay; // 비어있으면 override 없음
 			if (i < overrides.size())
 			{
 				const auto& overrideRef = overrides[i];
@@ -169,26 +182,35 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 					const MaterialHandle handle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
 					if (handle.IsValid())
 					{
-						if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
+						// displayName 우선
+						if (const std::string* displayName = assetLoader.GetMaterials().GetDisplayName(handle))
 						{
-							display = *key;
+							if (!displayName->empty())
+								overrideDisplay = *displayName;
 						}
-						else
+						if (overrideDisplay.empty())
 						{
-							display = overrideRef.assetPath;
+							if (const std::string* key = assetLoader.GetMaterials().GetKey(handle))
+							{
+								if (!key->empty())
+									overrideDisplay = *key;
+							}
 						}
 					}
-					else
-					{
-						display = overrideRef.assetPath;
-					}
+
+					// resolve 실패/표시이름 없음이면 path라도 보여줌
+					if (overrideDisplay.empty())
+						overrideDisplay = overrideRef.assetPath;
 				}
 			}
 
-			if (display == "<None>" && !baseDisplay.empty())
-				display = baseDisplay;
+			// shown 우선순위: overrideDisplay > baseDisplay > <None>
+			const char* name =
+				(!overrideDisplay.empty()) ? overrideDisplay.c_str() :
+				(!baseDisplay.empty()) ? baseDisplay.c_str() :
+				"<None>";
 
-			const std::string buttonLabel = display + "##SubMeshOverride";
+			std::string buttonLabel = std::string(name) + "##SubMeshOverride";
 			ImGui::Button(buttonLabel.c_str());
 
 			if (ImGui::BeginDragDropTarget())
@@ -539,8 +561,10 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		property.GetValue(component, &value);
 
 		const std::string* key = assetLoader.GetMeshes().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
+		const std::string* displayName = assetLoader.GetMeshes().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
 
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
@@ -577,8 +601,10 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		property.GetValue(component, &value);
 
 		const std::string* key = assetLoader.GetMaterials().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
+		const std::string* displayName = assetLoader.GetMaterials().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
 
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
@@ -615,8 +641,10 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		property.GetValue(component, &value);
 
 		const std::string* key = assetLoader.GetTextures().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
+		const std::string* displayName = assetLoader.GetTextures().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
 
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
@@ -647,8 +675,10 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		property.GetValue(component, &value);
 
 		const std::string* key = assetLoader.GetAnimations().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
+		const std::string* displayName = assetLoader.GetAnimations().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
 
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
@@ -680,8 +710,10 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		property.GetValue(component, &value);
 
 		const std::string* key = assetLoader.GetSkeletons().GetKey(value);
-		const std::string display = key ? *key : std::string("<None>");
-		const std::string buttonLabel = display + "##" + property.GetName();
+		const std::string* displayName = assetLoader.GetSkeletons().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
 
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
@@ -728,10 +760,13 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 
 		for (size_t i = 0; i < value.textures.size(); ++i)
 		{
+			ImGui::PushID(static_cast<int>(i));
 			TextureHandle handle = value.textures[i];
 			const std::string* key = assetLoader.GetTextures().GetKey(handle);
-			const std::string display = key ? *key : std::string("<None>");
-			const std::string buttonLabel = display + "##MaterialTexture";
+			const std::string* displayName = assetLoader.GetTextures().GetDisplayName(handle);
+
+			const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+			const std::string buttonLabel = std::string(name) + "##MaterialTexture";
 
 			ImGui::TextUnformatted(kTextureLabels[i]);
 			ImGui::SameLine();
@@ -754,6 +789,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.textures[i] = TextureHandle::Invalid();
 				updated = true;
 			}
+
+
+			ImGui::PopID();
 		}
 
 		// Shader handle

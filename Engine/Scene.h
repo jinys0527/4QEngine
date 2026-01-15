@@ -66,6 +66,8 @@ public:
 	void SetGameManager     (GameManager* gameManager);
 	void SetSceneManager    (SceneManager* sceneManager);
 
+	ServiceRegistry& GetServices() const { return m_Services; }
+
 	void SetIsPause         (bool value) { m_Pause = value; }
 	bool GetIsPause         ()           { return m_Pause;  }
 

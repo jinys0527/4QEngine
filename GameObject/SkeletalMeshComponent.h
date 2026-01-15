@@ -27,6 +27,8 @@ public:
 			loader->GetSkeletonAssetReference(handle, ref.assetPath, ref.assetIndex);
 
 		LoadSetSkeleton(ref); // 또는 내부 갱신 함수
+
+		m_SkinningPalette.clear();
 	}
 	const SkeletonHandle& GetSkeletonHandle() const                { return m_SkeletonHandle;   }
 

@@ -15,7 +15,7 @@ public:
 	MaterialComponent() = default;
 	virtual ~MaterialComponent() = default;
 
-	void				  SetMaterialHandle(const MaterialHandle& handle)
+	void SetMaterialHandle(const MaterialHandle& handle)
 	{ 
 		m_MaterialHandle = handle;
 		// 파생값 갱신 (읽기전용 표시용)
@@ -24,7 +24,10 @@ public:
 			loader->GetMaterialAssetReference(handle, ref.assetPath, ref.assetIndex);
 
 		LoadSetMaterial(ref); // 또는 내부 갱신 함수
+
+		RefreshDerivedAfterMaterialChanged(); // 여기서 텍스처 포함 파생 갱신
 	}
+
 	const MaterialHandle& GetMaterialHandle() const						  { return m_MaterialHandle;   }
 
 	void LoadSetMaterial(const MaterialRef& materialRef)
@@ -44,6 +47,8 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 protected:
+	void RefreshDerivedAfterMaterialChanged();
+
 	MaterialHandle			 m_MaterialHandle;
 	MaterialRef				 m_Material;
 	RenderData::MaterialData m_Overrides;

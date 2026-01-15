@@ -25,3 +25,25 @@ void MaterialComponent::Update(float deltaTime)
 void MaterialComponent::OnEvent(EventType type, const void* data)
 {
 }
+
+void MaterialComponent::RefreshDerivedAfterMaterialChanged()
+{
+	// 1) 머티리얼 원본 데이터 얻기
+	auto* loader = AssetLoader::GetActive();
+	if (!loader || !m_MaterialHandle.IsValid())
+	{
+		m_Overrides = RenderData::MaterialData{}; // 기본값
+		return;
+	}
+
+	const auto* src = loader->GetMaterials().Get(m_MaterialHandle);
+	if (!src)
+	{
+		m_Overrides = RenderData::MaterialData{};
+		return;
+	}
+
+	m_Overrides = *src;
+
+	SetOverrides(m_Overrides); 
+}

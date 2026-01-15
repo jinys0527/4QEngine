@@ -151,12 +151,38 @@
                                 "overrides": {
                                     "baseColor": {
                                         "a": 1.0,
-                                        "b": 1.0,
-                                        "g": 1.0,
-                                        "r": 1.0
+                                        "b": 0.5,
+                                        "g": 0.5,
+                                        "r": 0.5
                                     },
                                     "metallic": 0.0,
-                                    "roughness": 1.0
+                                    "roughness": 1.0,
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 4,
+                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ]
                                 }
                             }
                         },
@@ -267,14 +293,14 @@
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": 1.526030659985657e+20,
+                            "Intensity": 1.648459987812352e+15,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "Range": 1.526030659985657e+20,
-                            "SpotAngle": 1.526030659985657e+20
+                            "Range": 1.648459987812352e+15,
+                            "SpotAngle": 1.648459987812352e+15
                         },
                         "type": "LightComponent"
                     }

@@ -44,8 +44,8 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 protected:
-	MeshHandle  m_MeshHandle;
-	MeshRef		m_Mesh;
+	MeshHandle   m_MeshHandle;
+	MeshRef		 m_Mesh;
 	std::vector<MaterialRef> m_SubMeshMaterialOverrides;
 };
 
