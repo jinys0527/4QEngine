@@ -18,7 +18,7 @@ public:
 
 	void LoadSetMesh(const MeshRef& meshRef)
 	{
-		m_Mesh= meshRef;
+		m_Mesh = meshRef;
 	}
 
 	const MeshRef& GetMesh() const { return m_Mesh; }
@@ -44,13 +44,13 @@ public:
 	void		SetReceiveShadow(bool receiveShadow) { m_ReceiveShadow = receiveShadow; }
 	const bool& GetReceiveShadow() const		     { return m_ReceiveShadow;	        }
 
-	virtual bool BuildRenderItem(RenderData::RenderItem& out) const;
+	virtual bool BuildRenderItem(RenderData::RenderItem& out);
 
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
 private:
-	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const;
+	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material);
 
 protected:
 	static UINT64 BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT8 layer);

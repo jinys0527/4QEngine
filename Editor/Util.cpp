@@ -119,6 +119,10 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 	const auto& overrides = meshComponent.GetSubMeshMaterialOverrides();
 	bool changed = false;
 
+	// Clear UI 상태(직전 Clear 누른 슬롯만 <None>으로 보이게)
+	static MeshComponent* s_lastClearedComp = nullptr;
+	static int s_lastClearedIndex = -1;
+
 	auto resolveMaterialDisplay = [&assetLoader](const MaterialHandle& handle) -> std::string
 		{
 			if (!handle.IsValid())
@@ -140,6 +144,13 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 			return {};
 		};
 
+	// ★ 오브젝트(MaterialComponent) 쪽 "현재 베이스 머티리얼"을 먼저 잡아둠
+	MaterialHandle ownerBaseMaterial = MaterialHandle::Invalid();
+	if (const auto* owner = meshComponent.GetOwner())
+	{
+		if (const auto* materialComponent = owner->GetComponent<MaterialComponent>())
+			ownerBaseMaterial = materialComponent->GetMaterialHandle();
+	}
 
 	if (ImGui::TreeNode("SubMesh Overrides"))
 	{
@@ -147,26 +158,24 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 		{
 			ImGui::PushID(static_cast<int>(i));
 			ImGui::AlignTextToFramePadding();
+
 			std::string subMeshName;
-			MaterialHandle baseMaterial = MaterialHandle::Invalid();
-			if (!meshData->subMeshes.empty())
+
+			// ★ meshbin에 박힌 서브메시 기본 머티리얼 (fallback용)
+			MaterialHandle subMeshDefaultMaterial = MaterialHandle::Invalid();
+			if (!meshData->subMeshes.empty() && i < meshData->subMeshes.size())
 			{
-				if (i < meshData->subMeshes.size())
-				{
-					subMeshName = meshData->subMeshes[i].name;
-					baseMaterial = meshData->subMeshes[i].material;
-				}
-			}
-			else
-			{
-				if (const auto* owner = meshComponent.GetOwner())
-				{
-					if (const auto* materialComponent = owner->GetComponent<MaterialComponent>())
-						baseMaterial = materialComponent->GetMaterialHandle();
-				}
+				subMeshName = meshData->subMeshes[i].name;
+				subMeshDefaultMaterial = meshData->subMeshes[i].material;
 			}
 
+			// ★ UI에서 보여줄 baseMaterial 우선순위:
+			// 1) 오브젝트(MaterialComponent) 현재 값
+			// 2) meshbin의 submesh 기본값(임포트 당시)
+			MaterialHandle baseMaterial = ownerBaseMaterial.IsValid() ? ownerBaseMaterial : subMeshDefaultMaterial;
+
 			std::string baseDisplay = resolveMaterialDisplay(baseMaterial);
+
 			if (!subMeshName.empty())
 				ImGui::Text("%s", subMeshName.c_str());
 			else
@@ -205,9 +214,13 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 				}
 			}
 
+			// Clear 상태 체크
+			bool isClear = (s_lastClearedComp == &meshComponent && s_lastClearedIndex == (int)i);
+
 			// shown 우선순위: overrideDisplay > baseDisplay > <None>
 			const char* name =
 				(!overrideDisplay.empty()) ? overrideDisplay.c_str() :
+				isClear ? "<None>" :
 				(!baseDisplay.empty()) ? baseDisplay.c_str() :
 				"<None>";
 
@@ -225,6 +238,13 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 					{
 						meshComponent.SetSubMeshMaterialOverride(i, MaterialRef{ assetPath, assetIndex });
 						changed = true;
+
+						// 드롭으로 override가 들어오면 Clear 상태 해제
+						if (s_lastClearedComp == &meshComponent && s_lastClearedIndex == (int)i)
+						{
+							s_lastClearedComp = nullptr;
+							s_lastClearedIndex = -1;
+						}
 					}
 				}
 				ImGui::EndDragDropTarget();
@@ -235,6 +255,9 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 			{
 				meshComponent.ClearSubMeshMaterialOverride(i);
 				changed = true;
+
+				s_lastClearedIndex = static_cast<int>(i);
+				s_lastClearedComp = &meshComponent;
 			}
 
 			ImGui::PopID();
@@ -328,7 +351,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	}
 
 	if (typeInfo == typeid(XMFLOAT3))
-	{
+	{ 
 		if (auto* transform = dynamic_cast<LightComponent*>(component)) {
 			if (property.GetName() == "Color") {
 				XMFLOAT3 value{};
