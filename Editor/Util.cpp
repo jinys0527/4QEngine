@@ -386,9 +386,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 						XMConvertToDegrees(eulerRadians.z)
 					};
 					state.eulerDegrees = {
-						NormalizeDegrees(eulerDegrees.z),
+						NormalizeDegrees(eulerDegrees.x),
 						NormalizeDegrees(eulerDegrees.y),
-						NormalizeDegrees(eulerDegrees.x)
+						NormalizeDegrees(eulerDegrees.z)
 					};
 					state.lastQuaternion = value;
 					state.initialized = true;
@@ -408,9 +408,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 						NormalizeDegrees(data[2])
 					};
 					const XMFLOAT3 updatedRadians = {
-						XMConvertToRadians(state.eulerDegrees.z),
+						XMConvertToRadians(state.eulerDegrees.x),
 						XMConvertToRadians(state.eulerDegrees.y),
-						XMConvertToRadians(state.eulerDegrees.x)
+						XMConvertToRadians(state.eulerDegrees.z)
 					};
 					const XMFLOAT4 updatedRotation = EulerRadiansToQuaternion(updatedRadians);
 					property.SetValue(component, &updatedRotation);

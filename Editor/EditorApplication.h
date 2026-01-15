@@ -54,6 +54,7 @@ private:
 	void DrawInspector();
 	void DrawFolderView();
 	void DrawResourceBrowser();
+	void DrawGizmo();
 
 	//Gui 관련
 	void CreateDockSpace();
