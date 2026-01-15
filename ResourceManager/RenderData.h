@@ -90,7 +90,7 @@ namespace RenderData
 		LightType  type = LightType::Directional;
 		XMFLOAT3   posiiton{ 0.0f, 0.0f, 0.0f };
 		FLOAT      range = 0.0f;
-		XMFLOAT3   diretion{ 0.0f, -1.0f, 0.0f };
+		XMFLOAT3   direction{ 0.0f, -1.0f, 0.0f };
 		FLOAT      spotAngle = 0.0f;
 		XMFLOAT3   color{ 1.0f, 1.0f, 1.0f };
 		FLOAT      intensity = 1.0f;

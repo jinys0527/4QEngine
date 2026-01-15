@@ -37,7 +37,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 	{
 		const auto& light = frame.lights[0];
 		Light dirlight;
-		dirlight.vDir = light.diretion;
+		dirlight.vDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
 		dirlight.Color = light.color;
 		dirlight.Intensity = light.intensity;
 		dirlight.mLightViewProj = light.lightViewProj;

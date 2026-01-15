@@ -15,7 +15,7 @@ float4 DirectLight(float4 nrm)
     
     //각 벡터 노멀라이즈.
     N = normalize(N);
-    L = normalize(-L);
+    L = normalize(L);
 
     
     //조명 계산 

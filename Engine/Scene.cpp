@@ -517,7 +517,7 @@ static void AppendLights(const Object& obj, RenderData::FrameData& frameData)
 		data.type          = light->GetType();
 		data.posiiton      = light->GetPosition();
 		data.range         = light->GetRange();
-		data.diretion      = light->GetDirection();
+		data.direction      = light->GetDirection();
 		data.spotAngle     = light->GetSpotAngle();
 		data.color         = light->GetColor();
 		data.intensity     = light->GetIntensity();
