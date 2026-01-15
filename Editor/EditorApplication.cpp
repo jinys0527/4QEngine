@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "EditorApplication.h"
 #include "CameraObject.h"
+#include "TransformComponent.h"
 #include "CameraComponent.h"
 #include "MeshComponent.h"
 #include "MeshRenderer.h"
@@ -8,6 +9,7 @@
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "AnimationComponent.h"
+#include "CameraComponent.h"
 #include "GameObject.h"
 #include "Reflection.h"
 #include "ServiceRegistry.h"
@@ -20,865 +22,15 @@
 #include "Importer.h"
 #include "Util.h"
 #include "json.hpp"
-#include <algorithm>
-#include <type_traits>
-#include <utility>
+#include "ImGuizmo.h"
+#include "MathHelper.h"
+
 
 
 #define DRAG_SPEED 0.01f
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-// util
-// Check 
-//bool SceneHasObjectName(const Scene& scene, const std::string& name)
-//{  
-//	const auto& opaqueObjects = scene.GetOpaqueObjects();
-//	const auto& transparentObjects = scene.GetTransparentObjects();
-//	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
-//}
-//
-//	// 이름 변경용 helper 
-//	void CopyStringToBuffer(const std::string& value, std::array<char, 256>& buffer)
-//	{
-//		std::snprintf(buffer.data(), buffer.size(), "%s", value.c_str());
-//	}
-//	//////////////////////
-//	// 
-//	// 
-//	// 이름 중복방지(넘버링)
-//	std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName)
-//	{
-//		if (!SceneHasObjectName(scene, baseName))
-//		{
-//			return baseName;
-//		}
-//		for (int index = 1; index < 10000; ++index)
-//		{
-//			std::string candidate = baseName + std::to_string(index);
-//			if (!SceneHasObjectName(scene, candidate))
-//			{
-//				return candidate;
-//			}
-//		}
-//		//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
-//	}
-//
-//
-//	bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& assetLoader)
-//	{
-//		const MeshHandle meshHandle = meshComponent.GetMeshHandle();
-//		if (!meshHandle.IsValid())
-//		{
-//			ImGui::TextDisabled("SubMesh Overrides (mesh not set)");
-//			return false;
-//		}
-//
-//		const auto* meshData = assetLoader.GetMeshes().Get(meshHandle);
-//		if (!meshData)
-//		{
-//			ImGui::TextDisabled("SubMesh Overrides (mesh not loaded)");
-//			return false;
-//		}
-//
-//		const size_t subMeshCount = meshData->subMeshes.empty() ? 1 : meshData->subMeshes.size();
-//		const auto& overrides = meshComponent.GetSubMeshMaterialOverrides();
-//		bool changed = false;
-//
-//		auto resolveMaterialDisplay = [&assetLoader](const MaterialHandle& handle) -> std::string
-//			{
-//				if (!handle.IsValid())
-//					return {};
-//				if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
-//					return *key;
-//				return {};
-//			};
-//
-//
-//		if (ImGui::TreeNode("SubMesh Overrides"))
-//		{
-//			for (size_t i = 0; i < subMeshCount; ++i)
-//			{
-//				ImGui::PushID(static_cast<int>(i));
-//				ImGui::AlignTextToFramePadding();
-//				std::string subMeshName;
-//				MaterialHandle baseMaterial = MaterialHandle::Invalid();
-//				if (!meshData->subMeshes.empty())
-//				{
-//					if (i < meshData->subMeshes.size())
-//					{
-//						subMeshName  = meshData->subMeshes[i].name;
-//						baseMaterial = meshData->subMeshes[i].material;
-//					}
-//				}
-//				else
-//				{
-//					if (const auto* owner = meshComponent.GetOwner())
-//					{
-//						if (const auto* materialComponent = owner->GetComponent<MaterialComponent>())
-//							baseMaterial = materialComponent->GetMaterialHandle();
-//					}
-//				}
-//
-//				std::string baseDisplay = resolveMaterialDisplay(baseMaterial);
-//				if (!subMeshName.empty())
-//					ImGui::Text("%s", subMeshName.c_str());
-//				else
-//					ImGui::Text("SubMesh %zu", i);
-//				ImGui::SameLine();
-//
-//				std::string display = "<None>";
-//				if (i < overrides.size())
-//				{
-//					const auto& overrideRef = overrides[i];
-//					if (!overrideRef.assetPath.empty())
-//					{
-//						const MaterialHandle handle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
-//						if (handle.IsValid())
-//						{
-//							if (const auto* key = assetLoader.GetMaterials().GetKey(handle))
-//							{
-//								display = *key;
-//							}
-//							else
-//							{
-//								display = overrideRef.assetPath;
-//							}
-//						}
-//						else
-//						{
-//							display = overrideRef.assetPath;
-//						}
-//					}
-//				}
-//
-//				if (display == "<None>" && !baseDisplay.empty())
-//					display = baseDisplay;
-//
-//				const std::string buttonLabel = display + "##SubMeshOverride";
-//				ImGui::Button(buttonLabel.c_str());
-//
-//				if (ImGui::BeginDragDropTarget())
-//				{
-//					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
-//					{
-//						const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
-//						std::string assetPath;
-//						UINT32 assetIndex = 0;
-//						if (assetLoader.GetMaterialAssetReference(dropped, assetPath, assetIndex))
-//						{
-//							meshComponent.SetSubMeshMaterialOverride(i, MaterialRef{ assetPath, assetIndex });
-//							changed = true;
-//						}
-//					}
-//					ImGui::EndDragDropTarget();
-//				}
-//
-//				ImGui::SameLine();
-//				if (ImGui::Button("Clear"))
-//				{
-//					meshComponent.ClearSubMeshMaterialOverride(i);
-//					changed = true;
-//				}
-//
-//				ImGui::PopID();
-//			}
-//			ImGui::TreePop();
-//		}
-//
-//		return changed;
-//	}
-//
-//	bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
-//	{	// 각 Property별 배치 Layout은 정해줘야 함
-//		using PlaybackStateType   = std::decay_t<decltype(std::declval<AnimationComponent>().GetPlayback())>;
-//		using BoneMaskSourceType  = std::decay_t<decltype(std::declval<AnimationComponent>().GetBoneMaskSource())>;
-//		using RetargetOffsetsType = std::decay_t<decltype(std::declval<AnimationComponent>().GetRetargetOffsets())>;
-//		const std::type_info& typeInfo = property.GetTypeInfo();
-//	
-//		if (typeInfo == typeid(int))
-//		{
-//			int value = 0;
-//			property.GetValue(component, &value);
-//			if (ImGui::DragInt(property.GetName().c_str(), &value))
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(float))
-//		{
-//			float value = 0.0f;
-//			property.GetValue(component, &value);
-//			if (ImGui::DragFloat(property.GetName().c_str(), &value, DRAG_SPEED))
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(bool))
-//		{
-//			bool value = false;
-//			property.GetValue(component, &value);
-//			if (ImGui::Checkbox(property.GetName().c_str(), &value))
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(std::string))
-//		{
-//			std::string value;
-//			property.GetValue(component, &value);
-//			std::array<char, 256> buffer{};
-//			CopyStringToBuffer(value, buffer);
-//			if (ImGui::InputText(property.GetName().c_str(), buffer.data(), buffer.size()))
-//			{
-//				std::string updatedValue(buffer.data());
-//				property.SetValue(component, &updatedValue);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(XMFLOAT2))
-//		{
-//			XMFLOAT2 value{};
-//			property.GetValue(component, &value);
-//			float data[2] = { value.x, value.y };
-//			if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
-//			{
-//				value.x = data[0];
-//				value.y = data[1];
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(XMFLOAT3))
-//		{
-//			XMFLOAT3 value{};
-//			property.GetValue(component, &value);
-//			float data[3] = { value.x, value.y, value.z };
-//			if (ImGui::DragFloat3(property.GetName().c_str(), data, DRAG_SPEED))
-//			{
-//				value.x = data[0];
-//				value.y = data[1];
-//				value.z = data[2];
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(XMFLOAT4))
-//		{
-//			XMFLOAT4 value{};
-//			property.GetValue(component, &value);
-//			float data[4] = { value.x, value.y, value.z, value.w };
-//			if (ImGui::DragFloat4(property.GetName().c_str(), data, DRAG_SPEED))
-//			{
-//				value.x = data[0];
-//				value.y = data[1];
-//				value.z = data[2];
-//				value.w = data[3];
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		// 카메라
-//		if (typeInfo == typeid(Viewport))
-//		{
-//			Viewport value{};
-//			property.GetValue(component, &value);
-//			float data[2] = { value.Width, value.Height };
-//			if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
-//			{
-//				value.Width = data[0];
-//				value.Height = data[1];
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(PerspectiveParams))
-//		{
-//			PerspectiveParams value{};
-//			property.GetValue(component, &value);
-//			bool updated = false;
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::Indent();
-//			ImGui::PushID(property.GetName().c_str());
-//			updated |= ImGui::InputFloat("Fov", &value.Fov);
-//			updated |= ImGui::InputFloat("Aspect", &value.Aspect);
-//			ImGui::PopID();
-//			ImGui::Unindent();
-//			if (updated)
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(OrthoParams))
-//		{
-//			OrthoParams value{};
-//			property.GetValue(component, &value);
-//			bool updated = false;
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::Indent();
-//			ImGui::PushID(property.GetName().c_str());
-//			updated |= ImGui::InputFloat("Width", &value.Width);
-//			updated |= ImGui::InputFloat("Height", &value.Height);
-//			ImGui::PopID();
-//			ImGui::Unindent();
-//			if (updated)
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(OrthoOffCenterParams))
-//		{
-//			OrthoOffCenterParams value{};
-//			property.GetValue(component, &value);
-//			bool updated = false;
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::Indent();
-//			ImGui::PushID(property.GetName().c_str());
-//			updated |= ImGui::InputFloat("Left", &value.Left);
-//			updated |= ImGui::InputFloat("Right", &value.Right);
-//			updated |= ImGui::InputFloat("Bottom", &value.Bottom);
-//			updated |= ImGui::InputFloat("Top", &value.Top);
-//			ImGui::PopID();
-//			ImGui::Unindent();
-//			if (updated)
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//
-//		// Render Layer
-//		if (typeInfo == typeid(UINT8))
-//		{
-//			UINT8 value = 0;
-//			property.GetValue(component, &value);
-//			if (property.GetName() == "RenderLayer")
-//			{
-//				static constexpr const char* kLayers[] = { "Opaque", "Transparent", "UI" };
-//				int current = static_cast<int>(value);
-//				if (ImGui::Combo(property.GetName().c_str(), &current, kLayers, IM_ARRAYSIZE(kLayers)))
-//				{
-//					const UINT8 updated = static_cast<UINT8>(std::clamp(current, 0, 2));
-//					property.SetValue(component, &updated);
-//					return true;
-//				}
-//				return false;
-//			}
-//
-//			if (ImGui::DragScalar(property.GetName().c_str(), ImGuiDataType_U8, &value))
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//
-//		// AssetPath + AssetIndex
-//		if (typeInfo == typeid(AssetRef))
-//		{
-//			AssetRef value{};
-//			property.GetValue(component, &value);
-//
-//			std::string label = property.GetName();
-//			label += ": ";
-//			if (!value.assetPath.empty())
-//			{
-//				label += value.assetPath + " [" + std::to_string(value.assetIndex) + "]";
-//			}
-//			else
-//			{
-//				label += "<None>";
-//			}
-//			ImGui::TextUnformatted(label.c_str());
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(XMFLOAT4X4))
-//		{
-//			XMFLOAT4X4 value{};
-//			property.GetValue(component, &value);
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._11, value._12, value._13, value._14);
-//			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._21, value._22, value._23, value._24);
-//			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._31, value._32, value._33, value._34);
-//			ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._41, value._42, value._43, value._44);
-//			return false;
-//		}
-//
-//
-//		if (typeInfo == typeid(MeshHandle))
-//		{
-//			MeshHandle value{};
-//			property.GetValue(component, &value);
-//
-//			const std::string* key = assetLoader.GetMeshes().GetKey(value);
-//			const std::string display = key ? *key : std::string("<None>");
-//			const std::string buttonLabel = display + "##" + property.GetName();
-//
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::SameLine();
-//			ImGui::Button(buttonLabel.c_str());
-//
-//			if (ImGui::BeginDragDropTarget())
-//			{
-//				bool updated = false;
-//				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MESH"))
-//				{
-//					const MeshHandle dropped = *static_cast<const MeshHandle*>(payload->Data);
-//					property.SetValue(component, &dropped);
-//
-//					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
-//					{
-//						const std::string* droppedKey = assetLoader.GetMeshes().GetKey(dropped);
-//					}
-//
-//					updated = true;
-//				}
-//				ImGui::EndDragDropTarget();
-//				if (updated)
-//				{
-//					return true;
-//				}
-//			}
-//
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(MaterialHandle))
-//		{
-//			MaterialHandle value{};
-//			property.GetValue(component, &value);
-//
-//			const std::string* key = assetLoader.GetMaterials().GetKey(value);
-//			const std::string display = key ? *key : std::string("<None>");
-//			const std::string buttonLabel = display + "##" + property.GetName();
-//
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::SameLine();
-//			ImGui::Button(buttonLabel.c_str());
-//
-//			if (ImGui::BeginDragDropTarget())
-//			{
-//				bool updated = false;
-//				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_MATERIAL"))
-//				{
-//					const MaterialHandle dropped = *static_cast<const MaterialHandle*>(payload->Data);
-//					property.SetValue(component, &dropped);
-//
-//					if (auto* materialComponent = dynamic_cast<MaterialComponent*>(component))
-//					{
-//						const std::string* droppedKey = assetLoader.GetMaterials().GetKey(dropped);
-//					}
-//
-//					updated = true;
-//				}
-//				ImGui::EndDragDropTarget();
-//				if (updated)
-//				{
-//					return true;
-//				}
-//			}
-//
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(TextureHandle))
-//		{
-//			TextureHandle value{};
-//			property.GetValue(component, &value);
-//
-//			const std::string* key = assetLoader.GetTextures().GetKey(value);
-//			const std::string display = key ? *key : std::string("<None>");
-//			const std::string buttonLabel = display + "##" + property.GetName();
-//
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::SameLine();
-//			ImGui::Button(buttonLabel.c_str());
-//
-//			if (ImGui::BeginDragDropTarget())
-//			{
-//				bool updated = false;
-//				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
-//				{
-//					const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
-//					property.SetValue(component, &dropped);
-//					updated = true;
-//				}
-//				ImGui::EndDragDropTarget();
-//				if (updated)
-//				{
-//					return true;
-//				}
-//			}
-//
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(AnimationHandle))
-//		{
-//			AnimationHandle value{};
-//			property.GetValue(component, &value);
-//
-//			const std::string* key = assetLoader.GetAnimations().GetKey(value);
-//			const std::string display = key ? *key : std::string("<None>");
-//			const std::string buttonLabel = display + "##" + property.GetName();
-//
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::SameLine();
-//			ImGui::Button(buttonLabel.c_str());
-//
-//			if (ImGui::BeginDragDropTarget())
-//			{
-//				bool updated = false;
-//				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
-//				{
-//					const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
-//					property.SetValue(component, &dropped);
-//					updated = true;
-//				}
-//				ImGui::EndDragDropTarget();
-//				if (updated)
-//				{
-//					return true;
-//				}
-//			}
-//
-//			return false;
-//		}
-//
-//
-//		if (typeInfo == typeid(SkeletonHandle))
-//		{
-//			SkeletonHandle value{};
-//			property.GetValue(component, &value);
-//
-//			const std::string* key = assetLoader.GetSkeletons().GetKey(value);
-//			const std::string display = key ? *key : std::string("<None>");
-//			const std::string buttonLabel = display + "##" + property.GetName();
-//
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::SameLine();
-//			ImGui::Button(buttonLabel.c_str());
-//
-//			if (ImGui::BeginDragDropTarget())
-//			{
-//				bool updated = false;
-//				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SKELETON"))
-//				{
-//					const SkeletonHandle dropped = *static_cast<const SkeletonHandle*>(payload->Data);
-//					property.SetValue(component, &dropped);
-//					updated = true;
-//				}
-//				ImGui::EndDragDropTarget();
-//				if (updated)
-//				{
-//					return true;
-//				}
-//			}
-//
-//			return false;
-//		}
-//
-//		
-//
-//		if (typeInfo == typeid(RenderData::MaterialData))
-//		{
-//			RenderData::MaterialData value{};
-//			property.GetValue(component, &value);
-//
-//			bool updated = false;
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::Indent();
-//			ImGui::PushID(property.GetName().c_str());
-//
-//			updated |= ImGui::ColorEdit4("Base Color", &value.baseColor.x);
-//			updated |= ImGui::DragFloat("Metallic", &value.metallic, 0.01f, 0.0f, 1.0f);
-//			updated |= ImGui::DragFloat("Roughness", &value.roughness, 0.01f, 0.0f, 1.0f);
-//
-//			// Texture slots
-//			static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
-//			static_assert(std::size(kTextureLabels) == static_cast<size_t>(RenderData::MaterialTextureSlot::TEX_MAX));
-//
-//			for (size_t i = 0; i < value.textures.size(); ++i)
-//			{
-//				TextureHandle handle = value.textures[i];
-//				const std::string* key = assetLoader.GetTextures().GetKey(handle);
-//				const std::string display = key ? *key : std::string("<None>");
-//				const std::string buttonLabel = display + "##MaterialTexture";
-//
-//				ImGui::TextUnformatted(kTextureLabels[i]);
-//				ImGui::SameLine();
-//				ImGui::Button(buttonLabel.c_str());
-//
-//				if (ImGui::BeginDragDropTarget())
-//				{
-//					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
-//					{
-//						const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
-//						value.textures[i] = dropped;
-//						updated = true;
-//					}
-//					ImGui::EndDragDropTarget();
-//				}
-//
-//				ImGui::SameLine();
-//				if (ImGui::Button("Clear##Texture"))
-//				{
-//					value.textures[i] = TextureHandle::Invalid();
-//					updated = true;
-//				}
-//			}
-//
-//			// Shader handle
-//			{
-//				ShaderHandle shader = value.shader;
-//				//const std::string* key = assetLoader.GetShaders().GetKey(shader);
-//				//const std::string display = key ? *key : std::string("<None>");
-//				const std::string display = "<None>";
-//				const std::string buttonLabel = display + "##MaterialShader";
-//
-//				ImGui::TextUnformatted("Shader");
-//				ImGui::SameLine();
-//				ImGui::Button(buttonLabel.c_str());
-//
-//				if (ImGui::BeginDragDropTarget())
-//				{
-//					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER"))
-//					{
-//						const ShaderHandle dropped = *static_cast<const ShaderHandle*>(payload->Data);
-//						value.shader = dropped;
-//						updated = true;
-//					}
-//					ImGui::EndDragDropTarget();
-//				}
-//
-//				ImGui::SameLine();
-//				if (ImGui::Button("Clear##Shader"))
-//				{
-//					value.shader = ShaderHandle::Invalid();
-//					updated = true;
-//				}
-//			}
-//
-//			ImGui::PopID();
-//			ImGui::Unindent();
-//
-//			if (updated)
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//
-//		if (typeInfo == typeid(std::vector<float>))
-//		{
-//			std::vector<float> value;
-//			property.GetValue(component, &value);
-//			ImGui::Text("%s: %zu entries", property.GetName().c_str(), value.size());
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(std::vector<DirectX::XMFLOAT4X4>))
-//		{
-//			std::vector<DirectX::XMFLOAT4X4> value;
-//			property.GetValue(component, &value);
-//			ImGui::Text("%s: %zu matrices", property.GetName().c_str(), value.size());
-//			return false;
-//		}
-//
-//
-//		if (typeInfo == typeid(PlaybackStateType))
-//		{
-//			PlaybackStateType value{};
-//			property.GetValue(component, &value);
-//			ImGui::Text("%s: time %.3f, speed %.2f, looping %s, playing %s",
-//				property.GetName().c_str(),
-//				value.time,
-//				value.speed,
-//				value.looping ? "true" : "false",
-//				value.playing ? "true" : "false");
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(AnimationComponent::BlendState))
-//		{
-//			AnimationComponent::BlendState value{};
-//			property.GetValue(component, &value);
-//
-//			bool updated = false;
-//
-//			ImGui::TextUnformatted(property.GetName().c_str());
-//			ImGui::Indent();
-//			ImGui::PushID(property.GetName().c_str());
-//
-//			// active
-//			updated |= ImGui::Checkbox("Active", &value.active);
-//
-//			// fromClip
-//			{
-//				const std::string* key = assetLoader.GetAnimations().GetKey(value.fromClip);
-//				const std::string display = key ? *key : std::string("<None>");
-//				const std::string buttonLabel = display + "##BlendFromClip";
-//
-//				ImGui::TextUnformatted("From Clip");
-//				ImGui::SameLine();
-//				ImGui::Button(buttonLabel.c_str());
-//
-//				if (ImGui::BeginDragDropTarget())
-//				{
-//					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
-//					{
-//						const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
-//						value.fromClip = dropped;
-//						updated = true;
-//					}
-//					ImGui::EndDragDropTarget();
-//				}
-//
-//				ImGui::SameLine();
-//				if (ImGui::Button("Clear##BlendFromClip"))
-//				{
-//					value.fromClip = AnimationHandle::Invalid();
-//					updated = true;
-//				}
-//			}
-//
-//			// toClip
-//			{
-//				const std::string* key = assetLoader.GetAnimations().GetKey(value.toClip);
-//				const std::string display = key ? *key : std::string("<None>");
-//				const std::string buttonLabel = display + "##BlendToClip";
-//
-//				ImGui::TextUnformatted("To Clip");
-//				ImGui::SameLine();
-//				ImGui::Button(buttonLabel.c_str());
-//
-//				if (ImGui::BeginDragDropTarget())
-//				{
-//					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
-//					{
-//						const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
-//						value.toClip = dropped;
-//						updated = true;
-//					}
-//					ImGui::EndDragDropTarget();
-//				}
-//
-//				ImGui::SameLine();
-//				if (ImGui::Button("Clear##BlendToClip"))
-//				{
-//					value.toClip = AnimationHandle::Invalid();
-//					updated = true;
-//				}
-//			}
-//
-//			// duration / elapsed / fromTime / toTime
-//			updated |= ImGui::InputFloat("Duration", &value.duration);
-//			updated |= ImGui::InputFloat("Elapsed", &value.elapsed);
-//			updated |= ImGui::InputFloat("From Time", &value.fromTime);
-//			updated |= ImGui::InputFloat("To Time", &value.toTime);
-//
-//			// blendType (enum)
-//			{
-//				// enum -> int combo
-//				// BlendType 정의에 맞게 라벨/개수 수정 필요
-//				// 여기선 Linear, EaseIn, EaseOut, EaseInOut, Curve 가정
-//				static constexpr const char* kBlendTypeLabels[] =
-//				{
-//					"Linear",
-//					"EaseIn",
-//					"EaseOut",
-//					"EaseInOut",
-//					"Curve"
-//				};
-//
-//				int current = static_cast<int>(value.blendType);
-//				if (ImGui::Combo("Blend Type", &current, kBlendTypeLabels, IM_ARRAYSIZE(kBlendTypeLabels)))
-//				{
-//					value.blendType = static_cast<AnimationComponent::BlendType>(current);
-//					updated = true;
-//				}
-//			}
-//
-//			// curveFn: function pointer -> edit 불가 (표시만)
-//			{
-//				const bool hasCurve = (value.curveFn != nullptr);
-//				ImGui::Text("Curve Fn: %s", hasCurve ? "Set" : "None");
-//				// 필요하면 주소 표시 (디버그용)
-//				// ImGui::Text("Curve Fn Ptr: 0x%p", reinterpret_cast<void*>(value.curveFn));
-//			}
-//
-//			ImGui::PopID();
-//			ImGui::Unindent();
-//
-//			if (updated)
-//			{
-//				property.SetValue(component, &value);
-//				return true;
-//			}
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(BoneMaskSourceType))
-//		{
-//			BoneMaskSourceType value{};
-//			property.GetValue(component, &value);
-//			const char* label = "None";
-//			switch (value)
-//			{
-//			case AnimationComponent::BoneMaskSource::UpperBody:
-//				label = "UpperBody";
-//				break;
-//			case AnimationComponent::BoneMaskSource::LowerBody:
-//				label = "LowerBody";
-//				break;
-//			default:
-//				break;
-//			}
-//			ImGui::Text("%s: %s", property.GetName().c_str(), label);
-//			return false;
-//		}
-//
-//		if (typeInfo == typeid(RetargetOffsetsType))
-//		{
-//			RetargetOffsetsType value;
-//			property.GetValue(component, &value);
-//			ImGui::Text("%s: %zu offsets", property.GetName().c_str(), value.size());
-//			return false;
-//		}
-//
-//		ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
-//		return false;
-//	}
 
+	// ImGUI 창그리기
 	bool EditorApplication::Initialize()
 	{
 		const wchar_t* className = L"MIEditor";
@@ -923,18 +75,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 	}
 
 
-	bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-	{
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
-		{
-			return true; // ImGui가 메시지를 처리했으면 true 반환
-		}
-
-		return false;
-	}
-
-
-
 	void EditorApplication::Run() {
 		//실행 루프
 		MSG msg = { 0 };
@@ -968,6 +108,18 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		//그외 메모리 해제
 	}
 
+	bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+	{
+		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
+		{
+			return true; // ImGui가 메시지를 처리했으면 true 반환
+		}
+
+		return false;
+	}
+
+
+
 	void EditorApplication::UpdateInput()
 	{
 
@@ -977,6 +129,177 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 	{
 		m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
 		m_SoundManager->Update();
+	}
+
+void EditorApplication::UpdateSceneViewport()
+{
+	// m_Veiwport = editor Viewport
+	const ImVec2 editorSize = m_EditorViewport.GetViewportSize();
+	const ImVec2 gameSize = m_GameViewport.GetViewportSize();
+	const UINT editorWidth = static_cast<UINT>(editorSize.x);
+	const UINT editorHeight = static_cast<UINT>(editorSize.y);
+	const UINT gameWidth = static_cast<UINT>(gameSize.x);
+	const UINT gameHeight = static_cast<UINT>(gameSize.y);
+
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
+
+	if (editorWidth != 0 && editorHeight != 0)
+	{
+		//return;
+		if (auto editorCamera = scene->GetEditorCamera())
+		{
+			if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
+			{
+				cameraComponent->SetViewport({ static_cast<float>(editorWidth), static_cast<float>(editorHeight) });
+			}
+		}
+	}
+
+	if (gameWidth != 0 && gameHeight != 0)
+	{
+		if (auto gameCamera = scene->GetGameCamera())
+		{
+			if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
+			{
+				cameraComponent->SetViewport({ static_cast<float>(gameWidth), static_cast<float>(gameHeight) });
+			}
+		}
+	}
+
+}
+
+void EditorApplication::UpdateEditorCamera()
+{
+	if (!m_EditorViewport.IsHovered())
+	{
+		return;
+	}
+
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
+
+		auto camera = scene->GetEditorCamera();
+		if (!camera)
+		{
+			return;
+		}
+
+		auto* cameraComponent = camera->GetComponent<CameraComponent>();
+		if (!cameraComponent)
+		{
+			return;
+		}
+
+		ImGuiIO& io = ImGui::GetIO();
+		const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
+
+		XMFLOAT3 eye = cameraComponent->GetEye();
+		XMFLOAT3 look = cameraComponent->GetLook();
+		XMFLOAT3 up = cameraComponent->GetUp();
+
+		XMVECTOR eyeVec = XMLoadFloat3(&eye);
+		XMVECTOR lookVec = XMLoadFloat3(&look);
+		XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
+		XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
+		XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
+
+		bool updated = false;
+
+	if (io.MouseDown[1])
+	{
+		const float rotationSpeed = 0.003f;
+		const float yaw = io.MouseDelta.x * rotationSpeed;
+		const float pitch = io.MouseDelta.y * rotationSpeed;
+
+			if (yaw != 0.0f || pitch != 0.0f)
+			{
+				XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+				const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
+				const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
+				XMMATRIX transform = pitchRotation * yawRotation;
+				forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
+				rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
+				upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+
+				lookVec = XMVectorAdd(eyeVec, forwardVec);
+				updated = true;
+
+			}
+
+			const float baseSpeed = 6.0f;
+			const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
+			const float moveSpeed = baseSpeed * speedMultiplier;
+
+		XMVECTOR moveVec = XMVectorZero();
+		if (ImGui::IsKeyDown(ImGuiKey_W))
+		{
+			moveVec = XMVectorAdd(moveVec, forwardVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_S))
+		{
+			moveVec = XMVectorSubtract(moveVec, forwardVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_D))
+		{
+			moveVec = XMVectorAdd(moveVec, rightVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_A))
+		{
+			moveVec = XMVectorSubtract(moveVec, rightVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_E))
+		{
+			moveVec = XMVectorAdd(moveVec, upVec);
+		}
+		if (ImGui::IsKeyDown(ImGuiKey_Q))
+		{
+			moveVec = XMVectorSubtract(moveVec, upVec);
+		}
+		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
+		{
+			moveVec = XMVector3Normalize(moveVec);
+			const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
+			eyeVec = XMVectorAdd(eyeVec, scaledMove);
+			lookVec = XMVectorAdd(lookVec, scaledMove);
+			updated = true;
+		}
+	}
+
+		if (io.MouseDown[2])
+		{
+			const float panSpeed = 0.01f;
+			const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
+			const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
+			const XMVECTOR pan = XMVectorAdd(panRight, panUp);
+			eyeVec = XMVectorAdd(eyeVec, pan);
+			lookVec = XMVectorAdd(lookVec, pan);
+			updated = true;
+		}
+
+		if (io.MouseWheel != 0.0f)
+		{
+			const float zoomSpeed = 4.0f;
+			const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
+			eyeVec = XMVectorAdd(eyeVec, dolly);
+			lookVec = XMVectorAdd(lookVec, dolly);
+			updated = true;
+		}
+
+		if (updated)
+		{
+			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+			XMStoreFloat3(&eye, eyeVec);
+			XMStoreFloat3(&look, lookVec);
+			XMStoreFloat3(&up, upVec);
+			cameraComponent->SetEyeLookUp(eye, look, up);
+		}
 	}
 
 	void EditorApplication::Render() {
@@ -996,7 +319,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		Flip(m_Renderer.GetSwapChain().Get()); //★
 	}
 
-	// ImGUI 창그리기
 	void EditorApplication::RenderImGUI() {
 		//★★
 		ImGui_ImplDX11_NewFrame();
@@ -1011,7 +333,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 	RenderSceneView();
 	DrawFolderView();
 	DrawResourceBrowser();
-
+	
 	 //Scene그리기
 
 	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
@@ -1024,6 +346,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 	}
 	
 		UpdateEditorCamera();
+		DrawGizmo();
+		
 
 		// DockBuilder
 		static bool dockBuilt = true;
@@ -1095,7 +419,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			return;
 		}
 
-		auto editorCamera = scene->GetEditorCamera();
+		auto editorCamera = scene->GetEditorCamera().get();
 		if (!editorCamera)
 		{
 			return;
@@ -1204,6 +528,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			const bool selected = (m_SelectedObjectName == name);
 			if (ImGui::Selectable(name.c_str(), selected)) {
 				m_SelectedObjectName = name;
+			}
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+			{
+				m_SelectedObjectName = name;
+				FocusEditorCameraOnObject(Object);
 			}
 			if (ImGui::BeginPopupContextItem("ObjectContext"))
 			{
@@ -1411,7 +740,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 		ImGui::End();
 	}
-
 	void EditorApplication::DrawFolderView()
 	{
 		ImGui::Begin("Folder");
@@ -1830,6 +1158,213 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		ImGui::End();
 	}
 
+	void EditorApplication::DrawGizmo()
+	{
+		if (!m_EditorViewport.HasViewportRect())
+		{
+			return;
+		}
+
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
+
+		if (m_SelectedObjectName.empty())
+		{
+			return;
+		}
+
+		auto editorCamera = scene->GetEditorCamera().get();
+		if (!editorCamera)
+		{
+			return;
+		}
+
+		const auto& opaqueObjects = scene->GetOpaqueObjects();
+		const auto& transparentObjects = scene->GetTransparentObjects();
+
+		std::shared_ptr<GameObject> selectedObject;
+		if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
+		{
+			selectedObject = opaqueIt->second;
+		}
+		else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
+		{
+			selectedObject = transparentIt->second;
+		}
+
+		if (!selectedObject)
+		{
+			return;
+		}
+
+		auto* transform = selectedObject->GetComponent<TransformComponent>();
+		if (!transform)
+		{
+			return;
+		}
+
+		static ImGuizmo::OPERATION currentOperation = ImGuizmo::TRANSLATE;
+		static ImGuizmo::MODE currentMode = ImGuizmo::WORLD;
+		static bool useSnap = false;
+		static float snapValues[3]{ 1.0f, 1.0f, 1.0f };
+
+		ImGui::Begin("Gizmo");
+		if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE))
+		{
+			currentOperation = ImGuizmo::TRANSLATE;
+		}
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE))
+		{
+			currentOperation = ImGuizmo::ROTATE;
+		}
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE))
+		{
+			currentOperation = ImGuizmo::SCALE;
+		}
+
+		if (currentOperation != ImGuizmo::SCALE)
+		{
+			if (ImGui::RadioButton("Local", currentMode == ImGuizmo::LOCAL))
+			{
+				currentMode = ImGuizmo::LOCAL;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("World", currentMode == ImGuizmo::WORLD))
+			{
+				currentMode = ImGuizmo::WORLD;
+			}
+		}
+		ImGui::Checkbox("Snap", &useSnap);
+		if (useSnap)
+		{
+			ImGui::InputFloat3("Snap Value", snapValues);
+		}
+		ImGui::End();
+
+		const ImVec2 rectMin = m_EditorViewport.GetViewportRectMin();
+		const ImVec2 rectMax = m_EditorViewport.GetViewportRectMax();
+		const ImVec2 rectSize = ImVec2(rectMax.x - rectMin.x, rectMax.y - rectMin.y);
+
+		XMFLOAT4X4 view = editorCamera->GetViewMatrix();
+		XMFLOAT4X4 proj = editorCamera->GetProjMatrix();
+		XMFLOAT4X4 world = transform->GetWorldMatrix();
+
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::BeginFrame();
+		if (auto* drawList = m_EditorViewport.GetDrawList())
+		{
+			ImGuizmo::SetDrawlist(drawList);
+		}
+		ImGuizmo::SetRect(rectMin.x, rectMin.y, rectSize.x, rectSize.y);
+
+		ImGuizmo::Manipulate(
+			&view._11,
+			&proj._11,
+			currentOperation,
+			currentMode,
+			&world._11,
+			nullptr,
+			useSnap ? snapValues : nullptr);
+
+		if (ImGuizmo::IsUsing())
+		{
+			XMFLOAT4X4 local = world;
+			if (auto* parent = transform->GetParent())
+			{
+				local = MathUtils::Mul(world, parent->GetInverseWorldMatrix());
+			}
+
+			XMFLOAT3 position{};
+			XMFLOAT4 rotation{};
+			XMFLOAT3 scale{};
+			MathUtils::DecomposeMatrix(local, position, rotation, scale);
+
+			transform->SetPosition(position);
+			transform->SetRotation(rotation);
+			transform->SetScale(scale);
+		}
+	}
+
+	void EditorApplication::FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object)
+	{
+		if (!object)
+		{
+			return;
+		}
+
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
+
+		auto editorCamera = scene->GetEditorCamera();
+		if (!editorCamera)
+		{
+			return;
+		}
+
+		auto* cameraComponent = editorCamera->GetComponent<CameraComponent>();
+		if (!cameraComponent)
+		{
+			return;
+		}
+
+		auto* transform = object->GetComponent<TransformComponent>();
+		if (!transform)
+		{
+			return;
+		}
+
+		const XMFLOAT4X4 world = transform->GetWorldMatrix();
+		const XMFLOAT3 target{ world._41, world._42, world._43 };
+		const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f);
+		const XMFLOAT3 eye = cameraComponent->GetEye();
+
+		const XMVECTOR eyeVec = XMLoadFloat3(&eye);
+		const XMVECTOR targetVec = XMLoadFloat3(&target);
+		XMVECTOR toTarget = XMVectorSubtract(targetVec, eyeVec);
+		float distance = XMVectorGetX(XMVector3Length(toTarget));
+		XMVECTOR forwardVec = XMVectorZero();
+
+		if (distance > 0.00001f)
+		{
+			forwardVec = XMVector3Normalize(toTarget);
+		}
+		else
+		{
+			const XMFLOAT3 look = cameraComponent->GetLook();
+			const XMVECTOR lookVec = XMLoadFloat3(&look);
+			const XMVECTOR fallback = XMVectorSubtract(lookVec, eyeVec);
+			const float fallbackDistance = XMVectorGetX(XMVector3Length(fallback));
+
+			if (fallbackDistance > 0.001f)
+			{
+				forwardVec = XMVector3Normalize(fallback);
+				distance = fallbackDistance;
+			}
+			else
+			{
+				forwardVec = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+				distance = 5.0f;
+			}
+		}
+
+		const float minDistance = 2.0f;
+		const float desiredDistance = (std::max)(minDistance,distance * 0.2f);
+		const XMVECTOR newEyeVec = XMVectorSubtract(targetVec, XMVectorScale(forwardVec, desiredDistance));
+		XMFLOAT3 newEye{};
+		XMStoreFloat3(&newEye, newEyeVec);
+
+		cameraComponent->SetEyeLookUp(newEye, target, up);
+	}
+
+
 	void EditorApplication::CreateDockSpace()
 	{
 		ImGui::DockSpaceOverViewport(
@@ -1879,177 +1414,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		ImGui::DockBuilderDockWindow("Editor", dockMain);
 
 		ImGui::DockBuilderFinish(dockspaceID);
-	}
-
-void EditorApplication::UpdateSceneViewport()
-{
-	// m_Veiwport = editor Viewport
-	const ImVec2 editorSize = m_EditorViewport.GetViewportSize();
-	const ImVec2 gameSize = m_GameViewport.GetViewportSize();
-	const UINT editorWidth = static_cast<UINT>(editorSize.x);
-	const UINT editorHeight = static_cast<UINT>(editorSize.y);
-	const UINT gameWidth = static_cast<UINT>(gameSize.x);
-	const UINT gameHeight = static_cast<UINT>(gameSize.y);
-
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene)
-		{
-			return;
-		}
-
-	if (editorWidth != 0 && editorHeight != 0)
-	{
-		//return;
-		if (auto editorCamera = scene->GetEditorCamera())
-		{
-			if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
-			{
-				cameraComponent->SetViewport({ static_cast<float>(editorWidth), static_cast<float>(editorHeight) });
-			}
-		}
-	}
-
-	if (gameWidth != 0 && gameHeight != 0)
-	{
-		if (auto gameCamera = scene->GetGameCamera())
-		{
-			if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
-			{
-				cameraComponent->SetViewport({ static_cast<float>(gameWidth), static_cast<float>(gameHeight) });
-			}
-		}
-	}
-
-}
-
-void EditorApplication::UpdateEditorCamera()
-{
-	if (!m_EditorViewport.IsHovered())
-	{
-		return;
-	}
-
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene)
-		{
-			return;
-		}
-
-		auto camera = scene->GetEditorCamera();
-		if (!camera)
-		{
-			return;
-		}
-
-		auto* cameraComponent = camera->GetComponent<CameraComponent>();
-		if (!cameraComponent)
-		{
-			return;
-		}
-
-		ImGuiIO& io = ImGui::GetIO();
-		const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
-
-		XMFLOAT3 eye = cameraComponent->GetEye();
-		XMFLOAT3 look = cameraComponent->GetLook();
-		XMFLOAT3 up = cameraComponent->GetUp();
-
-		XMVECTOR eyeVec = XMLoadFloat3(&eye);
-		XMVECTOR lookVec = XMLoadFloat3(&look);
-		XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
-		XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
-		XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
-
-		bool updated = false;
-
-	if (io.MouseDown[1])
-	{
-		const float rotationSpeed = 0.003f;
-		const float yaw = io.MouseDelta.x * rotationSpeed;
-		const float pitch = io.MouseDelta.y * rotationSpeed;
-
-			if (yaw != 0.0f || pitch != 0.0f)
-			{
-				XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-				const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
-				const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
-				XMMATRIX transform = pitchRotation * yawRotation;
-				forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
-				rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
-				upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
-
-				lookVec = XMVectorAdd(eyeVec, forwardVec);
-				updated = true;
-
-			}
-
-			const float baseSpeed = 6.0f;
-			const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
-			const float moveSpeed = baseSpeed * speedMultiplier;
-
-		XMVECTOR moveVec = XMVectorZero();
-		if (ImGui::IsKeyDown(ImGuiKey_W))
-		{
-			moveVec = XMVectorAdd(moveVec, forwardVec);
-		}
-		if (ImGui::IsKeyDown(ImGuiKey_S))
-		{
-			moveVec = XMVectorSubtract(moveVec, forwardVec);
-		}
-		if (ImGui::IsKeyDown(ImGuiKey_D))
-		{
-			moveVec = XMVectorAdd(moveVec, rightVec);
-		}
-		if (ImGui::IsKeyDown(ImGuiKey_A))
-		{
-			moveVec = XMVectorSubtract(moveVec, rightVec);
-		}
-		if (ImGui::IsKeyDown(ImGuiKey_E))
-		{
-			moveVec = XMVectorAdd(moveVec, upVec);
-		}
-		if (ImGui::IsKeyDown(ImGuiKey_Q))
-		{
-			moveVec = XMVectorSubtract(moveVec, upVec);
-		}
-		if (XMVectorGetX(XMVector3LengthSq(moveVec)) > 0.0f)
-		{
-			moveVec = XMVector3Normalize(moveVec);
-			const XMVECTOR scaledMove = XMVectorScale(moveVec, moveSpeed * deltaTime);
-			eyeVec = XMVectorAdd(eyeVec, scaledMove);
-			lookVec = XMVectorAdd(lookVec, scaledMove);
-			updated = true;
-		}
-	}
-
-		if (io.MouseDown[2])
-		{
-			const float panSpeed = 0.01f;
-			const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
-			const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
-			const XMVECTOR pan = XMVectorAdd(panRight, panUp);
-			eyeVec = XMVectorAdd(eyeVec, pan);
-			lookVec = XMVectorAdd(lookVec, pan);
-			updated = true;
-		}
-
-		if (io.MouseWheel != 0.0f)
-		{
-			const float zoomSpeed = 4.0f;
-			const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
-			eyeVec = XMVectorAdd(eyeVec, dolly);
-			lookVec = XMVectorAdd(lookVec, dolly);
-			updated = true;
-		}
-
-		if (updated)
-		{
-			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
-			XMStoreFloat3(&eye, eyeVec);
-			XMStoreFloat3(&look, lookVec);
-			XMStoreFloat3(&up, upVec);
-			cameraComponent->SetEyeLookUp(eye, look, up);
-		}
 	}
 
 	void EditorApplication::OnResize(int width, int height)
