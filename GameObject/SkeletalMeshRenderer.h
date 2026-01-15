@@ -20,13 +20,13 @@ public:
 	void LoadSetSkeleton(const SkeletonRef& skeletonRef) { m_Skeleton = skeletonRef; }
 	const SkeletonRef& GetSkeleton() const				  { return m_Skeleton;        }
 
-	bool BuildRenderItem(RenderData::RenderItem& out) const override;
+	bool BuildRenderItem(RenderData::RenderItem& out) override;
 
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
 private:
-	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material, SkeletonHandle& skeleton) const;
+	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material, SkeletonHandle& skeleton);
 
 protected:
 	SkeletonHandle m_SkeletonHandle  = SkeletonHandle::Invalid();
