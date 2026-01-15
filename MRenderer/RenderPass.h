@@ -28,6 +28,7 @@ public:
 	void SetRasterizerState(RS state);
 	void SetSamplerState();
 
+	virtual void SetBaseCB(const RenderData::RenderItem& item);
 	virtual void SetCameraCB(const RenderData::FrameData& frame);
 	virtual void SetDirLight(const RenderData::FrameData& frame);
 	virtual void SetVertex(const RenderData::RenderItem& item);

@@ -30,17 +30,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         {
             for (const auto& item : items)
             {
-				XMMATRIX mtm = XMLoadFloat4x4(&item.world);
-                XMMATRIX mLocalToWorld = XMLoadFloat4x4(&item.localToWorld);
-				
-                mtm = MathUtils::Mul(mLocalToWorld, mtm);
-
-				XMFLOAT4X4 tm;
-				XMStoreFloat4x4(&tm, mtm);
-
-				m_RenderContext.BCBuffer.mWorld = tm;
-
-				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
+                SetBaseCB(item);
 
 				if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 				{
@@ -74,7 +64,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				BOOL castshadow = frame.lights[index].castShadow;
 
-                //텍스쳐 바인딩
+                ////텍스쳐 바인딩
                 if (textures && item.material.IsValid())
                 {
                     RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
@@ -98,7 +88,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                     }
                 }
 
-
 				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
 				{
                     const MeshHandle bufferHandle = item.mesh;
@@ -115,7 +104,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
 						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
-						DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
+						//DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
+                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS_PBR.Get(), m_RenderContext.PS_PBR.Get(), useSubMesh, indexCount, indexStart);
 					}
 				}
             }

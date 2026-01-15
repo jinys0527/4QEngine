@@ -24,9 +24,7 @@ void DepthPass::Execute(const RenderData::FrameData& frame)
             for (const auto& item : items)
             {
 
-                m_RenderContext.BCBuffer.mWorld = item.world;
-
-                UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+                SetBaseCB(item);
 
                 const auto* vertexBuffers = m_RenderContext.vertexBuffers;
                 const auto* indexBuffers = m_RenderContext.indexBuffers;

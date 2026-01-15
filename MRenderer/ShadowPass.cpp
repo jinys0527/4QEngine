@@ -54,16 +54,8 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
         {
             for (const auto& item : items)
             {
-				XMMATRIX mtm = XMLoadFloat4x4(&item.world);
-				XMMATRIX mLocalToWorld = XMLoadFloat4x4(&item.localToWorld);
-				mtm = MathUtils::Mul(mLocalToWorld, mtm);
 
-				XMFLOAT4X4 tm;
-				XMStoreFloat4x4(&tm, mtm);
-
-				m_RenderContext.BCBuffer.mWorld = tm;
-
-                UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(BaseConstBuffer));
+                SetBaseCB(item);
 
                 const auto* vertexBuffers = m_RenderContext.vertexBuffers;
                 const auto* indexBuffers = m_RenderContext.indexBuffers;
