@@ -13,7 +13,8 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     texMetal.a = texRough.a = 1;
     //임시
     texMetal.rgb = texMetal.r;
-    
+    texRough.rgb = texRough.r;
+    texAO.rgb = texAO.r;
     if (texAO.r < 0.001f && texAO.g < 0.001f && texAO.b < 0.001f)
     {
         texAO = 1.f;
@@ -27,7 +28,8 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     
     BuildTBN(input.T.xyz, input.nrm.xyz, handedness, texNrm, T, B, N);
 
-    float3 nW = normalize(mul(float4(N, 0), mWorldInvTranspose).xyz);
+    
+    float3 nW = normalize(mul(float4(N, 0), mWorld).xyz);
     float3 nV = normalize(mul(nW, (float3x3)mView));
     
     float3 eN = normalize(nW);
@@ -35,9 +37,9 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float3 eR = normalize(reflect(eL, eN)); //반사벡터 계산.
     
     float specParam = 0.5f;
-    float4 dirLit = UE_DirectionalLighting(input.vPos, input.nrm, float4(lights[0].viewDir, 0), texAlbedo, texAO, texMetal, texRough, specParam);
+    float4 dirLit = UE_DirectionalLighting(input.vPos, float4(nV, 0), float4(lights[0].viewDir, 0), texAlbedo, texAO, texMetal, texRough, specParam);
     //dirLit.rgb *= lerp(0.05f, 1.0f, shadowFactor);
-    
+    //return float4(nV, 1);
     //float4 ptLit = UE_PointLighting(viewPos, float4(nV, 0), viewLitPos, baseColor, ao, metallic, roughness, specParam);
     
     float4 lit = dirLit; //+ptLit;
@@ -53,11 +55,22 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     
     float4 env = 0.3f * F * specOcc * envStrength;
     
-    float4 amb = /*g_GlobalAmbient * baseColor*/lights[0].Color * texAlbedo * (1 - texMetal) * texAO;
+    float4 amb = /*g_GlobalAmbient * baseColor*/lights[0].Color * 0.1f * texAlbedo * (1 - texMetal) * texAO;
     amb.a = 1;
     
     float4 col = lit + amb;//    +env;
     col.a = texAlbedo.a;
         
+    //return texAlbedo;
+    //return texNrm   ;
+    //return float4(texMetal.xyz, 1);
+    //return texRough ;
+    //return texAO;
+    
+    
+    
+    
+    
+    
     return col;
 }

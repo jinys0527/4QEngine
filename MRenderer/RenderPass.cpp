@@ -33,7 +33,16 @@ void RenderPass::SetSamplerState()
 
 void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 {
-	m_RenderContext.BCBuffer.mWorld = item.world;
+	XMMATRIX mtm = XMLoadFloat4x4(&item.world);
+	XMMATRIX mLocalToWorld = XMLoadFloat4x4(&item.localToWorld);
+
+	mtm = MathUtils::Mul(mLocalToWorld, mtm);
+
+	XMFLOAT4X4 tm;
+	XMStoreFloat4x4(&tm, mtm);
+
+	m_RenderContext.BCBuffer.mWorld = tm;
+
 	XMMATRIX world = XMLoadFloat4x4(&item.world);
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
@@ -93,7 +102,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 		XMStoreFloat3(&dirlight.viewDir, dirV);
 
 		dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
-		dirlight.Intensity = 1.f;
+		dirlight.Intensity = 3.14f;
 		dirlight.mLightViewProj = light.lightViewProj;
 		dirlight.CastShadow = light.castShadow;
 

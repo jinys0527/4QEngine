@@ -21,12 +21,6 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
 		{
             for (const auto& item : items)
             {
-				XMMATRIX mtm = XMLoadFloat4x4(&item.world);
-				XMMATRIX mLocalToWorld = XMLoadFloat4x4(&item.localToWorld);
-				mtm = MathUtils::Mul(mLocalToWorld, mtm);
-
-				XMFLOAT4X4 tm;
-				XMStoreFloat4x4(&tm, mtm);
 
                 SetBaseCB(item);
 
