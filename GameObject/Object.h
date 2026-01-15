@@ -8,6 +8,8 @@
 #include "Component.h"
 //#include "RenderData.h"
 
+class Scene;
+
 class Object
 {
 	friend class Scene;
@@ -94,6 +96,9 @@ public:
 		return m_Name;
 	}
 
+	void SetScene(Scene* scene) { m_Scene = scene; }
+	Scene* GetScene() const		{ return m_Scene;  }
+
 	void SendMessages(const myCore::MessageID msg, void* data = nullptr);
 
 	void SendEvent(const std::string& evt);
@@ -104,5 +109,6 @@ protected:
 	std::string m_Name;
 	std::unordered_map<std::string, std::vector<std::unique_ptr<Component>>> m_Components;
 	EventDispatcher& m_EventDispatcher;
+	Scene*		m_Scene;
 };
 

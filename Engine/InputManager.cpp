@@ -4,9 +4,9 @@
 #include "Event.h"
 #include <iostream>
 
-InputManager::InputManager(EventDispatcher& dispatcher) : m_EventDispatcher(dispatcher)
+void InputManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
-
+	m_EventDispatcher = eventDispatcher;
 }
 
 void InputManager::Update()
@@ -16,7 +16,7 @@ void InputManager::Update()
 		if (!m_KeysDownPrev.contains(key))
 		{
 			Events::KeyEvent e{ key };
-			m_EventDispatcher.Dispatch(EventType::KeyDown, &e);
+			m_EventDispatcher->Dispatch(EventType::KeyDown, &e);
 		}
 	}
 
@@ -25,7 +25,7 @@ void InputManager::Update()
 		if (!m_KeysDown.contains(key))
 		{
 			Events::KeyEvent e{ key };
-			m_EventDispatcher.Dispatch(EventType::KeyUp, &e);
+			m_EventDispatcher->Dispatch(EventType::KeyUp, &e);
 		}
 	}
 
@@ -34,39 +34,39 @@ void InputManager::Update()
 	//마우스 좌클릭 이벤트
 	if (!m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
-		m_EventDispatcher.Dispatch(EventType::MouseLeftClick, &m_Mouse);
-		m_EventDispatcher.Dispatch(EventType::Pressed, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::Pressed, &m_Mouse);
 	}
 	else if (m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
-		m_EventDispatcher.Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
-		m_EventDispatcher.Dispatch(EventType::Dragged, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::Dragged, &m_Mouse);
 	}
 	else if(m_MousePrev.leftPressed && !m_Mouse.leftPressed)
 	{
-		m_EventDispatcher.Dispatch(EventType::MouseLeftClickUp, &m_Mouse);
-		m_EventDispatcher.Dispatch(EventType::Released, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::MouseLeftClickUp, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse);
 	}
 	
 
 
 	if (m_MousePrev.rightPressed == false && m_Mouse.rightPressed)
 	{
-		m_EventDispatcher.Dispatch(EventType::MouseRightClick, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::MouseRightClick, &m_Mouse);
 	}
 	else if (m_MousePrev.rightPressed == true && m_Mouse.rightPressed)
 	{
-		m_EventDispatcher.Dispatch(EventType::MouseRightClickHold, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::MouseRightClickHold, &m_Mouse);
 	}
 	else if(m_MousePrev.rightPressed == true && !m_Mouse.rightPressed)
 	{
-		m_EventDispatcher.Dispatch(EventType::MouseRightClickUp, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::MouseRightClickUp, &m_Mouse);
 	}
 	
 
 
 	//버튼위에 호버됐는지 확인하기 위해 매번 보내야함
-	m_EventDispatcher.Dispatch(EventType::Hovered, &m_Mouse);
+	m_EventDispatcher->Dispatch(EventType::Hovered, &m_Mouse);
 
 	m_MousePrev = m_Mouse;
 }

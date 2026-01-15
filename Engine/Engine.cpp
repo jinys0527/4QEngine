@@ -1,17 +1,14 @@
 ﻿#include "pch.h"
 #include "Engine.h"
+#include "ServiceRegistry.h"
+#include "InputManager.h"
+#include "Renderer.h"
 
 void Engine::Initailize()
 {
-	m_EventDispatcher = std::make_unique<EventDispatcher>();
-	m_InputManager    = std::make_unique<InputManager>(*m_EventDispatcher);
 	m_Device		  =	std::make_unique<Device>();
-	
-	//m_AssetManager = std::make_unique<AssetManager>(*m_Renderer);
-	//m_SoundAssetManager = std::make_unique<SoundAssetManager>();
-
 	m_GameTimer.Reset();
-	
+	m_InputManager = &m_Services.Get<InputManager>();
 }
 
 void Engine::UpdateTime()

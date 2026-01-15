@@ -3,22 +3,17 @@
 #include <unordered_map>
 #include <string>
 #include "Scene.h"
-#include "EventDispatcher.h"
-//#include "AssetManager.h"
-//#include "SoundAssetManager.h"
-#include "SoundManager.h"
-#include "GameManager.h"
-#include "UIManager.h"
 
+class ServiceRegistry;
+class GameManager;
+class UIManager;
 class CameraObject;
 
 class SceneManager
 {
 	friend class Editor;
 public:
-	SceneManager(/*D2DRenderer& renderer, */EventDispatcher& eventDispatcher, 
-		/*AssetManager& assetManager, SoundAssetManager& soundAssetManager,*/ 
-		SoundManager& soundManager, GameManager& gameManager, UIManager& uiManager) : /*m_Renderer(renderer), */m_EventDispatcher(eventDispatcher), /*m_AssetManager(assetManager), m_SoundAssetManager(soundAssetManager), */m_SoundManager(soundManager), m_GameManager(gameManager), m_UIManager(uiManager) { }
+	SceneManager(ServiceRegistry& serviceRegistry) : m_Services(serviceRegistry) { }
 	~SceneManager() = default;
 
 	void Initialize();
@@ -49,16 +44,14 @@ public:
 	void SetChangeScene(std::string name);
 
 private:
+	ServiceRegistry& m_Services;
+
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
-	CameraObject* m_Camera = nullptr;
-	//D2DRenderer& m_Renderer;
-	//AssetManager& m_AssetManager;
-	//SoundAssetManager& m_SoundAssetManager;
-	EventDispatcher& m_EventDispatcher;
-	SoundManager& m_SoundManager;
-	GameManager& m_GameManager;
-	UIManager& m_UIManager;
+	CameraObject*   m_Camera = nullptr;
+	GameManager*	m_GameManager;
+	UIManager*		m_UIManager;
+	
 	bool m_ShouldQuit = false;
 
 	std::string m_ChangeSceneName;

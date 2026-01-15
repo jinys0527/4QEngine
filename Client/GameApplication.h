@@ -2,22 +2,18 @@
  
 #include "NzWndBase.h"
 #include <wrl/client.h>
-#include "Engine.h"
-#include "SceneManager.h"
-#include "SoundManager.h"
-#include "Editor.h"
 
+class ServiceRegistry;
+class Engine;
+class Renderer;
+class SceneManager;
 class GameObject;
 
 class GameApplication : public NzWndBase
 {
 
 public:
-#ifdef _EDITOR
-	GameApplication(Engine& engine, SceneManager& sceneManager, SoundManager& soundManager, Editor& editor) : NzWndBase(), m_Engine(engine), m_SceneManager(sceneManager), m_SoundManager(soundManager), m_Editor(editor) {}
-#else
-	GameApplication(Engine& engine, SceneManager& sceneManager, SoundManager& soundManager) : NzWndBase(), m_Engine(engine), m_SceneManager(sceneManager), m_SoundManager(soundManager) { }
-#endif
+	GameApplication(ServiceRegistry& serviceRegistry, Engine& engine, Renderer& renderer, SceneManager& sceneManager) : NzWndBase(), m_Services(serviceRegistry), m_Engine(engine), m_Renderer(renderer), m_SceneManager(sceneManager) { }
 	virtual ~GameApplication() = default;
 
 	bool Initialize();
@@ -41,15 +37,14 @@ private:
 	//GameObject* m_Obstacle;
 
 
-#ifdef _EDITOR
-	Editor& m_Editor;
-#endif
 
 	float m_fFrameCount;
 	float m_GameSpeed = 1.0f;
 
-	Engine& m_Engine;
-	SceneManager& m_SceneManager;
-	SoundManager& m_SoundManager;
+	ServiceRegistry& m_Services;
+	Engine&			 m_Engine;
+	Renderer&		 m_Renderer;
+	SceneManager&	 m_SceneManager;
+
 };
 

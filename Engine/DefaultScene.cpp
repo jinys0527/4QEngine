@@ -9,20 +9,20 @@
 
 void DefaultScene::Initialize()
 {
-	auto gamecamera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
+	auto gamecamera = std::make_shared<CameraObject>(GetEventDispatcher(), 1280.0f, 720.0f);
 
 	gamecamera->SetName("Main Camera");
 	SetGameCamera(gamecamera); // Main Camera
 	AddGameObject(gamecamera, true);
 
 	//editorCam
-	auto editorCamera = std::make_shared<CameraObject>(m_EventDispatcher, 1280.0f, 720.0f);
+	auto editorCamera = std::make_shared<CameraObject>(GetEventDispatcher(), 1280.0f, 720.0f);
 	editorCamera->SetName("Editor Camera");
 	SetEditorCamera(editorCamera);
 	AddGameObject(editorCamera, true);
 
 
-	auto lightObject = std::make_shared<GameObject>(m_EventDispatcher);
+	auto lightObject = std::make_shared<GameObject>(GetEventDispatcher());
 	lightObject->SetName("DirectionalLight");
 	if (auto* light = lightObject->AddComponent<LightComponent>())
 	{

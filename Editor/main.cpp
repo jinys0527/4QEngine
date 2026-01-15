@@ -2,12 +2,14 @@
 #include "pch.h"
 #include "EditorApplication.h"
 #include "SceneManager.h"
+#include "Renderer.h"
+#include "Engine.h"
+#include "EventDispatcher.h"
+#include "InputManager.h"
+#include "AssetLoader.h"
 #include "SoundManager.h"
 #include "UIManager.h"
-#include "Engine.h"
-#include "AssetLoader.h"
-#include "Renderer.h"
-#include "Importer.h"
+#include "ServiceRegistry.h"
 
 
 //namespace
@@ -23,20 +25,23 @@ int main()
 	if (FAILED(hr)) {
 		return -1;
 	}
-	Engine engine;
-	SoundManager soundManager;
-	UIManager uiManager(engine.GetEventDispatcher());
-	AssetLoader assetLoader;
-	AssetLoader::SetActive(&assetLoader);
+
+	ServiceRegistry services;
+
+	auto& inputManager = services.Register<InputManager>();
+	auto& assetLoader = services.Register<AssetLoader>();
+	auto& soundManager = services.Register<SoundManager>();
+	auto& uiManager = services.Register<UIManager>();
+
 	Renderer renderer(assetLoader);
-	SceneManager sceneManager(/*renderer,*/ engine.GetEventDispatcher(), assetLoader, /* engine.GetSoundAssetManager(), */ soundManager, uiManager);
+	Engine engine(services, renderer);
+	SceneManager sceneManager(services);
+
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
-	ImportAll();
-	assetLoader.LoadAll();
 	
 
-	EditorApplication app(engine, renderer, sceneManager, soundManager, assetLoader);
+	EditorApplication app(services, engine, renderer, sceneManager);
 	if (!app.Initialize())
 	{
 		CoUninitialize();
@@ -49,8 +54,6 @@ int main()
 	app.Finalize();
 	//
 
-
-	//uiManager.Reset();
 	sceneManager.Reset();
 	engine.Reset();
 

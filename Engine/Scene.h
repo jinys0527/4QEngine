@@ -3,12 +3,8 @@
 #include <memory>
 #include <vector>
 #include "RenderData.h"
-#include "AssetLoader.h"
-//#include "D2DRenderer.h"
-//#include "AssetManager.h"
-//#include "SoundAssetManager.h"
-#include "SoundManager.h"
-#include "UIManager.h"
+#include "EventDispatcher.h"
+#include "json.hpp"
 
 class NzWndBase;
 class GameObject;
@@ -16,24 +12,15 @@ class UIObject;
 class GameManager;
 class SceneManager;
 class CameraObject;
+class ServiceRegistry;
+class AssetLoader;
 
 class Scene
 {
 public:
 	friend class Editor;
 
-	Scene(EventDispatcher& eventDispatcher, 
-		AssetLoader& assetLoader, 
-		//SoundAssetManager& soundAssetManager, 
-		SoundManager& soundManager, 
-		//D2DRenderer& renderer, 
-		UIManager& uiManager) 
-		: m_EventDispatcher(eventDispatcher), 
-		m_AssetLoader(assetLoader),
-		//m_SoundAssetManager(soundAssetManager), 
-		m_SoundManager(soundManager), 
-		//m_Renderer(renderer), 
-		m_UIManager(uiManager) {}
+	Scene(ServiceRegistry& serviceRegistry);
 
 	virtual ~Scene();
 	virtual void Initialize () = 0;
@@ -45,7 +32,6 @@ public:
 	virtual void FixedUpdate() = 0;
 	virtual void Update     (float deltaTime) = 0;
 	virtual void StateUpdate(float deltaTime);	// Light, Camera, Fog Update 
-	//virtual void Render(std::vector<RenderInfo>& renderInfo, std::vector<UIRenderInfo>& uiRenderInfo, std::vector<UITextInfo>& uiTextInfo) = 0;
 	virtual void Render(RenderData::FrameData& data) const;
 
 	void AddGameObject      (std::shared_ptr<GameObject> gameObject, bool isOpaque);
@@ -72,6 +58,8 @@ public:
 	void Deserialize        (const nlohmann::json& j);
 	void BuildFrameData(RenderData::FrameData& frameData) const;
 
+	EventDispatcher& GetEventDispatcher() { return m_EventDispatcher; }
+
 	void SetName            (std::string name) { m_Name = name; }
 	std::string GetName     () const     { return m_Name;   }
 
@@ -84,19 +72,17 @@ public:
 protected:
 	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_OpaqueObjects;
 	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_TransparentObjects;
-	EventDispatcher& m_EventDispatcher;
-	//D2DRenderer& m_Renderer;
-	AssetLoader& m_AssetLoader;
-	//SoundAssetManager& m_SoundAssetManager;
-	SoundManager&   m_SoundManager;
-	UIManager&      m_UIManager;
-	SceneManager*   m_SceneManager = nullptr;
-	GameManager*    m_GameManager = nullptr;
+	ServiceRegistry& m_Services;
+	SceneManager*    m_SceneManager = nullptr;
+	GameManager*     m_GameManager = nullptr;
 	std::shared_ptr<CameraObject>   m_GameCamera;
 	std::shared_ptr<CameraObject>   m_EditorCamera;
-	std::string     m_Name;
+	std::string      m_Name;
+	bool		     m_Pause = false;
 
-	bool		    m_Pause = false;
+private:
+	AssetLoader*    m_AssetLoader;
+	EventDispatcher m_EventDispatcher;
 private:
 	Scene(const Scene&)            = delete;
 	Scene& operator=(const Scene&) = delete;

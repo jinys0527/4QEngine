@@ -11,6 +11,9 @@
 class AssetLoader
 {
 public:
+	AssetLoader();
+	~AssetLoader();
+
 	static void SetActive(AssetLoader* loader);
 	static AssetLoader* GetActive();
 
