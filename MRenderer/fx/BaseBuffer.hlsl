@@ -18,15 +18,21 @@ cbuffer CameraBuffer : register(b1)
 
 struct Light
 {
-    float3 Pos;
-    float Range;
-    float3 Dir;
-    float SpotAngle;
-    float3 Color;
-    float Intensity;
-    matrix mVP;
+    matrix mLightVP; 
+
+    float4 Color; 
+
+    float3 Pos; 
+    float Range; 
+
+    float3 worldDir; 
+    float SpotAngle; 
+
+    float3 viewDir; 
+    float Intensity; 
+
     uint CastShadow;
-    float3 padding;
+    float3 padding; 
 };
 
 cbuffer LightBuffer : register(b2)
@@ -93,6 +99,16 @@ struct VSOutput_P
     float4 originPos : TEXCOORD0;
 };
 
+struct VSOutput_PBR
+{
+    float4 pos : SV_POSITION;
+    float4 nrm : NORMAL;
+    float2 uv : TEXCOORD0;
+    float4 wPos : TEXCOORD1;
+    float4 vPos : TEXCOORD2;
+    float3 envUVW : TEXCOORD3;
+    float4 T : TEXCOORD4;
+};
 
 //ShaderResourceView
 Texture2D g_RTView : register(t0);

@@ -160,6 +160,10 @@ private:
 	ComPtr<ID3D11PixelShader>	m_pPS_P;
 	ComPtr<ID3DBlob> m_pVSCode_P;
 
+	//PBR
+	ComPtr<ID3D11VertexShader>	m_pVS_PBR;
+	ComPtr<ID3D11PixelShader>	m_pPS_PBR;
+	ComPtr<ID3DBlob> m_pVSCode_PBR;
 
 //그리드
 private:

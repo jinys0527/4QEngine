@@ -105,6 +105,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
+
+
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
@@ -389,8 +393,15 @@ void Renderer::CreateContext()
 	m_RenderContext.inputLayout				= m_pInputLayout;
 
 	m_RenderContext.VS_P					= m_pVS_P;
+	m_RenderContext.PS_P					= m_pPS_P;
 	m_RenderContext.VSCode_P				= m_pVSCode_P;
 	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
+
+	m_RenderContext.VS_PBR					= m_pVS_PBR;
+	m_RenderContext.PS_PBR					= m_pPS_PBR;
+	m_RenderContext.VSCode_PBR				= m_pVSCode_PBR;
+
+
 
 	m_RenderContext.RState					= m_RState;
 	m_RenderContext.DSState					= m_DSState;

@@ -133,6 +133,12 @@
     <FxCompile Include="fx\Demo_PS_POS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="fx\Demo_PBR_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_PBR_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

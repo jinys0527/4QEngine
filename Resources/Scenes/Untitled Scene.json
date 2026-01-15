@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -0.5488109588623047,
-                "y": 1.1378204822540283,
-                "z": -1.152115821838379
+                "x": -1.2915256023406982,
+                "y": 2.592747449874878,
+                "z": -5.930792808532715
             },
             "look": {
-                "x": -0.12933209538459778,
-                "y": 0.9854789972305298,
-                "z": -0.25722503662109375
+                "x": -1.1731994152069092,
+                "y": 2.166572332382202,
+                "z": -5.033924102783203
             },
             "up": {
-                "x": 0.06465872377157211,
-                "y": 0.9883279204368591,
-                "z": 0.13793900609016418
+                "x": 0.05574335530400276,
+                "y": 0.9046407341957092,
+                "z": 0.422513872385025
             }
         }
     },
@@ -46,14 +46,14 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": -0.5488109588623047,
-                                "y": 1.1378204822540283,
-                                "z": -1.152115821838379
+                                "x": -1.2915256023406982,
+                                "y": 2.592747449874878,
+                                "z": -5.930792808532715
                             },
                             "Look": {
-                                "x": -0.12933209538459778,
-                                "y": 0.9854789972305298,
-                                "z": -0.25722503662109375
+                                "x": -1.1731994152069092,
+                                "y": 2.166572332382202,
+                                "z": -5.033924102783203
                             },
                             "Ortho": {
                                 "height": 10.0,
@@ -66,16 +66,16 @@
                                 "top": 1.0
                             },
                             "Perspective": {
-                                "aspect": 1.818411111831665,
+                                "aspect": 1.7846534252166748,
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": 0.06465872377157211,
-                                "y": 0.9883279204368591,
-                                "z": 0.13793900609016418
+                                "x": 0.05574335530400276,
+                                "y": 0.9046407341957092,
+                                "z": 0.422513872385025
                             },
                             "Viewport": {
-                                "height": 793.0,
+                                "height": 808.0,
                                 "width": 1442.0
                             }
                         },
@@ -100,9 +100,9 @@
                                 "z": 0.0
                             },
                             "Scale": {
-                                "x": 15.0,
-                                "y": 15.0,
-                                "z": 15.0
+                                "x": 50.0,
+                                "y": 50.0,
+                                "z": 50.0
                             }
                         },
                         "type": "TransformComponent"
@@ -111,11 +111,11 @@
                         "data": {
                             "Mesh": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
                             "MeshHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             }
                         },
                         "type": "MeshComponent"
@@ -141,42 +141,42 @@
                         "data": {
                             "Material": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
                             "MaterialHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
                             "Overrides": {
                                 "overrides": {
                                     "baseColor": {
                                         "a": 1.0,
-                                        "b": 0.5,
-                                        "g": 0.5,
-                                        "r": 0.5
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
                                     },
                                     "metallic": 0.0,
-                                    "roughness": 1.0,
+                                    "roughness": 0.6092624068260193,
                                     "textures": [
                                         {
                                             "assetIndex": 0,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                                         },
                                         {
                                             "assetIndex": 1,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                                         },
                                         {
                                             "assetIndex": 2,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                                         },
                                         {
                                             "assetIndex": 3,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                                         },
                                         {
-                                            "assetIndex": 4,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                            "assetIndex": 0,
+                                            "assetPath": ""
                                         },
                                         {
                                             "assetIndex": 0,
@@ -293,14 +293,14 @@
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": 1.648459987812352e+15,
+                            "Intensity": 1.0,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "Range": 1.648459987812352e+15,
-                            "SpotAngle": 1.648459987812352e+15
+                            "Range": 0.0,
+                            "SpotAngle": 0.0
                         },
                         "type": "LightComponent"
                     }

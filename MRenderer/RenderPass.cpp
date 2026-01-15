@@ -73,16 +73,33 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 	if (!frame.lights.empty())
 	{
 		const auto& light = frame.lights[0];
-		Light dirlight;
-		dirlight.vDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
-		dirlight.Color = light.color;
-		dirlight.Intensity = light.intensity;
+
+		XMFLOAT4X4 view; 
+		if (m_RenderContext.isEditCam)
+		{
+			view = frame.context.editorCamera.view;
+		}
+		else if (!m_RenderContext.isEditCam)
+		{
+			view = frame.context.gameCamera.view;
+		}
+		XMMATRIX mView = XMLoadFloat4x4(&view);
+
+		Light dirlight{};
+		dirlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
+
+		XMVECTOR dirW = XMLoadFloat3(&dirlight.worldDir); 
+		XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
+		XMStoreFloat3(&dirlight.viewDir, dirV);
+
+		dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+		dirlight.Intensity = 1.f;
 		dirlight.mLightViewProj = light.lightViewProj;
 		dirlight.CastShadow = light.castShadow;
 
 		m_RenderContext.LightCBuffer.lights[0] = dirlight;
 
-		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(BaseConstBuffer));
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
 
 	}
 

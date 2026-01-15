@@ -19,24 +19,28 @@ struct CameraConstBuffer
 	XMFLOAT4X4	mProj = XMFLOAT4X4{};
 	XMFLOAT4X4	mVP = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
-	FLOAT		padding{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
-
+	float		padding = 0.0f;
 };
 
 struct Light
 {
-	XMFLOAT3   vPos{ 0.0f, 0.0f, 0.0f };
-	FLOAT      Range = 0.0f;
-	XMFLOAT3   vDir{ 0.0f, -1.0f, 0.0f };
-	FLOAT      SpotAngle = 0.0f;
-	XMFLOAT3   Color{ 1.0f, 1.0f, 1.0f };
-	FLOAT      Intensity = 1.0f;
 	XMFLOAT4X4 mLightViewProj{};
-	UINT       CastShadow = TRUE;
-	FLOAT      padding[3]{ 0.0f, 0.0f, 0.0f };
-};
 
+	XMFLOAT4   Color{ 1,1,1,0 };
+
+	XMFLOAT3   Pos{ 0,0,0 };
+	float      Range = 0;
+
+	XMFLOAT3   worldDir{ 0,-1,0 };
+	float      SpotAngle = 0;
+
+	XMFLOAT3   viewDir{ 0,-1,0 };
+	float      Intensity = 1.0f;
+
+	UINT       CastShadow = TRUE;
+	float      padding[3]{ 0,0,0 };
+};
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
 {
@@ -92,8 +96,12 @@ struct RenderContext
 
 	ComPtr<ID3D11InputLayout> InputLayout_P;
 	ComPtr<ID3D11VertexShader> VS_P;
+	ComPtr<ID3D11PixelShader> PS_P;
 	ComPtr<ID3DBlob> VSCode_P;
 
+	ComPtr<ID3D11VertexShader> VS_PBR;
+	ComPtr<ID3D11PixelShader> PS_PBR;
+	ComPtr<ID3DBlob> VSCode_PBR;
 
 	//imgui용 == Scene Draw용
 	bool isEditCam = false;
