@@ -21,8 +21,14 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
 		{
             for (const auto& item : items)
             {
+				XMMATRIX mtm = XMLoadFloat4x4(&item.world);
+				XMMATRIX mLocalToWorld = XMLoadFloat4x4(&item.localToWorld);
+				mtm = MathUtils::Mul(mLocalToWorld, mtm);
 
-                m_RenderContext.BCBuffer.mWorld = item.world;
+				XMFLOAT4X4 tm;
+				XMStoreFloat4x4(&tm, mtm);
+
+				m_RenderContext.BCBuffer.mWorld = tm;
 
                 UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 
