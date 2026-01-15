@@ -76,6 +76,9 @@ public:
 
 	void SetClipHandle(const AnimationHandle& handle)  
 	{
+		if (m_ClipHandle == handle)
+			return;
+
 		m_ClipHandle = handle; 
 
 		// 파생값 갱신 (읽기전용 표시용)
@@ -84,6 +87,9 @@ public:
 			loader->GetAnimationAssetReference(handle, ref.assetPath, ref.assetIndex);
 
 		LoadSetAnimation(ref); // 또는 내부 갱신 함수
+
+		// 클립 바뀌면 파생 상태를 일관되게 정리/재계산
+		RefreshDerivedAfterClipChanged();
 	}
 
 	const AnimationHandle& GetClipHandle()			   { return m_ClipHandle;   }
@@ -172,12 +178,20 @@ public:
 		m_Animations = animations;
 	}
 
-	const PlaybackState& GetPlayback() const { return m_Playback; }
+	void LoadSetPlayback(const PlaybackState& playback) { m_Playback = playback; }
+	const PlaybackState& GetPlayback() const			{ return m_Playback;	 }
+
 	const BlendState& GetBlend() const { return m_Blend; }
+
+	void LoadSetBoneMaskWeights(const std::vector<float>& boneMaskWeights) { m_BoneMaskWeights = boneMaskWeights; }
 	const std::vector<float>& GetBoneMaskWeights() const { return m_BoneMaskWeights; }
+	void LoadSetRetargetOffsets(const std::vector<LocalPose>& retargetOffset) { m_RetargetOffsets = retargetOffset; }
 	const std::vector<LocalPose>& GetRetargetOffsets() const { return m_RetargetOffsets; }
+	void LoadSetBoneMaskSource(const BoneMaskSource& boneMaskSource) { m_BoneMaskSource = boneMaskSource; }
 	const BoneMaskSource& GetBoneMaskSource() const { return m_BoneMaskSource; }
+	void LoadSetBoneMaskWeight(const float& boneMaskWeight) { m_BoneMaskWeight = boneMaskWeight; }
 	const float& GetBoneMaskWeight() const { return m_BoneMaskWeight; }
+	void LoadSetBoneMaskDefaultWeight(const float& boneMaskDefaultWeight) { m_BoneMaskDefaultWeight = boneMaskDefaultWeight; }
 	const float& GetBoneMaskDefaultWeight() const { return m_BoneMaskDefaultWeight; }
 	const bool& GetAutoBoneMaskApplied() const { return m_AutoBoneMaskApplied; }
 	
@@ -197,6 +211,8 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 private:
+	void RefreshDerivedAfterClipChanged();
+
 	void SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind,
 							     const std::vector<DirectX::XMFLOAT4X4>& targetBind);
 

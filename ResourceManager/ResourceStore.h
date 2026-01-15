@@ -38,6 +38,7 @@ public:
 		HandleType handle = AllocateHandle();
 		Entry& entry = m_Entries[handle.id];
 		entry.key = key;
+		entry.displayName = MakeDisplayNameFromKey(key);
 		entry.resource = loader ? loader() : nullptr;
 		entry.alive = true;
 		entry.generation = handle.generation;
@@ -120,6 +121,12 @@ public:
 		return m_KeyToHandle;
 	}
 
+	const std::string* GetDisplayName(HandleType handle) const
+	{
+		if (!IsAlive(handle)) return nullptr;
+		return &m_Entries[handle.id].displayName;
+	}
+
 	const std::string* GetKey(HandleType handle) const
 	{
 		if (!IsAlive(handle))
@@ -131,9 +138,25 @@ public:
 	}
 
 private:
+	static std::string MakeDisplayNameFromKey(const std::string& key)
+	{
+		// key가 경로/긴 문자열이라고 가정하고 파일 stem만 뽑음
+		size_t p = key.find_last_of("/\\");
+		std::string name = (p == std::string::npos) ? key : key.substr(p + 1);
+
+		size_t dot = name.find_last_of('.');
+		if (dot != std::string::npos)
+			name = name.substr(0, dot);
+
+		return name;
+	}
+
+
+private:
 	struct Entry
 	{
 		std::string        key;
+		std::string        displayName;
 		std::unique_ptr<T> resource;
 		UINT32             generation = 1;
 		bool               alive = false;
