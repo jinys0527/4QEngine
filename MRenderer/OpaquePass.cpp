@@ -6,26 +6,7 @@
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
-    const auto& context = frame.context;
-
-    if (!m_RenderContext.isEditCam)
-    {
-        m_RenderContext.BCBuffer.mView = context.gameCamera.view;
-        m_RenderContext.BCBuffer.mProj = context.gameCamera.proj;
-        m_RenderContext.BCBuffer.mVP = context.gameCamera.viewProj;
-
-        m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-
-    }
-    else if (m_RenderContext.isEditCam)
-    {
-        m_RenderContext.BCBuffer.mView = context.editorCamera.view;
-        m_RenderContext.BCBuffer.mProj = context.editorCamera.proj;
-        m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
-
-        m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-
-    }
+    SetCameraCB(frame);
 
     //빛 상수 버퍼 set
     SetDirLight(frame);

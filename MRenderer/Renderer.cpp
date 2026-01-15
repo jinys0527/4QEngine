@@ -100,6 +100,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_PS_POS.hlsl"), m_pPS_P.GetAddressOf());
 
 	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
@@ -374,6 +375,8 @@ void Renderer::CreateContext()
 	
 	m_RenderContext.pBCB					= m_pBCB;
 	m_RenderContext.BCBuffer				= m_BCBuffer;
+	m_RenderContext.pCameraCB				= m_pCameraCB;
+	m_RenderContext.CameraCBuffer			= m_CameraCBuffer;
 	m_RenderContext.pSkinCB					= m_pSkinCB;
 	m_RenderContext.SkinCBuffer				= m_SkinCBuffer;
 	m_RenderContext.pLightCB				= m_pLightCB;		
@@ -477,9 +480,16 @@ HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const c
 	);
 	if (FAILED(hr))
 	{
-		ERROR_MSG(hr);
+		if (pError)
+		{
+			MessageBoxA(
+				nullptr,
+				(char*)pError->GetBufferPointer(),
+				"Shader Compile Error",
+				MB_OK | MB_ICONERROR
+			);
+		}
 	}
-
 	SafeRelease(pError);
 	return hr;
 }
@@ -674,6 +684,13 @@ HRESULT Renderer::CreateConstBuffer()
 	HRESULT hr = S_OK;
 
 	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_pBCB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG(hr);
+		return hr;
+	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(CameraConstBuffer), m_pCameraCB.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ERROR_MSG(hr);
@@ -1568,7 +1585,7 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 {
 	const auto& context = frame.context;
 
-	XMFLOAT3 g_vEye = context.gameCamera.cameraPos;
+	XMFLOAT3   eye = context.gameCamera.cameraPos;
 	XMFLOAT4X4 view = context.gameCamera.view;
 	XMFLOAT4X4 proj = context.gameCamera.proj;
 	XMFLOAT4X4 vp = context.gameCamera.viewProj;
@@ -1576,24 +1593,13 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 
 	XMFLOAT4X4 tm;
 
-	// 
-	//XMFLOAT3		g_vEye(0.0f, 10.0f, -6.0f);		//카메라 위치1.(Position)
-	XMFLOAT3		g_vLookAt(0.0f, 0.0f, 0.0f);	//바라보는 곳1.(Position)
-	XMFLOAT3		g_vUp(0.0f, 1.0f, 0.0f);		//카메라 상방 벡터1.(Direction)
-
-	// 투영 변환 정보. 
-	//constexpr float Fov = XMConvertToRadians(45.0f);	//기본 FOV 앵글. Field of View (Y)
-
-	XMVECTOR eye = XMLoadFloat3(&g_vEye);	//카메라 위치 
-	XMVECTOR lookat = XMLoadFloat3(&g_vLookAt);	//바라보는 곳.위치.
-	XMVECTOR up = XMLoadFloat3(&g_vUp);		//카메라 상방 벡터.	
-	// 뷰 변환 행렬 생성 :  View Transform 
-	//XMMATRIX mView = XMMatrixLookAtLH(eye, lookat, up);
-
 	XMMATRIX mView = XMLoadFloat4x4(&view);
 
 	if (m_IsEditCam)
+	{
 		mView = XMLoadFloat4x4(&context.editorCamera.view);
+		eye = context.editorCamera.cameraPos;
+	}
 
 	//XMMATRIX mProj = XMMatrixPerspectiveFovLH(Fov, 960.f / 800.f, 1, 300);
 	XMMATRIX mProj = XMLoadFloat4x4(&proj);
@@ -1601,21 +1607,24 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 		mProj = XMLoadFloat4x4(&context.editorCamera.proj);
 
 	XMStoreFloat4x4(&tm, mView);
-	m_RenderContext.BCBuffer.mView = tm;
+	m_RenderContext.CameraCBuffer.mView = tm;
 
 
 	XMStoreFloat4x4(&tm, mProj);
-	m_RenderContext.BCBuffer.mProj = tm;
+	m_RenderContext.CameraCBuffer.mProj = tm;
 
 	XMStoreFloat4x4(&tm, mView * mProj);
-	m_RenderContext.BCBuffer.mVP = tm;
+	m_RenderContext.CameraCBuffer.mVP = tm;
 
+	m_RenderContext.CameraCBuffer.camPos = eye;
 
 	XMFLOAT4X4 wTM;
 	XMStoreFloat4x4(&wTM, XMMatrixIdentity());
 	m_RenderContext.BCBuffer.mWorld = wTM;
 
 	UpdateDynamicBuffer(m_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
+	UpdateDynamicBuffer(m_pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &m_RenderContext.CameraCBuffer, sizeof(CameraConstBuffer));
+
 }
 
 void Renderer::DrawGrid()
@@ -1625,9 +1634,10 @@ void Renderer::DrawGrid()
 	UINT strideC = sizeof(VertexP), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);
 	m_pDXDC->VSSetShader(m_pVS_P.Get(), nullptr, 0);
-	m_pDXDC->PSSetShader(m_pPS.Get(), nullptr, 0);
+	m_pDXDC->PSSetShader(m_pPS_P.Get(), nullptr, 0);
 	m_pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-	
+	m_pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
+
 	m_pDXDC->Draw(m_GridVertexCount, 0);
 
 }

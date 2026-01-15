@@ -9,12 +9,13 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     XMMATRIX tm = XMMatrixIdentity();
     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, tm);
-    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mView, tm);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, tm);
 
     XMMATRIX mProj = XMMatrixOrthographicOffCenterLH(0, (float)m_RenderContext.WindowSize.width, (float)m_RenderContext.WindowSize.height, 0.0f, 1.0f, 100.0f);
 
-    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mProj, mProj);
-    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mVP, mProj);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, mProj);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
+    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자

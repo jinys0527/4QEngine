@@ -138,6 +138,8 @@ private:
 	//상수 버퍼
 	ComPtr<ID3D11Buffer>		m_pBCB;
 	BaseConstBuffer				m_BCBuffer;
+	ComPtr<ID3D11Buffer>		m_pCameraCB;
+	CameraConstBuffer			m_CameraCBuffer;
 	ComPtr<ID3D11Buffer>		m_pSkinCB;
 	SkinningConstBuffer			m_SkinCBuffer;
 	ComPtr<ID3D11Buffer>		m_pLightCB;
@@ -152,9 +154,10 @@ private:
 	ComPtr<ID3DBlob> m_pVSCode;
 
 
-	//Shadow, Depth용
+	//Shadow, Depth용, 지금은 그리드용
 	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
-	ComPtr<ID3D11VertexShader> m_pVS_P;
+	ComPtr<ID3D11VertexShader>	m_pVS_P;
+	ComPtr<ID3D11PixelShader>	m_pPS_P;
 	ComPtr<ID3DBlob> m_pVSCode_P;
 
 

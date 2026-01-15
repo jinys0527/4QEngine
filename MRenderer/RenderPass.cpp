@@ -31,6 +31,32 @@ void RenderPass::SetSamplerState()
 {
 }
 
+void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
+{
+	const auto& context = frame.context;
+
+	if (!m_RenderContext.isEditCam)
+	{
+		m_RenderContext.CameraCBuffer.mView = context.gameCamera.view;
+		m_RenderContext.CameraCBuffer.mProj = context.gameCamera.proj;
+		m_RenderContext.CameraCBuffer.mVP = context.gameCamera.viewProj;
+
+		m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+
+	}
+	else if (m_RenderContext.isEditCam)
+	{
+		m_RenderContext.CameraCBuffer.mView = context.editorCamera.view;
+		m_RenderContext.CameraCBuffer.mProj = context.editorCamera.proj;
+		m_RenderContext.CameraCBuffer.mVP = context.editorCamera.viewProj;
+
+		m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+	}
+
+	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
+
+}
+
 void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 {
 	if (!frame.lights.empty())
@@ -103,8 +129,10 @@ void RenderPass::DrawMesh(
 
 	dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 	dc->PSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-	dc->VSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
-	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
+	dc->VSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
+	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
+	dc->VSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+	dc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
 
 
 	if (useSubMesh)

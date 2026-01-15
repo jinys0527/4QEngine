@@ -2,11 +2,11 @@
 
 VSOutput VS_Main(VSInput_PNUT input)
 {
-    VSOutput o;
-
+    VSOutput o = (VSOutput) 0;
+    
     float4 pos;
     pos = float4(input.pos, 1.0f);
-    pos = mul(pos, mWorld);
+    pos = mul(pos, mWorld);    float4 wPos = pos;
     pos = mul(pos, mView);
     pos = mul(pos, mProj);
     
@@ -16,5 +16,6 @@ VSOutput VS_Main(VSInput_PNUT input)
     o.pos = pos;
     o.nrm = nrm;
     o.uv = input.uv;
+    o.wPos = wPos;
     return o;
 }

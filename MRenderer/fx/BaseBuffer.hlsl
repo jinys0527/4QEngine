@@ -4,9 +4,15 @@
 cbuffer BaseBuffer : register(b0)
 {
     matrix mWorld;
+};
+
+cbuffer CameraBuffer : register(b1)
+{
     matrix mView;
     matrix mProj;
     matrix mVP;
+    float3 cameraPos;
+    float padding;
 };
 
 struct Light
@@ -22,14 +28,14 @@ struct Light
     float3 padding;
 };
 
-cbuffer LightBuffer : register(b1)
+cbuffer LightBuffer : register(b2)
 {
     Light lights[16];
     uint lightcount;
     float3 lightpadding;
 };
 
-cbuffer SkinningBuffer : register(b2)
+cbuffer SkinningBuffer : register(b3)
 {
     matrix bones[128];
     uint count;
@@ -71,6 +77,7 @@ struct VSOutput
     float4 pos : SV_POSITION;
     float4 nrm : NORMAL;
     float2 uv : TEXCOORD0;
+    float4 wPos : TEXCOORD1;
 };
 
 struct VSOutput_PU
@@ -79,6 +86,11 @@ struct VSOutput_PU
     float2 uv : TEXCOORD0;
 };
 
+struct VSOutput_P
+{
+    float4 pos : SV_POSITION;
+    float4 originPos : TEXCOORD0;
+};
 
 
 //ShaderResourceView
