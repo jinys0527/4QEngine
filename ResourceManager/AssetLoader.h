@@ -8,6 +8,10 @@
 #include "ResourceStore.h"
 #include "ResourceRefs.h"
 
+#include "json.hpp"
+using nlohmann::json;
+namespace fs = std::filesystem;
+
 class AssetLoader
 {
 public:
@@ -48,6 +52,31 @@ public:
 	ResourceStore<RenderData::Skeleton, SkeletonHandle>& GetSkeletons() { return m_Skeletons; }
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>& GetAnimations() { return m_Animations; }
 	AssetLoadResult LoadAsset(const std::string& assetMetaPath);
+
+	void LoadMeshes(json& meta,
+		const fs::path& baseDir,
+		AssetLoadResult& result,
+		std::vector<MaterialHandle>& materialHandles,
+		std::unordered_map<std::string, MaterialHandle>& materialByName,
+		const std::string& assetMetaPath);
+
+	void LoadMaterials(json& meta,
+		const fs::path& baseDir,
+		const fs::path& textureDir,
+		AssetLoadResult& result,
+		std::vector<MaterialHandle>& materialHandles,
+		std::unordered_map<std::string, MaterialHandle>& materialByName,
+		const std::string& assetMetaPath);
+
+	void LoadSkeletons(json& meta, 
+		const fs::path& baseDir, 
+		AssetLoadResult& result,
+		const std::string& assetMetaPath);
+
+	void LoadAnimations(json& meta, 
+		const fs::path& baseDir,
+		AssetLoadResult& result, 
+		const std::string& assetMetaPath);
 private:
 	
 

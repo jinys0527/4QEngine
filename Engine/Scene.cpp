@@ -372,6 +372,7 @@ static void EmitSubMeshes(
 			item.useSubMesh = true;
 			item.indexStart = sm.indexStart;
 			item.indexCount = sm.indexCount;
+			item.localToWorld = sm.localToWorld;
 
 			// submesh material override + 에디터에서 수정하면 갱신되도록
 			if (!item.material.IsValid() && sm.material.IsValid())
@@ -400,7 +401,7 @@ static void EmitSubMeshes(
 		item.useSubMesh = false;
 		item.indexStart = 0;
 		item.indexCount = static_cast<UINT32>(meshData.indices.size());
-
+		item.localToWorld = Identity();
 		if (overrides && !overrides->empty())
 		{
 			const auto& overrideRef = overrides->front();

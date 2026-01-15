@@ -7,10 +7,6 @@
 #include <unordered_map>
 #include <iostream>
 
-#include "json.hpp"
-using nlohmann::json;
-namespace fs = std::filesystem;
-
 namespace
 {
 	enum class ETextureType : uint8_t { ALBEDO, NORMAL, METALLIC, ROUGHNESS, AO, EMISSIVE, MAX };
@@ -36,6 +32,7 @@ namespace
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
 		uint32_t subMeshCount = 0;
+		uint32_t instanceCount = 0;
 		uint32_t stringTableBytes = 0;
 		AABBf    bounds{};
 	};
@@ -47,6 +44,13 @@ namespace
 		uint32_t materialNameOffset;
 		uint32_t nameOffset;
 		AABBf    bounds{};
+		uint32_t instanceStart = 0;      // InstanceTransform 배열 시작 인덱스
+		uint32_t instanceCount = 0;      // 이 submesh의 인스턴스 개수
+	};
+
+	struct InstanceTransformBin
+	{
+		float m[16]; // XMFLOAT4X4 그대로 memcpy 가능(로우메이저 전제)
 	};
 
 	struct Vertex
@@ -631,12 +635,222 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 	const fs::path baseDir = (metaDir / pathJson.value("baseDir", "")).lexically_normal();
 	const fs::path textureDir = (baseDir / pathJson.value("textureDir", "")).lexically_normal();
 
-	const json filesJson = meta.value("files", json::object());
-	const std::string materialsFile = filesJson.value("materials", "");
-	const std::string skeletonFile = filesJson.value("skeleton", "");
-
 	std::vector<MaterialHandle> materialHandles;
 	std::unordered_map<std::string, MaterialHandle> materialByName;
+	
+	LoadMaterials(meta, baseDir, textureDir, result, materialHandles, materialByName, assetMetaPath);
+
+	LoadSkeletons(meta, baseDir, result, assetMetaPath);
+
+	LoadMeshes(meta, baseDir, result, materialHandles, materialByName, assetMetaPath);
+
+	LoadAnimations(meta, baseDir, result, assetMetaPath);
+
+	m_AssetsByPath[assetMetaPath] = result;
+	return result;
+}
+
+void AssetLoader::LoadMeshes(
+	json& meta, 
+	const fs::path& baseDir, 
+	AssetLoadResult& result, 
+	std::vector<MaterialHandle>& materialHandles, 
+	std::unordered_map<std::string, MaterialHandle>& materialByName,
+	const std::string& assetMetaPath
+)
+{
+	if (meta.contains("meshes") && meta["meshes"].is_array())
+	{
+		for (const auto& meshJson : meta["meshes"])
+		{
+			UINT32 meshIndex = 0;
+			const std::string meshFile = meshJson.value("file", "");
+			if (meshFile.empty())
+			{
+				++meshIndex;
+				continue;
+			}
+
+			const fs::path meshPath = ResolvePath(baseDir, meshFile);
+			std::ifstream meshStream(meshPath, std::ios::binary);
+			if (!meshStream)
+			{
+				++meshIndex;
+				continue;
+			}
+
+			MeshBinHeader header{};
+			meshStream.read(reinterpret_cast<char*>(&header), sizeof(header));
+			if (header.magic != kMeshMagic)
+			{
+				++meshIndex;
+				continue;
+			}
+
+			std::vector<SubMeshBin> subMeshes(header.subMeshCount);
+			meshStream.read(reinterpret_cast<char*>(subMeshes.data()), sizeof(SubMeshBin) * subMeshes.size());
+
+			//instanceTransforms 읽기
+			std::vector<InstanceTransformBin> instanceTransforms;
+			if (header.version >= 3 && header.instanceCount > 0)
+			{
+				instanceTransforms.resize(header.instanceCount);
+				meshStream.read(reinterpret_cast<char*>(instanceTransforms.data()),
+					sizeof(InstanceTransformBin) * instanceTransforms.size());
+			}
+
+			RenderData::MeshData meshData{};
+			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
+
+			meshData.vertices.reserve(header.vertexCount);
+			if (meshData.hasSkinning)
+			{
+				std::vector<VertexSkinned> vertices(header.vertexCount);
+				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(VertexSkinned) * vertices.size());
+				for (const auto& v : vertices)
+				{
+					meshData.vertices.push_back(ToRenderVertex(v));
+				}
+			}
+			else
+			{
+				std::vector<Vertex> vertices(header.vertexCount);
+				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(Vertex) * vertices.size());
+				for (const auto& v : vertices)
+				{
+					meshData.vertices.push_back(ToRenderVertex(v));
+				}
+			}
+
+			meshData.indices.resize(header.indexCount);
+			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
+
+#ifdef _DEBUG
+			// 			std::cout << "[MeshBin] load mesh=" << meshPath.filename().string()
+			// 				<< " verts=" << meshData.vertices.size()
+			// 				<< " indices=" << meshData.indices.size()
+			// 				<< " skinned=" << meshData.hasSkinning
+			// 				<< std::endl;
+			// 			for (auto i = 0; i < meshData.vertices.size(); ++i)
+			// 			{
+			// 				const auto& v = meshData.vertices[i];
+			// 				std::cout << "[MeshBin] v" << i
+			// 					<< " pos=(" << v.position.x << "," << v.position.y << "," << v.position.z << ")"
+			// 					<< " n=(" << v.normal.x << "," << v.normal.y << "," << v.normal.z << ")"
+			// 					<< " uv=(" << v.uv.x << "," << v.uv.y << ")"
+			// 					<< " t=(" << v.tangent.x << "," << v.tangent.y << "," << v.tangent.z << "," << v.tangent.w << ")"
+			// 					<< std::endl;
+			// 			}
+			// 			for (size_t i = 0; i + 2 < meshData.indices.size(); i += 3)
+			// 			{
+			// 				std::cout << "[MeshBin] tri" << (i / 3)
+			// 					<< " idx=(" << meshData.indices[i] << "," << meshData.indices[i + 1] << "," << meshData.indices[i + 2] << ")"
+			// 					<< std::endl;
+			// 			}
+#endif
+
+			std::string stringTable;
+			if (header.stringTableBytes > 0)
+			{
+				stringTable.resize(header.stringTableBytes);
+				meshStream.read(stringTable.data(), header.stringTableBytes);
+			}
+
+#ifdef _DEBUG
+			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+#endif
+
+			meshData.subMeshes.reserve(subMeshes.size());
+			for (const auto& subMesh : subMeshes)
+			{
+				const std::string materialName = ReadStringAtOffset(stringTable, subMesh.materialNameOffset);
+				const std::string subName = ReadStringAtOffset(stringTable, subMesh.nameOffset);
+
+				auto resolveMat = [&]() -> MaterialHandle
+					{
+						if (!materialName.empty())
+						{
+							auto it = materialByName.find(materialName);
+							if (it != materialByName.end()) return it->second;
+						}
+						if (materialHandles.size() == 1) return materialHandles.front();
+						return MaterialHandle::Invalid();
+					};
+
+				const MaterialHandle mat = resolveMat();
+
+				// v2 (또는 v3인데 instanceTransforms 없음) -> 1개만, identity
+				if (header.version < 3 || instanceTransforms.empty() || subMesh.instanceCount == 0)
+				{
+					RenderData::MeshData::SubMesh out{};
+					out.indexStart = subMesh.indexStart;
+					out.indexCount = subMesh.indexCount;
+					out.material = mat;
+					out.name = subName;
+
+					DirectX::XMFLOAT4X4 id{};
+					id._11 = id._22 = id._33 = id._44 = 1.0f;
+					out.localToWorld = id;
+
+					meshData.subMeshes.push_back(std::move(out));
+					continue;
+				}
+
+				// v3 -> instanceCount 만큼 풀어서 push
+				const uint32_t start = subMesh.instanceStart;
+				const uint32_t count = subMesh.instanceCount;
+
+				for (uint32_t i = 0; i < count; ++i)
+				{
+					const uint32_t idx = start + i;
+					if (idx >= (uint32_t)instanceTransforms.size()) break;
+
+					RenderData::MeshData::SubMesh out{};
+					out.indexStart = subMesh.indexStart;
+					out.indexCount = subMesh.indexCount;
+					out.material = mat;
+					out.name = subName;
+					out.localToWorld._11 = instanceTransforms[idx].m[0];
+					out.localToWorld._12 = instanceTransforms[idx].m[1];
+					out.localToWorld._13 = instanceTransforms[idx].m[2];
+					out.localToWorld._14 = instanceTransforms[idx].m[3];
+					out.localToWorld._21 = instanceTransforms[idx].m[4];
+					out.localToWorld._22 = instanceTransforms[idx].m[5];
+					out.localToWorld._23 = instanceTransforms[idx].m[6];
+					out.localToWorld._24 = instanceTransforms[idx].m[7];
+					out.localToWorld._31 = instanceTransforms[idx].m[8];
+					out.localToWorld._32 = instanceTransforms[idx].m[9];
+					out.localToWorld._33 = instanceTransforms[idx].m[10];
+					out.localToWorld._34 = instanceTransforms[idx].m[11];
+					out.localToWorld._41 = instanceTransforms[idx].m[12];
+					out.localToWorld._42 = instanceTransforms[idx].m[13];
+					out.localToWorld._43 = instanceTransforms[idx].m[14];
+					out.localToWorld._44 = instanceTransforms[idx].m[15];
+
+					meshData.subMeshes.push_back(std::move(out));
+				}
+			}
+
+			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
+				{
+					return std::make_unique<RenderData::MeshData>(meshData);
+				});
+			result.meshes.push_back(handle);
+
+			if (handle.IsValid())
+			{
+				StoreReferenceIfMissing(m_MeshRefs, handle, assetMetaPath, meshIndex);
+			}
+			++meshIndex;
+		}
+	}
+}
+
+void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::path& textureDir, AssetLoadResult& result, std::vector<MaterialHandle>& materialHandles, std::unordered_map<std::string, MaterialHandle>& materialByName, const std::string& assetMetaPath)
+{
+	const json filesJson = meta.value("files", json::object());
+	const std::string materialsFile = filesJson.value("materials", "");
+
 	if (!materialsFile.empty())
 	{
 		const fs::path materialPath = ResolvePath(baseDir, materialsFile);
@@ -658,7 +872,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 				}
 
 #ifdef _DEBUG
-		//		LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
+				//		LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
 #endif // _DEBUG
 
 				materialHandles.reserve(mats.size());
@@ -726,7 +940,13 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			}
 		}
 	}
+}
 
+void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadResult& result, const std::string& assetMetaPath)
+{
+	const json filesJson = meta.value("files", json::object());
+	const std::string skeletonFile = filesJson.value("skeleton", "");
+	
 	if (!skeletonFile.empty())
 	{
 		const fs::path skelPath = ResolvePath(baseDir, skeletonFile);
@@ -785,138 +1005,10 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			}
 		}
 	}
+}
 
-	if (meta.contains("meshes") && meta["meshes"].is_array())
-	{
-		for (const auto& meshJson : meta["meshes"])
-		{
-			UINT32 meshIndex = 0;
-			const std::string meshFile = meshJson.value("file", "");
-			if (meshFile.empty())
-			{
-				++meshIndex;
-				continue;
-			}
-
-			const fs::path meshPath = ResolvePath(baseDir, meshFile);
-			std::ifstream meshStream(meshPath, std::ios::binary);
-			if (!meshStream)
-			{
-				++meshIndex;
-				continue;
-			}
-
-			MeshBinHeader header{};
-			meshStream.read(reinterpret_cast<char*>(&header), sizeof(header));
-			if (header.magic != kMeshMagic)
-			{
-				++meshIndex;
-				continue;
-			}
-
-			std::vector<SubMeshBin> subMeshes(header.subMeshCount);
-			meshStream.read(reinterpret_cast<char*>(subMeshes.data()), sizeof(SubMeshBin)* subMeshes.size());
-
-			RenderData::MeshData meshData{};
-			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
-
-			meshData.vertices.reserve(header.vertexCount);
-			if (meshData.hasSkinning)
-			{
-				std::vector<VertexSkinned> vertices(header.vertexCount);
-				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(VertexSkinned) * vertices.size());
-				for (const auto& v : vertices)
-				{
-					meshData.vertices.push_back(ToRenderVertex(v));
-				}
-			}
-			else
-			{
-				std::vector<Vertex> vertices(header.vertexCount);
-				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(Vertex) * vertices.size());
-				for (const auto& v : vertices)
-				{
-					meshData.vertices.push_back(ToRenderVertex(v));
-				}
-			}
-
-			meshData.indices.resize(header.indexCount);
-			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
-
-#ifdef _DEBUG
-// 			std::cout << "[MeshBin] load mesh=" << meshPath.filename().string()
-// 				<< " verts=" << meshData.vertices.size()
-// 				<< " indices=" << meshData.indices.size()
-// 				<< " skinned=" << meshData.hasSkinning
-// 				<< std::endl;
-// 			for (auto i = 0; i < meshData.vertices.size(); ++i)
-// 			{
-// 				const auto& v = meshData.vertices[i];
-// 				std::cout << "[MeshBin] v" << i
-// 					<< " pos=(" << v.position.x << "," << v.position.y << "," << v.position.z << ")"
-// 					<< " n=(" << v.normal.x << "," << v.normal.y << "," << v.normal.z << ")"
-// 					<< " uv=(" << v.uv.x << "," << v.uv.y << ")"
-// 					<< " t=(" << v.tangent.x << "," << v.tangent.y << "," << v.tangent.z << "," << v.tangent.w << ")"
-// 					<< std::endl;
-// 			}
-// 			for (size_t i = 0; i + 2 < meshData.indices.size(); i += 3)
-// 			{
-// 				std::cout << "[MeshBin] tri" << (i / 3)
-// 					<< " idx=(" << meshData.indices[i] << "," << meshData.indices[i + 1] << "," << meshData.indices[i + 2] << ")"
-// 					<< std::endl;
-// 			}
-#endif
-
-			std::string stringTable;
-			if (header.stringTableBytes > 0)
-			{
-				stringTable.resize(header.stringTableBytes);
-				meshStream.read(stringTable.data(), header.stringTableBytes);
-			}
-
-#ifdef _DEBUG
-			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
-#endif
-
-			meshData.subMeshes.reserve(subMeshes.size());
-			for (const auto& subMesh : subMeshes)
-			{
-				RenderData::MeshData::SubMesh out{};
-				out.indexStart = subMesh.indexStart;
-				out.indexCount = subMesh.indexCount;
-
-				const std::string materialName = ReadStringAtOffset(stringTable, subMesh.materialNameOffset);
-				out.name = ReadStringAtOffset(stringTable, subMesh.nameOffset);
-				if (!materialName.empty())
-				{
-					auto it = materialByName.find(materialName);
-					if (it != materialByName.end())
-					{
-						out.material = it->second;
-					}
-				}
-				else if (materialHandles.size() == 1)
-				{
-					out.material = materialHandles.front();
-				}
-
-				meshData.subMeshes.push_back(out);
-			}
-
-			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
-				{
-					return std::make_unique<RenderData::MeshData>(meshData);
-				});
-			result.meshes.push_back(handle);
-
-			if (handle.IsValid())
-			{
-				StoreReferenceIfMissing(m_MeshRefs, handle, assetMetaPath, meshIndex);
-			}
-			++meshIndex;
-		}
-	}
-
+void AssetLoader::LoadAnimations(json& meta, const fs::path& baseDir, AssetLoadResult& result, const std::string& assetMetaPath)
+{
 	if (meta.contains("animations") && meta["animations"].is_array())
 	{
 		UINT32 animationIndex = 0;
@@ -954,7 +1046,4 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			++animationIndex;
 		}
 	}
-
-	m_AssetsByPath[assetMetaPath] = result;
-	return result;
 }
