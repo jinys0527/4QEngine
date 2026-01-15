@@ -41,6 +41,7 @@ namespace RenderData
 			UINT32 indexCount = 0;
 			MaterialHandle material = MaterialHandle::Invalid();
 			std::string name;
+			XMFLOAT4X4 localToWorld;
 		};
 
 		std::vector<Vertex>   vertices;
@@ -169,6 +170,7 @@ namespace RenderData
 		UINT32		   indexStart = 0;
 		UINT32		   indexCount = 0;
 		bool		   useSubMesh = false;
+		XMFLOAT4X4     localToWorld{};
 	};
 
 	enum RenderLayer
