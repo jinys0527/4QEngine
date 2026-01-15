@@ -13,7 +13,7 @@ REGISTER_PROPERTY(MeshRenderer, ReceiveShadow)
 REGISTER_PROPERTY(MeshRenderer, RenderLayer)
 
 
-bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
+bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out)
 {
 	if (!m_Visible)
 		return false;
@@ -66,7 +66,7 @@ UINT64 MeshRenderer::BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT
 	return key;
 }
 
-void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const
+void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material)
 {
 	mesh     = m_MeshHandle;
 	material = m_MaterialHandle;
@@ -82,6 +82,12 @@ void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) co
 		if (const auto* meshComponent = owner->GetComponent<MeshComponent>())
 		{
 			mesh = meshComponent->GetMeshHandle();
+			// 파생값 갱신 (읽기전용 표시용)
+			MeshRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetMeshAssetReference(mesh, ref.assetPath, ref.assetIndex);
+
+			LoadSetMesh(ref); // 또는 내부 갱신 함수
 		}
 	}
 
@@ -90,6 +96,12 @@ void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) co
 		if (const auto* materialComponent = owner->GetComponent<MaterialComponent>())
 		{
 			material = materialComponent->GetMaterialHandle();
+			// 파생값 갱신 (읽기전용 표시용)
+			MaterialRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetMaterialAssetReference(material, ref.assetPath, ref.assetIndex);
+
+			LoadSetMaterial(ref); // 또는 내부 갱신 함수
 		}
 	}
 }

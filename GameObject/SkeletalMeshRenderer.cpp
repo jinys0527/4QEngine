@@ -7,7 +7,7 @@
 REGISTER_COMPONENT_DERIVED(SkeletalMeshRenderer, MeshRenderer)
 REGISTER_PROPERTY_READONLY_LOADABLE(SkeletalMeshRenderer, Skeleton)
 
-bool SkeletalMeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
+bool SkeletalMeshRenderer::BuildRenderItem(RenderData::RenderItem& out)
 {
 	if (!m_Visible)
 		return false;
@@ -40,7 +40,7 @@ void SkeletalMeshRenderer::OnEvent(EventType type, const void* data)
 {
 }
 
-void SkeletalMeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material, SkeletonHandle& skeleton) const
+void SkeletalMeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material, SkeletonHandle& skeleton)
 {
 	mesh = m_MeshHandle;
 	material = m_MaterialHandle;
@@ -55,6 +55,13 @@ void SkeletalMeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& mate
 		if (const auto* skeletalMeshComp = owner->GetComponent<SkeletalMeshComponent>())
 		{
 			mesh = skeletalMeshComp->GetMeshHandle();
+
+			// 파생값 갱신 (읽기전용 표시용)
+			MeshRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetMeshAssetReference(mesh, ref.assetPath, ref.assetIndex);
+
+			LoadSetMesh(ref); // 또는 내부 갱신 함수
 		}
 	}
 
@@ -63,6 +70,13 @@ void SkeletalMeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& mate
 		if (const auto* materialComp = owner->GetComponent<MaterialComponent>())
 		{
 			material = materialComp->GetMaterialHandle();
+
+			// 파생값 갱신 (읽기전용 표시용)
+			MaterialRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetMaterialAssetReference(material, ref.assetPath, ref.assetIndex);
+
+			LoadSetMaterial(ref); // 또는 내부 갱신 함수
 		}
 	}
 
@@ -71,6 +85,12 @@ void SkeletalMeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& mate
 		if (const auto* skeletalMeshComp = owner->GetComponent<SkeletalMeshComponent>())
 		{
 			skeleton = skeletalMeshComp->GetSkeletonHandle();
+			// 파생값 갱신 (읽기전용 표시용)
+			SkeletonRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetSkeletonAssetReference(skeleton, ref.assetPath, ref.assetIndex);
+
+			LoadSetSkeleton(ref); // 또는 내부 갱신 함수
 		}
 	}
 }

@@ -94,9 +94,9 @@
                                 "z": 0.0
                             },
                             "Rotation": {
-                                "w": 1.0,
+                                "w": 0.9781476259231567,
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": 0.20791170001029968,
                                 "z": 0.0
                             },
                             "Scale": {
@@ -187,6 +187,36 @@
                             }
                         },
                         "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                            }
+                        },
+                        "type": "MeshComponent"
                     }
                 ],
                 "name": "GameObject"
@@ -285,8 +315,8 @@
                             "CastShadow": true,
                             "Color": {
                                 "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "y": 0.27450981736183167,
+                                "z": 0.27450981736183167
                             },
                             "Direction": {
                                 "x": 0.0,

@@ -90,22 +90,6 @@ void GameObject::Serialize(nlohmann::json& j) const
 	{
 		for (const auto& comp : component.second)
 		{
-			//기존
-			/*const char* typeName = comp->GetTypeName();
-			if (strcmp(typeName, "TransformComponent") == 0)
-			{
-				nlohmann::json compJson;
-				compJson["type"] = typeName;
-				comp->Serialize(compJson["data"]);
-				j["components"].push_back(compJson);
-			}
-			else if(strcmp(typeName, "SpriteRenderer") == 0)
-			{
-				nlohmann::json compJson;
-				compJson["type"] = typeName;
-				comp->Serialize(compJson["data"]);
-				j["components"].push_back(compJson);
-			}*/
 			//Reflection 으로 교체
 			nlohmann::json compJson;
 			compJson["type"] = comp->GetTypeName();

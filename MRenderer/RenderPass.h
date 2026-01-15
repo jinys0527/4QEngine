@@ -6,6 +6,7 @@
 #include "RenderData.h"
 #include "DX11.h"
 #include "Buffers.h"
+#include "MathHelper.h"
 
 // 렌더 패스의 공통 인터페이스
 // 새로운 렌더 패스를 작성을 위한 부모 클래스

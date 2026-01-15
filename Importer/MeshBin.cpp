@@ -56,6 +56,55 @@ static uint16_t ToU16Norm(float weight)
 	return static_cast<uint16_t>(weight * 65535.0f + 0.5f);
 }
 
+static void CollectMeshTransforms_DFS(
+	const aiNode* node,
+	const aiMatrix4x4& parentGlobal,
+	std::vector<std::vector<aiMatrix4x4>>& out // [meshIndex] -> transforms
+)
+{
+	if (!node) return;
+
+	aiMatrix4x4 global = parentGlobal * node->mTransformation;
+
+	for (uint32_t i = 0; i < node->mNumMeshes; ++i)
+	{
+		uint32_t meshIndex = node->mMeshes[i];
+		if (meshIndex < out.size())
+			out[meshIndex].push_back(global);
+	}
+
+	for (uint32_t c = 0; c < node->mNumChildren; ++c)
+		CollectMeshTransforms_DFS(node->mChildren[c], global, out);
+}
+
+// static void CollectMeshInstances_DFS(
+// 	const aiNode* node,
+// 	const aiMatrix4x4& parentGlobal,
+// 	std::vector<MeshInstance>& outInstances
+// )
+// {
+// 	if (!node) return;
+// 
+// 	aiMatrix4x4 global = parentGlobal * node->mTransformation;
+// 	const std::string nodeName = node->mName.C_Str();
+// 
+// 	// 이 노드가 참조하는 mesh들
+// 	for (uint32_t i = 0; i < node->mNumMeshes; ++i)
+// 	{
+// 		MeshInstance meshInst;
+// 		meshInst.meshIndex = node->mMeshes[i];
+// 		meshInst.global = global;
+// 		meshInst.nodeName = nodeName;
+// 		outInstances.push_back(std::move(meshInst));
+// 	}
+// 
+// 	// 자식으로 내려감
+// 	for (uint32_t c = 0; c < node->mNumChildren; ++c)
+// 	{
+// 		CollectMeshInstances_DFS(node->mChildren[c], global, outInstances);
+// 	}
+// }
+
 static void SaveVertex(const aiMesh* mesh, uint32_t i, Vertex& v)
 {
 	v.px = mesh->mVertices[i].x;
@@ -97,6 +146,8 @@ static void SaveVertex(const aiMesh* mesh, uint32_t i, Vertex& v)
 		v.handedness = 1.0f;
 	}
 }
+
+
 
 #ifdef _DEBUG
 static void WriteMeshBinDebugJson(
@@ -277,6 +328,28 @@ static void AppendMeshVertices(
 	}
 }
 
+static void AABBExpandByTransformedLocalAABB(AABBf& worldBounds, const AABBf& localBounds, const aiMatrix4x4& localToWorld)
+{
+	// 8 corners 변환해서 world AABB 확장
+	const aiVector3D c[8] =
+	{
+		{ localBounds.min[0], localBounds.min[1], localBounds.min[2] },
+		{ localBounds.max[0], localBounds.min[1], localBounds.min[2] },
+		{ localBounds.min[0], localBounds.max[1], localBounds.min[2] },
+		{ localBounds.max[0], localBounds.max[1], localBounds.min[2] },
+		{ localBounds.min[0], localBounds.min[1], localBounds.max[2] },
+		{ localBounds.max[0], localBounds.min[1], localBounds.max[2] },
+		{ localBounds.min[0], localBounds.max[1], localBounds.max[2] },
+		{ localBounds.max[0], localBounds.max[1], localBounds.max[2] },
+	};
+
+	for (int i = 0; i < 8; ++i)
+	{
+		aiVector3D w = TransformPoint(localToWorld, c[i]);
+		AABBExpand(worldBounds, w.x, w.y, w.z);
+	}
+}
+
 bool ImportFBXToMeshBin(
 	const aiScene* scene,
 	const std::string& outDir, 
@@ -308,6 +381,36 @@ bool ImportFBXToMeshBin(
 	{
 		return false;
 	}
+	
+	std::vector<std::vector<aiMatrix4x4>> meshTransforms(scene->mNumMeshes);
+	aiMatrix4x4 I; // identity
+	CollectMeshTransforms_DFS(scene->mRootNode, I, meshTransforms);
+
+	// 비어있으면 identity 1개라도 넣어둠(렌더 불가 방지)
+	for (uint32_t m = 0; m < scene->mNumMeshes; ++m)
+	{
+		if (meshTransforms[m].empty())
+			meshTransforms[m].push_back(I);
+	}
+
+// 	1) 노드 기반으로 mesh 인스턴스 목록 수집
+// 		std::vector<MeshInstance> instances;
+// 		instances.reserve(scene->mNumMeshes);
+// 	
+// 		CollectMeshInstances_DFS(scene->mRootNode, I, instances);
+// 	
+// 		if (instances.empty())
+// 		{
+// 			// 노드에 mesh 참조가 없는 비정상 케이스 대비: 그냥 mesh들 1회씩 처리
+// 			for (uint32_t m = 0; m < scene->mNumMeshes; ++m)
+// 			{
+// 				MeshInstance inst;
+// 				inst.meshIndex = m;
+// 				inst.global = I;
+// 				inst.nodeName = "Root";
+// 				instances.push_back(std::move(inst));
+// 			}
+// 		}
 
 	std::vector<Vertex>        vertices;
 	std::vector<VertexSkinned> verticesSkinned;
@@ -315,8 +418,9 @@ bool ImportFBXToMeshBin(
 	std::vector<SubMeshBin>	   subMeshes;
 	subMeshes.reserve(scene->mNumMeshes);
 
-	AABBf bounds{};
-	AABBInit(bounds);
+	// 헤더용 전체 월드 bounds
+	AABBf sceneWorldBounds{};
+	AABBInit(sceneWorldBounds);
 
 	std::string stringTable;
 	stringTable.push_back('\0');
@@ -324,6 +428,11 @@ bool ImportFBXToMeshBin(
 
 	uint32_t vertexBase = 0;
 	
+	std::vector<InstanceTransformBin> instanceTransforms;
+	size_t approxInst = 0;
+	for (auto& v : meshTransforms) approxInst += v.size();
+	instanceTransforms.reserve(approxInst);
+
 	for (uint32_t m = 0; m < scene->mNumMeshes; ++m)
 	{
 		const aiMesh* mesh = scene->mMeshes[m];
@@ -332,15 +441,13 @@ bool ImportFBXToMeshBin(
 		SubMeshBin subMesh{};
 		subMesh.indexStart = static_cast<uint32_t>(indices.size());
 
-		AABBf subBounds{};
-		AABBInit(subBounds);
+		AABBf localBounds{};
+		AABBInit(localBounds);
 
 		const std::unordered_map<std::string, uint32_t>* mapPtr = anySkinned ? &boneNameToIndex : nullptr;
-		AppendMeshVertices(mesh, mapPtr, anySkinned, vertices, verticesSkinned, subBounds);
+		AppendMeshVertices(mesh, mapPtr, anySkinned, vertices, verticesSkinned, localBounds);
 
-		AABBExpand(bounds, subBounds.min[0], subBounds.min[1], subBounds.min[2]);
-		AABBExpand(bounds, subBounds.max[0], subBounds.max[1], subBounds.max[2]);
-
+		// 인덱스 복제
 		for (uint32_t f = 0; f < mesh->mNumFaces; ++f)
 		{
 			const aiFace& face = mesh->mFaces[f];
@@ -351,8 +458,42 @@ bool ImportFBXToMeshBin(
 			indices.push_back(vertexBase + static_cast<uint32_t>(face.mIndices[2]));
 		}
 
+
 		subMesh.indexCount = static_cast<uint32_t>(indices.size()) - subMesh.indexStart;
-		subMesh.bounds = subBounds;
+
+		// subMesh.bounds <- 로컬 bounds 저장
+		subMesh.bounds = localBounds;
+
+		// ===== 인스턴스 리스트 저장 =====
+		subMesh.instanceStart = static_cast<uint32_t>(instanceTransforms.size());
+		if (anySkinned)
+		{
+			subMesh.instanceCount = 1;
+
+			InstanceTransformBin it{};
+			XMFLOAT4X4 id{};
+			id._11 = id._22 = id._33 = id._44 = 1.0f;
+			it.localToWorld = id;
+			instanceTransforms.push_back(it);
+
+			// 스킨은 월드 bounds 확정 불가 → 로컬로만 확장(정책)
+			AABBExpand(sceneWorldBounds, localBounds.min[0], localBounds.min[1], localBounds.min[2]);
+			AABBExpand(sceneWorldBounds, localBounds.max[0], localBounds.max[1], localBounds.max[2]);
+		}
+		else
+		{
+			subMesh.instanceCount = static_cast<uint32_t>(meshTransforms[m].size());
+
+			for (const aiMatrix4x4& g : meshTransforms[m])
+			{
+				InstanceTransformBin it{};
+				it.localToWorld = ToXMFLOAT4X4(g);
+				instanceTransforms.push_back(it);
+
+				// 헤더 bounds는 모든 인스턴스를 반영
+				AABBExpandByTransformedLocalAABB(sceneWorldBounds, localBounds, g);
+			}
+		}
 
 		const uint32_t materialIndex = mesh->mMaterialIndex;
 		std::string materialName;
@@ -391,13 +532,14 @@ bool ImportFBXToMeshBin(
 	std::string outPath = JoinPath(outDir, file);
 
 	MeshBinHeader header{};
-	header.version = 2;
+	header.version = 3;
 	header.flags = anySkinned ? MESH_HAS_SKINNING : 0;
 	header.vertexCount      = anySkinned ? static_cast<uint32_t>(verticesSkinned.size()) : static_cast<uint32_t>(vertices.size());
 	header.indexCount       = static_cast<uint32_t>(indices.size());
 	header.subMeshCount     = static_cast<uint32_t>(subMeshes.size());
+	header.instanceCount	= static_cast<uint32_t>(instanceTransforms.size());
 	header.stringTableBytes = static_cast<uint32_t>(stringTable.size());
-	header.bounds = bounds;
+	header.bounds = sceneWorldBounds;
 
 #ifdef _DEBUG
 	//WriteMeshBinDebugJson(fs::path(outPath), header, subMeshes, vertices, verticesSkinned, indices, anySkinned);
@@ -413,6 +555,9 @@ bool ImportFBXToMeshBin(
 	{
 		ofs.write(reinterpret_cast<const char*>(subMeshes.data()), sizeof(SubMeshBin) * subMeshes.size());
 	}
+	if (!instanceTransforms.empty())
+		ofs.write(reinterpret_cast<const char*>(instanceTransforms.data()), sizeof(InstanceTransformBin) * instanceTransforms.size());
+
 	if (anySkinned)
 	{
 		ofs.write(reinterpret_cast<const char*>(verticesSkinned.data()), sizeof(VertexSkinned) * verticesSkinned.size());

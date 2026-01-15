@@ -4,10 +4,11 @@
 
 static void MatToRowMajor16(const aiMatrix4x4& m, float out16[16])
 {
-	out16[0]  = m.a1; out16[1]  = m.a2; out16[2]  = m.a3; out16[3]  = m.a4;
-	out16[4]  = m.b1; out16[5]  = m.b2; out16[6]  = m.b3; out16[7]  = m.b4;
-	out16[8]  = m.c1; out16[9]  = m.c2; out16[10] = m.c3; out16[11] = m.c4;
-	out16[12] = m.d1; out16[13] = m.d2; out16[14] = m.d3; out16[15] = m.d4;
+	// transpose (Assimp -> DX)
+	out16[0]  = m.a1; out16[1]  = m.b1; out16[2]  = m.c1; out16[3]  = m.d1;
+	out16[4]  = m.a2; out16[5]  = m.b2; out16[6]  = m.c2; out16[7]  = m.d2;
+	out16[8]  = m.a3; out16[9]  = m.b3; out16[10] = m.c3; out16[11] = m.d3;
+	out16[12] = m.a4; out16[13] = m.b4; out16[14] = m.c4; out16[15] = m.d4;
 }
 
 static aiMatrix4x4 Identity()
