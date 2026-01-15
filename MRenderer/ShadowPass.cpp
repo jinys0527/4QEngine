@@ -54,9 +54,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
         {
             const auto& item = items[index];
 
-            m_RenderContext.BCBuffer.mWorld = item.world;
-
-            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(BaseConstBuffer));
+            SetBaseCB(item);
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;

@@ -30,15 +30,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
         {
             for (const auto& item : items)
             {
-				XMMATRIX mtm = XMMatrixIdentity();
-				mtm = XMLoadFloat4x4(&item.world);
-
-				XMFLOAT4X4 tm;
-				XMStoreFloat4x4(&tm, mtm);
-
-				m_RenderContext.BCBuffer.mWorld = tm;
-
-				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
+                SetBaseCB(item);
 
 				if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 				{
@@ -72,7 +64,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				BOOL castshadow = frame.lights[index].castShadow;
 
-                //텍스쳐 바인딩
+                ////텍스쳐 바인딩
                 if (textures && item.material.IsValid())
                 {
                     RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
@@ -95,7 +87,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                         m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
                     }
                 }
-
 
 				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
 				{

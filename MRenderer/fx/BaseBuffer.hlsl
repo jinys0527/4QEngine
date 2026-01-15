@@ -4,6 +4,7 @@
 cbuffer BaseBuffer : register(b0)
 {
     matrix mWorld;
+    matrix mWorldInvTranspose;
 };
 
 cbuffer CameraBuffer : register(b1)

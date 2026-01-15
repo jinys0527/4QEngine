@@ -60,7 +60,7 @@ float4 SpecularLight_Direction(float4 pos, float4 nrm)
     spec.a = 1;
     
     float3 N = nrm.xyz;
-    N = normalize(N);
+    N = normalize(mul(N, (float3x3)mWorldInvTranspose));
     
     float3 L = normalize(lights[0].Dir);
 

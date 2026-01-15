@@ -9,6 +9,7 @@
 struct BaseConstBuffer
 {
 	XMFLOAT4X4 mWorld = XMFLOAT4X4{};
+	XMFLOAT4X4  mWorldInvTranspose = XMFLOAT4X4{};
 
 };
 

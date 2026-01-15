@@ -31,6 +31,17 @@ void RenderPass::SetSamplerState()
 {
 }
 
+void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
+{
+	m_RenderContext.BCBuffer.mWorld = item.world;
+	XMMATRIX world = XMLoadFloat4x4(&item.world);
+	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
+	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
+
+	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+}
+
+
 void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 {
 	const auto& context = frame.context;
