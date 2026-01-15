@@ -9,6 +9,7 @@
 #include "SkeletalMeshRenderer.h"
 #include "AnimationComponent.h"
 #include "TransformComponent.h"
+#include "LightComponent.h"
 #include "GameObject.h"
 #include "Reflection.h"
 #include "Renderer.h"
@@ -328,6 +329,24 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 
 	if (typeInfo == typeid(XMFLOAT3))
 	{
+		if (auto* transform = dynamic_cast<LightComponent*>(component)) {
+			if (property.GetName() == "Color") {
+				XMFLOAT3 value{};
+				property.GetValue(component, &value);
+				float data[3] = { value.x, value.y, value.z };
+				if (ImGui::ColorEdit3(property.GetName().c_str(), data, DRAG_SPEED))
+				{
+					value.x = data[0];
+					value.y = data[1];
+					value.z = data[2];
+					property.SetValue(component, &value);
+					return true;
+				}
+				return false;
+			}
+
+		}
+
 		XMFLOAT3 value{};
 		property.GetValue(component, &value);
 		float data[3] = { value.x, value.y, value.z };
@@ -346,6 +365,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	{
 		if (auto* transform = dynamic_cast<TransformComponent*>(component))
 		{
+
+			// Rotation에 대한 GUI만 오일러로 변환
 			if (property.GetName() == "Rotation")
 			{
 				XMFLOAT4 value{};

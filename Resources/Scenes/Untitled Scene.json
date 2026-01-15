@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -0.5488109588623047,
-                "y": 1.1378204822540283,
-                "z": -1.152115821838379
+                "x": -0.03506055101752281,
+                "y": 1.968023419380188,
+                "z": -2.0334160327911377
             },
             "look": {
-                "x": -0.12933209538459778,
-                "y": 0.9854789972305298,
-                "z": -0.25722503662109375
+                "x": -0.12309625744819641,
+                "y": 1.5335417985916138,
+                "z": -1.1370480060577393
             },
             "up": {
-                "x": 0.06465872377157211,
-                "y": 0.9883279204368591,
-                "z": 0.13793900609016418
+                "x": -0.04246775433421135,
+                "y": 0.9006807208061218,
+                "z": 0.4324010908603668
             }
         }
     },
@@ -46,14 +46,14 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": -0.5488109588623047,
-                                "y": 1.1378204822540283,
-                                "z": -1.152115821838379
+                                "x": -0.03506055101752281,
+                                "y": 1.968023419380188,
+                                "z": -2.0334160327911377
                             },
                             "Look": {
-                                "x": -0.12933209538459778,
-                                "y": 0.9854789972305298,
-                                "z": -0.25722503662109375
+                                "x": -0.12309625744819641,
+                                "y": 1.5335417985916138,
+                                "z": -1.1370480060577393
                             },
                             "Ortho": {
                                 "height": 10.0,
@@ -66,16 +66,16 @@
                                 "top": 1.0
                             },
                             "Perspective": {
-                                "aspect": 1.818411111831665,
+                                "aspect": 1.7846534252166748,
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": 0.06465872377157211,
-                                "y": 0.9883279204368591,
-                                "z": 0.13793900609016418
+                                "x": -0.04246775433421135,
+                                "y": 0.9006807208061218,
+                                "z": 0.4324010908603668
                             },
                             "Viewport": {
-                                "height": 793.0,
+                                "height": 808.0,
                                 "width": 1442.0
                             }
                         },
@@ -94,31 +94,69 @@
                                 "z": 0.0
                             },
                             "Rotation": {
-                                "w": 1.0,
+                                "w": 0.9781476259231567,
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": 0.20791170001029968,
                                 "z": 0.0
                             },
                             "Scale": {
-                                "x": 15.0,
-                                "y": 15.0,
-                                "z": 15.0
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
                             }
                         },
                         "type": "TransformComponent"
                     },
                     {
                         "data": {
-                            "Mesh": {
+                            "Material": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
                             },
-                            "MeshHandle": {
+                            "MaterialHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 1.0,
+                                        "g": 1.0,
+                                        "r": 1.0
+                                    },
+                                    "metallic": 0.0,
+                                    "roughness": 0.5527864098548889,
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ]
+                                }
                             }
                         },
-                        "type": "MeshComponent"
+                        "type": "MaterialComponent"
                     },
                     {
                         "data": {
@@ -139,54 +177,16 @@
                     },
                     {
                         "data": {
-                            "Material": {
+                            "Mesh": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
                             },
-                            "MaterialHandle": {
+                            "MeshHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                            },
-                            "Overrides": {
-                                "overrides": {
-                                    "baseColor": {
-                                        "a": 1.0,
-                                        "b": 0.5,
-                                        "g": 0.5,
-                                        "r": 0.5
-                                    },
-                                    "metallic": 0.0,
-                                    "roughness": 1.0,
-                                    "textures": [
-                                        {
-                                            "assetIndex": 0,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 1,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 2,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 3,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 4,
-                                            "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 0,
-                                            "assetPath": ""
-                                        }
-                                    ]
-                                }
+                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
                             }
                         },
-                        "type": "MaterialComponent"
+                        "type": "MeshComponent"
                     }
                 ],
                 "name": "GameObject"
@@ -285,22 +285,22 @@
                             "CastShadow": true,
                             "Color": {
                                 "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "y": 0.27450981736183167,
+                                "z": 0.27450981736183167
                             },
                             "Direction": {
                                 "x": 0.0,
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": 1.648459987812352e+15,
+                            "Intensity": 1.0,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "Range": 1.648459987812352e+15,
-                            "SpotAngle": 1.648459987812352e+15
+                            "Range": 0.0,
+                            "SpotAngle": 0.0
                         },
                         "type": "LightComponent"
                     }

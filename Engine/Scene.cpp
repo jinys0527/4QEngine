@@ -341,6 +341,7 @@ void Scene::Deserialize(const nlohmann::json& j)
 		}
 	}
 
+	// 오브젝트 자동 역직렬화
 	if (goRoot.contains("opaque"))
 	{
 		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, GetEventDispatcher(), this);
