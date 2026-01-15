@@ -9,9 +9,16 @@
 struct BaseConstBuffer
 {
 	XMFLOAT4X4 mWorld = XMFLOAT4X4{};
-	XMFLOAT4X4 mView  = XMFLOAT4X4{};
-	XMFLOAT4X4 mProj  = XMFLOAT4X4{};
-	XMFLOAT4X4 mVP    = XMFLOAT4X4{};
+
+};
+
+struct CameraConstBuffer
+{
+	XMFLOAT4X4	mView = XMFLOAT4X4{};
+	XMFLOAT4X4	mProj = XMFLOAT4X4{};
+	XMFLOAT4X4	mVP = XMFLOAT4X4{};
+	XMFLOAT3	camPos = XMFLOAT3{};
+	FLOAT		padding{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
 
 };
@@ -64,6 +71,8 @@ struct RenderContext
 
 	BaseConstBuffer				BCBuffer;
 	ComPtr<ID3D11Buffer>		pBCB;			//GPU에 넘기는 버퍼
+	CameraConstBuffer			CameraCBuffer;
+	ComPtr<ID3D11Buffer>		pCameraCB;			
 	SkinningConstBuffer			SkinCBuffer;
 	ComPtr<ID3D11Buffer>		pSkinCB;
 	LightConstBuffer			LightCBuffer;

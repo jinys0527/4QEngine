@@ -6,45 +6,14 @@
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
-    const auto& context = frame.context;
-
-    if (!m_RenderContext.isEditCam)
-    {
-        m_RenderContext.BCBuffer.mView = context.gameCamera.view;
-        m_RenderContext.BCBuffer.mProj = context.gameCamera.proj;
-        m_RenderContext.BCBuffer.mVP = context.gameCamera.viewProj;
-
-        m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-
-    }
-    else if (m_RenderContext.isEditCam)
-    {
-        m_RenderContext.BCBuffer.mView = context.editorCamera.view;
-        m_RenderContext.BCBuffer.mProj = context.editorCamera.proj;
-        m_RenderContext.BCBuffer.mVP = context.editorCamera.viewProj;
-
-        m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-
-    }
+    SetCameraCB(frame);
 
     //빛 상수 버퍼 set
-    if (!frame.lights.empty())
-    {
-        const auto& light = frame.lights[0];
-        Light dirlight;
-        dirlight.vDir = light.diretion;
-        dirlight.Color = light.color;
-        dirlight.Intensity = light.intensity;
-        dirlight.mLightViewProj = light.lightViewProj;
-        dirlight.CastShadow = light.castShadow;
+    SetDirLight(frame);
 
-        m_RenderContext.LightCBuffer.lights[0] = dirlight;
-
-        UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(BaseConstBuffer));
-
-    }
-
-
+    SetBlendState(BS::DEFAULT);
+    SetRasterizerState(RS::CULLBACK);
+    SetDepthStencilState(DS::DEPTH_ON);
 
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
@@ -103,7 +72,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				BOOL castshadow = frame.lights[index].castShadow;
 
-
+                //텍스쳐 바인딩
                 if (textures && item.material.IsValid())
                 {
                     RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
@@ -144,7 +113,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
 						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
-						DrawMesh(m_RenderContext.pDXDC.Get(), vb, ib, useSubMesh, indexCount, indexStart, castshadow);
+						DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
 					}
 				}
             }
@@ -152,46 +121,3 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     }
 }
 
-void OpaquePass::DrawMesh(
-    ID3D11DeviceContext* dc,
-    ID3D11Buffer* vb,
-    ID3D11Buffer* ib,
-    BOOL useSubMesh,
-    UINT indexCount,
-    UINT indexStart,
-    BOOL castshadow
-)
-{
-    const UINT stride = sizeof(RenderData::Vertex);
-    const UINT offset = 0;
-
-    dc->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
-    dc->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
-    dc->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
-
-    dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-    dc->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-    dc->IASetInputLayout(m_RenderContext.inputLayout.Get());
-    dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    dc->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-    dc->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-
-    dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-    dc->PSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-    dc->VSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
-    dc->PSSetConstantBuffers(1, 1, m_RenderContext.pLightCB.GetAddressOf());
-
-    //그림자가 드리워진다면 다른 픽셀쉐이더를 실행하게 한다?
-    //SetShaderResource(dc);
-    //SetSamplerState(dc);
-
-	if (useSubMesh)
-	{
-        dc->DrawIndexed(indexCount, indexStart, 0);
-	}
-	else
-	{
-        dc->DrawIndexed(indexCount, 0, 0);
-	}
-}

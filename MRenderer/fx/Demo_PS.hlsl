@@ -7,9 +7,11 @@ float4 PS_Main(VSOutput i) : SV_TARGET
     
     float4 albedo = g_Albedo.Sample(smpClamp, i.uv);
     
-    final = DirectLight(i.nrm);
+    float4 diffuse = DirectLight(i.nrm);
+       
+    float4 spec = SpecularLight_Direction(i.wPos, i.nrm);
     
-    final = albedo * final;
+    final = albedo * diffuse + spec;
     
     return final;
 }

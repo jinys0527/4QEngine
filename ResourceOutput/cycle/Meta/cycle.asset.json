@@ -4,12 +4,7 @@
     "materials": "Mats/cycle.matbin",
     "skeleton": "Skels/cycle.skelbin"
   },
-  "meshes": [
-    {
-      "file": "Meshes/cycle.meshbin",
-      "isSkinned": false
-    }
-  ],
+  "meshes": [],
   "name": "cycle",
   "path": {
     "baseDir": "..",

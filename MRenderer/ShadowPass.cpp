@@ -11,7 +11,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     //0번이 전역광이라고 가정...
     XMMATRIX lightview, lightproj;
     XMVECTOR maincampos = XMLoadFloat3(&context.gameCamera.cameraPos); //원래는 주인공 위치가 더 좋은데, 일단 카메라 위치로 해도 크게 상관 없을 듯
-    XMVECTOR dir = XMLoadFloat3(&mainlight.diretion);
+    XMVECTOR dir = -XMLoadFloat3(&mainlight.direction);
     XMVECTOR pos = dir * -10.f + maincampos;
     XMVECTOR look = maincampos;
     XMVECTOR up = XMVectorSet(0, 1, 0, 0);
@@ -36,9 +36,10 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     XMMATRIX mLightTM;
     mLightTM = lightview * lightproj * mscale;
 
-    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mView, lightview);
-    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mProj, lightproj);
-    XMStoreFloat4x4(&m_RenderContext.BCBuffer.mVP, lightview * lightproj);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, lightview);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, lightproj);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, lightview * lightproj);
+    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
 
     //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
@@ -55,7 +56,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
 
             m_RenderContext.BCBuffer.mWorld = item.world;
 
-            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(BaseConstBuffer));
 
             const auto* vertexBuffers = m_RenderContext.vertexBuffers;
             const auto* indexBuffers = m_RenderContext.indexBuffers;
