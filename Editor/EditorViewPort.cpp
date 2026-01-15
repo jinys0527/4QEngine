@@ -4,8 +4,9 @@
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
 	ImGui::Begin(m_WindowName.c_str());
+	m_DrawList = ImGui::GetWindowDrawList();
 	m_IsHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-
+	m_HasViewportRect = false;
 	ImVec2 available = ImGui::GetContentRegionAvail();
 	ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
 
@@ -23,6 +24,9 @@ bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 			clamped,
 			ImVec2(0.0f, 0.0f),
 			ImVec2(1.0f, 1.0f));
+		m_ViewportRectMin = ImGui::GetItemRectMin();
+		m_ViewportRectMax = ImGui::GetItemRectMax();
+		m_HasViewportRect = true;
 	}
 	else
 	{
