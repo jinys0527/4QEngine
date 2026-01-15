@@ -17,6 +17,9 @@ public:
 
 	void AddComponent(std::unique_ptr<Component> comp)	//Deserialize용
 	{
+		if (!CanAddComponent(typeid(*comp)))
+			return;
+
 		comp->SetOwner(this);
 		m_Components[comp->GetTypeName()].emplace_back(std::move(comp));
 	}

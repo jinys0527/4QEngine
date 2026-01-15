@@ -23,6 +23,9 @@ public:
 	{
 		static_assert(std::is_constructible_v<T, Args...>, "Invalid constructor arguments for T.");
 
+		if (!CanAddComponent(typeid(T)))
+			return nullptr;
+
 		auto comp = std::make_unique<T>(std::forward<Args>(args)...);
 		comp->SetOwner(this);  // 필요한 경우
 		T* ptr = comp.get();
@@ -74,6 +77,14 @@ public:
 		// 3. vector가 비면 map에서 key 제거
 		if (vec.empty())
 			m_Components.erase(it);
+	}
+
+	bool CanAddComponent(const std::type_info& type) const;
+	
+	template<typename T>
+	bool HasComponent() const
+	{
+		return GetComponent<T>() != nullptr;
 	}
 
 	std::vector<std::string> GetComponentTypeNames() const;
