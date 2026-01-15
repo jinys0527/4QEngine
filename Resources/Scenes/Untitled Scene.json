@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -0.03506055101752281,
-                "y": 1.968023419380188,
-                "z": -2.0334160327911377
+                "x": -6.7007293701171875,
+                "y": 6.9071784019470215,
+                "z": -9.278553009033203
             },
             "look": {
-                "x": -0.12309625744819641,
-                "y": 1.5335417985916138,
-                "z": -1.1370480060577393
+                "x": -6.093434810638428,
+                "y": 6.476853847503662,
+                "z": -8.610710144042969
             },
             "up": {
-                "x": -0.04246775433421135,
-                "y": 0.9006807208061218,
-                "z": 0.4324010908603668
+                "x": 0.28951072692871094,
+                "y": 0.9026741981506348,
+                "z": 0.31837525963783264
             }
         }
     },
@@ -25,15 +25,15 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 0.0,
-                                "y": 0.0,
+                                "x": 11.318883895874023,
+                                "y": 12.098795890808105,
                                 "z": 0.0
                             },
                             "Rotation": {
                                 "w": 1.0,
-                                "x": 0.0,
+                                "x": -0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -0.0
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -46,14 +46,14 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": -0.03506055101752281,
-                                "y": 1.968023419380188,
-                                "z": -2.0334160327911377
+                                "x": -6.7007293701171875,
+                                "y": 6.9071784019470215,
+                                "z": -9.278553009033203
                             },
                             "Look": {
-                                "x": -0.12309625744819641,
-                                "y": 1.5335417985916138,
-                                "z": -1.1370480060577393
+                                "x": -6.093434810638428,
+                                "y": 6.476853847503662,
+                                "z": -8.610710144042969
                             },
                             "Ortho": {
                                 "height": 10.0,
@@ -70,9 +70,9 @@
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": -0.04246775433421135,
-                                "y": 0.9006807208061218,
-                                "z": 0.4324010908603668
+                                "x": 0.28951072692871094,
+                                "y": 0.9026741981506348,
+                                "z": 0.31837525963783264
                             },
                             "Viewport": {
                                 "height": 808.0,
@@ -89,15 +89,15 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": 0.7042780518531799,
+                                "y": -1.7818660736083984,
+                                "z": 2.9112257957458496
                             },
                             "Rotation": {
-                                "w": 0.9781476259231567,
-                                "x": 0.0,
-                                "y": 0.20791170001029968,
-                                "z": 0.0
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -106,47 +106,73 @@
                             }
                         },
                         "type": "TransformComponent"
+                    }
+                ],
+                "name": "GameObject"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": -0.9709646105766296,
+                                "y": 1.7646827697753906,
+                                "z": -4.016645431518555
+                            },
+                            "Rotation": {
+                                "w": 0.7130013108253479,
+                                "x": -0.0,
+                                "y": -0.7011626958847046,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 47.79651641845703,
+                                "y": 47.79659652709961,
+                                "z": 47.79651641845703
+                            }
+                        },
+                        "type": "TransformComponent"
                     },
                     {
                         "data": {
                             "Material": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                                "assetIndex": 1,
+                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                             },
                             "MaterialHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                                "assetIndex": 1,
+                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                             },
                             "Overrides": {
                                 "overrides": {
                                     "baseColor": {
                                         "a": 1.0,
-                                        "b": 1.0,
-                                        "g": 1.0,
-                                        "r": 1.0
+                                        "b": 0.5,
+                                        "g": 0.5,
+                                        "r": 0.5
                                     },
                                     "metallic": 0.0,
-                                    "roughness": 0.5527864098548889,
+                                    "roughness": 1.0,
                                     "textures": [
                                         {
                                             "assetIndex": 0,
-                                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                                         },
                                         {
                                             "assetIndex": 1,
-                                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                                         },
                                         {
-                                            "assetIndex": 0,
-                                            "assetPath": ""
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                                         },
                                         {
-                                            "assetIndex": 0,
-                                            "assetPath": ""
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                                         },
                                         {
-                                            "assetIndex": 0,
-                                            "assetPath": ""
+                                            "assetIndex": 4,
+                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
                                         },
                                         {
                                             "assetIndex": 0,
@@ -157,6 +183,19 @@
                             }
                         },
                         "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
+                            }
+                        },
+                        "type": "MeshComponent"
                     },
                     {
                         "data": {
@@ -174,22 +213,9 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
-                            }
-                        },
-                        "type": "MeshComponent"
                     }
                 ],
-                "name": "GameObject"
+                "name": "GameObject1"
             },
             {
                 "components": [
@@ -285,8 +311,8 @@
                             "CastShadow": true,
                             "Color": {
                                 "x": 1.0,
-                                "y": 0.27450981736183167,
-                                "z": 0.27450981736183167
+                                "y": 1.0,
+                                "z": 1.0
                             },
                             "Direction": {
                                 "x": 0.0,

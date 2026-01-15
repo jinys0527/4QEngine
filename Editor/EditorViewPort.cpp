@@ -4,6 +4,7 @@
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
 	ImGui::Begin(m_WindowName.c_str());
+	m_DrawList = ImGui::GetWindowDrawList();
 	m_IsHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 	m_HasViewportRect = false;
 	ImVec2 available = ImGui::GetContentRegionAvail();
