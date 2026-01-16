@@ -11,8 +11,8 @@ public:
 
 	void Initialize() override;
 	void Finalize() override;
-	void Enter() override;
 	void Leave() override;
 	void FixedUpdate() override;
 	void Update(float deltaTime) override;
+	void StateUpdate(float deltaTime) override;
 };

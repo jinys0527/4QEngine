@@ -43,7 +43,7 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 
 	m_RenderContext.BCBuffer.mWorld = tm;
 
-	XMMATRIX world = XMLoadFloat4x4(&item.world);
+	XMMATRIX world = XMLoadFloat4x4(&tm);
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
 

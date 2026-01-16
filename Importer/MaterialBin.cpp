@@ -155,7 +155,11 @@ static std::string GetTexPath(
 			return "embedded_" + std::to_string(index) + "_texture." + extension;
 		}
 
-		const std::string suffix = TextureTypeSuffix(type);
+		std::string suffix = TextureTypeSuffix(type);
+		if (!suffix.empty())
+		{
+			suffix[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(suffix[0])));
+		}
 		return "embedded_" + std::to_string(index) + "_" + suffix + "." + extension;
 	}
 

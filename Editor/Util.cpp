@@ -255,7 +255,7 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 			{
 				meshComponent.ClearSubMeshMaterialOverride(i);
 				changed = true;
-
+					
 				s_lastClearedIndex = static_cast<int>(i);
 				s_lastClearedComp = &meshComponent;
 			}

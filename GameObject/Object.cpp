@@ -1,7 +1,26 @@
 ﻿#include "Object.h"
+#include "SkeletalMeshRenderer.h"
+#include "SkeletalMeshComponent.h"
 
 Object::Object(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher)
 {
+}
+
+bool Object::CanAddComponent(const std::type_info& type) const
+{
+	const bool hasMR  = HasComponent<MeshRenderer>();
+	const bool hasSMR = HasComponent<SkeletalMeshRenderer>();
+
+	const bool hasMC  = HasComponent<MeshComponent>();
+	const bool hasSMC = HasComponent<SkeletalMeshComponent>();
+
+	if ((type == typeid(MeshRenderer) && hasSMR) || (type == typeid(MeshComponent) && hasSMR)) return false;
+	if ((type == typeid(SkeletalMeshRenderer) && hasMR) || (type == typeid(SkeletalMeshComponent) && hasMR)) return false;
+
+	if ((type == typeid(MeshComponent) && hasSMC) || (type == typeid(MeshRenderer) && hasSMC)) return false;
+	if ((type == typeid(SkeletalMeshComponent) && hasMC) || (type == typeid(SkeletalMeshRenderer) && hasMC)) return false;
+
+	return true;
 }
 
 std::vector<std::string> Object::GetComponentTypeNames() const
@@ -82,6 +101,17 @@ void Object::Update(float deltaTime)
 			{
 				comp->Update(deltaTime);
 			}
+		}
+	}
+}
+
+void Object::Start()
+{
+	for (auto& [name, comps] : m_Components)
+	{
+		for (auto& comp : comps)
+		{
+			comp->Start();
 		}
 	}
 }

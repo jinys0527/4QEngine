@@ -31,11 +31,13 @@ void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
 void EventDispatcher::Dispatch(EventType type, const void* data)
 {
 	auto it = m_Listeners.find(type);
-	if (it != m_Listeners.end())
+	if (it == m_Listeners.end())
+		return;
+
+	auto listeners = it->second; // 스냅샷 복사
+	for (auto* listener : listeners)
 	{
-		for (auto* listener : it->second)
-		{
+		if (listener)
 			listener->OnEvent(type, data);
-		}
 	}
 }
