@@ -355,7 +355,6 @@ void EditorApplication::UpdateEditorCamera()
 	
 		UpdateEditorCamera();
 		DrawGizmo();
-		DrawMainCameraFrustum();
 
 		// DockBuilder
 		static bool dockBuilt = true;
