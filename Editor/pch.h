@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 #include <cmath>
+#include <DirectXCollision.h>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "d3d11.lib")
