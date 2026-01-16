@@ -55,7 +55,7 @@ private:
 	void DrawFolderView();
 	void DrawResourceBrowser();
 	void DrawGizmo();
-	void DrawMainCameraFrustum();
+
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
 	//Gui 관련
 	void CreateDockSpace();
