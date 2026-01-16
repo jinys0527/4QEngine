@@ -66,7 +66,7 @@ int CreateInputLayout(ID3D11Device* pDev, D3D11_INPUT_ELEMENT_DESC* ed, DWORD nu
     hr = pDev->CreateInputLayout(ed, num, pVSCode->GetBufferPointer(), pVSCode->GetBufferSize(), &pLayout);
     if (FAILED(hr))
     {
-        ERROR_MSG(hr);
+        ERROR_MSG_HR(hr);
         return hr;
     }
 
@@ -104,7 +104,7 @@ HRESULT CreateDynamicConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer*
     hr = pDev->CreateBuffer(&bd, nullptr, &pCB);
     if (FAILED(hr))
     {
-        ERROR_MSG(hr);
+        ERROR_MSG_HR(hr);
         return hr;
     }
 
@@ -137,7 +137,7 @@ HRESULT CreateDynamicConstantBuffer(ID3D11Device* pDev, UINT size, LPVOID pData,
     hr = pDev->CreateBuffer(&bd, &sd, &pCB);
     if (FAILED(hr))
     {
-        ERROR_MSG(hr);
+        ERROR_MSG_HR(hr);
         return hr;
     }
 
@@ -160,7 +160,7 @@ HRESULT UpdateDynamicBuffer(ID3D11DeviceContext* pDXDC, ID3D11Resource* pBuff, L
     hr = pDXDC->Map(pBuff, 0, D3D11_MAP_WRITE_DISCARD, 0, &mr);
     if (FAILED(hr))
     {
-        ERROR_MSG(hr);
+        ERROR_MSG_HR(hr);
         return hr;
     }
 

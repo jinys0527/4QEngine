@@ -29,7 +29,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     BuildTBN(input.T.xyz, input.nrm.xyz, handedness, texNrm, T, B, N);
 
     
-    float3 nW = normalize(mul(float4(N, 0), mWorld).xyz);
+    float3 nW = normalize(mul(float4(N, 0), mWorldInvTranspose).xyz);
     float3 nV = normalize(mul(nW, (float3x3)mView));
     
     float3 eN = normalize(nW);

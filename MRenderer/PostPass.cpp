@@ -4,6 +4,7 @@
 
 void PostPass::Execute(const RenderData::FrameData& frame)
 {
+    SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
     //먼저 화면전체 QUad그리기
     const auto& context = frame.context;
 
@@ -20,11 +21,17 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
-    m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView.GetAddressOf(), nullptr);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
-    QuadDraw();
+    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 
+    dxdc->VSSetShader(m_RenderContext.VS_Post.Get(), nullptr, 0);
+    dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
+    dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
+    dxdc->PSSetShaderResources(1, 1, m_RenderContext.pTexRvScene_Blur.GetAddressOf());
+    dxdc->PSSetShaderResources(2, 1, m_RenderContext.Vignetting.GetAddressOf());
+
+    m_RenderContext.DrawFullscreenQuad();
 
     //★아래 프레임데이터를 순회하면서 그리는게 필요없어 보이는데 어떻게 넘겨줄지 몰라서 일단 남김.
     //for (size_t index : GetQueue())
@@ -81,17 +88,3 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
 }
 
-void PostPass::QuadDraw()
-{
-    m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::DEFAULT].Get(), NULL, 0xFFFFFFFF);
-    m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
-    m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::SOLID].Get());
-    m_RenderContext.pDXDC->PSSetSamplers(0, 1, m_RenderContext.SState[SS::CLAMP].GetAddressOf());
-
-    if(!m_RenderContext.isEditCam)
-        m_RenderContext.pDXDC->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
-    else if(m_RenderContext.isEditCam)
-        m_RenderContext.pDXDC->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui_edit.GetAddressOf());
-
-    m_RenderContext.DrawFullscreenQuad();
-}

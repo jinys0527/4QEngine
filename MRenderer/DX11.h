@@ -38,13 +38,19 @@ typedef DXGI_MODE_DESC DISPLAY;
 //};
 //#endif
 // 이 부분도 클래스화
-#define ERROR_MSG(hr) \
-    { \
-        wchar_t buf[512]; \
-        swprintf_s(buf, L"[실패] \n파일: %s\n줄: %d\nHRESULT: 0x%08X", \
-                   _CRT_WIDE(__FILE__), __LINE__, hr); \
-        MessageBox(NULL, buf, L"Error", MB_OK | MB_ICONERROR); \
-    }
+inline void ERROR_MSG(HRESULT hr, const wchar_t* file, int line)
+{
+#if defined(_DEBUG)
+    __debugbreak();
+#endif
+
+    wchar_t buf[512];
+    swprintf_s(buf, L"[실패] \n파일: %s\n줄: %d\nHRESULT: 0x%08X", file, line, hr);
+    MessageBox(NULL, buf, L"Error", MB_OK | MB_ICONERROR);
+}
+
+#define ERROR_MSG_HR(hr) ERROR_MSG((hr), _CRT_WIDE(__FILE__), __LINE__)
+
 
 #pragma region 상태
 enum class DS 

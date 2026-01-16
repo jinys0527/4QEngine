@@ -11,5 +11,6 @@ struct AssetRef
 using MeshRef      = AssetRef;
 using MaterialRef  = AssetRef;
 using TextureRef   = AssetRef;
+using ShaderRef	   = AssetRef;
 using SkeletonRef  = AssetRef;
 using AnimationRef = AssetRef;

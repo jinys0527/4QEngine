@@ -27,6 +27,7 @@ public:
 	void SetDepthStencilState(DS state);
 	void SetRasterizerState(RS state);
 	void SetSamplerState();
+	void SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview);
 
 	virtual void SetBaseCB(const RenderData::RenderItem& item);
 	virtual void SetCameraCB(const RenderData::FrameData& frame);

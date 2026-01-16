@@ -63,6 +63,9 @@
     <ClCompile Include="UIPass.cpp">
       <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BlurPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -104,6 +107,9 @@
     <ClInclude Include="UIPass.h">
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BlurPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\BaseBuffer.hlsl">
@@ -137,6 +143,12 @@
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="fx\Demo_PBR_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Post_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Post_VS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

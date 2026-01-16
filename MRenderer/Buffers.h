@@ -45,7 +45,7 @@ constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
 {
 	Light	lights[MAX_LIGHTS];
-	UINT	lightCount;
+	UINT	lightCount = 0;
 	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
@@ -103,6 +103,15 @@ struct RenderContext
 	ComPtr<ID3D11PixelShader> PS_PBR;
 	ComPtr<ID3DBlob> VSCode_PBR;
 
+	ComPtr<ID3D11VertexShader> VS_Quad;
+	ComPtr<ID3D11PixelShader> PS_Quad;
+	ComPtr<ID3DBlob> VSCode_Quad;
+
+	ComPtr<ID3D11VertexShader> VS_Post;
+	ComPtr<ID3D11PixelShader> PS_Post;
+	ComPtr<ID3DBlob> VSCode_Post;
+
+
 	//imgui용 == Scene Draw용
 	bool isEditCam = false;
 	ComPtr<ID3D11Texture2D>				pRTScene_Imgui;
@@ -130,8 +139,23 @@ struct RenderContext
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 
+	//PostPass용
+	ComPtr<ID3D11Texture2D>				pRTScene_Post;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Post;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Post;
+
+	//BlurPass용
+	ComPtr<ID3D11Texture2D>				pRTScene_Blur;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
+
+
+
 	std::function<void()> DrawFullscreenQuad;
 	std::function<void()> DrawGrid;
 	std::function<void(const RenderData::FrameData& f)> UpdateGrid;
+
+	//블러 테스트
+	ComPtr<ID3D11ShaderResourceView> Vignetting;
 
 };
