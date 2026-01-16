@@ -26,7 +26,7 @@ public:
 	virtual void Initialize () = 0;
 	virtual void Finalize   () = 0;
 
-	virtual void Enter      () = 0;
+	virtual void Enter      ();
 	virtual void Leave      () = 0;
 
 	virtual void FixedUpdate() = 0;

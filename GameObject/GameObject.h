@@ -21,6 +21,7 @@ public:
 			return;
 
 		comp->SetOwner(this);
+		comp->Start();
 		m_Components[comp->GetTypeName()].emplace_back(std::move(comp));
 	}
 

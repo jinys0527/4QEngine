@@ -105,6 +105,17 @@ void Object::Update(float deltaTime)
 	}
 }
 
+void Object::Start()
+{
+	for (auto& [name, comps] : m_Components)
+	{
+		for (auto& comp : comps)
+		{
+			comp->Start();
+		}
+	}
+}
+
 void Object::FixedUpdate()
 {
 

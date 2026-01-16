@@ -38,9 +38,6 @@ void DefaultScene::Finalize()
 {
 }
 
-void DefaultScene::Enter()
-{
-}
 
 void DefaultScene::Leave()
 {
@@ -74,12 +71,6 @@ void DefaultScene::Update(float deltaTime)
 	// 문제 생기는 경우
 	// Upcasting 하던가, GameObject 자체에 멤버로 투명 불투병 bool 갖고, 이거 따라서 분류해서 Render 주던가
 
-	if (m_EditorCamera)
-	{
-		m_EditorCamera->Update(deltaTime);
-	}
-
-
 	for (const auto& [name, gameObject] : m_OpaqueObjects)
 	{
 		if (gameObject)
@@ -96,5 +87,13 @@ void DefaultScene::Update(float deltaTime)
 		}
 	}
 
+}
+
+void DefaultScene::StateUpdate(float deltaTime)
+{
+	if (m_EditorCamera)
+	{
+		m_EditorCamera->Update(deltaTime);
+	}
 }
 
