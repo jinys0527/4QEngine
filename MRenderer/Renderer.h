@@ -25,6 +25,7 @@ public:
 	void InitIB(const RenderData::FrameData& frame);
 	void EnsureMeshBuffers(const RenderData::FrameData& frame);
 	void InitTexture();
+	void InitShaders();
 
 	ComPtr<ID3D11RenderTargetView>	GetRTView() { return m_pRTView; }
 	ComPtr<IDXGISwapChain>			GetSwapChain() { return m_pSwapChain; }
@@ -88,6 +89,11 @@ private:
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Post;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Post;
 
+	//BlurPass용
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Blur;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Blur;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur;
+
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	m_DSState;		//깊이 스텐실 상태
@@ -134,6 +140,13 @@ private:
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>				m_IndexBuffers;
 	std::unordered_map<MeshHandle, UINT32>								m_IndexCounts;
 	std::unordered_map<TextureHandle, ComPtr<ID3D11ShaderResourceView>>	m_Textures;
+	struct ShaderResources
+	{
+		ComPtr<ID3D11VertexShader>	vertexShader;
+		ComPtr<ID3D11PixelShader>	pixelShader;
+		ComPtr<ID3DBlob>			vertexShaderCode;
+	};
+	std::unordered_map<ShaderHandle, ShaderResources>					m_Shaders;
 
 	//상수 버퍼
 	ComPtr<ID3D11Buffer>		m_pBCB;
@@ -164,6 +177,11 @@ private:
 	ComPtr<ID3D11VertexShader>	m_pVS_PBR;
 	ComPtr<ID3D11PixelShader>	m_pPS_PBR;
 	ComPtr<ID3DBlob> m_pVSCode_PBR;
+
+	//Post
+	ComPtr<ID3D11VertexShader> m_pVS_Post;
+	ComPtr<ID3D11PixelShader> m_pPS_Post;
+	ComPtr<ID3DBlob> m_pVSCode_Post;
 
 //그리드
 private:
@@ -208,4 +226,7 @@ protected:
 
 	void CreateQuadVB();
 	void CreateQuadIB();
+
+	//블러 테스트
+	ComPtr<ID3D11ShaderResourceView> m_Vignetting;
 };

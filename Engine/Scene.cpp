@@ -38,6 +38,18 @@ void Scene::StateUpdate(float deltaTime)
 	// Light의 경우 LightObject가 생기고 PointLight 같은 애의 위치가 바뀌면 만들수있을것같음?
 }
 
+void Scene::Enter()
+{
+	for (auto& [name, obj] : m_OpaqueObjects)
+	{
+		obj->Start();
+	}
+	for (auto& [name, obj] : m_TransparentObjects)
+	{
+		obj->Start();
+	}
+}
+
 void Scene::Render(RenderData::FrameData& frameData) const
 {
 	BuildFrameData(frameData);

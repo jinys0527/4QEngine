@@ -78,6 +78,12 @@ namespace RenderData
 		BOOL sRGB = true;
 	};
 
+	struct ShaderData
+	{
+		std::string vertexShaderPath;
+		std::string pixelShaderPath;
+	};
+
 	enum class LightType : uint8_t
 	{
 		Directional,

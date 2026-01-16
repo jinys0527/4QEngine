@@ -7,6 +7,14 @@
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
     SetCameraCB(frame);
+    if (m_RenderContext.isEditCam)
+    {
+        SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+    }
+    else if (!m_RenderContext.isEditCam)
+    {
+        SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+    }
 
     //빛 상수 버퍼 set
     SetDirLight(frame);

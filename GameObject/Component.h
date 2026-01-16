@@ -17,6 +17,7 @@ class Component
 public:
 	Component() = default;
 	virtual ~Component() = default;
+	virtual void Start() {}
 	virtual void Update(float deltaTime) = 0;
 	virtual void OnEvent(EventType type, const void* data) abstract;
 	virtual const char* GetTypeName() const = 0;

@@ -68,6 +68,11 @@ struct VSInput_PU
     float2 uv : TEXCOORD0;
 };
 
+struct VSInput_POST
+{
+    float4 pos : POSITION;
+    float2 uv : TEXCOORD0;
+};
 
 struct VSInput_PNUT
 {
@@ -112,6 +117,8 @@ struct VSOutput_PBR
 
 //ShaderResourceView
 Texture2D g_RTView : register(t0);
+Texture2D g_Blur : register(t1);
+Texture2D g_ShadowMap : register(t2);
 
 Texture2D g_Albedo : register(t11);
 Texture2D g_Normal : register(t12);

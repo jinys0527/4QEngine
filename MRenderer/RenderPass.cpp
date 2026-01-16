@@ -31,6 +31,11 @@ void RenderPass::SetSamplerState()
 {
 }
 
+void RenderPass::SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview)
+{
+	m_RenderContext.pDXDC->OMSetRenderTargets(1, &rtview, dsview);
+}
+
 void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 {
 	XMMATRIX mtm = XMLoadFloat4x4(&item.world);
@@ -43,7 +48,7 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 
 	m_RenderContext.BCBuffer.mWorld = tm;
 
-	XMMATRIX world = XMLoadFloat4x4(&item.world);
+	XMMATRIX world = XMLoadFloat4x4(&tm);
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
 
@@ -60,21 +65,17 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 		m_RenderContext.CameraCBuffer.mView = context.gameCamera.view;
 		m_RenderContext.CameraCBuffer.mProj = context.gameCamera.proj;
 		m_RenderContext.CameraCBuffer.mVP = context.gameCamera.viewProj;
-
-		m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-
+		m_RenderContext.CameraCBuffer.camPos = context.gameCamera.cameraPos;
 	}
 	else if (m_RenderContext.isEditCam)
 	{
 		m_RenderContext.CameraCBuffer.mView = context.editorCamera.view;
 		m_RenderContext.CameraCBuffer.mProj = context.editorCamera.proj;
 		m_RenderContext.CameraCBuffer.mVP = context.editorCamera.viewProj;
-
-		m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+		m_RenderContext.CameraCBuffer.camPos = context.editorCamera.cameraPos;
 	}
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
-
 }
 
 void RenderPass::SetDirLight(const RenderData::FrameData& frame)
