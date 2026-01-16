@@ -922,12 +922,23 @@ HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Te
 
 HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView)
 {
+	if (!pTex)
+	{
+		return E_INVALIDARG;
+	}
+
+	D3D11_TEXTURE2D_DESC td = {};
+	pTex->GetDesc(&td);
+
 	//렌더타겟 정보 구성.
 	D3D11_RENDER_TARGET_VIEW_DESC rd = {};
 	//ZeroMemory(&rd, sizeof(rd));
 	rd.Format = fmt;										//텍스처와 동일포멧유지.
-	rd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;		//2D RT.
-	rd.Texture2D.MipSlice = 0;								//2D RT 용 추가 설정 : 밉멥 분할용 밉멥레벨 인덱스.
+	rd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;		//2D RT.
+	if (rd.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D)
+	{
+		rd.Texture2D.MipSlice = 0;								//2D RT 용 추가 설정 : 밉멥 분할용 밉멥레벨 인덱스.
+	}
 	//rd.Texture2DMS.UnusedField_NothingToDefine = 0;		//2D RT + AA 용 추가 설정
 
 	//렌더타겟 생성.
@@ -935,7 +946,7 @@ HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11Ren
 	HRESULT hr = m_pDevice->CreateRenderTargetView(pTex, &rd, &pRTView);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateRenderTargetView 실패"));
+		ERROR_MSG_HR(hr);
 		return hr;
 	}
 
@@ -949,13 +960,24 @@ HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11Ren
 
 HRESULT Renderer::RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV)
 {
+	if (!pTex)
+	{
+		return E_INVALIDARG;
+	}
+
+	D3D11_TEXTURE2D_DESC td = {};
+	pTex->GetDesc(&td);
+
 	//셰이더리소스뷰 정보 구성.
 	D3D11_SHADER_RESOURCE_VIEW_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.Format = fmt;										//텍스처와 동일포멧유지.
-	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;		//2D SRV.
-	sd.Texture2D.MipLevels = -1;								//2D SRV 추가 설정 : 밉멥 설정.
-	sd.Texture2D.MostDetailedMip = 0;
+	sd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;		//2D SRV.
+	if (sd.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D)
+	{
+		sd.Texture2D.MipLevels = -1;								//2D SRV 추가 설정 : 밉멥 설정.
+		sd.Texture2D.MostDetailedMip = 0;
+	}
 	//sd.Texture2DMS.UnusedField_NothingToDefine = 0;		//2D SRV+AA 추가 설정
 
 	//셰이더리소스뷰 생성.
@@ -963,7 +985,7 @@ HRESULT Renderer::RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11S
 	HRESULT hr = m_pDevice->CreateShaderResourceView(pTex, &sd, &pTexRV);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateShaderResourceView 실패"));
+		ERROR_MSG_HR(hr);
 		return hr;
 	}
 
@@ -1011,9 +1033,11 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Textu
 	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
 	//ZeroMemory(&dd, sizeof(dd));
 	dd.Format = td.Format;
-	dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;			//2D (AA 없음)
-	//dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;			//2D (AA 적용)
-	dd.Texture2D.MipSlice = 0;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;			//2D (AA 적용)
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
 	//깊이/스텐실 뷰 생성.
 	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
 	if (FAILED(hr))
@@ -1119,7 +1143,8 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 	HRESULT hr = S_OK;
 
 	//Unbind → Release → ResizeBuffers → Recreate → Viewport → Camera
-
+	m_WindowSize.width = width;
+	m_WindowSize.height = height;
 
 	// 1.GPU 파이프라인 타겟 해제
 	m_pDXDC->OMSetRenderTargets(0, nullptr, nullptr);
@@ -1129,24 +1154,36 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 	ReleaseScreenSizeResource();
 
 	// 3.SwapChain ResizeBuffers 호출
-	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN,0);
-
+	hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 	// 4. 새 BackBuffer 획득 & RTV 재생성
-	ComPtr<ID3D11Texture2D> backBuffer;
-	m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+	hr = CreateRenderTarget();
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
-	m_pDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_pRTView);
+	// 5. DepthStencil 재생성 (AA 반영)
+	hr = CreateDepthStencil(width, height);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
-	// 5. 화면 크기 기반 렌더 타겟 전부 재생성
+	// 6. 화면 크기 기반 렌더 타겟 전부 재생성
 	ReCreateRenderTarget();
 
-
-	// 6. Viewport 재설정
+	// 7. Viewport 재설정
 	SetViewPort(width, height, m_pDXDC.Get());
+	m_pDXDC->OMSetRenderTargets(1, m_pRTView.GetAddressOf(), m_pDSView.Get());
+	CreateContext();
 
-
-	// 7. ResizeTarget, 전체화면 전환 시, 디스플레이 모드 변경 시
+	// 8. ResizeTarget, 전체화면 전환 시, 디스플레이 모드 변경 시
 
 	return hr;
 }
@@ -1330,6 +1367,37 @@ HRESULT Renderer::ReCreateRenderTarget()
 	return hr;
 }
 
+void Renderer::RecreateForAASampleChange(int width, int height, DWORD sampleCount)
+{
+	m_dwAA = sampleCount;
+
+	// 1. GPU 파이프라인 타겟 해제
+	m_pDXDC->OMSetRenderTargets(0, nullptr, nullptr);
+	m_pDXDC->Flush();
+
+	// 2. 기존 화면 크기 의존 리소스 전부 Release
+	ReleaseScreenSizeResource();
+
+	// 3. SwapChain ResizeBuffers 호출 (샘플 수 변경 시 백버퍼 재생성)
+	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+
+	// 4. 새 BackBuffer 획득 & RTV 재생성
+	CreateRenderTarget();
+
+	// 5. DepthStencil 재생성 (m_dwAA 반영)
+	CreateDepthStencil(width, height);
+
+	// 6. 화면 크기 기반 렌더 타겟 전부 재생성
+	ReCreateRenderTarget();
+
+	// 7. Viewport 및 기본 렌더 타겟 재설정
+	SetViewPort(width, height, m_pDXDC.Get());
+	m_pDXDC->OMSetRenderTargets(1, m_pRTView.GetAddressOf(), m_pDSView.Get());
+
+	// 8. RenderContext 포인터 갱신
+	CreateContext();
+}
+
 HRESULT Renderer::CreateDepthStencil(int width, int height)
 {
 	HRESULT hr = S_OK;
@@ -1355,10 +1423,11 @@ HRESULT Renderer::CreateDepthStencil(int width, int height)
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC  dd = {};
 	dd.Format = td.Format;
-	dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;		//AA 없음.
-	//dd.ViewDimension  = D3D11_DSV_DIMENSION_TEXTURE2DMS;	//+AA 설정 "MSAA"
-
-	dd.Texture2D.MipSlice = 0;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;		//AA 설정 "MSAA"
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
 
 	hr = m_pDevice->CreateDepthStencilView(m_pDS.Get(), &dd, &m_pDSView);
 	if (FAILED(hr))
@@ -1415,7 +1484,7 @@ HRESULT Renderer::CreateRasterState()
 	rd.SlopeScaledDepthBias = 0;
 	rd.DepthClipEnable = true;
 	rd.ScissorEnable = false;
-	rd.MultisampleEnable = false;
+	rd.MultisampleEnable = true;
 	rd.AntialiasedLineEnable = false;
 	//레스터라이져 상태 객체 생성.
 	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::SOLID].GetAddressOf());

@@ -39,6 +39,7 @@ private:
 	HRESULT CreateRenderTarget();
 	HRESULT CreateRenderTarget_Other();
 	HRESULT ReCreateRenderTarget();							//스크린에 영향받는 것들
+	void RecreateForAASampleChange(int width, int height, DWORD sampleCount);			//코덱스로 생성함 코드 검토 및 테스트 필요
 	HRESULT CreateDepthStencil(int width, int height);
 	HRESULT	CreateDepthStencilState();
 	HRESULT	CreateRasterState();
