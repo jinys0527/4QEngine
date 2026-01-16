@@ -752,7 +752,7 @@ void EditorApplication::UpdateEditorCamera()
 			ImGui::End();
 			return;
 		}
-
+		 // new Scene 생성 -> Directional light / Main Camera Default 생성
 		auto createNewScene = [&]()
 			{
 				const std::string baseName = "NewScene";
@@ -1323,7 +1323,7 @@ void EditorApplication::UpdateEditorCamera()
 
 		const XMFLOAT4X4 world = transform->GetWorldMatrix();
 		const XMFLOAT3 target{ world._41, world._42, world._43 };
-		const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f);
+		const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f); // editor에서는 up 고정
 		const XMFLOAT3 eye = cameraComponent->GetEye();
 
 		const XMVECTOR eyeVec = XMLoadFloat3(&eye);
@@ -1354,13 +1354,8 @@ void EditorApplication::UpdateEditorCamera()
 				distance = 5.0f;
 			}
 		}
-
-		const float minDistance = 2.0f;
-		const float desiredDistance = (std::max)(minDistance,distance * 0.2f);
-		const XMVECTOR newEyeVec = XMVectorSubtract(targetVec, XMVectorScale(forwardVec, desiredDistance));
-		XMFLOAT3 newEye{};
-		XMStoreFloat3(&newEye, newEyeVec);
-
+	
+		XMFLOAT3 newEye = { target.x,target.y + 5,target.z + 5 };
 		cameraComponent->SetEyeLookUp(newEye, target, up);
 	}
 
