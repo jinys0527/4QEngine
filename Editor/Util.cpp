@@ -1061,3 +1061,27 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 	ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
 	return false;
 }
+
+bool ProjectToViewport(
+	const XMFLOAT3& world,
+	const XMMATRIX& viewProj,
+	const ImVec2& rectMin,
+	const ImVec2& rectMax,
+	ImVec2& out)
+{
+	const XMVECTOR projected = XMVector3TransformCoord(XMLoadFloat3(&world), viewProj);
+	const float x = XMVectorGetX(projected);
+	const float y = XMVectorGetY(projected);
+	const float z = XMVectorGetZ(projected);
+
+	if (z < 0.0f || z > 1.0f)
+	{
+		return false;
+	}
+
+	const ImVec2 rectSize = ImVec2(rectMax.x - rectMin.x, rectMax.y - rectMin.y);
+	const float screenX = rectMin.x + (x * 0.5f + 0.5f) * rectSize.x;
+	const float screenY = rectMin.y + (1.0f - (y * 0.5f + 0.5f)) * rectSize.y;
+	out = ImVec2(screenX, screenY);
+	return true;
+}

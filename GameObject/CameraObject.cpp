@@ -1,8 +1,9 @@
 ﻿#include "CameraObject.h"
-
+#include "TransformComponent.h"
 CameraObject::CameraObject(EventDispatcher eventDispatcher, float width, float height)
 	: GameObject(eventDispatcher)
 {
+	//AddComponent<TransformComponent>();
 	AddComponent<CameraComponent>();
 	m_CameraComp = GetComponent<CameraComponent>();
 	if (m_CameraComp)

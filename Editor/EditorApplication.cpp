@@ -333,6 +333,7 @@ void EditorApplication::UpdateEditorCamera()
 	RenderSceneView();
 	DrawFolderView();
 	DrawResourceBrowser();
+
 	
 	 //Scene그리기
 
@@ -347,7 +348,7 @@ void EditorApplication::UpdateEditorCamera()
 	
 		UpdateEditorCamera();
 		DrawGizmo();
-		
+		DrawMainCameraFrustum();
 
 		// DockBuilder
 		static bool dockBuilt = true;
@@ -1287,6 +1288,124 @@ void EditorApplication::UpdateEditorCamera()
 			transform->SetPosition(position);
 			transform->SetRotation(rotation);
 			transform->SetScale(scale);
+		}
+	}
+
+	// 카메라 절두체 그림
+	void EditorApplication::DrawMainCameraFrustum()
+	{	
+		if (!m_EditorViewport.HasViewportRect())
+		{
+			return;
+		}
+
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (!scene)
+		{
+			return;
+		}
+
+		auto editorCamera = scene->GetEditorCamera().get();
+		if (!editorCamera)
+		{
+			return;
+		}
+
+		auto mainCamera = scene->GetGameCamera();
+		if (!mainCamera)
+		{
+			return;
+		}
+
+		auto* cameraComponent = mainCamera->GetComponent<CameraComponent>();
+		if (!cameraComponent)
+		{
+			return;
+		}
+
+		if (cameraComponent->GetProjectionMode() != ProjectionMode::Perspective)
+		{
+			return;
+		}
+
+		const float nearZ = cameraComponent->GetNearZ();
+		const float farZ = cameraComponent->GetFarZ();
+		const PerspectiveParams& perspective = cameraComponent->GetPerspective();
+
+		if (nearZ <= 0.0f || farZ <= nearZ)
+		{
+			return;
+		}
+
+		const XMFLOAT3 eye = cameraComponent->GetEye();
+		const XMFLOAT3 look = cameraComponent->GetLook();
+		const XMFLOAT3 up = cameraComponent->GetUp();
+
+		const XMVECTOR eyeVec = XMLoadFloat3(&eye);
+		XMVECTOR forwardVec = XMVectorSubtract(XMLoadFloat3(&look), eyeVec);
+		if (XMVectorGetX(XMVector3LengthSq(forwardVec)) < 0.000001f)
+		{
+			forwardVec = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		}
+		else
+		{
+			forwardVec = XMVector3Normalize(forwardVec);
+		}
+
+		XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
+		XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
+		upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+
+		const float nearHeight = 2.0f * tanf(perspective.Fov * 0.5f) * nearZ;
+		const float nearWidth = nearHeight * perspective.Aspect;
+		const float farHeight = 2.0f * tanf(perspective.Fov * 0.5f) * farZ;
+		const float farWidth = farHeight * perspective.Aspect;
+
+		const XMVECTOR nearCenter = XMVectorAdd(eyeVec, XMVectorScale(forwardVec, nearZ));
+		const XMVECTOR farCenter = XMVectorAdd(eyeVec, XMVectorScale(forwardVec, farZ));
+		const XMVECTOR nearUp = XMVectorScale(upVec, nearHeight * 0.5f);
+		const XMVECTOR nearRight = XMVectorScale(rightVec, nearWidth * 0.5f);
+		const XMVECTOR farUp = XMVectorScale(upVec, farHeight * 0.5f);
+		const XMVECTOR farRight = XMVectorScale(rightVec, farWidth * 0.5f);
+
+		XMFLOAT3 corners[8]{};
+		XMStoreFloat3(&corners[0], XMVectorAdd(XMVectorSubtract(nearCenter, nearRight), nearUp));
+		XMStoreFloat3(&corners[1], XMVectorAdd(XMVectorAdd(nearCenter, nearRight), nearUp));
+		XMStoreFloat3(&corners[2], XMVectorSubtract(XMVectorSubtract(nearCenter, nearRight), nearUp));
+		XMStoreFloat3(&corners[3], XMVectorSubtract(XMVectorAdd(nearCenter, nearRight), nearUp));
+		XMStoreFloat3(&corners[4], XMVectorAdd(XMVectorSubtract(farCenter, farRight), farUp));
+		XMStoreFloat3(&corners[5], XMVectorAdd(XMVectorAdd(farCenter, farRight), farUp));
+		XMStoreFloat3(&corners[6], XMVectorSubtract(XMVectorSubtract(farCenter, farRight), farUp));
+		XMStoreFloat3(&corners[7], XMVectorSubtract(XMVectorAdd(farCenter, farRight), farUp));
+
+		const ImVec2 rectMin = m_EditorViewport.GetViewportRectMin();
+		const ImVec2 rectMax = m_EditorViewport.GetViewportRectMax();
+
+		const XMFLOAT4X4& view = editorCamera->GetViewMatrix();
+		const XMFLOAT4X4& proj = editorCamera->GetProjMatrix();
+		// editorcamera->Getter 의 경우 const 라서 안됨 
+		const XMMATRIX viewProj = XMMatrixMultiply(
+			XMLoadFloat4x4(&view), XMLoadFloat4x4(&proj));
+
+		if (auto* drawList = m_EditorViewport.GetDrawList())
+		{
+			const ImU32 color = IM_COL32(255, 255, 255, 255);
+			const int edges[12][2] = {
+				{0, 1}, {1, 3}, {3, 2}, {2, 0},
+				{4, 5}, {5, 7}, {7, 6}, {6, 4},
+				{0, 4}, {1, 5}, {2, 6}, {3, 7}
+			};
+
+			for (const auto& edge : edges)
+			{
+				ImVec2 p0{};
+				ImVec2 p1{};
+				if (ProjectToViewport(corners[edge[0]], viewProj, rectMin, rectMax, p0)
+					&& ProjectToViewport(corners[edge[1]], viewProj, rectMin, rectMax, p1))
+				{
+					drawList->AddLine(p0, p1, color, 1.5f);
+				}
+			}
 		}
 	}
 
