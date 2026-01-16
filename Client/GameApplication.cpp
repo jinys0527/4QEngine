@@ -26,7 +26,7 @@ bool GameApplication::Initialize()
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
 	m_Services.Get<SoundManager>().Init();
 	m_SceneManager.Initialize();
-
+	m_InputManager = &m_Services.Get<InputManager>();
 	return true;
 }
 
@@ -38,9 +38,7 @@ void GameApplication::Run()
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-#ifndef _EDITOR
-			if (false == m_Services.Get<InputManager>().OnHandleMessage(msg))
-#endif
+			if (false == m_InputManager->OnHandleMessage(msg))
 				TranslateMessage(&msg);
 
 			DispatchMessage(&msg);

@@ -23,6 +23,7 @@ public:
 
 	void Initialize();
 	void Update(float deltaTime);
+	void StateUpdate(float deltaTime);
 	void Render();
 
 	void SetCamera(std::shared_ptr<CameraObject> camera) { m_Camera = camera; }

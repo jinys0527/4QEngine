@@ -10,6 +10,7 @@
 #include "SkeletalMeshRenderer.h"
 #include "AnimationComponent.h"
 #include "CameraComponent.h"
+#include "InputManager.h"
 #include "GameObject.h"
 #include "Reflection.h"
 #include "ServiceRegistry.h"
@@ -51,6 +52,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		m_SoundManager = &m_Services.Get<SoundManager>();
 		m_SoundManager->Init();
 
+		m_InputManager = &m_Services.Get<InputManager>();
+
 		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
 		m_SceneManager.Initialize();
 
@@ -79,10 +82,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		//실행 루프
 		MSG msg = { 0 };
 		while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
-
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-				// Window Message 해석
-				TranslateMessage(&msg);
+			// Window Message 해석
+			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
+			{
+				if (false == m_InputManager->OnHandleMessage(msg))
+					TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
 			else {
@@ -127,7 +131,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 	void EditorApplication::Update()
 	{
-		m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
+		float dTime = m_Engine.GetTime();
+
+		m_SceneManager.StateUpdate(dTime);
+		m_SceneManager.Update(dTime);
+
 		m_SoundManager->Update();
 	}
 
@@ -324,7 +332,7 @@ void EditorApplication::UpdateEditorCamera()
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
+		
 	CreateDockSpace();
 	DrawMainMenuBar();
 	DrawHierarchy();
@@ -457,6 +465,28 @@ void EditorApplication::UpdateEditorCamera()
 			auto scene = m_SceneManager.GetCurrentScene();
 			const char* sceneName = scene ? scene->GetName().c_str() : "None";
 			ImGui::Text("Scene: %s", sceneName);
+
+			// ---- 중앙 정렬 계산 ----
+			float buttonWidth = 60.0f;
+			float spacing = ImGui::GetStyle().ItemSpacing.x;
+			float totalButtonWidth = buttonWidth * 2 + spacing;
+
+			float windowWidth = ImGui::GetWindowWidth();
+			float centerX = (windowWidth - totalButtonWidth) * 0.5f;
+
+			ImGui::SetCursorPosX(centerX);
+
+
+			if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.GetCurrentScene()->SetIsPause(false);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.GetCurrentScene()->SetIsPause(true);
+			}
+
 			ImGui::EndMainMenuBar();
 		}
 	}
