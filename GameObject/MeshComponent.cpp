@@ -23,6 +23,16 @@ void MeshComponent::SetSubMeshMaterialOverride(size_t index, const MaterialRef& 
 	m_SubMeshMaterialOverrides[index].material = overrideRef;
 }
 
+void MeshComponent::SetSubMeshShaderAssetOverride(size_t index, const ShaderAssetHandle& handle)
+{
+	if (m_SubMeshMaterialOverrides.size() <= index)
+	{
+		m_SubMeshMaterialOverrides.resize(index + 1);
+	}
+
+	m_SubMeshMaterialOverrides[index].shaderAsset = handle;
+}
+
 void MeshComponent::SetSubMeshVertexShaderOverride(size_t index, const VertexShaderHandle& handle)
 {
 	if (m_SubMeshMaterialOverrides.size() <= index)
@@ -60,6 +70,7 @@ void MeshComponent::ClearSubMeshShaderOverrides(size_t index)
 		return;
 	}
 
+	m_SubMeshMaterialOverrides[index].shaderAsset = ShaderAssetHandle::Invalid();
 	m_SubMeshMaterialOverrides[index].vertexShader = VertexShaderHandle::Invalid();
 	m_SubMeshMaterialOverrides[index].pixelShader = PixelShaderHandle::Invalid();
 }

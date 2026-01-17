@@ -422,6 +422,16 @@ static void EmitSubMeshes(
 					{
 						materialOverrides = *sourceMaterial;
 					}
+
+					if (overrideData.shaderAsset.IsValid())
+					{
+						materialOverrides.shaderAsset = overrideData.shaderAsset;
+					}
+					else
+					{
+						materialOverrides.shaderAsset = ShaderAssetHandle::Invalid();
+					}
+
 					if (overrideData.vertexShader.IsValid())
 					{
 						materialOverrides.vertexShader = overrideData.vertexShader;
@@ -430,7 +440,7 @@ static void EmitSubMeshes(
 					{
 						materialOverrides.pixelShader = overrideData.pixelShader;
 					}
-					materialOverrides.shaderAsset = ShaderAssetHandle::Invalid();
+
 					item.materialOverrides = materialOverrides;
 					item.useMaterialOverrides = true;
 				}
@@ -478,6 +488,16 @@ static void EmitSubMeshes(
 				{
 					materialOverrides = *sourceMaterial;
 				}
+
+				if (overrideData.shaderAsset.IsValid())
+				{
+					materialOverrides.shaderAsset = overrideData.shaderAsset;
+				}
+				else
+				{
+					materialOverrides.shaderAsset = ShaderAssetHandle::Invalid();
+				}
+
 				if (overrideData.vertexShader.IsValid())
 				{
 					materialOverrides.vertexShader = overrideData.vertexShader;
@@ -486,7 +506,7 @@ static void EmitSubMeshes(
 				{
 					materialOverrides.pixelShader = overrideData.pixelShader;
 				}
-				materialOverrides.shaderAsset = ShaderAssetHandle::Invalid();
+
 				item.materialOverrides = materialOverrides;
 				item.useMaterialOverrides = true;
 			}

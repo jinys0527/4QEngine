@@ -261,8 +261,30 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 			}
 
 			const auto* overrideData = (i < overrides.size()) ? &overrides[i] : nullptr;
+			ShaderAssetHandle shaderAssetHandle = overrideData ? overrideData->shaderAsset : ShaderAssetHandle::Invalid();
 			VertexShaderHandle vsHandle = overrideData ? overrideData->vertexShader : VertexShaderHandle::Invalid();
 			PixelShaderHandle psHandle = overrideData ? overrideData->pixelShader : PixelShaderHandle::Invalid();
+
+			auto resolveShaderAssetDisplay = [&assetLoader](const ShaderAssetHandle& handle) -> std::string
+				{
+					if (!handle.IsValid())
+						return {};
+
+					if (const std::string* displayName = assetLoader.GetShaderAssets().GetDisplayName(handle))
+					{
+						if (!displayName->empty())
+							return *displayName;
+					}
+
+					if (const std::string* key = assetLoader.GetShaderAssets().GetKey(handle))
+					{
+						if (!key->empty())
+							return *key;
+					}
+
+					return {};
+				};
+
 
 			auto resolveVertexShaderDisplay = [&assetLoader](const VertexShaderHandle& handle) -> std::string
 				{
@@ -306,9 +328,11 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 
 			std::string vsDisplay = resolveVertexShaderDisplay(vsHandle);
 			std::string psDisplay = resolvePixelShaderDisplay(psHandle);
+			std::string shaderAssetDisplay = resolveShaderAssetDisplay(shaderAssetHandle);
 
 			const char* vsName = vsDisplay.empty() ? "<None>" : vsDisplay.c_str();
 			const char* psName = psDisplay.empty() ? "<None>" : psDisplay.c_str();
+			const char* shaderAssetName = shaderAssetDisplay.empty() ? "<None>" : shaderAssetDisplay.c_str();
 
 			ImGui::Indent();
 			{
@@ -355,6 +379,29 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 				if (ImGui::Button("Clear##SubMeshPS"))
 				{
 					meshComponent.SetSubMeshPixelShaderOverride(i, PixelShaderHandle::Invalid());
+					changed = true;
+				}
+
+				std::string shaderAssetLabel = std::string(shaderAssetName) + "##SubMeshShaderAssetOverride";
+				ImGui::TextUnformatted("Shader Asset");
+				ImGui::SameLine();
+				ImGui::Button(shaderAssetLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER_ASSET"))
+					{
+						const ShaderAssetHandle dropped = *static_cast<const ShaderAssetHandle*>(payload->Data);
+						meshComponent.SetSubMeshShaderAssetOverride(i, dropped);
+						changed = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##SubMeshShaderAsset"))
+				{
+					meshComponent.SetSubMeshShaderAssetOverride(i, ShaderAssetHandle::Invalid());
 					changed = true;
 				}
 			}

@@ -90,11 +90,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				if (textures && mat)
                 {
-                    RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
-                    if (!mat)
-                        continue;
-
-					if (mat->shaderAsset.IsValid())
+               		if (mat->shaderAsset.IsValid())
 					{
 						const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
 						if (shaderAsset)

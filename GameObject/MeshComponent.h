@@ -12,11 +12,12 @@ public:
 	struct SubMeshMaterialOverride
 	{
 		MaterialRef material{};
+		ShaderAssetHandle shaderAsset = ShaderAssetHandle::Invalid();
 		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
 		PixelShaderHandle pixelShader = PixelShaderHandle::Invalid();
 
 		bool HasMaterialOverride() const { return !material.assetPath.empty(); }
-		bool HasShaderOverrides() const { return vertexShader.IsValid() || pixelShader.IsValid(); }
+		bool HasShaderOverrides() const { return shaderAsset.IsValid() || vertexShader.IsValid() || pixelShader.IsValid(); }
 	};
 
 
@@ -49,6 +50,7 @@ public:
 	const std::vector<SubMeshMaterialOverride>& GetSubMeshMaterialOverrides() const { return m_SubMeshMaterialOverrides; }
 	void SetSubMeshMaterialOverrides(const std::vector<SubMeshMaterialOverride>& overrides);
 	void SetSubMeshMaterialOverride(size_t index, const MaterialRef& overrideRef);
+	void SetSubMeshShaderAssetOverride(size_t index, const ShaderAssetHandle& handle);
 	void SetSubMeshVertexShaderOverride(size_t index, const VertexShaderHandle& handle);
 	void SetSubMeshPixelShaderOverride(size_t index, const PixelShaderHandle& handle);
 	void ClearSubMeshMaterialOverride(size_t index);
