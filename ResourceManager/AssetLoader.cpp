@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <unordered_map>
 #include <iostream>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 
 namespace
 {
@@ -133,6 +136,23 @@ namespace
 		}
 
 		return (baseDir / path).lexically_normal();
+	}
+
+	std::string ToLowerCopy(std::string value)
+	{
+		std::transform(value.begin(), value.end(), value.begin(),
+			[](unsigned char c)
+			{
+				return static_cast<char>(std::tolower(c));
+			});
+		return value;
+	}
+
+	bool ContainsTokenIgnoreCase(const std::string& value, const std::string& token)
+	{
+		const std::string lowerValue = ToLowerCopy(value);
+		const std::string lowerToken = ToLowerCopy(token);
+		return lowerValue.find(lowerToken) != std::string::npos;
 	}
 
 	void LogMaterialBinTextures(
@@ -403,34 +423,104 @@ AssetLoader* AssetLoader::GetActive()
 void AssetLoader::LoadAll()
 {
 	const fs::path assetRoot = "../ResourceOutput";
-	if (!fs::exists(assetRoot) || !fs::is_directory(assetRoot))
-		return;
-
-	for (const auto& dirEntry : fs::directory_iterator(assetRoot))
+	if (fs::exists(assetRoot) && fs::is_directory(assetRoot))
 	{
-		if (!dirEntry.is_directory())
-			continue;
-
-		fs::path metaDir = dirEntry.path() / "Meta";
-		if (!fs::exists(metaDir) || !fs::is_directory(metaDir))
-			continue;
-
-		for (const auto& fileEntry : fs::directory_iterator(metaDir))
+		for (const auto& dirEntry : fs::directory_iterator(assetRoot))
 		{
-			if (!fileEntry.is_regular_file())
+			if (!dirEntry.is_directory())
 				continue;
 
-			const fs::path& path = fileEntry.path();
-			if (path.extension() != ".json")
+			fs::path metaDir = dirEntry.path() / "Meta";
+			if (!fs::exists(metaDir) || !fs::is_directory(metaDir))
 				continue;
 
-			if (path.filename().string().find(".asset.json") == std::string::npos)
-				continue;
+			for (const auto& fileEntry : fs::directory_iterator(metaDir))
+			{
+				if (!fileEntry.is_regular_file())
+					continue;
+
+				const fs::path& path = fileEntry.path();
+				if (path.extension() != ".json")
+					continue;
+
+				const std::string filename = path.filename().string();
+				if (filename.find(".shader.json") != std::string::npos)
+				{
+					LoadShaderAsset(path.string());
+					continue;
+				}
+
+				if (filename.find(".asset.json") == std::string::npos)
+					continue;
 
 #ifdef _DEBUG
-		//	std::cout << path.string() << std::endl;
+				//	std::cout << path.string() << std::endl;
 #endif
-			LoadAsset(path.string());
+				LoadAsset(path.string());
+			}
+		}
+	}
+
+	const fs::path shaderRoot = "../MRenderer/fx";
+	LoadShaderSources(shaderRoot);
+}
+
+void AssetLoader::LoadShaderSources(const fs::path& shaderDir)
+{
+	if (!fs::exists(shaderDir) || !fs::is_directory(shaderDir))
+	{
+		return;
+	}
+
+	for (const auto& fileEntry : fs::directory_iterator(shaderDir))
+	{
+		if (!fileEntry.is_regular_file())
+		{
+			continue;
+		}
+
+		const fs::path& path = fileEntry.path();
+		if (path.extension() != ".hlsl")
+		{
+			continue;
+		}
+
+		const std::string stem = path.stem().string();
+		const bool isVertexShader = ContainsTokenIgnoreCase(stem, "_vs");
+		const bool isPixelShader = ContainsTokenIgnoreCase(stem, "_ps");
+		if (!isVertexShader && !isPixelShader)
+		{
+			continue;
+		}
+
+		if (isVertexShader)
+		{
+			VertexShaderHandle handle = m_VertexShaders.Load(path.generic_string(), [path]()
+				{
+					auto data = std::make_unique<RenderData::VertexShaderData>();
+					data->path = path.generic_string();
+					return data;
+				});
+			if (!stem.empty())
+			{
+				m_VertexShaders.SetDisplayName(handle, stem);
+			}
+			StoreReferenceIfMissing(m_VertexShaderRefs, handle, path.generic_string(), 0u);
+		}
+
+		if (isPixelShader)
+		{
+			PixelShaderHandle handle = m_PixelShaders.Load(path.generic_string(), [path]()
+				{
+					auto data = std::make_unique<RenderData::PixelShaderData>();
+					data->path = path.generic_string();
+					return data;
+				});
+			if (!stem.empty())
+			{
+				m_PixelShaders.SetDisplayName(handle, stem);
+			}
+			StoreReferenceIfMissing(m_PixelShaderRefs, handle, path.generic_string(), 0u);
 		}
 	}
 }
@@ -509,27 +599,6 @@ TextureHandle AssetLoader::ResolveTexture(const std::string& assetMetaPath, UINT
 	return asset->textures[index];
 }
 
-ShaderHandle AssetLoader::ResolveShader(const std::string& assetMetaPath, UINT32 index) const
-{
-	if (assetMetaPath.empty())
-	{
-		return ShaderHandle::Invalid();
-	}
-
-	const auto* asset = GetAsset(assetMetaPath);
-	if (!asset)
-	{
-		return ShaderHandle::Invalid();
-	}
-
-	if (index >= asset->shaders.size())
-	{
-		return ShaderHandle::Invalid();
-	}
-
-	return asset->shaders[index];
-}
-
 SkeletonHandle AssetLoader::ResolveSkeleton(const std::string& assetMetaPath, UINT32 index) const
 {
 	if (assetMetaPath.empty())
@@ -572,6 +641,50 @@ AnimationHandle AssetLoader::ResolveAnimation(const std::string& assetMetaPath, 
 	return asset->animations[index];
 }
 
+ShaderAssetHandle AssetLoader::ResolveShaderAsset(const std::string& shaderMetaPath, UINT32 index)
+{
+	(void)index;
+	return LoadShaderAsset(shaderMetaPath);
+}
+
+VertexShaderHandle AssetLoader::ResolveVertexShader(const VertexShaderRef& ref)
+{
+	if (ref.assetPath.empty())
+	{
+		return VertexShaderHandle::Invalid();
+	}
+
+	const fs::path shaderPath = ref.assetPath;
+	VertexShaderHandle handle = m_VertexShaders.Load(shaderPath.generic_string(), [shaderPath]()
+		{
+			auto data = std::make_unique<RenderData::VertexShaderData>();
+			data->path = shaderPath.generic_string();
+			return data;
+		});
+
+	StoreReferenceIfMissing(m_VertexShaderRefs, handle, shaderPath.generic_string(), 0u);
+	return handle;
+}
+
+PixelShaderHandle AssetLoader::ResolvePixelShader(const PixelShaderRef& ref)
+{
+	if (ref.assetPath.empty())
+	{
+		return PixelShaderHandle::Invalid();
+	}
+
+	const fs::path shaderPath = ref.assetPath;
+	PixelShaderHandle handle = m_PixelShaders.Load(shaderPath.generic_string(), [shaderPath]()
+		{
+			auto data = std::make_unique<RenderData::PixelShaderData>();
+			data->path = shaderPath.generic_string();
+			return data;
+		});
+
+	StoreReferenceIfMissing(m_PixelShaderRefs, handle, shaderPath.generic_string(), 0u);
+	return handle;
+}
+
 bool AssetLoader::GetMaterialAssetReference(MaterialHandle handle, std::string& outPath, UINT32& outIndex) const
 {
 	auto it = m_MaterialRefs.find(MakeHandleKey(handle));
@@ -611,10 +724,36 @@ bool AssetLoader::GetTextureAssetReference(TextureHandle handle, std::string& ou
 	return true;
 }
 
-bool AssetLoader::GetShaderAssetReference(ShaderHandle handle, std::string& outPath, UINT32& outIndex) const
+bool AssetLoader::GetShaderAssetReference(ShaderAssetHandle handle, std::string& outPath, UINT32& outIndex) const
 {
-	auto it = m_ShaderRefs.find(MakeHandleKey(handle));
-	if (it == m_ShaderRefs.end())
+	auto it = m_ShaderAssetRefs.find(MakeHandleKey(handle));
+	if (it == m_ShaderAssetRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetVertexShaderAssetReference(VertexShaderHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_VertexShaderRefs.find(MakeHandleKey(handle));
+	if (it == m_VertexShaderRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetPixelShaderAssetReference(PixelShaderHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_PixelShaderRefs.find(MakeHandleKey(handle));
+	if (it == m_PixelShaderRefs.end())
 	{
 		return false;
 	}
@@ -674,8 +813,6 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 	
 	LoadMaterials(meta, baseDir, textureDir, result, materialHandles, materialByName, assetMetaPath);
 
-	LoadShaders(meta, baseDir, result, assetMetaPath);
-
 	LoadSkeletons(meta, baseDir, result, assetMetaPath);
 
 	LoadMeshes(meta, baseDir, result, materialHandles, materialByName, assetMetaPath);
@@ -685,6 +822,131 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 	m_AssetsByPath[assetMetaPath] = result;
 	return result;
 }
+
+ShaderAssetHandle AssetLoader::LoadShaderAsset(const std::string& shaderMetaPath)
+{
+	if (shaderMetaPath.empty())
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	json meta = json::object();
+	std::string shaderName;
+	std::string vsFile;
+	std::string psFile;
+	const fs::path metaPath(shaderMetaPath);
+	const fs::path baseDir = metaPath.parent_path();
+	{
+		std::ifstream ifs(shaderMetaPath);
+		if (ifs)
+		{
+			ifs >> meta;
+			shaderName = meta.value("name", "");
+			vsFile = meta.value("vs", "");
+			psFile = meta.value("ps", "");
+		}
+	}
+	
+	const std::string shaderKey = shaderMetaPath;
+	ShaderAssetHandle handle = m_ShaderAssets.Load(shaderKey, [vsFile, psFile, baseDir, this]()
+		{
+			auto data = std::make_unique<RenderData::ShaderAssetData>();
+
+			if (!vsFile.empty())
+			{
+				const fs::path vsPath = ResolvePath(baseDir, vsFile);
+				VertexShaderHandle vsHandle = m_VertexShaders.Load(vsPath.generic_string(), [vsPath]()
+					{
+						auto vsData = std::make_unique<RenderData::VertexShaderData>();
+						vsData->path = vsPath.generic_string();
+						return vsData;
+					});
+				data->vertexShader = vsHandle;
+				StoreReferenceIfMissing(m_VertexShaderRefs, vsHandle, vsPath.generic_string(), 0u);
+			}
+
+			if (!psFile.empty())
+			{
+				const fs::path psPath = ResolvePath(baseDir, psFile);
+				PixelShaderHandle psHandle = m_PixelShaders.Load(psPath.generic_string(), [psPath]()
+					{
+						auto psData = std::make_unique<RenderData::PixelShaderData>();
+						psData->path = psPath.generic_string();
+						return psData;
+					});
+				data->pixelShader = psHandle;
+				StoreReferenceIfMissing(m_PixelShaderRefs, psHandle, psPath.generic_string(), 0u);
+			}
+
+			return data;
+		});
+
+	if (!shaderName.empty())
+	{
+		m_ShaderAssets.SetDisplayName(handle, shaderName);
+	}
+
+	StoreReferenceIfMissing(m_ShaderAssetRefs, handle, shaderMetaPath, 0u);
+	return handle;
+}
+
+static std::string HashShaderKey(const std::string& key)
+{
+	const size_t hashValue = std::hash<std::string>{}(key);
+	std::ostringstream oss;
+	oss << std::hex << hashValue;
+	return oss.str();
+}
+
+ShaderAssetHandle AssetLoader::EnsureShaderAssetForStages(VertexShaderHandle vertexShader, PixelShaderHandle pixelShader)
+{
+	if (!vertexShader.IsValid() || !pixelShader.IsValid())
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	std::string vsPath;
+	std::string psPath;
+	UINT32 vsIndex = 0;
+	UINT32 psIndex = 0;
+	if (!GetVertexShaderAssetReference(vertexShader, vsPath, vsIndex))
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	if (!GetPixelShaderAssetReference(pixelShader, psPath, psIndex))
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	const std::string key = vsPath + "|" + psPath;
+	const std::string hash = HashShaderKey(key);
+	const std::string assetName = "AutoShader_" + hash;
+
+	const fs::path metaRoot = fs::path("../ResourceOutput") / "ShaderAssets" / "Meta";
+	const fs::path metaPath = metaRoot / (assetName + ".shader.json");
+	if (fs::exists(metaPath))
+	{
+		return LoadShaderAsset(metaPath.string());
+	}
+
+	fs::create_directories(metaRoot);
+	json meta = json::object();
+	meta["name"] = assetName;
+	meta["vs"] = vsPath;
+	meta["ps"] = psPath;
+
+	std::ofstream out(metaPath);
+	if (!out)
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	out << meta.dump(4);
+	out.close();
+	return LoadShaderAsset(metaPath.string());
+}
+
 
 void AssetLoader::LoadMeshes(
 	json& meta, 
@@ -975,52 +1237,6 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 				}
 			}
 		}
-	}
-}
-
-void AssetLoader::LoadShaders(json& meta, const fs::path& baseDir, AssetLoadResult& result, const std::string& assetMetaPath)
-{
-	if (!meta.contains("shaders") || !meta["shaders"].is_array())
-	{
-		return;
-	}
-
-	UINT32 shaderIndex = 0;
-	for (const auto& shaderJson : meta["shaders"])
-	{
-		const std::string vsFile = shaderJson.value("vs", "");
-		const std::string psFile = shaderJson.value("ps", "");
-		if (vsFile.empty() && psFile.empty())
-		{
-			++shaderIndex;
-			continue;
-		}
-
-		RenderData::ShaderData shaderData{};
-		if (!vsFile.empty())
-		{
-			shaderData.vertexShaderPath = ResolvePath(baseDir, vsFile).generic_string();
-		}
-		if (!psFile.empty())
-		{
-			shaderData.pixelShaderPath = ResolvePath(baseDir, psFile).generic_string();
-		}
-
-		std::string shaderName = shaderJson.value("name", "");
-		if (shaderName.empty())
-		{
-			shaderName = "Shader_" + std::to_string(shaderIndex);
-		}
-
-		const std::string shaderKey = assetMetaPath + ":" + shaderName;
-		ShaderHandle handle = m_Shaders.Load(shaderKey, [shaderData]()
-			{
-				return std::make_unique<RenderData::ShaderData>(shaderData);
-			});
-
-		result.shaders.push_back(handle);
-		StoreReferenceIfMissing(m_ShaderRefs, handle, assetMetaPath, shaderIndex);
-		++shaderIndex;
 	}
 }
 

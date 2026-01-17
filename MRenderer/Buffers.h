@@ -58,6 +58,16 @@ struct SkinningConstBuffer
 	float padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
+struct VertexShaderResources
+{
+	ComPtr<ID3D11VertexShader>	vertexShader;
+	ComPtr<ID3DBlob>			vertexShaderCode;
+};
+
+struct PixelShaderResources
+{
+	ComPtr<ID3D11PixelShader>	pixelShader;
+};
 
 struct RenderContext
 {
@@ -87,6 +97,8 @@ struct RenderContext
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, UINT32>*									indexCounts		= nullptr;
 	std::unordered_map<TextureHandle, ComPtr<ID3D11ShaderResourceView>>*	textures		= nullptr;
+	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
+	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
 	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
 

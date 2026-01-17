@@ -137,6 +137,16 @@ public:
 		return &m_Entries[handle.id].key;
 	}
 
+	void SetDisplayName(HandleType handle, const std::string& displayName)
+	{
+		if (!IsAlive(handle))
+		{
+			return;
+		}
+
+		m_Entries[handle.id].displayName = displayName;
+	}
+
 private:
 	static std::string MakeDisplayNameFromKey(const std::string& key)
 	{

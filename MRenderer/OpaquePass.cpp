@@ -66,11 +66,16 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				}
 
 				const auto* vertexBuffers = m_RenderContext.vertexBuffers;
-				const auto* indexBuffers = m_RenderContext.indexBuffers;
-				const auto* indexCounts = m_RenderContext.indexCounts;
-                const auto* textures = m_RenderContext.textures;
+				const auto* indexBuffers  = m_RenderContext.indexBuffers;
+				const auto* indexCounts   = m_RenderContext.indexCounts;
+                const auto* textures      = m_RenderContext.textures;
+				const auto* vertexShaders = m_RenderContext.vertexShaders;
+				const auto* pixelShaders  = m_RenderContext.pixelShaders;
 
 				BOOL castshadow = frame.lights[index].castShadow;
+
+				ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
+				ID3D11PixelShader*  pixelShader  = m_RenderContext.PS_PBR.Get();
 
                 ////텍스쳐 바인딩
                 if (textures && item.material.IsValid())
@@ -78,6 +83,49 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                     RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
                     if (!mat)
                         continue;
+
+					if (mat->shaderAsset.IsValid())
+					{
+						const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
+						if (shaderAsset)
+						{
+							if (vertexShaders && shaderAsset->vertexShader.IsValid())
+							{
+								const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
+								if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+								{
+									vertexShader = shaderIt->second.vertexShader.Get();
+								}
+							}
+
+							if (pixelShaders && shaderAsset->pixelShader.IsValid())
+							{
+								const auto shaderIt = pixelShaders->find(shaderAsset->pixelShader);
+								if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+								{
+									pixelShader = shaderIt->second.pixelShader.Get();
+								}
+							}
+						}
+					}
+
+					if (vertexShaders && mat->vertexShader.IsValid())
+					{
+						const auto shaderIt = vertexShaders->find(mat->vertexShader);
+						if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+						{
+							vertexShader = shaderIt->second.vertexShader.Get();
+						}
+					}
+
+					if (pixelShaders && mat->pixelShader.IsValid())
+					{
+						const auto shaderIt = pixelShaders->find(mat->pixelShader);
+						if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+						{
+							pixelShader = shaderIt->second.pixelShader.Get();
+						}
+					}
 
                     for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
                     {
@@ -101,7 +149,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
                     const MeshHandle bufferHandle = item.mesh;
                     const auto vbIt = vertexBuffers->find(bufferHandle);
                     const auto ibIt = indexBuffers->find(bufferHandle);
-                    const auto countIt = indexCounts->find(bufferHandle);
+                    const auto countIt = indexCounts        ->find(bufferHandle);
 
 					if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexCounts->end())
 					{
@@ -113,7 +161,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
 						//DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
-                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS_PBR.Get(), m_RenderContext.PS_PBR.Get(), useSubMesh, indexCount, indexStart);
+                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
 					}
 				}
             }

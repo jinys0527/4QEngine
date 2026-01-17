@@ -838,33 +838,102 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::PopID();
 		}
 
-		// Shader handle
-		{
-			ShaderHandle shader = value.shader;
-			//const std::string* key = assetLoader.GetShaders().GetKey(shader);
-			//const std::string display = key ? *key : std::string("<None>");
-			const std::string display = "<None>";
-			const std::string buttonLabel = display + "##MaterialShader";
+		bool stageShaderChanged = false;
 
-			ImGui::TextUnformatted("Shader");
+		// Vertex shader handle
+		{
+			VertexShaderHandle shader = value.vertexShader;
+			const std::string* key = assetLoader.GetVertexShaders().GetKey(shader);
+			const std::string* displayName = assetLoader.GetVertexShaders().GetDisplayName(shader);
+			const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+			const std::string buttonLabel = std::string(name) + "##MaterialVertexShader";
+
+			ImGui::TextUnformatted("Vertex Shader");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
 
 			if (ImGui::BeginDragDropTarget())
 			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER"))
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_VERTEX_SHADER"))
 				{
-					const ShaderHandle dropped = *static_cast<const ShaderHandle*>(payload->Data);
-					value.shader = dropped;
+					const VertexShaderHandle dropped = *static_cast<const VertexShaderHandle*>(payload->Data);
+					value.vertexShader = dropped;
+					stageShaderChanged = true;
 					updated = true;
 				}
 				ImGui::EndDragDropTarget();
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Clear##Shader"))
+			if (ImGui::Button("Clear##VertexShader"))
 			{
-				value.shader = ShaderHandle::Invalid();
+				value.vertexShader = VertexShaderHandle::Invalid();
+				stageShaderChanged = true;
+				updated = true;
+			}
+		}
+
+		// Pixel shader handle
+		{
+			PixelShaderHandle shader = value.pixelShader;
+			const std::string* key = assetLoader.GetPixelShaders().GetKey(shader);
+			const std::string* displayName = assetLoader.GetPixelShaders().GetDisplayName(shader);
+			const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+			const std::string buttonLabel = std::string(name) + "##MaterialPixelShader";
+
+			ImGui::TextUnformatted("Pixel Shader");
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_PIXEL_SHADER"))
+				{
+					const PixelShaderHandle dropped = *static_cast<const PixelShaderHandle*>(payload->Data);
+					value.pixelShader = dropped;
+					stageShaderChanged = true;
+					updated = true;
+			
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Clear##PixelShader"))
+			{
+				value.pixelShader = PixelShaderHandle::Invalid();
+				stageShaderChanged = true;
+				updated = true;
+			}
+		}
+
+		// Shader asset handle
+		{
+			ShaderAssetHandle shader = value.shaderAsset;
+			const std::string* key = assetLoader.GetShaderAssets().GetKey(shader);
+			const std::string* displayName = assetLoader.GetShaderAssets().GetDisplayName(shader);
+			const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+			const std::string buttonLabel = std::string(name) + "##MaterialShaderAsset";
+
+			ImGui::TextUnformatted("Shader Asset");
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER_ASSET"))
+				{
+					const ShaderAssetHandle dropped = *static_cast<const ShaderAssetHandle*>(payload->Data);
+					value.shaderAsset = dropped;
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Clear##ShaderAsset"))
+			{
+				value.shaderAsset = ShaderAssetHandle::Invalid();
 				updated = true;
 			}
 		}
@@ -872,6 +941,10 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::PopID();
 		ImGui::Unindent();
 
+		if (updated && !value.shaderAsset.IsValid() && value.vertexShader.IsValid() && value.pixelShader.IsValid())
+		{
+			value.shaderAsset = ShaderAssetHandle::Invalid();
+		}
 		if (updated)
 		{
 			property.SetValue(component, &value);
