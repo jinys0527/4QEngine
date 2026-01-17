@@ -186,7 +186,7 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 			std::string overrideDisplay; // 비어있으면 override 없음
 			if (i < overrides.size())
 			{
-				const auto& overrideRef = overrides[i];
+				const auto& overrideRef = overrides[i].material;
 				if (!overrideRef.assetPath.empty())
 				{
 					const MaterialHandle handle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
@@ -259,6 +259,107 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 				s_lastClearedIndex = static_cast<int>(i);
 				s_lastClearedComp = &meshComponent;
 			}
+
+			const auto* overrideData = (i < overrides.size()) ? &overrides[i] : nullptr;
+			VertexShaderHandle vsHandle = overrideData ? overrideData->vertexShader : VertexShaderHandle::Invalid();
+			PixelShaderHandle psHandle = overrideData ? overrideData->pixelShader : PixelShaderHandle::Invalid();
+
+			auto resolveVertexShaderDisplay = [&assetLoader](const VertexShaderHandle& handle) -> std::string
+				{
+					if (!handle.IsValid())
+						return {};
+
+					if (const std::string* displayName = assetLoader.GetVertexShaders().GetDisplayName(handle))
+					{
+						if (!displayName->empty())
+							return *displayName;
+					}
+
+					if (const std::string* key = assetLoader.GetVertexShaders().GetKey(handle))
+					{
+						if (!key->empty())
+							return *key;
+					}
+
+					return {};
+				};
+
+			auto resolvePixelShaderDisplay = [&assetLoader](const PixelShaderHandle& handle) -> std::string
+				{
+					if (!handle.IsValid())
+						return {};
+
+					if (const std::string* displayName = assetLoader.GetPixelShaders().GetDisplayName(handle))
+					{
+						if (!displayName->empty())
+							return *displayName;
+					}
+
+					if (const std::string* key = assetLoader.GetPixelShaders().GetKey(handle))
+					{
+						if (!key->empty())
+							return *key;
+					}
+
+					return {};
+				};
+
+			std::string vsDisplay = resolveVertexShaderDisplay(vsHandle);
+			std::string psDisplay = resolvePixelShaderDisplay(psHandle);
+
+			const char* vsName = vsDisplay.empty() ? "<None>" : vsDisplay.c_str();
+			const char* psName = psDisplay.empty() ? "<None>" : psDisplay.c_str();
+
+			ImGui::Indent();
+			{
+				std::string vsButtonLabel = std::string(vsName) + "##SubMeshVSOverride";
+				ImGui::TextUnformatted("Vertex Shader");
+				ImGui::SameLine();
+				ImGui::Button(vsButtonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_VERTEX_SHADER"))
+					{
+						const VertexShaderHandle dropped = *static_cast<const VertexShaderHandle*>(payload->Data);
+						meshComponent.SetSubMeshVertexShaderOverride(i, dropped);
+						changed = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##SubMeshVS"))
+				{
+					meshComponent.SetSubMeshVertexShaderOverride(i, VertexShaderHandle::Invalid());
+					changed = true;
+				}
+
+				std::string psButtonLabel = std::string(psName) + "##SubMeshPSOverride";
+				ImGui::TextUnformatted("Pixel Shader");
+				ImGui::SameLine();
+				ImGui::Button(psButtonLabel.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_PIXEL_SHADER"))
+					{
+						const PixelShaderHandle dropped = *static_cast<const PixelShaderHandle*>(payload->Data);
+						meshComponent.SetSubMeshPixelShaderOverride(i, dropped);
+						changed = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Clear##SubMeshPS"))
+				{
+					meshComponent.SetSubMeshPixelShaderOverride(i, PixelShaderHandle::Invalid());
+					changed = true;
+				}
+			}
+			ImGui::Unindent();
+
 
 			ImGui::PopID();
 		}

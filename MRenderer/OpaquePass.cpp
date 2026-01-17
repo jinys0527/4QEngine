@@ -78,7 +78,17 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				ID3D11PixelShader*  pixelShader  = m_RenderContext.PS_PBR.Get();
 
                 ////텍스쳐 바인딩
-                if (textures && item.material.IsValid())
+				const RenderData::MaterialData* mat = nullptr;
+				if (item.useMaterialOverrides)
+				{
+					mat = &item.materialOverrides;
+				}
+				else if (item.material.IsValid())
+				{
+					mat = m_AssetLoader.GetMaterials().Get(item.material);
+				}
+
+				if (textures && mat)
                 {
                     RenderData::MaterialData* mat = m_AssetLoader.GetMaterials().Get(item.material);
                     if (!mat)

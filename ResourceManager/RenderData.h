@@ -181,6 +181,8 @@ namespace RenderData
 		MeshHandle     mesh     = MeshHandle::Invalid();
 		MaterialHandle material = MaterialHandle::Invalid();
 		SkeletonHandle skeleton = SkeletonHandle::Invalid();
+		MaterialData   materialOverrides{};
+		bool           useMaterialOverrides = false;
 		XMFLOAT4X4     world{};
 		UINT64         sortKey = 0;
 		UINT32		   skinningPaletteOffset = 0;

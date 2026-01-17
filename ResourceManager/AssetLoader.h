@@ -61,6 +61,7 @@ public:
 
 	const ResourceStore<RenderData::MeshData, MeshHandle>& GetMeshes() const { return m_Meshes; }
 	ResourceStore<RenderData::MeshData, MeshHandle>& GetMeshes() { return m_Meshes; }
+	const ResourceStore<RenderData::MaterialData, MaterialHandle>& GetMaterials() const { return m_Materials; }
 	ResourceStore<RenderData::MaterialData, MaterialHandle>& GetMaterials() { return m_Materials; }
 	ResourceStore<RenderData::TextureData, TextureHandle>& GetTextures() { return m_Textures; }
 	ResourceStore<RenderData::ShaderAssetData, ShaderAssetHandle>& GetShaderAssets() { return m_ShaderAssets; }

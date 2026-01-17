@@ -28,6 +28,83 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                 const auto* vertexBuffers = m_RenderContext.vertexBuffers;
                 const auto* indexBuffers = m_RenderContext.indexBuffers;
                 const auto* indexcounts = m_RenderContext.indexCounts;
+				const auto* textures = m_RenderContext.textures;
+				const auto* vertexShaders = m_RenderContext.vertexShaders;
+				const auto* pixelShaders = m_RenderContext.pixelShaders;
+
+				ID3D11VertexShader* vertexShader = m_RenderContext.VS.Get();
+				ID3D11PixelShader* pixelShader = m_RenderContext.PS.Get();
+
+				const RenderData::MaterialData* mat = nullptr;
+				if (item.useMaterialOverrides)
+				{
+					mat = &item.materialOverrides;
+				}
+				else if (item.material.IsValid())
+				{
+					mat = m_AssetLoader.GetMaterials().Get(item.material);
+				}
+
+				if (textures && mat)
+				{
+					if (mat->shaderAsset.IsValid())
+					{
+						const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
+						if (shaderAsset)
+						{
+							if (vertexShaders && shaderAsset->vertexShader.IsValid())
+							{
+								const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
+								if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+								{
+									vertexShader = shaderIt->second.vertexShader.Get();
+								}
+							}
+
+							if (pixelShaders && shaderAsset->pixelShader.IsValid())
+							{
+								const auto shaderIt = pixelShaders->find(shaderAsset->pixelShader);
+								if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+								{
+									pixelShader = shaderIt->second.pixelShader.Get();
+								}
+							}
+						}
+					}
+
+					if (vertexShaders && mat->vertexShader.IsValid())
+					{
+						const auto shaderIt = vertexShaders->find(mat->vertexShader);
+						if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+						{
+							vertexShader = shaderIt->second.vertexShader.Get();
+						}
+					}
+
+					if (pixelShaders && mat->pixelShader.IsValid())
+					{
+						const auto shaderIt = pixelShaders->find(mat->pixelShader);
+						if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+						{
+							pixelShader = shaderIt->second.pixelShader.Get();
+						}
+					}
+
+					for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
+					{
+						const TextureHandle h = mat->textures[slot];
+						if (!h.IsValid())
+							continue;
+
+						const auto tIt = textures->find(h);
+						if (tIt == textures->end())
+							continue;
+
+						ID3D11ShaderResourceView* srv = tIt->second.Get();
+						m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
+					}
+				}
+
 
                 if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
                 {
@@ -44,7 +121,7 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                         const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
                         const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
-                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
+						DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
                     }
                 }
             }
