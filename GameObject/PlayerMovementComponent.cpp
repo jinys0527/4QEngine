@@ -45,7 +45,6 @@ void PlayerMovementComponent::Update(float deltaTime)
 	x /= len; z /= len;
 
 	transComp->Translate({ x * m_Speed * deltaTime, 0.f, z * m_Speed * deltaTime });
-	std::cout << "Up : " << m_IsUp << " Down : " << m_IsDown << " Left : " << m_IsLeft << " Right : " << m_IsRight <<std::endl;
 }
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)

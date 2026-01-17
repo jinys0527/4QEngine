@@ -9,7 +9,6 @@
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "AnimationComponent.h"
-#include "CameraComponent.h"
 #include "InputManager.h"
 #include "GameObject.h"
 #include "Reflection.h"
@@ -479,12 +478,19 @@ void EditorApplication::UpdateEditorCamera()
 
 			if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
 			{
+				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
 				m_SceneManager.GetCurrentScene()->SetIsPause(false);
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
 			{
 				m_SceneManager.GetCurrentScene()->SetIsPause(true);
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
 			}
 
 			ImGui::EndMainMenuBar();
