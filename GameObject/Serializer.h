@@ -317,6 +317,88 @@ struct Serializer<AnimationHandle> {
 	}
 };
 
+template<>
+struct Serializer<ShaderAssetHandle> {
+	static void ToJson(nlohmann::json& j, const ShaderAssetHandle& v) {
+		ShaderAssetRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetShaderAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<ShaderAssetRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, ShaderAssetHandle& v) {
+		ShaderAssetRef ref{};
+		Serializer<ShaderAssetRef>::FromJson(j, ref);
+		if (ref.assetPath.empty())
+		{
+			v = ShaderAssetHandle::Invalid();
+			return;
+		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveShaderAsset(ref.assetPath, ref.assetIndex);
+		else
+			v = ShaderAssetHandle::Invalid();
+	}
+};
+
+template<>
+struct Serializer<VertexShaderHandle> {
+	static void ToJson(nlohmann::json& j, const VertexShaderHandle& v) {
+		VertexShaderRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetVertexShaderAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<VertexShaderRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, VertexShaderHandle& v) {
+		VertexShaderRef ref{};
+		Serializer<VertexShaderRef>::FromJson(j, ref);
+		if (ref.assetPath.empty())
+		{
+			v = VertexShaderHandle::Invalid();
+			return;
+		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolveVertexShader(ref);
+		else
+			v = VertexShaderHandle::Invalid();
+	}
+};
+
+template<>
+struct Serializer<PixelShaderHandle> {
+	static void ToJson(nlohmann::json& j, const PixelShaderHandle& v) {
+		PixelShaderRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			loader->GetPixelShaderAssetReference(v, ref.assetPath, ref.assetIndex);
+		}
+		Serializer<PixelShaderRef>::ToJson(j, ref);
+	}
+
+	static void FromJson(const nlohmann::json& j, PixelShaderHandle& v) {
+		PixelShaderRef ref{};
+		Serializer<PixelShaderRef>::FromJson(j, ref);
+		if (ref.assetPath.empty())
+		{
+			v = PixelShaderHandle::Invalid();
+			return;
+		}
+
+		if (auto* loader = AssetLoader::GetActive())
+			v = loader->ResolvePixelShader(ref);
+		else
+			v = PixelShaderHandle::Invalid();
+	}
+};
+
+
 // MaterialData
 template<>
 struct Serializer<RenderData::MaterialData> {
@@ -357,14 +439,21 @@ struct Serializer<RenderData::MaterialData> {
 			}
 		}
 
-// 		// shader도 같은 방식 (ShaderHandle serializer가 없다면 ShaderRef로)
-// 		ShaderRef sref{};
-// 		if (auto* loader = AssetLoader::GetActive())
-// 		{
-// 			if (v.shader.IsValid())
-// 				loader->GetShaderAssetReference(v.shader, sref.assetPath, sref.assetIndex); // 함수 필요
-// 		}
-// 		Serializer<ShaderRef>::ToJson(j["overrides"]["shader"], sref);
+		VertexShaderRef vertexRef{};
+		PixelShaderRef pixelRef{};
+		ShaderAssetRef shaderAssetRef{};
+		if (auto* loader = AssetLoader::GetActive())
+		{
+			if (v.shaderAsset.IsValid())
+				loader->GetShaderAssetReference(v.shaderAsset, shaderAssetRef.assetPath, shaderAssetRef.assetIndex);
+			if (v.vertexShader.IsValid())
+				loader->GetVertexShaderAssetReference(v.vertexShader, vertexRef.assetPath, vertexRef.assetIndex);
+			if (v.pixelShader.IsValid())
+				loader->GetPixelShaderAssetReference(v.pixelShader, pixelRef.assetPath, pixelRef.assetIndex);
+		}
+		Serializer<ShaderAssetRef>::ToJson(j["overrides"]["shaderAsset"], shaderAssetRef);
+		Serializer<VertexShaderRef>::ToJson(j["overrides"]["vertexShader"], vertexRef);
+		Serializer<PixelShaderRef>::ToJson(j["overrides"]["pixelShader"], pixelRef);
 	}
 
 	static void FromJson(const nlohmann::json& j, RenderData::MaterialData& v) {
@@ -399,17 +488,35 @@ struct Serializer<RenderData::MaterialData> {
 			}
 		}
 
-		// shader도 동일
-// 		if (ovr.contains("shader"))
-// 		{
-// 			ShaderRef sref{};
-// 			Serializer<ShaderRef>::FromJson(ovr["shader"], sref);
-// 
-// 			if (auto* loader = AssetLoader::GetActive())
-// 				v.shader = loader->ResolveShader(sref.assetPath, sref.assetIndex); // 함수 필요
-// 			else
-// 				v.shader = ShaderHandle::Invalid();
-// 		}
+		if (j["overrides"].contains("vertexShader"))
+		{
+			VertexShaderRef ref{};
+			Serializer<VertexShaderRef>::FromJson(j["overrides"]["vertexShader"], ref);
+			if (auto* loader = AssetLoader::GetActive())
+				v.vertexShader = loader->ResolveVertexShader(ref);
+			else
+				v.vertexShader = VertexShaderHandle::Invalid();
+		}
+
+		if (j["overrides"].contains("shaderAsset"))
+		{
+			ShaderAssetRef ref{};
+			Serializer<ShaderAssetRef>::FromJson(j["overrides"]["shaderAsset"], ref);
+			if (auto* loader = AssetLoader::GetActive())
+				v.shaderAsset = loader->ResolveShaderAsset(ref.assetPath, ref.assetIndex);
+			else
+				v.shaderAsset = ShaderAssetHandle::Invalid();
+		}
+
+		if (j["overrides"].contains("pixelShader"))
+		{
+			PixelShaderRef ref{};
+			Serializer<PixelShaderRef>::FromJson(j["overrides"]["pixelShader"], ref);
+			if (auto* loader = AssetLoader::GetActive())
+				v.pixelShader = loader->ResolvePixelShader(ref);
+			else
+				v.pixelShader = PixelShaderHandle::Invalid();
+		}
 	}
 };
 

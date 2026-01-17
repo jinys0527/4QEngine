@@ -28,6 +28,7 @@
 
 
 #define DRAG_SPEED 0.01f
+namespace fs = std::filesystem;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	// ImGUI 창그리기
@@ -478,12 +479,19 @@ void EditorApplication::UpdateEditorCamera()
 
 			if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
 			{
+				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
 				m_SceneManager.GetCurrentScene()->SetIsPause(false);
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
 			{
 				m_SceneManager.GetCurrentScene()->SetIsPause(true);
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
 			}
 
 			ImGui::EndMainMenuBar();
@@ -1035,7 +1043,7 @@ void EditorApplication::UpdateEditorCamera()
 
 	void EditorApplication::DrawResourceBrowser()
 	{
-		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_Once);
+		ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_Once);
 		ImGui::Begin("Resource Browser");
 
 		if (ImGui::BeginTabBar("ResourceTabs"))
@@ -1170,6 +1178,156 @@ void EditorApplication::UpdateEditorCamera()
 					{
 						ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
 						ImGui::Text("Animation : %s", name);
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+
+			//Vertex Shaders
+			if (ImGui::BeginTabItem("Vertex Shaders"))
+			{
+				ImGui::BeginChild("VertexShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& shaders = m_AssetLoader->GetVertexShaders().GetKeyToHandle();
+				for (const auto& [key, handle] : shaders)
+				{
+					const std::string* displayName = m_AssetLoader->GetVertexShaders().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_VERTEX_SHADER", &handle, sizeof(VertexShaderHandle));
+						ImGui::Text("Vertex Shader : %s", name);
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Pixel Shaders
+			if (ImGui::BeginTabItem("Pixel Shaders"))
+			{
+				ImGui::BeginChild("PixelShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& shaders = m_AssetLoader->GetPixelShaders().GetKeyToHandle();
+				for (const auto& [key, handle] : shaders)
+				{
+					const std::string* displayName = m_AssetLoader->GetPixelShaders().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_PIXEL_SHADER", &handle, sizeof(PixelShaderHandle));
+						ImGui::Text("Pixel Shader : %s", name);
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Shader Assets
+			if (ImGui::BeginTabItem("Shader Assets"))
+			{
+				static char shaderAssetName[128] = "";
+				static char shaderAssetFolder[128] = "";
+				static char shaderVertexPath[256] = "";
+				static char shaderPixelPath[256] = "";
+
+				if (ImGui::Button("New Shader Asset"))
+				{
+					ImGui::OpenPopup("CreateShaderAssetPopup");
+				}
+
+				if (ImGui::BeginPopup("CreateShaderAssetPopup"))
+				{
+					ImGui::InputText("Name", shaderAssetName, sizeof(shaderAssetName));
+					ImGui::InputText("Asset Folder", shaderAssetFolder, sizeof(shaderAssetFolder));
+					ImGui::InputText("VS Path", shaderVertexPath, sizeof(shaderVertexPath));
+					ImGui::InputText("PS Path", shaderPixelPath, sizeof(shaderPixelPath));
+
+					if (ImGui::Button("Create"))
+					{
+						const fs::path resourceRoot = "../ResourceOutput";
+						const fs::path assetDir = resourceRoot / shaderAssetFolder;
+						const fs::path metaDir = assetDir / "Meta";
+						const fs::path metaPath = metaDir / (std::string(shaderAssetName) + ".shader.json");
+
+						if (!shaderAssetName[0] || !shaderAssetFolder[0])
+						{
+							ImGui::CloseCurrentPopup();
+						}
+						else
+						{
+							fs::create_directories(metaDir);
+							json meta = json::object();
+							meta["name"] = shaderAssetName;
+							meta["vs"] = shaderVertexPath;
+							meta["ps"] = shaderPixelPath;
+
+							std::ofstream out(metaPath);
+							if (out)
+							{
+								out << meta.dump(4);
+								out.close();
+								if (m_AssetLoader)
+								{
+									m_AssetLoader->LoadShaderAsset(metaPath.string());
+								}
+							}
+							shaderAssetName[0] = '\0';
+							shaderAssetFolder[0] = '\0';
+							shaderVertexPath[0] = '\0';
+							shaderPixelPath[0] = '\0';
+							ImGui::CloseCurrentPopup();
+						}
+					}
+
+					ImGui::SameLine();
+					if (ImGui::Button("Cancel"))
+					{
+						ImGui::CloseCurrentPopup();
+					}
+
+					ImGui::EndPopup();
+				}
+
+				ImGui::Separator();
+
+				ImGui::BeginChild("ShaderAssetsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& shaderAssets = m_AssetLoader->GetShaderAssets().GetKeyToHandle();
+				for (const auto& [key, handle] : shaderAssets)
+				{
+					const std::string* displayName = m_AssetLoader->GetShaderAssets().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_SHADER_ASSET", &handle, sizeof(ShaderAssetHandle));
+						ImGui::Text("Shader Asset : %s", name);
 						ImGui::EndDragDropSource();
 					}
 					ImGui::Separator();
