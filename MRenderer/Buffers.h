@@ -109,6 +109,7 @@ struct RenderContext
 	ComPtr<ID3D11InputLayout> InputLayout_P;
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3D11PixelShader> PS_P;
+	ComPtr<ID3D11PixelShader> PS_Frustum;
 	ComPtr<ID3DBlob> VSCode_P;
 
 	ComPtr<ID3D11VertexShader> VS_PBR;

@@ -17,8 +17,8 @@ protected:
 	// Viewport(또는 화면) 관련
 	Viewport m_Viewport;
 
-	float m_NearZ  = 0.1f;
-	float m_FarZ   = 1000.0f;
+	float m_NearZ  = 1.0f;
+	float m_FarZ   = 100.0f;
 
 	PerspectiveParams m_Perspective;
 

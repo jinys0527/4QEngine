@@ -2,21 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-
-                "x": -6.7007293701171875,
-                "y": 6.9071784019470215,
-                "z": -9.278553009033203
+                "x": -4.184118747711182,
+                "y": 3.1019041538238525,
+                "z": -6.012021064758301
             },
             "look": {
-                "x": -6.093434810638428,
-                "y": 6.476853847503662,
-                "z": -8.610710144042969
+                "x": -3.656017303466797,
+                "y": 2.9501681327819824,
+                "z": -5.176506042480469
             },
             "up": {
-                "x": 0.28951072692871094,
-                "y": 0.9026741981506348,
-                "z": 0.31837525963783264
-
+                "x": 0.08107075095176697,
+                "y": 0.9884212017059326,
+                "z": 0.12826286256313324
             }
         }
     },
@@ -27,15 +25,15 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 11.318883895874023,
-                                "y": 12.098795890808105,
-                                "z": 0.0
+                                "x": -4.184118747711182,
+                                "y": 3.1019041538238525,
+                                "z": -6.012021064758301
                             },
                             "Rotation": {
-                                "w": 1.0,
-                                "x": -0.0,
-                                "y": 0.0,
-                                "z": -0.0
+                                "w": 0.9577628970146179,
+                                "x": 0.0730866864323616,
+                                "y": 0.2773101329803467,
+                                "z": -0.021161487326025963
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -48,16 +46,14 @@
                     {
                         "data": {
                             "Eye": {
-
-                                "x": -6.7007293701171875,
-                                "y": 6.9071784019470215,
-                                "z": -9.278553009033203
+                                "x": -4.184118747711182,
+                                "y": 3.1019041538238525,
+                                "z": -6.012021064758301
                             },
                             "Look": {
-                                "x": -6.093434810638428,
-                                "y": 6.476853847503662,
-                                "z": -8.610710144042969
-
+                                "x": -3.656017303466797,
+                                "y": 2.9501681327819824,
+                                "z": -5.176506042480469
                             },
                             "Ortho": {
                                 "height": 10.0,
@@ -74,11 +70,9 @@
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-
-                                "x": 0.28951072692871094,
-                                "y": 0.9026741981506348,
-                                "z": 0.31837525963783264
-
+                                "x": 0.08107075095176697,
+                                "y": 0.9884212017059326,
+                                "z": 0.12826286256313324
                             },
                             "Viewport": {
                                 "height": 808.0,
@@ -95,9 +89,9 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 0.7042780518531799,
-                                "y": -1.7818660736083984,
-                                "z": 2.9112257957458496
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
                             },
                             "Rotation": {
                                 "w": 1.0,
@@ -106,12 +100,105 @@
                                 "z": -0.0
                             },
                             "Scale": {
-                                "x": 50.0,
-                                "y": 50.0,
-                                "z": 50.0
+                                "x": 61.631996154785156,
+                                "y": 61.631996154785156,
+                                "z": 61.631996154785156
                             }
                         },
                         "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.5,
+                                        "g": 0.5,
+                                        "r": 0.5
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 1.0,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 4,
+                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            }
+                        },
+                        "type": "MeshComponent"
                     }
                 ],
                 "name": "GameObject"
@@ -121,134 +208,9 @@
                     {
                         "data": {
                             "Position": {
-                                "x": -0.9709646105766296,
-                                "y": 1.7646827697753906,
-                                "z": -4.016645431518555
-                            },
-                            "Rotation": {
-                                "w": 0.7130013108253479,
-                                "x": -0.0,
-                                "y": -0.7011626958847046,
-                                "z": -0.0
-                            },
-                            "Scale": {
-                                "x": 47.79651641845703,
-                                "y": 47.79659652709961,
-                                "z": 47.79651641845703
-                            }
-                        },
-                        "type": "TransformComponent"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            }
-                        },
-                        "type": "MeshComponent"
-                    },
-                    {
-                        "data": {
-                            "CastShadow": true,
-                            "Material": {
-
-                                "assetIndex": 1,
-                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                            },
-                            "MaterialHandle": {
-                                "assetIndex": 1,
-                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-
-                            },
-                            "Overrides": {
-                                "overrides": {
-                                    "baseColor": {
-                                        "a": 1.0,
-
-                                        "b": 0.5,
-                                        "g": 0.5,
-                                        "r": 0.5
-                                    },
-                                    "metallic": 0.0,
-                                    "roughness": 1.0,
-                                    "textures": [
-                                        {
-                                            "assetIndex": 0,
-                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 1,
-                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 2,
-                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 3,
-                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-
-                                        },
-                                        {
-                                            "assetIndex": 4,
-                                            "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                                        },
-                                        {
-                                            "assetIndex": 0,
-                                            "assetPath": ""
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        "type": "MaterialComponent"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
-                            }
-                        },
-                        "type": "MeshComponent"
-                    },
-                    {
-                        "data": {
-                            "CastShadow": true,
-                            "Material": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            },
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            },
-                            "ReceiveShadow": true,
-                            "RenderLayer": 0,
-                            "Visible": true
-                        },
-                        "type": "MeshRenderer"
-                    }
-                ],
-                "name": "GameObject1"
-            },
-            {
-                "components": [
-                    {
-                        "data": {
-                            "Position": {
                                 "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "y": 0.5,
+                                "z": -0.5
                             },
                             "Rotation": {
                                 "w": 1.0,
@@ -268,13 +230,13 @@
                         "data": {
                             "Eye": {
                                 "x": 0.0,
-                                "y": 3.0,
-                                "z": -5.0
+                                "y": 0.5,
+                                "z": -0.5
                             },
                             "Look": {
                                 "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "y": 0.5,
+                                "z": 0.5
                             },
                             "Ortho": {
                                 "height": 10.0,

@@ -166,6 +166,7 @@ private:
 	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
 	ComPtr<ID3D11VertexShader>	m_pVS_P;
 	ComPtr<ID3D11PixelShader>	m_pPS_P;
+	ComPtr<ID3D11PixelShader>	m_pPS_Frustum;
 	ComPtr<ID3DBlob> m_pVSCode_P;
 
 	//PBR
