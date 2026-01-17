@@ -55,6 +55,7 @@ private:
 	void DrawFolderView();
 	void DrawResourceBrowser();
 	void DrawGizmo();
+
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
 
 	void DrawPlayPauseButton();
@@ -80,6 +81,7 @@ private:
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext   m_SceneRenderTarget;
 	RenderTargetContext   m_SceneRenderTarget_edit;
+
 	EditorViewport        m_EditorViewport;
 	EditorViewport        m_GameViewport;
 
