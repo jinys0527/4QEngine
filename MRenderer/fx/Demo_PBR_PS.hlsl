@@ -60,7 +60,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     
     float4 col = lit + amb;//    +env;
     col.a = texAlbedo.a;
-        
+    
     //return texAlbedo;
     //return texNrm   ;
     //return float4(texMetal.xyz, 1);

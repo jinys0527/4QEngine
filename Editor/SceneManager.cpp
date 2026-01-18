@@ -27,7 +27,8 @@ void SceneManager::Initialize()
 	emptyScene->SetSceneManager(this);
 	emptyScene->SetName("Untitled Scene");
 	emptyScene->Initialize();
-
+	emptyScene->SetIsPause(true);
+	emptyScene->Enter();
 	// editor는 Current Scene만 띄운다.
 	SetCurrentScene(emptyScene);
 }
@@ -36,12 +37,24 @@ void SceneManager::Update(float deltaTime)
 {
 	if (!m_CurrentScene)
 		return;
+	if (m_CurrentScene->GetIsPause())
+		deltaTime = 0.0f;
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
+
 	if (totalTime >= 0.016f)
 		m_CurrentScene->FixedUpdate();
+
 	m_CurrentScene->Update(deltaTime);
+}
+
+void SceneManager::StateUpdate(float deltaTime)
+{
+	if (!m_CurrentScene)
+		return;
+
+	m_CurrentScene->StateUpdate(deltaTime);
 }
 
 void SceneManager::Render()
@@ -66,6 +79,7 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 	auto oldScene = m_CurrentScene;
 
 	m_CurrentScene = scene;
+	m_CurrentScene->Enter();
 	m_Camera = m_CurrentScene->GetGameCamera();
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
@@ -115,6 +129,7 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	loadedScene->SetName(filePath.stem().string());
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);
+	loadedScene->SetIsPause(true);
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 

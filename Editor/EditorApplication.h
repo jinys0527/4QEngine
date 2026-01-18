@@ -55,7 +55,10 @@ private:
 	void DrawFolderView();
 	void DrawResourceBrowser();
 	void DrawGizmo();
+
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
+
+	void DrawPlayPauseButton();
 	//Gui 관련
 	void CreateDockSpace();
 	void SetupEditorDockLayout();
@@ -74,9 +77,11 @@ private:
 	Renderer&             m_Renderer;
 	AssetLoader*		  m_AssetLoader;
 	SoundManager*		  m_SoundManager;
+	InputManager*	      m_InputManager;
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext   m_SceneRenderTarget;
 	RenderTargetContext   m_SceneRenderTarget_edit;
+
 	EditorViewport        m_EditorViewport;
 	EditorViewport        m_GameViewport;
 

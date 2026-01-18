@@ -9,6 +9,18 @@ class MeshComponent : public Component
 	friend class Editor;
 
 public:
+	struct SubMeshMaterialOverride
+	{
+		MaterialRef material{};
+		ShaderAssetHandle shaderAsset = ShaderAssetHandle::Invalid();
+		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
+		PixelShaderHandle pixelShader = PixelShaderHandle::Invalid();
+
+		bool HasMaterialOverride() const { return !material.assetPath.empty(); }
+		bool HasShaderOverrides() const { return shaderAsset.IsValid() || vertexShader.IsValid() || pixelShader.IsValid(); }
+	};
+
+
 	static constexpr const char* StaticTypeName = "MeshComponent";
 	const char* GetTypeName() const override;
 
@@ -35,10 +47,15 @@ public:
 
 	const MeshRef& GetMesh() const { return m_Mesh; }
 
-	const std::vector<MaterialRef>& GetSubMeshMaterialOverrides() const { return m_SubMeshMaterialOverrides; }
-	void SetSubMeshMaterialOverrides(const std::vector<MaterialRef>& overrides);
+	const std::vector<SubMeshMaterialOverride>& GetSubMeshMaterialOverrides() const { return m_SubMeshMaterialOverrides; }
+	void SetSubMeshMaterialOverrides(const std::vector<SubMeshMaterialOverride>& overrides);
 	void SetSubMeshMaterialOverride(size_t index, const MaterialRef& overrideRef);
+	void SetSubMeshShaderAssetOverride(size_t index, const ShaderAssetHandle& handle);
+	void SetSubMeshVertexShaderOverride(size_t index, const VertexShaderHandle& handle);
+	void SetSubMeshPixelShaderOverride(size_t index, const PixelShaderHandle& handle);
 	void ClearSubMeshMaterialOverride(size_t index);
+	void ClearSubMeshShaderOverrides(size_t index);
+
 
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
@@ -46,7 +63,7 @@ public:
 protected:
 	MeshHandle   m_MeshHandle;
 	MeshRef		 m_Mesh;
-	std::vector<MaterialRef> m_SubMeshMaterialOverrides;
+	std::vector<SubMeshMaterialOverride> m_SubMeshMaterialOverrides;
 };
 
 

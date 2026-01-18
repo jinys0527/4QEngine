@@ -141,14 +141,9 @@ private:
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>				m_IndexBuffers;
 	std::unordered_map<MeshHandle, UINT32>								m_IndexCounts;
 	std::unordered_map<TextureHandle, ComPtr<ID3D11ShaderResourceView>>	m_Textures;
-	struct ShaderResources
-	{
-		ComPtr<ID3D11VertexShader>	vertexShader;
-		ComPtr<ID3D11PixelShader>	pixelShader;
-		ComPtr<ID3DBlob>			vertexShaderCode;
-	};
-	std::unordered_map<ShaderHandle, ShaderResources>					m_Shaders;
 
+	std::unordered_map<VertexShaderHandle, VertexShaderResources>		m_VertexShaders;
+	std::unordered_map<PixelShaderHandle,  PixelShaderResources>		m_PixelShaders;
 	//상수 버퍼
 	ComPtr<ID3D11Buffer>		m_pBCB;
 	BaseConstBuffer				m_BCBuffer;

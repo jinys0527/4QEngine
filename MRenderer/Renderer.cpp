@@ -124,7 +124,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	CreateConstBuffer();
 
 	InitTexture();
-	
+	InitShaders();
 	
 	//블러 테스트
 	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
@@ -381,23 +381,22 @@ void Renderer::InitTexture()
 
 void Renderer::InitShaders()
 {
-	const auto& shaders = m_AssetLoader.GetShaders();
-
-	for (const auto& [key, handle] : shaders.GetKeyToHandle())
+	const auto& vertexShaders = m_AssetLoader.GetVertexShaders();
+	for (const auto& [key, handle] : vertexShaders.GetKeyToHandle())
 	{
 		if (!handle.IsValid())
 		{
 			continue;
 		}
 
-		const auto* shaderData = shaders.Get(handle);
+		const auto* shaderData = vertexShaders.Get(handle);
 		if (!shaderData)
 		{
 			continue;
 		}
 
-		const auto existingIt = FindById(m_Shaders, handle.id);
-		const bool alive = (existingIt != m_Shaders.end());
+		const auto existingIt = FindById(m_VertexShaders, handle.id);
+		const bool alive = (existingIt != m_VertexShaders.end());
 		const bool sameGen = (alive && existingIt->first.generation == handle.generation);
 
 		if (sameGen)
@@ -407,28 +406,65 @@ void Renderer::InitShaders()
 
 		if (alive && !sameGen)
 		{
-			EraseById(m_Shaders, handle.id);
+			EraseById(m_VertexShaders, handle.id);
 		}
 
-		ShaderResources resources{};
-		if (!shaderData->vertexShaderPath.empty())
+		VertexShaderResources resources{};
+		if (!shaderData->path.empty())
 		{
-			std::wstring vsPath(shaderData->vertexShaderPath.begin(), shaderData->vertexShaderPath.end());
+			std::wstring vsPath(shaderData->path.begin(), shaderData->path.end());
 			LoadVertexShader(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
 		}
 
-		if (!shaderData->pixelShaderPath.empty())
-		{
-			std::wstring psPath(shaderData->pixelShaderPath.begin(), shaderData->pixelShaderPath.end());
-			LoadPixelShader(psPath.c_str(), resources.pixelShader.GetAddressOf());
-		}
-
-		if (!resources.vertexShader || !resources.pixelShader)
+		if (!resources.vertexShader)
 		{
 			continue;
 		}
 
-		m_Shaders.emplace(handle, std::move(resources));
+		m_VertexShaders.emplace(handle, std::move(resources));
+	}
+
+	const auto& pixelShaders = m_AssetLoader.GetPixelShaders();
+	for (const auto& [key, handle] : pixelShaders.GetKeyToHandle())
+	{
+		if (!handle.IsValid())
+		{
+			continue;
+		}
+
+		const auto* shaderData = pixelShaders.Get(handle);
+		if (!shaderData)
+		{
+			continue;
+		}
+
+		const auto existingIt = FindById(m_PixelShaders, handle.id);
+		const bool alive = (existingIt != m_PixelShaders.end());
+		const bool sameGen = (alive && existingIt->first.generation == handle.generation);
+
+		if (sameGen)
+		{
+			continue;
+		}
+
+		if (alive && !sameGen)
+		{
+			EraseById(m_PixelShaders, handle.id);
+		}
+
+		PixelShaderResources resources{};
+		if (!shaderData->path.empty())
+		{
+			std::wstring psPath(shaderData->path.begin(), shaderData->path.end());
+			LoadPixelShader(psPath.c_str(), resources.pixelShader.GetAddressOf());
+		}
+
+		if (!resources.pixelShader)
+		{
+			continue;
+		}
+
+		m_PixelShaders.emplace(handle, std::move(resources));
 	}
 }
 
@@ -445,7 +481,9 @@ void Renderer::CreateContext()
 	m_RenderContext.indexBuffers			= &m_IndexBuffers;
 	m_RenderContext.indexCounts				= &m_IndexCounts;
 	m_RenderContext.textures				= &m_Textures;
-	
+	m_RenderContext.vertexShaders			= &m_VertexShaders;
+	m_RenderContext.pixelShaders			= &m_PixelShaders;
+
 	m_RenderContext.pBCB					= m_pBCB;
 	m_RenderContext.BCBuffer				= m_BCBuffer;
 	m_RenderContext.pCameraCB				= m_pCameraCB;

@@ -23,11 +23,16 @@ public:
 	{
 		static_assert(std::is_constructible_v<T, Args...>, "Invalid constructor arguments for T.");
 
+		if (!CanAddComponent(typeid(T)))
+			return nullptr;
+
 		auto comp = std::make_unique<T>(std::forward<Args>(args)...);
 		comp->SetOwner(this);  // 필요한 경우
+
 		T* ptr = comp.get();
 
 		m_Components[T::StaticTypeName].emplace_back(std::move(comp));
+		
 		return ptr;
 	}
 
@@ -76,12 +81,21 @@ public:
 			m_Components.erase(it);
 	}
 
+	bool CanAddComponent(const std::type_info& type) const;
+	
+	template<typename T>
+	bool HasComponent() const
+	{
+		return GetComponent<T>() != nullptr;
+	}
+
 	std::vector<std::string> GetComponentTypeNames() const;
 
 	Component* GetComponentByTypeName(const std::string& typeName, int index = 0) const;
 	std::vector<Component*> GetComponentsByTypeName(const std::string& typeName) const;
 	bool RemoveComponentByTypeName(const std::string& typeName, int index = 0); // 삭제
 
+	virtual void Start();
 	virtual void Update(float deltaTime);
 
 	virtual void FixedUpdate();

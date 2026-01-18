@@ -1,4 +1,6 @@
 ﻿#include "CameraComponent.h"
+#include "TransformComponent.h"
+#include "Object.h"
 #include "ReflectionMacro.h"
 REGISTER_COMPONENT(CameraComponent);
 REGISTER_PROPERTY(CameraComponent, Eye)
@@ -62,6 +64,45 @@ CameraComponent::CameraComponent(float viewportW, float viewportH,
 
 void CameraComponent::Update(float deltaTime)
 {
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return;
+	}
+
+	auto* transform = owner->GetComponent<TransformComponent>();
+	if (!transform)
+	{
+		return;
+	}
+
+	const XMFLOAT4X4& world = transform->GetWorldMatrix();
+	XMVECTOR scale = XMVectorZero();
+	XMVECTOR rotation = XMVectorZero();
+	XMVECTOR translation = XMVectorZero();
+
+	if (!XMMatrixDecompose(&scale, &rotation, &translation, XMLoadFloat4x4(&world)))
+	{
+		return;
+	}
+
+	XMFLOAT3 eye{};
+	XMStoreFloat3(&eye, translation);
+
+	const XMVECTOR forwardVec = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rotation);
+	const XMVECTOR upVec = XMVector3Rotate(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rotation);
+
+	XMFLOAT3 forward{};
+	XMFLOAT3 up{};
+	XMStoreFloat3(&forward, forwardVec);
+	XMStoreFloat3(&up, upVec);
+
+	const XMFLOAT3 look = Add(eye, forward);
+
+	m_Eye = eye;
+	m_Look = look;
+	m_Up = up;
+	m_ViewDirty = true;
 }
 
 void CameraComponent::OnEvent(EventType type, const void* data)
@@ -94,6 +135,60 @@ void CameraComponent::SetEyeLookUp(const XMFLOAT3& eye, const XMFLOAT3& look, co
 	m_Look = look;
 	m_Up   = up;
 	m_ViewDirty = true;
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return;
+	}
+
+	auto* transform = owner->GetComponent<TransformComponent>();
+	if (!transform)
+	{
+		return;
+	}
+
+	const XMVECTOR eyeVec = XMLoadFloat3(&eye);
+	const XMVECTOR lookVec = XMLoadFloat3(&look);
+	const XMVECTOR upVec = XMLoadFloat3(&up);
+	XMVECTOR forwardVec = XMVectorSubtract(lookVec, eyeVec);
+	const float forwardLength = XMVectorGetX(XMVector3Length(forwardVec));
+
+	if (forwardLength < 0.0001f)
+	{
+		forwardVec = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	}
+	else
+	{
+		forwardVec = XMVector3Normalize(forwardVec);
+	}
+
+	XMVECTOR rightVec = XMVector3Cross(upVec, forwardVec);
+	const float rightLength = XMVectorGetX(XMVector3Length(rightVec));
+
+	if (rightLength < 0.0001f)
+	{
+		rightVec = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	}
+	else
+	{
+		rightVec = XMVector3Normalize(rightVec);
+	}
+
+	const XMVECTOR orthoUpVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+
+	const XMMATRIX rotationMatrix = XMMATRIX(
+		rightVec,
+		orthoUpVec,
+		forwardVec,
+		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)
+	);
+
+	const XMVECTOR rotationQuat = XMQuaternionNormalize(XMQuaternionRotationMatrix(rotationMatrix));
+	XMFLOAT4 rotation{};
+	XMStoreFloat4(&rotation, rotationQuat);
+
+	transform->SetPosition(eye);
+	transform->SetRotation(rotation);
 }
 
 

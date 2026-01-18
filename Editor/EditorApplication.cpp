@@ -9,7 +9,7 @@
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "AnimationComponent.h"
-#include "CameraComponent.h"
+#include "InputManager.h"
 #include "GameObject.h"
 #include "Reflection.h"
 #include "ServiceRegistry.h"
@@ -28,6 +28,7 @@
 
 
 #define DRAG_SPEED 0.01f
+namespace fs = std::filesystem;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	// ImGUI 창그리기
@@ -50,6 +51,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		m_AssetLoader->LoadAll();
 		m_SoundManager = &m_Services.Get<SoundManager>();
 		m_SoundManager->Init();
+
+		m_InputManager = &m_Services.Get<InputManager>();
 
 		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
 		m_SceneManager.Initialize();
@@ -79,10 +82,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		//실행 루프
 		MSG msg = { 0 };
 		while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
-
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-				// Window Message 해석
-				TranslateMessage(&msg);
+			// Window Message 해석
+			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
+			{
+				if (false == m_InputManager->OnHandleMessage(msg))
+					TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
 			else {
@@ -127,7 +131,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 	void EditorApplication::Update()
 	{
-		m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
+		float dTime = m_Engine.GetTime();
+
+		m_SceneManager.StateUpdate(dTime);
+		m_SceneManager.Update(dTime);
+
 		m_SoundManager->Update();
 	}
 
@@ -324,7 +332,7 @@ void EditorApplication::UpdateEditorCamera()
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
+		
 	CreateDockSpace();
 	DrawMainMenuBar();
 	DrawHierarchy();
@@ -333,6 +341,7 @@ void EditorApplication::UpdateEditorCamera()
 	RenderSceneView();
 	DrawFolderView();
 	DrawResourceBrowser();
+
 	
 	 //Scene그리기
 
@@ -347,7 +356,6 @@ void EditorApplication::UpdateEditorCamera()
 	
 		UpdateEditorCamera();
 		DrawGizmo();
-		
 
 		// DockBuilder
 		static bool dockBuilt = true;
@@ -457,6 +465,35 @@ void EditorApplication::UpdateEditorCamera()
 			auto scene = m_SceneManager.GetCurrentScene();
 			const char* sceneName = scene ? scene->GetName().c_str() : "None";
 			ImGui::Text("Scene: %s", sceneName);
+
+			// ---- 중앙 정렬 계산 ----
+			float buttonWidth = 60.0f;
+			float spacing = ImGui::GetStyle().ItemSpacing.x;
+			float totalButtonWidth = buttonWidth * 2 + spacing;
+
+			float windowWidth = ImGui::GetWindowWidth();
+			float centerX = (windowWidth - totalButtonWidth) * 0.5f;
+
+			ImGui::SetCursorPosX(centerX);
+
+
+			if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+				m_SceneManager.GetCurrentScene()->SetIsPause(false);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.GetCurrentScene()->SetIsPause(true);
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
+			{
+				m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
+			}
+
 			ImGui::EndMainMenuBar();
 		}
 	}
@@ -752,7 +789,7 @@ void EditorApplication::UpdateEditorCamera()
 			ImGui::End();
 			return;
 		}
-
+		 // new Scene 생성 -> Directional light / Main Camera Default 생성
 		auto createNewScene = [&]()
 			{
 				const std::string baseName = "NewScene";
@@ -1006,7 +1043,7 @@ void EditorApplication::UpdateEditorCamera()
 
 	void EditorApplication::DrawResourceBrowser()
 	{
-		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_Once);
+		ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_Once);
 		ImGui::Begin("Resource Browser");
 
 		if (ImGui::BeginTabBar("ResourceTabs"))
@@ -1141,6 +1178,156 @@ void EditorApplication::UpdateEditorCamera()
 					{
 						ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
 						ImGui::Text("Animation : %s", name);
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+
+			//Vertex Shaders
+			if (ImGui::BeginTabItem("Vertex Shaders"))
+			{
+				ImGui::BeginChild("VertexShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& shaders = m_AssetLoader->GetVertexShaders().GetKeyToHandle();
+				for (const auto& [key, handle] : shaders)
+				{
+					const std::string* displayName = m_AssetLoader->GetVertexShaders().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_VERTEX_SHADER", &handle, sizeof(VertexShaderHandle));
+						ImGui::Text("Vertex Shader : %s", name);
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Pixel Shaders
+			if (ImGui::BeginTabItem("Pixel Shaders"))
+			{
+				ImGui::BeginChild("PixelShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& shaders = m_AssetLoader->GetPixelShaders().GetKeyToHandle();
+				for (const auto& [key, handle] : shaders)
+				{
+					const std::string* displayName = m_AssetLoader->GetPixelShaders().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_PIXEL_SHADER", &handle, sizeof(PixelShaderHandle));
+						ImGui::Text("Pixel Shader : %s", name);
+						ImGui::EndDragDropSource();
+					}
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
+
+			//Shader Assets
+			if (ImGui::BeginTabItem("Shader Assets"))
+			{
+				static char shaderAssetName[128] = "";
+				static char shaderAssetFolder[128] = "";
+				static char shaderVertexPath[256] = "";
+				static char shaderPixelPath[256] = "";
+
+				if (ImGui::Button("New Shader Asset"))
+				{
+					ImGui::OpenPopup("CreateShaderAssetPopup");
+				}
+
+				if (ImGui::BeginPopup("CreateShaderAssetPopup"))
+				{
+					ImGui::InputText("Name", shaderAssetName, sizeof(shaderAssetName));
+					ImGui::InputText("Asset Folder", shaderAssetFolder, sizeof(shaderAssetFolder));
+					ImGui::InputText("VS Path", shaderVertexPath, sizeof(shaderVertexPath));
+					ImGui::InputText("PS Path", shaderPixelPath, sizeof(shaderPixelPath));
+
+					if (ImGui::Button("Create"))
+					{
+						const fs::path resourceRoot = "../ResourceOutput";
+						const fs::path assetDir = resourceRoot / shaderAssetFolder;
+						const fs::path metaDir = assetDir / "Meta";
+						const fs::path metaPath = metaDir / (std::string(shaderAssetName) + ".shader.json");
+
+						if (!shaderAssetName[0] || !shaderAssetFolder[0])
+						{
+							ImGui::CloseCurrentPopup();
+						}
+						else
+						{
+							fs::create_directories(metaDir);
+							json meta = json::object();
+							meta["name"] = shaderAssetName;
+							meta["vs"] = shaderVertexPath;
+							meta["ps"] = shaderPixelPath;
+
+							std::ofstream out(metaPath);
+							if (out)
+							{
+								out << meta.dump(4);
+								out.close();
+								if (m_AssetLoader)
+								{
+									m_AssetLoader->LoadShaderAsset(metaPath.string());
+								}
+							}
+							shaderAssetName[0] = '\0';
+							shaderAssetFolder[0] = '\0';
+							shaderVertexPath[0] = '\0';
+							shaderPixelPath[0] = '\0';
+							ImGui::CloseCurrentPopup();
+						}
+					}
+
+					ImGui::SameLine();
+					if (ImGui::Button("Cancel"))
+					{
+						ImGui::CloseCurrentPopup();
+					}
+
+					ImGui::EndPopup();
+				}
+
+				ImGui::Separator();
+
+				ImGui::BeginChild("ShaderAssetsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const auto& shaderAssets = m_AssetLoader->GetShaderAssets().GetKeyToHandle();
+				for (const auto& [key, handle] : shaderAssets)
+				{
+					const std::string* displayName = m_AssetLoader->GetShaderAssets().GetDisplayName(handle);
+					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+					ImGui::PushID((int)handle.id); // 충돌 방지
+					ImGui::Selectable(name);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("RESOURCE_SHADER_ASSET", &handle, sizeof(ShaderAssetHandle));
+						ImGui::Text("Shader Asset : %s", name);
 						ImGui::EndDragDropSource();
 					}
 					ImGui::Separator();
@@ -1290,6 +1477,9 @@ void EditorApplication::UpdateEditorCamera()
 		}
 	}
 
+	// 카메라 절두체 그림
+
+
 	void EditorApplication::FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object)
 	{
 		if (!object)
@@ -1323,7 +1513,7 @@ void EditorApplication::UpdateEditorCamera()
 
 		const XMFLOAT4X4 world = transform->GetWorldMatrix();
 		const XMFLOAT3 target{ world._41, world._42, world._43 };
-		const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f);
+		const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f); // editor에서는 up 고정
 		const XMFLOAT3 eye = cameraComponent->GetEye();
 
 		const XMVECTOR eyeVec = XMLoadFloat3(&eye);
@@ -1354,13 +1544,8 @@ void EditorApplication::UpdateEditorCamera()
 				distance = 5.0f;
 			}
 		}
-
-		const float minDistance = 2.0f;
-		const float desiredDistance = (std::max)(minDistance,distance * 0.2f);
-		const XMVECTOR newEyeVec = XMVectorSubtract(targetVec, XMVectorScale(forwardVec, desiredDistance));
-		XMFLOAT3 newEye{};
-		XMStoreFloat3(&newEye, newEyeVec);
-
+	
+		XMFLOAT3 newEye = { target.x,target.y + 5,target.z + 5 };
 		cameraComponent->SetEyeLookUp(newEye, target, up);
 	}
 

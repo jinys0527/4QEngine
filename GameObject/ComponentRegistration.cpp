@@ -9,6 +9,7 @@
 #include "AnimationComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
+#include "PlayerMovementComponent.h"
 
 
 // 중앙 등록 .cpp
@@ -27,6 +28,7 @@ extern "C" {
 	void Link_AnimationComponent();
 	void Link_SkeletalMeshComponent();
 	void Link_SkeletalMeshRenderer();
+	void Link_PlayerMovementComponent();
 }
 //해당 함수는 client.exe에서 한번 호출로 component들의 obj 를 가져올 명분제공
 void LinkEngineComponents() {
@@ -41,4 +43,5 @@ void LinkEngineComponents() {
 	Link_AnimationComponent();
 	Link_SkeletalMeshComponent();
 	Link_SkeletalMeshRenderer();
+	Link_PlayerMovementComponent();
 }

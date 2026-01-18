@@ -45,6 +45,6 @@ private:
 	Engine&			 m_Engine;
 	Renderer&		 m_Renderer;
 	SceneManager&	 m_SceneManager;
-
+	InputManager*    m_InputManager;
 };
 

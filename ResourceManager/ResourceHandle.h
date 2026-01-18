@@ -70,7 +70,15 @@ struct TextureTag
 {
 };
 
-struct ShaderTag
+struct ShaderAssetTag
+{
+};
+
+struct VertexShaderTag
+{
+};
+
+struct PixelShaderTag
 {
 };
 
@@ -82,12 +90,14 @@ struct AnimationTag
 {
 };
 
-using MeshHandle      = TypedHandle<MeshTag>;
-using MaterialHandle  = TypedHandle<MaterialTag>;
-using TextureHandle   = TypedHandle<TextureTag>;
-using ShaderHandle    = TypedHandle<ShaderTag>;
-using SkeletonHandle  = TypedHandle<SkeletonTag>;
-using AnimationHandle = TypedHandle<AnimationTag>;
+using MeshHandle		 = TypedHandle<MeshTag>;
+using MaterialHandle	 = TypedHandle<MaterialTag>;
+using TextureHandle		 = TypedHandle<TextureTag>;
+using ShaderAssetHandle  = TypedHandle<ShaderAssetTag>;
+using VertexShaderHandle = TypedHandle<VertexShaderTag>;
+using PixelShaderHandle  = TypedHandle<PixelShaderTag>;
+using SkeletonHandle     = TypedHandle<SkeletonTag>;
+using AnimationHandle    = TypedHandle<AnimationTag>;
 
 
 //핸들을 unordered_map의키로 사용할 수 있게 해주는 해시 함수

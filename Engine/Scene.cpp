@@ -38,6 +38,18 @@ void Scene::StateUpdate(float deltaTime)
 	// Light의 경우 LightObject가 생기고 PointLight 같은 애의 위치가 바뀌면 만들수있을것같음?
 }
 
+void Scene::Enter()
+{
+	for (auto& [name, obj] : m_OpaqueObjects)
+	{
+		obj->Start();
+	}
+	for (auto& [name, obj] : m_TransparentObjects)
+	{
+		obj->Start();
+	}
+}
+
 void Scene::Render(RenderData::FrameData& frameData) const
 {
 	BuildFrameData(frameData);
@@ -358,7 +370,7 @@ template<typename PushFn>
 static void EmitSubMeshes(
 	const RenderData::MeshData& meshData,
 	const RenderData::RenderItem& baseItem,
-	const std::vector<MaterialRef>* overrides,
+	const std::vector<MeshComponent::SubMeshMaterialOverride>* overrides,
 	const AssetLoader& assetLoader,
 	PushFn&& push)
 {
@@ -380,14 +392,57 @@ static void EmitSubMeshes(
 
 			if (overrides && subMeshIndex < overrides->size())
 			{
-				const auto& overrideRef = overrides->at(subMeshIndex);
-				if (!overrideRef.assetPath.empty())
+				const auto& overrideData = overrides->at(subMeshIndex);
+				if (overrideData.HasMaterialOverride())
 				{
-					const MaterialHandle overrideHandle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
+					const MaterialHandle overrideHandle = assetLoader.ResolveMaterial(
+						overrideData.material.assetPath,
+						overrideData.material.assetIndex);
 					if (overrideHandle.IsValid())
 					{
 						item.material = overrideHandle;
+						item.materialOverrides = RenderData::MaterialData{};
+						item.useMaterialOverrides = false;
 					}
+				}
+
+				if (overrideData.HasShaderOverrides())
+				{
+					RenderData::MaterialData materialOverrides{};
+					const RenderData::MaterialData* sourceMaterial = nullptr;
+					if (item.useMaterialOverrides)
+					{
+						sourceMaterial = &item.materialOverrides;
+					}
+					else if (item.material.IsValid())
+					{
+						sourceMaterial = assetLoader.GetMaterials().Get(item.material);
+					}
+					if (sourceMaterial)
+					{
+						materialOverrides = *sourceMaterial;
+					}
+
+					if (overrideData.shaderAsset.IsValid())
+					{
+						materialOverrides.shaderAsset = overrideData.shaderAsset;
+					}
+					else
+					{
+						materialOverrides.shaderAsset = ShaderAssetHandle::Invalid();
+					}
+
+					if (overrideData.vertexShader.IsValid())
+					{
+						materialOverrides.vertexShader = overrideData.vertexShader;
+					}
+					if (overrideData.pixelShader.IsValid())
+					{
+						materialOverrides.pixelShader = overrideData.pixelShader;
+					}
+
+					item.materialOverrides = materialOverrides;
+					item.useMaterialOverrides = true;
 				}
 			}
 
@@ -404,16 +459,59 @@ static void EmitSubMeshes(
 		item.localToWorld = Identity();
 		if (overrides && !overrides->empty())
 		{
-			const auto& overrideRef = overrides->front();
-			if (!overrideRef.assetPath.empty())
+			const auto& overrideData = overrides->front();
+			if (overrideData.HasMaterialOverride())
 			{
-				const MaterialHandle overrideHandle = assetLoader.ResolveMaterial(overrideRef.assetPath, overrideRef.assetIndex);
+				const MaterialHandle overrideHandle = assetLoader.ResolveMaterial(
+					overrideData.material.assetPath,
+					overrideData.material.assetIndex);
 				if (overrideHandle.IsValid())
 				{
 					item.material = overrideHandle;
+					item.materialOverrides = RenderData::MaterialData{};
+					item.useMaterialOverrides = false;
 				}
 			}
+			if (overrideData.HasShaderOverrides())
+			{
+				RenderData::MaterialData materialOverrides{};
+				const RenderData::MaterialData* sourceMaterial = nullptr;
+				if (item.useMaterialOverrides)
+				{
+					sourceMaterial = &item.materialOverrides;
+				}
+				else if (item.material.IsValid())
+				{
+					sourceMaterial = assetLoader.GetMaterials().Get(item.material);
+				}
+				if (sourceMaterial)
+				{
+					materialOverrides = *sourceMaterial;
+				}
+
+				if (overrideData.shaderAsset.IsValid())
+				{
+					materialOverrides.shaderAsset = overrideData.shaderAsset;
+				}
+				else
+				{
+					materialOverrides.shaderAsset = ShaderAssetHandle::Invalid();
+				}
+
+				if (overrideData.vertexShader.IsValid())
+				{
+					materialOverrides.vertexShader = overrideData.vertexShader;
+				}
+				if (overrideData.pixelShader.IsValid())
+				{
+					materialOverrides.pixelShader = overrideData.pixelShader;
+				}
+
+				item.materialOverrides = materialOverrides;
+				item.useMaterialOverrides = true;
+			}
 		}
+
 
 		push(std::move(item));
 	}
@@ -444,6 +542,15 @@ static bool BuildStaticBaseItem(
 	{
 		if (const auto* matComp = obj.GetComponent<MaterialComponent>())
 			item.material = matComp->GetMaterialHandle();
+	}
+
+	if (const auto* matComp = obj.GetComponent<MaterialComponent>())
+	{
+		if (matComp->HasOverrides())
+		{
+			item.materialOverrides = matComp->GetOverrides();
+			item.useMaterialOverrides = true;
+		}
 	}
 
 	outItem = std::move(item);
@@ -495,6 +602,15 @@ static bool BuildSkeletalBaseItem(
 	{
 		if (const auto* matComp = obj.GetComponent<MaterialComponent>())
 			item.material = matComp->GetMaterialHandle();
+	}
+
+	if (const auto* matComp = obj.GetComponent<MaterialComponent>())
+	{
+		if (matComp->HasOverrides())
+		{
+			item.materialOverrides = matComp->GetOverrides();
+			item.useMaterialOverrides = true;
+		}
 	}
 
 	// palette append (오브젝트 단위 1번)

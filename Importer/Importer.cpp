@@ -229,7 +229,11 @@ static void WriteEmbeddedTextures(
 		{
 			for (aiTextureType type : it->second)
 			{
-				const std::string suffix = TextureTypeSuffix(type);
+				std::string suffix = TextureTypeSuffix(type);
+				if (!suffix.empty())
+				{
+					suffix[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(suffix[0])));
+				}
 				outPaths.push_back(texDir / ("embedded_" + std::to_string(i) + "_" + suffix + "." + extension));
 			}
 		}

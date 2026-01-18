@@ -69,7 +69,9 @@ namespace RenderData
 		FLOAT    roughness = 1.0f;
 		FLOAT    padding[2]{ 0.0f, 0.0f };
 		std::array<TextureHandle, static_cast<size_t>(MaterialTextureSlot::TEX_MAX)> textures{};
-		ShaderHandle shader = ShaderHandle::Invalid();
+		ShaderAssetHandle  shaderAsset  = ShaderAssetHandle::Invalid();
+		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
+		PixelShaderHandle  pixelShader  = PixelShaderHandle::Invalid();
 	};
 
 	struct TextureData
@@ -78,10 +80,20 @@ namespace RenderData
 		BOOL sRGB = true;
 	};
 
-	struct ShaderData
+	struct VertexShaderData
 	{
-		std::string vertexShaderPath;
-		std::string pixelShaderPath;
+		std::string path;
+	};
+
+	struct PixelShaderData
+	{
+		std::string path;
+	};
+
+	struct ShaderAssetData
+	{
+		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
+		PixelShaderHandle  pixelShader  = PixelShaderHandle::Invalid();
 	};
 
 	enum class LightType : uint8_t
@@ -169,6 +181,8 @@ namespace RenderData
 		MeshHandle     mesh     = MeshHandle::Invalid();
 		MaterialHandle material = MaterialHandle::Invalid();
 		SkeletonHandle skeleton = SkeletonHandle::Invalid();
+		MaterialData   materialOverrides{};
+		bool           useMaterialOverrides = false;
 		XMFLOAT4X4     world{};
 		UINT64         sortKey = 0;
 		UINT32		   skinningPaletteOffset = 0;
