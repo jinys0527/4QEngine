@@ -6,6 +6,8 @@ REGISTER_COMPONENT(CameraComponent);
 REGISTER_PROPERTY(CameraComponent, Eye)
 REGISTER_PROPERTY(CameraComponent, Look)
 REGISTER_PROPERTY(CameraComponent, Up)
+REGISTER_PROPERTY(CameraComponent, NearZ)
+REGISTER_PROPERTY(CameraComponent, FarZ)
 REGISTER_PROPERTY(CameraComponent, Viewport)
 REGISTER_PROPERTY(CameraComponent, Perspective)
 REGISTER_PROPERTY(CameraComponent, Ortho)
