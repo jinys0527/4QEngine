@@ -1566,7 +1566,7 @@ void EditorApplication::UpdateEditorCamera()
 			}
 		}
 	
-		XMFLOAT3 newEye = { target.x,target.y + 5,target.z + 5 };
+		XMFLOAT3 newEye = { target.x,target.y + 5,target.z - 5 };
 		cameraComponent->SetEyeLookUp(newEye, target, up);
 	}
 

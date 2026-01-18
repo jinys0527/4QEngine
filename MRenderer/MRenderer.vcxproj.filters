@@ -66,6 +66,9 @@
     <ClCompile Include="BlurPass.cpp">
       <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FrustumPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -108,6 +111,9 @@
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BlurPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrustumPass.h">
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -155,6 +161,9 @@
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="fx\Test_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Frustum_PS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>
