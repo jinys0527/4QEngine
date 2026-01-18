@@ -41,10 +41,12 @@ public:
 
 	void SetPosition(const XMFLOAT3& pos) { m_Position = pos; SetDirty(); }
 	void SetRotation(const XMFLOAT4& rot) { m_Rotation = rot; SetDirty(); }
+	void SetRotationEuler(const XMFLOAT3& rot); //
 	void SetScale(const XMFLOAT3& scale) { m_Scale = scale; SetDirty(); }
 	
 	const XMFLOAT3& GetPosition() const { return m_Position; }
 	const XMFLOAT4& GetRotation() const { return m_Rotation; }
+	// const XMFLOAT3& GetRotationEuler() const { return } 필요할때 구현
 	const XMFLOAT3& GetScale() const { return m_Scale; }
 
 	void Translate(const XMFLOAT3& delta);
@@ -87,7 +89,7 @@ private:
 
 private:
 	XMFLOAT3 m_Position = { 0.0f, 0.0f, 0.0f };
-	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 1.0f }; //quaternion
 	XMFLOAT3 m_Scale    = { 1.0f, 1.0f, 1.0f };
 
 	XMFLOAT3 m_Pivot    = { 0.0f, 0.0f, 0.0f };

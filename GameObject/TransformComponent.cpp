@@ -56,6 +56,20 @@ void TransformComponent::RemoveChild(TransformComponent* child)
 	);
 }
 
+void TransformComponent::SetRotationEuler(const XMFLOAT3& rot)
+{	// 쿼터니언 -> 오일러 변환
+	// 변환 순서
+	// degree -> radian -> Quater
+
+	XMFLOAT3 rotRad{ XMConvertToRadians(rot.x),XMConvertToRadians(rot.y),XMConvertToRadians(rot.z) };
+		
+
+	XMFLOAT4 result{};
+	XMStoreFloat4(&result, XMQuaternionRotationRollPitchYaw(rotRad.x, rotRad.y, rotRad.z));
+	m_Rotation = result;
+	SetDirty();
+}
+
 void TransformComponent::Translate(const XMFLOAT3& delta)
 {
 	AddInPlace(m_Position, delta);

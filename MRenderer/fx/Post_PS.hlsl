@@ -13,5 +13,5 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     tex = lerp(Blur, RTView, val);
     
     tex.a = 1;
-    return tex;
+    return RTView;
 }

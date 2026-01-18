@@ -4,6 +4,7 @@
 #include "TransparentPass.h"
 #include "BlurPass.h"
 #include "PostPass.h"
+#include "FrustumPass.h"
 #include "RenderTargetContext.h"
 
 #include "Renderer.h"
@@ -102,9 +103,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_PS_POS.hlsl"), m_pPS_P.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Frustum_PS.hlsl"), m_pPS_Frustum.GetAddressOf());
 
 	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
+	
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
@@ -118,6 +121,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
@@ -501,6 +505,7 @@ void Renderer::CreateContext()
 
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
+	m_RenderContext.PS_Frustum				= m_pPS_Frustum;
 	m_RenderContext.VSCode_P				= m_pVSCode_P;
 	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
 
