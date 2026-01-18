@@ -14,6 +14,12 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     else if (!m_RenderContext.isEditCam)
     {
         SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+
+		//임시 스카이박스 테스트
+		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+		m_RenderContext.pDXDC->VSSetShader(m_RenderContext.pVS_SkyBox.Get(), nullptr, 0);
+		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.pPS_SkyBox.Get(), nullptr, 0);
+		m_RenderContext.DrawFullscreenQuad();
     }
 
     //빛 상수 버퍼 set
@@ -26,11 +32,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
-	//임시 스카이박스 테스트
-	m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
-	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.pVS_SkyBox.Get(), nullptr, 0);
-	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.pPS_SkyBox.Get(), nullptr, 0);
-	m_RenderContext.DrawFullscreenQuad();
 
 
     m_RenderContext.UpdateGrid(frame);
