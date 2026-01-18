@@ -100,13 +100,12 @@ struct RenderContext
 	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
-	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
+	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
 	ComPtr<ID3DBlob> VSCode;
 
-	ComPtr<ID3D11InputLayout> InputLayout_P;
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3D11PixelShader> PS_P;
 	ComPtr<ID3DBlob> VSCode_P;

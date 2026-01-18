@@ -75,6 +75,21 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 		m_RenderContext.CameraCBuffer.camPos = context.editorCamera.cameraPos;
 	}
 
+	//스카이박스 행렬
+	XMFLOAT4X4 view, proj;
+	view = m_RenderContext.CameraCBuffer.mView;
+	proj = m_RenderContext.CameraCBuffer.mProj;
+	view._41 = view._42 = view._43 = 0.0f;
+
+	XMMATRIX mV, mP, mVP, mSkyBox;
+	mV = XMLoadFloat4x4(&view);
+	mP = XMLoadFloat4x4(&proj);
+
+	mVP = mV * mP;
+	mSkyBox = XMMatrixInverse(nullptr, mVP);
+	//스카이박스 행렬 끝
+
+
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }
 
@@ -144,7 +159,6 @@ void RenderPass::SetVertex(const RenderData::RenderItem& item)
 void RenderPass::DrawMesh(
 	ID3D11Buffer* vb,
 	ID3D11Buffer* ib,
-	ID3D11InputLayout* layout,
 	ID3D11VertexShader* vs,
 	ID3D11PixelShader* ps,
 	BOOL useSubMesh,
@@ -159,7 +173,7 @@ void RenderPass::DrawMesh(
 
 	dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 	dc->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-	dc->IASetInputLayout(layout);
+	dc->IASetInputLayout(m_RenderContext.InputLayout.Get());
 	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	dc->VSSetShader(vs, nullptr, 0);

@@ -36,7 +36,6 @@ public:
 	virtual void DrawMesh(
 		ID3D11Buffer* vb,
 		ID3D11Buffer* ib,
-		ID3D11InputLayout* layout,
 		ID3D11VertexShader* vs,
 		ID3D11PixelShader* ps,
 		BOOL useSubMesh,

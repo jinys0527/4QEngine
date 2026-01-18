@@ -164,7 +164,6 @@ private:
 
 
 	//Shadow, Depth용, 지금은 그리드용
-	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
 	ComPtr<ID3D11VertexShader>	m_pVS_P;
 	ComPtr<ID3D11PixelShader>	m_pPS_P;
 	ComPtr<ID3DBlob> m_pVSCode_P;
@@ -210,7 +209,6 @@ protected:
 		2, 1, 3
 	};
 
-	ComPtr<ID3D11InputLayout>	m_pQuadInputLayout;
 	ComPtr<ID3D11Buffer>		m_QuadVertexBuffers;
 	ComPtr<ID3D11Buffer>		m_QuadIndexBuffers;
 	UINT						m_QuadIndexCounts;

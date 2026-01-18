@@ -12,6 +12,7 @@ cbuffer CameraBuffer : register(b1)
     matrix mView;
     matrix mProj;
     matrix mVP;
+    matrix mSkyBox;
     float3 cameraPos;
     float padding;
 };
@@ -54,26 +55,7 @@ cbuffer SkinningBuffer : register(b3)
 
 
 
-
-
-
-struct VSInput_P
-{
-    float3 pos : POSITION;
-};
-
-struct VSInput_PU
-{
-    float3 pos : POSITION;
-    float2 uv : TEXCOORD0;
-};
-
-struct VSInput_POST
-{
-    float4 pos : POSITION;
-    float2 uv : TEXCOORD0;
-};
-
+//인풋(고정)
 struct VSInput_PNUT
 {
     float3 pos : POSITION;

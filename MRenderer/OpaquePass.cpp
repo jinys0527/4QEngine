@@ -167,7 +167,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
 						//DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
-                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
+                        DrawMesh(vb, ib, vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
 					}
 				}
             }

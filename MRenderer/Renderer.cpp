@@ -72,7 +72,7 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 	m_RenderContext.VS = m_pVS;
 	m_RenderContext.PS = m_pPS;
 	m_RenderContext.VSCode = m_pVSCode;
-	m_RenderContext.inputLayout = m_pInputLayout;
+	m_RenderContext.InputLayout = m_pInputLayout;
 
 	//그리드
 	CreateGridVB();
@@ -497,12 +497,11 @@ void Renderer::CreateContext()
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
 	m_RenderContext.VSCode					= m_pVSCode;
-	m_RenderContext.inputLayout				= m_pInputLayout;
+	m_RenderContext.InputLayout				= m_pInputLayout;
 
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
 	m_RenderContext.VSCode_P				= m_pVSCode_P;
-	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
 
 	m_RenderContext.VS_PBR					= m_pVS_PBR;
 	m_RenderContext.PS_PBR					= m_pPS_PBR;
@@ -565,7 +564,7 @@ void Renderer::CreateContext()
 			ID3D11Buffer* vb = m_QuadVertexBuffers.Get();
 			ID3D11Buffer* ib = m_QuadIndexBuffers.Get();
 
-			m_pDXDC->IASetInputLayout(m_pQuadInputLayout.Get());
+			m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
 			m_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 			m_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -763,51 +762,6 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
-
-
-	D3D11_INPUT_ELEMENT_DESC layout2[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	numElements = ARRAYSIZE(layout2);
-
-	// 정접 입력구조 객체 생성 Create the input layout
-	hr = m_pDevice->CreateInputLayout(layout2,
-		numElements,
-		m_pVSCode_P->GetBufferPointer(),
-		m_pVSCode_P->GetBufferSize(),
-		m_pInputLayout_P.GetAddressOf()
-	);
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
-
-
-	D3D11_INPUT_ELEMENT_DESC layout3[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,          0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-
-	};
-	numElements = ARRAYSIZE(layout3);
-
-	// 정접 입력구조 객체 생성 Create the input layout
-	hr = m_pDevice->CreateInputLayout(layout3,
-		numElements,
-		m_pVSCode_Quad->GetBufferPointer(),
-		m_pVSCode_Quad->GetBufferSize(),
-		m_pQuadInputLayout.GetAddressOf()
-	);
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
-
-
-
 	return hr;
 }
 
@@ -1843,7 +1797,7 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 
 void Renderer::DrawGrid()
 {
-	m_pDXDC->IASetInputLayout(m_pInputLayout_P.Get());
+	m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
 	m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	UINT strideC = sizeof(VertexP), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);

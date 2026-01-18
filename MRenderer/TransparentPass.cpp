@@ -121,7 +121,7 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                         const UINT32 indexCount = useSubMesh ? item.indexCount : fullCount;
                         const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
-						DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
+						DrawMesh(vb, ib, vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
                     }
                 }
             }
