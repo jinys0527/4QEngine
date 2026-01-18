@@ -7,6 +7,7 @@
 REGISTER_COMPONENT(MeshComponent);
 REGISTER_PROPERTY_HANDLE(MeshComponent, MeshHandle)
 REGISTER_PROPERTY_READONLY_LOADABLE(MeshComponent, Mesh)
+REGISTER_PROPERTY(MeshComponent, SubMeshMaterialOverrides)
 
 void MeshComponent::SetSubMeshMaterialOverrides(const std::vector<SubMeshMaterialOverride>& overrides)
 {

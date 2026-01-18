@@ -7,6 +7,7 @@
 #include "CameraSettings.h"
 #include "AssetLoader.h"
 #include "ResourceHandle.h"
+#include "MeshComponent.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -521,6 +522,72 @@ struct Serializer<RenderData::MaterialData> {
 };
 
 template<>
+struct Serializer<MeshComponent::SubMeshMaterialOverride> {
+	static void ToJson(nlohmann::json& j, const MeshComponent::SubMeshMaterialOverride& v) {
+		Serializer<MaterialRef>::ToJson(j["material"], v.material);
+		Serializer<ShaderAssetHandle>::ToJson(j["shaderAsset"], v.shaderAsset);
+		Serializer<VertexShaderHandle>::ToJson(j["vertexShader"], v.vertexShader);
+		Serializer<PixelShaderHandle>::ToJson(j["pixelShader"], v.pixelShader);
+	}
+
+	static void FromJson(const nlohmann::json& j, MeshComponent::SubMeshMaterialOverride& v) {
+		if (j.contains("material")) {
+			Serializer<MaterialRef>::FromJson(j["material"], v.material);
+		}
+		else {
+			v.material = MaterialRef{};
+		}
+
+		if (j.contains("shaderAsset")) {
+			Serializer<ShaderAssetHandle>::FromJson(j["shaderAsset"], v.shaderAsset);
+		}
+		else {
+			v.shaderAsset = ShaderAssetHandle::Invalid();
+		}
+
+		if (j.contains("vertexShader")) {
+			Serializer<VertexShaderHandle>::FromJson(j["vertexShader"], v.vertexShader);
+		}
+		else {
+			v.vertexShader = VertexShaderHandle::Invalid();
+		}
+
+		if (j.contains("pixelShader")) {
+			Serializer<PixelShaderHandle>::FromJson(j["pixelShader"], v.pixelShader);
+		}
+		else {
+			v.pixelShader = PixelShaderHandle::Invalid();
+		}
+	}
+};
+
+template<>
+struct Serializer<std::vector<MeshComponent::SubMeshMaterialOverride>> {
+	static void ToJson(nlohmann::json& j, const std::vector<MeshComponent::SubMeshMaterialOverride>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v) {
+			nlohmann::json entry;
+			Serializer<MeshComponent::SubMeshMaterialOverride>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<MeshComponent::SubMeshMaterialOverride>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			MeshComponent::SubMeshMaterialOverride item{};
+			Serializer<MeshComponent::SubMeshMaterialOverride>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+
+template<>
 struct Serializer<UINT8> {
 	static void ToJson(nlohmann::json& j, const UINT8& v) {
 		j = static_cast<int>(v);
@@ -530,6 +597,7 @@ struct Serializer<UINT8> {
 		v = static_cast<UINT8>(j.get<int>());
 	}
 };
+
 
 template<>
 struct Serializer<XMFLOAT3> {
