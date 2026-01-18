@@ -62,6 +62,8 @@ struct VSInput_PNUT
     float3 nrm : NORMAL;
     float2 uv : TEXCOORD0;
     float4 T : TANGENT;
+    uint4 boneIndices : BONEINDICES;
+    float4 boneWeights : BONEWEIGHTS;
 };
 
 //아웃풋

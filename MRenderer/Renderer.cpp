@@ -558,7 +558,7 @@ void Renderer::CreateContext()
 	m_RenderContext.DrawFullscreenQuad =
 		[this]()
 		{
-			UINT stride = sizeof(RenderData::Vertex_PU);
+			UINT stride = sizeof(RenderData::Vertex);
 			UINT offset = 0;
 
 			ID3D11Buffer* vb = m_QuadVertexBuffers.Get();
@@ -746,8 +746,12 @@ HRESULT Renderer::CreateInputLayout()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,       0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,          0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TANGENT",   0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "TANGENT",   0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+		{ "BONEINDICES",  0, DXGI_FORMAT_R16G16B16A16_UINT,     0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS",  0, DXGI_FORMAT_R32G32B32A32_FLOAT,    0, 56, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+	
 	UINT numElements = ARRAYSIZE(layout);
 
 	// 정접 입력구조 객체 생성 Create the input layout
@@ -1812,7 +1816,7 @@ void Renderer::DrawGrid()
 
 void Renderer::CreateQuadVB()
 {
-	CreateVertexBuffer(m_pDevice.Get(), quadVertices.data(), static_cast<UINT>(quadVertices.size() * sizeof(RenderData::Vertex_PU)), sizeof(RenderData::Vertex_PU), m_QuadVertexBuffers.GetAddressOf());
+	CreateVertexBuffer(m_pDevice.Get(), quadVertices.data(), static_cast<UINT>(quadVertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), m_QuadVertexBuffers.GetAddressOf());
 }
 
 void Renderer::CreateQuadIB()

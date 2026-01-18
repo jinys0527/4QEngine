@@ -26,12 +26,6 @@ namespace RenderData
 		std::array<uint16_t, 4> boneIndices{ 0, 0, 0, 0 };
 		std::array<float, 4>    boneWeights{ 0, 0, 0, 0 }; // normalized to 0 ~ 1
 	};
-
-	struct Vertex_PU
-	{
-		XMFLOAT3 pos	{ 0.0f, 0.0f, 0.0f };
-		XMFLOAT2 uv		{ 0.0f, 0.0f };
-	};
 	
 	struct MeshData
 	{
