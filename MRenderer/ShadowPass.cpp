@@ -39,11 +39,13 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, lightview);
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, lightproj);
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, lightview * lightproj);
+
+    //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mShadow, mLightTM);
+
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
 
-    //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
-    //XMStoreFloat4x4();
 
     m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
     m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);

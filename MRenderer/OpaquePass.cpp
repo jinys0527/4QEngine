@@ -6,6 +6,8 @@
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
+	SetSamplerState();
+
     SetCameraCB(frame);
     if (m_RenderContext.isEditCam)
     {
@@ -17,8 +19,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 		//임시 스카이박스 테스트
 		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
-		m_RenderContext.pDXDC->VSSetShader(m_RenderContext.pVS_SkyBox.Get(), nullptr, 0);
-		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.pPS_SkyBox.Get(), nullptr, 0);
+		m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
+		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
 		m_RenderContext.DrawFullscreenQuad();
     }
 
@@ -32,6 +34,20 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
+
+	//터레인 그리기
+	XMMATRIX mTM, mScale, mRotate, mTrans;
+	mScale = XMMatrixScaling(50, 50, 1);
+	mRotate = XMMatrixRotationX(XM_PI / 2);
+	mTrans = XMMatrixIdentity();
+	mTM = mScale * mRotate, mTrans;
+	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
+	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+	m_RenderContext.pDXDC->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
+	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
+	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
+	m_RenderContext.DrawFullscreenQuad();
+	//터레인 끝
 
 
     m_RenderContext.UpdateGrid(frame);

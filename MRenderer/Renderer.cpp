@@ -115,6 +115,9 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
+
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
@@ -167,10 +170,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	CreateQuadVB();
 	CreateQuadIB();
 
+
+
 	CreateContext();		//마지막에 실행
 
 	m_bIsInitialized = true;
-
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
@@ -570,8 +574,12 @@ void Renderer::CreateContext()
 	m_RenderContext.Vignetting				= m_Vignetting;
 
 	m_RenderContext.SkyBox					= m_SkyBox;
-	m_RenderContext.pVS_SkyBox				= m_pVS_SkyBox;
-	m_RenderContext.pPS_SkyBox				= m_pPS_SkyBox;
+	m_RenderContext.VS_SkyBox				= m_pVS_SkyBox;
+	m_RenderContext.PS_SkyBox				= m_pPS_SkyBox;
+
+	m_RenderContext.VS_Shadow				= m_pVS_Shadow;
+	m_RenderContext.PS_Shadow				= m_pPS_Shadow;
+
 
 
 	//DrawQuad함수

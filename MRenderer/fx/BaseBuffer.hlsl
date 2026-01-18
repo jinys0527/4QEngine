@@ -13,6 +13,7 @@ cbuffer CameraBuffer : register(b1)
     matrix mProj;
     matrix mVP;
     matrix mSkyBox;
+    matrix mShadow;
     float3 cameraPos;
     float padding;
 };
@@ -67,7 +68,7 @@ struct VSInput_PNUT
 };
 
 //아웃풋
-
+//기본
 struct VSOutput
 {
     float4 pos : SV_POSITION;
@@ -82,18 +83,29 @@ struct VSOutput_PU
     float2 uv : TEXCOORD0;
 };
 
+//큐브맵
 struct VSOutput_PUVW
 {
     float4 pos : SV_POSITION;
     float3 uvw : TEXCOORD0;
 };
 
+//그림자 매핑 테스트
+struct VSOutput_Shadow
+{
+    float4 pos : SV_POSITION;
+    float4 uvshadow : TEXCOORD0;
+};
+
+
+//그리드
 struct VSOutput_P
 {
     float4 pos : SV_POSITION;
     float4 originPos : TEXCOORD0;
 };
 
+//PBR
 struct VSOutput_PBR
 {
     float4 pos : SV_POSITION;
@@ -119,7 +131,11 @@ Texture2D g_AO : register(t15);
 Texture2D g_Env : register(t16);
 
 //Sampler State
-SamplerState smpClamp : register(s0);
+SamplerState smpWrap : register(s0);
+SamplerState smpMirror : register(s1);
+SamplerState smpClamp : register(s2);
+SamplerState smpBoreder : register(s3);
+SamplerState smpBorderShadow : register(s4);
 
 
 #endif

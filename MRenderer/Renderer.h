@@ -230,4 +230,9 @@ protected:
 	ComPtr<ID3D11PixelShader> m_pPS_SkyBox;
 	ComPtr<ID3DBlob> m_pVSCode_SkyBox;
 
+	//그림자매핑 테스트
+	ComPtr<ID3D11VertexShader> m_pVS_Shadow;
+	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
+	ComPtr<ID3DBlob> m_pVSCode_Shadow;
+
 };

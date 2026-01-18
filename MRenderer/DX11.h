@@ -78,11 +78,11 @@ enum class RS
 
 enum class SS
 {
-    WRAP,
-    MIRROR,
-    CLAMP,
-    BORDER,
-    BORDER_SHADOW,
+    WRAP,               //반복
+    MIRROR,             //거울반복
+    CLAMP,              //가장자리 픽셀로 고정
+    BORDER,             //지정된 색으로 처리
+    BORDER_SHADOW,      //지정된 색으로 처리
 
     MAX_
 };

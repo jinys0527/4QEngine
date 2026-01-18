@@ -29,6 +29,11 @@ void RenderPass::SetRasterizerState(RS state)
 
 void RenderPass::SetSamplerState()
 {
+	m_RenderContext.pDXDC->PSSetSamplers(0, 1, m_RenderContext.SState[SS::WRAP].GetAddressOf());
+	m_RenderContext.pDXDC->PSSetSamplers(1, 1, m_RenderContext.SState[SS::MIRROR].GetAddressOf());
+	m_RenderContext.pDXDC->PSSetSamplers(2, 1, m_RenderContext.SState[SS::CLAMP].GetAddressOf());
+	m_RenderContext.pDXDC->PSSetSamplers(3, 1, m_RenderContext.SState[SS::BORDER].GetAddressOf());
+	m_RenderContext.pDXDC->PSSetSamplers(4, 1, m_RenderContext.SState[SS::BORDER_SHADOW].GetAddressOf());
 }
 
 void RenderPass::SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview)
@@ -76,6 +81,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 	}
 
 	//스카이박스 행렬
+#pragma region SkyBox
 	XMFLOAT4X4 view, proj;
 	view = m_RenderContext.CameraCBuffer.mView;
 	proj = m_RenderContext.CameraCBuffer.mProj;
@@ -90,6 +96,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 	XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mSkyBox, mSkyBox);
 	//스카이박스 행렬 끝
 
+#pragma endregion
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }
