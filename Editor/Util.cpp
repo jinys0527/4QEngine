@@ -17,6 +17,9 @@
 #include "DX11.h"
 #include "Util.h"
 #include "json.hpp"
+#include "FSMActionRegistry.h"
+#include "FSMComponent.h"
+#include "FSMEventRegistry.h"
 
 #define DRAG_SPEED 0.01f
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
@@ -414,6 +417,404 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 	}
 
 	return changed;
+}
+
+bool DrawFSMActionParams(FSMAction& action)
+{
+	bool updated = false;
+	const auto* definition = FSMActionRegistry::Instance().FindAction(action.id);
+	if (!definition)
+	{
+		ImGui::TextDisabled("No Action Schema Available.");
+		return false;
+	}
+
+	static constexpr const char* kCurveLabels[] =
+	{
+		"Linear",
+		"EaseInSine",
+		"EaseOutSine",
+		"EaseInOutSine",
+		"EaseInQuad",
+		"EaseOutQuad",
+		"EaseInOutQuad",
+		"EaseInCubic",
+		"EaseOutCubic",
+		"EaseInOutCubic",
+		"EaseInQuart",
+		"EaseOutQuart",
+		"EaseInOutQuart",
+		"EaseInQuint",
+		"EaseOutQuint",
+		"EaseInOutQuint",
+		"EaseInExpo",
+		"EaseOutExpo",
+		"EaseInOutExpo",
+		"EaseInCirc",
+		"EaseOutCirc",
+		"EaseInOutCirc",
+		"EaseInBack",
+		"EaseOutBack",
+		"EaseInOutBack",
+		"EaseInElastic",
+		"EaseOutElastic",
+		"EaseInElastic",
+		"EaseInBounce" ,
+		"EaseOutBounce",
+		"EaseInOutBounce"
+	};
+
+	for (const auto& param : definition->params)
+	{
+		ImGui::PushID(param.name.c_str());
+		const std::string label = param.name + " (" + param.type + ")";
+
+		if (param.type == "bool")
+		{
+			bool value = action.params.value(param.name, param.defaultValue.get<bool>());
+			if (ImGui::Checkbox(label.c_str(), &value))
+			{
+				action.params[param.name] = value;
+				updated = true;
+			}
+		}
+		else if (param.type == "float")
+		{
+			float value = action.params.value(param.name, param.defaultValue.get<float>());
+			if (ImGui::DragFloat(label.c_str(), &value, DRAG_SPEED))
+			{
+				action.params[param.name] = value;
+				updated = true;
+			}
+		}
+		else if (param.type == "int")
+		{
+			int value = action.params.value(param.name, param.defaultValue.get<int>());
+			if (ImGui::DragInt(label.c_str(), &value, DRAG_SPEED))
+			{
+				action.params[param.name] = value;
+				updated = true;
+			}
+		}
+		else if (param.type == "string")
+		{
+			if (action.id == "Anim_BlendTo" && param.name == "curve")
+			{
+				std::string value = action.params.value(param.name, param.defaultValue.get<std::string>());
+				int curveIndex = 0;
+				for (int i = 0; i < IM_ARRAYSIZE(kCurveLabels); ++i)
+				{
+					if (value == kCurveLabels[i])
+					{
+						curveIndex = i;
+						break;
+					}
+				}
+
+				if (ImGui::Combo(label.c_str(), &curveIndex, kCurveLabels, IM_ARRAYSIZE(kCurveLabels)))
+				{
+					action.params[param.name] = std::string(kCurveLabels[curveIndex]);
+					updated = true;
+				}
+			}
+			else
+			{
+				std::string value = action.params.value(param.name, param.defaultValue.get<std::string>());
+				std::array<char, 256> buffer{};
+				CopyStringToBuffer(value, buffer);
+				if (ImGui::InputText(label.c_str(), buffer.data(), buffer.size()))
+				{
+					action.params[param.name] = std::string(buffer.data());
+					updated = true;
+				}
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("%s (unsupported)", label.c_str());
+		}
+
+		ImGui::PopID();
+	}
+
+	return updated;
+}
+
+bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
+{
+	bool updated = false;
+	if (!ImGui::TreeNode(label))
+	{
+		return false;
+	}
+
+	const auto& actionDefs = FSMActionRegistry::Instance().GetActions();
+
+	for (size_t i = 0; i < actions.size(); ++i)
+	{
+		ImGui::PushID(static_cast<int>(i));
+		ImGui::Separator();
+		ImGui::Text("Action %zu", i);
+
+		std::string currentId = actions[i].id;
+		int currentIndex = -1;
+		std::vector<const char*> labels;
+		labels.reserve(actionDefs.size());
+		for (size_t idx = 0; idx < actionDefs.size(); ++idx)
+		{
+			labels.push_back(actionDefs[idx].id.c_str());
+			if (actionDefs[idx].id == currentId)
+			{
+				currentIndex = static_cast<int>(idx);
+			}
+		}
+
+		if (!labels.empty())
+		{
+			if (ImGui::Combo("Action", &currentIndex, labels.data(), static_cast<int>(labels.size())))
+			{
+				actions[i].id = actionDefs[currentIndex].id;
+				actions[i].params = nlohmann::json::object();
+				updated = true;
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("No Registered Actions");
+		}
+
+		updated |= DrawFSMActionParams(actions[i]);
+
+		if (ImGui::Button("Remove Action"))
+		{
+			actions.erase(actions.begin() + static_cast<long>(i));
+			updated = true;
+			ImGui::PopID();
+			break;
+		}
+
+		ImGui::PopID();
+	}
+
+	if (ImGui::Button("Add Action"))
+	{
+		FSMAction newAction;
+		if (!actionDefs.empty())
+		{
+			newAction.id = actionDefs.front().id;
+		}
+		newAction.params = nlohmann::json::object();
+		actions.push_back(newAction);
+		updated = true;
+	}
+
+	ImGui::TreePop();
+	return updated;
+}
+
+bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vector<std::string>& stateNames)
+{
+	bool updated = false;
+	if (!ImGui::TreeNode("Transitions"))
+	{
+		return false;
+	}
+
+	const auto& eventDefs = FSMEventRegistry::Instance().GetEvents();
+	std::vector<const char*> eventLabels;
+	eventLabels.reserve(eventDefs.size());
+	for (const auto& evt : eventDefs)
+	{
+		eventLabels.push_back(evt.name.c_str());
+	}
+
+	std::vector<const char*> stateLabels;
+	stateLabels.reserve(stateNames.size());
+	for (const auto& name : stateNames)
+	{
+		stateLabels.push_back(name.c_str());
+	}
+
+	for (size_t i = 0; i < transitions.size(); ++i)
+	{
+		ImGui::PushID(static_cast<int>(i));
+		ImGui::Separator();
+		ImGui::Text("Transition %zu", i);
+
+		int eventIndex = -1;
+		for (size_t idx = 0; idx < eventDefs.size(); ++idx)
+		{
+			if (eventDefs[idx].name == transitions[i].eventName)
+			{
+				eventIndex = static_cast<int>(idx);
+				break;
+			}
+		}
+
+		if (!eventLabels.empty())
+		{
+			if (ImGui::Combo("Event", &eventIndex, eventLabels.data(), static_cast<int>(eventLabels.size())))
+			{
+				transitions[i].eventName = eventDefs[eventIndex].name;
+				updated = true;
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("No Registerd Events");
+		}
+
+		int targetIndex = -1;
+		for (size_t idx = 0; idx < stateNames.size(); ++idx)
+		{
+			if (stateNames[idx] == transitions[i].targetState)
+			{
+				targetIndex = static_cast<int>(idx);
+				break;
+			}
+		}
+
+		if (!stateLabels.empty())
+		{
+			if (ImGui::Combo("Target", &targetIndex, stateLabels.data(), static_cast<int>(stateLabels.size())))
+			{
+				transitions[i].targetState = stateNames[targetIndex];
+				updated = true;
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("No States Available");
+		}
+
+		if (ImGui::DragInt("Priority", &transitions[i].priority))
+		{
+			updated = true;
+		}
+
+if (ImGui::Button("Remove Transition"))
+{
+	transitions.erase(transitions.begin() + static_cast<long>(i));
+	updated = true;
+	ImGui::PopID();
+	break;
+}
+
+ImGui::PopID();
+	}
+
+	if (ImGui::Button("Add Transition"))
+	{
+		FSMTransition newTransition;
+		if (!eventDefs.empty())
+		{
+			newTransition.eventName = eventDefs.front().name;
+		}
+		if (!stateNames.empty())
+		{
+			newTransition.targetState = stateNames.front();
+		}
+		transitions.push_back(newTransition);
+		updated = true;
+	}
+
+	ImGui::TreePop();
+	return updated;
+}
+
+
+bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames)
+{
+	bool updated = false;
+	ImGui::Separator();
+	ImGui::Text("State");
+
+	std::array<char, 256> buffer{};
+	CopyStringToBuffer(state.name, buffer);
+
+	if (ImGui::InputText("Name", buffer.data(), buffer.size()))
+	{
+		state.name = buffer.data();
+		updated = true;
+	}
+
+	updated |= DrawFSMActionList("OnEnter", state.onEnter);
+	updated |= DrawFSMActionList("OnExit", state.onExit);
+	updated |= DrawFSMTransitions(state.transitions, stateNames);
+
+	return updated;
+}
+
+bool DrawFSMGraphEditor(FSMGraph& graph)
+{
+	bool updated = false;
+	std::vector<std::string> stateNames;
+	stateNames.reserve(graph.states.size());
+
+	for (const auto& state : graph.states)
+	{
+		stateNames.push_back(state.name);
+	}
+
+	int initialIndex = -1;
+	for (size_t idx = 0; idx < stateNames.size(); ++idx)
+	{
+		if (stateNames[idx] == graph.initialState)
+		{
+			initialIndex = static_cast<int>(idx);
+			break;
+		}
+	}
+
+	std::vector<const char*> stateLabels;
+	stateLabels.reserve(stateNames.size());
+
+	for (const auto& name : stateNames)
+	{
+		stateLabels.push_back(name.c_str());
+	}
+
+	if (!stateLabels.empty())
+	{
+		if (ImGui::Combo("Initial State", &initialIndex, stateLabels.data(), static_cast<int>(stateLabels.size())))
+		{
+			graph.initialState = stateNames[initialIndex];
+			updated = true;
+		}
+	}
+	else
+	{
+		ImGui::TextDisabled("No States Defined");
+	}
+
+	for (size_t i = 0; i < graph.states.size(); ++i)
+	{
+		ImGui::PushID(static_cast<int>(i));
+		if (ImGui::TreeNode("State Editor", "State %zu", i))
+		{
+			updated |= DrawFSMState(graph.states[i], stateNames);
+			if (ImGui::Button("Remove State"))
+			{
+				graph.states.erase(graph.states.begin() + static_cast<long>(i));
+				updated = true;
+				ImGui::TreePop();
+				ImGui::PopID();
+				break;
+			}
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+	}
+
+	if (ImGui::Button("Add State"))
+	{
+		FSMState newState;
+		newState.name = "NewState";
+		graph.states.push_back(newState);
+		updated = true;
+	}
+
+	return updated;
 }
 
 bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
@@ -1115,9 +1516,58 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		std::vector<DirectX::XMFLOAT4X4> value;
 		property.GetValue(component, &value);
 		ImGui::Text("%s: %zu matrices", property.GetName().c_str(), value.size());
+		ImGui::PushID(property.GetName().c_str());
+
+		static std::unordered_map<std::string, int> matrixIndices;
+		int& index = matrixIndices[property.GetName()];
+		if (index < 0)
+		{
+			index = 0;
+		}
+
+		if (!value.empty())
+		{
+			if (ImGui::InputInt("Index", &index))
+			{
+				index = std::clamp(index, 0, static_cast<int>(value.size() - 1));
+			}
+
+			if (ImGui::TreeNode("Matrix Values"))
+			{
+				const auto& m = value[static_cast<size_t>(index)];
+				ImGui::Text("Row 0: %.3f %.3f %.3f %.3f", m._11, m._12, m._13, m._14);
+				ImGui::Text("Row 1: %.3f %.3f %.3f %.3f", m._21, m._22, m._23, m._24);
+				ImGui::Text("Row 2: %.3f %.3f %.3f %.3f", m._31, m._32, m._33, m._34);
+				ImGui::Text("Row 3: %.3f %.3f %.3f %.3f", m._41, m._42, m._43, m._44);
+				ImGui::TreePop();
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("No matrices available.");
+		}
+
+		ImGui::PopID();
 		return false;
 	}
 
+	if (typeInfo == typeid(FSMGraph))
+	{
+		FSMGraph graph;
+		property.GetValue(component, &graph);
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		ImGui::PushID(property.GetName().c_str());
+		const bool updated = DrawFSMGraphEditor(graph);
+		ImGui::PopID();
+		ImGui::Unindent();
+		if (updated)
+		{
+			property.SetValue(component, &graph);
+			return true;
+		}
+		return false;
+	}
 
 	if (typeInfo == typeid(PlaybackStateType))
 	{
@@ -1238,6 +1688,154 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::Text("Curve Fn: %s", hasCurve ? "Set" : "None");
 			// 필요하면 주소 표시 (디버그용)
 			// ImGui::Text("Curve Fn Ptr: 0x%p", reinterpret_cast<void*>(value.curveFn));
+		}
+
+		ImGui::PopID();
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			return true;
+		}
+		return false;
+	}
+
+	if (typeInfo == typeid(AnimationComponent::BlendConfig))
+	{
+		AnimationComponent::BlendConfig value{};
+		property.GetValue(component, &value);
+
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		ImGui::PushID(property.GetName().c_str());
+
+		{
+			const std::string* key = assetLoader.GetAnimations().GetKey(value.fromClip);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##BlendConfigFromClip";
+
+			ImGui::TextUnformatted("From Clip");
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+				{
+					const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+					value.fromClip = dropped;
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Clear##BlendConfigFromClip"))
+			{
+				value.fromClip = AnimationHandle::Invalid();
+				updated = true;
+			}
+		}
+
+		{
+			const std::string* key = assetLoader.GetAnimations().GetKey(value.toClip);
+			const std::string display = key ? *key : std::string("<None>");
+			const std::string buttonLabel = display + "##BlendConfigToClip";
+
+			ImGui::TextUnformatted("To Clip");
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
+				{
+					const AnimationHandle dropped = *static_cast<const AnimationHandle*>(payload->Data);
+					value.toClip = dropped;
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Clear##BlendConfigToClip"))
+			{
+				value.toClip = AnimationHandle::Invalid();
+				updated = true;
+			}
+		}
+
+		updated |= ImGui::InputFloat("Blend Time", &value.blendTime);
+
+		{
+			static constexpr const char* kBlendTypeLabels[] =
+			{
+				"Linear",
+				"Curve"
+			};
+
+			int current = static_cast<int>(value.blendType);
+			if (ImGui::Combo("Blend Type", &current, kBlendTypeLabels, IM_ARRAYSIZE(kBlendTypeLabels)))
+			{
+				value.blendType = static_cast<AnimationComponent::BlendType>(current);
+				updated = true;
+			}
+		}
+
+		{
+			static constexpr const char* kCurveLabels[] =
+			{
+				"Linear",
+				"EaseInSine",
+				"EaseOutSine",
+				"EaseInOutSine",
+				"EaseInQuad",
+				"EaseOutQuad",
+				"EaseInOutQuad",
+				"EaseInCubic",
+				"EaseOutCubic",
+				"EaseInOutCubic",
+				"EaseInQuart",
+				"EaseOutQuart",
+				"EaseInOutQuart",
+				"EaseInQuint",
+				"EaseOutQuint",
+				"EaseInOutQuint",
+				"EaseInExpo",
+				"EaseOutExpo",
+				"EaseInOutExpo",
+				"EaseInCirc",
+				"EaseOutCirc",
+				"EaseInOutCirc",
+				"EaseInBack",
+				"EaseOutBack",
+				"EaseInOutBack",
+				"EaseInElastic",
+				"EaseOutElastic",
+				"EaseInElastic",
+				"EaseInBounce" ,
+				"EaseOutBounce",
+				"EaseInOutBounce"
+			};
+
+			int curveIndex = 0;
+			for (int i = 0; i < IM_ARRAYSIZE(kCurveLabels); ++i)
+			{
+				if (value.curveName == kCurveLabels[i])
+				{
+					curveIndex = i;
+					break;
+				}
+			}
+
+			if (ImGui::Combo("Curve", &curveIndex, kCurveLabels, IM_ARRAYSIZE(kCurveLabels)))
+			{
+				value.curveName = kCurveLabels[curveIndex];
+				updated = true;
+			}
 		}
 
 		ImGui::PopID();

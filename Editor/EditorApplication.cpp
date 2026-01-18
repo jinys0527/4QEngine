@@ -85,8 +85,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 			// Window Message 해석
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
 			{
-				if (false == m_InputManager->OnHandleMessage(msg))
-					TranslateMessage(&msg);
+				m_InputManager->OnHandleMessage(msg);
+				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
 			else {
@@ -1250,7 +1250,6 @@ void EditorApplication::UpdateEditorCamera()
 			if (ImGui::BeginTabItem("Shader Assets"))
 			{
 				static char shaderAssetName[128] = "";
-				static char shaderAssetFolder[128] = "";
 				static char shaderVertexPath[256] = "";
 				static char shaderPixelPath[256] = "";
 
@@ -1262,28 +1261,51 @@ void EditorApplication::UpdateEditorCamera()
 				if (ImGui::BeginPopup("CreateShaderAssetPopup"))
 				{
 					ImGui::InputText("Name", shaderAssetName, sizeof(shaderAssetName));
-					ImGui::InputText("Asset Folder", shaderAssetFolder, sizeof(shaderAssetFolder));
 					ImGui::InputText("VS Path", shaderVertexPath, sizeof(shaderVertexPath));
 					ImGui::InputText("PS Path", shaderPixelPath, sizeof(shaderPixelPath));
 
 					if (ImGui::Button("Create"))
 					{
 						const fs::path resourceRoot = "../ResourceOutput";
-						const fs::path assetDir = resourceRoot / shaderAssetFolder;
+						const fs::path assetDir = resourceRoot / "ShaderAsset";
 						const fs::path metaDir = assetDir / "Meta";
 						const fs::path metaPath = metaDir / (std::string(shaderAssetName) + ".shader.json");
+						// “실제 shader 파일들이 있는 폴더(절대/상대 상관없음, 하지만 path로 관리)”
+						const fs::path shaderDirAbsOrRel = "../MRenderer/fx/";
 
-						if (!shaderAssetName[0] || !shaderAssetFolder[0])
+						// meta 기준 상대경로 prefix 생성 (Meta -> shaderDir)
+						const fs::path shaderDirFromMeta = fs::relative(shaderDirAbsOrRel, metaDir).lexically_normal();
+
+						// 최종 vs/ps 경로(메타 기준 상대경로)
+						const fs::path vsRel = (shaderDirFromMeta / shaderVertexPath).lexically_normal();
+						const fs::path psRel = (shaderDirFromMeta / shaderPixelPath).lexically_normal();
+
+						if (!shaderAssetName[0])
 						{
 							ImGui::CloseCurrentPopup();
 						}
 						else
 						{
+							auto makeShaderPath = [&](const char* input, const char* fallbackSuffix) -> std::string
+								{
+									std::string path = input && input[0] ? input : "";
+									if (path.empty())
+									{
+										path = std::string(shaderAssetName) + fallbackSuffix;
+									}
+
+									const fs::path parsed = fs::path(path);
+									if (parsed.extension().empty())
+									{
+										return (parsed.string() + ".hlsl");
+									}
+									return parsed.string();
+								};
 							fs::create_directories(metaDir);
 							json meta = json::object();
 							meta["name"] = shaderAssetName;
-							meta["vs"] = shaderVertexPath;
-							meta["ps"] = shaderPixelPath;
+							meta["vs"] = makeShaderPath(vsRel.generic_string().c_str(), "_VS");
+							meta["ps"] = makeShaderPath(psRel.generic_string().c_str(), "_PS");
 
 							std::ofstream out(metaPath);
 							if (out)
@@ -1296,7 +1318,6 @@ void EditorApplication::UpdateEditorCamera()
 								}
 							}
 							shaderAssetName[0] = '\0';
-							shaderAssetFolder[0] = '\0';
 							shaderVertexPath[0] = '\0';
 							shaderPixelPath[0] = '\0';
 							ImGui::CloseCurrentPopup();

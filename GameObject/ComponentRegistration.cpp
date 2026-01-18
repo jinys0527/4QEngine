@@ -10,6 +10,10 @@
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "PlayerMovementComponent.h"
+#include "FSMComponent.h"
+#include "CollisionFSMComponent.h"
+#include "AnimFSMComponent.h"
+#include "UIFSMComponent.h"
 
 
 // 중앙 등록 .cpp
@@ -29,7 +33,17 @@ extern "C" {
 	void Link_SkeletalMeshComponent();
 	void Link_SkeletalMeshRenderer();
 	void Link_PlayerMovementComponent();
+	void Link_FSMComponent();
+	void Link_CollisionFSMComponent();
+	void Link_AnimFSMComponent();
+	void Link_UIFSMComponent();
 }
+
+void RegisterUIFSMDefinitions();
+void RegisterCollisionFSMDefinitions();
+void RegisterAnimFSMDefinitions();
+void RegisterFSMBaseDefinitions();
+
 //해당 함수는 client.exe에서 한번 호출로 component들의 obj 를 가져올 명분제공
 void LinkEngineComponents() {
 
@@ -44,4 +58,13 @@ void LinkEngineComponents() {
 	Link_SkeletalMeshComponent();
 	Link_SkeletalMeshRenderer();
 	Link_PlayerMovementComponent();
+	Link_FSMComponent();
+	Link_CollisionFSMComponent();
+	Link_AnimFSMComponent();
+	Link_UIFSMComponent();
+
+	RegisterUIFSMDefinitions();
+	RegisterCollisionFSMDefinitions();
+	RegisterAnimFSMDefinitions();
+	RegisterFSMBaseDefinitions();
 }

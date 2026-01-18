@@ -55,6 +55,24 @@
     <ClCompile Include="PlayerMovementComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIFSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionFSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimFSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FSMEventRegistry.cpp">
+      <Filter>Components\Utils\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FSMActionRegistry.cpp">
+      <Filter>Components\Utils\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -81,12 +99,6 @@
     </ClInclude>
     <ClInclude Include="Serializer.h">
       <Filter>Reflection\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimBlendCurveFunction.h">
-      <Filter>Components\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="CameraSettings.h">
-      <Filter>Components\Utils</Filter>
     </ClInclude>
     <ClInclude Include="AnimationComponent.h">
       <Filter>Components\Default\Header Files</Filter>
@@ -123,6 +135,30 @@
     </ClInclude>
     <ClInclude Include="PlayerMovementComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimFSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionFSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIFSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimBlendCurveFunction.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraSettings.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FSMActionRegistry.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FSMEventRegistry.h">
+      <Filter>Components\Utils\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +203,12 @@
     </Filter>
     <Filter Include="Components\Default\Source Files">
       <UniqueIdentifier>{8e2edd01-4c5b-4c65-9cde-083e98d3cdb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Utils\Header Files">
+      <UniqueIdentifier>{f5581adb-113b-43ff-8677-5458bb91d7f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Utils\Source Files">
+      <UniqueIdentifier>{c7443698-6f50-4d0f-9468-826b8502fc60}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -240,11 +240,16 @@
   <ItemGroup>
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimBlendCurveFunction.h" />
+    <ClInclude Include="AnimFSMComponent.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraObject.h" />
     <ClInclude Include="CameraSettings.h" />
+    <ClInclude Include="CollisionFSMComponent.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="CoreTypes.h" />
+    <ClInclude Include="FSMActionRegistry.h" />
+    <ClInclude Include="FSMComponent.h" />
+    <ClInclude Include="FSMEventRegistry.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="LightComponent.h" />
     <ClInclude Include="MaterialComponent.h" />
@@ -259,14 +264,20 @@
     <ClInclude Include="SkeletalMeshRenderer.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIComponent.h" />
+    <ClInclude Include="UIFSMComponent.h" />
     <ClInclude Include="UIObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
+    <ClCompile Include="AnimFSMComponent.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CameraObject.cpp" />
+    <ClCompile Include="CollisionFSMComponent.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ComponentRegistration.cpp" />
+    <ClCompile Include="FSMActionRegistry.cpp" />
+    <ClCompile Include="FSMComponent.cpp" />
+    <ClCompile Include="FSMEventRegistry.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="MaterialComponent.cpp" />
@@ -279,6 +290,7 @@
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
+    <ClCompile Include="UIFSMComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
   </ItemGroup>
   <ItemGroup>
