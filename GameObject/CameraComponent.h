@@ -89,6 +89,7 @@ public:
 	void SetFarZ(const float& farz) { if (farz < 0.1f) { return; } m_FarZ = farz; m_ProjDirty = true; }
 	const float& GetFarZ() const { return m_FarZ; }
 
+
 	ProjectionMode GetProjectionMode() const { return m_Mode; }
 
 	// Get할때만 계산해서 받아옴
