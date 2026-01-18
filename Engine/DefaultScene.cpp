@@ -21,6 +21,11 @@ void DefaultScene::Initialize()
 	editorCamera->SetName("Editor Camera");
 	SetEditorCamera(editorCamera);
 	AddGameObject(editorCamera, true);
+	if (auto* editorCameraComponent = editorCamera->GetComponent<CameraComponent>())
+	{
+		editorCameraComponent->SetNearZ(0.1f);
+		editorCameraComponent->SetFarZ(1000.0f);
+	}
 
 	//초기 카메라 위치 Set
 	m_GameCamera->GetComponent<TransformComponent>()->SetPosition(XMFLOAT3{ 0.0f,4.0f,-11.0f });
