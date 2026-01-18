@@ -58,6 +58,15 @@ public:
 		BlendCurveFn curveFn = nullptr;	// Curve일 때만 유효
 	};
 
+	struct BlendConfig
+	{
+		AnimationHandle fromClip = AnimationHandle::Invalid();
+		AnimationHandle toClip = AnimationHandle::Invalid();
+		float blendTime = 0.2f;
+		BlendType blendType = BlendType::Linear;
+		std::string curveName = "Linear";
+	};
+
 private:
 	struct LocalPose
 	{
@@ -183,6 +192,18 @@ public:
 
 	const BlendState& GetBlend() const { return m_Blend; }
 
+	void SetBlendConfig(const BlendConfig& config)
+	{
+		m_BlendConfig = config;
+		m_Blend.fromClip = config.fromClip;
+		m_Blend.toClip = config.toClip;
+		m_Blend.duration = config.blendTime;
+		m_Blend.blendType = config.blendType;
+	}
+
+	const BlendConfig& GetBlendConfig() const { return m_BlendConfig; }
+
+
 	void LoadSetBoneMaskWeights(const std::vector<float>& boneMaskWeights) { m_BoneMaskWeights = boneMaskWeights; }
 	const std::vector<float>& GetBoneMaskWeights() const { return m_BoneMaskWeights; }
 	void LoadSetRetargetOffsets(const std::vector<LocalPose>& retargetOffset) { m_RetargetOffsets = retargetOffset; }
@@ -271,6 +292,7 @@ private:
 						             
 	PlaybackState                    m_Playback{};
 	BlendState                       m_Blend{};
+	BlendConfig                      m_BlendConfig{};
 	std::vector<float>               m_BoneMaskWeights;
 	std::vector<LocalPose>           m_RetargetOffsets;
 	BoneMaskSource					 m_BoneMaskSource			  = BoneMaskSource::None;

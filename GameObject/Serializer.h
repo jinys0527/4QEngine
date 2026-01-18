@@ -8,6 +8,8 @@
 #include "AssetLoader.h"
 #include "ResourceHandle.h"
 #include "MeshComponent.h"
+#include "FSMComponent.h"
+#include "AnimationComponent.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -586,6 +588,171 @@ struct Serializer<std::vector<MeshComponent::SubMeshMaterialOverride>> {
 	}
 };
 
+
+// FSM
+template<>
+struct Serializer<FSMAction> {
+	static void ToJson(nlohmann::json& j, const FSMAction& v) {
+		j["id"]     = v.id;
+		j["params"] = v.params;
+	}
+
+	static void FromJson(const nlohmann::json& j, FSMAction& v) {
+		v.id     = j.value("id", std::string());
+		v.params = j.value("params", nlohmann::json::object());
+	}
+};
+
+template<>
+struct Serializer<FSMTransition> {
+	static void ToJson(nlohmann::json& j, const FSMTransition& v) {
+		j["event"]    = v.eventName;
+		j["target"]   = v.targetState;
+		j["priority"] = v.priority;
+	}
+
+	static void FromJson(const nlohmann::json& j, FSMTransition& v) {
+		v.eventName   = j.value("event", std::string());
+		v.targetState = j.value("target", std::string());
+		v.priority    = j.value("priority", 0);
+	}
+};
+
+template<>
+struct Serializer<std::vector<FSMAction>> {
+	static void ToJson(nlohmann::json& j, const std::vector<FSMAction>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v)
+		{
+			nlohmann::json entry;
+			Serializer<FSMAction>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<FSMAction>& v) {
+		v.clear();
+		if (!j.is_array())
+			return;
+
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			FSMAction item{};
+			Serializer<FSMAction>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<std::vector<FSMTransition>> {
+	static void ToJson(nlohmann::json& j, const std::vector<FSMTransition>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v)
+		{
+			nlohmann::json entry;
+			Serializer<FSMTransition>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<FSMTransition>& v) {
+		v.clear();
+		if (!j.is_array())
+			return;
+
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			FSMTransition item{};
+			Serializer<FSMTransition>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<FSMState> {
+	static void ToJson(nlohmann::json& j, const FSMState& v) {
+		j["name"] = v.name;
+		Serializer<std::vector<FSMAction>>::ToJson(j["onEnter"], v.onEnter);
+		Serializer<std::vector<FSMAction>>::ToJson(j["onExit"], v.onExit);
+		Serializer<std::vector<FSMTransition>>::ToJson(j["transitions"], v.transitions);
+	}
+
+	static void FromJson(const nlohmann::json& j, FSMState& v) {
+		v.name = j.value("name", std::string());
+		Serializer<std::vector<FSMAction>>::FromJson(j.value("onEnter", nlohmann::json::array()), v.onEnter);
+		Serializer<std::vector<FSMAction>>::FromJson(j.value("onExit", nlohmann::json::array()), v.onExit);
+		Serializer<std::vector<FSMTransition>>::FromJson(j.value("transitions", nlohmann::json::array()), v.transitions);
+	}
+};
+
+
+
+template<>
+struct Serializer<std::vector<FSMState>> {
+	static void ToJson(nlohmann::json& j, const std::vector<FSMState>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v)
+		{
+			nlohmann::json entry;
+			Serializer<FSMState>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<FSMState>& v) {
+		v.clear();
+		if (!j.is_array())
+			return;
+
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			FSMState item{};
+			Serializer<FSMState>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<FSMGraph> {
+	static void ToJson(nlohmann::json& j, const FSMGraph& v) {
+		j["initialState"] = v.initialState;
+		Serializer<std::vector<FSMState>>::ToJson(j["states"], v.states);
+	}
+
+	static void FromJson(const nlohmann::json& j, FSMGraph& v) {
+		v.initialState = j.value("initialState", std::string());
+		Serializer<std::vector<FSMState>>::FromJson(j.value("states", nlohmann::json::array()), v.states);;
+	}
+};
+
+template<>
+struct Serializer<AnimationComponent::BlendConfig> {
+	static void ToJson(nlohmann::json& j, const AnimationComponent::BlendConfig& v) {
+		Serializer<AnimationHandle>::ToJson(j["fromClip"], v.fromClip);
+		Serializer<AnimationHandle>::ToJson(j["toClip"], v.toClip);
+		j["blendTime"] = v.blendTime;
+		j["blendType"] = static_cast<int>(v.blendType);
+		j["curveName"] = v.curveName;
+	}
+
+	static void FromJson(const nlohmann::json& j, AnimationComponent::BlendConfig& v) {
+		if (j.contains("fromClip")) {
+			Serializer<AnimationHandle>::FromJson(j["fromClip"], v.fromClip);
+		}
+		if (j.contains("toClip")) {
+			Serializer<AnimationHandle>::FromJson(j["toClip"], v.toClip);
+		}
+		v.blendTime = j.value("blendTime", 0.2f);
+		v.blendType = static_cast<AnimationComponent::BlendType>(j.value("blendType", 0));
+		v.curveName = j.value("curveName", std::string("Linear"));
+	}
+};
 
 template<>
 struct Serializer<UINT8> {
