@@ -18,6 +18,7 @@ struct CameraConstBuffer
 	XMFLOAT4X4	mView = XMFLOAT4X4{};
 	XMFLOAT4X4	mProj = XMFLOAT4X4{};
 	XMFLOAT4X4	mVP = XMFLOAT4X4{};
+	XMFLOAT4X4  mSkyBox = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
 	float		padding = 0.0f;
@@ -168,5 +169,10 @@ struct RenderContext
 
 	//블러 테스트
 	ComPtr<ID3D11ShaderResourceView> Vignetting;
+
+	//스카이박스 테스트
+	ComPtr<ID3D11ShaderResourceView>	SkyBox;
+	ComPtr<ID3D11VertexShader>			pVS_SkyBox;
+	ComPtr<ID3D11PixelShader>			pPS_SkyBox;
 
 };

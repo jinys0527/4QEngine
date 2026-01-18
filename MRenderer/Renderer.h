@@ -223,4 +223,11 @@ protected:
 
 	//블러 테스트
 	ComPtr<ID3D11ShaderResourceView> m_Vignetting;
+
+	//스카이박스 테스트
+	ComPtr<ID3D11ShaderResourceView> m_SkyBox;
+	ComPtr<ID3D11VertexShader> m_pVS_SkyBox;
+	ComPtr<ID3D11PixelShader> m_pPS_SkyBox;
+	ComPtr<ID3DBlob> m_pVSCode_SkyBox;
+
 };

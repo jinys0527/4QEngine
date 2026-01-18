@@ -82,6 +82,12 @@ struct VSOutput_PU
     float2 uv : TEXCOORD0;
 };
 
+struct VSOutput_PUVW
+{
+    float4 pos : SV_POSITION;
+    float3 uvw : TEXCOORD0;
+};
+
 struct VSOutput_P
 {
     float4 pos : SV_POSITION;
@@ -103,6 +109,7 @@ struct VSOutput_PBR
 Texture2D g_RTView : register(t0);
 Texture2D g_Blur : register(t1);
 Texture2D g_ShadowMap : register(t2);
+TextureCube g_SkyBox : register(t3);
 
 Texture2D g_Albedo : register(t11);
 Texture2D g_Normal : register(t12);

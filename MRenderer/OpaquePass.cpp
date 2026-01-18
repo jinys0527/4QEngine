@@ -26,6 +26,13 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
+	//임시 스카이박스 테스트
+	m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.pVS_SkyBox.Get(), nullptr, 0);
+	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.pPS_SkyBox.Get(), nullptr, 0);
+	m_RenderContext.DrawFullscreenQuad();
+
+
     m_RenderContext.UpdateGrid(frame);
     m_RenderContext.DrawGrid();
     
@@ -77,7 +84,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
 				ID3D11PixelShader*  pixelShader  = m_RenderContext.PS_PBR.Get();
 
-                ////텍스쳐 바인딩
 				const RenderData::MaterialData* mat = nullptr;
 				if (item.useMaterialOverrides)
 				{
@@ -89,8 +95,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				}
 
 				if (textures && mat)
-                {
-               		if (mat->shaderAsset.IsValid())
+				{
+					if (mat->shaderAsset.IsValid())
 					{
 						const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
 						if (shaderAsset)
@@ -133,22 +139,28 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						}
 					}
 
-                    for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
-                    {
-                        const TextureHandle h = mat->textures[slot];
-                        if (!h.IsValid())
-                            continue;
 
-                        const auto tIt = textures->find(h);
-                        if (tIt == textures->end())
-                            continue;
 
-                        ID3D11ShaderResourceView* srv = tIt->second.Get();
+#pragma region TextureBinding
+					for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
+					{
+						const TextureHandle h = mat->textures[slot];
+						if (!h.IsValid())
+							continue;
 
-                       
-                        m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
-                    }
-                }
+						const auto tIt = textures->find(h);
+						if (tIt == textures->end())
+							continue;
+
+						ID3D11ShaderResourceView* srv = tIt->second.Get();
+
+
+						m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
+					}
+				}
+
+#pragma endregion
+
 
 				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
 				{

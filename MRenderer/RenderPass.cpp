@@ -87,6 +87,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 	mVP = mV * mP;
 	mSkyBox = XMMatrixInverse(nullptr, mVP);
+	XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mSkyBox, mSkyBox);
 	//스카이박스 행렬 끝
 
 

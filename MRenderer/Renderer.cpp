@@ -112,6 +112,9 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Post_VS.hlsl"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Post_PS.hlsl"), m_pPS_Post.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
+
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
@@ -122,6 +125,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
 	CreateConstBuffer();
+
 
 	InitTexture();
 	InitShaders();
@@ -139,7 +143,18 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	
+	filename = L"../MRenderer/fx/YenaSky.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+		nullptr, m_SkyBox.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
 
 	
 
@@ -554,6 +569,11 @@ void Renderer::CreateContext()
 
 	m_RenderContext.Vignetting				= m_Vignetting;
 
+	m_RenderContext.SkyBox					= m_SkyBox;
+	m_RenderContext.pVS_SkyBox				= m_pVS_SkyBox;
+	m_RenderContext.pPS_SkyBox				= m_pPS_SkyBox;
+
+
 	//DrawQuad함수
 	m_RenderContext.DrawFullscreenQuad =
 		[this]()
@@ -568,6 +588,7 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 			m_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
 		};
