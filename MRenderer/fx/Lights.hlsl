@@ -34,8 +34,8 @@ float4 DirectLight(float4 nrm)
 
 float PCF(float4 smUV)
 {
-    float2 uv = smUV.xy / smUV.w;
-    float curDepth = smUV.z / smUV.w;
+    float2 uv = smUV.xy ;
+    float curDepth = smUV.z;
 
     float offset = 1.0f / 4096.0f;
     float bias = pow(0.5f, 23);
@@ -52,7 +52,6 @@ float PCF(float4 smUV)
             float2 suv = uv + float2((x - 1) * offset, (y - 1) * offset);
             float smDepth = g_ShadowMap.Sample(smpBorderShadow, suv).r;
             
-
             sum += (smDepth >= curDepth - bias) ? 1.0f : 0.0f;
         }
     }
@@ -62,7 +61,7 @@ float PCF(float4 smUV)
 
 float CastShadow(float4 uv)
 {
-    //uv.xy /= uv.w;
+    uv.xy /= uv.w;
 
     float shadowDepth = g_ShadowMap.Sample(smpBorderShadow, uv.xy).r;
 

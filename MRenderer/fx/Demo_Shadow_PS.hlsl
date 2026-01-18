@@ -8,6 +8,6 @@ float4 PS_Main(VSOutput_Shadow i) : SV_TARGET
     float shadow = CastShadow(i.uvshadow);
     
     final.rgb *= shadow;
-        
+    
     return final;
 }

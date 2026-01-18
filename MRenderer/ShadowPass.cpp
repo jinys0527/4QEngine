@@ -11,8 +11,8 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     //0번이 전역광이라고 가정...
     XMMATRIX lightview, lightproj;
     XMVECTOR maincampos = XMLoadFloat3(&context.gameCamera.cameraPos); //원래는 주인공 위치가 더 좋은데, 일단 카메라 위치로 해도 크게 상관 없을 듯
-    XMVECTOR dir = -XMLoadFloat3(&mainlight.direction);
-    XMVECTOR pos = dir * -10.f + maincampos;
+    XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&mainlight.direction));
+    XMVECTOR pos = maincampos - (dir * 10.f);
     XMVECTOR look = maincampos;
     XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
