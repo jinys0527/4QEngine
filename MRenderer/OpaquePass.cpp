@@ -1,5 +1,4 @@
-﻿#include "ResourceStore.h"
-#include "OpaquePass.h"
+﻿#include "OpaquePass.h"
 
 #include <algorithm>
 #include <iostream>

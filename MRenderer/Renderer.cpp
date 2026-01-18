@@ -1074,6 +1074,82 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Textu
 	return hr;
 }
 
+
+HRESULT Renderer::DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pTexRV)
+{
+	HRESULT hr = S_OK;
+
+
+	//---------------------------------- 
+	// 깊이/스텐실 버퍼용 빈 텍스처로 만들기.	
+	//---------------------------------- 
+	//깊이/스텐실 버퍼 정보 구성.
+	D3D11_TEXTURE2D_DESC td = {};
+	//ZeroMemory(&td, sizeof(td));
+	td.Width = width;
+	td.Height = height;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+	td.Format = DXGI_FORMAT_R32_TYPELESS;									//원본 RT 와 동일 포멧유지.
+	//td.Format  = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;	//깊이 버퍼 (32bit) + 스텐실 (8bit) / 신형 하드웨어 (DX11)
+	td.SampleDesc.Count = 1;							// AA 없음.
+	//td.SampleDesc.Count = g_dwAA;						// AA 설정 - RT 과 동일 규격 준수.
+	//td.SampleDesc.Quality = 0;
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;			//깊이-스텐실 버퍼용으로 설정.
+	td.MiscFlags = 0;
+	//깊이/스텐실 버퍼용 빈 텍스처로 만들기.	
+	hr = m_pDevice->CreateTexture2D(&td, NULL, pDSTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
+	//---------------------------------- 
+	// 깊이/스텐실 뷰 생성.
+	//---------------------------------- 
+	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
+	//ZeroMemory(&dd, sizeof(dd));
+	dd.Format = DXGI_FORMAT_D32_FLOAT;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;			//2D (AA 적용)
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
+	//깊이/스텐실 뷰 생성.
+	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
+	//쉐이더 리소스 뷰 생성
+	D3D11_SHADER_RESOURCE_VIEW_DESC sd = {};
+	td.Format = DXGI_FORMAT_R32_TYPELESS;
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+
+	dd.Format = DXGI_FORMAT_R32_FLOAT;
+
+	sd.Format = DXGI_FORMAT_R32_FLOAT;
+	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	sd.Texture2D.MipLevels = 1;
+	sd.Texture2D.MostDetailedMip = 0;
+
+	hr = m_pDevice->CreateShaderResourceView(*pDSTex, &sd, pTexRV);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
+	return hr;
+}
+
 HRESULT Renderer::RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)
 {
 	//텍스처 정보 구성.
@@ -1326,8 +1402,7 @@ HRESULT Renderer::CreateRenderTarget_Other()
 
 #pragma region ShadowMap
 	m_ShadowTextureSize = { 16384, 16384 };
-	DXGI_FORMAT fmt = DXGI_FORMAT_D32_FLOAT;
-	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
+	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf(), m_pShadowRV.GetAddressOf());
 #pragma endregion
 
 
@@ -1359,8 +1434,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 
 #pragma region Depth
-	fmt = DXGI_FORMAT_D32_FLOAT;
-	DSCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
+	DSCreate(m_WindowSize.width, m_WindowSize.height, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf(), m_pDepthRV.GetAddressOf());
 
 #pragma endregion
 

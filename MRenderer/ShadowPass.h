@@ -25,7 +25,7 @@ protected:
     bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const override
     {
         
-        return false;
+        return true;
     }
 
 };

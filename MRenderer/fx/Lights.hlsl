@@ -51,18 +51,18 @@ float PCF(float4 smUV)
         {
             float2 suv = uv + float2((x - 1) * offset, (y - 1) * offset);
             float smDepth = g_ShadowMap.Sample(smpBorderShadow, suv).r;
+            
 
             sum += (smDepth >= curDepth - bias) ? 1.0f : 0.0f;
         }
     }
-
     float shadow = smoothstep(0.0f, 16.0f, sum);
     return max(shadow, 0.3f);
 }
 
 float CastShadow(float4 uv)
 {
-    uv.xy /= uv.w;
+    //uv.xy /= uv.w;
 
     float shadowDepth = g_ShadowMap.Sample(smpBorderShadow, uv.xy).r;
 
