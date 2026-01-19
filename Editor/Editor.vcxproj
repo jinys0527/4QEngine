@@ -166,7 +166,9 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     <ClInclude Include="EditorViewPort.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="Snapshot.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="UndoManager.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -212,6 +214,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="UndoManager.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>

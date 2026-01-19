@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include <filesystem>
 #include <array>
+#include "UndoManager.h"
 
 class ServiceRegistry;
 class Renderer;
@@ -119,4 +120,6 @@ private:
 
 	bool m_OpenSaveConfirm = false;
 	bool m_OpenDeleteConfirm = false;
+
+	UndoManager m_UndoManager;
 };

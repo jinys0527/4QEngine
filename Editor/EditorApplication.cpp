@@ -24,120 +24,130 @@
 #include "json.hpp"
 #include "ImGuizmo.h"
 #include "MathHelper.h"
-
-
+#include "Snapshot.h"
 
 #define DRAG_SPEED 0.01f
 namespace fs = std::filesystem;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	// ImGUI 창그리기
-	bool EditorApplication::Initialize()
+// ImGUI 창그리기
+bool EditorApplication::Initialize()
+{
+	const wchar_t* className = L"MIEditor";
+	const wchar_t* windowName = L"MIEditor";
+
+	if (false == Create(className, windowName, 1920, 1080))
 	{
-		const wchar_t* className = L"MIEditor";
-		const wchar_t* windowName = L"MIEditor";
+		return false;
+	}
+	///m_hwnd
+	//m_Engine.GetAssetManager().Init(L"../Resource");
+	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
+	m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
 
-		if (false == Create(className, windowName, 1920, 1080))
-		{
-			return false;
-		}
-		///m_hwnd
-		//m_Engine.GetAssetManager().Init(L"../Resource");
-		//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-		m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
+	ImportAll();
+	m_AssetLoader = &m_Services.Get<AssetLoader>();
+	m_AssetLoader->LoadAll();
+	m_SoundManager = &m_Services.Get<SoundManager>();
+	m_SoundManager->Init();
 
-		ImportAll();
-		m_AssetLoader = &m_Services.Get<AssetLoader>();
-		m_AssetLoader->LoadAll();
-		m_SoundManager = &m_Services.Get<SoundManager>();
-		m_SoundManager->Init();
+	m_InputManager = &m_Services.Get<InputManager>();
 
-		m_InputManager = &m_Services.Get<InputManager>();
-
-		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
-		m_SceneManager.Initialize();
+	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
+	m_SceneManager.Initialize();
 
 		
 
-		m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
-		m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = nullptr;				// ini 사용 안함
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-		ImGui::StyleColorsDark();
-		ImGui_ImplWin32_Init(m_hwnd);
-		ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
-		//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
-		//RT 받기
-		//초기 세팅 값으로 창 배치
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.IniFilename = nullptr;				// ini 사용 안함
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(m_hwnd);
+	ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
+	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
+	//RT 받기
+	//초기 세팅 값으로 창 배치
 
-		return true;
-	}
-
-
-	void EditorApplication::Run() {
-		//실행 루프
-		MSG msg = { 0 };
-		while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
-			// Window Message 해석
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
-			{
-				m_InputManager->OnHandleMessage(msg);
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			else {
-				m_Engine.UpdateTime();
-				Update();
-				m_Engine.UpdateInput();
-				//UpdateLogic();  //★
-				Render();
-
-			}
-		}
-	}
+	return true;
+}
 
 
-
-	void EditorApplication::Finalize() {
-		__super::Destroy();
-
-		ImGui_ImplDX11_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
-
-		//그외 메모리 해제
-	}
-
-	bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-	{
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
+void EditorApplication::Run() {
+	//실행 루프
+	MSG msg = { 0 };
+	while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
+		// Window Message 해석
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
 		{
-			return true; // ImGui가 메시지를 처리했으면 true 반환
+			m_InputManager->OnHandleMessage(msg);
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
+		else {
+			m_Engine.UpdateTime();
+			Update();
+			m_Engine.UpdateInput();
+			//UpdateLogic();  //★
+			Render();
 
-		return false;
+		}
 	}
+}
 
 
 
-	void EditorApplication::UpdateInput()
+void EditorApplication::Finalize() {
+	__super::Destroy();
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
+	//그외 메모리 해제
+}
+
+bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
 	{
-
+		return true; // ImGui가 메시지를 처리했으면 true 반환
 	}
 
-	void EditorApplication::Update()
+	return false;
+}
+
+
+
+void EditorApplication::UpdateInput()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	if (!io.WantTextInput)
 	{
-		float dTime = m_Engine.GetTime();
-
-		m_SceneManager.StateUpdate(dTime);
-		m_SceneManager.Update(dTime);
-
-		m_SoundManager->Update();
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))
+		{
+			m_UndoManager.Undo();
+		}
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y))
+		{
+			m_UndoManager.Redo();
+		}
 	}
+}
+
+void EditorApplication::Update()
+{
+	float dTime = m_Engine.GetTime();
+	UpdateInput();
+	m_SceneManager.StateUpdate(dTime);
+	m_SceneManager.Update(dTime);
+
+	m_SoundManager->Update();
+}
 
 void EditorApplication::UpdateSceneViewport()
 {
@@ -549,15 +559,46 @@ void EditorApplication::UpdateEditorCamera()
 			{
 				scene->SetName(newName);
 				m_LastSceneName = newName;
+				const fs::path oldScenePath = m_CurrentScenePath;
+				const fs::path oldSelectedPath = m_SelectedResourcePath;
+				fs::path renamedPath = m_CurrentScenePath;
+				fs::path renamedSeletedPath = m_SelectedResourcePath;
+
 				if (!m_CurrentScenePath.empty() && m_CurrentScenePath.stem() == oldName)
 				{
-					std::filesystem::path renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
+					renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
 					if (m_SelectedResourcePath == m_CurrentScenePath)
 					{
-						m_SelectedResourcePath = renamedPath;
+						renamedSeletedPath = renamedPath;
 					}
-					m_CurrentScenePath = renamedPath;
 				}
+				m_SelectedResourcePath = renamedSeletedPath;
+				m_CurrentScenePath = renamedPath;
+
+				Scene* scenePtr = scene.get();
+				m_UndoManager.Push(UndoManager::Command{
+					"Rename Scene",
+					[this, scenePtr, oldName, oldScenePath, oldSelectedPath]()
+					{
+						if (!scenePtr)
+							return;
+						scenePtr->SetName(oldName);
+						m_LastSceneName = oldName;
+						CopyStringToBuffer(oldName, m_SceneNameBuffer);
+						m_CurrentScenePath = oldScenePath;
+						m_SelectedResourcePath = oldSelectedPath;
+					},
+					[this, scenePtr, newName, renamedPath, renamedSeletedPath]()
+					{
+						if (!scenePtr)
+							return;
+						scenePtr->SetName(newName);
+						m_LastSceneName = newName;
+						CopyStringToBuffer(newName, m_SceneNameBuffer);
+						m_CurrentScenePath = renamedPath;
+						m_SelectedResourcePath = renamedSeletedPath;
+					}
+				});
 			}
 			else
 			{
@@ -569,9 +610,33 @@ void EditorApplication::UpdateEditorCamera()
 		if (ImGui::Button("Add GameObject")) // Button
 		{
 			const std::string name = MakeUniqueObjectName(*scene, "GameObject");
-			scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
+			auto createdObject = scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
 			//scene->CreateGameObject(name, false); //transparent
 			m_SelectedObjectName = name;
+
+			if (createdObject)
+			{
+				ObjectSnapshot snapshot;
+				snapshot.isOpaque = true;
+				createdObject->Serialize(snapshot.data);
+				Scene* scenePtr = scene.get();
+
+				m_UndoManager.Push(UndoManager::Command{
+					"Create GameObject",
+					[scenePtr, snapshot]()
+					{
+						if (!scenePtr)
+							return;
+
+						scenePtr->RemoveGameObjectByName(snapshot.data.value("name", ""));
+
+					},
+					[scenePtr, snapshot]()
+					{
+						ApplySnapshot(scenePtr, snapshot);
+					}
+				});
+			}
 		}
 
 		// copy
@@ -732,17 +797,60 @@ void EditorApplication::UpdateEditorCamera()
 			newObject->Deserialize(objectJson);
 			scene->AddGameObject(newObject, isOpaque);
 			m_SelectedObjectName = uniqueName;
+
+			ObjectSnapshot snapshot;
+			snapshot.isOpaque = isOpaque;
+			newObject->Serialize(snapshot.data);
+			Scene* scenePtr = scene.get();
+
+			m_UndoManager.Push(UndoManager::Command{
+				"Paste GameObject",
+				[scenePtr, snapshot]()
+				{
+					if (!scenePtr)
+						return;
+					scenePtr->RemoveGameObjectByName(snapshot.data.value("name", ""));
+				},
+				[scenePtr, snapshot]()
+				{
+					ApplySnapshot(scenePtr, snapshot);
+				}
+			});
 		}
-
-
-
 
 		for (const auto& name : pendingDeletes)
 		{
+			bool wasOpaque = true;
+			ObjectSnapshot snapshot;
+			if (auto removedObject = FindSceneObject(scene.get(), name, &wasOpaque))
+			{
+				snapshot.isOpaque = wasOpaque;
+				removedObject->Serialize(snapshot.data);
+			}
+
 			scene->RemoveGameObjectByName(name);
 			if (m_SelectedObjectName == name)
 			{
 				m_SelectedObjectName.clear();
+			}
+
+			if (!snapshot.data.is_null())
+			{
+				Scene* scenePtr = scene.get();
+
+				m_UndoManager.Push(UndoManager::Command{
+					"Delete GameObject",
+					[scenePtr, snapshot]()
+					{
+						ApplySnapshot(scenePtr, snapshot);
+					},
+					[scenePtr, snapshot]()
+					{
+						if (!scenePtr)
+							return;
+						scenePtr->RemoveGameObjectByName(snapshot.data.value("name", ""));
+					}
+				});
 			}
 		}
 
@@ -781,6 +889,9 @@ void EditorApplication::UpdateEditorCamera()
 		auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
 		auto selectedObject = it->second;
 
+		const bool selectedIsOpaque = (opaqueIt != opaqueObjects.end() && opaqueIt->second);
+		static std::unordered_map<size_t, ObjectSnapshot> pendingPropertySnapshots;
+
 		if (m_LastSelectedObjectName != m_SelectedObjectName)
 		{
 			CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
@@ -796,11 +907,34 @@ void EditorApplication::UpdateEditorCamera()
 			std::string newName = m_ObjectNameBuffer.data();
 			if (!newName.empty() && newName != selectedObject->GetName())
 			{
-				const std::string currentName = it->second->GetName();
-				if (scene->RenameGameObject(currentName, newName))
+				const std::string oldName = it->second->GetName();
+				if (scene->RenameGameObject(oldName, newName))
 				{
 					m_SelectedObjectName = newName;
 					m_LastSelectedObjectName = newName;
+
+					Scene* scenePtr = scene.get();
+					m_UndoManager.Push(UndoManager::Command{
+						"Rename GameObject",
+						[this, scenePtr, oldName, newName]()
+						{
+							if (!scenePtr)
+								return;
+							scenePtr->RenameGameObject(newName, oldName);
+							m_SelectedObjectName = oldName;
+							m_LastSelectedObjectName = oldName;
+							CopyStringToBuffer(oldName, m_ObjectNameBuffer);
+						},
+						[this, scenePtr, oldName, newName]()
+						{
+							if (!scenePtr)
+								return;
+							scenePtr->RenameGameObject(oldName, newName);
+							m_SelectedObjectName = newName;
+							m_LastSelectedObjectName = newName;
+							CopyStringToBuffer(newName, m_ObjectNameBuffer);
+						}
+					});
 				}
 				else
 				{
@@ -817,7 +951,7 @@ void EditorApplication::UpdateEditorCamera()
 		ImGui::Separator();
 
 
-	for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
+		for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
 		// 여기서 각 Component별 Property와 조작까지 생성?
 		ImGui::PushID(typeName.c_str());
 		const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -833,7 +967,30 @@ void EditorApplication::UpdateEditorCamera()
 			//삭제
 			if (ImGui::MenuItem("Remove Component"))
 			{
-				selectedObject->RemoveComponentByTypeName(typeName);
+				ObjectSnapshot beforeSnapshot;
+				beforeSnapshot.isOpaque = selectedIsOpaque;
+				selectedObject->Serialize(beforeSnapshot.data);
+
+				if (selectedObject->RemoveComponentByTypeName(typeName))
+				{
+					ObjectSnapshot afterSnapshot;
+					afterSnapshot.isOpaque = selectedIsOpaque;
+					selectedObject->Serialize(afterSnapshot.data);
+
+					Scene* scenePtr = scene.get();
+					const std::string label = "Remove Component " + typeName;
+					m_UndoManager.Push(UndoManager::Command{
+						label,
+						[scenePtr, beforeSnapshot]()
+						{
+							ApplySnapshot(scenePtr, beforeSnapshot);
+						},
+						[scenePtr, afterSnapshot]()
+						{
+							ApplySnapshot(scenePtr, afterSnapshot);
+						}
+					});
+				}
 			}
 		/*	if (!canRemove)
 			{
@@ -852,12 +1009,77 @@ void EditorApplication::UpdateEditorCamera()
 
 					for (const auto& prop : props)
 					{	
-						DrawComponentPropertyEditor(component, *prop, *m_AssetLoader);
+						const PropertyEditResult editResult = DrawComponentPropertyEditor(component, *prop, *m_AssetLoader);
+						const bool updated       = editResult.updated;
+						const bool activated     = editResult.activated;
+						const bool deactivated   = editResult.deactivated;
+						const size_t propertyKey = MakePropertyKey(component, prop->GetName());
+
+						if (activated && pendingPropertySnapshots.find(propertyKey) == pendingPropertySnapshots.end())
+						{
+							ObjectSnapshot snapshot;
+							snapshot.isOpaque = selectedIsOpaque;
+							selectedObject->Serialize(snapshot.data);
+							pendingPropertySnapshots.emplace(propertyKey, std::move(snapshot));
+						}
+
+						if (deactivated)
+						{
+							auto itSnapshot = pendingPropertySnapshots.find(propertyKey);
+							if (itSnapshot != pendingPropertySnapshots.end())
+							{
+								if (updated)
+								{
+									ObjectSnapshot beforeSnapshot = itSnapshot->second;
+									ObjectSnapshot afterSnapshot;
+									afterSnapshot.isOpaque = selectedIsOpaque;
+									selectedObject->Serialize(afterSnapshot.data);
+
+									Scene* scenePtr = scene.get();
+									const std::string label = "Edit " + prop->GetName();
+									m_UndoManager.Push(UndoManager::Command{
+										label,
+										[scenePtr, beforeSnapshot]()
+										{
+											ApplySnapshot(scenePtr, beforeSnapshot);
+										},
+										[scenePtr, afterSnapshot]()
+										{
+											ApplySnapshot(scenePtr, afterSnapshot);
+										}
+									});
+								}
+							}
+						}
 					}
 
   					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
   					{
-  						DrawSubMeshOverridesEditor(*meshComponent, *m_AssetLoader);
+						ObjectSnapshot beforeSnapshot;
+						beforeSnapshot.isOpaque = selectedIsOpaque;
+						selectedObject->Serialize(beforeSnapshot.data);
+
+						const bool updated = DrawSubMeshOverridesEditor(*meshComponent, *m_AssetLoader);
+
+						if (updated)
+						{
+							ObjectSnapshot afterSnapshot;
+							afterSnapshot.isOpaque = selectedIsOpaque;
+							selectedObject->Serialize(afterSnapshot.data);
+
+							Scene* scenePtr = scene.get();
+							m_UndoManager.Push(UndoManager::Command{
+								"Edit SubMesh Overrides",
+								[scenePtr, beforeSnapshot]()
+								{
+									ApplySnapshot(scenePtr, beforeSnapshot);
+								},
+								[scenePtr, afterSnapshot]()
+								{
+									ApplySnapshot(scenePtr, afterSnapshot);
+								}
+							});
+						}
   					}
 					ImGui::Separator();
 				}
@@ -901,10 +1123,32 @@ void EditorApplication::UpdateEditorCamera()
 
 				if (ImGui::MenuItem(typeName.c_str()))
 				{
+					ObjectSnapshot beforeSnapshot;
+					beforeSnapshot.isOpaque = selectedIsOpaque;
+					selectedObject->Serialize(beforeSnapshot.data);
+
 					auto comp = ComponentFactory::Instance().Create(typeName);
 					if (comp)
 					{
 						selectedObject->AddComponent(std::move(comp));
+
+						ObjectSnapshot afterSnapshot;
+						afterSnapshot.isOpaque = selectedIsOpaque;
+						selectedObject->Serialize(afterSnapshot.data);
+
+						Scene* scenePtr = scene.get();
+						const std::string label = "Add Component " + typeName;
+						m_UndoManager.Push(UndoManager::Command{
+							label,
+							[scenePtr, beforeSnapshot]()
+							{
+								ApplySnapshot(scenePtr, beforeSnapshot);
+							},
+							[scenePtr, afterSnapshot]()
+							{
+								ApplySnapshot(scenePtr, afterSnapshot);
+							}
+						});
 					}
 				}
 
@@ -931,7 +1175,43 @@ void EditorApplication::UpdateEditorCamera()
 			ImGui::End();
 			return;
 		}
-		 // new Scene 생성 -> Directional light / Main Camera Default 생성
+
+
+		auto captureSceneState = [&]() -> SceneStateSnapshot
+			{
+				SceneStateSnapshot snapshot;
+				snapshot.currentPath            = m_CurrentScenePath;
+				snapshot.selectedPath           = m_SelectedResourcePath;
+				snapshot.selectedObjectName     = m_SelectedObjectName;
+				snapshot.lastSelectedObjectName = m_LastSelectedObjectName;
+				snapshot.objectNameBuffer       = m_ObjectNameBuffer;
+				snapshot.lastSceneName			= m_LastSceneName;
+				snapshot.sceneNameBuffer		= m_SceneNameBuffer;
+
+				if (auto scene = m_SceneManager.GetCurrentScene())
+				{
+					snapshot.hasScene = true;
+					scene->Serialize(snapshot.data);
+				}
+				return snapshot;
+			};
+
+		auto restoreSceneState = [&](const SceneStateSnapshot& snapshot)
+			{
+				if (snapshot.hasScene)
+				{
+					m_SceneManager.LoadSceneFromJsonData(snapshot.data, snapshot.currentPath);
+				}
+				m_CurrentScenePath		 = snapshot.currentPath;
+				m_SelectedResourcePath   = snapshot.selectedPath;
+				m_SelectedObjectName	 = snapshot.selectedObjectName;
+				m_LastSelectedObjectName = snapshot.lastSelectedObjectName;
+				m_ObjectNameBuffer		 = snapshot.objectNameBuffer;
+				m_LastSceneName			 = snapshot.lastSceneName;
+				m_SceneNameBuffer		 = snapshot.sceneNameBuffer;
+			};
+
+		// new Scene 생성 -> Directional light / Main Camera Default 생성
 		auto createNewScene = [&]()
 			{
 				const std::string baseName = "NewScene";
@@ -946,6 +1226,9 @@ void EditorApplication::UpdateEditorCamera()
 					}
 				}
 
+				SceneStateSnapshot beforeState = captureSceneState();
+				SceneFileSnapshot beforeFile = CaptureFileSnapshot(newPath);
+
 				if(m_SceneManager.CreateNewScene(newPath))
 				{
 					m_CurrentScenePath = newPath;
@@ -953,6 +1236,23 @@ void EditorApplication::UpdateEditorCamera()
 					m_SelectedObjectName.clear();
 					m_LastSelectedObjectName.clear();
 					m_ObjectNameBuffer.fill('\0');
+
+					SceneStateSnapshot afterState = captureSceneState();
+					SceneFileSnapshot  afterFile  = CaptureFileSnapshot(newPath);
+
+					m_UndoManager.Push(UndoManager::Command{
+						"Create Scene",
+						[this, beforeState, beforeFile, restoreSceneState]()
+						{
+							restoreSceneState(beforeState);
+							RestoreFileSnapshot(beforeFile);
+						},
+						[this, afterState, afterFile, restoreSceneState]()
+						{
+							restoreSceneState(afterState);
+							RestoreFileSnapshot(afterFile);
+						}
+						});
 				}
 			};
 		ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause);
@@ -1038,10 +1338,34 @@ void EditorApplication::UpdateEditorCamera()
 			ImGui::Text("Save scene \"%s\"?", m_PendingSavePath.filename().string().c_str());
 			if (ImGui::Button("Save"))
 			{
+				const fs::path beforeCurrentPath  = m_CurrentScenePath;
+				const fs::path beforeSelectedPath = m_SelectedResourcePath;
+				SceneFileSnapshot beforeFile = CaptureFileSnapshot(m_PendingSavePath);
+
 				if (m_SceneManager.SaveSceneToJson(m_PendingSavePath))
 				{
 					m_CurrentScenePath = m_PendingSavePath;
 					m_SelectedResourcePath = m_PendingSavePath;
+
+					const fs::path afterCurrentPath  = m_CurrentScenePath;
+					const fs::path afterSelectedPath = m_SelectedResourcePath;
+					SceneFileSnapshot afterFile = CaptureFileSnapshot(m_PendingSavePath);
+
+					m_UndoManager.Push(UndoManager::Command{
+						"Save Scene",
+						[this, beforeCurrentPath, beforeSelectedPath, beforeFile]()
+						{
+							RestoreFileSnapshot(beforeFile);
+							m_CurrentScenePath = beforeCurrentPath;
+							m_SelectedResourcePath = beforeSelectedPath;
+						},
+						[this, afterCurrentPath, afterSelectedPath, afterFile]()
+						{
+							RestoreFileSnapshot(afterFile);
+							m_CurrentScenePath = afterCurrentPath;
+							m_SelectedResourcePath = afterSelectedPath;
+						}
+						});
 				}
 				ImGui::CloseCurrentPopup();
 			}
@@ -1059,19 +1383,57 @@ void EditorApplication::UpdateEditorCamera()
 		
 			if (ImGui::Button("Delete"))
 			{
+				const fs::path targetPath = m_PendingDeletePath;
+				const bool wasCurrent  = (m_CurrentScenePath == targetPath);
+				const bool wasSelected = (m_SelectedResourcePath == targetPath);
+				SceneFileSnapshot beforeFile = CaptureFileSnapshot(targetPath);
+
 				std::error_code error;
-				std::filesystem::remove(m_PendingDeletePath, error);
+				std::filesystem::remove(targetPath, error);
 				if (!error)
 				{
-					if (m_CurrentScenePath == m_PendingDeletePath)
+					if (wasCurrent)
 					{
 						m_CurrentScenePath.clear();
 					}
-					if (m_SelectedResourcePath == m_PendingDeletePath)
+					if (wasSelected)
 					{
 						m_SelectedResourcePath.clear();
 					}
 				}
+
+				SceneFileSnapshot afterFile;
+				afterFile.path = targetPath;
+				afterFile.existed = false;
+
+				m_UndoManager.Push(UndoManager::Command{
+					"Delete Scene File",
+					[this, beforeFile, wasCurrent, wasSelected]()
+					{
+						RestoreFileSnapshot(beforeFile);
+						if (wasCurrent)
+						{
+							m_CurrentScenePath = beforeFile.path;
+						}
+						if (wasSelected)
+						{
+							m_SelectedResourcePath = beforeFile.path;
+						}
+					},
+					[this, afterFile, wasCurrent, wasSelected]()
+					{
+						RestoreFileSnapshot(afterFile);
+						if (wasCurrent)
+						{
+							m_CurrentScenePath = afterFile.path;
+						}
+						if (wasSelected)
+						{
+							m_SelectedResourcePath = afterFile.path;
+						}
+					}
+				});
+
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
@@ -1155,6 +1517,7 @@ void EditorApplication::UpdateEditorCamera()
 
 						if (clicked)
 						{
+							SceneStateSnapshot beforeState = captureSceneState();
 							m_SelectedResourcePath = entry.path();
 							if (entry.path().extension() == ".json")
 							{
@@ -1164,6 +1527,40 @@ void EditorApplication::UpdateEditorCamera()
 									m_SelectedObjectName.clear();
 									m_LastSelectedObjectName.clear();
 									m_ObjectNameBuffer.fill('\0');
+
+									SceneStateSnapshot afterState = captureSceneState();
+
+									m_UndoManager.Push(UndoManager::Command{
+										"Load Scene",
+										[this, beforeState]()
+										{
+											if (beforeState.hasScene)
+											{
+												m_SceneManager.LoadSceneFromJsonData(beforeState.data, beforeState.currentPath);
+											}
+											m_CurrentScenePath		 = beforeState.currentPath;
+											m_SelectedResourcePath	 = beforeState.selectedPath;
+											m_SelectedObjectName	 = beforeState.selectedObjectName;
+											m_LastSelectedObjectName = beforeState.lastSelectedObjectName;
+											m_ObjectNameBuffer		 = beforeState.objectNameBuffer;
+											m_LastSceneName			 = beforeState.lastSceneName;
+											m_SceneNameBuffer		 = beforeState.sceneNameBuffer;
+										},
+										[this, afterState]()
+										{
+											if (afterState.hasScene)
+											{
+												m_SceneManager.LoadSceneFromJsonData(afterState.data, afterState.currentPath);
+											}
+											m_CurrentScenePath		 = afterState.currentPath;
+											m_SelectedResourcePath	 = afterState.selectedPath;
+											m_SelectedObjectName	 = afterState.selectedObjectName;
+											m_LastSelectedObjectName = afterState.lastSelectedObjectName;
+											m_ObjectNameBuffer		 = afterState.objectNameBuffer;
+											m_LastSceneName			 = afterState.lastSceneName;
+											m_SceneNameBuffer		 = afterState.sceneNameBuffer;
+										}
+									});
 								}
 							}
 						}

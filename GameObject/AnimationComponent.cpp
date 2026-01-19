@@ -686,7 +686,7 @@ void AnimationComponent::SampleLocalPoses(const RenderData::Skeleton& skeleton, 
 			if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) >= boneCount)
 			{
 #ifdef _DEBUG
-				AppendSkinningPaletteDebug(GetOwner(), skeleton, &clip, "track_bone_index_out_of_range");
+				//AppendSkinningPaletteDebug(GetOwner(), skeleton, &clip, "track_bone_index_out_of_range");
 #endif
 				continue;
 			}
@@ -746,20 +746,20 @@ void AnimationComponent::BuildPoseFromLocal(
 		DirectX::XMStoreFloat4x4(&m_SkinningPalette[i], skin);
 	}
 #ifdef _DEBUG
-	if (boneCount == 0)
-	{
-		AppendSkinningPaletteDebug(GetOwner(), skeleton, ResolveClip(), "empty_skeleton_bones");
-		return;
-	}
-
-	for (const auto& paletteMatrix : m_SkinningPalette)
-	{
-		if (MatrixHasNonFinite(paletteMatrix))
-		{
-			AppendSkinningPaletteDebug(GetOwner(), skeleton, ResolveClip(), "non_finite_palette_matrix");
-			break;
-		}
-	}
+// 	if (boneCount == 0)
+// 	{
+// 		AppendSkinningPaletteDebug(GetOwner(), skeleton, ResolveClip(), "empty_skeleton_bones");
+// 		return;
+// 	}
+// 
+// 	for (const auto& paletteMatrix : m_SkinningPalette)
+// 	{
+// 		if (MatrixHasNonFinite(paletteMatrix))
+// 		{
+// 			AppendSkinningPaletteDebug(GetOwner(), skeleton, ResolveClip(), "non_finite_palette_matrix");
+// 			break;
+// 		}
+// 	}
 #endif
 }
 

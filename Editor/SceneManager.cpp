@@ -155,6 +155,30 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	return true;
 }
 
+bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::filesystem::path& filePath)
+{
+	if(data.is_null())
+		return false;
+
+	auto loadedScene = std::make_shared<DefaultScene>(m_Services);
+	if (!filePath.empty())
+	{
+		loadedScene->SetName(filePath.stem().string());
+	}
+	else
+	{
+		loadedScene->SetName("Untitled Scene");
+	}
+
+	loadedScene->Initialize();
+	loadedScene->Deserialize(data);
+	loadedScene->SetIsPause(true);
+	SetCurrentScene(loadedScene);
+	m_CurrentScenePath = filePath;
+
+	return true;
+}
+
 bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 {	
 	// 같은 이름이 있는경우 그냥 덮어쓰기 할것

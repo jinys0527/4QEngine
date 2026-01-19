@@ -1339,7 +1339,7 @@ void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadRe
 				}
 
 #ifdef _DEBUG
-				WriteSkeletonLoadDebug(skelPath, skeleton);
+				//WriteSkeletonLoadDebug(skelPath, skeleton);
 #endif
 
 				result.skeleton = m_Skeletons.Load(skelPath.generic_string(), [skeleton]()
@@ -1383,7 +1383,7 @@ void AssetLoader::LoadAnimations(json& meta, const fs::path& baseDir, AssetLoadR
 			RenderData::AnimationClip clip = ParseAnimationJson(animData);
 
 #ifdef _DEBUG
-			WriteAnimationLoadDebug(animPath, clip);
+			//WriteAnimationLoadDebug(animPath, clip);
 #endif
 
 			AnimationHandle handle = m_Animations.Load(animPath.generic_string(), [clip]()
