@@ -365,6 +365,77 @@ void Scene::Deserialize(const nlohmann::json& j)
 	{
 		ProcessWithErase(goRoot.at("transparent"), m_TransparentObjects, GetEventDispatcher(), this);
 	}
+	std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
+	for (const auto& [name, object] : m_OpaqueObjects)
+	{
+		objectLookup[name] = object;
+	}
+	for (const auto& [name, object] : m_TransparentObjects)
+	{
+		objectLookup[name] = object;
+	}
+
+	auto applyParentLinks = [&](const nlohmann::json& arr)
+		{
+			for (const auto& gameObjectJson : arr)
+			{
+				const std::string name = gameObjectJson.at("name").get<std::string>();
+				auto childIt = objectLookup.find(name);
+				if (childIt == objectLookup.end())
+				{
+					continue;
+				}
+				auto* childTransform = childIt->second->GetComponent<TransformComponent>();
+				if (!childTransform)
+				{
+					continue;
+				}
+
+				const std::string parentName = gameObjectJson.value("parent", "");
+				if (parentName.empty())
+				{
+					if (childTransform->GetParent())
+					{
+						childTransform->DetachFromParent();
+					}
+					continue;
+				}
+
+				auto parentIt = objectLookup.find(parentName);
+				if (parentIt == objectLookup.end())
+				{
+					if (childTransform->GetParent())
+					{
+						childTransform->DetachFromParent();
+					}
+					continue;
+				}
+
+				auto* parentTransform = parentIt->second->GetComponent<TransformComponent>();
+				if (!parentTransform)
+				{
+					continue;
+				}
+
+				if (childTransform->GetParent() != parentTransform)
+				{
+					if (childTransform->GetParent())
+					{
+						childTransform->DetachFromParent();
+					}
+					childTransform->SetParent(parentTransform);
+				}
+			}
+		};
+
+	if (goRoot.contains("opaque"))
+	{
+		applyParentLinks(goRoot.at("opaque"));
+	}
+	if (goRoot.contains("transparent"))
+	{
+		applyParentLinks(goRoot.at("transparent"));
+	}
 	//UI
 }
 
