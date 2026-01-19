@@ -11,6 +11,43 @@ static void MatToRowMajor16(const aiMatrix4x4& m, float out16[16])
 	out16[12] = m.a4; out16[13] = m.b4; out16[14] = m.c4; out16[15] = m.d4;
 }
 
+#ifdef _DEBUG
+static std::string ReadStringAtOffset(const std::string& table, uint32_t offset)
+{
+	if (offset >= table.size())
+		return {};
+	return std::string(&table[offset]);
+}
+
+static void WriteSkeletonDebug(const std::string& outSkelBin, const SkeletonBuildResult& skel)
+{
+	std::ofstream ofs(outSkelBin + ".debug.txt");
+	if (!ofs)
+		return;
+
+	ofs << "boneCount=" << skel.bones.size() << "\n";
+	for (size_t i = 0; i < skel.bones.size(); ++i)
+	{
+		const BoneBin& bone = skel.bones[i];
+		ofs << "bone[" << i << "] name=" << ReadStringAtOffset(skel.stringTable, bone.nameOffset)
+			<< " parentIndex=" << bone.parentIndex << "\n";
+		ofs << "  localBind=";
+		for (int m = 0; m < 16; ++m)
+		{
+			ofs << bone.localBind[m];
+			ofs << (m == 15 ? "\n" : ",");
+		}
+		ofs << "  inverseBindPose=";
+		for (int m = 0; m < 16; ++m)
+		{
+			ofs << bone.inverseBindPose[m];
+			ofs << (m == 15 ? "\n" : ",");
+		}
+	}
+}
+#endif
+
+
 static aiMatrix4x4 Identity()
 {
 	aiMatrix4x4 I;
@@ -176,6 +213,10 @@ bool ImportFBXToSkelBin(
 	// 여기서는 "bone 없으면 false" 대신 "빈 스켈레톤 파일 생성"으로 처리 가능
 	// 일단: bone 없으면 outBoneNameToIndex 비우고 true 반환(정적 에셋 케이스)
 	outBoneNameToIndex = skel.boneNameToIndex;
+
+#ifdef _DEBUG
+	WriteSkeletonDebug(outSkelBin, skel);
+#endif
 
 	if (skel.bones.empty())
 		return true;
