@@ -92,9 +92,11 @@ namespace RenderData
 
 	enum class LightType : uint8_t
 	{
+		None,
 		Directional,
 		Point,
 		Spot,
+		Rect,
 		LIGHT_MAX
 	};
 

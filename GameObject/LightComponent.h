@@ -11,7 +11,7 @@ public:
 	static constexpr const char* StaticTypeName = "LightComponent";
 	const char* GetTypeName() const override;
 
-	LightComponent();
+	LightComponent() = default;
 	virtual ~LightComponent() = default;
 
 	void SetType(RenderData::LightType type) { m_Type = type; }
@@ -20,41 +20,25 @@ public:
 	void  SetColor(const XMFLOAT3& color){ m_Color = color; }
 	const XMFLOAT3& GetColor() const     { return m_Color;  }
 
-	void  SetIntensity(float intensity){ m_Intensity = intensity; }
+	void  SetIntensity(float intensity)		  { m_Intensity = intensity; }
 	const float& GetIntensity() const         { return m_Intensity;      }
-
-	void  SetRange(float range){ m_Range = range; }
-	const float& GetRange() const     { return m_Range;  }
-
-	void  SetSpotAngle(float angle){ m_SpotAngle = angle; }
-	const float& GetSpotAngle() const     { return m_SpotAngle;  }
-
-	void  SetDirection(const XMFLOAT3& direction){ m_Direction = direction; }
-	const XMFLOAT3& GetDirection() const         { return m_Direction;      }
 
 	void  SetPosition(const XMFLOAT3& position){ m_Position = position; }
 	const XMFLOAT3& GetPosition() const        { return m_Position;     }
 
-	void  SetLightViewProj(const XMFLOAT4X4& viewProj){ m_LightViewProj = viewProj; }
-	const XMFLOAT4X4& GetLightViewProj() const        { return m_LightViewProj;     }
-
 	void SetCastShadow			(bool castShadow) { m_CastShadow = castShadow; }
 	const bool& GetCastShadow   () const          { return m_CastShadow;       }
+
+	virtual RenderData::LightData BuildLightData() const;
 
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	//void Serialize  (nlohmann::json& j) const override;
-	//void Deserialize(const nlohmann::json& j) override;
-
 protected:
-	LightType  m_Type = LightType::Directional;
+	LightType  m_Type = LightType::None;
 	XMFLOAT3   m_Color        {};
 	XMFLOAT3   m_Position	  {};
 	float	   m_Intensity = 0.0f;
-	float      m_Range = 0.0f;
-	float      m_SpotAngle = 0.0f;
-	XMFLOAT3   m_Direction    {1, 0, 0};
 	XMFLOAT4X4 m_LightViewProj{};
 	bool       m_CastShadow = true;
 };

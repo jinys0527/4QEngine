@@ -13,6 +13,9 @@
 #include "MeshRenderer.h"
 #include "MaterialComponent.h"
 #include "LightComponent.h"
+#include "DirectionalLightComponent.h"
+#include "PointLightComponent.h"
+#include "SpotLightComponent.h"
 #include "TransformComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
@@ -631,18 +634,7 @@ static void AppendLights(const Object& obj, RenderData::FrameData& frameData)
 	{
 		if (!light) continue;
 
-		RenderData::LightData data{};
-		data.type          = light->GetType();
-		data.posiiton      = light->GetPosition();
-		data.range         = light->GetRange();
-		data.direction      = light->GetDirection();
-		data.spotAngle     = light->GetSpotAngle();
-		data.color         = light->GetColor();
-		data.intensity     = light->GetIntensity();
-		data.lightViewProj = light->GetLightViewProj();
-		data.castShadow    = light->GetCastShadow();
-
-		frameData.lights.push_back(data);
+		frameData.lights.push_back(light->BuildLightData());
 	}
 }
 

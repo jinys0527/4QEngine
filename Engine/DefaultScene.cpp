@@ -3,7 +3,7 @@
 #include "CameraObject.h"
 #include "CameraComponent.h"
 #include "TransformComponent.h"
-#include "LightComponent.h"
+#include "DirectionalLightComponent.h"
 #include "MeshRenderer.h"
 
 
@@ -37,7 +37,7 @@ void DefaultScene::Initialize()
 
 	auto lightObject = std::make_shared<GameObject>(GetEventDispatcher());
 	lightObject->SetName("DirectionalLight");
-	if (auto* light = lightObject->AddComponent<LightComponent>())
+	if (auto* light = lightObject->AddComponent<DirectionalLightComponent>())
 	{
 		light->SetType(RenderData::LightType::Directional);
 		light->SetColor({ 1.0f, 1.0f, 1.0f });
