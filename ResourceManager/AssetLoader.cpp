@@ -176,14 +176,6 @@ namespace
 				{
 					continue;
 				}
-
-#ifdef _DEBUG
-// 				std::cout << "[MaterialBin] path=" << materialBinPath
-// 					<< " material=" << materialName
-// 					<< " slot=" << t
-// 					<< " texture=" << texPathRaw
-// 					<< std::endl;
-#endif
 			}
 		}
 	}
@@ -390,6 +382,68 @@ namespace
 	}
 }
 
+#ifdef _DEBUG
+bool IsZeroMatrix(const float* m)
+{
+	for (int i = 0; i < 16; ++i)
+	{
+		if (m[i] != 0.0f)
+			return false;
+	}
+	return true;
+}
+
+void WriteSkeletonLoadDebug(const fs::path& skelPath, const RenderData::Skeleton& skeleton)
+{
+	std::ofstream ofs(skelPath.string() + ".load.debug.txt");
+	if (!ofs)
+		return;
+
+	ofs << "boneCount=" << skeleton.bones.size() << "\n";
+	for (size_t i = 0; i < skeleton.bones.size(); ++i)
+	{
+		const auto& bone = skeleton.bones[i];
+		ofs << "bone[" << i << "] name=" << bone.name
+			<< " parentIndex=" << bone.parentIndex
+			<< " bindPoseZero=" << (IsZeroMatrix(reinterpret_cast<const float*>(&bone.bindPose)) ? "true" : "false")
+			<< " inverseBindPoseZero=" << (IsZeroMatrix(reinterpret_cast<const float*>(&bone.inverseBindPose)) ? "true" : "false")
+			<< "\n";
+		ofs << "  bindPose=";
+		const float* bind = reinterpret_cast<const float*>(&bone.bindPose);
+		for (int m = 0; m < 16; ++m)
+			ofs << bind[m] << (m == 15 ? "\n" : ",");
+		ofs << "  inverseBindPose=";
+		const float* inv = reinterpret_cast<const float*>(&bone.inverseBindPose);
+		for (int m = 0; m < 16; ++m)
+			ofs << inv[m] << (m == 15 ? "\n" : ",");
+	}
+}
+
+void WriteAnimationLoadDebug(const fs::path& animPath, const RenderData::AnimationClip& clip)
+{
+	std::ofstream ofs(animPath.string() + ".load.debug.txt");
+	if (!ofs)
+		return;
+
+	size_t totalKeys = 0;
+	for (const auto& track : clip.tracks)
+		totalKeys += track.keyFrames.size();
+
+	ofs << "name=" << clip.name << "\n";
+	ofs << "duration=" << clip.duration << "\n";
+	ofs << "ticksPerSecond=" << clip.ticksPerSecond << "\n";
+	ofs << "tracks=" << clip.tracks.size() << "\n";
+	ofs << "totalKeys=" << totalKeys << "\n";
+
+	for (size_t i = 0; i < clip.tracks.size(); ++i)
+	{
+		const auto& track = clip.tracks[i];
+		ofs << "track[" << i << "] boneIndex=" << track.boneIndex
+			<< " keys=" << track.keyFrames.size() << "\n";
+	}
+}
+#endif
+
 AssetLoader::AssetLoader()
 {
 	SetActive(this);
@@ -453,9 +507,6 @@ void AssetLoader::LoadAll()
 				if (filename.find(".asset.json") == std::string::npos)
 					continue;
 
-#ifdef _DEBUG
-				//	std::cout << path.string() << std::endl;
-#endif
 				LoadAsset(path.string());
 			}
 		}
@@ -1169,10 +1220,6 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 					matStream.read(stringTable.data(), header.stringTableBytes);
 				}
 
-#ifdef _DEBUG
-				//		LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
-#endif // _DEBUG
-
 				materialHandles.reserve(mats.size());
 				materialByName.reserve(mats.size());
 				for (size_t i = 0; i < mats.size(); ++i)
@@ -1291,6 +1338,10 @@ void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadRe
 					skeleton.lowerBodyBones.assign(indices.begin(), indices.end());
 				}
 
+#ifdef _DEBUG
+				WriteSkeletonLoadDebug(skelPath, skeleton);
+#endif
+
 				result.skeleton = m_Skeletons.Load(skelPath.generic_string(), [skeleton]()
 					{
 						return std::make_unique<RenderData::Skeleton>(skeleton);
@@ -1330,6 +1381,10 @@ void AssetLoader::LoadAnimations(json& meta, const fs::path& baseDir, AssetLoadR
 			json animData;
 			animStream >> animData;
 			RenderData::AnimationClip clip = ParseAnimationJson(animData);
+
+#ifdef _DEBUG
+			WriteAnimationLoadDebug(animPath, clip);
+#endif
 
 			AnimationHandle handle = m_Animations.Load(animPath.generic_string(), [clip]()
 				{

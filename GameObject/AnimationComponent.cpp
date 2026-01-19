@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 
+#include "AssetLoader.h"
 #include "MathHelper.h"
 #include "Object.h"
 #include "SkeletalMeshComponent.h"
@@ -23,6 +25,83 @@ REGISTER_PROPERTY_READONLY(AnimationComponent, AutoBoneMaskApplied)
 REGISTER_PROPERTY_READONLY(AnimationComponent, LocalPose)
 REGISTER_PROPERTY_READONLY(AnimationComponent, GlobalPose)
 REGISTER_PROPERTY_READONLY(AnimationComponent, SkinningPalette)
+
+
+#ifdef _DEBUG
+namespace
+{
+	bool MatrixHasNonFinite(const DirectX::XMFLOAT4X4& matrix)
+	{
+		const float* data = reinterpret_cast<const float*>(&matrix);
+		for (int i = 0; i < 16; ++i)
+		{
+			if (!std::isfinite(data[i]))
+				return true;
+		}
+		return false;
+	}
+
+	void AppendSkinningPaletteDebug(
+		const Object* owner,
+		const RenderData::Skeleton& skeleton,
+		const RenderData::AnimationClip* clip,
+		const char* reason)
+	{
+		std::ofstream ofs("skinning_palette.debug.txt", std::ios::app);
+		if (!ofs)
+			return;
+
+		const std::string objectName = owner ? owner->GetName() : std::string("unknown");
+		ofs << "object=" << objectName
+			<< " reason=" << (reason ? reason : "unknown")
+			<< " bones=" << skeleton.bones.size()
+			<< " clip=" << (clip ? clip->name : "none")
+			<< "\n";
+	}
+}
+#else
+	namespace
+{
+	void AppendSkinningPaletteDebug(
+		const Object*,
+		const RenderData::Skeleton&,
+		const RenderData::AnimationClip*,
+		const char*)
+	{
+	}
+}
+#endif
+
+namespace
+{
+	void BuildBindPosePalette(const RenderData::Skeleton& skeleton, std::vector<DirectX::XMFLOAT4X4>& outPalette)
+	{
+		const size_t boneCount = skeleton.bones.size();
+		outPalette.resize(boneCount);
+		std::vector<DirectX::XMFLOAT4X4> globalPose(boneCount);
+
+		for (size_t i = 0; i < boneCount; ++i)
+		{
+			const auto local = DirectX::XMLoadFloat4x4(&skeleton.bones[i].bindPose);
+			const int parentIndex = skeleton.bones[i].parentIndex;
+			if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < boneCount)
+			{
+				const auto parent = DirectX::XMLoadFloat4x4(&globalPose[static_cast<size_t>(parentIndex)]);
+				const auto global = DirectX::XMMatrixMultiply(local, parent);
+				DirectX::XMStoreFloat4x4(&globalPose[i], global);
+			}
+			else
+			{
+				DirectX::XMStoreFloat4x4(&globalPose[i], local);
+			}
+
+			const auto global = DirectX::XMLoadFloat4x4(&globalPose[i]);
+			const auto invBind = DirectX::XMLoadFloat4x4(&skeleton.bones[i].inverseBindPose);
+			const auto skin = DirectX::XMMatrixMultiply(global, invBind);
+			DirectX::XMStoreFloat4x4(&outPalette[i], skin);
+		}
+	}
+}
 
 
 // 클립 유효 범위 내로 시간을 강제
@@ -262,6 +341,24 @@ void AnimationComponent::ClearRetargetOffsets()
 	m_RetargetOffsets.clear(); 
 }
 
+void AnimationComponent::Start()
+{
+	EnsureResourceStores();
+}
+
+void AnimationComponent::EnsureResourceStores()
+{
+	if (m_Skeletons && m_Animations)
+		return;
+
+	if (auto* loader = AssetLoader::GetActive())
+	{
+		m_Skeletons = &loader->GetSkeletons();
+		m_Animations = &loader->GetAnimations();
+	}
+}
+
+
 void AnimationComponent::RefreshDerivedAfterClipChanged()
 {
 	// 1) 블렌딩 상태 초기화 (클립 바뀌면 기존 블렌드는 의미 없음)
@@ -297,7 +394,16 @@ void AnimationComponent::RefreshDerivedAfterClipChanged()
 	if (!skeletal) return;
 
 	const RenderData::Skeleton* skel = ResolveSkeleton(skeletal->GetSkeletonHandle());
-	if (!skel || skel->bones.empty() || !clip) return;
+	if (!skel || skel->bones.empty())
+		return;
+
+	if (!clip)
+	{
+		BuildBindPosePalette(*skel, m_SkinningPalette);
+		skeletal->LoadSetSkinningPalette(m_SkinningPalette);
+		AppendSkinningPaletteDebug(GetOwner(), *skel, nullptr, "bind_pose_fallback");
+		return;
+	}
 
 	EnsureAutoBoneMask(*skel);
 	BuildPose(*skel, *clip, m_Playback.time);
@@ -386,6 +492,7 @@ void AnimationComponent::ClearSkeletonMask()
 
 void AnimationComponent::Update(float deltaTime)
 {
+	EnsureResourceStores();
 	if (!m_Playback.playing)
 		return;
 
@@ -576,8 +683,13 @@ void AnimationComponent::SampleLocalPoses(const RenderData::Skeleton& skeleton, 
 
 	for (const auto& track : clip.tracks)
 	{
-		if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) > boneCount)
-			continue;
+			if (track.boneIndex < 0 || static_cast<size_t>(track.boneIndex) >= boneCount)
+			{
+#ifdef _DEBUG
+				AppendSkinningPaletteDebug(GetOwner(), skeleton, &clip, "track_bone_index_out_of_range");
+#endif
+				continue;
+			}
 
 		localPoses[track.boneIndex] = SampleTrack(track, timeSec);
 	}
@@ -633,6 +745,22 @@ void AnimationComponent::BuildPoseFromLocal(
 		const auto skin    = DirectX::XMMatrixMultiply(global, invBind);
 		DirectX::XMStoreFloat4x4(&m_SkinningPalette[i], skin);
 	}
+#ifdef _DEBUG
+	if (boneCount == 0)
+	{
+		AppendSkinningPaletteDebug(GetOwner(), skeleton, ResolveClip(), "empty_skeleton_bones");
+		return;
+	}
+
+	for (const auto& paletteMatrix : m_SkinningPalette)
+	{
+		if (MatrixHasNonFinite(paletteMatrix))
+		{
+			AppendSkinningPaletteDebug(GetOwner(), skeleton, ResolveClip(), "non_finite_palette_matrix");
+			break;
+		}
+	}
+#endif
 }
 
 void AnimationComponent::BlendLocalPoses(

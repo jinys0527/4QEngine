@@ -20,7 +20,32 @@
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
+#include <fstream>
 
+#ifdef _DEBUG
+namespace
+{
+	void AppendSkinningPaletteFrameDebug(
+		const Object* owner,
+		const RenderData::Skeleton* skeleton,
+		size_t paletteSize,
+		const char* reason)
+	{
+		std::ofstream ofs("skinning_palette_frame.debug.txt", std::ios::app);
+		if (!ofs)
+			return;
+
+		const std::string objectName = owner ? owner->GetName() : std::string("unknown");
+		const size_t boneCount = skeleton ? skeleton->bones.size() : 0u;
+
+		ofs << "object=" << objectName
+			<< " reason=" << (reason ? reason : "unknown")
+			<< " bones=" << boneCount
+			<< " paletteSize=" << paletteSize
+			<< "\n";
+	}
+}
+#endif
 Scene::Scene(ServiceRegistry& serviceRegistry) : m_Services(serviceRegistry) 
 { 
 	m_AssetLoader = &m_Services.Get<AssetLoader>(); 
@@ -572,8 +597,34 @@ static void AppendSkinningPaletteIfAny(
 	outCount  = 0;
 
 	const auto& palette = skelComp.GetSkinningPalette();
+#ifdef _DEBUG
+	const RenderData::Skeleton* skeleton = nullptr;
+	if (auto* loader = AssetLoader::GetActive())
+	{
+		skeleton = loader->GetSkeletons().Get(skelComp.GetSkeletonHandle());
+	}
+
+	if (!skeleton)
+	{
+		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), nullptr, palette.size(), "skeleton_invalid");
+	}
+#endif
+
 	if (palette.empty())
+	{
+#ifdef _DEBUG
+		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), skeleton, 0u, "palette_empty");
+#endif
 		return;
+	}
+
+#ifdef _DEBUG
+	if (skeleton && palette.size() != skeleton->bones.size())
+	{
+		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), skeleton, palette.size(), "palette_bone_count_mismatch");
+	}
+#endif
+
 
 	outOffset = static_cast<UINT32>(frameData.skinningPalettes.size());
 	outCount  = static_cast<UINT32>(palette.size());

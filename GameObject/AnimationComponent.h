@@ -13,6 +13,7 @@ class SkeletalMeshComponent;
 class AnimationComponent : public Component
 {
 	friend class Editor;
+	friend class SkeletalMeshComponent;
 
 public:
 	enum class BlendType
@@ -89,6 +90,7 @@ public:
 			return;
 
 		m_ClipHandle = handle; 
+		EnsureResourceStores();
 
 		// 파생값 갱신 (읽기전용 표시용)
 		AnimationRef ref{};
@@ -96,7 +98,7 @@ public:
 			loader->GetAnimationAssetReference(handle, ref.assetPath, ref.assetIndex);
 
 		LoadSetAnimation(ref); // 또는 내부 갱신 함수
-
+		
 		// 클립 바뀌면 파생 상태를 일관되게 정리/재계산
 		RefreshDerivedAfterClipChanged();
 	}
@@ -221,6 +223,7 @@ public:
 	const std::vector<DirectX::XMFLOAT4X4>& GetSkinningPalette() const { return m_SkinningPalette; }
 
 	
+	void Start() override;
 	/// 애니메이션을 업데이트하고 스키닝 팔레트를 계산한다.
 	/// - playing=false면 아무 것도 하지 않는다.
 	/// - 블렌드 중이면 from/to 포즈를 샘플링 후 alpha로 블렌딩한다.
@@ -232,6 +235,7 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 private:
+	void EnsureResourceStores();
 	void RefreshDerivedAfterClipChanged();
 
 	void SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind,

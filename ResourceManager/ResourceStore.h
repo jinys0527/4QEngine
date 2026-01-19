@@ -101,7 +101,7 @@ public:
 		return entry.alive && entry.generation == handle.generation;
 	}
 
-#if defined(_DEBUG)
+#ifdef _DEBUG
 	void DebugDump(std::ostream& os) const
 	{
 		os << "ResourceStore<" << typeid(T).name() << "> entries=" << (m_Entries.size() > 0 ? m_Entries.size() - 1 : 0)

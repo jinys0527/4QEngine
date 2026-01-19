@@ -17,19 +17,7 @@ public:
 	SkeletalMeshComponent() = default;
 	virtual ~SkeletalMeshComponent() = default;
 
-	void  SetSkeletonHandle(const SkeletonHandle& handle)		   
-	{ 
-		m_SkeletonHandle = handle; 
-
-		// 파생값 갱신 (읽기전용 표시용)
-		SkeletonRef ref{};
-		if (auto* loader = AssetLoader::GetActive())
-			loader->GetSkeletonAssetReference(handle, ref.assetPath, ref.assetIndex);
-
-		LoadSetSkeleton(ref); // 또는 내부 갱신 함수
-
-		m_SkinningPalette.clear();
-	}
+	void  SetSkeletonHandle(const SkeletonHandle& handle);
 	const SkeletonHandle& GetSkeletonHandle() const                { return m_SkeletonHandle;   }
 
 	void LoadSetSkeleton(const SkeletonRef& skeletonRef) { m_Skeleton = skeletonRef; }
