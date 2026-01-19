@@ -424,6 +424,7 @@ void Scene::Deserialize(const nlohmann::json& j)
 						childTransform->DetachFromParent();
 					}
 					childTransform->SetParent(parentTransform);
+					//childTransform->SetParentKeepLocal(parentTransform);
 				}
 			}
 		};

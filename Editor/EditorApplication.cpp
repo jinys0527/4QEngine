@@ -462,9 +462,6 @@ void EditorApplication::UpdateEditorCamera()
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			auto scene = m_SceneManager.GetCurrentScene();
-			const char* sceneName = scene ? scene->GetName().c_str() : "None";
-			ImGui::Text("Scene: %s", sceneName);
 
 			// ---- 중앙 정렬 계산 ----
 			float buttonWidth = 60.0f;
@@ -772,6 +769,7 @@ void EditorApplication::UpdateEditorCamera()
 				childTransform->DetachFromParent();
 			}
 			childTransform->SetParent(parentTransform);
+			//childTransform->SetParentKeepLocal(parentTransform);
 			};
 		std::vector<GameObject*> rootObjects;
 		rootObjects.reserve(objectLookup.size());
@@ -798,9 +796,11 @@ void EditorApplication::UpdateEditorCamera()
 					flags |= ImGuiTreeNodeFlags_Selected;
 				}
 
+				ImGui::PushID(object);
+
 				if (!hasChildren) {
 					flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-					ImGui::PushID(object);
+
 					const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
 					if (ImGui::IsItemClicked())
 					{
@@ -858,8 +858,66 @@ void EditorApplication::UpdateEditorCamera()
 						}
 						ImGui::EndDragDropTarget();
 					}
+				}
+				else {
+					const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
+					if (ImGui::IsItemClicked())
+					{
+						m_SelectedObjectName = name;
+					}
+					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+					{
+						m_SelectedObjectName = name;
+						auto selected = findObjectByName(name);
+						if (selected)
+						{
+							FocusEditorCameraOnObject(selected);
+						}
+					}
+					if (ImGui::BeginPopupContextItem("ObjectContext"))
+					{
+						const bool isOpaque = objectOpacity[object];
+						auto selected = findObjectByName(name);
+						if (ImGui::MenuItem("Copy") && selected)
+						{
+							copySelectedObject(selected);
+						}
+						if (ImGui::MenuItem("Duplicate") && selected)
+						{
+							copySelectedObject(selected);
+							if (m_ObjectClipboardHasData)
+							{
+								queuePasteObject(m_ObjectClipboard);
+							}
+						}
+						if (ImGui::MenuItem("Delete"))
+						{
+							pendingDeletes.push_back(name);
+						}
+						ImGui::EndPopup();
+					}
 
-					if (nodeOpen && hasChildren)
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+						ImGui::TextUnformatted(name.c_str());
+						ImGui::EndDragDropSource();
+					}
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+						{
+							const char* payloadName = static_cast<const char*>(payload->Data);
+							if (payloadName)
+							{
+								reparentObject(payloadName, name);
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+
+					if (nodeOpen)
 					{
 						for (auto* childTransform : *children)
 						{
@@ -876,9 +934,10 @@ void EditorApplication::UpdateEditorCamera()
 						}
 						ImGui::TreePop();
 					}
+				}
 
-					ImGui::PopID();
-				};
+				ImGui::PopID();
+			};
 
 				for (auto* root : rootObjects)
 				{

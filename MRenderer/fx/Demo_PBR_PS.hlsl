@@ -70,7 +70,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     
     
     
-    col.a = 0;
+    //col.a = 0;
     
     return col;
 }

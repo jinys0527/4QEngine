@@ -34,6 +34,7 @@ public:
 	TransformComponent* GetParent() const { return m_Parent; }
 
 	void SetParent(TransformComponent* newParent);
+	void SetParentKeepLocal(TransformComponent* newParent);
 	void DetachFromParent();
 
 	void AddChild(TransformComponent* child);
