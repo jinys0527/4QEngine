@@ -12,19 +12,19 @@ public:
 	RectLightComponent();
 	virtual ~RectLightComponent() = default;
 
-	void  SetAttenuationRadius(float radius)  { m_AttenuationRadius = radius; }
+	void  SetAttenuationRadius(const float& radius)  { m_AttenuationRadius = radius; }
 	const float& GetAttenuationRadius() const { return m_AttenuationRadius;   }
 
-	void SetSourceWidth(float width)    { m_SourceWidth = width; }
+	void SetSourceWidth(const float& width)    { m_SourceWidth = width; }
 	const float& GetSourceWidth() const { return m_SourceWidth;  }
 
-	void SetSourceHeight(float height)	 { m_SourceHeight = height; }
+	void SetSourceHeight(const float& height)	 { m_SourceHeight = height; }
 	const float& GetSourceHeight() const { return m_SourceHeight;	}
 
-	void SetBarnDoorAngle(float angle)	  { m_BarnDoorAngle = angle; }
+	void SetBarnDoorAngle(const float& angle)	  { m_BarnDoorAngle = angle; }
 	const float& GetBarnDoorAngle() const { return m_BarnDoorAngle;  }
 
-	void SetBarnDoorLength(float length)	{ m_BarnDoorLength = length; }
+	void SetBarnDoorLength(const float& length)	{ m_BarnDoorLength = length; }
 	const float& GetBarnDoorLength() const  { return m_BarnDoorLength;	 }
 
 	void Update(float deltaTime) override;
