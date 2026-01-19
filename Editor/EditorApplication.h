@@ -18,6 +18,15 @@ class GameObject;
 class AssetLoader;
 class SoundManager;
 
+
+enum class EditorPlayState
+{
+	Stop,
+	Play,
+	Pause
+};
+
+
 class EditorApplication : public NzWndBase
 {
 
@@ -84,7 +93,7 @@ private:
 
 	EditorViewport        m_EditorViewport;
 	EditorViewport        m_GameViewport;
-
+	EditorPlayState       m_EditorState = EditorPlayState::Stop;
 	// Hier
 	std::string m_SelectedObjectName;
 
