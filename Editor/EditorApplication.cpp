@@ -885,6 +885,11 @@ void EditorApplication::UpdateEditorCamera()
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
 		for (const auto& typeName : typeNames)
 		{
+			if (typeName == "LightComponent")
+			{
+				continue;
+			}
+
 			const bool hasType = std::find(existingTypes.begin(), existingTypes.end(), typeName) != existingTypes.end();
 			//const bool disallowDuplicate = (typeName == "TransformComponent");
 			const bool disabled = hasType /*&& disallowDuplicate*/;
