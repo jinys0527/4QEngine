@@ -23,12 +23,9 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		m_RenderContext.DrawFullscreenQuad();
     }
 
+
     //빛 상수 버퍼 set
     SetDirLight(frame);
-
-    SetBlendState(BS::DEFAULT);
-    SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_ON);
 
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
@@ -48,12 +45,17 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	m_RenderContext.DrawFullscreenQuad();
 	//터레인 끝
 
+	m_RenderContext.UpdateGrid(frame);
+	m_RenderContext.DrawGrid();
 
-    m_RenderContext.UpdateGrid(frame);
-    m_RenderContext.DrawGrid();
+
     
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
+
+	SetBlendState(BS::DEFAULT);
+	SetRasterizerState(RS::CULLBACK);
+	SetDepthStencilState(DS::DEPTH_ON);
 
     for (size_t index : GetQueue())
     {
