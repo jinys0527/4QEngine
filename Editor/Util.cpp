@@ -817,12 +817,13 @@ bool DrawFSMGraphEditor(FSMGraph& graph)
 	return updated;
 }
 
-bool DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
+PropertyEditResult DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
 {	// 각 Property별 배치 Layout은 정해줘야 함
 	using PlaybackStateType = std::decay_t<decltype(std::declval<AnimationComponent>().GetPlayback())>;
 	using BoneMaskSourceType = std::decay_t<decltype(std::declval<AnimationComponent>().GetBoneMaskSource())>;
 	using RetargetOffsetsType = std::decay_t<decltype(std::declval<AnimationComponent>().GetRetargetOffsets())>;
 	const std::type_info& typeInfo = property.GetTypeInfo();
+	PropertyEditResult result;
 
 	struct RotationUIState
 	{
@@ -840,9 +841,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		if (ImGui::DragInt(property.GetName().c_str(), &value))
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(float))
@@ -852,9 +855,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		if (ImGui::DragFloat(property.GetName().c_str(), &value, DRAG_SPEED))
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated	|| ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(bool))
@@ -864,9 +869,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		if (ImGui::Checkbox(property.GetName().c_str(), &value))
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated	|| ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(std::string))
@@ -879,9 +886,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		{
 			std::string updatedValue(buffer.data());
 			property.SetValue(component, &updatedValue);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated	|| ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(XMFLOAT2))
@@ -894,9 +903,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			value.x = data[0];
 			value.y = data[1];
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(XMFLOAT3))
@@ -912,9 +923,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 					value.y = data[1];
 					value.z = data[2];
 					property.SetValue(component, &value);
-					return true;
+					result.updated = true;
 				}
-				return false;
+				result.activated = result.activated || ImGui::IsItemActivated();
+				result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+				return result;
 			}
 
 		}
@@ -928,9 +941,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			value.y = data[1];
 			value.z = data[2];
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated	|| ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(XMFLOAT4))
@@ -987,10 +1002,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 					const XMFLOAT4 updatedRotation = EulerRadiansToQuaternion(updatedRadians);
 					property.SetValue(component, &updatedRotation);
 					state.lastQuaternion = updatedRotation;
-					return true;
+					result.updated = true;
 				}
-
-				return false;
+				result.activated   = result.activated	|| ImGui::IsItemActivated();
+				result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+				return result;
 			}
 		}
 
@@ -1004,9 +1020,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			value.z = data[2];
 			value.w = data[3];
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	// 카메라
@@ -1020,9 +1038,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			value.Width = data[0];
 			value.Height = data[1];
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated	|| ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 	if (typeInfo == typeid(PerspectiveParams))
@@ -1034,15 +1054,20 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::Indent();
 		ImGui::PushID(property.GetName().c_str());
 		updated |= ImGui::InputFloat("Fov", &value.Fov);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		updated |= ImGui::InputFloat("Aspect", &value.Aspect);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		ImGui::PopID();
 		ImGui::Unindent();
 		if (updated)
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+
+		return result;
 	}
 
 	if (typeInfo == typeid(OrthoParams))
@@ -1054,15 +1079,21 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::Indent();
 		ImGui::PushID(property.GetName().c_str());
 		updated |= ImGui::InputFloat("Width", &value.Width);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		updated |= ImGui::InputFloat("Height", &value.Height);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		ImGui::PopID();
 		ImGui::Unindent();
 		if (updated)
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+
+		return result;
 	}
 
 	if (typeInfo == typeid(OrthoOffCenterParams))
@@ -1074,17 +1105,26 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::Indent();
 		ImGui::PushID(property.GetName().c_str());
 		updated |= ImGui::InputFloat("Left", &value.Left);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		updated |= ImGui::InputFloat("Right", &value.Right);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		updated |= ImGui::InputFloat("Bottom", &value.Bottom);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		updated |= ImGui::InputFloat("Top", &value.Top);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		ImGui::PopID();
 		ImGui::Unindent();
 		if (updated)
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+
+		return result;
 	}
 
 
@@ -1101,17 +1141,21 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			{
 				const UINT8 updated = static_cast<UINT8>(std::clamp(current, 0, 2));
 				property.SetValue(component, &updated);
-				return true;
+				result.updated = true;
 			}
-			return false;
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+			return result;
 		}
 
 		if (ImGui::DragScalar(property.GetName().c_str(), ImGuiDataType_U8, &value))
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
 	}
 
 
@@ -1132,7 +1176,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			label += "<None>";
 		}
 		ImGui::TextUnformatted(label.c_str());
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(XMFLOAT4X4))
@@ -1144,7 +1188,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._21, value._22, value._23, value._24);
 		ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._31, value._32, value._33, value._34);
 		ImGui::Text("  [%.3f %.3f %.3f %.3f]", value._41, value._42, value._43, value._44);
-		return false;
+		return result;
 	}
 
 
@@ -1162,6 +1206,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
 		ImGui::Button(buttonLabel.c_str());
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -1181,11 +1227,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::EndDragDropTarget();
 			if (updated)
 			{
-				return true;
+				result.updated = true;
 			}
 		}
 
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(MaterialHandle))
@@ -1202,6 +1248,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
 		ImGui::Button(buttonLabel.c_str());
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -1221,11 +1269,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::EndDragDropTarget();
 			if (updated)
 			{
-				return true;
+				result.updated = true;
 			}
 		}
 
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(TextureHandle))
@@ -1242,6 +1290,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
 		ImGui::Button(buttonLabel.c_str());
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -1255,11 +1305,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::EndDragDropTarget();
 			if (updated)
 			{
-				return true;
+				result.updated = true;
 			}
 		}
 
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(AnimationHandle))
@@ -1276,6 +1326,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
 		ImGui::Button(buttonLabel.c_str());
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -1289,11 +1341,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::EndDragDropTarget();
 			if (updated)
 			{
-				return true;
+				result.updated = true;
 			}
 		}
 
-		return false;
+		return result;
 	}
 
 
@@ -1311,6 +1363,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::SameLine();
 		ImGui::Button(buttonLabel.c_str());
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -1324,11 +1378,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::EndDragDropTarget();
 			if (updated)
 			{
-				return true;
+				result.updated = true;
 			}
 		}
 
-		return false;
+		return result;
 	}
 
 
@@ -1344,8 +1398,16 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::PushID(property.GetName().c_str());
 
 		updated |= ImGui::ColorEdit4("Base Color", &value.baseColor.x);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		updated |= ImGui::DragFloat("Metallic", &value.metallic, 0.01f, 0.0f, 1.0f);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		updated |= ImGui::DragFloat("Roughness", &value.roughness, 0.01f, 0.0f, 1.0f);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		// Texture slots
 		static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
@@ -1364,6 +1426,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted(kTextureLabels[i]);
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1382,6 +1446,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.textures[i] = TextureHandle::Invalid();
 				updated = true;
 			}
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 
 			ImGui::PopID();
@@ -1400,6 +1466,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted("Vertex Shader");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1420,6 +1489,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				stageShaderChanged = true;
 				updated = true;
 			}
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		// Pixel shader handle
@@ -1433,6 +1504,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted("Pixel Shader");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1454,6 +1528,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				stageShaderChanged = true;
 				updated = true;
 			}
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		// Shader asset handle
@@ -1467,6 +1543,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted("Shader Asset");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1485,6 +1564,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.shaderAsset = ShaderAssetHandle::Invalid();
 				updated = true;
 			}
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		ImGui::PopID();
@@ -1497,9 +1579,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		if (updated)
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		return result;
 	}
 
 
@@ -1508,7 +1590,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		std::vector<float> value;
 		property.GetValue(component, &value);
 		ImGui::Text("%s: %zu entries", property.GetName().c_str(), value.size());
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(std::vector<DirectX::XMFLOAT4X4>))
@@ -1548,7 +1630,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		}
 
 		ImGui::PopID();
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(FSMGraph))
@@ -1559,14 +1641,18 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		ImGui::Indent();
 		ImGui::PushID(property.GetName().c_str());
 		const bool updated = DrawFSMGraphEditor(graph);
+
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		ImGui::PopID();
 		ImGui::Unindent();
 		if (updated)
 		{
 			property.SetValue(component, &graph);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(PlaybackStateType))
@@ -1579,7 +1665,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			value.speed,
 			value.looping ? "true" : "false",
 			value.playing ? "true" : "false");
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(AnimationComponent::BlendState))
@@ -1595,6 +1681,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 
 		// active
 		updated |= ImGui::Checkbox("Active", &value.active);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		// fromClip
 		{
@@ -1605,6 +1693,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted("From Clip");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1623,6 +1714,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.fromClip = AnimationHandle::Invalid();
 				updated = true;
 			}
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		// toClip
@@ -1634,6 +1728,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted("To Clip");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+			
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1652,13 +1749,27 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.toClip = AnimationHandle::Invalid();
 				updated = true;
 			}
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		// duration / elapsed / fromTime / toTime
 		updated |= ImGui::InputFloat("Duration", &value.duration);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		updated |= ImGui::InputFloat("Elapsed", &value.elapsed);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		updated |= ImGui::InputFloat("From Time", &value.fromTime);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		updated |= ImGui::InputFloat("To Time", &value.toTime);
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		// blendType (enum)
 		{
@@ -1680,6 +1791,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.blendType = static_cast<AnimationComponent::BlendType>(current);
 				updated = true;
 			}
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		// curveFn: function pointer -> edit 불가 (표시만)
@@ -1696,9 +1809,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		if (updated)
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(AnimationComponent::BlendConfig))
@@ -1721,6 +1834,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
 
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 			if (ImGui::BeginDragDropTarget())
 			{
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_ANIMATION"))
@@ -1738,6 +1854,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.fromClip = AnimationHandle::Invalid();
 				updated = true;
 			}
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		{
@@ -1748,6 +1867,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			ImGui::TextUnformatted("To Clip");
 			ImGui::SameLine();
 			ImGui::Button(buttonLabel.c_str());
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 			if (ImGui::BeginDragDropTarget())
 			{
@@ -1766,6 +1888,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.toClip = AnimationHandle::Invalid();
 				updated = true;
 			}
+
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		updated |= ImGui::InputFloat("Blend Time", &value.blendTime);
@@ -1783,6 +1908,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.blendType = static_cast<AnimationComponent::BlendType>(current);
 				updated = true;
 			}
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		{
@@ -1836,6 +1963,8 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 				value.curveName = kCurveLabels[curveIndex];
 				updated = true;
 			}
+			result.activated   = result.activated   || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		}
 
 		ImGui::PopID();
@@ -1844,9 +1973,9 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		if (updated)
 		{
 			property.SetValue(component, &value);
-			return true;
+			result.updated = true;
 		}
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(BoneMaskSourceType))
@@ -1866,7 +1995,7 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 			break;
 		}
 		ImGui::Text("%s: %s", property.GetName().c_str(), label);
-		return false;
+		return result;
 	}
 
 	if (typeInfo == typeid(RetargetOffsetsType))
@@ -1874,11 +2003,11 @@ bool DrawComponentPropertyEditor(Component* component, const Property& property,
 		RetargetOffsetsType value;
 		property.GetValue(component, &value);
 		ImGui::Text("%s: %zu offsets", property.GetName().c_str(), value.size());
-		return false;
+		return result;
 	}
 
 	ImGui::TextDisabled("%s (Unsupported)", property.GetName().c_str());
-	return false;
+	return result;
 }
 
 bool ProjectToViewport(

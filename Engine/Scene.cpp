@@ -673,31 +673,31 @@ static void AppendSkinningPaletteIfAny(
 
 	const auto& palette = skelComp.GetSkinningPalette();
 #ifdef _DEBUG
-	const RenderData::Skeleton* skeleton = nullptr;
-	if (auto* loader = AssetLoader::GetActive())
-	{
-		skeleton = loader->GetSkeletons().Get(skelComp.GetSkeletonHandle());
-	}
-
-	if (!skeleton)
-	{
-		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), nullptr, palette.size(), "skeleton_invalid");
-	}
+// 	const RenderData::Skeleton* skeleton = nullptr;
+// 	if (auto* loader = AssetLoader::GetActive())
+// 	{
+// 		skeleton = loader->GetSkeletons().Get(skelComp.GetSkeletonHandle());
+// 	}
+// 
+// 	if (!skeleton)
+// 	{
+// 		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), nullptr, palette.size(), "skeleton_invalid");
+// 	}
 #endif
 
 	if (palette.empty())
 	{
 #ifdef _DEBUG
-		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), skeleton, 0u, "palette_empty");
+		//AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), skeleton, 0u, "palette_empty");
 #endif
 		return;
 	}
 
 #ifdef _DEBUG
-	if (skeleton && palette.size() != skeleton->bones.size())
-	{
-		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), skeleton, palette.size(), "palette_bone_count_mismatch");
-	}
+// 	if (skeleton && palette.size() != skeleton->bones.size())
+// 	{
+// 		AppendSkinningPaletteFrameDebug(skelComp.GetOwner(), skeleton, palette.size(), "palette_bone_count_mismatch");
+// 	}
 #endif
 
 

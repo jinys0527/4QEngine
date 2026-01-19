@@ -24,120 +24,132 @@
 #include "json.hpp"
 #include "ImGuizmo.h"
 #include "MathHelper.h"
-
-
+#include "Snapshot.h"
 
 #define DRAG_SPEED 0.01f
 namespace fs = std::filesystem;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	// ImGUI 창그리기
-	bool EditorApplication::Initialize()
+// ImGUI 창그리기
+bool EditorApplication::Initialize()
+{
+	const wchar_t* className = L"MIEditor";
+	const wchar_t* windowName = L"MIEditor";
+
+	if (false == Create(className, windowName, 1920, 1080))
 	{
-		const wchar_t* className = L"MIEditor";
-		const wchar_t* windowName = L"MIEditor";
-
-		if (false == Create(className, windowName, 1920, 1080))
-		{
-			return false;
-		}
-		///m_hwnd
-		//m_Engine.GetAssetManager().Init(L"../Resource");
-		//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-		m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
-
-		ImportAll();
-		m_AssetLoader = &m_Services.Get<AssetLoader>();
-		m_AssetLoader->LoadAll();
-		m_SoundManager = &m_Services.Get<SoundManager>();
-		m_SoundManager->Init();
-
-		m_InputManager = &m_Services.Get<InputManager>();
-
-		m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
-		m_SceneManager.Initialize();
-
-		
-
-		m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
-		m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
-
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = nullptr;				// ini 사용 안함
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-		ImGui::StyleColorsDark();
-		ImGui_ImplWin32_Init(m_hwnd);
-		ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
-		//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
-		//RT 받기
-		//초기 세팅 값으로 창 배치
-
-		return true;
-	}
-
-
-	void EditorApplication::Run() {
-		//실행 루프
-		MSG msg = { 0 };
-		while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
-			// Window Message 해석
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
-			{
-				m_InputManager->OnHandleMessage(msg);
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			else {
-				m_Engine.UpdateTime();
-				Update();
-				m_Engine.UpdateInput();
-				//UpdateLogic();  //★
-				Render();
-
-			}
-		}
-	}
-
-
-
-	void EditorApplication::Finalize() {
-		__super::Destroy();
-
-		ImGui_ImplDX11_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
-
-		//그외 메모리 해제
-	}
-
-	bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-	{
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
-		{
-			return true; // ImGui가 메시지를 처리했으면 true 반환
-		}
-
 		return false;
 	}
+	///m_hwnd
+	//m_Engine.GetAssetManager().Init(L"../Resource");
+	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
+	m_Engine.CreateDevice(m_hwnd);							//엔진 Device, DXDC생성
+
+	ImportAll();
+	m_AssetLoader = &m_Services.Get<AssetLoader>();
+	m_AssetLoader->LoadAll();
+	m_SoundManager = &m_Services.Get<SoundManager>();
+	m_SoundManager->Init();
+
+	m_InputManager = &m_Services.Get<InputManager>();
+
+	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
+	m_SceneManager.Initialize();
 
 
 
-	void EditorApplication::UpdateInput()
+	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.IniFilename = nullptr;				// ini 사용 안함
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(m_hwnd);
+	ImGui_ImplDX11_Init(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC()); //★ 일단 임시 Renderer의 Device사용, 엔진에서 받는 걸로 수정해야됨
+	//ImGui_ImplDX11_Init(m_Engine.Get3DDevice(),m_Engine.GetD3DDXDC());
+	//RT 받기
+	//초기 세팅 값으로 창 배치
+
+	return true;
+}
+
+
+void EditorApplication::Run() {
+	//실행 루프
+	MSG msg = { 0 };
+	while (WM_QUIT != msg.message /*&& !m_SceneManager.ShouldQuit()*/) {
+		// Window Message 해석
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			m_InputManager->OnHandleMessage(msg);
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else {
+			m_Engine.UpdateTime();
+			Update();
+			m_Engine.UpdateInput();
+			//UpdateLogic();  //★
+			Render();
+
+		}
+	}
+}
+
+
+
+void EditorApplication::Finalize() {
+	__super::Destroy();
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
+	//그외 메모리 해제
+}
+
+bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
 	{
-
+		return true; // ImGui가 메시지를 처리했으면 true 반환
 	}
 
-	void EditorApplication::Update()
+	return false;
+}
+
+
+
+void EditorApplication::UpdateInput()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	if (!io.WantTextInput)
 	{
-		float dTime = m_Engine.GetTime();
-
-		m_SceneManager.StateUpdate(dTime);
-		m_SceneManager.Update(dTime);
-
-		m_SoundManager->Update();
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))
+		{
+			ClearPendingPropertySnapshots();
+			m_UndoManager.Undo();
+		}
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y))
+		{
+			ClearPendingPropertySnapshots();
+			m_UndoManager.Redo();
+		}
 	}
+}
+
+void EditorApplication::Update()
+{
+	float dTime = m_Engine.GetTime();
+	UpdateInput();
+	m_SceneManager.StateUpdate(dTime);
+	m_SceneManager.Update(dTime);
+
+	m_SoundManager->Update();
+}
 
 void EditorApplication::UpdateSceneViewport()
 {
@@ -149,11 +161,11 @@ void EditorApplication::UpdateSceneViewport()
 	const UINT gameWidth = static_cast<UINT>(gameSize.x);
 	const UINT gameHeight = static_cast<UINT>(gameSize.y);
 
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene)
-		{
-			return;
-		}
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
 
 	if (editorWidth != 0 && editorHeight != 0)
 	{
@@ -187,38 +199,38 @@ void EditorApplication::UpdateEditorCamera()
 		return;
 	}
 
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene)
-		{
-			return;
-		}
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
 
-		auto camera = scene->GetEditorCamera();
-		if (!camera)
-		{
-			return;
-		}
+	auto camera = scene->GetEditorCamera();
+	if (!camera)
+	{
+		return;
+	}
 
-		auto* cameraComponent = camera->GetComponent<CameraComponent>();
-		if (!cameraComponent)
-		{
-			return;
-		}
+	auto* cameraComponent = camera->GetComponent<CameraComponent>();
+	if (!cameraComponent)
+	{
+		return;
+	}
 
-		ImGuiIO& io = ImGui::GetIO();
-		const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
+	ImGuiIO& io = ImGui::GetIO();
+	const float deltaTime = (io.DeltaTime > 0.0f) ? io.DeltaTime : m_Engine.GetTimer().DeltaTime();
 
-		XMFLOAT3 eye = cameraComponent->GetEye();
-		XMFLOAT3 look = cameraComponent->GetLook();
-		XMFLOAT3 up = cameraComponent->GetUp();
+	XMFLOAT3 eye = cameraComponent->GetEye();
+	XMFLOAT3 look = cameraComponent->GetLook();
+	XMFLOAT3 up = cameraComponent->GetUp();
 
-		XMVECTOR eyeVec = XMLoadFloat3(&eye);
-		XMVECTOR lookVec = XMLoadFloat3(&look);
-		XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
-		XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
-		XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
+	XMVECTOR eyeVec = XMLoadFloat3(&eye);
+	XMVECTOR lookVec = XMLoadFloat3(&look);
+	XMVECTOR upVec = XMVector3Normalize(XMLoadFloat3(&up));
+	XMVECTOR forwardVec = XMVector3Normalize(XMVectorSubtract(lookVec, eyeVec));
+	XMVECTOR rightVec = XMVector3Normalize(XMVector3Cross(upVec, forwardVec));
 
-		bool updated = false;
+	bool updated = false;
 
 	if (io.MouseDown[1])
 	{
@@ -226,24 +238,24 @@ void EditorApplication::UpdateEditorCamera()
 		const float yaw = io.MouseDelta.x * rotationSpeed;
 		const float pitch = io.MouseDelta.y * rotationSpeed;
 
-			if (yaw != 0.0f || pitch != 0.0f)
-			{
-				XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-				const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
-				const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
-				XMMATRIX transform = pitchRotation * yawRotation;
-				forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
-				rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
-				upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+		if (yaw != 0.0f || pitch != 0.0f)
+		{
+			XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+			const XMMATRIX yawRotation = XMMatrixRotationAxis(upVec, yaw);
+			const XMMATRIX pitchRotation = XMMatrixRotationAxis(rightVec, pitch);
+			XMMATRIX transform = pitchRotation * yawRotation;
+			forwardVec = XMVector3Normalize(XMVector3TransformNormal(forwardVec, transform));
+			rightVec = XMVector3Normalize(XMVector3Cross(worldUp, forwardVec));
+			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
 
-				lookVec = XMVectorAdd(eyeVec, forwardVec);
-				updated = true;
+			lookVec = XMVectorAdd(eyeVec, forwardVec);
+			updated = true;
 
-			}
+		}
 
-			const float baseSpeed = 6.0f;
-			const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
-			const float moveSpeed = baseSpeed * speedMultiplier;
+		const float baseSpeed = 6.0f;
+		const float speedMultiplier = io.KeyShift ? 3.0f : 1.0f;
+		const float moveSpeed = baseSpeed * speedMultiplier;
 
 		XMVECTOR moveVec = XMVectorZero();
 		if (ImGui::IsKeyDown(ImGuiKey_W))
@@ -280,103 +292,103 @@ void EditorApplication::UpdateEditorCamera()
 		}
 	}
 
-		if (io.MouseDown[2])
-		{
-			const float panSpeed = 0.01f;
-			const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
-			const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
-			const XMVECTOR pan = XMVectorAdd(panRight, panUp);
-			eyeVec = XMVectorAdd(eyeVec, pan);
-			lookVec = XMVectorAdd(lookVec, pan);
-			updated = true;
-		}
-
-		if (io.MouseWheel != 0.0f)
-		{
-			const float zoomSpeed = 4.0f;
-			const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
-			eyeVec = XMVectorAdd(eyeVec, dolly);
-			lookVec = XMVectorAdd(lookVec, dolly);
-			updated = true;
-		}
-
-		if (updated)
-		{
-			upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
-			XMStoreFloat3(&eye, eyeVec);
-			XMStoreFloat3(&look, lookVec);
-			XMStoreFloat3(&up, upVec);
-			cameraComponent->SetEyeLookUp(eye, look, up);
-		}
+	if (io.MouseDown[2])
+	{
+		const float panSpeed = 0.01f;
+		const XMVECTOR panRight = XMVectorScale(rightVec, -io.MouseDelta.x * panSpeed);
+		const XMVECTOR panUp = XMVectorScale(upVec, io.MouseDelta.y * panSpeed);
+		const XMVECTOR pan = XMVectorAdd(panRight, panUp);
+		eyeVec = XMVectorAdd(eyeVec, pan);
+		lookVec = XMVectorAdd(lookVec, pan);
+		updated = true;
 	}
 
-	void EditorApplication::Render() {
-		if (!m_Engine.GetD3DDXDC()) return; //★
+	if (io.MouseWheel != 0.0f)
+	{
+		const float zoomSpeed = 4.0f;
+		const XMVECTOR dolly = XMVectorScale(forwardVec, io.MouseWheel * zoomSpeed);
+		eyeVec = XMVectorAdd(eyeVec, dolly);
+		lookVec = XMVectorAdd(lookVec, dolly);
+		updated = true;
+	}
+
+	if (updated)
+	{
+		upVec = XMVector3Normalize(XMVector3Cross(forwardVec, rightVec));
+		XMStoreFloat3(&eye, eyeVec);
+		XMStoreFloat3(&look, lookVec);
+		XMStoreFloat3(&up, upVec);
+		cameraComponent->SetEyeLookUp(eye, look, up);
+	}
+}
+
+void EditorApplication::Render() {
+	if (!m_Engine.GetD3DDXDC()) return; //★
 
 
-		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get()};
-		m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
+	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
 	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
 	//m_SceneManager.Render(); // Scene 전체 그리고
 
-		RenderImGUI();
+	RenderImGUI();
 
-		Flip(m_Renderer.GetSwapChain().Get()); //★
-	}
+	Flip(m_Renderer.GetSwapChain().Get()); //★
+}
 
-	void EditorApplication::RenderImGUI() {
-		//★★
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-		
+void EditorApplication::RenderImGUI() {
+	//★★
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
 	CreateDockSpace();
 	DrawMainMenuBar();
 	DrawHierarchy();
-	
+
 	DrawInspector();
 	RenderSceneView();
 	DrawFolderView();
 	DrawResourceBrowser();
 
-	
-	 //Scene그리기
 
-	//흐름만 참조. 추후 우리 형태에 맞게 개발 필요
+	//Scene그리기
+
+   //흐름만 참조. 추후 우리 형태에 맞게 개발 필요
 	const bool gameViewportChanged = m_GameViewport.Draw(m_SceneRenderTarget);
 	const bool editorViewportChanged = m_EditorViewport.Draw(m_SceneRenderTarget_edit);
-	
+
 	if (editorViewportChanged || gameViewportChanged)
 	{
 		UpdateSceneViewport();
 	}
-	
-		UpdateEditorCamera();
-		DrawGizmo();
 
-		// DockBuilder
-		static bool dockBuilt = true;
-		if (dockBuilt)
-		{
-			//std::cout << "Layout Init" << std::endl;
-			SetupEditorDockLayout();
-			dockBuilt = false;
-		}
+	UpdateEditorCamera();
+	DrawGizmo();
+
+	// DockBuilder
+	static bool dockBuilt = true;
+	if (dockBuilt)
+	{
+		//std::cout << "Layout Init" << std::endl;
+		SetupEditorDockLayout();
+		dockBuilt = false;
+	}
 
 
-		ImGui::Render();  // Gui들그리기
+	ImGui::Render();  // Gui들그리기
 
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-		ImGuiIO& io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
 
 		// main back buffer 상태 복구 // 함수로 묶기
 		ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
@@ -385,31 +397,31 @@ void EditorApplication::UpdateEditorCamera()
 		SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 	}
 
-	}
+}
 
-	// 게임화면 
-	void EditorApplication::RenderSceneView() {
+// 게임화면 
+void EditorApplication::RenderSceneView() {
 
-		//if (!m_SceneRenderTarget.IsValid())
-		//{
-		//	return;
-		//}
+	//if (!m_SceneRenderTarget.IsValid())
+	//{
+	//	return;
+	//}
 
-		//auto scene = m_SceneManager.GetCurrentScene();
-		//if (!scene)
-		//{
-		//	return;
-		//}
+	//auto scene = m_SceneManager.GetCurrentScene();
+	//if (!scene)
+	//{
+	//	return;
+	//}
 
-		//scene->BuildFrameData(m_FrameData);
-		m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
-		m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
+	//scene->BuildFrameData(m_FrameData);
+	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
+	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
 
 	m_SceneRenderTarget.Bind();
 	m_SceneRenderTarget.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
-		m_SceneRenderTarget_edit.Bind();
-		m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
+	m_SceneRenderTarget_edit.Bind();
+	m_SceneRenderTarget_edit.Clear(COLOR(0.1f, 0.1f, 0.1f, 1.0f));
 
 
 	auto scene = m_SceneManager.GetCurrentScene();
@@ -418,20 +430,20 @@ void EditorApplication::UpdateEditorCamera()
 		scene->Render(m_FrameData);
 	}
 
-		//m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+	//m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
-	
 
-		if (!scene)
-		{
-			return;
-		}
 
-		auto editorCamera = scene->GetEditorCamera().get();
-		if (!editorCamera)
-		{
-			return;
-		}
+	if (!scene)
+	{
+		return;
+	}
+
+	auto editorCamera = scene->GetEditorCamera().get();
+	if (!editorCamera)
+	{
+		return;
+	}
 
 	if (auto* cameraComponent = editorCamera->GetComponent<CameraComponent>())
 	{
@@ -458,639 +470,800 @@ void EditorApplication::UpdateEditorCamera()
 }
 
 
-	void EditorApplication::DrawMainMenuBar()
+void EditorApplication::DrawMainMenuBar()
+{
+	if (ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::BeginMainMenuBar())
+
+		// ---- 중앙 정렬 계산 ----
+		float buttonWidth = 60.0f;
+		float spacing = ImGui::GetStyle().ItemSpacing.x;
+		float totalButtonWidth = buttonWidth * 2 + spacing;
+
+		float windowWidth = ImGui::GetWindowWidth();
+		float centerX = (windowWidth - totalButtonWidth) * 0.5f;
+
+		ImGui::SetCursorPosX(centerX);
+		//Play = True일 때 비활성
+
+		bool disablePlay = (m_EditorState == EditorPlayState::Play);
+		bool disablePause = (m_EditorState != EditorPlayState::Play);
+		bool disableStop = (m_EditorState == EditorPlayState::Stop);
+
+		ImGui::BeginDisabled(disablePlay);
+		if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
 		{
+			m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+			m_SceneManager.GetCurrentScene()->SetIsPause(false);
+			m_EditorState = EditorPlayState::Play;
 
-			// ---- 중앙 정렬 계산 ----
-			float buttonWidth = 60.0f;
-			float spacing = ImGui::GetStyle().ItemSpacing.x;
-			float totalButtonWidth = buttonWidth * 2 + spacing;
 
-			float windowWidth = ImGui::GetWindowWidth();
-			float centerX = (windowWidth - totalButtonWidth) * 0.5f;
+		}
+		ImGui::EndDisabled();
 
-			ImGui::SetCursorPosX(centerX);
-			//Play = True일 때 비활성
+		ImGui::SameLine();
 
-			bool disablePlay = (m_EditorState == EditorPlayState::Play);
-			bool disablePause = (m_EditorState != EditorPlayState::Play);
-			bool disableStop = (m_EditorState == EditorPlayState::Stop);
+		ImGui::BeginDisabled(disablePause);
+		if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
+		{
+			m_SceneManager.GetCurrentScene()->SetIsPause(true);
+			m_EditorState = EditorPlayState::Pause;
+		}
+		ImGui::EndDisabled();
 
-			ImGui::BeginDisabled(disablePlay);
-			if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
+		ImGui::SameLine();
+
+		ImGui::BeginDisabled(disableStop);
+		if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
+		{
+			m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
+			m_EditorState = EditorPlayState::Stop;
+		}
+		ImGui::EndDisabled();
+
+		ImGui::EndMainMenuBar();
+	}
+}
+
+void EditorApplication::DrawHierarchy() {
+	ImGui::Begin("Hierarchy");
+
+	auto scene = m_SceneManager.GetCurrentScene();
+
+	// Scene이 없는 경우는 이젠 없음
+	if (!scene) {
+		ImGui::Text("Scene Loading Fail");
+		ImGui::End();
+		return;
+	}
+
+	if (scene->GetName() != m_LastSceneName)
+	{
+		CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
+		m_LastSceneName = scene->GetName();
+	}
+	// Scene 이름 변경
+	ImGui::Text("Scene");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-1);
+	ImGui::InputText("##SceneName", m_SceneNameBuffer.data(), m_SceneNameBuffer.size());
+
+	if (ImGui::IsItemDeactivatedAfterEdit())
+	{
+		std::string oldName = scene->GetName();
+		std::string newName = m_SceneNameBuffer.data();
+		if (!newName.empty() && newName != scene->GetName())
+		{
+			scene->SetName(newName);
+			m_LastSceneName = newName;
+			const fs::path oldScenePath = m_CurrentScenePath;
+			const fs::path oldSelectedPath = m_SelectedResourcePath;
+			fs::path renamedPath = m_CurrentScenePath;
+			fs::path renamedSeletedPath = m_SelectedResourcePath;
+
+			if (!m_CurrentScenePath.empty() && m_CurrentScenePath.stem() == oldName)
 			{
-				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
-				m_SceneManager.GetCurrentScene()->SetIsPause(false);
-				m_EditorState = EditorPlayState::Play;
-
-
+				renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
+				if (m_SelectedResourcePath == m_CurrentScenePath)
+				{
+					renamedSeletedPath = renamedPath;
+				}
 			}
-			ImGui::EndDisabled();
+			m_SelectedResourcePath = renamedSeletedPath;
+			m_CurrentScenePath = renamedPath;
 
-			ImGui::SameLine();
-
-			ImGui::BeginDisabled(disablePause);
-			if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
-			{
-				m_SceneManager.GetCurrentScene()->SetIsPause(true);
-				m_EditorState = EditorPlayState::Pause;
-			}
-			ImGui::EndDisabled();
-
-			ImGui::SameLine();
-
-			ImGui::BeginDisabled(disableStop);
-			if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
-			{
-				m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
-				m_EditorState = EditorPlayState::Stop;
-			}
-			ImGui::EndDisabled();
-
-			ImGui::EndMainMenuBar();
+			Scene* scenePtr = scene.get();
+			m_UndoManager.Push(UndoManager::Command{
+				"Rename Scene",
+				[this, scenePtr, oldName, oldScenePath, oldSelectedPath]()
+				{
+					if (!scenePtr)
+						return;
+					scenePtr->SetName(oldName);
+					m_LastSceneName = oldName;
+					CopyStringToBuffer(oldName, m_SceneNameBuffer);
+					m_CurrentScenePath = oldScenePath;
+					m_SelectedResourcePath = oldSelectedPath;
+				},
+				[this, scenePtr, newName, renamedPath, renamedSeletedPath]()
+				{
+					if (!scenePtr)
+						return;
+					scenePtr->SetName(newName);
+					m_LastSceneName = newName;
+					CopyStringToBuffer(newName, m_SceneNameBuffer);
+					m_CurrentScenePath = renamedPath;
+					m_SelectedResourcePath = renamedSeletedPath;
+				}
+				});
+		}
+		else
+		{
+			CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
 		}
 	}
 
-	void EditorApplication::DrawHierarchy() {
-		ImGui::Begin("Hierarchy");
+	// hier창 우클릭 생성, 오브젝트에서 우클릭 Delete 필요( 추후 수정) 
+	if (ImGui::Button("Add GameObject")) // Button
+	{
+		const std::string name = MakeUniqueObjectName(*scene, "GameObject");
+		auto createdObject = scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
+		//scene->CreateGameObject(name, false); //transparent
+		m_SelectedObjectName = name;
 
-		auto scene = m_SceneManager.GetCurrentScene();
-
-		// Scene이 없는 경우는 이젠 없음
-		if (!scene) {
-			ImGui::Text("Scene Loading Fail");
-			ImGui::End();
-			return;
-		}
-
-		if (scene->GetName() != m_LastSceneName)
+		if (createdObject)
 		{
-			CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
-			m_LastSceneName = scene->GetName();
-		}
-		// Scene 이름 변경
-		ImGui::Text("Scene");
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(-1);
-		ImGui::InputText("##SceneName", m_SceneNameBuffer.data(), m_SceneNameBuffer.size());
+			ObjectSnapshot snapshot;
+			snapshot.isOpaque = true;
+			createdObject->Serialize(snapshot.data);
+			Scene* scenePtr = scene.get();
 
-		if (ImGui::IsItemDeactivatedAfterEdit())
-		{
-			std::string oldName = scene->GetName();
-			std::string newName = m_SceneNameBuffer.data();
-			if (!newName.empty() && newName != scene->GetName())
-			{
-				scene->SetName(newName);
-				m_LastSceneName = newName;
-				if (!m_CurrentScenePath.empty() && m_CurrentScenePath.stem() == oldName)
+			m_UndoManager.Push(UndoManager::Command{
+				"Create GameObject",
+				[scenePtr, snapshot]()
 				{
-					std::filesystem::path renamedPath = m_CurrentScenePath.parent_path() / (newName + m_CurrentScenePath.extension().string());
-					if (m_SelectedResourcePath == m_CurrentScenePath)
-					{
-						m_SelectedResourcePath = renamedPath;
-					}
-					m_CurrentScenePath = renamedPath;
-				}
-			}
-			else
-			{
-				CopyStringToBuffer(scene->GetName(), m_SceneNameBuffer);
-			}
-		}
+					if (!scenePtr)
+						return;
 
-		// hier창 우클릭 생성, 오브젝트에서 우클릭 Delete 필요( 추후 수정) 
-		if (ImGui::Button("Add GameObject")) // Button
-		{
-			const std::string name = MakeUniqueObjectName(*scene, "GameObject");
-			scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
-			//scene->CreateGameObject(name, false); //transparent
-			m_SelectedObjectName = name;
-		}
+					scenePtr->RemoveGameObjectByName(snapshot.data.value("name", ""));
 
-		std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
-		std::unordered_map<GameObject*, bool> objectOpacity;
-		auto collectObjects = [&](const auto& objects, bool isOpaque)
-			{
-				for (const auto& [name, object] : objects)
+				},
+				[scenePtr, snapshot]()
 				{
-					if (!object)
-					{
-						continue;
-					}
-					objectLookup[name] = object;
-					objectOpacity[object.get()] = isOpaque;
+					ApplySnapshot(scenePtr, snapshot);
 				}
-			};
-
-		collectObjects(scene->GetOpaqueObjects(), true);
-		collectObjects(scene->GetTransparentObjects(), false);
-
-		auto findObjectByName = [&](const std::string& name) -> std::shared_ptr<GameObject>
-			{
-				if (const auto it = objectLookup.find(name); it != objectLookup.end())
-				{
-					return it->second;
-				}
-				return nullptr;
-			};
-
-
-		// copy
-		const std::shared_ptr<GameObject>* selectedObject = nullptr;
-		bool selectedObjectIsOpaque = true;
-
-		if (const auto it = objectLookup.find(m_SelectedObjectName); it != objectLookup.end())
-		{
-			selectedObject = &it->second;
-			selectedObjectIsOpaque = objectOpacity[it->second.get()];
+				});
 		}
+	}
 
-		auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object)
+	std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
+	std::unordered_map<GameObject*, bool> objectOpacity;
+	auto collectObjects = [&](const auto& objects, bool isOpaque)
+		{
+			for (const auto& [name, object] : objects)
 			{
 				if (!object)
 				{
-					return;
+					continue;
+				}
+				objectLookup[name] = object;
+				objectOpacity[object.get()] = isOpaque;
+			}
+		};
+
+	collectObjects(scene->GetOpaqueObjects(), true);
+	collectObjects(scene->GetTransparentObjects(), false);
+
+	auto findObjectByName = [&](const std::string& name) -> std::shared_ptr<GameObject>
+		{
+			if (const auto it = objectLookup.find(name); it != objectLookup.end())
+			{
+				return it->second;
+			}
+			return nullptr;
+		};
+
+	// copy
+	const std::shared_ptr<GameObject>* selectedObject = nullptr;
+	if (const auto it = objectLookup.find(m_SelectedObjectName); it != objectLookup.end())
+	{
+		selectedObject = &it->second;
+	}
+
+	auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object)
+		{
+			if (!object)
+			{
+				return;
+			}
+
+			nlohmann::json clipboard = nlohmann::json::object();
+			clipboard["objects"] = nlohmann::json::array();
+
+			std::unordered_map<GameObject*, int> objectIds;
+			int nextId = 0;
+			std::vector<GameObject*> stack;
+			stack.push_back(object.get());
+			while (!stack.empty())
+			{
+				GameObject* current = stack.back();
+				stack.pop_back();
+
+				if (!current)
+				{
+					continue;
 				}
 
-				nlohmann::json clipboard = nlohmann::json::object();
-				clipboard["objects"] = nlohmann::json::array();
+				const bool isRoot = (current == object.get());
+				auto* currentTransform = current->GetComponent<TransformComponent>();
+				GameObject* parentObject = (!isRoot && currentTransform && currentTransform->GetParent())
+					? dynamic_cast<GameObject*>(currentTransform->GetParent()->GetOwner())
+					: nullptr;
 
-				std::vector<GameObject*> stack;
-				stack.push_back(object.get());
-				while (!stack.empty())
+				if (objectIds.find(current) == objectIds.end())
 				{
-					GameObject* current = stack.back();
-					stack.pop_back();
+					objectIds[current] = nextId++;
+				}
 
-					if (!current)
+				const int currentId = objectIds[current];
+				int parentId = -1;
+				if (parentObject)
+				{
+					if (objectIds.find(parentObject) == objectIds.end())
+					{
+						objectIds[parentObject] = nextId++;
+					}
+					parentId = objectIds[parentObject];
+				}
+
+				nlohmann::json objectJson;
+				current->Serialize(objectJson);
+				objectJson["clipboardId"] = currentId;
+				objectJson["parentId"] = parentId;
+				const auto opacityIt = objectOpacity.find(current);
+				objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;
+				clipboard["objects"].push_back(std::move(objectJson));
+
+				if (!currentTransform)
+				{
+					continue;
+				}
+
+				for (auto* childTransform : currentTransform->GetChildrens())
+				{
+					if (!childTransform)
 					{
 						continue;
 					}
-					nlohmann::json objectJson;
-					current->Serialize(objectJson);
-					objectJson["originalName"] = current->GetName();
-					auto* currentTransform = current->GetComponent<TransformComponent>();
-					const bool isRoot = (current == object.get());
-					const std::string parentName = (!isRoot && currentTransform && currentTransform->GetParent())
-						? currentTransform->GetParent()->GetOwner()->GetName()
-						: "";
-					objectJson["parent"] = parentName;
-					const auto opacityIt = objectOpacity.find(current);
-					objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;
-					clipboard["objects"].push_back(std::move(objectJson));
-
-					auto* transform = current->GetComponent<TransformComponent>();
-					if (!transform)
+					auto* childObject = dynamic_cast<GameObject*>(childTransform->GetOwner());
+					if (childObject)
 					{
-						continue;
+						stack.push_back(childObject);
 					}
-					for (auto* childTransform : transform->GetChildrens())
+				}
+			}
+
+			m_ObjectClipboard = std::move(clipboard);
+			const auto rootOpacityIt = objectOpacity.find(object.get());
+			m_ObjectClipboardIsOpaque = (rootOpacityIt != objectOpacity.end()) ? rootOpacityIt->second : true;
+			m_ObjectClipboardHasData = true;
+		};
+
+	struct PendingAdd
+	{
+		nlohmann::json data;
+		std::string label;
+	};
+
+	std::vector<PendingAdd> pendingAdds;
+
+	auto queuePasteObject = [&](nlohmann::json objectJson, std::string label)
+		{
+			pendingAdds.push_back(PendingAdd{ std::move(objectJson), std::move(label) });
+		};
+
+	auto pasteClipboardObject = [&]()
+		{
+			if (!m_ObjectClipboardHasData)
+			{
+				return false;
+			}
+			if (!m_ObjectClipboard.is_object())
+			{
+				m_ObjectClipboardHasData = false;
+				return false;
+			}
+			queuePasteObject(m_ObjectClipboard, "Paste GameObject");
+			return true;
+		};
+
+
+	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) && selectedObject && *selectedObject)
+		{
+			copySelectedObject(*selectedObject);
+		}
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V))
+		{
+			pasteClipboardObject();
+		}
+	}
+
+
+	ImGui::Separator();
+	std::vector<std::string> pendingDeletes;
+
+	if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+	{
+		if (!m_ObjectClipboardHasData)
+		{
+			ImGui::BeginDisabled();
+		}
+		if (ImGui::MenuItem("Paste"))
+		{
+			pasteClipboardObject();
+		}
+		if (!m_ObjectClipboardHasData)
+		{
+			ImGui::EndDisabled();
+		}
+		ImGui::EndPopup();
+	}
+
+
+	auto isDescendant = [&](TransformComponent* child, TransformComponent* potentialParent) -> bool
+		{
+			for (auto* current = potentialParent; current != nullptr; current = current->GetParent())
+			{
+				if (current == child)
+				{
+					return true;
+				}
+			}
+			return false;
+		};
+
+	auto reparentObject = [&](const std::string& childName, const std::string& parentName) {
+		if (childName == parentName) {
+			return;
+		}
+		auto childObject = findObjectByName(childName);
+		auto parentObject = findObjectByName(parentName);
+
+		if (!childObject || !parentObject)
+		{
+			return;
+		}
+
+		auto* childTransform = childObject->GetComponent<TransformComponent>();
+		auto* parentTransform = parentObject->GetComponent<TransformComponent>();
+		if (!childTransform || !parentTransform)
+		{
+			return;
+		}
+		if (childTransform->GetParent() == parentTransform)
+		{
+			return;
+		}
+		if (isDescendant(childTransform, parentTransform))
+		{
+			return;
+		}
+
+		SceneStateSnapshot beforeState = CaptureSceneState(scene);
+
+		if (childTransform->GetParent())
+		{
+			childTransform->DetachFromParentKeepLocal();
+		}
+		childTransform->SetParentKeepLocal(parentTransform);
+
+		SceneStateSnapshot afterState = CaptureSceneState(scene);
+		m_UndoManager.Push(UndoManager::Command{
+			"Reparent GameObject",
+			[this, beforeState]()
+			{
+				RestoreSceneState(beforeState);
+			},
+			[this, afterState]()
+			{
+				RestoreSceneState(afterState);
+			}
+			});
+		};
+
+	std::vector<GameObject*> rootObjects;
+	rootObjects.reserve(objectLookup.size());
+	for (const auto& [name, object] : objectLookup)
+	{
+		auto* transform = object->GetComponent<TransformComponent>();
+		if (!transform || transform->GetParent() == nullptr)
+		{
+			rootObjects.push_back(object.get());
+		}
+	}
+	std::sort(rootObjects.begin(), rootObjects.end(),
+		[](const GameObject* a, const GameObject* b)
+		{
+			if (!a || !b)
+			{
+				return a < b;
+			}
+			return a->GetName() < b->GetName();
+		});
+	auto drawHierarchyNode = [&](auto&& self, GameObject* object) -> void
+		{
+			if (!object) { return; }
+			const std::string& name = object->GetName();
+			auto* transform = object->GetComponent<TransformComponent>();
+			auto* children = transform ? &transform->GetChildrens() : nullptr;
+			const bool hasChildren = children && !children->empty();
+
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
+			if (m_SelectedObjectName == name)
+			{
+				flags |= ImGuiTreeNodeFlags_Selected;
+			}
+
+			ImGui::PushID(object);
+
+			if (!hasChildren) {
+				flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+				ImGui::TreeNodeEx(name.c_str(), flags);
+				if (ImGui::IsItemClicked())
+				{
+					m_SelectedObjectName = name;
+				}
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+				{
+					m_SelectedObjectName = name;
+					auto selected = findObjectByName(name);
+					if (selected)
+					{
+						FocusEditorCameraOnObject(selected);
+					}
+				}
+
+				if (ImGui::BeginPopupContextItem("ObjectContext"))
+				{
+					auto selected = findObjectByName(name);
+					if (ImGui::MenuItem("Copy") && selected)
+					{
+						copySelectedObject(selected);
+					}
+					if (ImGui::MenuItem("Duplicate") && selected)
+					{
+						copySelectedObject(selected);
+						if (m_ObjectClipboardHasData)
+						{
+							queuePasteObject(m_ObjectClipboard, "Duplicate GameObject");
+						}
+					}
+					if (ImGui::MenuItem("Delete"))
+					{
+						pendingDeletes.push_back(name);
+					}
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					ImGui::TextUnformatted(name.c_str());
+					ImGui::EndDragDropSource();
+				}
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+					{
+						const char* payloadName = static_cast<const char*>(payload->Data);
+						if (payloadName)
+						{
+							reparentObject(payloadName, name);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+			else {
+				const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
+				if (ImGui::IsItemClicked())
+				{
+					m_SelectedObjectName = name;
+				}
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+				{
+					m_SelectedObjectName = name;
+					auto selected = findObjectByName(name);
+					if (selected)
+					{
+						FocusEditorCameraOnObject(selected);
+					}
+				}
+				if (ImGui::BeginPopupContextItem("ObjectContext"))
+				{
+					auto selected = findObjectByName(name);
+					if (ImGui::MenuItem("Copy") && selected)
+					{
+						copySelectedObject(selected);
+					}
+					if (ImGui::MenuItem("Duplicate") && selected)
+					{
+						copySelectedObject(selected);
+						if (m_ObjectClipboardHasData)
+						{
+							queuePasteObject(m_ObjectClipboard, "Duplicate GameObject");
+						}
+					}
+					if (ImGui::MenuItem("Delete"))
+					{
+						pendingDeletes.push_back(name);
+					}
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					ImGui::TextUnformatted(name.c_str());
+					ImGui::EndDragDropSource();
+				}
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+					{
+						const char* payloadName = static_cast<const char*>(payload->Data);
+						if (payloadName)
+						{
+							reparentObject(payloadName, name);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				if (nodeOpen)
+				{
+					for (auto* childTransform : *children)
 					{
 						if (!childTransform)
 						{
 							continue;
 						}
-						auto* childObject = dynamic_cast<GameObject*>(childTransform->GetOwner());
-						if (childObject)
+						auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
+						if (!childOwner)
 						{
-							stack.push_back(childObject);
+							continue;
 						}
+						self(self, childOwner);
 					}
+					ImGui::TreePop();
 				}
-
-				m_ObjectClipboard = std::move(clipboard);
-				const auto rootOpacityIt = objectOpacity.find(object.get());
-				m_ObjectClipboardIsOpaque = (rootOpacityIt != objectOpacity.end()) ? rootOpacityIt->second : true;
-				m_ObjectClipboardHasData = true;
-			};
-
-		std::vector<nlohmann::json> pendingAdds;
-
-		auto queuePasteObject = [&](nlohmann::json objectJson)
-			{
-				pendingAdds.emplace_back(std::move(objectJson));
-			};
-
-		auto pasteClipboardObject = [&]()
-			{
-				if (!m_ObjectClipboardHasData)
-				{
-					return false;
-				}
-				if (!m_ObjectClipboard.is_object())
-				{
-					m_ObjectClipboardHasData = false;
-					return false;
-				}
-				queuePasteObject(m_ObjectClipboard);
-				return true;
-			};
-
-
-		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) && selectedObject && *selectedObject)
-			{
-				copySelectedObject(*selectedObject);
 			}
-			if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V))
+
+			ImGui::PopID();
+		};
+
+	for (auto* root : rootObjects)
+	{
+		drawHierarchyNode(drawHierarchyNode, root);
+	}
+
+	for (auto& pendingAdd : pendingAdds)
+	{
+		bool didAdd = false;
+		SceneStateSnapshot beforeState = CaptureSceneState(scene);
+
+		if (pendingAdd.data.contains("objects") && pendingAdd.data["objects"].is_array())
+		{
+			std::unordered_map<int, std::shared_ptr<GameObject>> createdObjects;
+
+			for (auto& objectJson : pendingAdd.data["objects"])
 			{
-				pasteClipboardObject();
+				const int clipboardId = objectJson.value("clipboardId", static_cast<int>(createdObjects.size()));
+				const std::string baseName = objectJson.value("name", "GameObject");
+				const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
+
+				objectJson["name"] = uniqueName;
+				const bool isOpaque = objectJson.value("isOpaque", true);
+				auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
+				newObject->Deserialize(objectJson);
+				scene->AddGameObject(newObject, isOpaque);
+				createdObjects[clipboardId] = newObject;
+				m_SelectedObjectName = uniqueName;
+				didAdd = true;
+			}
+
+			for (const auto& objectJson : pendingAdd.data["objects"])
+			{
+				const int clipboardId = objectJson.value("clipboardId", -1);
+				const int parentId = objectJson.value("parentId", -1);
+				if (clipboardId < 0 || parentId < 0)
+				{
+					continue;
+				}
+
+				auto childIt = createdObjects.find(clipboardId);
+				auto parentIt = createdObjects.find(parentId);
+				if (childIt == createdObjects.end() || parentIt == createdObjects.end())
+				{
+					continue;
+				}
+
+				auto* childTransform = childIt->second->GetComponent<TransformComponent>();
+				auto* parentTransform = parentIt->second->GetComponent<TransformComponent>();
+				if (!childTransform || !parentTransform)
+				{
+					continue;
+				}
+				if (childTransform->GetParent())
+				{
+					childTransform->DetachFromParentKeepLocal();
+				}
+				childTransform->SetParentKeepLocal(parentTransform);
 			}
 		}
-
-
-		ImGui::Separator();
-		std::vector<std::string> pendingDeletes;
-
-		if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+		else if (pendingAdd.data.contains("components") && pendingAdd.data["components"].is_array())
 		{
-			if (!m_ObjectClipboardHasData)
-			{
-				ImGui::BeginDisabled();
-			}
-			if (ImGui::MenuItem("Paste"))
-			{
-				pasteClipboardObject();
-			}
-			if (!m_ObjectClipboardHasData)
-			{
-				ImGui::EndDisabled();
-			}
-			ImGui::EndPopup();
+			const std::string baseName = pendingAdd.data.value("name", "GameObject");
+			const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
+			pendingAdd.data["name"] = uniqueName;
+
+			auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
+			newObject->Deserialize(pendingAdd.data);
+			scene->AddGameObject(newObject, m_ObjectClipboardIsOpaque);
+			m_SelectedObjectName = uniqueName;
+			didAdd = true;
 		}
 
-
-		auto isDescendant = [&](TransformComponent* child, TransformComponent* potentialParent) -> bool
-			{
-				for (auto* current = potentialParent; current != nullptr; current = current->GetParent())
-				{
-					if (current == child)
-					{
-						return true;
-					}
-				}
-				return false;
-			};
-
-		auto reparentObject = [&](const std::string& childName, const std::string& parentName) {
-
-			if (childName == parentName) {
-				return;
-			}
-			auto childObject = findObjectByName(childName);
-			auto parentObject = findObjectByName(parentName);
-
-			if (!childObject || !parentObject)
-			{
-				return;
-			}
-
-			auto* childTransform = childObject->GetComponent<TransformComponent>();
-			auto* parentTransform = parentObject->GetComponent<TransformComponent>();
-			if (!childTransform || !parentTransform)
-			{
-				return;
-			}
-			if (childTransform->GetParent() == parentTransform)
-			{
-				return;
-			}
-			if (isDescendant(childTransform, parentTransform))
-			{
-				return;
-			}
-
-			if (childTransform->GetParent())
-			{
-				childTransform->DetachFromParent();
-			}
-			//childTransform->SetParent(parentTransform);
-			childTransform->SetParentKeepLocal(parentTransform);
-			};
-		std::vector<GameObject*> rootObjects;
-		rootObjects.reserve(objectLookup.size());
-		for (const auto& [name, object] : objectLookup)
+		if (didAdd)
 		{
-			auto* transform = object->GetComponent<TransformComponent>();
-			if (!transform || transform->GetParent() == nullptr)
+			SceneStateSnapshot afterState = CaptureSceneState(scene);
+			m_UndoManager.Push(UndoManager::Command{
+				pendingAdd.label,
+				[this, beforeState]()
+				{
+					RestoreSceneState(beforeState);
+				},
+				[this, afterState]()
+				{
+					RestoreSceneState(afterState);
+				}
+				});
+		}
+	}
+
+	for (const auto& name : pendingDeletes)
+	{
+		SceneStateSnapshot beforeState = CaptureSceneState(scene);
+		scene->RemoveGameObjectByName(name);
+		if (m_SelectedObjectName == name)
+		{
+			m_SelectedObjectName.clear();
+		}
+		SceneStateSnapshot afterState = CaptureSceneState(scene);
+
+		m_UndoManager.Push(UndoManager::Command{
+			"Delete GameObject",
+			[this, beforeState]()
 			{
-				rootObjects.push_back(object.get());
+				RestoreSceneState(beforeState);
+			},
+			[this, afterState]()
+			{
+				RestoreSceneState(afterState);
 			}
-		}
-		//------------------------------------
-		auto drawHierarchyNode = [&](auto&& self, GameObject* object) -> void
+			});
+	}
+
+	ImGui::End();
+
+}
+
+
+
+
+void EditorApplication::DrawInspector() {
+
+	ImGui::Begin("Inspector");
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene) {
+		ImGui::Text("No Selected Object");
+		ImGui::End();
+		return;
+	}
+
+	// hierarchy 에서 선택한 object 
+	// Opaque
+	const auto& opaqueObjects = scene->GetOpaqueObjects();
+	const auto  opaqueIt = opaqueObjects.find(m_SelectedObjectName);
+
+	// Transparent
+	const auto& transparentObjects = scene->GetTransparentObjects();
+	const auto  transparentIt = transparentObjects.find(m_SelectedObjectName);
+
+	// 선택된 오브젝트가 없거나, 실체가 없는 경우
+	//second == Object 포인터
+	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second))
+	{
+		ImGui::Text("No Selected GameObject");
+		ImGui::End();
+		return;
+	}
+
+	auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
+	auto selectedObject = it->second;
+
+	const bool selectedIsOpaque = (opaqueIt != opaqueObjects.end() && opaqueIt->second);
+
+	if (m_LastPendingSnapshotScenePath != m_CurrentScenePath)
+	{
+		m_PendingPropertySnapshots.clear();
+		m_LastPendingSnapshotScenePath = m_CurrentScenePath;
+	}
+
+	if (m_LastSelectedObjectName != m_SelectedObjectName)
+	{
+		m_PendingPropertySnapshots.clear();
+		CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
+		m_LastSelectedObjectName = m_SelectedObjectName;
+	}
+
+	ImGui::Text("Name");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-1);
+	ImGui::InputText("##ObjectName", m_ObjectNameBuffer.data(), m_ObjectNameBuffer.size());
+	if (ImGui::IsItemDeactivatedAfterEdit())
+	{
+		std::string newName = m_ObjectNameBuffer.data();
+		if (!newName.empty() && newName != selectedObject->GetName())
+		{
+			const std::string oldName = it->second->GetName();
+			if (scene->RenameGameObject(oldName, newName))
 			{
-				if (!object) { return; }
-				const std::string& name = object->GetName();
-				auto* transform = object->GetComponent<TransformComponent>();
-				auto* children = transform ? &transform->GetChildrens() : nullptr;
-				const bool hasChildren = children && !children->empty();
+				m_SelectedObjectName = newName;
+				m_LastSelectedObjectName = newName;
 
-				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
-				if (m_SelectedObjectName == name)
-				{
-					flags |= ImGuiTreeNodeFlags_Selected;
-				}
-
-				ImGui::PushID(object);
-
-				if (!hasChildren) {
-					flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-
-					const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
-					if (ImGui::IsItemClicked())
+				Scene* scenePtr = scene.get();
+				m_UndoManager.Push(UndoManager::Command{
+					"Rename GameObject",
+					[this, scenePtr, oldName, newName]()
 					{
-						m_SelectedObjectName = name;
-					}
-					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+						if (!scenePtr)
+							return;
+						scenePtr->RenameGameObject(newName, oldName);
+						m_SelectedObjectName = oldName;
+						m_LastSelectedObjectName = oldName;
+						CopyStringToBuffer(oldName, m_ObjectNameBuffer);
+					},
+					[this, scenePtr, oldName, newName]()
 					{
-						m_SelectedObjectName = name;
-						auto selected = findObjectByName(name);
-						if (selected)
-						{
-							FocusEditorCameraOnObject(selected);
-						}
+						if (!scenePtr)
+							return;
+						scenePtr->RenameGameObject(oldName, newName);
+						m_SelectedObjectName = newName;
+						m_LastSelectedObjectName = newName;
+						CopyStringToBuffer(newName, m_ObjectNameBuffer);
 					}
-
-					if (ImGui::BeginPopupContextItem("ObjectContext"))
-					{
-						const bool isOpaque = objectOpacity[object];
-						auto selected = findObjectByName(name);
-						if (ImGui::MenuItem("Copy") && selected)
-						{
-							copySelectedObject(selected);
-						}
-						if (ImGui::MenuItem("Duplicate") && selected)
-						{
-							copySelectedObject(selected);
-							if (m_ObjectClipboardHasData)
-							{
-								queuePasteObject(m_ObjectClipboard);
-							}
-						}
-						if (ImGui::MenuItem("Delete"))
-						{
-							pendingDeletes.push_back(name);
-						}
-						ImGui::EndPopup();
-					}
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
-						ImGui::TextUnformatted(name.c_str());
-						ImGui::EndDragDropSource();
-					}
-
-					if (ImGui::BeginDragDropTarget())
-					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
-						{
-							const char* payloadName = static_cast<const char*>(payload->Data);
-							if (payloadName)
-							{
-								reparentObject(payloadName, name);
-							}
-						}
-						ImGui::EndDragDropTarget();
-					}
-				}
-				else {
-					const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
-					if (ImGui::IsItemClicked())
-					{
-						m_SelectedObjectName = name;
-					}
-					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-					{
-						m_SelectedObjectName = name;
-						auto selected = findObjectByName(name);
-						if (selected)
-						{
-							FocusEditorCameraOnObject(selected);
-						}
-					}
-					if (ImGui::BeginPopupContextItem("ObjectContext"))
-					{
-						const bool isOpaque = objectOpacity[object];
-						auto selected = findObjectByName(name);
-						if (ImGui::MenuItem("Copy") && selected)
-						{
-							copySelectedObject(selected);
-						}
-						if (ImGui::MenuItem("Duplicate") && selected)
-						{
-							copySelectedObject(selected);
-							if (m_ObjectClipboardHasData)
-							{
-								queuePasteObject(m_ObjectClipboard);
-							}
-						}
-						if (ImGui::MenuItem("Delete"))
-						{
-							pendingDeletes.push_back(name);
-						}
-						ImGui::EndPopup();
-					}
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
-						ImGui::TextUnformatted(name.c_str());
-						ImGui::EndDragDropSource();
-					}
-
-					if (ImGui::BeginDragDropTarget())
-					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
-						{
-							const char* payloadName = static_cast<const char*>(payload->Data);
-							if (payloadName)
-							{
-								reparentObject(payloadName, name);
-							}
-						}
-						ImGui::EndDragDropTarget();
-					}
-
-					if (nodeOpen)
-					{
-						for (auto* childTransform : *children)
-						{
-							if (!childTransform)
-							{
-								continue;
-							}
-							auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
-							if (!childOwner)
-							{
-								continue;
-							}
-							self(self, childOwner);
-						}
-						ImGui::TreePop();
-					}
-				}
-
-				ImGui::PopID();
-			};
-
-				for (auto* root : rootObjects)
-				{
-					drawHierarchyNode(drawHierarchyNode, root);
-				}
-				for (auto& clipboardJson : pendingAdds)
-				{
-					if (clipboardJson.contains("objects") && clipboardJson["objects"].is_array())
-					{
-						std::unordered_map<std::string, std::shared_ptr<GameObject>> createdObjects;
-
-						for (auto& objectJson : clipboardJson["objects"])
-						{
-							const std::string originalName = objectJson.value("originalName", objectJson.value("name", "GameObject"));
-							const std::string resolvedOriginalName = originalName.empty() ? "GameObject" : originalName;
-							const std::string baseName = resolvedOriginalName;
-							const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
-
-							objectJson["name"] = uniqueName;
-							const bool isOpaque = objectJson.value("isOpaque", true);
-							auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
-							newObject->Deserialize(objectJson);
-							scene->AddGameObject(newObject, isOpaque);
-							createdObjects[resolvedOriginalName] = newObject;
-							m_SelectedObjectName = uniqueName;
-						}
-
-						for (const auto& objectJson : clipboardJson["objects"])
-						{
-							const std::string originalName = objectJson.value("originalName", "");
-							const std::string resolvedOriginalName = originalName.empty() ? "GameObject" : originalName;
-							const std::string parentName = objectJson.value("parent", "");
-							if (parentName.empty())
-							{
-								continue;
-							}
-
-							auto childIt = createdObjects.find(resolvedOriginalName);
-							auto parentIt = createdObjects.find(parentName);
-							if (childIt == createdObjects.end() || parentIt == createdObjects.end())
-							{
-								continue;
-							}
-
-							auto* childTransform = childIt->second->GetComponent<TransformComponent>();
-							auto* parentTransform = parentIt->second->GetComponent<TransformComponent>();
-							if (!childTransform || !parentTransform)
-							{
-								continue;
-							}
-							if (childTransform->GetParent())
-							{
-								childTransform->DetachFromParentKeepLocal();
-							}
-							childTransform->SetParent(parentTransform);
-						}
-					}
-					else if (clipboardJson.contains("components") && clipboardJson["components"].is_array())
-					{
-						const std::string baseName = clipboardJson.value("name", "GameObject");
-						const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
-						clipboardJson["name"] = uniqueName;
-
-						auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
-						newObject->Deserialize(clipboardJson);
-						scene->AddGameObject(newObject, m_ObjectClipboardIsOpaque);
-						m_SelectedObjectName = uniqueName;
-					}
-				}
-
-
-				//
-				for (const auto& name : pendingDeletes)
-				{
-					scene->RemoveGameObjectByName(name);
-					if (m_SelectedObjectName == name)
-					{
-						m_SelectedObjectName.clear();
-					}
-				}
-
-				ImGui::End();
-
-			}
-
-
-
-
-	void EditorApplication::DrawInspector() {
-
-		ImGui::Begin("Inspector");
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene) {
-			ImGui::Text("No Selected Object");
-			ImGui::End();
-			return;
-		}
-
-		// hierarchy 에서 선택한 object 
-		// Opaque
-		const auto& opaqueObjects = scene->GetOpaqueObjects();
-		const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName);
-
-		// Transparent
-		const auto& transparentObjects = scene->GetTransparentObjects();
-		const auto transparentIt = transparentObjects.find(m_SelectedObjectName);
-
-		// 선택된 오브젝트가 없거나, 실체가 없는 경우
-		//second == Object 포인터
-		if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second)) 
-		{
-			ImGui::Text("No Selected GameObject");
-			ImGui::End();
-			return;
-		}
-
-		auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
-		auto selectedObject = it->second;
-
-		if (m_LastSelectedObjectName != m_SelectedObjectName)
-		{
-			CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
-			m_LastSelectedObjectName = m_SelectedObjectName;
-		}
-
-		ImGui::Text("Name");
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(-1);
-		ImGui::InputText("##ObjectName", m_ObjectNameBuffer.data(), m_ObjectNameBuffer.size());
-		if (ImGui::IsItemDeactivatedAfterEdit())
-		{
-			std::string newName = m_ObjectNameBuffer.data();
-			if (!newName.empty() && newName != selectedObject->GetName())
-			{
-				const std::string currentName = it->second->GetName();
-				if (scene->RenameGameObject(currentName, newName))
-				{
-					m_SelectedObjectName = newName;
-					m_LastSelectedObjectName = newName;
-				}
-				else
-				{
-					CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
-				}
+					});
 			}
 			else
 			{
 				CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
 			}
 		}
-		ImGui::Separator();
-		ImGui::Text("Components");
-		ImGui::Separator();
+		else
+		{
+			CopyStringToBuffer(selectedObject->GetName(), m_ObjectNameBuffer);
+		}
+	}
+	ImGui::Separator();
+	ImGui::Text("Components");
+	ImGui::Separator();
 
 
 	for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
@@ -1109,50 +1282,148 @@ void EditorApplication::UpdateEditorCamera()
 			//삭제
 			if (ImGui::MenuItem("Remove Component"))
 			{
-				selectedObject->RemoveComponentByTypeName(typeName);
+				ObjectSnapshot beforeSnapshot;
+				beforeSnapshot.isOpaque = selectedIsOpaque;
+				selectedObject->Serialize(beforeSnapshot.data);
+
+				if (selectedObject->RemoveComponentByTypeName(typeName))
+				{
+					ObjectSnapshot afterSnapshot;
+					afterSnapshot.isOpaque = selectedIsOpaque;
+					selectedObject->Serialize(afterSnapshot.data);
+
+					Scene* scenePtr = scene.get();
+					const std::string label = "Remove Component " + typeName;
+					m_UndoManager.Push(UndoManager::Command{
+						label,
+						[scenePtr, beforeSnapshot]()
+						{
+							ApplySnapshot(scenePtr, beforeSnapshot);
+						},
+						[scenePtr, afterSnapshot]()
+						{
+							ApplySnapshot(scenePtr, afterSnapshot);
+						}
+						});
+				}
 			}
-		/*	if (!canRemove)
-			{
-				ImGui::EndDisabled(); 
-			}*/
+			/*	if (!canRemove)
+				{
+					ImGui::EndDisabled();
+				}*/
 			ImGui::EndPopup();
 		}
 		if (nodeOpen)
 		{
 			Component* component = selectedObject->GetComponentByTypeName(typeName);
 			auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
-			
-				if (component && typeInfo)
-				{
-					auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
 
-					for (const auto& prop : props)
-					{	
-						DrawComponentPropertyEditor(component, *prop, *m_AssetLoader);
+			if (component && typeInfo)
+			{
+				auto props = ComponentRegistry::Instance().CollectProperties(typeInfo);
+
+				for (const auto& prop : props)
+				{
+					const PropertyEditResult editResult = DrawComponentPropertyEditor(component, *prop, *m_AssetLoader);
+					const bool updated = editResult.updated;
+					const bool activated = editResult.activated;
+					const bool deactivated = editResult.deactivated;
+					const size_t propertyKey = MakePropertyKey(component, prop->GetName());
+
+					if (activated && m_PendingPropertySnapshots.find(propertyKey) == m_PendingPropertySnapshots.end())
+					{
+						PendingPropertySnapshot pendingSnapshot;
+						pendingSnapshot.beforeSnapshot.isOpaque = selectedIsOpaque;
+						selectedObject->Serialize(pendingSnapshot.beforeSnapshot.data);
+						m_PendingPropertySnapshots.emplace(propertyKey, std::move(pendingSnapshot));
 					}
 
-  					if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
-  					{
-  						DrawSubMeshOverridesEditor(*meshComponent, *m_AssetLoader);
-  					}
-					ImGui::Separator();
+					if (updated)
+					{
+						auto itSnapshot = m_PendingPropertySnapshots.find(propertyKey);
+						if (itSnapshot != m_PendingPropertySnapshots.end())
+						{
+							itSnapshot->second.updated = true;
+						}
+					}
+
+					if (deactivated)
+					{
+						auto itSnapshot = m_PendingPropertySnapshots.find(propertyKey);
+						if (itSnapshot != m_PendingPropertySnapshots.end())
+						{
+							if (itSnapshot->second.updated)
+							{
+								ObjectSnapshot beforeSnapshot = itSnapshot->second.beforeSnapshot;
+								ObjectSnapshot afterSnapshot;
+								afterSnapshot.isOpaque = selectedIsOpaque;
+								selectedObject->Serialize(afterSnapshot.data);
+
+								Scene* scenePtr = scene.get();
+								const std::string label = "Edit " + prop->GetName();
+								m_UndoManager.Push(UndoManager::Command{
+									label,
+									[scenePtr, beforeSnapshot]()
+									{
+										ApplySnapshot(scenePtr, beforeSnapshot);
+									},
+									[scenePtr, afterSnapshot]()
+									{
+										ApplySnapshot(scenePtr, afterSnapshot);
+									}
+									});
+							}
+							m_PendingPropertySnapshots.erase(itSnapshot);
+						}
+					}
 				}
-				else
+
+				if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
 				{
-					ImGui::TextDisabled("Component data unavailable.");
+					ObjectSnapshot beforeSnapshot;
+					beforeSnapshot.isOpaque = selectedIsOpaque;
+					selectedObject->Serialize(beforeSnapshot.data);
+
+					const bool updated = DrawSubMeshOverridesEditor(*meshComponent, *m_AssetLoader);
+
+					if (updated)
+					{
+						ObjectSnapshot afterSnapshot;
+						afterSnapshot.isOpaque = selectedIsOpaque;
+						selectedObject->Serialize(afterSnapshot.data);
+
+						Scene* scenePtr = scene.get();
+						m_UndoManager.Push(UndoManager::Command{
+							"Edit SubMesh Overrides",
+							[scenePtr, beforeSnapshot]()
+							{
+								ApplySnapshot(scenePtr, beforeSnapshot);
+							},
+							[scenePtr, afterSnapshot]()
+							{
+								ApplySnapshot(scenePtr, afterSnapshot);
+							}
+							});
+					}
 				}
-
-				ImGui::TreePop();
+				ImGui::Separator();
 			}
-			ImGui::PopID();
-		}
+			else
+			{
+				ImGui::TextDisabled("Component data unavailable.");
+			}
 
-	
-
-		if (ImGui::Button("Add Component"))
-		{
-			ImGui::OpenPopup("AddComponentPopup");
+			ImGui::TreePop();
 		}
+		ImGui::PopID();
+	}
+
+
+
+	if (ImGui::Button("Add Component"))
+	{
+		ImGui::OpenPopup("AddComponentPopup");
+	}
 
 	if (ImGui::BeginPopup("AddComponentPopup"))
 	{
@@ -1170,876 +1441,1129 @@ void EditorApplication::UpdateEditorCamera()
 			//const bool disallowDuplicate = (typeName == "TransformComponent");
 			const bool disabled = hasType /*&& disallowDuplicate*/;
 
-				if (disabled)
-				{
-					ImGui::BeginDisabled();
-				}
+			if (disabled)
+			{
+				ImGui::BeginDisabled();
+			}
 
-				if (ImGui::MenuItem(typeName.c_str()))
-				{
-					auto comp = ComponentFactory::Instance().Create(typeName);
-					if (comp)
-					{
-						selectedObject->AddComponent(std::move(comp));
-					}
-				}
+			if (ImGui::MenuItem(typeName.c_str()))
+			{
+				ObjectSnapshot beforeSnapshot;
+				beforeSnapshot.isOpaque = selectedIsOpaque;
+				selectedObject->Serialize(beforeSnapshot.data);
 
-				if (disabled)
+				auto comp = ComponentFactory::Instance().Create(typeName);
+				if (comp)
 				{
-					ImGui::EndDisabled();
+					selectedObject->AddComponent(std::move(comp));
+
+					ObjectSnapshot afterSnapshot;
+					afterSnapshot.isOpaque = selectedIsOpaque;
+					selectedObject->Serialize(afterSnapshot.data);
+
+					Scene* scenePtr = scene.get();
+					const std::string label = "Add Component " + typeName;
+					m_UndoManager.Push(UndoManager::Command{
+						label,
+						[scenePtr, beforeSnapshot]()
+						{
+							ApplySnapshot(scenePtr, beforeSnapshot);
+						},
+						[scenePtr, afterSnapshot]()
+						{
+							ApplySnapshot(scenePtr, afterSnapshot);
+						}
+						});
 				}
 			}
-			ImGui::EndPopup();
-		} // 
 
-
-		ImGui::End();
-	}
-	void EditorApplication::DrawFolderView()
-	{
-		ImGui::Begin("Folder");
-
-		//ImGui::Text("Need Logic");
-		//logic
-		if (!std::filesystem::exists(m_ResourceRoot)) {
-			// resource folder 인식 문제방지
-			ImGui::Text("Resources folder not found: %s", m_ResourceRoot.string().c_str());
-			ImGui::End();
-			return;
-		}
-		 // new Scene 생성 -> Directional light / Main Camera Default 생성
-		auto createNewScene = [&]()
+			if (disabled)
 			{
-				const std::string baseName = "NewScene";
-				std::filesystem::path newPath;
-				for (int index = 0; index < 10000; ++index)
-				{
-					std::string name = (index == 0) ? baseName : baseName + std::to_string(index);
-					newPath = m_ResourceRoot / (name + ".json");
-					if (!std::filesystem::exists(newPath))
-					{
-						break;
-					}
-				}
+				ImGui::EndDisabled();
+			}
+		}
+		ImGui::EndPopup();
+	} // 
 
-				if(m_SceneManager.CreateNewScene(newPath))
+
+	ImGui::End();
+}
+void EditorApplication::DrawFolderView()
+{
+	ImGui::Begin("Folder");
+
+	//ImGui::Text("Need Logic");
+	//logic
+	if (!std::filesystem::exists(m_ResourceRoot)) {
+		// resource folder 인식 문제방지
+		ImGui::Text("Resources folder not found: %s", m_ResourceRoot.string().c_str());
+		ImGui::End();
+		return;
+	}
+
+	// new Scene 생성 -> Directional light / Main Camera Default 생성
+	auto createNewScene = [&]()
+		{
+			const std::string baseName = "NewScene";
+			std::filesystem::path newPath;
+			for (int index = 0; index < 10000; ++index)
+			{
+				std::string name = (index == 0) ? baseName : baseName + std::to_string(index);
+				newPath = m_ResourceRoot / (name + ".json");
+				if (!std::filesystem::exists(newPath))
 				{
-					m_CurrentScenePath = newPath;
-					m_SelectedResourcePath = newPath;
-					m_SelectedObjectName.clear();
-					m_LastSelectedObjectName.clear();
-					m_ObjectNameBuffer.fill('\0');
+					break;
 				}
-			};
-		ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause);
-		if (ImGui::Button("New Scene"))
+			}
+
+			SceneStateSnapshot beforeState = CaptureSceneState(m_SceneManager.GetCurrentScene());
+			SceneFileSnapshot beforeFile = CaptureFileSnapshot(newPath);
+
+			if (m_SceneManager.CreateNewScene(newPath))
+			{
+				m_CurrentScenePath = newPath;
+				m_SelectedResourcePath = newPath;
+				m_SelectedObjectName.clear();
+				m_LastSelectedObjectName.clear();
+				m_ObjectNameBuffer.fill('\0');
+
+				SceneStateSnapshot afterState = CaptureSceneState(m_SceneManager.GetCurrentScene());
+				SceneFileSnapshot  afterFile = CaptureFileSnapshot(newPath);
+
+				m_UndoManager.Push(UndoManager::Command{
+					"Create Scene",
+					[this, beforeState, beforeFile]()
+					{
+						RestoreSceneState(beforeState);
+						RestoreFileSnapshot(beforeFile);
+					},
+					[this, afterState, afterFile]()
+					{
+						RestoreSceneState(afterState);
+						RestoreFileSnapshot(afterFile);
+					}
+					});
+			}
+		};
+	ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause);
+	if (ImGui::Button("New Scene"))
+	{
+		createNewScene();
+	}
+	//ImGui::EndDisabled();
+
+	ImGui::SameLine();
+	// Play 중일때 저장 불가
+	//ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause); 
+	if (ImGui::Button("Save")) {
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (scene)
+		{
+			std::filesystem::path savePath = m_CurrentScenePath;
+
+			if (savePath.empty())
+			{
+				savePath = m_ResourceRoot / (scene->GetName() + ".json");
+			}
+			m_PendingSavePath = savePath;
+			m_OpenSaveConfirm = true;
+			m_PendingSavePath = savePath;
+			m_OpenSaveConfirm = true;
+		}
+	}
+
+
+
+	ImGui::SameLine();
+	const bool canDelete = !m_SelectedResourcePath.empty() && m_SelectedResourcePath.extension() == ".json";
+	if (!canDelete)
+	{
+		ImGui::BeginDisabled();
+	}
+	if (ImGui::Button("Delete"))
+	{
+		m_PendingDeletePath = m_SelectedResourcePath;
+		m_OpenDeleteConfirm = true;
+	}
+	if (!canDelete)
+	{
+		ImGui::EndDisabled();
+	}
+	ImGui::EndDisabled();
+	ImGui::SameLine();
+	if (m_CurrentScenePath.empty())
+	{
+		ImGui::Text("Current Scene: None");
+	}
+	else
+	{
+		ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
+	}
+
+	if (m_OpenSaveConfirm)
+	{
+		ImGui::OpenPopup("Confirm Save");
+		m_OpenSaveConfirm = false;
+	}
+
+	if (m_OpenDeleteConfirm)
+	{
+		ImGui::OpenPopup("Confirm Delete");
+		m_OpenDeleteConfirm = false;
+	}
+
+	if (ImGui::BeginPopupContextWindow("FolderContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+	{
+		if (ImGui::MenuItem("New Scene"))
 		{
 			createNewScene();
 		}
-		//ImGui::EndDisabled();
+		ImGui::EndPopup();
+	}
 
-		ImGui::SameLine();
-		// Play 중일때 저장 불가
-		//ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause); 
-		if (ImGui::Button("Save")) {
-			auto scene = m_SceneManager.GetCurrentScene();
-			if (scene)
-			{
-				std::filesystem::path savePath = m_CurrentScenePath;
-
-				if (savePath.empty())
-				{
-					savePath = m_ResourceRoot / (scene->GetName() + ".json");
-				}
-				m_PendingSavePath = savePath;
-				m_OpenSaveConfirm = true;
-				m_PendingSavePath = savePath;
-				m_OpenSaveConfirm = true;
-			}
-		}
-		
-
-
-		ImGui::SameLine();
-		const bool canDelete = !m_SelectedResourcePath.empty() && m_SelectedResourcePath.extension() == ".json";
-		if (!canDelete)
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Save scene \"%s\"?", m_PendingSavePath.filename().string().c_str());
+		if (ImGui::Button("Save"))
 		{
-			ImGui::BeginDisabled();
+			const fs::path beforeCurrentPath = m_CurrentScenePath;
+			const fs::path beforeSelectedPath = m_SelectedResourcePath;
+			SceneFileSnapshot beforeFile = CaptureFileSnapshot(m_PendingSavePath);
+
+			if (m_SceneManager.SaveSceneToJson(m_PendingSavePath))
+			{
+				m_CurrentScenePath = m_PendingSavePath;
+				m_SelectedResourcePath = m_PendingSavePath;
+
+				const fs::path afterCurrentPath = m_CurrentScenePath;
+				const fs::path afterSelectedPath = m_SelectedResourcePath;
+				SceneFileSnapshot afterFile = CaptureFileSnapshot(m_PendingSavePath);
+
+				m_UndoManager.Push(UndoManager::Command{
+					"Save Scene",
+					[this, beforeCurrentPath, beforeSelectedPath, beforeFile]()
+					{
+						RestoreFileSnapshot(beforeFile);
+						m_CurrentScenePath = beforeCurrentPath;
+						m_SelectedResourcePath = beforeSelectedPath;
+					},
+					[this, afterCurrentPath, afterSelectedPath, afterFile]()
+					{
+						RestoreFileSnapshot(afterFile);
+						m_CurrentScenePath = afterCurrentPath;
+						m_SelectedResourcePath = afterSelectedPath;
+					}
+					});
+			}
+			ImGui::CloseCurrentPopup();
 		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Confirm Delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+
 		if (ImGui::Button("Delete"))
 		{
-			m_PendingDeletePath = m_SelectedResourcePath;
-			m_OpenDeleteConfirm = true;
+			const fs::path targetPath = m_PendingDeletePath;
+			const bool wasCurrent = (m_CurrentScenePath == targetPath);
+			const bool wasSelected = (m_SelectedResourcePath == targetPath);
+			SceneFileSnapshot beforeFile = CaptureFileSnapshot(targetPath);
+
+			std::error_code error;
+			std::filesystem::remove(targetPath, error);
+			if (!error)
+			{
+				if (wasCurrent)
+				{
+					m_CurrentScenePath.clear();
+				}
+				if (wasSelected)
+				{
+					m_SelectedResourcePath.clear();
+				}
+			}
+
+			SceneFileSnapshot afterFile;
+			afterFile.path = targetPath;
+			afterFile.existed = false;
+
+			m_UndoManager.Push(UndoManager::Command{
+				"Delete Scene File",
+				[this, beforeFile, wasCurrent, wasSelected]()
+				{
+					RestoreFileSnapshot(beforeFile);
+					if (wasCurrent)
+					{
+						m_CurrentScenePath = beforeFile.path;
+					}
+					if (wasSelected)
+					{
+						m_SelectedResourcePath = beforeFile.path;
+					}
+				},
+				[this, afterFile, wasCurrent, wasSelected]()
+				{
+					RestoreFileSnapshot(afterFile);
+					if (wasCurrent)
+					{
+						m_CurrentScenePath = afterFile.path;
+					}
+					if (wasSelected)
+					{
+						m_SelectedResourcePath = afterFile.path;
+					}
+				}
+				});
+
+			ImGui::CloseCurrentPopup();
 		}
-		if (!canDelete)
-		{
-			ImGui::EndDisabled();
-		}
-		ImGui::EndDisabled();
 		ImGui::SameLine();
-		if (m_CurrentScenePath.empty())
+		if (ImGui::Button("Cancel"))
 		{
-			ImGui::Text("Current Scene: None");
+			ImGui::CloseCurrentPopup();
 		}
-		else
-		{
-			ImGui::Text("Current Scene: %s", m_CurrentScenePath.filename().string().c_str());
-		}
+		ImGui::EndPopup();
+	}
 
-		if (m_OpenSaveConfirm)
-		{
-			ImGui::OpenPopup("Confirm Save");
-			m_OpenSaveConfirm = false;
-		}
+	ImGui::Separator();
 
-		if (m_OpenDeleteConfirm)
+	const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
 		{
-			ImGui::OpenPopup("Confirm Delete");
-			m_OpenDeleteConfirm = false;
-		}
-
-		if (ImGui::BeginPopupContextWindow("FolderContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
-		{
-			if (ImGui::MenuItem("New Scene"))
+			std::vector<std::filesystem::directory_entry> entries;
+			for (const auto& entry : std::filesystem::directory_iterator(dir))
 			{
-				createNewScene();
+				entries.push_back(entry);
 			}
-			ImGui::EndPopup();
-		}
 
-		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			ImGui::Text("Save scene \"%s\"?", m_PendingSavePath.filename().string().c_str());
-			if (ImGui::Button("Save"))
-			{
-				if (m_SceneManager.SaveSceneToJson(m_PendingSavePath))
+			std::sort(entries.begin(), entries.end(),
+				[](const auto& a, const auto& b)
 				{
-					m_CurrentScenePath = m_PendingSavePath;
-					m_SelectedResourcePath = m_PendingSavePath;
-				}
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
-			{
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-
-		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		if (ImGui::BeginPopupModal("Confirm Delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-		
-			if (ImGui::Button("Delete"))
-			{
-				std::error_code error;
-				std::filesystem::remove(m_PendingDeletePath, error);
-				if (!error)
-				{
-					if (m_CurrentScenePath == m_PendingDeletePath)
+					if (a.is_directory() != b.is_directory())
 					{
-						m_CurrentScenePath.clear();
+						return a.is_directory() > b.is_directory();
 					}
-					if (m_SelectedResourcePath == m_PendingDeletePath)
+					return a.path().filename().string() < b.path().filename().string();
+				});
+
+			for (const auto& entry : entries)
+			{
+				const auto name = entry.path().filename().string();
+				if (entry.is_directory())
+				{
+					const std::string label = name;
+					const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+					if (ImGui::TreeNodeEx(label.c_str(), flags))
 					{
-						m_SelectedResourcePath.clear();
+						self(self, entry.path());
+						ImGui::TreePop();
 					}
 				}
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
-			{
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-
-		ImGui::Separator();
-
-		const auto drawDirectory = [&](const auto& self, const std::filesystem::path& dir) -> void
-			{
-				std::vector<std::filesystem::directory_entry> entries;
-				for (const auto& entry : std::filesystem::directory_iterator(dir))
+				else
 				{
-					entries.push_back(entry);
-				}
-
-				std::sort(entries.begin(), entries.end(),
-					[](const auto& a, const auto& b)
+					const std::string label = name;
+					const bool selected = (m_SelectedResourcePath == entry.path());
+					const bool isSceneFile = entry.path().extension() == ".json";
+					ImGui::PushID(label.c_str());
+					if (isSceneFile && selected)
 					{
-						if (a.is_directory() != b.is_directory())
-						{
-							return a.is_directory() > b.is_directory();
-						}
-						return a.path().filename().string() < b.path().filename().string();
-					});
+						ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+					}
 
-				for (const auto& entry : entries)
-				{
-					const auto name = entry.path().filename().string();
-					if (entry.is_directory())
+					bool clicked = false;
+					if (isSceneFile)
 					{
-						const std::string label = name;
-						const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-						if (ImGui::TreeNodeEx(label.c_str(), flags))
-						{
-							self(self, entry.path());
-							ImGui::TreePop();
-						}
+						clicked = ImGui::Button(label.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
 					}
 					else
 					{
-						const std::string label = name;
-						const bool selected = (m_SelectedResourcePath == entry.path());
-						const bool isSceneFile = entry.path().extension() == ".json";
-						ImGui::PushID(label.c_str());
-						if (isSceneFile && selected)
-						{
-							ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-							ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-						}
-
-						bool clicked = false;
-						if (isSceneFile)
-						{
-							clicked = ImGui::Button(label.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
-						}
-						else
-						{
-							clicked = ImGui::Selectable(label.c_str(), selected);
-						}
-
-						if (isSceneFile && selected)
-						{
-							ImGui::PopStyleColor(3);
-						}
-
-						if (ImGui::BeginPopupContextItem("SceneItemContext"))
-						{
-							if (isSceneFile && ImGui::MenuItem("Delete"))
-							{
-								m_PendingDeletePath = entry.path();
-								m_OpenDeleteConfirm = true;
-							}
-							ImGui::EndPopup();
-						}
-
-						if (clicked)
-						{
-							m_SelectedResourcePath = entry.path();
-							if (entry.path().extension() == ".json")
-							{
-								if (m_SceneManager.LoadSceneFromJson(entry.path()))
-								{
-									m_CurrentScenePath = entry.path();
-									m_SelectedObjectName.clear();
-									m_LastSelectedObjectName.clear();
-									m_ObjectNameBuffer.fill('\0');
-								}
-							}
-						}
-						ImGui::PopID();
+						clicked = ImGui::Selectable(label.c_str(), selected);
 					}
+
+					if (isSceneFile && selected)
+					{
+						ImGui::PopStyleColor(3);
+					}
+
+					if (ImGui::BeginPopupContextItem("SceneItemContext"))
+					{
+						if (isSceneFile && ImGui::MenuItem("Delete"))
+						{
+							m_PendingDeletePath = entry.path();
+							m_OpenDeleteConfirm = true;
+						}
+						ImGui::EndPopup();
+					}
+
+					if (clicked)
+					{
+						SceneStateSnapshot beforeState = CaptureSceneState(m_SceneManager.GetCurrentScene());
+						m_SelectedResourcePath = entry.path();
+						if (entry.path().extension() == ".json")
+						{
+							if (m_SceneManager.LoadSceneFromJson(entry.path()))
+							{
+								m_CurrentScenePath = entry.path();
+								m_SelectedObjectName.clear();
+								m_LastSelectedObjectName.clear();
+								m_ObjectNameBuffer.fill('\0');
+
+								SceneStateSnapshot afterState = CaptureSceneState(m_SceneManager.GetCurrentScene());
+
+								m_UndoManager.Push(UndoManager::Command{
+									"Load Scene",
+									[this, beforeState]()
+									{
+										if (beforeState.hasScene)
+										{
+											m_SceneManager.LoadSceneFromJsonData(beforeState.data, beforeState.currentPath);
+										}
+										m_CurrentScenePath = beforeState.currentPath;
+										m_SelectedResourcePath = beforeState.selectedPath;
+										m_SelectedObjectName = beforeState.selectedObjectName;
+										m_LastSelectedObjectName = beforeState.lastSelectedObjectName;
+										m_ObjectNameBuffer = beforeState.objectNameBuffer;
+										m_LastSceneName = beforeState.lastSceneName;
+										m_SceneNameBuffer = beforeState.sceneNameBuffer;
+									},
+									[this, afterState]()
+									{
+										if (afterState.hasScene)
+										{
+											m_SceneManager.LoadSceneFromJsonData(afterState.data, afterState.currentPath);
+										}
+										m_CurrentScenePath = afterState.currentPath;
+										m_SelectedResourcePath = afterState.selectedPath;
+										m_SelectedObjectName = afterState.selectedObjectName;
+										m_LastSelectedObjectName = afterState.lastSelectedObjectName;
+										m_ObjectNameBuffer = afterState.objectNameBuffer;
+										m_LastSceneName = afterState.lastSceneName;
+										m_SceneNameBuffer = afterState.sceneNameBuffer;
+									}
+									});
+							}
+						}
+					}
+					ImGui::PopID();
 				}
-			};
+			}
+		};
 
-		drawDirectory(drawDirectory, m_ResourceRoot);
-		ImGui::End();
-	}
+	drawDirectory(drawDirectory, m_ResourceRoot);
+	ImGui::End();
+}
 
 
-	void EditorApplication::DrawResourceBrowser()
+void EditorApplication::DrawResourceBrowser()
+{
+	ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_Once);
+	ImGui::Begin("Resource Browser");
+
+	if (ImGui::BeginTabBar("ResourceTabs"))
 	{
-		ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_Once);
-		ImGui::Begin("Resource Browser");
-
-		if (ImGui::BeginTabBar("ResourceTabs"))
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		//Meshes
+		if (ImGui::BeginTabItem("Meshes"))
 		{
-			ImVec2 avail = ImGui::GetContentRegionAvail();
-			//Meshes
-			if (ImGui::BeginTabItem("Meshes"))
+			ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& meshes = m_AssetLoader->GetMeshes().GetKeyToHandle();
+			for (const auto& [key, handle] : meshes)
 			{
-				ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetMeshes().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& meshes = m_AssetLoader->GetMeshes().GetKeyToHandle();
-				for (const auto& [key, handle] : meshes)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetMeshes().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
-						ImGui::Text("Mesh : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator();
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
+					ImGui::Text("Mesh : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-			
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
-			//Materials
-			if (ImGui::BeginTabItem("Materials"))
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Materials
+		if (ImGui::BeginTabItem("Materials"))
+		{
+			ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& materials = m_AssetLoader->GetMaterials().GetKeyToHandle();
+			for (const auto& [key, handle] : materials)
 			{
-				ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetMaterials().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& materials = m_AssetLoader->GetMaterials().GetKeyToHandle();
-				for (const auto& [key, handle] : materials)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetMaterials().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_MATERIAL", &handle, sizeof(MaterialHandle));
-						ImGui::Text("Material : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator(); 
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_MATERIAL", &handle, sizeof(MaterialHandle));
+					ImGui::Text("Material : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
-			//Textures
-			if (ImGui::BeginTabItem("Textures"))
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Textures
+		if (ImGui::BeginTabItem("Textures"))
+		{
+			ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& textures = m_AssetLoader->GetTextures().GetKeyToHandle();
+			for (const auto& [key, handle] : textures)
 			{
-				ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetTextures().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& textures = m_AssetLoader->GetTextures().GetKeyToHandle();
-				for (const auto& [key, handle] : textures)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetTextures().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
-						ImGui::Text("Texture : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator();
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
+					ImGui::Text("Texture : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
-			//Skeletons
-			if (ImGui::BeginTabItem("Skeletons"))
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Skeletons
+		if (ImGui::BeginTabItem("Skeletons"))
+		{
+			ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& skeletons = m_AssetLoader->GetSkeletons().GetKeyToHandle();
+			for (const auto& [key, handle] : skeletons)
 			{
-				ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetSkeletons().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& skeletons = m_AssetLoader->GetSkeletons().GetKeyToHandle();
-				for (const auto& [key, handle] : skeletons)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetSkeletons().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
-						ImGui::Text("Skeleton : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator();
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
+					ImGui::Text("Skeleton : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
-			//Animations
-			if (ImGui::BeginTabItem("Animations"))
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Animations
+		if (ImGui::BeginTabItem("Animations"))
+		{
+			ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& animations = m_AssetLoader->GetAnimations().GetKeyToHandle();
+			for (const auto& [key, handle] : animations)
 			{
-				ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetAnimations().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& animations = m_AssetLoader->GetAnimations().GetKeyToHandle();
-				for (const auto& [key, handle] : animations)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetAnimations().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
-						ImGui::Text("Animation : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator();
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
+					ImGui::Text("Animation : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
+			ImGui::EndChild();
 
-			//Vertex Shaders
-			if (ImGui::BeginTabItem("Vertex Shaders"))
+			ImGui::EndTabItem();
+		}
+
+
+		//Vertex Shaders
+		if (ImGui::BeginTabItem("Vertex Shaders"))
+		{
+			ImGui::BeginChild("VertexShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& shaders = m_AssetLoader->GetVertexShaders().GetKeyToHandle();
+			for (const auto& [key, handle] : shaders)
 			{
-				ImGui::BeginChild("VertexShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetVertexShaders().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& shaders = m_AssetLoader->GetVertexShaders().GetKeyToHandle();
-				for (const auto& [key, handle] : shaders)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetVertexShaders().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_VERTEX_SHADER", &handle, sizeof(VertexShaderHandle));
-						ImGui::Text("Vertex Shader : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator();
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_VERTEX_SHADER", &handle, sizeof(VertexShaderHandle));
+					ImGui::Text("Vertex Shader : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
-			//Pixel Shaders
-			if (ImGui::BeginTabItem("Pixel Shaders"))
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Pixel Shaders
+		if (ImGui::BeginTabItem("Pixel Shaders"))
+		{
+			ImGui::BeginChild("PixelShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& shaders = m_AssetLoader->GetPixelShaders().GetKeyToHandle();
+			for (const auto& [key, handle] : shaders)
 			{
-				ImGui::BeginChild("PixelShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+				const std::string* displayName = m_AssetLoader->GetPixelShaders().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
 
-				const auto& shaders = m_AssetLoader->GetPixelShaders().GetKeyToHandle();
-				for (const auto& [key, handle] : shaders)
+				if (ImGui::BeginDragDropSource())
 				{
-					const std::string* displayName = m_AssetLoader->GetPixelShaders().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("RESOURCE_PIXEL_SHADER", &handle, sizeof(PixelShaderHandle));
-						ImGui::Text("Pixel Shader : %s", name);
-						ImGui::EndDragDropSource();
-					}
-					ImGui::Separator();
-					ImGui::PopID();
+					ImGui::SetDragDropPayload("RESOURCE_PIXEL_SHADER", &handle, sizeof(PixelShaderHandle));
+					ImGui::Text("Pixel Shader : %s", name);
+					ImGui::EndDragDropSource();
 				}
-
-				ImGui::EndChild();
-
-				ImGui::EndTabItem();
+				ImGui::Separator();
+				ImGui::PopID();
 			}
 
-			//Shader Assets
-			if (ImGui::BeginTabItem("Shader Assets"))
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
+		}
+
+		//Shader Assets
+		if (ImGui::BeginTabItem("Shader Assets"))
+		{
+			static char shaderAssetName[128] = "";
+			static char shaderVertexPath[256] = "";
+			static char shaderPixelPath[256] = "";
+
+			if (ImGui::Button("New Shader Asset"))
 			{
-				static char shaderAssetName[128] = "";
-				static char shaderVertexPath[256] = "";
-				static char shaderPixelPath[256] = "";
+				ImGui::OpenPopup("CreateShaderAssetPopup");
+			}
 
-				if (ImGui::Button("New Shader Asset"))
+			if (ImGui::BeginPopup("CreateShaderAssetPopup"))
+			{
+				ImGui::InputText("Name", shaderAssetName, sizeof(shaderAssetName));
+				ImGui::InputText("VS Path", shaderVertexPath, sizeof(shaderVertexPath));
+				ImGui::InputText("PS Path", shaderPixelPath, sizeof(shaderPixelPath));
+
+				if (ImGui::Button("Create"))
 				{
-					ImGui::OpenPopup("CreateShaderAssetPopup");
-				}
+					const fs::path resourceRoot = "../ResourceOutput";
+					const fs::path assetDir = resourceRoot / "ShaderAsset";
+					const fs::path metaDir = assetDir / "Meta";
+					const fs::path metaPath = metaDir / (std::string(shaderAssetName) + ".shader.json");
+					// “실제 shader 파일들이 있는 폴더(절대/상대 상관없음, 하지만 path로 관리)”
+					const fs::path shaderDirAbsOrRel = "../MRenderer/fx/";
 
-				if (ImGui::BeginPopup("CreateShaderAssetPopup"))
-				{
-					ImGui::InputText("Name", shaderAssetName, sizeof(shaderAssetName));
-					ImGui::InputText("VS Path", shaderVertexPath, sizeof(shaderVertexPath));
-					ImGui::InputText("PS Path", shaderPixelPath, sizeof(shaderPixelPath));
+					// meta 기준 상대경로 prefix 생성 (Meta -> shaderDir)
+					const fs::path shaderDirFromMeta = fs::relative(shaderDirAbsOrRel, metaDir).lexically_normal();
 
-					if (ImGui::Button("Create"))
-					{
-						const fs::path resourceRoot = "../ResourceOutput";
-						const fs::path assetDir = resourceRoot / "ShaderAsset";
-						const fs::path metaDir = assetDir / "Meta";
-						const fs::path metaPath = metaDir / (std::string(shaderAssetName) + ".shader.json");
-						// “실제 shader 파일들이 있는 폴더(절대/상대 상관없음, 하지만 path로 관리)”
-						const fs::path shaderDirAbsOrRel = "../MRenderer/fx/";
+					// 최종 vs/ps 경로(메타 기준 상대경로)
+					const fs::path vsRel = (shaderDirFromMeta / shaderVertexPath).lexically_normal();
+					const fs::path psRel = (shaderDirFromMeta / shaderPixelPath).lexically_normal();
 
-						// meta 기준 상대경로 prefix 생성 (Meta -> shaderDir)
-						const fs::path shaderDirFromMeta = fs::relative(shaderDirAbsOrRel, metaDir).lexically_normal();
-
-						// 최종 vs/ps 경로(메타 기준 상대경로)
-						const fs::path vsRel = (shaderDirFromMeta / shaderVertexPath).lexically_normal();
-						const fs::path psRel = (shaderDirFromMeta / shaderPixelPath).lexically_normal();
-
-						if (!shaderAssetName[0])
-						{
-							ImGui::CloseCurrentPopup();
-						}
-						else
-						{
-							auto makeShaderPath = [&](const char* input, const char* fallbackSuffix) -> std::string
-								{
-									std::string path = input && input[0] ? input : "";
-									if (path.empty())
-									{
-										path = std::string(shaderAssetName) + fallbackSuffix;
-									}
-
-									const fs::path parsed = fs::path(path);
-									if (parsed.extension().empty())
-									{
-										return (parsed.string() + ".hlsl");
-									}
-									return parsed.string();
-								};
-							fs::create_directories(metaDir);
-							json meta = json::object();
-							meta["name"] = shaderAssetName;
-							meta["vs"] = makeShaderPath(vsRel.generic_string().c_str(), "_VS");
-							meta["ps"] = makeShaderPath(psRel.generic_string().c_str(), "_PS");
-
-							std::ofstream out(metaPath);
-							if (out)
-							{
-								out << meta.dump(4);
-								out.close();
-								if (m_AssetLoader)
-								{
-									m_AssetLoader->LoadShaderAsset(metaPath.string());
-								}
-							}
-							shaderAssetName[0] = '\0';
-							shaderVertexPath[0] = '\0';
-							shaderPixelPath[0] = '\0';
-							ImGui::CloseCurrentPopup();
-						}
-					}
-
-					ImGui::SameLine();
-					if (ImGui::Button("Cancel"))
+					if (!shaderAssetName[0])
 					{
 						ImGui::CloseCurrentPopup();
 					}
-
-					ImGui::EndPopup();
-				}
-
-				ImGui::Separator();
-
-				ImGui::BeginChild("ShaderAssetsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-				const auto& shaderAssets = m_AssetLoader->GetShaderAssets().GetKeyToHandle();
-				for (const auto& [key, handle] : shaderAssets)
-				{
-					const std::string* displayName = m_AssetLoader->GetShaderAssets().GetDisplayName(handle);
-					const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
-					ImGui::PushID((int)handle.id); // 충돌 방지
-					ImGui::Selectable(name);
-
-					if (ImGui::BeginDragDropSource())
+					else
 					{
-						ImGui::SetDragDropPayload("RESOURCE_SHADER_ASSET", &handle, sizeof(ShaderAssetHandle));
-						ImGui::Text("Shader Asset : %s", name);
-						ImGui::EndDragDropSource();
+						auto makeShaderPath = [&](const char* input, const char* fallbackSuffix) -> std::string
+							{
+								std::string path = input && input[0] ? input : "";
+								if (path.empty())
+								{
+									path = std::string(shaderAssetName) + fallbackSuffix;
+								}
+
+								const fs::path parsed = fs::path(path);
+								if (parsed.extension().empty())
+								{
+									return (parsed.string() + ".hlsl");
+								}
+								return parsed.string();
+							};
+						fs::create_directories(metaDir);
+						json meta = json::object();
+						meta["name"] = shaderAssetName;
+						meta["vs"] = makeShaderPath(vsRel.generic_string().c_str(), "_VS");
+						meta["ps"] = makeShaderPath(psRel.generic_string().c_str(), "_PS");
+
+						std::ofstream out(metaPath);
+						if (out)
+						{
+							out << meta.dump(4);
+							out.close();
+							if (m_AssetLoader)
+							{
+								m_AssetLoader->LoadShaderAsset(metaPath.string());
+							}
+						}
+						shaderAssetName[0] = '\0';
+						shaderVertexPath[0] = '\0';
+						shaderPixelPath[0] = '\0';
+						ImGui::CloseCurrentPopup();
 					}
-					ImGui::Separator();
-					ImGui::PopID();
 				}
 
-				ImGui::EndChild();
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel"))
+				{
+					ImGui::CloseCurrentPopup();
+				}
 
-				ImGui::EndTabItem();
+				ImGui::EndPopup();
 			}
 
-			ImGui::EndTabBar();
+			ImGui::Separator();
+
+			ImGui::BeginChild("ShaderAssetsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+			const auto& shaderAssets = m_AssetLoader->GetShaderAssets().GetKeyToHandle();
+			for (const auto& [key, handle] : shaderAssets)
+			{
+				const std::string* displayName = m_AssetLoader->GetShaderAssets().GetDisplayName(handle);
+				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
+				ImGui::PushID((int)handle.id); // 충돌 방지
+				ImGui::Selectable(name);
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("RESOURCE_SHADER_ASSET", &handle, sizeof(ShaderAssetHandle));
+					ImGui::Text("Shader Asset : %s", name);
+					ImGui::EndDragDropSource();
+				}
+				ImGui::Separator();
+				ImGui::PopID();
+			}
+
+			ImGui::EndChild();
+
+			ImGui::EndTabItem();
 		}
 
-		ImGui::End();
+		ImGui::EndTabBar();
 	}
 
-	void EditorApplication::DrawGizmo()
+	ImGui::End();
+}
+
+void EditorApplication::DrawGizmo()
+{
+	if (!m_EditorViewport.HasViewportRect())
 	{
-		if (!m_EditorViewport.HasViewportRect())
-		{
-			return;
-		}
+		return;
+	}
 
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene)
-		{
-			return;
-		}
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
 
-		if (m_SelectedObjectName.empty())
-		{
-			return;
-		}
+	if (m_SelectedObjectName.empty())
+	{
+		return;
+	}
 
-		auto editorCamera = scene->GetEditorCamera().get();
-		if (!editorCamera)
-		{
-			return;
-		}
+	auto editorCamera = scene->GetEditorCamera().get();
+	if (!editorCamera)
+	{
+		return;
+	}
 
-		const auto& opaqueObjects = scene->GetOpaqueObjects();
-		const auto& transparentObjects = scene->GetTransparentObjects();
+	const auto& opaqueObjects = scene->GetOpaqueObjects();
+	const auto& transparentObjects = scene->GetTransparentObjects();
 
-		std::shared_ptr<GameObject> selectedObject;
-		if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
-		{
-			selectedObject = opaqueIt->second;
-		}
-		else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
-		{
-			selectedObject = transparentIt->second;
-		}
+	std::shared_ptr<GameObject> selectedObject;
+	bool selectedIsOpaque = true;
+	if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
+	{
+		selectedObject = opaqueIt->second;
+		selectedIsOpaque = true;
+	}
+	else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
+	{
+		selectedObject = transparentIt->second;
+		selectedIsOpaque = false;
+	}
 
-		if (!selectedObject)
-		{
-			return;
-		}
+	if (!selectedObject)
+	{
+		return;
+	}
 
-		auto* transform = selectedObject->GetComponent<TransformComponent>();
-		if (!transform)
-		{
-			return;
-		}
+	auto* transform = selectedObject->GetComponent<TransformComponent>();
+	if (!transform)
+	{
+		return;
+	}
 
-		static ImGuizmo::OPERATION currentOperation = ImGuizmo::TRANSLATE;
-		static ImGuizmo::MODE currentMode = ImGuizmo::WORLD;
-		static bool useSnap = false;
-		static float snapValues[3]{ 1.0f, 1.0f, 1.0f };
+	static ImGuizmo::OPERATION currentOperation = ImGuizmo::TRANSLATE;
+	static ImGuizmo::MODE currentMode = ImGuizmo::WORLD;
+	static bool useSnap = false;
+	static float snapValues[3]{ 1.0f, 1.0f, 1.0f };
 
-		ImGui::Begin("Gizmo");
-		if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE)|| ImGui::IsKeyPressed(ImGuiKey_T))
+	ImGui::Begin("Gizmo");
+	if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE) || ImGui::IsKeyPressed(ImGuiKey_T))
+	{
+		currentOperation = ImGuizmo::TRANSLATE;
+	}
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE) || ImGui::IsKeyPressed(ImGuiKey_R))
+	{
+		currentOperation = ImGuizmo::ROTATE;
+	}
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE) || ImGui::IsKeyPressed(ImGuiKey_S))
+	{
+		currentOperation = ImGuizmo::SCALE;
+	}
+
+	if (currentOperation != ImGuizmo::SCALE)
+	{
+		if (ImGui::RadioButton("Local", currentMode == ImGuizmo::LOCAL))
 		{
-			currentOperation = ImGuizmo::TRANSLATE;
+			currentMode = ImGuizmo::LOCAL;
 		}
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE)|| ImGui::IsKeyPressed(ImGuiKey_R))
+		if (ImGui::RadioButton("World", currentMode == ImGuizmo::WORLD))
 		{
-			currentOperation = ImGuizmo::ROTATE;
+			currentMode = ImGuizmo::WORLD;
 		}
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE)|| ImGui::IsKeyPressed(ImGuiKey_S))
+	}
+	ImGui::Checkbox("Snap", &useSnap);
+	if (useSnap)
+	{
+		ImGui::InputFloat3("Snap Value", snapValues);
+	}
+	ImGui::End();
+
+	const ImVec2 rectMin = m_EditorViewport.GetViewportRectMin();
+	const ImVec2 rectMax = m_EditorViewport.GetViewportRectMax();
+	const ImVec2 rectSize = ImVec2(rectMax.x - rectMin.x, rectMax.y - rectMin.y);
+
+	XMFLOAT4X4 view = editorCamera->GetViewMatrix();
+	XMFLOAT4X4 proj = editorCamera->GetProjMatrix();
+	XMFLOAT4X4 world = transform->GetWorldMatrix();
+
+	ImGuizmo::SetOrthographic(false);
+	ImGuizmo::BeginFrame();
+	if (auto* drawList = m_EditorViewport.GetDrawList())
+	{
+		ImGuizmo::SetDrawlist(drawList);
+	}
+	ImGuizmo::SetRect(rectMin.x, rectMin.y, rectSize.x, rectSize.y);
+
+	ImGuizmo::Manipulate(
+		&view._11,
+		&proj._11,
+		currentOperation,
+		currentMode,
+		&world._11,
+		nullptr,
+		useSnap ? snapValues : nullptr);
+
+	static bool wasUsing = false;
+	static bool gizmoUpdated = false;
+	static bool hasSnapshot = false;
+	static ObjectSnapshot beforeSnapshot{};
+	static std::string pendingObjectName;
+
+	const bool usingNow = ImGuizmo::IsUsing();
+
+	if (usingNow && !wasUsing)
+	{
+		beforeSnapshot.isOpaque = selectedIsOpaque;
+		selectedObject->Serialize(beforeSnapshot.data);
+		pendingObjectName = selectedObject->GetName();
+		gizmoUpdated = false;
+		hasSnapshot = true;
+	}
+
+	if (usingNow)
+	{
+		XMFLOAT4X4 local = world;
+		if (auto* parent = transform->GetParent())
 		{
-			currentOperation = ImGuizmo::SCALE;
+			local = MathUtils::Mul(world, parent->GetInverseWorldMatrix());
 		}
 
-		if (currentOperation != ImGuizmo::SCALE)
+		XMFLOAT3 position{};
+		XMFLOAT4 rotation{};
+		XMFLOAT3 scale{};
+		MathUtils::DecomposeMatrix(local, position, rotation, scale);
+
+		transform->SetPosition(position);
+		transform->SetRotation(rotation);
+		transform->SetScale(scale);
+		gizmoUpdated = true;
+	}
+
+	if (!usingNow && wasUsing && hasSnapshot && gizmoUpdated)
+	{
+		bool isOpaque = beforeSnapshot.isOpaque;
+		if (auto targetObject = FindSceneObject(scene.get(), pendingObjectName, &isOpaque))
 		{
-			if (ImGui::RadioButton("Local", currentMode == ImGuizmo::LOCAL))
+			ObjectSnapshot afterSnapshot;
+			afterSnapshot.isOpaque = isOpaque;
+			targetObject->Serialize(afterSnapshot.data);
+
+			const char* opLabel = "Gizmo Edit";
+			switch (currentOperation)
 			{
-				currentMode = ImGuizmo::LOCAL;
-			}
-			ImGui::SameLine();
-			if (ImGui::RadioButton("World", currentMode == ImGuizmo::WORLD))
-			{
-				currentMode = ImGuizmo::WORLD;
-			}
-		}
-		ImGui::Checkbox("Snap", &useSnap);
-		if (useSnap)
-		{
-			ImGui::InputFloat3("Snap Value", snapValues);
-		}
-		ImGui::End();
-
-		const ImVec2 rectMin = m_EditorViewport.GetViewportRectMin();
-		const ImVec2 rectMax = m_EditorViewport.GetViewportRectMax();
-		const ImVec2 rectSize = ImVec2(rectMax.x - rectMin.x, rectMax.y - rectMin.y);
-
-		XMFLOAT4X4 view = editorCamera->GetViewMatrix();
-		XMFLOAT4X4 proj = editorCamera->GetProjMatrix();
-		XMFLOAT4X4 world = transform->GetWorldMatrix();
-
-		ImGuizmo::SetOrthographic(false);
-		ImGuizmo::BeginFrame();
-		if (auto* drawList = m_EditorViewport.GetDrawList())
-		{
-			ImGuizmo::SetDrawlist(drawList);
-		}
-		ImGuizmo::SetRect(rectMin.x, rectMin.y, rectSize.x, rectSize.y);
-
-		ImGuizmo::Manipulate(
-			&view._11,
-			&proj._11,
-			currentOperation,
-			currentMode,
-			&world._11,
-			nullptr,
-			useSnap ? snapValues : nullptr);
-
-		if (ImGuizmo::IsUsing())
-		{
-			XMFLOAT4X4 local = world;
-			if (auto* parent = transform->GetParent())
-			{
-				local = MathUtils::Mul(world, parent->GetInverseWorldMatrix());
+			case ImGuizmo::TRANSLATE:
+				opLabel = "Gizmo Translate";
+				break;
+			case ImGuizmo::ROTATE:
+				opLabel = "Gizmo Rotate";
+				break;
+			case ImGuizmo::SCALE:
+				opLabel = "Gizmo Scale";
+				break;
+			default:
+				break;
 			}
 
-			XMFLOAT3 position{};
-			XMFLOAT4 rotation{};
-			XMFLOAT3 scale{};
-			MathUtils::DecomposeMatrix(local, position, rotation, scale);
-
-			transform->SetPosition(position);
-			transform->SetRotation(rotation);
-			transform->SetScale(scale);
+			Scene* scenePtr = scene.get();
+			ObjectSnapshot undoSnapshot = beforeSnapshot;
+			m_UndoManager.Push(UndoManager::Command{
+				opLabel,
+				[scenePtr, undoSnapshot]()
+				{
+					ApplySnapshot(scenePtr, undoSnapshot);
+				},
+				[scenePtr, afterSnapshot]()
+				{
+					ApplySnapshot(scenePtr, afterSnapshot);
+				}
+				});
 		}
 	}
 
-	// 카메라 절두체 그림
-
-
-	void EditorApplication::FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object)
+	if (!usingNow && wasUsing)
 	{
-		if (!object)
+		hasSnapshot = false;
+		gizmoUpdated = false;
+		pendingObjectName.clear();
+	}
+
+	wasUsing = usingNow;
+}
+
+// 카메라 절두체 그림
+
+
+void EditorApplication::FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object)
+{
+	if (!object)
+	{
+		return;
+	}
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	auto editorCamera = scene->GetEditorCamera();
+	if (!editorCamera)
+	{
+		return;
+	}
+
+	auto* cameraComponent = editorCamera->GetComponent<CameraComponent>();
+	if (!cameraComponent)
+	{
+		return;
+	}
+
+	auto* transform = object->GetComponent<TransformComponent>();
+	if (!transform)
+	{
+		return;
+	}
+
+	const XMFLOAT4X4 world = transform->GetWorldMatrix();
+	const XMFLOAT3 target{ world._41, world._42, world._43 };
+	const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f); // editor에서는 up 고정
+	const XMFLOAT3 eye = cameraComponent->GetEye();
+
+	const XMVECTOR eyeVec = XMLoadFloat3(&eye);
+	const XMVECTOR targetVec = XMLoadFloat3(&target);
+	XMVECTOR toTarget = XMVectorSubtract(targetVec, eyeVec);
+	float distance = XMVectorGetX(XMVector3Length(toTarget));
+	XMVECTOR forwardVec = XMVectorZero();
+
+	if (distance > 0.00001f)
+	{
+		forwardVec = XMVector3Normalize(toTarget);
+	}
+	else
+	{
+		const XMFLOAT3 look = cameraComponent->GetLook();
+		const XMVECTOR lookVec = XMLoadFloat3(&look);
+		const XMVECTOR fallback = XMVectorSubtract(lookVec, eyeVec);
+		const float fallbackDistance = XMVectorGetX(XMVector3Length(fallback));
+
+		if (fallbackDistance > 0.001f)
 		{
-			return;
-		}
-
-		auto scene = m_SceneManager.GetCurrentScene();
-		if (!scene)
-		{
-			return;
-		}
-
-		auto editorCamera = scene->GetEditorCamera();
-		if (!editorCamera)
-		{
-			return;
-		}
-
-		auto* cameraComponent = editorCamera->GetComponent<CameraComponent>();
-		if (!cameraComponent)
-		{
-			return;
-		}
-
-		auto* transform = object->GetComponent<TransformComponent>();
-		if (!transform)
-		{
-			return;
-		}
-
-		const XMFLOAT4X4 world = transform->GetWorldMatrix();
-		const XMFLOAT3 target{ world._41, world._42, world._43 };
-		const XMFLOAT3 up = XMFLOAT3(0.0f, 0.1f, 0.0f); // editor에서는 up 고정
-		const XMFLOAT3 eye = cameraComponent->GetEye();
-
-		const XMVECTOR eyeVec = XMLoadFloat3(&eye);
-		const XMVECTOR targetVec = XMLoadFloat3(&target);
-		XMVECTOR toTarget = XMVectorSubtract(targetVec, eyeVec);
-		float distance = XMVectorGetX(XMVector3Length(toTarget));
-		XMVECTOR forwardVec = XMVectorZero();
-
-		if (distance > 0.00001f)
-		{
-			forwardVec = XMVector3Normalize(toTarget);
+			forwardVec = XMVector3Normalize(fallback);
+			distance = fallbackDistance;
 		}
 		else
 		{
-			const XMFLOAT3 look = cameraComponent->GetLook();
-			const XMVECTOR lookVec = XMLoadFloat3(&look);
-			const XMVECTOR fallback = XMVectorSubtract(lookVec, eyeVec);
-			const float fallbackDistance = XMVectorGetX(XMVector3Length(fallback));
-
-			if (fallbackDistance > 0.001f)
-			{
-				forwardVec = XMVector3Normalize(fallback);
-				distance = fallbackDistance;
-			}
-			else
-			{
-				forwardVec = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-				distance = 5.0f;
-			}
+			forwardVec = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+			distance = 5.0f;
 		}
-	
-		XMFLOAT3 newEye = { target.x,target.y + 5,target.z - 5 };
-		cameraComponent->SetEyeLookUp(newEye, target, up);
 	}
 
+	XMFLOAT3 newEye = { target.x,target.y + 5,target.z - 5 };
+	cameraComponent->SetEyeLookUp(newEye, target, up);
+}
 
-	void EditorApplication::CreateDockSpace()
+
+void EditorApplication::CreateDockSpace()
+{
+	ImGui::DockSpaceOverViewport(
+		ImGui::GetID("EditorDockSpace"),
+		ImGui::GetMainViewport(),
+		ImGuiDockNodeFlags_PassthruCentralNode
+	);
+}
+
+// 초기 창 셋팅
+void EditorApplication::SetupEditorDockLayout()
+{
+	ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
+
+	ImGui::DockBuilderRemoveNode(dockspaceID);
+	ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
+	ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
+
+	ImGuiID dockMain = dockspaceID; // dockMain을 쪼개서 쓰는 것.
+	ImGuiID dockLeft,
+		dockRight,
+		dockRightA,
+		dockRightB,
+		dockBottom;
+
+
+
+	// 분할   ( 어떤 영역을, 어느방향에서, 비율만큼, 뗀 영역의 이름, Dockspacemain)
+	// 나눠지는 순서도 중요
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
+
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockMain); //Right 20%
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.2f, &dockBottom, &dockMain);  //Down 20%
+
+	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.40f, &dockRightA, &dockMain); // Right 10%
+	ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.60f, &dockRightB, &dockMain);// Right 10%
+
+	ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.10f, &dockRight, &dockMain);
+
+	//Down 30%
+
+// 창 할당
+	ImGui::DockBuilderDockWindow("Hierarchy", dockRightA);
+	ImGui::DockBuilderDockWindow("Inspector", dockRightB);
+	ImGui::DockBuilderDockWindow("Folder", dockBottom);
+	ImGui::DockBuilderDockWindow("Game", dockMain);
+	ImGui::DockBuilderDockWindow("Editor", dockMain);
+
+	ImGui::DockBuilderFinish(dockspaceID);
+}
+
+SceneStateSnapshot EditorApplication::CaptureSceneState(const std::shared_ptr<Scene>& scene) const
+{
+	SceneStateSnapshot snapshot;
+	snapshot.currentPath = m_CurrentScenePath;
+	snapshot.selectedPath = m_SelectedResourcePath;
+	snapshot.selectedObjectName = m_SelectedObjectName;
+	snapshot.lastSelectedObjectName = m_LastSelectedObjectName;
+	snapshot.objectNameBuffer = m_ObjectNameBuffer;
+	snapshot.lastSceneName = m_LastSceneName;
+	snapshot.sceneNameBuffer = m_SceneNameBuffer;
+
+	if (scene)
 	{
-		ImGui::DockSpaceOverViewport(
-			ImGui::GetID("EditorDockSpace"),
-			ImGui::GetMainViewport(),
-			ImGuiDockNodeFlags_PassthruCentralNode
-		);
+		snapshot.hasScene = true;
+		scene->Serialize(snapshot.data);
 	}
+	return snapshot;
+}
 
-	// 초기 창 셋팅
-	void EditorApplication::SetupEditorDockLayout()
-	{	
-		ImGuiID dockspaceID = ImGui::GetID("EditorDockSpace");
+void EditorApplication::RestoreSceneState(const SceneStateSnapshot& snapshot)
+{
+	ClearPendingPropertySnapshots();
 
-		ImGui::DockBuilderRemoveNode(dockspaceID);
-		ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
-		ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->WorkSize);
-
-		ImGuiID dockMain = dockspaceID; // dockMain을 쪼개서 쓰는 것.
-		ImGuiID dockLeft,
-				dockRight,
-				dockRightA,
-				dockRightB,
-				dockBottom;
-
-
-
-		// 분할   ( 어떤 영역을, 어느방향에서, 비율만큼, 뗀 영역의 이름, Dockspacemain)
-		// 나눠지는 순서도 중요
-		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.2f, &dockLeft, &dockMain);
-
-		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockMain); //Right 20%
-		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.2f, &dockBottom, &dockMain);  //Down 20%
-
-		ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Left, 0.40f, &dockRightA, &dockMain); // Right 10%
-		ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Right, 0.60f, &dockRightB, &dockMain);// Right 10%
-	
-		ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.10f, &dockRight, &dockMain);
-	
-		 //Down 30%
-
-	// 창 할당
-		ImGui::DockBuilderDockWindow("Hierarchy", dockRightA);
-		ImGui::DockBuilderDockWindow("Inspector", dockRightB);
-		ImGui::DockBuilderDockWindow("Folder", dockBottom);
-		ImGui::DockBuilderDockWindow("Game", dockMain);
-		ImGui::DockBuilderDockWindow("Editor", dockMain);
-
-		ImGui::DockBuilderFinish(dockspaceID);
-	}
-
-	void EditorApplication::OnResize(int width, int height)
+	if (snapshot.hasScene)
 	{
-		__super::OnResize(width, height);
+		m_SceneManager.LoadSceneFromJsonData(snapshot.data, snapshot.currentPath);
 	}
+	m_CurrentScenePath = snapshot.currentPath;
+	m_SelectedResourcePath = snapshot.selectedPath;
+	m_SelectedObjectName = snapshot.selectedObjectName;
+	m_LastSelectedObjectName = snapshot.lastSelectedObjectName;
+	m_ObjectNameBuffer = snapshot.objectNameBuffer;
+	m_LastSceneName = snapshot.lastSceneName;
+	m_SceneNameBuffer = snapshot.sceneNameBuffer;
+}
 
-	void EditorApplication::OnClose()
-	{
-		m_SceneManager.RequestQuit();
-	}
+void EditorApplication::ClearPendingPropertySnapshots()
+{
+	m_PendingPropertySnapshots.clear();
+	m_LastPendingSnapshotScenePath.clear();
+}
+
+void EditorApplication::OnResize(int width, int height)
+{
+	__super::OnResize(width, height);
+}
+
+void EditorApplication::OnClose()
+{
+	m_SceneManager.RequestQuit();
+}

@@ -35,6 +35,7 @@ public:
 	void ChangeScene();
 	bool CreateNewScene(const std::filesystem::path& filePath);
 	bool LoadSceneFromJson(const std::filesystem::path& filePath);
+	bool LoadSceneFromJsonData(const nlohmann::json& data, const std::filesystem::path& filePath);
 	bool SaveSceneToJson(const std::filesystem::path& filePath) const;
 
 	void Reset()
