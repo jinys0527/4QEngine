@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -4.184118747711182,
-                "y": 3.1019041538238525,
-                "z": -6.012021064758301
+                "x": -3.013698101043701,
+                "y": 11.450615882873535,
+                "z": -20.9918270111084
             },
             "look": {
-                "x": -3.656017303466797,
-                "y": 2.9501681327819824,
-                "z": -5.176506042480469
+                "x": -2.9324309825897217,
+                "y": 11.256816864013672,
+                "z": -20.014158248901367
             },
             "up": {
-                "x": 0.08107075095176697,
-                "y": 0.9884212017059326,
-                "z": 0.12826286256313324
+                "x": 0.01605384796857834,
+                "y": 0.9810413122177124,
+                "z": 0.19313308596611023
             }
         }
     },
@@ -25,15 +25,15 @@
                     {
                         "data": {
                             "Position": {
-                                "x": -4.184118747711182,
-                                "y": 3.1019041538238525,
-                                "z": -6.012021064758301
+                                "x": -3.013698101043701,
+                                "y": 11.450615882873535,
+                                "z": -20.9918270111084
                             },
                             "Rotation": {
-                                "w": 0.9577628970146179,
-                                "x": 0.0730866864323616,
-                                "y": 0.2773101329803467,
-                                "z": -0.021161487326025963
+                                "w": 0.994393527507782,
+                                "x": 0.09727844595909119,
+                                "y": 0.04125751927495003,
+                                "z": -0.004036083817481995
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -46,15 +46,17 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": -4.184118747711182,
-                                "y": 3.1019041538238525,
-                                "z": -6.012021064758301
+                                "x": -3.013698101043701,
+                                "y": 11.450615882873535,
+                                "z": -20.9918270111084
                             },
+                            "FarZ": 1000.0,
                             "Look": {
-                                "x": -3.656017303466797,
-                                "y": 2.9501681327819824,
-                                "z": -5.176506042480469
+                                "x": -2.9324309825897217,
+                                "y": 11.256816864013672,
+                                "z": -20.014158248901367
                             },
+                            "NearZ": 0.10000000149011612,
                             "Ortho": {
                                 "height": 10.0,
                                 "width": 10.0
@@ -70,9 +72,9 @@
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": 0.08107075095176697,
-                                "y": 0.9884212017059326,
-                                "z": 0.12826286256313324
+                                "x": 0.01605384796857834,
+                                "y": 0.9810413122177124,
+                                "z": 0.19313308596611023
                             },
                             "Viewport": {
                                 "height": 808.0,
@@ -94,15 +96,15 @@
                                 "z": 0.0
                             },
                             "Rotation": {
-                                "w": 1.0,
+                                "w": 0.8443279266357422,
                                 "x": -0.0,
-                                "y": 0.0,
-                                "z": -0.0
+                                "y": -0.5358268618583679,
+                                "z": 0.0
                             },
                             "Scale": {
-                                "x": 61.631996154785156,
-                                "y": 61.631996154785156,
-                                "z": 61.631996154785156
+                                "x": 69.44525909423828,
+                                "y": 69.44525909423828,
+                                "z": 69.44525909423828
                             }
                         },
                         "type": "TransformComponent"
@@ -111,11 +113,11 @@
                         "data": {
                             "Material": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                             },
                             "MaterialHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                             },
                             "Overrides": {
                                 "overrides": {
@@ -138,23 +140,23 @@
                                     "textures": [
                                         {
                                             "assetIndex": 0,
-                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                                         },
                                         {
                                             "assetIndex": 1,
-                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                                         },
                                         {
                                             "assetIndex": 2,
-                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                                         },
                                         {
                                             "assetIndex": 3,
-                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                                         },
                                         {
                                             "assetIndex": 4,
-                                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                                         },
                                         {
                                             "assetIndex": 0,
@@ -175,11 +177,11 @@
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                             },
                             "Mesh": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                             },
                             "ReceiveShadow": true,
                             "RenderLayer": 0,
@@ -191,17 +193,24 @@
                         "data": {
                             "Mesh": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
                             },
                             "MeshHandle": {
                                 "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
-                            }
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
                         },
                         "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
                     }
                 ],
-                "name": "GameObject"
+                "name": "Hirosi"
             },
             {
                 "components": [
@@ -209,19 +218,19 @@
                         "data": {
                             "Position": {
                                 "x": 0.0,
-                                "y": 0.5,
-                                "z": -0.5
+                                "y": 5.661504745483398,
+                                "z": -5.403164863586426
                             },
                             "Rotation": {
                                 "w": 1.0,
-                                "x": 0.0,
+                                "x": -0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -0.0
                             },
                             "Scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "x": 3.319999933242798,
+                                "y": 3.3199996948242188,
+                                "z": 7.258419513702393
                             }
                         },
                         "type": "TransformComponent"
@@ -230,14 +239,16 @@
                         "data": {
                             "Eye": {
                                 "x": 0.0,
-                                "y": 0.5,
-                                "z": -0.5
+                                "y": 5.661504745483398,
+                                "z": -5.403164863586426
                             },
+                            "FarZ": 100.0,
                             "Look": {
                                 "x": 0.0,
-                                "y": 0.5,
-                                "z": 0.5
+                                "y": 5.661504745483398,
+                                "z": -4.403164863586426
                             },
+                            "NearZ": 1.0,
                             "Ortho": {
                                 "height": 10.0,
                                 "width": 10.0
@@ -249,7 +260,7 @@
                                 "top": 1.0
                             },
                             "Perspective": {
-                                "aspect": 1.7846534252166748,
+                                "aspect": 1.5595794916152954,
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
@@ -258,8 +269,8 @@
                                 "z": 0.0
                             },
                             "Viewport": {
-                                "height": 808.0,
-                                "width": 1442.0
+                                "height": 856.0,
+                                "width": 1335.0
                             }
                         },
                         "type": "CameraComponent"
@@ -310,11 +321,9 @@
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
-                            },
-                            "Range": 0.0,
-                            "SpotAngle": 0.0
+                            }
                         },
-                        "type": "LightComponent"
+                        "type": "DirectionalLightComponent"
                     }
                 ],
                 "name": "DirectionalLight"

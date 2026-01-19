@@ -7,7 +7,7 @@
 #include "Engine.h"
 #include "RenderTargetContext.h" 
 #include "RenderData.h"
-
+#include "json.hpp"
 #include <filesystem>
 #include <array>
 
@@ -17,6 +17,15 @@ class SceneManager;
 class GameObject;
 class AssetLoader;
 class SoundManager;
+
+
+enum class EditorPlayState
+{
+	Stop,
+	Play,
+	Pause
+};
+
 
 class EditorApplication : public NzWndBase
 {
@@ -84,7 +93,7 @@ private:
 
 	EditorViewport        m_EditorViewport;
 	EditorViewport        m_GameViewport;
-
+	EditorPlayState       m_EditorState = EditorPlayState::Stop;
 	// Hier
 	std::string m_SelectedObjectName;
 
@@ -93,6 +102,10 @@ private:
 	std::string m_LastSceneName;
 	std::array<char, 256> m_ObjectNameBuffer;
 	std::array<char, 256> m_SceneNameBuffer;
+
+	nlohmann::json m_ObjectClipboard;
+	bool m_ObjectClipboardHasData = false;
+	bool m_ObjectClipboardIsOpaque = true;
 
 	// Floder View 변수
 	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음

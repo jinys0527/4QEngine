@@ -3,6 +3,7 @@
 #include "ServiceRegistry.h"
 #include "GameManager.h"
 #include "UIManager.h"
+#include "DefaultScene.h"
 
 void SceneManager::Initialize()
 {

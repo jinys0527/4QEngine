@@ -80,8 +80,9 @@ protected:
 	std::shared_ptr<CameraObject>   m_GameCamera;
 	std::shared_ptr<CameraObject>   m_EditorCamera;
 	std::string      m_Name;
-	bool		     m_Pause = false;
 
+	bool		     m_Pause = false;
+	
 private:
 	AssetLoader*    m_AssetLoader;
 	EventDispatcher m_EventDispatcher;

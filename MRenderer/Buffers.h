@@ -35,10 +35,15 @@ struct Light
 	float      Range = 0;
 
 	XMFLOAT3   worldDir{ 0,-1,0 };
-	float      SpotAngle = 0;
+	float      padding0 = 0.0f;
 
 	XMFLOAT3   viewDir{ 0,-1,0 };
 	float      Intensity = 1.0f;
+
+	float		SpotInnerAngle = 0.0f;
+	float		SpotOutterAngle = 0.0f;
+	float		AttenuationRadius = 0.0f;
+	float		padding1 = 0.0f;
 
 	UINT       CastShadow = TRUE;
 	float      padding[3]{ 0,0,0 };

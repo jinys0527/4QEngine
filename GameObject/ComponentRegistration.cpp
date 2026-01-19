@@ -1,7 +1,9 @@
 ﻿#include "Component.h"
 #include "CameraComponent.h"
 #include "TransformComponent.h"
-#include "LightComponent.h"
+#include "DirectionalLightComponent.h"
+#include "PointLightComponent.h"
+#include "SpotLightComponent.h"
 #include "MaterialComponent.h"
 #include "MeshComponent.h"
 #include "MeshRenderer.h"
@@ -27,7 +29,9 @@ extern "C" {
 	void Link_CameraComponent();
 	void Link_MaterialComponent();
 	void Link_MeshComponent();
-	void Link_LightComponent();
+	void Link_DirectionalLightComponent();
+	void Link_PointLightComponent();
+	void Link_SpotLightComponent();
 	void Link_UIComponent();
 	void Link_AnimationComponent();
 	void Link_SkeletalMeshComponent();
@@ -52,7 +56,9 @@ void LinkEngineComponents() {
 	Link_CameraComponent();
 	Link_MaterialComponent();
 	Link_MeshComponent();
-	Link_LightComponent();
+	Link_DirectionalLightComponent();
+	Link_PointLightComponent();
+	Link_SpotLightComponent();
 	Link_UIComponent();
 	Link_AnimationComponent();
 	Link_SkeletalMeshComponent();
@@ -63,8 +69,8 @@ void LinkEngineComponents() {
 	Link_AnimFSMComponent();
 	Link_UIFSMComponent();
 
+	RegisterFSMBaseDefinitions();
 	RegisterUIFSMDefinitions();
 	RegisterCollisionFSMDefinitions();
 	RegisterAnimFSMDefinitions();
-	RegisterFSMBaseDefinitions();
 }

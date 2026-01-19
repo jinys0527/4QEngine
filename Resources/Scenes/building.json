@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": 5.572042942047119,
-                "y": 6.772914409637451,
-                "z": -9.42281723022461
+                "x": -10.81617546081543,
+                "y": 7.545425891876221,
+                "z": -5.999121189117432
             },
             "look": {
-                "x": 4.773903846740723,
-                "y": 6.324887752532959,
-                "z": -9.02001953125
+                "x": -10.178720474243164,
+                "y": 7.190953254699707,
+                "z": -5.31501579284668
             },
             "up": {
-                "x": -0.39997732639312744,
-                "y": 0.8940200805664063,
-                "z": 0.2018565535545349
+                "x": 0.24165166914463043,
+                "y": 0.9350664019584656,
+                "z": 0.2593364119529724
             }
         }
     },
@@ -25,15 +25,15 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 5.572042942047119,
-                                "y": 6.772914409637451,
-                                "z": -9.42281723022461
+                                "x": -10.81617546081543,
+                                "y": 7.545425891876221,
+                                "z": -5.999121189117432
                             },
                             "Rotation": {
-                                "w": 0.8287587761878967,
-                                "x": 0.19604115188121796,
-                                "y": -0.5100677013397217,
-                                "z": 0.12065564095973969
+                                "w": 0.9152572751045227,
+                                "x": 0.16766025125980377,
+                                "y": 0.3603294789791107,
+                                "z": -0.06600646674633026
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -46,15 +46,17 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": 5.572042942047119,
-                                "y": 6.772914409637451,
-                                "z": -9.42281723022461
+                                "x": -10.81617546081543,
+                                "y": 7.545425891876221,
+                                "z": -5.999121189117432
                             },
+                            "FarZ": 1000.0,
                             "Look": {
-                                "x": 4.773903846740723,
-                                "y": 6.324887752532959,
-                                "z": -9.02001953125
+                                "x": -10.178720474243164,
+                                "y": 7.190953254699707,
+                                "z": -5.31501579284668
                             },
+                            "NearZ": 0.10000000149011612,
                             "Ortho": {
                                 "height": 10.0,
                                 "width": 10.0
@@ -70,9 +72,9 @@
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": -0.39997732639312744,
-                                "y": 0.8940200805664063,
-                                "z": 0.2018565535545349
+                                "x": 0.24165166914463043,
+                                "y": 0.9350664019584656,
+                                "z": 0.2593364119529724
                             },
                             "Viewport": {
                                 "height": 808.0,
@@ -90,14 +92,206 @@
                         "data": {
                             "Position": {
                                 "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "y": 3.859999895095825,
+                                "z": -5.403164863586426
+                            },
+                            "Rotation": {
+                                "w": 0.9698916673660278,
+                                "x": 0.23900005221366882,
+                                "y": 0.04674080014228821,
+                                "z": -0.0020811008289456367
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 0.9999997019767761
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "Eye": {
+                                "x": 0.0,
+                                "y": 3.859999895095825,
+                                "z": -5.403164863586426
+                            },
+                            "FarZ": 100.0,
+                            "Look": {
+                                "x": 0.0896722674369812,
+                                "y": 3.3961970806121826,
+                                "z": -4.52177619934082
+                            },
+                            "NearZ": 1.0,
+                            "Ortho": {
+                                "height": 10.0,
+                                "width": 10.0
+                            },
+                            "OrthoOffCenter": {
+                                "bottom": -1.0,
+                                "left": -1.0,
+                                "right": 1.0,
+                                "top": 1.0
+                            },
+                            "Perspective": {
+                                "aspect": 1.7846534252166748,
+                                "fov": 0.7853981852531433
+                            },
+                            "Up": {
+                                "x": 0.026378992944955826,
+                                "y": 0.885749340057373,
+                                "z": 0.463413804769516
+                            },
+                            "Viewport": {
+                                "height": 808.0,
+                                "width": 1442.0
+                            }
+                        },
+                        "type": "CameraComponent"
+                    }
+                ],
+                "name": "Main Camera"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 6.692409038543701,
+                                "y": -0.08829188346862793,
+                                "z": 4.181729793548584
                             },
                             "Rotation": {
                                 "w": 1.0,
-                                "x": 0.0,
+                                "x": -0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": -1.2816476821899414,
+                                "y": -0.08829188346862793,
+                                "z": -0.3016993999481201
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -208,20 +402,900 @@
                         "type": "PlayerMovementComponent"
                     }
                 ],
-                "name": "GameObject"
+                "name": "building1"
             },
             {
                 "components": [
                     {
                         "data": {
                             "Position": {
-                                "x": 0.0,
-                                "y": 3.859999895095825,
-                                "z": -9.255428314208984
+                                "x": 3.3849880695343018,
+                                "y": -0.08829188346862793,
+                                "z": 4.181729793548584
                             },
                             "Rotation": {
-                                "w": 0.9861851930618286,
-                                "x": 0.1656465083360672,
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building2"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 6.692409038543701,
+                                "y": -0.08829188346862793,
+                                "z": 4.181729793548584
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building3"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 6.692409038543701,
+                                "y": -0.08829188346862793,
+                                "z": -0.01793038845062256
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building4"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 4.351366996765137,
+                                "y": -0.08829188346862793,
+                                "z": -3.233442544937134
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building5"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 4.065037250518799,
+                                "y": -0.08829188346862793,
+                                "z": 1.0428828001022339
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building6"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": -5.021574020385742,
+                                "y": -0.08829188346862793,
+                                "z": 4.181729793548584
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building7"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": -1.2346428632736206,
+                                "y": -0.08829188346862793,
+                                "z": 4.181729793548584
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
+                    }
+                ],
+                "name": "building8"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": -3.4653565883636475,
+                                "y": -0.08829188346862793,
+                                "z": 1.516928791999817
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
                                 "y": 0.0,
                                 "z": -0.0
                             },
@@ -235,44 +1309,106 @@
                     },
                     {
                         "data": {
-                            "Eye": {
-                                "x": 0.0,
-                                "y": 3.859999895095825,
-                                "z": -9.255428314208984
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "Look": {
-                                "x": 0.0,
-                                "y": 3.5332837104797363,
-                                "z": -8.31030559539795
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "Ortho": {
-                                "height": 10.0,
-                                "width": 10.0
+                            "ReceiveShadow": true,
+                            "RenderLayer": 0,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "OrthoOffCenter": {
-                                "bottom": -1.0,
-                                "left": -1.0,
-                                "right": 1.0,
-                                "top": 1.0
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "Perspective": {
-                                "aspect": 1.7846534252166748,
-                                "fov": 0.7853981852531433
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "Up": {
-                                "x": 0.0,
-                                "y": 0.945122480392456,
-                                "z": 0.32671627402305603
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "Viewport": {
-                                "height": 808.0,
-                                "width": 1442.0
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.4303818345069885,
+                                        "g": 0.4303818345069885,
+                                        "r": 0.4303818345069885
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "roughness": 0.6092624068260193,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 1,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 2,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 3,
+                                            "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                }
                             }
                         },
-                        "type": "CameraComponent"
+                        "type": "MaterialComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
                     }
                 ],
-                "name": "Main Camera"
+                "name": "building9"
             }
         ],
         "transparent": [
@@ -312,16 +1448,14 @@
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": 85755904.0,
+                            "Intensity": 1.0,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
-                            },
-                            "Range": 85755904.0,
-                            "SpotAngle": 85755904.0
+                            }
                         },
-                        "type": "LightComponent"
+                        "type": "DirectionalLightComponent"
                     }
                 ],
                 "name": "DirectionalLight"

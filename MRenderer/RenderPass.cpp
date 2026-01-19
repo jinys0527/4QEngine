@@ -129,6 +129,10 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 		dirlight.Intensity = 3.14f;
 		dirlight.mLightViewProj = light.lightViewProj;
 		dirlight.CastShadow = light.castShadow;
+		dirlight.Range = light.range;
+		dirlight.SpotInnerAngle = light.spotInnerAngle;
+		dirlight.SpotOutterAngle = light.spotOutterAngle;
+		dirlight.AttenuationRadius = light.attenuationRadius;
 
 		m_RenderContext.LightCBuffer.lights[0] = dirlight;
 

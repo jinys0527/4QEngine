@@ -3,7 +3,7 @@
 #include "CameraObject.h"
 #include "CameraComponent.h"
 #include "TransformComponent.h"
-#include "LightComponent.h"
+#include "DirectionalLightComponent.h"
 #include "MeshRenderer.h"
 
 
@@ -21,6 +21,11 @@ void DefaultScene::Initialize()
 	editorCamera->SetName("Editor Camera");
 	SetEditorCamera(editorCamera);
 	AddGameObject(editorCamera, true);
+	if (auto* editorCameraComponent = editorCamera->GetComponent<CameraComponent>())
+	{
+		editorCameraComponent->SetNearZ(0.1f);
+		editorCameraComponent->SetFarZ(1000.0f);
+	}
 
 	//초기 카메라 위치 Set
 	m_GameCamera->GetComponent<TransformComponent>()->SetPosition(XMFLOAT3{ 0.0f,4.0f,-11.0f });
@@ -32,9 +37,8 @@ void DefaultScene::Initialize()
 
 	auto lightObject = std::make_shared<GameObject>(GetEventDispatcher());
 	lightObject->SetName("DirectionalLight");
-	if (auto* light = lightObject->AddComponent<LightComponent>())
+	if (auto* light = lightObject->AddComponent<DirectionalLightComponent>())
 	{
-		light->SetType(RenderData::LightType::Directional);
 		light->SetColor({ 1.0f, 1.0f, 1.0f });
 		light->SetIntensity(1.0f);
 		light->SetDirection({ 0.0f, -1.0f, 0.0f });

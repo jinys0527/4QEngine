@@ -69,6 +69,26 @@ public:
 	}
 
 	template<typename T>
+	std::vector<T*> GetComponentsDerived() const
+	{
+		std::vector<T*> result;
+
+		for (const auto& [typeName, components] : m_Components)
+		{
+			for (const auto& comp : components)
+			{
+				if (auto ptr = dynamic_cast<T*>(comp.get()))
+				{
+					result.push_back(ptr);
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	template<typename T>
 	void RemoveComponent(T* Component)
 	{
 		auto it = m_Components.find(T::StaticTypeName);

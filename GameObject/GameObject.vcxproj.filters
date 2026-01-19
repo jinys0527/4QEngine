@@ -73,6 +73,18 @@
     <ClCompile Include="FSMActionRegistry.cpp">
       <Filter>Components\Utils\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DirectionalLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SpotLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RectLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -159,6 +171,18 @@
     </ClInclude>
     <ClInclude Include="FSMEventRegistry.h">
       <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpotLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RectLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
