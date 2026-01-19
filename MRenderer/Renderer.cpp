@@ -1899,7 +1899,10 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 	m_RenderContext.CameraCBuffer.camPos = eye;
 
 	XMFLOAT4X4 wTM;
-	XMStoreFloat4x4(&wTM, XMMatrixIdentity());
+	const float cellSize = m_CellSize;
+	const float snapX = (cellSize > 0.0f) ? std::floor(eye.x / cellSize) * cellSize : 0.0f;
+	const float snapZ = (cellSize > 0.0f) ? std::floor(eye.z / cellSize) * cellSize : 0.0f;
+	XMStoreFloat4x4(&wTM, XMMatrixTranslation(snapX, 0.0f, snapZ));
 	m_RenderContext.BCBuffer.mWorld = wTM;
 
 	UpdateDynamicBuffer(m_pDXDC.Get(), m_RenderContext.pBCB.Get(), &m_RenderContext.BCBuffer, sizeof(BaseConstBuffer));
