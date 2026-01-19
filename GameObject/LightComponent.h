@@ -14,19 +14,19 @@ public:
 	LightComponent() = default;
 	virtual ~LightComponent() = default;
 
-	void SetType(RenderData::LightType type) { m_Type = type; }
+	void SetType(const RenderData::LightType& type) { m_Type = type; }
 	RenderData::LightType GetType() const    { return m_Type; }
 
 	void  SetColor(const XMFLOAT3& color){ m_Color = color; }
 	const XMFLOAT3& GetColor() const     { return m_Color;  }
 
-	void  SetIntensity(float intensity)		  { m_Intensity = intensity; }
+	void  SetIntensity(const float& intensity)		  { m_Intensity = intensity; }
 	const float& GetIntensity() const         { return m_Intensity;      }
 
 	void  SetPosition(const XMFLOAT3& position){ m_Position = position; }
 	const XMFLOAT3& GetPosition() const        { return m_Position;     }
 
-	void SetCastShadow			(bool castShadow) { m_CastShadow = castShadow; }
+	void SetCastShadow			(const bool& castShadow) { m_CastShadow = castShadow; }
 	const bool& GetCastShadow   () const          { return m_CastShadow;       }
 
 	virtual RenderData::LightData BuildLightData() const;
