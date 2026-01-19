@@ -10,11 +10,14 @@
 #include "json.hpp"
 #include <filesystem>
 #include <array>
+#include <unordered_map>
 #include "UndoManager.h"
+#include "Snapshot.h"
 
 class ServiceRegistry;
 class Renderer;
 class SceneManager;
+class Scene;
 class GameObject;
 class AssetLoader;
 class SoundManager;
@@ -68,12 +71,13 @@ private:
 
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
 
-	void DrawPlayPauseButton();
 	//Gui 관련
 	void CreateDockSpace();
 	void SetupEditorDockLayout();
 
-
+	SceneStateSnapshot CaptureSceneState(const std::shared_ptr<Scene>& scene) const;
+	void RestoreSceneState(const SceneStateSnapshot& snapshot);
+	void ClearPendingPropertySnapshots();
 
 	void OnResize(int width, int height) override;
 	void OnClose() override;
@@ -103,6 +107,14 @@ private:
 	std::string m_LastSceneName;
 	std::array<char, 256> m_ObjectNameBuffer;
 	std::array<char, 256> m_SceneNameBuffer;
+
+	struct PendingPropertySnapshot
+	{
+		ObjectSnapshot beforeSnapshot;
+		bool updated = false;
+	};
+	std::unordered_map<size_t, PendingPropertySnapshot> m_PendingPropertySnapshots;
+	std::filesystem::path m_LastPendingSnapshotScenePath;
 
 	nlohmann::json m_ObjectClipboard;
 	bool m_ObjectClipboardHasData = false;

@@ -36,7 +36,7 @@ struct SceneFileSnapshot
 	std::string contents;
 };
 
-std::shared_ptr<GameObject> FindSceneObject(Scene* scene, const std::string& name, bool* isOpaque)
+inline std::shared_ptr<GameObject> FindSceneObject(Scene* scene, const std::string& name, bool* isOpaque)
 {
 	if (!scene)
 	{
@@ -66,7 +66,7 @@ std::shared_ptr<GameObject> FindSceneObject(Scene* scene, const std::string& nam
 	return nullptr;
 }
 
-std::shared_ptr<GameObject> EnsureSceneObjects(Scene* scene, const ObjectSnapshot& snapshot)
+inline std::shared_ptr<GameObject> EnsureSceneObjects(Scene* scene, const ObjectSnapshot& snapshot)
 {
 	if (!scene)
 		return nullptr;
@@ -88,7 +88,7 @@ std::shared_ptr<GameObject> EnsureSceneObjects(Scene* scene, const ObjectSnapsho
 	return created;
 }
 
-void ApplySnapshot(Scene* scene, const ObjectSnapshot& snapshot)
+inline void ApplySnapshot(Scene* scene, const ObjectSnapshot& snapshot)
 {
 	auto target = EnsureSceneObjects(scene, snapshot);
 	if (!target)
@@ -97,14 +97,14 @@ void ApplySnapshot(Scene* scene, const ObjectSnapshot& snapshot)
 	target->Deserialize(snapshot.data);
 }
 
-size_t MakePropertyKey(const Component* component, const std::string& propertyName)
+inline size_t MakePropertyKey(const Component* component, const std::string& propertyName)
 {
 	const size_t pointerHash = std::hash<const void*>{}(component);
 	const size_t nameHash = std::hash<std::string>{}(propertyName);
 	return pointerHash ^ (nameHash + 0x9e3779b97f4a7c15ULL + (pointerHash << 6) + (pointerHash >> 2));
 }
 
-SceneFileSnapshot CaptureFileSnapshot(const fs::path& path)
+inline SceneFileSnapshot CaptureFileSnapshot(const fs::path& path)
 {
 	SceneFileSnapshot snapshot;
 	snapshot.path = path;
@@ -122,7 +122,7 @@ SceneFileSnapshot CaptureFileSnapshot(const fs::path& path)
 	return snapshot;
 }
 
-void RestoreFileSnapshot(const SceneFileSnapshot& snapshot)
+inline void RestoreFileSnapshot(const SceneFileSnapshot& snapshot)
 {
 	if(snapshot.path.empty())
 	{
