@@ -817,7 +817,7 @@ bool DrawFSMGraphEditor(FSMGraph& graph)
 	return updated;
 }
 
-PropertyEditResult& DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
+PropertyEditResult DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
 {	// 각 Property별 배치 Layout은 정해줘야 함
 	using PlaybackStateType = std::decay_t<decltype(std::declval<AnimationComponent>().GetPlayback())>;
 	using BoneMaskSourceType = std::decay_t<decltype(std::declval<AnimationComponent>().GetBoneMaskSource())>;

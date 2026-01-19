@@ -890,7 +890,14 @@ void EditorApplication::UpdateEditorCamera()
 		auto selectedObject = it->second;
 
 		const bool selectedIsOpaque = (opaqueIt != opaqueObjects.end() && opaqueIt->second);
-		static std::unordered_map<size_t, ObjectSnapshot> pendingPropertySnapshots;
+
+		struct PendingPropertySnapshot
+		{
+			ObjectSnapshot beforeSnapshot;
+			bool updated = false;
+		};
+
+		static std::unordered_map<size_t, PendingPropertySnapshot> pendingPropertySnapshots;
 
 		if (m_LastSelectedObjectName != m_SelectedObjectName)
 		{
@@ -1017,10 +1024,19 @@ void EditorApplication::UpdateEditorCamera()
 
 						if (activated && pendingPropertySnapshots.find(propertyKey) == pendingPropertySnapshots.end())
 						{
-							ObjectSnapshot snapshot;
-							snapshot.isOpaque = selectedIsOpaque;
-							selectedObject->Serialize(snapshot.data);
-							pendingPropertySnapshots.emplace(propertyKey, std::move(snapshot));
+							PendingPropertySnapshot pendingSnapshot;
+							pendingSnapshot.beforeSnapshot.isOpaque = selectedIsOpaque;
+							selectedObject->Serialize(pendingSnapshot.beforeSnapshot.data);
+							pendingPropertySnapshots.emplace(propertyKey, std::move(pendingSnapshot));
+						}
+
+						if (updated)
+						{
+							auto itSnapshot = pendingPropertySnapshots.find(propertyKey);
+							if (itSnapshot != pendingPropertySnapshots.end())
+							{
+								itSnapshot->second.updated = true;
+							}
 						}
 
 						if (deactivated)
@@ -1028,9 +1044,9 @@ void EditorApplication::UpdateEditorCamera()
 							auto itSnapshot = pendingPropertySnapshots.find(propertyKey);
 							if (itSnapshot != pendingPropertySnapshots.end())
 							{
-								if (updated)
+								if (itSnapshot->second.updated)
 								{
-									ObjectSnapshot beforeSnapshot = itSnapshot->second;
+									ObjectSnapshot beforeSnapshot = itSnapshot->second.beforeSnapshot;
 									ObjectSnapshot afterSnapshot;
 									afterSnapshot.isOpaque = selectedIsOpaque;
 									selectedObject->Serialize(afterSnapshot.data);
@@ -1049,6 +1065,7 @@ void EditorApplication::UpdateEditorCamera()
 										}
 									});
 								}
+								pendingPropertySnapshots.erase(itSnapshot);
 							}
 						}
 					}
@@ -1927,13 +1944,16 @@ void EditorApplication::UpdateEditorCamera()
 		const auto& transparentObjects = scene->GetTransparentObjects();
 
 		std::shared_ptr<GameObject> selectedObject;
+		bool selectedIsOpaque = true;
 		if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
 		{
 			selectedObject = opaqueIt->second;
+			selectedIsOpaque = true;
 		}
 		else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
 		{
 			selectedObject = transparentIt->second;
+			selectedIsOpaque = false;
 		}
 
 		if (!selectedObject)
@@ -1953,17 +1973,17 @@ void EditorApplication::UpdateEditorCamera()
 		static float snapValues[3]{ 1.0f, 1.0f, 1.0f };
 
 		ImGui::Begin("Gizmo");
-		if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE)|| ImGui::IsKeyPressed(ImGuiKey_T))
+		if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE) || ImGui::IsKeyPressed(ImGuiKey_T))
 		{
 			currentOperation = ImGuizmo::TRANSLATE;
 		}
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE)|| ImGui::IsKeyPressed(ImGuiKey_R))
+		if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE) || ImGui::IsKeyPressed(ImGuiKey_R))
 		{
 			currentOperation = ImGuizmo::ROTATE;
 		}
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE)|| ImGui::IsKeyPressed(ImGuiKey_S))
+		if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE) || ImGui::IsKeyPressed(ImGuiKey_S))
 		{
 			currentOperation = ImGuizmo::SCALE;
 		}
@@ -2012,7 +2032,24 @@ void EditorApplication::UpdateEditorCamera()
 			nullptr,
 			useSnap ? snapValues : nullptr);
 
-		if (ImGuizmo::IsUsing())
+		static bool wasUsing = false;
+		static bool gizmoUpdated = false;
+		static bool hasSnapshot = false;
+		static ObjectSnapshot beforeSnapshot{};
+		static std::string pendingObjectName;
+
+		const bool usingNow = ImGuizmo::IsUsing();
+
+		if (usingNow && !wasUsing)
+		{
+			beforeSnapshot.isOpaque = selectedIsOpaque;
+			selectedObject->Serialize(beforeSnapshot.data);
+			pendingObjectName = selectedObject->GetName();
+			gizmoUpdated = false;
+			hasSnapshot = true;
+		}
+
+		if (usingNow)
 		{
 			XMFLOAT4X4 local = world;
 			if (auto* parent = transform->GetParent())
@@ -2028,7 +2065,58 @@ void EditorApplication::UpdateEditorCamera()
 			transform->SetPosition(position);
 			transform->SetRotation(rotation);
 			transform->SetScale(scale);
+			gizmoUpdated = true;
 		}
+
+		if (!usingNow && wasUsing && hasSnapshot && gizmoUpdated)
+		{
+			bool isOpaque = beforeSnapshot.isOpaque;
+			if (auto targetObject = FindSceneObject(scene.get(), pendingObjectName, &isOpaque))
+			{
+				ObjectSnapshot afterSnapshot;
+				afterSnapshot.isOpaque = isOpaque;
+				targetObject->Serialize(afterSnapshot.data);
+
+				const char* opLabel = "Gizmo Edit";
+				switch (currentOperation)
+				{
+				case ImGuizmo::TRANSLATE:
+					opLabel = "Gizmo Translate";
+					break;
+				case ImGuizmo::ROTATE:
+					opLabel = "Gizmo Rotate";
+					break;
+				case ImGuizmo::SCALE:
+					opLabel = "Gizmo Scale";
+					break;
+				default:
+					break;
+				}
+
+				Scene* scenePtr = scene.get();
+				ObjectSnapshot undoSnapshot = beforeSnapshot;
+				m_UndoManager.Push(UndoManager::Command{
+					opLabel,
+					[scenePtr, undoSnapshot]()
+					{
+						ApplySnapshot(scenePtr, undoSnapshot);
+					},
+					[scenePtr, afterSnapshot]()
+					{
+						ApplySnapshot(scenePtr, afterSnapshot);
+					}
+					});
+			}
+		}
+
+		if (!usingNow && wasUsing)
+		{
+			hasSnapshot = false;
+			gizmoUpdated = false;
+			pendingObjectName.clear();
+		}
+
+		wasUsing = usingNow;
 	}
 
 	// 카메라 절두체 그림

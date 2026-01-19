@@ -15,5 +15,5 @@ struct PropertyEditResult
 	bool deactivated = false;
 };
 
-PropertyEditResult& DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader);
+PropertyEditResult DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader);
 bool ProjectToViewport( const XMFLOAT3& world, const XMMATRIX& viewProj, const ImVec2& rectMin,const ImVec2& rectMax, ImVec2& out);

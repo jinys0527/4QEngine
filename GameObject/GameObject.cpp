@@ -1,6 +1,7 @@
 ﻿#include "Component.h"
 #include "GameObject.h"
 #include "TransformComponent.h"
+#include <unordered_map>
 
 
 GameObject::GameObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
@@ -28,11 +29,12 @@ void GameObject::Serialize(nlohmann::json& j) const
 void GameObject::Deserialize(const nlohmann::json& j)
 {
 	m_Name = j.at("name");
+	std::unordered_map<std::string, size_t> desiredCounts;
 
 	for (const auto& compJson : j.at("components"))
 	{
 		std::string typeName = compJson.at("type");
-
+		++desiredCounts[typeName];
 		// 기존 컴포넌트가 있으면 찾아서 갱신
 		auto it = m_Components.find(typeName);
 		if (it != m_Components.end() && !it->second.empty())
@@ -52,6 +54,27 @@ void GameObject::Deserialize(const nlohmann::json& j)
 				comp->Deserialize(compJson.at("data"));
 				AddComponent(std::move(comp));
 			}
+		}
+	}
+
+	for (auto it = m_Components.begin(); it != m_Components.end();)
+	{
+		const auto desiredIt = desiredCounts.find(it->first);
+		const size_t desiredCount = (desiredIt != desiredCounts.end()) ? desiredIt->second : 0;
+		auto& components = it->second;
+
+		while (components.size() > desiredCount)
+		{
+			components.pop_back();
+		}
+
+		if (components.empty())
+		{
+			it = m_Components.erase(it);
+		}
+		else
+		{
+			++it;
 		}
 	}
 }
