@@ -28,10 +28,15 @@ struct Light
     float Range; 
 
     float3 worldDir; 
-    float SpotAngle; 
+    float  padding0; 
 
     float3 viewDir; 
     float Intensity; 
+
+    float SpotInnerAngle;
+    float SpotOutterAngle;
+    float AttenuationRadius;
+    float padding1;
 
     uint CastShadow;
     float3 padding; 

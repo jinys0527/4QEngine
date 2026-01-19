@@ -1,6 +1,7 @@
 ﻿#include "FSMComponent.h"
 #include "ReflectionMacro.h"
 #include "FSMEventRegistry.h"
+#include "FSMActionRegistry.h"
 #include <iostream>
 
 REGISTER_COMPONENT(FSMComponent)
@@ -9,6 +10,15 @@ REGISTER_PROPERTY(FSMComponent, CurrentStateName)
 
 void RegisterFSMBaseDefinitions()
 {
+	auto& actionRegistry = FSMActionRegistry::Instance();
+	actionRegistry.RegisterAction({
+		"None",
+		"FSM",
+		{
+			{ "value", "bool", true, false }
+		}
+		});
+
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "None", "Common" });
 }
