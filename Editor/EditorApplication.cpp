@@ -574,8 +574,92 @@ void EditorApplication::UpdateEditorCamera()
 			m_SelectedObjectName = name;
 		}
 
+		// copy
+		const std::shared_ptr<GameObject>* selectedObject = nullptr;
+		bool selectedObjectIsOpaque = true;
+		const auto& opaqueObjects = scene->GetOpaqueObjects();
+		const auto& transparentObjects = scene->GetTransparentObjects();
+		if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
+		{
+			selectedObject = &opaqueIt->second;
+			selectedObjectIsOpaque = true;
+		}
+		else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
+		{
+			selectedObject = &transparentIt->second;
+			selectedObjectIsOpaque = false;
+		}
+
+		auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object, bool isOpaque)
+			{
+				if (!object)
+				{
+					return;
+				}
+				m_ObjectClipboard = nlohmann::json::object();
+				object->Serialize(m_ObjectClipboard);
+				m_ObjectClipboardIsOpaque = isOpaque;
+				m_ObjectClipboardHasData = true;
+			};
+
+		std::vector<std::pair<nlohmann::json, bool>> pendingAdds;
+
+		auto queuePasteObject = [&](nlohmann::json objectJson, bool isOpaque)
+			{
+				pendingAdds.emplace_back(std::move(objectJson), isOpaque);
+			};
+
+		auto pasteClipboardObject = [&]()
+			{
+				if (!m_ObjectClipboardHasData)
+				{
+					return false;
+				}
+				if (!m_ObjectClipboard.is_object()
+					|| !m_ObjectClipboard.contains("components")
+					|| !m_ObjectClipboard["components"].is_array())
+				{
+					m_ObjectClipboardHasData = false;
+					return false;
+				}
+				queuePasteObject(m_ObjectClipboard, m_ObjectClipboardIsOpaque);
+				return true;
+			};
+
+		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) && selectedObject && *selectedObject)
+			{
+				copySelectedObject(*selectedObject, selectedObjectIsOpaque);
+			}
+			if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V))
+			{
+				pasteClipboardObject();
+			}
+		}
+
+
 		ImGui::Separator();
 		std::vector<std::string> pendingDeletes;
+
+		if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+		{
+			if (!m_ObjectClipboardHasData)
+			{
+				ImGui::BeginDisabled();
+			}
+			if (ImGui::MenuItem("Paste"))
+			{
+				pasteClipboardObject();
+			}
+			if (!m_ObjectClipboardHasData)
+			{
+				ImGui::EndDisabled();
+			}
+			ImGui::EndPopup();
+		}
+
 
 		// GameObjects map 가져와	Opaque
 		for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
@@ -591,6 +675,16 @@ void EditorApplication::UpdateEditorCamera()
 			}
 			if (ImGui::BeginPopupContextItem("ObjectContext"))
 			{
+				if (ImGui::MenuItem("Copy"))
+				{
+					copySelectedObject(Object, true);
+				}
+				if (ImGui::MenuItem("Duplicate"))
+				{
+					nlohmann::json duplicateJson = nlohmann::json::object();
+					Object->Serialize(duplicateJson);
+					queuePasteObject(std::move(duplicateJson), true);
+				}
 				if (ImGui::MenuItem("Delete"))
 				{
 					pendingDeletes.push_back(name);
@@ -609,6 +703,16 @@ void EditorApplication::UpdateEditorCamera()
 			}
 			if (ImGui::BeginPopupContextItem("ObjectContext"))
 			{
+				if (ImGui::MenuItem("Copy"))
+				{
+					copySelectedObject(Object, false);
+				}
+				if (ImGui::MenuItem("Duplicate"))
+				{
+					nlohmann::json duplicateJson = nlohmann::json::object();
+					Object->Serialize(duplicateJson);
+					queuePasteObject(std::move(duplicateJson), false);
+				}
 				if (ImGui::MenuItem("Delete"))
 				{
 					pendingDeletes.push_back(name);
@@ -617,6 +721,21 @@ void EditorApplication::UpdateEditorCamera()
 			}
 			ImGui::PopID();
 		}
+
+		for (auto& [objectJson, isOpaque] : pendingAdds)
+		{
+			const std::string baseName = objectJson.value("name", "GameObject");
+			const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
+			objectJson["name"] = uniqueName;
+
+			auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
+			newObject->Deserialize(objectJson);
+			scene->AddGameObject(newObject, isOpaque);
+			m_SelectedObjectName = uniqueName;
+		}
+
+
+
 
 		for (const auto& name : pendingDeletes)
 		{
@@ -1432,17 +1551,17 @@ void EditorApplication::UpdateEditorCamera()
 		static float snapValues[3]{ 1.0f, 1.0f, 1.0f };
 
 		ImGui::Begin("Gizmo");
-		if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE))
+		if (ImGui::RadioButton("Translate", currentOperation == ImGuizmo::TRANSLATE)|| ImGui::IsKeyPressed(ImGuiKey_T))
 		{
 			currentOperation = ImGuizmo::TRANSLATE;
 		}
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE))
+		if (ImGui::RadioButton("Rotate", currentOperation == ImGuizmo::ROTATE)|| ImGui::IsKeyPressed(ImGuiKey_R))
 		{
 			currentOperation = ImGuizmo::ROTATE;
 		}
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE))
+		if (ImGui::RadioButton("Scale", currentOperation == ImGuizmo::SCALE)|| ImGui::IsKeyPressed(ImGuiKey_S))
 		{
 			currentOperation = ImGuizmo::SCALE;
 		}
