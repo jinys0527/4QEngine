@@ -7,7 +7,7 @@
 #include "Engine.h"
 #include "RenderTargetContext.h" 
 #include "RenderData.h"
-
+#include "json.hpp"
 #include <filesystem>
 #include <array>
 
@@ -102,6 +102,10 @@ private:
 	std::string m_LastSceneName;
 	std::array<char, 256> m_ObjectNameBuffer;
 	std::array<char, 256> m_SceneNameBuffer;
+
+	nlohmann::json m_ObjectClipboard;
+	bool m_ObjectClipboardHasData = false;
+	bool m_ObjectClipboardIsOpaque = true;
 
 	// Floder View 변수
 	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음
