@@ -14,13 +14,13 @@ public:
 
 	void  SetDirection(const XMFLOAT3& direction) { m_Direction = direction;	  }
 	const XMFLOAT3& GetDirection() const          { return m_Direction;			  }
-	void  SetSpotInnerAngle(float angle)		  { m_SpotInnerAngle = angle;	  }
+	void  SetSpotInnerAngle(const float& angle)		  { m_SpotInnerAngle = angle;	  }
 	const float& GetSpotInnerAngle() const		  { return m_SpotInnerAngle;	  }
-	void  SetSpotOutterAngle(float angle)		  { m_SpotOutterAngle = angle;    }
+	void  SetSpotOutterAngle(const float& angle)		  { m_SpotOutterAngle = angle;    }
 	const float& GetSpotOutterAngle() const		  { return m_SpotOutterAngle;     }
-	void  SetAttenuationRadius(float radius)	  { m_AttenuationRadius = radius; }
+	void  SetAttenuationRadius(const float& radius)	  { m_AttenuationRadius = radius; }
 	const float& GetAttenuationRadius() const	  { return m_AttenuationRadius;   }
-	void  SetRange(float range)					  { m_Range = range;			  }
+	void  SetRange(const float& range)					  { m_Range = range;			  }
 	const float& GetRange() const				  { return m_Range;				  }
 
 	void Update(float deltaTime) override;

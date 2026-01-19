@@ -20,6 +20,32 @@ void TransformComponent::SetParent(TransformComponent* newParent)
 	SetDirty();
 }
 
+void TransformComponent::SetParentKeepLocal(TransformComponent* newParent)
+{
+	assert(newParent != this);
+	assert(m_Parent == nullptr);
+
+	m_Parent = newParent;
+	m_Parent->m_Children.push_back(this);
+
+	SetDirty();
+}
+
+void TransformComponent::DetachFromParentKeepLocal()
+{
+	if (m_Parent == nullptr) return;
+
+	auto* parent = m_Parent;
+	m_Parent = nullptr;
+
+	parent->m_Children.erase(
+		std::remove(parent->m_Children.begin(), parent->m_Children.end(), this),
+		parent->m_Children.end()
+	);
+
+	SetDirty();
+}
+
 void TransformComponent::DetachFromParent()
 {
 	if (m_Parent == nullptr) return;
@@ -33,9 +59,10 @@ void TransformComponent::DetachFromParent()
 
 void TransformComponent::AddChild(TransformComponent* child)
 {
-	XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
-	childLocalTM = Mul(childLocalTM, GetInverseWorldMatrix());
-
+	//XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
+	//childLocalTM = Mul(childLocalTM, GetInverseWorldMatrix());
+	XMFLOAT4X4 childWorldTM = child->GetWorldMatrix();
+	XMFLOAT4X4 childLocalTM = Mul(childWorldTM, GetInverseWorldMatrix());
 	XMFLOAT4X4 mNoPivot = RemovePivot(childLocalTM, child->GetPivotPoint());
 	DecomposeMatrix(mNoPivot, child->m_Position, child->m_Rotation, child->m_Scale);
 
@@ -44,9 +71,9 @@ void TransformComponent::AddChild(TransformComponent* child)
 
 void TransformComponent::RemoveChild(TransformComponent* child)
 {
-	XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
-	childLocalTM = Mul(childLocalTM, m_WorldMatrix);
-
+	//XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
+	//XMFLOAT4X4 childLocalTM = child->GetWorldMatrix();childLocalTM = Mul(childLocalTM, m_WorldMatrix);
+	XMFLOAT4X4 childLocalTM = child->GetWorldMatrix();
 	XMFLOAT4X4 mNoPivot = RemovePivot(childLocalTM, child->GetPivotPoint());
 	DecomposeMatrix(mNoPivot, child->m_Position, child->m_Rotation, child->m_Scale);
 

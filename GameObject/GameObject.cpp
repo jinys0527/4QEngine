@@ -12,6 +12,10 @@ GameObject::GameObject(EventDispatcher& eventDispatcher) : Object(eventDispatche
 void GameObject::Serialize(nlohmann::json& j) const
 {
 	j["name"] = m_Name;
+	if (m_Transform && m_Transform->GetParent())
+	{
+		j["parent"] = m_Transform->GetParent()->GetOwner()->GetName();
+	}
 	j["components"] = nlohmann::json::array();
 	for (const auto& component : m_Components)
 	{

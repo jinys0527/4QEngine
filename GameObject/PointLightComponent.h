@@ -12,7 +12,7 @@ public:
 	PointLightComponent();
 	virtual ~PointLightComponent() = default;
 
-	void  SetAttenuationRadius(float radius)  { m_AttenuationRadius = radius; }
+	void  SetAttenuationRadius(const float& radius)  { m_AttenuationRadius = radius; }
 	const float& GetAttenuationRadius() const { return m_AttenuationRadius;   }
 
 	void Update(float deltaTime) override;

@@ -472,9 +472,6 @@ void EditorApplication::UpdateEditorCamera()
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			auto scene = m_SceneManager.GetCurrentScene();
-			const char* sceneName = scene ? scene->GetName().c_str() : "None";
-			ImGui::Text("Scene: %s", sceneName);
 
 			// ---- 중앙 정렬 계산 ----
 			float buttonWidth = 60.0f;
@@ -527,8 +524,6 @@ void EditorApplication::UpdateEditorCamera()
 	}
 
 	void EditorApplication::DrawHierarchy() {
-
-
 		ImGui::Begin("Hierarchy");
 
 		auto scene = m_SceneManager.GetCurrentScene();
@@ -639,39 +634,162 @@ void EditorApplication::UpdateEditorCamera()
 			}
 		}
 
+		std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
+		std::unordered_map<GameObject*, bool> objectOpacity;
+		auto collectObjects = [&](const auto& objects, bool isOpaque)
+			{
+				for (const auto& [name, object] : objects)
+				{
+					if (!object)
+					{
+						continue;
+					}
+					objectLookup[name] = object;
+					objectOpacity[object.get()] = isOpaque;
+				}
+			};
+
+		collectObjects(scene->GetOpaqueObjects(), true);
+		collectObjects(scene->GetTransparentObjects(), false);
+
+		auto findObjectByName = [&](const std::string& name) -> std::shared_ptr<GameObject>
+			{
+				if (const auto it = objectLookup.find(name); it != objectLookup.end())
+				{
+					return it->second;
+				}
+				return nullptr;
+			};
+
+		auto captureSceneState = [&]() -> SceneStateSnapshot
+			{
+				SceneStateSnapshot snapshot;
+				snapshot.currentPath = m_CurrentScenePath;
+				snapshot.selectedPath = m_SelectedResourcePath;
+				snapshot.selectedObjectName = m_SelectedObjectName;
+				snapshot.lastSelectedObjectName = m_LastSelectedObjectName;
+				snapshot.objectNameBuffer = m_ObjectNameBuffer;
+				snapshot.lastSceneName = m_LastSceneName;
+				snapshot.sceneNameBuffer = m_SceneNameBuffer;
+
+				snapshot.hasScene = true;
+				scene->Serialize(snapshot.data);
+				return snapshot;
+			};
+
+		auto restoreSceneState = [&](const SceneStateSnapshot& snapshot)
+			{
+				if (snapshot.hasScene)
+				{
+					m_SceneManager.LoadSceneFromJsonData(snapshot.data, snapshot.currentPath);
+				}
+				m_CurrentScenePath = snapshot.currentPath;
+				m_SelectedResourcePath = snapshot.selectedPath;
+				m_SelectedObjectName = snapshot.selectedObjectName;
+				m_LastSelectedObjectName = snapshot.lastSelectedObjectName;
+				m_ObjectNameBuffer = snapshot.objectNameBuffer;
+				m_LastSceneName = snapshot.lastSceneName;
+				m_SceneNameBuffer = snapshot.sceneNameBuffer;
+			};
+
+
 		// copy
 		const std::shared_ptr<GameObject>* selectedObject = nullptr;
-		bool selectedObjectIsOpaque = true;
-		const auto& opaqueObjects = scene->GetOpaqueObjects();
-		const auto& transparentObjects = scene->GetTransparentObjects();
-		if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
+		if (const auto it = objectLookup.find(m_SelectedObjectName); it != objectLookup.end())
 		{
-			selectedObject = &opaqueIt->second;
-			selectedObjectIsOpaque = true;
-		}
-		else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
-		{
-			selectedObject = &transparentIt->second;
-			selectedObjectIsOpaque = false;
+			selectedObject = &it->second;
 		}
 
-		auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object, bool isOpaque)
+		auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object)
 			{
 				if (!object)
 				{
 					return;
 				}
-				m_ObjectClipboard = nlohmann::json::object();
-				object->Serialize(m_ObjectClipboard);
-				m_ObjectClipboardIsOpaque = isOpaque;
+
+				nlohmann::json clipboard = nlohmann::json::object();
+				clipboard["objects"] = nlohmann::json::array();
+
+				std::unordered_map<GameObject*, int> objectIds;
+				int nextId = 0;
+				std::vector<GameObject*> stack;
+				stack.push_back(object.get());
+				while (!stack.empty())
+				{
+					GameObject* current = stack.back();
+					stack.pop_back();
+
+					if (!current)
+					{
+						continue;
+					}
+
+					const bool isRoot = (current == object.get());
+					auto* currentTransform = current->GetComponent<TransformComponent>();
+					GameObject* parentObject = (!isRoot && currentTransform && currentTransform->GetParent())
+						? dynamic_cast<GameObject*>(currentTransform->GetParent()->GetOwner())
+						: nullptr;
+
+					if (objectIds.find(current) == objectIds.end())
+					{
+						objectIds[current] = nextId++;
+					}
+
+					const int currentId = objectIds[current];
+					int parentId = -1;
+					if (parentObject)
+					{
+						if (objectIds.find(parentObject) == objectIds.end())
+						{
+							objectIds[parentObject] = nextId++;
+						}
+						parentId = objectIds[parentObject];
+					}
+
+					nlohmann::json objectJson;
+					current->Serialize(objectJson);
+					objectJson["clipboardId"] = currentId;
+					objectJson["parentId"] = parentId;
+					const auto opacityIt = objectOpacity.find(current);
+					objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;
+					clipboard["objects"].push_back(std::move(objectJson));
+
+					if (!currentTransform)
+					{
+						continue;
+					}
+
+					for (auto* childTransform : currentTransform->GetChildrens())
+					{
+						if (!childTransform)
+						{
+							continue;
+						}
+						auto* childObject = dynamic_cast<GameObject*>(childTransform->GetOwner());
+						if (childObject)
+						{
+							stack.push_back(childObject);
+						}
+					}
+				}
+
+				m_ObjectClipboard = std::move(clipboard);
+				const auto rootOpacityIt = objectOpacity.find(object.get());
+				m_ObjectClipboardIsOpaque = (rootOpacityIt != objectOpacity.end()) ? rootOpacityIt->second : true;
 				m_ObjectClipboardHasData = true;
 			};
 
-		std::vector<std::pair<nlohmann::json, bool>> pendingAdds;
+		struct PendingAdd
+		{
+			nlohmann::json data;
+			std::string label;
+		};
 
-		auto queuePasteObject = [&](nlohmann::json objectJson, bool isOpaque)
+		std::vector<PendingAdd> pendingAdds;
+
+		auto queuePasteObject = [&](nlohmann::json objectJson, std::string label)
 			{
-				pendingAdds.emplace_back(std::move(objectJson), isOpaque);
+				pendingAdds.push_back(PendingAdd{ std::move(objectJson), std::move(label) });
 			};
 
 		auto pasteClipboardObject = [&]()
@@ -680,23 +798,22 @@ void EditorApplication::UpdateEditorCamera()
 				{
 					return false;
 				}
-				if (!m_ObjectClipboard.is_object()
-					|| !m_ObjectClipboard.contains("components")
-					|| !m_ObjectClipboard["components"].is_array())
+				if (!m_ObjectClipboard.is_object())
 				{
 					m_ObjectClipboardHasData = false;
 					return false;
 				}
-				queuePasteObject(m_ObjectClipboard, m_ObjectClipboardIsOpaque);
+				queuePasteObject(m_ObjectClipboard, "Paste GameObject");
 				return true;
 			};
+
 
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) && selectedObject && *selectedObject)
 			{
-				copySelectedObject(*selectedObject, selectedObjectIsOpaque);
+				copySelectedObject(*selectedObject);
 			}
 			if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V))
 			{
@@ -726,137 +843,359 @@ void EditorApplication::UpdateEditorCamera()
 		}
 
 
-		// GameObjects map 가져와	Opaque
-		for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
-			ImGui::PushID(name.c_str());
-			const bool selected = (m_SelectedObjectName == name);
-			if (ImGui::Selectable(name.c_str(), selected)) {
-				m_SelectedObjectName = name;
-			}
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		auto isDescendant = [&](TransformComponent* child, TransformComponent* potentialParent) -> bool
 			{
-				m_SelectedObjectName = name;
-				FocusEditorCameraOnObject(Object);
+				for (auto* current = potentialParent; current != nullptr; current = current->GetParent())
+				{
+					if (current == child)
+					{
+						return true;
+					}
+				}
+				return false;
+			};
+
+		auto reparentObject = [&](const std::string& childName, const std::string& parentName) {
+			if (childName == parentName) {
+				return;
 			}
-			if (ImGui::BeginPopupContextItem("ObjectContext"))
+			auto childObject = findObjectByName(childName);
+			auto parentObject = findObjectByName(parentName);
+
+			if (!childObject || !parentObject)
 			{
-				if (ImGui::MenuItem("Copy"))
-				{
-					copySelectedObject(Object, true);
-				}
-				if (ImGui::MenuItem("Duplicate"))
-				{
-					nlohmann::json duplicateJson = nlohmann::json::object();
-					Object->Serialize(duplicateJson);
-					queuePasteObject(std::move(duplicateJson), true);
-				}
-				if (ImGui::MenuItem("Delete"))
-				{
-					pendingDeletes.push_back(name);
-				}
-				ImGui::EndPopup();
+				return;
 			}
-			ImGui::PopID();
-		}
 
-		//Transparent
-		for (const auto& [name, Object] : scene->GetTransparentObjects()) {
-			ImGui::PushID(name.c_str());
-			const bool selected = (m_SelectedObjectName == name);
-			if (ImGui::Selectable(name.c_str(), selected)) {
-				m_SelectedObjectName = name;
-			}
-			if (ImGui::BeginPopupContextItem("ObjectContext"))
+			auto* childTransform = childObject->GetComponent<TransformComponent>();
+			auto* parentTransform = parentObject->GetComponent<TransformComponent>();
+			if (!childTransform || !parentTransform)
 			{
-				if (ImGui::MenuItem("Copy"))
-				{
-					copySelectedObject(Object, false);
-				}
-				if (ImGui::MenuItem("Duplicate"))
-				{
-					nlohmann::json duplicateJson = nlohmann::json::object();
-					Object->Serialize(duplicateJson);
-					queuePasteObject(std::move(duplicateJson), false);
-				}
-				if (ImGui::MenuItem("Delete"))
-				{
-					pendingDeletes.push_back(name);
-				}
-				ImGui::EndPopup();
+				return;
 			}
-			ImGui::PopID();
-		}
+			if (childTransform->GetParent() == parentTransform)
+			{
+				return;
+			}
+			if (isDescendant(childTransform, parentTransform))
+			{
+				return;
+			}
 
-		for (auto& [objectJson, isOpaque] : pendingAdds)
-		{
-			const std::string baseName = objectJson.value("name", "GameObject");
-			const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
-			objectJson["name"] = uniqueName;
+			SceneStateSnapshot beforeState = captureSceneState();
 
-			auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
-			newObject->Deserialize(objectJson);
-			scene->AddGameObject(newObject, isOpaque);
-			m_SelectedObjectName = uniqueName;
+			if (childTransform->GetParent())
+			{
+				childTransform->DetachFromParentKeepLocal();
+			}
+			childTransform->SetParentKeepLocal(parentTransform);
 
-			ObjectSnapshot snapshot;
-			snapshot.isOpaque = isOpaque;
-			newObject->Serialize(snapshot.data);
-			Scene* scenePtr = scene.get();
-
+			SceneStateSnapshot afterState = captureSceneState();
 			m_UndoManager.Push(UndoManager::Command{
-				"Paste GameObject",
-				[scenePtr, snapshot]()
+				"Reparent GameObject",
+				[this, beforeState, restoreSceneState]()
 				{
-					if (!scenePtr)
-						return;
-					scenePtr->RemoveGameObjectByName(snapshot.data.value("name", ""));
+					restoreSceneState(beforeState);
 				},
-				[scenePtr, snapshot]()
+				[this, afterState, restoreSceneState]()
 				{
-					ApplySnapshot(scenePtr, snapshot);
+					restoreSceneState(afterState);
 				}
+				});
+			};
+
+		std::vector<GameObject*> rootObjects;
+		rootObjects.reserve(objectLookup.size());
+		for (const auto& [name, object] : objectLookup)
+		{
+			auto* transform = object->GetComponent<TransformComponent>();
+			if (!transform || transform->GetParent() == nullptr)
+			{
+				rootObjects.push_back(object.get());
+			}
+		}
+		std::sort(rootObjects.begin(), rootObjects.end(),
+			[](const GameObject* a, const GameObject* b)
+			{
+				if (!a || !b)
+				{
+					return a < b;
+				}
+				return a->GetName() < b->GetName();
 			});
+		auto drawHierarchyNode = [&](auto&& self, GameObject* object) -> void
+			{
+				if (!object) { return; }
+				const std::string& name = object->GetName();
+				auto* transform = object->GetComponent<TransformComponent>();
+				auto* children = transform ? &transform->GetChildrens() : nullptr;
+				const bool hasChildren = children && !children->empty();
+
+				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
+				if (m_SelectedObjectName == name)
+				{
+					flags |= ImGuiTreeNodeFlags_Selected;
+				}
+
+				ImGui::PushID(object);
+
+				if (!hasChildren) {
+					flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+					ImGui::TreeNodeEx(name.c_str(), flags);
+					if (ImGui::IsItemClicked())
+					{
+						m_SelectedObjectName = name;
+					}
+					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+					{
+						m_SelectedObjectName = name;
+						auto selected = findObjectByName(name);
+						if (selected)
+						{
+							FocusEditorCameraOnObject(selected);
+						}
+					}
+
+					if (ImGui::BeginPopupContextItem("ObjectContext"))
+					{
+						auto selected = findObjectByName(name);
+						if (ImGui::MenuItem("Copy") && selected)
+						{
+							copySelectedObject(selected);
+						}
+						if (ImGui::MenuItem("Duplicate") && selected)
+						{
+							copySelectedObject(selected);
+							if (m_ObjectClipboardHasData)
+							{
+								queuePasteObject(m_ObjectClipboard, "Duplicate GameObject");
+							}
+						}
+						if (ImGui::MenuItem("Delete"))
+						{
+							pendingDeletes.push_back(name);
+						}
+						ImGui::EndPopup();
+					}
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+						ImGui::TextUnformatted(name.c_str());
+						ImGui::EndDragDropSource();
+					}
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+						{
+							const char* payloadName = static_cast<const char*>(payload->Data);
+							if (payloadName)
+							{
+								reparentObject(payloadName, name);
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
+				else {
+					const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
+					if (ImGui::IsItemClicked())
+					{
+						m_SelectedObjectName = name;
+					}
+					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+					{
+						m_SelectedObjectName = name;
+						auto selected = findObjectByName(name);
+						if (selected)
+						{
+							FocusEditorCameraOnObject(selected);
+						}
+					}
+					if (ImGui::BeginPopupContextItem("ObjectContext"))
+					{
+						auto selected = findObjectByName(name);
+						if (ImGui::MenuItem("Copy") && selected)
+						{
+							copySelectedObject(selected);
+						}
+						if (ImGui::MenuItem("Duplicate") && selected)
+						{
+							copySelectedObject(selected);
+							if (m_ObjectClipboardHasData)
+							{
+								queuePasteObject(m_ObjectClipboard, "Duplicate GameObject");
+							}
+						}
+						if (ImGui::MenuItem("Delete"))
+						{
+							pendingDeletes.push_back(name);
+						}
+						ImGui::EndPopup();
+					}
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+						ImGui::TextUnformatted(name.c_str());
+						ImGui::EndDragDropSource();
+					}
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+						{
+							const char* payloadName = static_cast<const char*>(payload->Data);
+							if (payloadName)
+							{
+								reparentObject(payloadName, name);
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+
+					if (nodeOpen)
+					{
+						for (auto* childTransform : *children)
+						{
+							if (!childTransform)
+							{
+								continue;
+							}
+							auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
+							if (!childOwner)
+							{
+								continue;
+							}
+							self(self, childOwner);
+						}
+						ImGui::TreePop();
+					}
+				}
+
+				ImGui::PopID();
+			};
+
+		for (auto* root : rootObjects)
+		{
+			drawHierarchyNode(drawHierarchyNode, root);
+		}
+
+		for (auto& pendingAdd : pendingAdds)
+		{
+			bool didAdd = false;
+			SceneStateSnapshot beforeState = captureSceneState();
+
+			if (pendingAdd.data.contains("objects") && pendingAdd.data["objects"].is_array())
+			{
+				std::unordered_map<int, std::shared_ptr<GameObject>> createdObjects;
+
+				for (auto& objectJson : pendingAdd.data["objects"])
+				{
+					const int clipboardId = objectJson.value("clipboardId", static_cast<int>(createdObjects.size()));
+					const std::string baseName = objectJson.value("name", "GameObject");
+					const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
+
+					objectJson["name"] = uniqueName;
+					const bool isOpaque = objectJson.value("isOpaque", true);
+					auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
+					newObject->Deserialize(objectJson);
+					scene->AddGameObject(newObject, isOpaque);
+					createdObjects[clipboardId] = newObject;
+					m_SelectedObjectName = uniqueName;
+					didAdd = true;
+				}
+
+				for (const auto& objectJson : pendingAdd.data["objects"])
+				{
+					const int clipboardId = objectJson.value("clipboardId", -1);
+					const int parentId = objectJson.value("parentId", -1);
+					if (clipboardId < 0 || parentId < 0)
+					{
+						continue;
+					}
+
+					auto childIt = createdObjects.find(clipboardId);
+					auto parentIt = createdObjects.find(parentId);
+					if (childIt == createdObjects.end() || parentIt == createdObjects.end())
+					{
+						continue;
+					}
+
+					auto* childTransform = childIt->second->GetComponent<TransformComponent>();
+					auto* parentTransform = parentIt->second->GetComponent<TransformComponent>();
+					if (!childTransform || !parentTransform)
+					{
+						continue;
+					}
+					if (childTransform->GetParent())
+					{
+						childTransform->DetachFromParentKeepLocal();
+					}
+					childTransform->SetParentKeepLocal(parentTransform);
+				}
+			}
+			else if (pendingAdd.data.contains("components") && pendingAdd.data["components"].is_array())
+			{
+				const std::string baseName = pendingAdd.data.value("name", "GameObject");
+				const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
+				pendingAdd.data["name"] = uniqueName;
+
+				auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
+				newObject->Deserialize(pendingAdd.data);
+				scene->AddGameObject(newObject, m_ObjectClipboardIsOpaque);
+				m_SelectedObjectName = uniqueName;
+				didAdd = true;
+			}
+
+			if (didAdd)
+			{
+				SceneStateSnapshot afterState = captureSceneState();
+				m_UndoManager.Push(UndoManager::Command{
+					pendingAdd.label,
+					[this, beforeState, restoreSceneState]()
+					{
+						restoreSceneState(beforeState);
+					},
+					[this, afterState, restoreSceneState]()
+					{
+						restoreSceneState(afterState);
+					}
+					});
+			}
 		}
 
 		for (const auto& name : pendingDeletes)
 		{
-			bool wasOpaque = true;
-			ObjectSnapshot snapshot;
-			if (auto removedObject = FindSceneObject(scene.get(), name, &wasOpaque))
-			{
-				snapshot.isOpaque = wasOpaque;
-				removedObject->Serialize(snapshot.data);
-			}
-
+			SceneStateSnapshot beforeState = captureSceneState();
 			scene->RemoveGameObjectByName(name);
 			if (m_SelectedObjectName == name)
 			{
 				m_SelectedObjectName.clear();
 			}
+			SceneStateSnapshot afterState = captureSceneState();
 
-			if (!snapshot.data.is_null())
-			{
-				Scene* scenePtr = scene.get();
-
-				m_UndoManager.Push(UndoManager::Command{
-					"Delete GameObject",
-					[scenePtr, snapshot]()
-					{
-						ApplySnapshot(scenePtr, snapshot);
-					},
-					[scenePtr, snapshot]()
-					{
-						if (!scenePtr)
-							return;
-						scenePtr->RemoveGameObjectByName(snapshot.data.value("name", ""));
-					}
+			m_UndoManager.Push(UndoManager::Command{
+				"Delete GameObject",
+				[this, beforeState, restoreSceneState]()
+				{
+					restoreSceneState(beforeState);
+				},
+				[this, afterState, restoreSceneState]()
+				{
+					restoreSceneState(afterState);
+				}
 				});
-			}
 		}
 
-		ImGui::End();
+				ImGui::End();
 
-	}
+			}
+
+
+
 
 	void EditorApplication::DrawInspector() {
 
