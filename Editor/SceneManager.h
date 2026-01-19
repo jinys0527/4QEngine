@@ -33,6 +33,7 @@ public:
 	std::shared_ptr<Scene> GetCurrentScene() const;
 	void ChangeScene(const std::string& name);
 	void ChangeScene();
+	bool CreateNewScene(const std::filesystem::path& filePath);
 	bool LoadSceneFromJson(const std::filesystem::path& filePath);
 	bool SaveSceneToJson(const std::filesystem::path& filePath) const;
 

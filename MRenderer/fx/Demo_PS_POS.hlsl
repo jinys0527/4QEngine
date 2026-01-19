@@ -2,7 +2,7 @@
 
 float4 PS_Main(VSOutput_P i) : SV_TARGET
 {
-    float4 final = float4(0.21f, 0.21f, 0.21f, 1);
+    float4 final = float4(0.0f, 0.0f, 0.0f, 1);
     
     if(i.originPos.z == 0.0f)
         final = float4(1, 0, 0, 1);

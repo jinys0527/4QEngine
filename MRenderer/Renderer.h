@@ -193,7 +193,7 @@ private:
 	void UpdateGrid(const RenderData::FrameData& frame);
 	void DrawGrid();
 	float m_CellSize = 1.0f;
-	int   m_HalfCells = 50;
+	int   m_HalfCells = 100;
 
 	//쿼드
 protected:

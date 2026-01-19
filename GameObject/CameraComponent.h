@@ -83,11 +83,12 @@ public:
 	void SetOrthoOffCenter(const OrthoOffCenterParams& orthoOC) { m_OrthoOffCenter = orthoOC; m_ProjDirty = true; }
 	const OrthoOffCenterParams& GetOrthoOffCenter() const		{ return m_OrthoOffCenter;    }
 
-	void SetNearZ(const float& nearz) { m_NearZ = nearz; m_ProjDirty = true; }
-	const float GetNearZ() const { return m_NearZ; }
+	void SetNearZ(const float& nearz) { if (nearz < 0.1f) { return; }  m_NearZ = nearz;  m_ProjDirty = true; }
+	const float& GetNearZ() const { return m_NearZ; }
 
-	void SetFarZ(const float& farz) { m_FarZ = farz; m_ProjDirty = true; }
-	const float GetFarZ() const { return m_FarZ; }
+	void SetFarZ(const float& farz) { if (farz < 0.1f) { return; } m_FarZ = farz; m_ProjDirty = true; }
+	const float& GetFarZ() const { return m_FarZ; }
+
 
 	ProjectionMode GetProjectionMode() const { return m_Mode; }
 

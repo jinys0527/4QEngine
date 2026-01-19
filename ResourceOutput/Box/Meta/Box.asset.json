@@ -1,0 +1,18 @@
+{
+  "animations": [],
+  "files": {
+    "materials": "Mats/Box.matbin",
+    "skeleton": "Skels/Box.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/Box.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "Box",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  }
+}

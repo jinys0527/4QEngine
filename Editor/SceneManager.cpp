@@ -108,6 +108,25 @@ void SceneManager::SetChangeScene(std::string name)
 	m_ChangeSceneName = name;
 }
 
+bool SceneManager::CreateNewScene(const std::filesystem::path& filePath)
+{
+	if (filePath.empty())
+	{
+		return false;
+	}
+
+	auto newScene = std::make_shared<DefaultScene>(m_Services);
+	newScene->SetSceneManager(this);
+	newScene->SetName(filePath.stem().string());
+	newScene->Initialize();
+	newScene->SetIsPause(true);
+	SetCurrentScene(newScene);
+	m_CurrentScenePath = filePath;
+
+	return SaveSceneToJson(filePath);
+}
+
+
 bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 {	// 선택했을때 해당 Scene을 Deserialize 해서 
 	// 현재 씬으로

@@ -475,24 +475,42 @@ void EditorApplication::UpdateEditorCamera()
 			float centerX = (windowWidth - totalButtonWidth) * 0.5f;
 
 			ImGui::SetCursorPosX(centerX);
+			//Play = True일 때 비활성
 
+			bool disablePlay = (m_EditorState == EditorPlayState::Play);
+			bool disablePause = (m_EditorState != EditorPlayState::Play);
+			bool disableStop = (m_EditorState == EditorPlayState::Stop);
 
+			ImGui::BeginDisabled(disablePlay);
 			if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
 			{
 				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
 				m_SceneManager.GetCurrentScene()->SetIsPause(false);
+				m_EditorState = EditorPlayState::Play;
+
+
 			}
+			ImGui::EndDisabled();
+
 			ImGui::SameLine();
+
+			ImGui::BeginDisabled(disablePause);
 			if (ImGui::Button("Pause", ImVec2(buttonWidth, 0)))
 			{
 				m_SceneManager.GetCurrentScene()->SetIsPause(true);
+				m_EditorState = EditorPlayState::Pause;
 			}
+			ImGui::EndDisabled();
 
 			ImGui::SameLine();
+
+			ImGui::BeginDisabled(disableStop);
 			if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
 			{
 				m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
+				m_EditorState = EditorPlayState::Stop;
 			}
+			ImGui::EndDisabled();
 
 			ImGui::EndMainMenuBar();
 		}
@@ -804,33 +822,25 @@ void EditorApplication::UpdateEditorCamera()
 					}
 				}
 
-				nlohmann::json j;
-				j["gameObjects"] = nlohmann::json::object();
-				j["gameObjects"]["opaque"] = nlohmann::json::array();
-				j["gameObjects"]["transparent"] = nlohmann::json::array();
-
-				std::ofstream out(newPath);
-				if (out)
+				if(m_SceneManager.CreateNewScene(newPath))
 				{
-					out << j.dump(4);
-					out.close();
-					if (m_SceneManager.LoadSceneFromJson(newPath))
-					{
-						m_CurrentScenePath = newPath;
-						m_SelectedResourcePath = newPath;
-						m_SelectedObjectName.clear();
-						m_LastSelectedObjectName.clear();
-						m_ObjectNameBuffer.fill('\0');
-					}
+					m_CurrentScenePath = newPath;
+					m_SelectedResourcePath = newPath;
+					m_SelectedObjectName.clear();
+					m_LastSelectedObjectName.clear();
+					m_ObjectNameBuffer.fill('\0');
 				}
 			};
-
+		ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause);
 		if (ImGui::Button("New Scene"))
 		{
 			createNewScene();
 		}
+		//ImGui::EndDisabled();
 
 		ImGui::SameLine();
+		// Play 중일때 저장 불가
+		//ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause); 
 		if (ImGui::Button("Save")) {
 			auto scene = m_SceneManager.GetCurrentScene();
 			if (scene)
@@ -847,6 +857,8 @@ void EditorApplication::UpdateEditorCamera()
 				m_OpenSaveConfirm = true;
 			}
 		}
+		
+
 
 		ImGui::SameLine();
 		const bool canDelete = !m_SelectedResourcePath.empty() && m_SelectedResourcePath.extension() == ".json";
@@ -863,7 +875,7 @@ void EditorApplication::UpdateEditorCamera()
 		{
 			ImGui::EndDisabled();
 		}
-
+		ImGui::EndDisabled();
 		ImGui::SameLine();
 		if (m_CurrentScenePath.empty())
 		{
