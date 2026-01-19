@@ -768,8 +768,8 @@ void EditorApplication::UpdateEditorCamera()
 			{
 				childTransform->DetachFromParent();
 			}
-			childTransform->SetParent(parentTransform);
-			//childTransform->SetParentKeepLocal(parentTransform);
+			//childTransform->SetParent(parentTransform);
+			childTransform->SetParentKeepLocal(parentTransform);
 			};
 		std::vector<GameObject*> rootObjects;
 		rootObjects.reserve(objectLookup.size());
@@ -990,7 +990,7 @@ void EditorApplication::UpdateEditorCamera()
 							}
 							if (childTransform->GetParent())
 							{
-								childTransform->DetachFromParent();
+								childTransform->DetachFromParentKeepLocal();
 							}
 							childTransform->SetParent(parentTransform);
 						}

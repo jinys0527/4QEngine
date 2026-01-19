@@ -396,7 +396,8 @@ void Scene::Deserialize(const nlohmann::json& j)
 				{
 					if (childTransform->GetParent())
 					{
-						childTransform->DetachFromParent();
+						//childTransform->DetachFromParent();
+						childTransform->DetachFromParentKeepLocal();
 					}
 					continue;
 				}
@@ -406,7 +407,8 @@ void Scene::Deserialize(const nlohmann::json& j)
 				{
 					if (childTransform->GetParent())
 					{
-						childTransform->DetachFromParent();
+						//childTransform->DetachFromParent();
+						childTransform->DetachFromParentKeepLocal();
 					}
 					continue;
 				}
@@ -421,10 +423,11 @@ void Scene::Deserialize(const nlohmann::json& j)
 				{
 					if (childTransform->GetParent())
 					{
-						childTransform->DetachFromParent();
+						//childTransform->DetachFromParent();
+						childTransform->DetachFromParentKeepLocal();
 					}
-					childTransform->SetParent(parentTransform);
-					//childTransform->SetParentKeepLocal(parentTransform);
+					//childTransform->SetParent(parentTransform);
+					childTransform->SetParentKeepLocal(parentTransform);
 				}
 			}
 		};

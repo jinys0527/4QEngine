@@ -31,6 +31,21 @@ void TransformComponent::SetParentKeepLocal(TransformComponent* newParent)
 	SetDirty();
 }
 
+void TransformComponent::DetachFromParentKeepLocal()
+{
+	if (m_Parent == nullptr) return;
+
+	auto* parent = m_Parent;
+	m_Parent = nullptr;
+
+	parent->m_Children.erase(
+		std::remove(parent->m_Children.begin(), parent->m_Children.end(), this),
+		parent->m_Children.end()
+	);
+
+	SetDirty();
+}
+
 void TransformComponent::DetachFromParent()
 {
 	if (m_Parent == nullptr) return;

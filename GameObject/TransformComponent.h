@@ -35,6 +35,7 @@ public:
 
 	void SetParent(TransformComponent* newParent);
 	void SetParentKeepLocal(TransformComponent* newParent);
+	void DetachFromParentKeepLocal();
 	void DetachFromParent();
 
 	void AddChild(TransformComponent* child);
