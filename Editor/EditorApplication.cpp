@@ -661,65 +661,193 @@ void EditorApplication::UpdateEditorCamera()
 		}
 
 
-		// GameObjects map 가져와	Opaque
-		for (const auto& [name, Object] : scene->GetOpaqueObjects()) {
-			ImGui::PushID(name.c_str());
-			const bool selected = (m_SelectedObjectName == name);
-			if (ImGui::Selectable(name.c_str(), selected)) {
-				m_SelectedObjectName = name;
-			}
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
+		std::unordered_map<GameObject*, bool> objectOpacity;
+		auto collectObjects = [&](const auto& objects, bool isOpaque)
 			{
-				m_SelectedObjectName = name;
-				FocusEditorCameraOnObject(Object);
-			}
-			if (ImGui::BeginPopupContextItem("ObjectContext"))
+				for (const auto& [name, object] : objects)
+				{
+					if (!object)
+					{
+						continue;
+					}
+					objectLookup[name] = object;
+					objectOpacity[object.get()] = isOpaque;
+				}
+			};
+
+		collectObjects(scene->GetOpaqueObjects(), true);
+		collectObjects(scene->GetTransparentObjects(), false);
+
+		auto findObjectByName = [&](const std::string& name) -> std::shared_ptr<GameObject>
 			{
-				if (ImGui::MenuItem("Copy"))
+				if (const auto it = objectLookup.find(name); it != objectLookup.end())
 				{
-					copySelectedObject(Object, true);
+					return it->second;
 				}
-				if (ImGui::MenuItem("Duplicate"))
+				return nullptr;
+			};
+
+		auto isDescendant = [&](TransformComponent* child, TransformComponent* potentialParent) -> bool
+			{
+				for (auto* current = potentialParent; current != nullptr; current = current->GetParent())
 				{
-					nlohmann::json duplicateJson = nlohmann::json::object();
-					Object->Serialize(duplicateJson);
-					queuePasteObject(std::move(duplicateJson), true);
+					if (current == child)
+					{
+						return true;
+					}
 				}
-				if (ImGui::MenuItem("Delete"))
+				return false;
+			};
+
+		auto reparentObject = [&](const std::string& childName, const std::string& parentName)
+			{
+				if (childName == parentName)
 				{
-					pendingDeletes.push_back(name);
+					return;
 				}
-				ImGui::EndPopup();
+				auto childObject = findObjectByName(childName);
+				auto parentObject = findObjectByName(parentName);
+				if (!childObject || !parentObject)
+				{
+					return;
+				}
+
+				auto* childTransform = childObject->GetComponent<TransformComponent>();
+				auto* parentTransform = parentObject->GetComponent<TransformComponent>();
+				if (!childTransform || !parentTransform)
+				{
+					return;
+				}
+				if (childTransform->GetParent() == parentTransform)
+				{
+					return;
+				}
+				if (isDescendant(childTransform, parentTransform))
+				{
+					return;
+				}
+
+				if (childTransform->GetParent())
+				{
+					childTransform->DetachFromParent();
+				}
+				childTransform->SetParent(parentTransform);
+			};
+
+		std::vector<GameObject*> rootObjects;
+		rootObjects.reserve(objectLookup.size());
+		for (const auto& [name, object] : objectLookup)
+		{
+			auto* transform = object->GetComponent<TransformComponent>();
+			if (!transform || transform->GetParent() == nullptr)
+			{
+				rootObjects.push_back(object.get());
 			}
-			ImGui::PopID();
 		}
 
-		//Transparent
-		for (const auto& [name, Object] : scene->GetTransparentObjects()) {
-			ImGui::PushID(name.c_str());
-			const bool selected = (m_SelectedObjectName == name);
-			if (ImGui::Selectable(name.c_str(), selected)) {
-				m_SelectedObjectName = name;
-			}
-			if (ImGui::BeginPopupContextItem("ObjectContext"))
+		auto drawHierarchyNode = [&](auto&& self, GameObject* object) -> void
 			{
-				if (ImGui::MenuItem("Copy"))
+				if (!object)
 				{
-					copySelectedObject(Object, false);
+					return;
 				}
-				if (ImGui::MenuItem("Duplicate"))
+				const std::string& name = object->GetName();
+				auto* transform = object->GetComponent<TransformComponent>();
+				auto* children = transform ? &transform->GetChildrens() : nullptr;
+				const bool hasChildren = children && !children->empty();
+
+				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
+				if (m_SelectedObjectName == name)
 				{
-					nlohmann::json duplicateJson = nlohmann::json::object();
-					Object->Serialize(duplicateJson);
-					queuePasteObject(std::move(duplicateJson), false);
+					flags |= ImGuiTreeNodeFlags_Selected;
 				}
-				if (ImGui::MenuItem("Delete"))
+				if (!hasChildren)
 				{
-					pendingDeletes.push_back(name);
+					flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 				}
-				ImGui::EndPopup();
-			}
-			ImGui::PopID();
+
+				ImGui::PushID(object);
+				const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
+				if (ImGui::IsItemClicked())
+				{
+					m_SelectedObjectName = name;
+				}
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+				{
+					m_SelectedObjectName = name;
+					auto selected = findObjectByName(name);
+					if (selected)
+					{
+						FocusEditorCameraOnObject(selected);
+					}
+				}
+
+				if (ImGui::BeginPopupContextItem("ObjectContext"))
+				{
+					const bool isOpaque = objectOpacity[object];
+					auto selected = findObjectByName(name);
+					if (ImGui::MenuItem("Copy") && selected)
+					{
+						copySelectedObject(selected, isOpaque);
+					}
+					if (ImGui::MenuItem("Duplicate") && selected)
+					{
+						nlohmann::json duplicateJson = nlohmann::json::object();
+						selected->Serialize(duplicateJson);
+						queuePasteObject(std::move(duplicateJson), isOpaque);
+					}
+					if (ImGui::MenuItem("Delete"))
+					{
+						pendingDeletes.push_back(name);
+					}
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::BeginDragDropSource())
+				{
+					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					ImGui::TextUnformatted(name.c_str());
+					ImGui::EndDragDropSource();
+				}
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+					{
+						const char* payloadName = static_cast<const char*>(payload->Data);
+						if (payloadName)
+						{
+							reparentObject(payloadName, name);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				if (nodeOpen && hasChildren)
+				{
+					for (auto* childTransform : *children)
+					{
+						if (!childTransform)
+						{
+							continue;
+						}
+						auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
+						if (!childOwner)
+						{
+							continue;
+						}
+						self(self, childOwner);
+					}
+					ImGui::TreePop();
+				}
+
+				ImGui::PopID();
+			};
+
+		for (auto* root : rootObjects)
+		{
+			drawHierarchyNode(drawHierarchyNode, root);
 		}
 
 		for (auto& [objectJson, isOpaque] : pendingAdds)
