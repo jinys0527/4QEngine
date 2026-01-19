@@ -37,7 +37,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 		const wchar_t* className = L"MIEditor";
 		const wchar_t* windowName = L"MIEditor";
 
-		if (false == Create(className, windowName, 1920, 1440))
+		if (false == Create(className, windowName, 1920, 1080))
 		{
 			return false;
 		}
