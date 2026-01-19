@@ -213,7 +213,7 @@ protected:
 
 	ComPtr<ID3D11Buffer>		m_QuadVertexBuffers;
 	ComPtr<ID3D11Buffer>		m_QuadIndexBuffers;
-	UINT						m_QuadIndexCounts;
+	UINT						m_QuadIndexCounts = 0;
 
 	ComPtr<ID3D11VertexShader> m_pVS_Quad;
 	ComPtr<ID3D11PixelShader> m_pPS_Quad;
