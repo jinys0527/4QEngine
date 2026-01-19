@@ -601,7 +601,7 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 			m_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
+			//m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
 		};
@@ -949,6 +949,36 @@ HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Te
 	return hr;
 }
 
+HRESULT Renderer::RTTexCreateMipMap(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)
+{
+	//텍스처 정보 구성.
+	D3D11_TEXTURE2D_DESC td = {};
+	//ZeroMemory(&td, sizeof(td));
+	td.Width = width;						//텍스처크기(1:1)
+	td.Height = height;
+	td.MipLevels = 0;						//밉맵 생성 안함
+	td.ArraySize = 1;
+	td.Format = fmt;							//텍스처 포멧 (DXGI_FORMAT_R8G8B8A8_UNORM 등..)
+	td.SampleDesc.Count = 1;					// AA 없음.
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;		//용도 : RT + SRV
+	td.CPUAccessFlags = 0;
+	td.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+	//텍스처 생성.
+	ID3D11Texture2D* pTex = NULL;
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, &pTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	//성공후 외부로 리턴.
+	if (ppTex) *ppTex = pTex;
+
+	return hr;
+}
 
 HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView)
 {
@@ -1458,7 +1488,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 #pragma region Blur
 	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
-	RTTexCreate(m_WindowSize.width / 8, m_WindowSize.height / 8, fmt, m_pRTScene_Blur.GetAddressOf());
+	RTTexCreateMipMap(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Blur.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Blur.Get(), m_pRTView_Blur.GetAddressOf());

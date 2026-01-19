@@ -7,6 +7,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
 	SetSamplerState();
 
+
     SetCameraCB(frame);
     if (m_RenderContext.isEditCam)
     {
@@ -20,6 +21,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
 		m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
 		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
+		SetDepthStencilState(DS::DEPTH_OFF);
 		m_RenderContext.DrawFullscreenQuad();
     }
 
@@ -32,6 +34,10 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 
 	//터레인 그리기
+	SetBlendState(BS::DEFAULT);
+	SetRasterizerState(RS::CULLBACK);
+	SetDepthStencilState(DS::DEPTH_ON);
+
 	XMMATRIX mTM, mScale, mRotate, mTrans;
 	mScale = XMMatrixScaling(50, 50, 1);
 	mRotate = XMMatrixRotationX(XM_PI / 2);

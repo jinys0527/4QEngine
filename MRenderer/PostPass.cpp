@@ -29,7 +29,8 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
     dxdc->PSSetShaderResources(1, 1, m_RenderContext.pTexRvScene_Blur.GetAddressOf());
-    dxdc->PSSetShaderResources(2, 1, m_RenderContext.Vignetting.GetAddressOf());
+    dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthRV.GetAddressOf());
+    SetDepthStencilState(DS::DEPTH_OFF);
 
     m_RenderContext.DrawFullscreenQuad();
 

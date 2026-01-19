@@ -122,6 +122,7 @@ Texture2D g_RTView : register(t0);
 Texture2D g_Blur : register(t1);
 Texture2D g_ShadowMap : register(t2);
 TextureCube g_SkyBox : register(t3);
+Texture2D g_DepthMap : register(t4);
 
 Texture2D g_Albedo : register(t11);
 Texture2D g_Normal : register(t12);
