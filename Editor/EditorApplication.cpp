@@ -418,7 +418,7 @@ void EditorApplication::UpdateEditorCamera()
 		scene->Render(m_FrameData);
 	}
 
-		m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
+		//m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
 
 	
 

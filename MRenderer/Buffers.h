@@ -18,6 +18,8 @@ struct CameraConstBuffer
 	XMFLOAT4X4	mView = XMFLOAT4X4{};
 	XMFLOAT4X4	mProj = XMFLOAT4X4{};
 	XMFLOAT4X4	mVP = XMFLOAT4X4{};
+	XMFLOAT4X4  mSkyBox = XMFLOAT4X4{};
+	XMFLOAT4X4  mShadow = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
 	float		padding = 0.0f;
@@ -100,13 +102,12 @@ struct RenderContext
 	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
-	ComPtr<ID3D11InputLayout> inputLayout = nullptr;
+	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
 	ComPtr<ID3DBlob> VSCode;
 
-	ComPtr<ID3D11InputLayout> InputLayout_P;
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3D11PixelShader> PS_P;
 	ComPtr<ID3D11PixelShader> PS_Frustum;
@@ -170,5 +171,14 @@ struct RenderContext
 
 	//블러 테스트
 	ComPtr<ID3D11ShaderResourceView> Vignetting;
+
+	//스카이박스 테스트
+	ComPtr<ID3D11ShaderResourceView>	SkyBox;
+	ComPtr<ID3D11VertexShader>			VS_SkyBox;
+	ComPtr<ID3D11PixelShader>			PS_SkyBox;
+
+	//그림자 매핑 테스트
+	ComPtr<ID3D11VertexShader>			VS_Shadow;
+	ComPtr<ID3D11PixelShader>			PS_Shadow;
 
 };

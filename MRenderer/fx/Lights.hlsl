@@ -32,6 +32,46 @@ float4 DirectLight(float4 nrm)
 	return saturate(diff + amb);
 }
 
+float PCF(float4 smUV)
+{
+    float2 uv = smUV.xy ;
+    float curDepth = smUV.z;
+
+    float offset = 1.0f / 4096.0f;
+    float bias = pow(0.5f, 23);
+
+    float sum = 0.0f;
+
+    // 4x4 PCF (0~3)
+    [unroll]
+    for (int y = 0; y < 4; y++)
+    {
+        [unroll]
+        for (int x = 0; x < 4; x++)
+        {
+            float2 suv = uv + float2((x - 1) * offset, (y - 1) * offset);
+            float smDepth = g_ShadowMap.Sample(smpBorderShadow, suv).r;
+            
+            sum += (smDepth >= curDepth - bias) ? 1.0f : 0.0f;
+        }
+    }
+    float shadow = smoothstep(0.0f, 16.0f, sum);
+    return max(shadow, 0.3f);
+}
+
+float CastShadow(float4 uv)
+{
+    uv.xy /= uv.w;
+
+    float shadowDepth = g_ShadowMap.Sample(smpBorderShadow, uv.xy).r;
+
+    if (shadowDepth == 0.0f)
+        return 1.0f; // 그림자 없음(또는 밖)
+
+    return PCF(uv);
+}
+
+
 float4 SpecularLight_Point(float4 pos, float4 nrm, Light light)
 {
     float4 spec = 0;    spec.a = 1;

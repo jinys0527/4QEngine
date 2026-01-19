@@ -1,5 +1,7 @@
 ﻿#include "DepthPass.h"
 
+#include <algorithm>
+
 void DepthPass::Execute(const RenderData::FrameData& frame)
 {
     const auto& context = frame.context;
@@ -17,6 +19,8 @@ void DepthPass::Execute(const RenderData::FrameData& frame)
     m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
+    SetDepthStencilState(DS::DEPTH_ON);
+
     for (size_t index : GetQueue())
     {
 		for (const auto& [layer, items] : frame.renderItems)
@@ -25,6 +29,30 @@ void DepthPass::Execute(const RenderData::FrameData& frame)
             {
 
                 SetBaseCB(item);
+
+                if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
+                {
+                    const size_t paletteStart = item.skinningPaletteOffset;
+                    const size_t paletteCount = item.skinningPaletteCount;
+                    const size_t paletteSize = frame.skinningPalettes.size();
+                    const size_t maxCount = min(static_cast<size_t>(kMaxSkinningBones), paletteCount);
+                    const size_t safeCount = (paletteStart + maxCount <= paletteSize) ? maxCount : (paletteSize > paletteStart ? paletteSize - paletteStart : 0);
+
+                    m_RenderContext.SkinCBuffer.boneCount = static_cast<UINT>(safeCount);
+                    for (size_t i = 0; i < safeCount; ++i)
+                    {
+                        m_RenderContext.SkinCBuffer.bones[i] = frame.skinningPalettes[paletteStart + i];
+                    }
+                    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+
+                    m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+                }
+                else if (m_RenderContext.pSkinCB)
+                {
+                    m_RenderContext.SkinCBuffer.boneCount = 0;
+                    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+                    m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+                }
 
                 const auto* vertexBuffers = m_RenderContext.vertexBuffers;
                 const auto* indexBuffers = m_RenderContext.indexBuffers;
@@ -48,21 +76,7 @@ void DepthPass::Execute(const RenderData::FrameData& frame)
                             const UINT stride = sizeof(RenderData::Vertex);
                             const UINT offset = 0;
 
-                            //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);       //클리어만 해도 바인딩이 됨
-
-                            //m_RenderContext.pDXDC->OMSetBlendState(m_RenderContext.BState[BS::DEFAULT].Get(), nullptr, 0xFFFFFFFF);
-                            m_RenderContext.pDXDC->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
-                            m_RenderContext.pDXDC->RSSetState(m_RenderContext.RState[RS::CULLBACK].Get());
-                            m_RenderContext.pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_ON].Get(), 0);
-                            m_RenderContext.pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-                            m_RenderContext.pDXDC->IASetInputLayout(m_RenderContext.inputLayout.Get());
-                            m_RenderContext.pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                            m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS.Get(), nullptr, 0);
-                            //m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS.Get(), nullptr, 0);
-                            m_RenderContext.pDXDC->PSSetShader(nullptr, nullptr, 0);
-                            m_RenderContext.pDXDC->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-                            m_RenderContext.pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-                            m_RenderContext.pDXDC->DrawIndexed(indexCount, indexStart, 0);
+                            DrawMesh(vb, ib, m_RenderContext.VS_Shadow.Get(), nullptr, useSubMesh, indexCount, indexStart);
                         }
                     }
                 }

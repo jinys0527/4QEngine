@@ -39,6 +39,7 @@ private:
 	HRESULT CreateRenderTarget();
 	HRESULT CreateRenderTarget_Other();
 	HRESULT ReCreateRenderTarget();							//스크린에 영향받는 것들
+	void RecreateForAASampleChange(int width, int height, DWORD sampleCount);			//코덱스로 생성함 코드 검토 및 테스트 필요
 	HRESULT CreateDepthStencil(int width, int height);
 	HRESULT	CreateDepthStencilState();
 	HRESULT	CreateRasterState();
@@ -117,7 +118,8 @@ private:
 	HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
 	HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
-	HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);
+	HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);				//일반 DS용
+	HRESULT DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pTexRV);		//쉐이더리소스뷰 생성 DS
 	HRESULT RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT CubeRTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView, UINT faceIndex);
 	HRESULT RTCubeSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
@@ -163,7 +165,6 @@ private:
 
 
 	//Shadow, Depth용, 지금은 그리드용
-	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
 	ComPtr<ID3D11VertexShader>	m_pVS_P;
 	ComPtr<ID3D11PixelShader>	m_pPS_P;
 	ComPtr<ID3D11PixelShader>	m_pPS_Frustum;
@@ -196,12 +197,12 @@ private:
 
 	//쿼드
 protected:
-	std::vector<RenderData::Vertex_PU> quadVertices =
+	std::vector<RenderData::Vertex> quadVertices =
 	{
-		{ { -0.999f,  0.999f, 0.0f }, { 0.0f, 0.0f } }, // LT
-		{ {  0.999f,  0.999f, 0.0f }, { 1.0f, 0.0f } }, // RT
-		{ { -0.999f, -0.999f, 0.0f }, { 0.0f, 1.0f } }, // LB
-		{ {  0.999f, -0.999f, 0.0f }, { 1.0f, 1.0f } }, // RB
+		{ { -1.f,  1.f, 0.0f },  {0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f, 0.0f}, {0,0,0,0}, {0.0f,0.0f,0.0f,0.0f} }, // LT
+		{ {  1.f,  1.f, 0.0f },  {0.0f, 0.0f, 0.0f}, { 1.0f, 0.0f }, {0.0f, 0.0f, 0.0f, 0.0f}, {0,0,0,0}, {0.0f,0.0f,0.0f,0.0f} }, // RT
+		{ { -1.f, -1.f, 0.0f },  {0.0f, 0.0f, 0.0f}, { 0.0f, 1.0f }, {0.0f, 0.0f, 0.0f, 0.0f}, {0,0,0,0}, {0.0f,0.0f,0.0f,0.0f} }, // LB
+		{ {  1.f, -1.f, 0.0f },  {0.0f, 0.0f, 0.0f}, { 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f, 0.0f}, {0,0,0,0}, {0.0f,0.0f,0.0f,0.0f} }, // RB
 	};
 
 	std::vector<uint32_t> quadIndices =
@@ -210,7 +211,6 @@ protected:
 		2, 1, 3
 	};
 
-	ComPtr<ID3D11InputLayout>	m_pQuadInputLayout;
 	ComPtr<ID3D11Buffer>		m_QuadVertexBuffers;
 	ComPtr<ID3D11Buffer>		m_QuadIndexBuffers;
 	UINT						m_QuadIndexCounts;
@@ -225,4 +225,16 @@ protected:
 
 	//블러 테스트
 	ComPtr<ID3D11ShaderResourceView> m_Vignetting;
+
+	//스카이박스 테스트
+	ComPtr<ID3D11ShaderResourceView> m_SkyBox;
+	ComPtr<ID3D11VertexShader> m_pVS_SkyBox;
+	ComPtr<ID3D11PixelShader> m_pPS_SkyBox;
+	ComPtr<ID3DBlob> m_pVSCode_SkyBox;
+
+	//그림자매핑 테스트
+	ComPtr<ID3D11VertexShader> m_pVS_Shadow;
+	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
+	ComPtr<ID3DBlob> m_pVSCode_Shadow;
+
 };

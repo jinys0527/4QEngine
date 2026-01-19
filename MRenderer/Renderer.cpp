@@ -73,7 +73,7 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 	m_RenderContext.VS = m_pVS;
 	m_RenderContext.PS = m_pPS;
 	m_RenderContext.VSCode = m_pVSCode;
-	m_RenderContext.inputLayout = m_pInputLayout;
+	m_RenderContext.InputLayout = m_pInputLayout;
 
 	//그리드
 	CreateGridVB();
@@ -115,6 +115,12 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Post_VS.hlsl"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Post_PS.hlsl"), m_pPS_Post.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
+
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
@@ -126,6 +132,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 
 	CreateConstBuffer();
+
 
 	InitTexture();
 	InitShaders();
@@ -143,7 +150,18 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	
+	filename = L"../MRenderer/fx/YenaSky.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+		nullptr, m_SkyBox.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
 
 	
 
@@ -156,10 +174,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	CreateQuadVB();
 	CreateQuadIB();
 
+
+
 	CreateContext();		//마지막에 실행
 
 	m_bIsInitialized = true;
-
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
@@ -501,13 +520,12 @@ void Renderer::CreateContext()
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
 	m_RenderContext.VSCode					= m_pVSCode;
-	m_RenderContext.inputLayout				= m_pInputLayout;
+	m_RenderContext.InputLayout				= m_pInputLayout;
 
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
 	m_RenderContext.PS_Frustum				= m_pPS_Frustum;
 	m_RenderContext.VSCode_P				= m_pVSCode_P;
-	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
 
 	m_RenderContext.VS_PBR					= m_pVS_PBR;
 	m_RenderContext.PS_PBR					= m_pPS_PBR;
@@ -560,20 +578,30 @@ void Renderer::CreateContext()
 
 	m_RenderContext.Vignetting				= m_Vignetting;
 
+	m_RenderContext.SkyBox					= m_SkyBox;
+	m_RenderContext.VS_SkyBox				= m_pVS_SkyBox;
+	m_RenderContext.PS_SkyBox				= m_pPS_SkyBox;
+
+	m_RenderContext.VS_Shadow				= m_pVS_Shadow;
+	m_RenderContext.PS_Shadow				= m_pPS_Shadow;
+
+
+
 	//DrawQuad함수
 	m_RenderContext.DrawFullscreenQuad =
 		[this]()
 		{
-			UINT stride = sizeof(RenderData::Vertex_PU);
+			UINT stride = sizeof(RenderData::Vertex);
 			UINT offset = 0;
 
 			ID3D11Buffer* vb = m_QuadVertexBuffers.Get();
 			ID3D11Buffer* ib = m_QuadIndexBuffers.Get();
 
-			m_pDXDC->IASetInputLayout(m_pQuadInputLayout.Get());
+			m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
 			m_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 			m_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
 		};
@@ -752,8 +780,12 @@ HRESULT Renderer::CreateInputLayout()
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,       0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,          0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TANGENT",   0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "TANGENT",   0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+		{ "BONEINDICES",  0, DXGI_FORMAT_R16G16B16A16_UINT,     0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BONEWEIGHTS",  0, DXGI_FORMAT_R32G32B32A32_FLOAT,    0, 56, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+	
 	UINT numElements = ARRAYSIZE(layout);
 
 	// 정접 입력구조 객체 생성 Create the input layout
@@ -768,51 +800,6 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
-
-
-	D3D11_INPUT_ELEMENT_DESC layout2[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	numElements = ARRAYSIZE(layout2);
-
-	// 정접 입력구조 객체 생성 Create the input layout
-	hr = m_pDevice->CreateInputLayout(layout2,
-		numElements,
-		m_pVSCode_P->GetBufferPointer(),
-		m_pVSCode_P->GetBufferSize(),
-		m_pInputLayout_P.GetAddressOf()
-	);
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
-
-
-	D3D11_INPUT_ELEMENT_DESC layout3[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,          0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-
-	};
-	numElements = ARRAYSIZE(layout3);
-
-	// 정접 입력구조 객체 생성 Create the input layout
-	hr = m_pDevice->CreateInputLayout(layout3,
-		numElements,
-		m_pVSCode_Quad->GetBufferPointer(),
-		m_pVSCode_Quad->GetBufferSize(),
-		m_pQuadInputLayout.GetAddressOf()
-	);
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
-
-
-
 	return hr;
 }
 
@@ -965,12 +952,23 @@ HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Te
 
 HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView)
 {
+	if (!pTex)
+	{
+		return E_INVALIDARG;
+	}
+
+	D3D11_TEXTURE2D_DESC td = {};
+	pTex->GetDesc(&td);
+
 	//렌더타겟 정보 구성.
 	D3D11_RENDER_TARGET_VIEW_DESC rd = {};
 	//ZeroMemory(&rd, sizeof(rd));
 	rd.Format = fmt;										//텍스처와 동일포멧유지.
-	rd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;		//2D RT.
-	rd.Texture2D.MipSlice = 0;								//2D RT 용 추가 설정 : 밉멥 분할용 밉멥레벨 인덱스.
+	rd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;		//2D RT.
+	if (rd.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D)
+	{
+		rd.Texture2D.MipSlice = 0;								//2D RT 용 추가 설정 : 밉멥 분할용 밉멥레벨 인덱스.
+	}
 	//rd.Texture2DMS.UnusedField_NothingToDefine = 0;		//2D RT + AA 용 추가 설정
 
 	//렌더타겟 생성.
@@ -978,7 +976,7 @@ HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11Ren
 	HRESULT hr = m_pDevice->CreateRenderTargetView(pTex, &rd, &pRTView);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateRenderTargetView 실패"));
+		ERROR_MSG_HR(hr);
 		return hr;
 	}
 
@@ -992,13 +990,24 @@ HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11Ren
 
 HRESULT Renderer::RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV)
 {
+	if (!pTex)
+	{
+		return E_INVALIDARG;
+	}
+
+	D3D11_TEXTURE2D_DESC td = {};
+	pTex->GetDesc(&td);
+
 	//셰이더리소스뷰 정보 구성.
 	D3D11_SHADER_RESOURCE_VIEW_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.Format = fmt;										//텍스처와 동일포멧유지.
-	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;		//2D SRV.
-	sd.Texture2D.MipLevels = -1;								//2D SRV 추가 설정 : 밉멥 설정.
-	sd.Texture2D.MostDetailedMip = 0;
+	sd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;		//2D SRV.
+	if (sd.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D)
+	{
+		sd.Texture2D.MipLevels = -1;								//2D SRV 추가 설정 : 밉멥 설정.
+		sd.Texture2D.MostDetailedMip = 0;
+	}
 	//sd.Texture2DMS.UnusedField_NothingToDefine = 0;		//2D SRV+AA 추가 설정
 
 	//셰이더리소스뷰 생성.
@@ -1006,7 +1015,7 @@ HRESULT Renderer::RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11S
 	HRESULT hr = m_pDevice->CreateShaderResourceView(pTex, &sd, &pTexRV);
 	if (FAILED(hr))
 	{
-		//ynError(hr, _T("[Error] RT/ CreateShaderResourceView 실패"));
+		ERROR_MSG_HR(hr);
 		return hr;
 	}
 
@@ -1054,9 +1063,11 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Textu
 	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
 	//ZeroMemory(&dd, sizeof(dd));
 	dd.Format = td.Format;
-	dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;			//2D (AA 없음)
-	//dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;			//2D (AA 적용)
-	dd.Texture2D.MipSlice = 0;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;			//2D (AA 적용)
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
 	//깊이/스텐실 뷰 생성.
 	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
 	if (FAILED(hr))
@@ -1064,6 +1075,82 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Textu
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
+	return hr;
+}
+
+
+HRESULT Renderer::DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pTexRV)
+{
+	HRESULT hr = S_OK;
+
+
+	//---------------------------------- 
+	// 깊이/스텐실 버퍼용 빈 텍스처로 만들기.	
+	//---------------------------------- 
+	//깊이/스텐실 버퍼 정보 구성.
+	D3D11_TEXTURE2D_DESC td = {};
+	//ZeroMemory(&td, sizeof(td));
+	td.Width = width;
+	td.Height = height;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+	td.Format = DXGI_FORMAT_R32_TYPELESS;									//원본 RT 와 동일 포멧유지.
+	//td.Format  = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;	//깊이 버퍼 (32bit) + 스텐실 (8bit) / 신형 하드웨어 (DX11)
+	td.SampleDesc.Count = 1;							// AA 없음.
+	//td.SampleDesc.Count = g_dwAA;						// AA 설정 - RT 과 동일 규격 준수.
+	//td.SampleDesc.Quality = 0;
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;			//깊이-스텐실 버퍼용으로 설정.
+	td.MiscFlags = 0;
+	//깊이/스텐실 버퍼용 빈 텍스처로 만들기.	
+	hr = m_pDevice->CreateTexture2D(&td, NULL, pDSTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
+	//---------------------------------- 
+	// 깊이/스텐실 뷰 생성.
+	//---------------------------------- 
+	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
+	//ZeroMemory(&dd, sizeof(dd));
+	dd.Format = DXGI_FORMAT_D32_FLOAT;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;			//2D (AA 적용)
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
+	//깊이/스텐실 뷰 생성.
+	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
+	//쉐이더 리소스 뷰 생성
+	D3D11_SHADER_RESOURCE_VIEW_DESC sd = {};
+	td.Format = DXGI_FORMAT_R32_TYPELESS;
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+
+	dd.Format = DXGI_FORMAT_R32_FLOAT;
+
+	sd.Format = DXGI_FORMAT_R32_FLOAT;
+	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	sd.Texture2D.MipLevels = 1;
+	sd.Texture2D.MostDetailedMip = 0;
+
+	hr = m_pDevice->CreateShaderResourceView(*pDSTex, &sd, pTexRV);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
 
 	return hr;
 }
@@ -1162,7 +1249,8 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 	HRESULT hr = S_OK;
 
 	//Unbind → Release → ResizeBuffers → Recreate → Viewport → Camera
-
+	m_WindowSize.width = width;
+	m_WindowSize.height = height;
 
 	// 1.GPU 파이프라인 타겟 해제
 	m_pDXDC->OMSetRenderTargets(0, nullptr, nullptr);
@@ -1172,24 +1260,36 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 	ReleaseScreenSizeResource();
 
 	// 3.SwapChain ResizeBuffers 호출
-	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN,0);
-
+	hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 	// 4. 새 BackBuffer 획득 & RTV 재생성
-	ComPtr<ID3D11Texture2D> backBuffer;
-	m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+	hr = CreateRenderTarget();
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
-	m_pDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_pRTView);
+	// 5. DepthStencil 재생성 (AA 반영)
+	hr = CreateDepthStencil(width, height);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
-	// 5. 화면 크기 기반 렌더 타겟 전부 재생성
+	// 6. 화면 크기 기반 렌더 타겟 전부 재생성
 	ReCreateRenderTarget();
 
-
-	// 6. Viewport 재설정
+	// 7. Viewport 재설정
 	SetViewPort(width, height, m_pDXDC.Get());
+	m_pDXDC->OMSetRenderTargets(1, m_pRTView.GetAddressOf(), m_pDSView.Get());
+	CreateContext();
 
-
-	// 7. ResizeTarget, 전체화면 전환 시, 디스플레이 모드 변경 시
+	// 8. ResizeTarget, 전체화면 전환 시, 디스플레이 모드 변경 시
 
 	return hr;
 }
@@ -1307,8 +1407,7 @@ HRESULT Renderer::CreateRenderTarget_Other()
 
 #pragma region ShadowMap
 	m_ShadowTextureSize = { 16384, 16384 };
-	DXGI_FORMAT fmt = DXGI_FORMAT_D32_FLOAT;
-	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, fmt, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf());
+	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf(), m_pShadowRV.GetAddressOf());
 #pragma endregion
 
 
@@ -1340,8 +1439,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 
 #pragma region Depth
-	fmt = DXGI_FORMAT_D32_FLOAT;
-	DSCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf());
+	DSCreate(m_WindowSize.width, m_WindowSize.height, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf(), m_pDepthRV.GetAddressOf());
 
 #pragma endregion
 
@@ -1373,6 +1471,37 @@ HRESULT Renderer::ReCreateRenderTarget()
 	return hr;
 }
 
+void Renderer::RecreateForAASampleChange(int width, int height, DWORD sampleCount)
+{
+	m_dwAA = sampleCount;
+
+	// 1. GPU 파이프라인 타겟 해제
+	m_pDXDC->OMSetRenderTargets(0, nullptr, nullptr);
+	m_pDXDC->Flush();
+
+	// 2. 기존 화면 크기 의존 리소스 전부 Release
+	ReleaseScreenSizeResource();
+
+	// 3. SwapChain ResizeBuffers 호출 (샘플 수 변경 시 백버퍼 재생성)
+	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+
+	// 4. 새 BackBuffer 획득 & RTV 재생성
+	CreateRenderTarget();
+
+	// 5. DepthStencil 재생성 (m_dwAA 반영)
+	CreateDepthStencil(width, height);
+
+	// 6. 화면 크기 기반 렌더 타겟 전부 재생성
+	ReCreateRenderTarget();
+
+	// 7. Viewport 및 기본 렌더 타겟 재설정
+	SetViewPort(width, height, m_pDXDC.Get());
+	m_pDXDC->OMSetRenderTargets(1, m_pRTView.GetAddressOf(), m_pDSView.Get());
+
+	// 8. RenderContext 포인터 갱신
+	CreateContext();
+}
+
 HRESULT Renderer::CreateDepthStencil(int width, int height)
 {
 	HRESULT hr = S_OK;
@@ -1398,10 +1527,11 @@ HRESULT Renderer::CreateDepthStencil(int width, int height)
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC  dd = {};
 	dd.Format = td.Format;
-	dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;		//AA 없음.
-	//dd.ViewDimension  = D3D11_DSV_DIMENSION_TEXTURE2DMS;	//+AA 설정 "MSAA"
-
-	dd.Texture2D.MipSlice = 0;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;		//AA 설정 "MSAA"
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
 
 	hr = m_pDevice->CreateDepthStencilView(m_pDS.Get(), &dd, &m_pDSView);
 	if (FAILED(hr))
@@ -1458,7 +1588,7 @@ HRESULT Renderer::CreateRasterState()
 	rd.SlopeScaledDepthBias = 0;
 	rd.DepthClipEnable = true;
 	rd.ScissorEnable = false;
-	rd.MultisampleEnable = false;
+	rd.MultisampleEnable = true;
 	rd.AntialiasedLineEnable = false;
 	//레스터라이져 상태 객체 생성.
 	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::SOLID].GetAddressOf());
@@ -1779,7 +1909,7 @@ void Renderer::UpdateGrid(const RenderData::FrameData& frame)
 
 void Renderer::DrawGrid()
 {
-	m_pDXDC->IASetInputLayout(m_pInputLayout_P.Get());
+	m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
 	m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	UINT strideC = sizeof(VertexP), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);
@@ -1794,7 +1924,7 @@ void Renderer::DrawGrid()
 
 void Renderer::CreateQuadVB()
 {
-	CreateVertexBuffer(m_pDevice.Get(), quadVertices.data(), static_cast<UINT>(quadVertices.size() * sizeof(RenderData::Vertex_PU)), sizeof(RenderData::Vertex_PU), m_QuadVertexBuffers.GetAddressOf());
+	CreateVertexBuffer(m_pDevice.Get(), quadVertices.data(), static_cast<UINT>(quadVertices.size() * sizeof(RenderData::Vertex)), sizeof(RenderData::Vertex), m_QuadVertexBuffers.GetAddressOf());
 }
 
 void Renderer::CreateQuadIB()

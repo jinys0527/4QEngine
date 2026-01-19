@@ -163,7 +163,16 @@
     <FxCompile Include="fx\Test_VS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="fx\Frustum_PS.hlsl">
+    <FxCompile Include="fx\SkyBox_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\SkyBox_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Shadow_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Shadow_VS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

@@ -1,11 +1,12 @@
-﻿#include "ResourceStore.h"
-#include "OpaquePass.h"
+﻿#include "OpaquePass.h"
 
 #include <algorithm>
 #include <iostream>
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
+	SetSamplerState();
+
     SetCameraCB(frame);
     if (m_RenderContext.isEditCam)
     {
@@ -14,23 +15,47 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     else if (!m_RenderContext.isEditCam)
     {
         SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+
+		//임시 스카이박스 테스트
+		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+		m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
+		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
+		m_RenderContext.DrawFullscreenQuad();
     }
+
 
     //빛 상수 버퍼 set
     SetDirLight(frame);
 
-    SetBlendState(BS::DEFAULT);
-    SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_ON);
-
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
-    m_RenderContext.UpdateGrid(frame);
-    m_RenderContext.DrawGrid();
+
+	//터레인 그리기
+	XMMATRIX mTM, mScale, mRotate, mTrans;
+	mScale = XMMatrixScaling(50, 50, 1);
+	mRotate = XMMatrixRotationX(XM_PI / 2);
+	mTrans = XMMatrixIdentity();
+	mTM = mScale * mRotate, mTrans;
+	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
+	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+	m_RenderContext.pDXDC->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
+	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
+	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
+	m_RenderContext.DrawFullscreenQuad();
+	//터레인 끝
+
+	m_RenderContext.UpdateGrid(frame);
+	m_RenderContext.DrawGrid();
+
+
     
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
+
+	SetBlendState(BS::DEFAULT);
+	SetRasterizerState(RS::CULLBACK);
+	SetDepthStencilState(DS::DEPTH_ON);
 
     for (size_t index : GetQueue())
     {
@@ -77,7 +102,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
 				ID3D11PixelShader*  pixelShader  = m_RenderContext.PS_PBR.Get();
 
-                ////텍스쳐 바인딩
 				const RenderData::MaterialData* mat = nullptr;
 				if (item.useMaterialOverrides)
 				{
@@ -89,8 +113,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 				}
 
 				if (textures && mat)
-                {
-               		if (mat->shaderAsset.IsValid())
+				{
+					if (mat->shaderAsset.IsValid())
 					{
 						const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
 						if (shaderAsset)
@@ -133,22 +157,28 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						}
 					}
 
-                    for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
-                    {
-                        const TextureHandle h = mat->textures[slot];
-                        if (!h.IsValid())
-                            continue;
 
-                        const auto tIt = textures->find(h);
-                        if (tIt == textures->end())
-                            continue;
 
-                        ID3D11ShaderResourceView* srv = tIt->second.Get();
+#pragma region TextureBinding
+					for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
+					{
+						const TextureHandle h = mat->textures[slot];
+						if (!h.IsValid())
+							continue;
 
-                       
-                        m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
-                    }
-                }
+						const auto tIt = textures->find(h);
+						if (tIt == textures->end())
+							continue;
+
+						ID3D11ShaderResourceView* srv = tIt->second.Get();
+
+
+						m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
+					}
+				}
+
+#pragma endregion
+
 
 				if (vertexBuffers && indexBuffers && indexCounts && item.mesh.IsValid())
 				{
@@ -167,7 +197,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 						const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
 
 						//DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
-                        DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
+                        DrawMesh(vb, ib, vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
 					}
 				}
             }
