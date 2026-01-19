@@ -20,3 +20,13 @@ void SpotLightComponent::Update(float deltaTime)
 void SpotLightComponent::OnEvent(EventType type, const void* data)
 {
 }
+
+void SpotLightComponent::FillLightData(RenderData::LightData& data) const
+{
+	LightComponent::FillLightData(data);
+	data.range = m_Range;
+	data.direction = m_Direction;
+	data.spotOutterAngle = m_SpotOutterAngle;
+	data.spotInnerAngle = m_SpotInnerAngle;
+	data.attenuationRadius = m_AttenuationRadius;
+}

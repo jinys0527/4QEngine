@@ -22,6 +22,9 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 protected:
+	void FillLightData(RenderData::LightData& data) const override;
+
+protected:
 	XMFLOAT3   m_Direction{ 1, 0, 0 };
 	XMFLOAT4X4 m_LightViewProj{};
 };

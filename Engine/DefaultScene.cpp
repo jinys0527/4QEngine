@@ -39,7 +39,6 @@ void DefaultScene::Initialize()
 	lightObject->SetName("DirectionalLight");
 	if (auto* light = lightObject->AddComponent<DirectionalLightComponent>())
 	{
-		light->SetType(RenderData::LightType::Directional);
 		light->SetColor({ 1.0f, 1.0f, 1.0f });
 		light->SetIntensity(1.0f);
 		light->SetDirection({ 0.0f, -1.0f, 0.0f });

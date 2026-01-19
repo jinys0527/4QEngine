@@ -27,6 +27,9 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 protected:
+	void FillLightData(RenderData::LightData& data) const override;
+
+protected:
 	XMFLOAT3   m_Direction{ 1, 0, 0 };
 	float      m_Range = 0.0f;
 	float	   m_SpotInnerAngle = 0.0f;

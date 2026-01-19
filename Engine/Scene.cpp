@@ -630,7 +630,7 @@ static bool BuildSkeletalBaseItem(
 
 static void AppendLights(const Object& obj, RenderData::FrameData& frameData)
 {
-	for (const auto* light : obj.GetComponents<LightComponent>())
+	for (const auto* light : obj.GetComponentsDerived<LightComponent>())
 	{
 		if (!light) continue;
 

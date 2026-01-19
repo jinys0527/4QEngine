@@ -35,6 +35,9 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 protected:
+	virtual void FillLightData(RenderData::LightData& data) const;
+
+protected:
 	LightType  m_Type = LightType::None;
 	XMFLOAT3   m_Color        {};
 	XMFLOAT3   m_Position	  {};

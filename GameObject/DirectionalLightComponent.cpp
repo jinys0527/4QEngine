@@ -19,3 +19,9 @@ void DirectionalLightComponent::Update(float deltaTime)
 void DirectionalLightComponent::OnEvent(EventType type, const void* data)
 {
 }
+
+void DirectionalLightComponent::FillLightData(RenderData::LightData& data) const
+{
+	LightComponent::FillLightData(data);
+	data.direction = m_Direction;
+}
