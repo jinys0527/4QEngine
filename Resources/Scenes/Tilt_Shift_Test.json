@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -3.953836679458618,
-                "y": 3.027707815170288,
-                "z": -7.789786338806152
+                "x": -0.03243720903992653,
+                "y": 4.373180389404297,
+                "z": -14.422647476196289
             },
             "look": {
-                "x": -3.5814931392669678,
-                "y": 2.6893606185913086,
-                "z": -6.925563335418701
+                "x": -0.029039589688181877,
+                "y": 4.075469970703125,
+                "z": -13.467997550964355
             },
             "up": {
-                "x": 0.13387688994407654,
-                "y": 0.9410213828086853,
-                "z": 0.310734361410141
+                "x": 0.001059529953636229,
+                "y": 0.9546562433242798,
+                "z": 0.29770857095718384
             }
         }
     },
@@ -45,6 +45,20 @@
                     },
                     {
                         "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -59,20 +73,6 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "SubMeshMaterialOverrides": []
-                        },
-                        "type": "MeshComponent"
                     },
                     {
                         "data": {
@@ -151,15 +151,15 @@
                     {
                         "data": {
                             "Position": {
-                                "x": -3.953836679458618,
-                                "y": 3.027707815170288,
-                                "z": -7.789786338806152
+                                "x": -0.03243720903992653,
+                                "y": 4.373180389404297,
+                                "z": -14.422647476196289
                             },
                             "Rotation": {
-                                "w": 0.9648358821868896,
-                                "x": 0.16818445920944214,
-                                "y": 0.19900371134281158,
-                                "z": -0.034688908606767654
+                                "w": 0.9885975122451782,
+                                "x": 0.15057165920734406,
+                                "y": 0.0017592116491869092,
+                                "z": -0.00026793262804858387
                             },
                             "Scale": {
                                 "x": 1.0,
@@ -172,15 +172,17 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": -3.953836679458618,
-                                "y": 3.027707815170288,
-                                "z": -7.789786338806152
+                                "x": -0.03243720903992653,
+                                "y": 4.373180389404297,
+                                "z": -14.422647476196289
                             },
+                            "FarZ": 1000.0,
                             "Look": {
-                                "x": -3.5814931392669678,
-                                "y": 2.6893606185913086,
-                                "z": -6.925563335418701
+                                "x": -0.029039589688181877,
+                                "y": 4.075469970703125,
+                                "z": -13.467997550964355
                             },
+                            "NearZ": 0.10000000149011612,
                             "Ortho": {
                                 "height": 10.0,
                                 "width": 10.0
@@ -192,16 +194,16 @@
                                 "top": 1.0
                             },
                             "Perspective": {
-                                "aspect": 1.7846534252166748,
+                                "aspect": 1.818411111831665,
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": 0.13387688994407654,
-                                "y": 0.9410213828086853,
-                                "z": 0.310734361410141
+                                "x": 0.001059529953636229,
+                                "y": 0.9546562433242798,
+                                "z": 0.29770857095718384
                             },
                             "Viewport": {
-                                "height": 808.0,
+                                "height": 793.0,
                                 "width": 1442.0
                             }
                         },
@@ -235,6 +237,20 @@
                     },
                     {
                         "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -249,20 +265,6 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
-                            },
-                            "SubMeshMaterialOverrides": []
-                        },
-                        "type": "MeshComponent"
                     },
                     {
                         "data": {
@@ -366,11 +368,13 @@
                                 "y": 4.0,
                                 "z": -11.0
                             },
+                            "FarZ": 100.0,
                             "Look": {
                                 "x": 0.0,
                                 "y": 3.741180896759033,
                                 "z": -10.034073829650879
                             },
+                            "NearZ": 1.0,
                             "Ortho": {
                                 "height": 10.0,
                                 "width": 10.0
@@ -425,6 +429,20 @@
                     },
                     {
                         "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -439,20 +457,6 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
-                            },
-                            "SubMeshMaterialOverrides": []
-                        },
-                        "type": "MeshComponent"
                     },
                     {
                         "data": {
@@ -525,6 +529,126 @@
                     }
                 ],
                 "name": "Shinchan"
+            },
+            {
+                "components": [
+                    {
+                        "data": {
+                            "Position": {
+                                "x": 0.0,
+                                "y": 1.1390807628631592,
+                                "z": -6.614663600921631
+                            },
+                            "Rotation": {
+                                "w": 1.0,
+                                "x": -0.0,
+                                "y": 0.0,
+                                "z": -0.0
+                            },
+                            "Scale": {
+                                "x": 5.734069347381592,
+                                "y": 3.302532196044922,
+                                "z": 1.0
+                            }
+                        },
+                        "type": "TransformComponent"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                            },
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                            },
+                            "ReceiveShadow": true,
+                            "RenderLayer": 1,
+                            "Visible": true
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Material": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                            },
+                            "MaterialHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                            },
+                            "Overrides": {
+                                "overrides": {
+                                    "baseColor": {
+                                        "a": 1.0,
+                                        "b": 0.800000011920929,
+                                        "g": 0.800000011920929,
+                                        "r": 0.800000011920929
+                                    },
+                                    "metallic": 0.0,
+                                    "pixelShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": "../MRenderer/fx/Demo_Wall_PS.hlsl"
+                                    },
+                                    "roughness": 0.5,
+                                    "shaderAsset": {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    "textures": [
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        },
+                                        {
+                                            "assetIndex": 0,
+                                            "assetPath": ""
+                                        }
+                                    ],
+                                    "vertexShader": {
+                                        "assetIndex": 0,
+                                        "assetPath": "../MRenderer/fx/Demo_Wall_VS.hlsl"
+                                    }
+                                }
+                            }
+                        },
+                        "type": "MaterialComponent"
+                    }
+                ],
+                "name": "aaa"
             }
         ],
         "transparent": [
@@ -564,14 +688,29 @@
                                 "y": -1.0,
                                 "z": 0.0
                             },
-                            "Intensity": -1.443688662846456e-23,
+                            "Intensity": -1.2125562041490447e-23,
                             "Position": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
+                            }
+                        },
+                        "type": "DirectionalLightComponent"
+                    },
+                    {
+                        "data": {
+                            "CastShadow": true,
+                            "Color": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
                             },
-                            "Range": -1.443688662846456e-23,
-                            "SpotAngle": -1.443688662846456e-23
+                            "Intensity": -1.2125562041490447e-23,
+                            "Position": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
                         },
                         "type": "LightComponent"
                     }

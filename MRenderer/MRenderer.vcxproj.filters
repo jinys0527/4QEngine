@@ -178,6 +178,12 @@
     <FxCompile Include="fx\Frustum_PS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="fx\Demo_Wall_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Wall_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

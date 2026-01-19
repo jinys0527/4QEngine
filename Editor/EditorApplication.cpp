@@ -366,7 +366,7 @@ void EditorApplication::UpdateEditorCamera()
 			dockBuilt = false;
 		}
 
-
+		m_Engine.GetD3DDXDC()->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 		ImGui::Render();  // Gui들그리기
 
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

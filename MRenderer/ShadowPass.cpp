@@ -27,9 +27,9 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     //텍스처 좌표 변환
     XMFLOAT4X4 m = {
         0.5f,  0.0f, 0.0f, 0.0f,
-        0.0f, -0.5f, 0.0f, 0.0f,
-        0.0f,  0.0f, 1.0f, 0.0f,
-        0.5f,  0.5f, 0.0f, 1.0f
+         0.0f, -0.5f, 0.0f, 0.0f,
+         0.0f,  0.0f, 1.0f, 0.0f,
+         0.5f,  0.5f, 0.0f, 1.0f
     };
 
     XMMATRIX mscale = XMLoadFloat4x4(&m);
@@ -38,7 +38,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
 
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, lightview);
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, lightproj);
-    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, lightview * lightproj);
+    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, lightview* lightproj);
 
     //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mShadow, mLightTM);
@@ -52,60 +52,54 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
     m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
-    for (size_t index : GetQueue())
+    for (const auto& queueItem : GetQueue())
     {
-        for (const auto& [layer, items] : frame.renderItems)
+        const auto& item = *queueItem.item;
+        SetBaseCB(item);
+        if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
         {
-            for (const auto& item : items)
+            const size_t paletteStart = item.skinningPaletteOffset;
+            const size_t paletteCount = item.skinningPaletteCount;
+            const size_t paletteSize = frame.skinningPalettes.size();
+            const size_t maxCount = min(static_cast<size_t>(kMaxSkinningBones), paletteCount);
+            const size_t safeCount = (paletteStart + maxCount <= paletteSize) ? maxCount : (paletteSize > paletteStart ? paletteSize - paletteStart : 0);
+
+            m_RenderContext.SkinCBuffer.boneCount = static_cast<UINT>(safeCount);
+            for (size_t i = 0; i < safeCount; ++i)
             {
+                m_RenderContext.SkinCBuffer.bones[i] = frame.skinningPalettes[paletteStart + i];
+            }
+            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
 
-                SetBaseCB(item);
-                if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
+            m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+        }
+        else if (m_RenderContext.pSkinCB)
+        {
+            m_RenderContext.SkinCBuffer.boneCount = 0;
+            UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+            m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+        }
+
+        const auto* vertexBuffers = m_RenderContext.vertexBuffers;
+        const auto* indexBuffers = m_RenderContext.indexBuffers;
+        const auto* indexcounts = m_RenderContext.indexCounts;
+
+        if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
+        {
+            const MeshHandle bufferHandle = item.mesh;
+            const auto vbIt = vertexBuffers->find(bufferHandle);
+            const auto ibIt = indexBuffers->find(bufferHandle);
+            const auto countIt = indexcounts->find(bufferHandle);
+            if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
+            {
+                ID3D11Buffer* vb = vbIt->second.Get();
+                ID3D11Buffer* ib = ibIt->second.Get();
+                const bool useSubMesh = item.useSubMesh;
+                const UINT32 indexCount = useSubMesh ? item.indexCount : countIt->second;
+                const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
+                if (vb && ib)
                 {
-                    const size_t paletteStart = item.skinningPaletteOffset;
-                    const size_t paletteCount = item.skinningPaletteCount;
-                    const size_t paletteSize = frame.skinningPalettes.size();
-                    const size_t maxCount = min(static_cast<size_t>(kMaxSkinningBones), paletteCount);
-                    const size_t safeCount = (paletteStart + maxCount <= paletteSize) ? maxCount : (paletteSize > paletteStart ? paletteSize - paletteStart : 0);
-
-                    m_RenderContext.SkinCBuffer.boneCount = static_cast<UINT>(safeCount);
-                    for (size_t i = 0; i < safeCount; ++i)
-                    {
-                        m_RenderContext.SkinCBuffer.bones[i] = frame.skinningPalettes[paletteStart + i];
-                    }
-                    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
-
-                    m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
-                }
-                else if (m_RenderContext.pSkinCB)
-                {
-                    m_RenderContext.SkinCBuffer.boneCount = 0;
-                    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
-                    m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
-                }
-
-                const auto* vertexBuffers = m_RenderContext.vertexBuffers;
-                const auto* indexBuffers = m_RenderContext.indexBuffers;
-                const auto* indexcounts = m_RenderContext.indexCounts;
-
-                if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
-                {
-                    const MeshHandle bufferHandle = item.mesh;
-                    const auto vbIt = vertexBuffers->find(bufferHandle);
-                    const auto ibIt = indexBuffers->find(bufferHandle);
-                    const auto countIt = indexcounts->find(bufferHandle);
-                    if (vbIt != vertexBuffers->end() && ibIt != indexBuffers->end() && countIt != indexcounts->end())
-                    {
-                        ID3D11Buffer* vb = vbIt->second.Get();
-                        ID3D11Buffer* ib = ibIt->second.Get();
-                        const bool useSubMesh = item.useSubMesh;
-                        const UINT32 indexCount = useSubMesh ? item.indexCount : countIt->second;
-                        const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
-                        if (vb && ib)
-                        {
-                            DrawMesh(vb, ib, m_RenderContext.VS_Shadow.Get(), nullptr, useSubMesh, indexCount, indexStart);
-                        }
-                    }
+                    DrawMesh(vb, ib, m_RenderContext.VS_Shadow.Get(), nullptr, useSubMesh, indexCount, indexStart);
                 }
             }
         }

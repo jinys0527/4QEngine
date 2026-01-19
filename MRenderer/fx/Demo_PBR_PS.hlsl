@@ -68,9 +68,6 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //return texAO;
     
     
-    
-    
-    
-    
+        
     return col;
 }

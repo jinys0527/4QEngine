@@ -5,6 +5,7 @@ cbuffer BaseBuffer : register(b0)
 {
     matrix mWorld;
     matrix mWorldInvTranspose;
+    matrix mTextureMask;
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -102,6 +103,14 @@ struct VSOutput_Shadow
     float4 uvshadow : TEXCOORD0;
 };
 
+//벽 테스트
+struct VSOutput_Wall
+{
+    float4 pos : SV_POSITION;
+    float4 uvmask : TEXCOORD0;
+    float2 uv : TEXCOORD1;
+
+};
 
 //그리드
 struct VSOutput_P
@@ -128,6 +137,8 @@ Texture2D g_Blur : register(t1);
 Texture2D g_ShadowMap : register(t2);
 TextureCube g_SkyBox : register(t3);
 Texture2D g_DepthMap : register(t4);
+Texture2D g_Mask_Wall : register(t5);
+
 
 Texture2D g_Albedo : register(t11);
 Texture2D g_Normal : register(t12);

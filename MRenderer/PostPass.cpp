@@ -5,7 +5,7 @@
 void PostPass::Execute(const RenderData::FrameData& frame)
 {
     SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
-    //먼저 화면전체 QUad그리기
+    //먼저 화면전체 Quad그리기
     const auto& context = frame.context;
 
     XMMATRIX tm = XMMatrixIdentity();

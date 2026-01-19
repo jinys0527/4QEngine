@@ -8,9 +8,9 @@
 //기본 상수 버퍼
 struct BaseConstBuffer
 {
-	XMFLOAT4X4 mWorld = XMFLOAT4X4{};
-	XMFLOAT4X4  mWorldInvTranspose = XMFLOAT4X4{};
-
+	XMFLOAT4X4		mWorld = XMFLOAT4X4{};
+	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
+	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
 };
 
 struct CameraConstBuffer

@@ -22,10 +22,10 @@ public:
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:
-    bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const override
+    bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
         
-        return true;
+        return layer == RenderData::OpaqueItems;
     }
 
 };
