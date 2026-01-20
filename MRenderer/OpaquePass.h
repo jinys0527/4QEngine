@@ -14,7 +14,7 @@ protected:
     bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
         // 예: 투명/블렌딩 제외 같은 조건
-        //return layer == RenderData::OpaqueItems;
-        return true;
+        return layer == RenderData::OpaqueItems;
+        //return true;
     }
 };
