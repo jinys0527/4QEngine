@@ -54,8 +54,7 @@ Scene::Scene(ServiceRegistry& serviceRegistry) : m_Services(serviceRegistry)
 
 Scene::~Scene()
 {
-	m_OpaqueObjects.clear();
-	m_TransparentObjects.clear();
+	m_GameObjects.clear();
 	//m_Camera = nullptr; // 필요 시
 }
 
@@ -68,11 +67,7 @@ void Scene::StateUpdate(float deltaTime)
 
 void Scene::Enter()
 {
-	for (auto& [name, obj] : m_OpaqueObjects)
-	{
-		obj->Start();
-	}
-	for (auto& [name, obj] : m_TransparentObjects)
+	for (auto& [name, obj] : m_GameObjects)
 	{
 		obj->Start();
 	}
@@ -83,7 +78,7 @@ void Scene::Render(RenderData::FrameData& frameData) const
 	BuildFrameData(frameData);
 }
 
-void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
+void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
 	if (!gameObject)
 		return;
@@ -95,15 +90,13 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
 		//SetMainCamera(gameObject);
 	}
 
-	if (isOpaque) // true -> Opaque / false -> Transparent
-		m_OpaqueObjects[gameObject->m_Name] = std::move(gameObject);
-	else
-		m_TransparentObjects[gameObject->m_Name] = std::move(gameObject);
+	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
 
-void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaque)
+void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
-	if(!gameObject) return;
+	if (!gameObject) return;
+
 
 	if (auto* trans = gameObject->GetComponent<TransformComponent>())
 	{
@@ -135,40 +128,35 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 		}
 	}
 	else
+
 	{
-		auto it = m_TransparentObjects.find(gameObject->m_Name);
-		if (it != m_TransparentObjects.end())
+		if (auto* trans = gameObject->GetComponent<TransformComponent>())
 		{
 			gameObject->SetScene(nullptr);
 			m_TransparentObjects.erase(gameObject->m_Name);
-		}
-	}
 
+		}
+		gameObject->SetScene(nullptr);
+		m_GameObjects.erase(gameObject->m_Name);
+	}
 }
 
-std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name, bool isOpaque)
+std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name)
 {
 	auto gameObject = std::make_shared<GameObject>(GetEventDispatcher());
 	gameObject->SetName(name);
 
-	AddGameObject(gameObject, isOpaque);
+	AddGameObject(gameObject);
 	return gameObject;
 }
 
 
 bool Scene::RemoveGameObjectByName(const std::string& name)
 {
-	auto opaqueIt = m_OpaqueObjects.find(name);
-	if (opaqueIt != m_OpaqueObjects.end())
+	auto it = m_GameObjects.find(name);
+	if (it != m_GameObjects.end())
 	{
-		RemoveGameObject(opaqueIt->second, true);
-		return true;
-	}
-
-	auto transparentIt = m_TransparentObjects.find(name);
-	if (transparentIt != m_TransparentObjects.end())
-	{
-		RemoveGameObject(transparentIt->second, false);
+		RemoveGameObject(it->second);
 		return true;
 	}
 
@@ -187,22 +175,12 @@ bool Scene::RenameGameObject(const std::string& currentName, const std::string& 
 		return false;
 	}
 
-	// 계속 2번 동작 해야됨
-	auto opaqueNode = m_OpaqueObjects.extract(currentName);
-	if (!opaqueNode.empty())
+	auto node = m_GameObjects.extract(currentName);
+	if (!node.empty())
 	{
-		opaqueNode.key() = newName;
-		opaqueNode.mapped()->SetName(newName);
-		m_OpaqueObjects.insert(std::move(opaqueNode));
-		return true;
-	}
-
-	auto transparentNode = m_TransparentObjects.extract(currentName);
-	if (!transparentNode.empty())
-	{
-		transparentNode.key() = newName;
-		transparentNode.mapped()->SetName(newName);
-		m_TransparentObjects.insert(std::move(transparentNode));
+		node.key() = newName;
+		node.mapped()->SetName(newName);
+		m_GameObjects.insert(std::move(node));
 		return true;
 	}
 
@@ -211,8 +189,7 @@ bool Scene::RenameGameObject(const std::string& currentName, const std::string& 
 
 bool Scene::HasGameObjectName(const std::string& name) const
 {
-	return m_OpaqueObjects.find(name) != m_OpaqueObjects.end()
-		|| m_TransparentObjects.find(name) != m_TransparentObjects.end();
+	return m_GameObjects.find(name) != m_GameObjects.end();
 }
 
 
@@ -254,15 +231,11 @@ void Scene::Serialize(nlohmann::json& j) const
 	//
 	//	GameObject 영역
 	//
-	j["gameObjects"] = nlohmann::json::object();
-	j["gameObjects"]["opaque"] = nlohmann::json::array();
-	j["gameObjects"]["transparent"] = nlohmann::json::array();
+	j["gameObjects"] = nlohmann::json::array();
 
 	// map -> vector 복사
-	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> opaque(
-		m_OpaqueObjects.begin(), m_OpaqueObjects.end());
-	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> transparent(
-		m_TransparentObjects.begin(), m_TransparentObjects.end());
+	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> gameObjects(
+		m_GameObjects.begin(), m_GameObjects.end());
 
 	//UI는 나중에
 
@@ -287,22 +260,14 @@ void Scene::Serialize(nlohmann::json& j) const
 		};
 
 	// 정렬 (숫자 포함 이름 기준)
-	std::sort(opaque.begin(), opaque.end(), sortPred);
-	std::sort(transparent.begin(), transparent.end(), sortPred);
+	std::sort(gameObjects.begin(), gameObjects.end(), sortPred);
 
 	// 정렬된 순서대로 JSON에 저장
-	for (const auto& gameObject : opaque)
+	for (const auto& gameObject : gameObjects)
 	{
 		nlohmann::json gameObjectJson;
 		gameObject.second->Serialize(gameObjectJson);
-		j["gameObjects"]["opaque"].push_back(gameObjectJson);
-	}
-
-	for (const auto& gameObject : transparent)
-	{
-		nlohmann::json gameObjectJson;
-		gameObject.second->Serialize(gameObjectJson);
-		j["gameObjects"]["transparent"].push_back(gameObjectJson);
+		j["gameObjects"].push_back(gameObjectJson);
 	}
 
 	//UI
@@ -318,11 +283,19 @@ void ProcessWithErase(
 	std::unordered_set<std::string> names;
 	for (const auto& gameObjectJson : arr)
 	{
+		if (!gameObjectJson.is_object() || !gameObjectJson.contains("name") || !gameObjectJson.at("name").is_string())
+		{
+			continue;
+		}
 		names.insert(gameObjectJson.at("name").get<std::string>());
 	}
 
 	for (const auto& gameObjectJson : arr)
 	{
+		if (!gameObjectJson.is_object() || !gameObjectJson.contains("name") || !gameObjectJson.at("name").is_string())
+		{
+			continue;
+		}
 		std::string name = gameObjectJson.at("name").get<std::string>();
 
 		auto it = objContainer.find(name);
@@ -355,6 +328,29 @@ void ProcessWithErase(
 void Scene::Deserialize(const nlohmann::json& j)
 {
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
+	nlohmann::json mergedGameObjects = nlohmann::json::array();
+	auto appendGameObjectArray = [&](const nlohmann::json& arr)
+		{
+			for (const auto& gameObjectJson : arr)
+			{
+				mergedGameObjects.push_back(gameObjectJson);
+			}
+		};
+	if (goRoot.is_array())
+	{
+		appendGameObjectArray(goRoot);
+	}
+	else if (goRoot.is_object())
+	{
+		for (const auto& [key, value] : goRoot.items())
+		{
+			if (value.is_array())
+			{
+				appendGameObjectArray(value);
+			}
+		}
+	}
+
 	const nlohmann::json* editorRoot = nullptr;
 	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
 	if (j.contains("editor"))
@@ -398,20 +394,10 @@ void Scene::Deserialize(const nlohmann::json& j)
 	}
 
 	// 오브젝트 자동 역직렬화
-	if (goRoot.contains("opaque"))
-	{
-		ProcessWithErase(goRoot.at("opaque"), m_OpaqueObjects, GetEventDispatcher(), this);
-	}
-	if (goRoot.contains("transparent"))
-	{
-		ProcessWithErase(goRoot.at("transparent"), m_TransparentObjects, GetEventDispatcher(), this);
-	}
+	ProcessWithErase(mergedGameObjects, m_GameObjects, GetEventDispatcher(), this);
+
 	std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
-	for (const auto& [name, object] : m_OpaqueObjects)
-	{
-		objectLookup[name] = object;
-	}
-	for (const auto& [name, object] : m_TransparentObjects)
+	for (const auto& [name, object] : m_GameObjects)
 	{
 		objectLookup[name] = object;
 	}
@@ -420,6 +406,10 @@ void Scene::Deserialize(const nlohmann::json& j)
 		{
 			for (const auto& gameObjectJson : arr)
 			{
+				if (!gameObjectJson.is_object() || !gameObjectJson.contains("name") || !gameObjectJson.at("name").is_string())
+				{
+					continue;
+				}
 				const std::string name = gameObjectJson.at("name").get<std::string>();
 				auto childIt = objectLookup.find(name);
 				if (childIt == objectLookup.end())
@@ -472,15 +462,7 @@ void Scene::Deserialize(const nlohmann::json& j)
 				}
 			}
 		};
-
-	if (goRoot.contains("opaque"))
-	{
-		applyParentLinks(goRoot.at("opaque"));
-	}
-	if (goRoot.contains("transparent"))
-	{
-		applyParentLinks(goRoot.at("transparent"));
-	}
+	applyParentLinks(mergedGameObjects);
 	//UI
 }
 
@@ -783,7 +765,6 @@ static void AppendLights(const Object& obj, RenderData::FrameData& frameData)
 template <typename ObjectMap>
 void AppendFrameDataFromObjects(
 	const ObjectMap& objects,
-	RenderData::RenderLayer layer,
 	const AssetLoader& assetLoader,
 	RenderData::FrameData& frameData)
 {
@@ -809,7 +790,7 @@ void AppendFrameDataFromObjects(
 
 					RenderData::RenderItem baseItem{};
 					const MeshComponent* meshComponent = nullptr;
-					if (!BuildSkeletalBaseItem(*gameObject, *renderer, layer, frameData, baseItem, meshComponent))
+					if (!BuildSkeletalBaseItem(*gameObject, *renderer, gameObject->GetLayer(), frameData, baseItem, meshComponent))
 						continue;
 
 					const auto* meshData = assetLoader.GetMeshes().Get(baseItem.mesh);
@@ -819,7 +800,7 @@ void AppendFrameDataFromObjects(
 					EmitSubMeshes(*meshData, baseItem, overrides, assetLoader,
 						[&](RenderData::RenderItem&& item)
 						{
-							frameData.renderItems[layer].push_back(std::move(item));
+							frameData.renderItems[gameObject->GetLayer()].push_back(std::move(item));
 						});
 				}
 
@@ -837,7 +818,7 @@ void AppendFrameDataFromObjects(
 
 				RenderData::RenderItem baseItem{};
 				const MeshComponent* meshComponent = nullptr;
-				if (!BuildStaticBaseItem(*gameObject, *renderer, layer, baseItem, meshComponent))
+				if (!BuildStaticBaseItem(*gameObject, *renderer, gameObject->GetLayer(), baseItem, meshComponent))
 					continue;
 
 				auto* meshData = assetLoader.GetMeshes().Get(baseItem.mesh);
@@ -847,7 +828,7 @@ void AppendFrameDataFromObjects(
 				EmitSubMeshes(*meshData, baseItem, overrides, assetLoader,
 					[&](RenderData::RenderItem&& item)
 					{
-						frameData.renderItems[layer].push_back(std::move(item));
+						frameData.renderItems[gameObject->GetLayer()].push_back(std::move(item));
 					});
 			}
 		}
@@ -909,9 +890,7 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 		BuildCameraData(m_EditorCamera, frameData, false);
 	}
 
-	AppendFrameDataFromObjects(m_OpaqueObjects, RenderData::RenderLayer::OpaqueItems, *m_AssetLoader, frameData);
-
-	AppendFrameDataFromObjects(m_TransparentObjects, RenderData::RenderLayer::TransparentItems, *m_AssetLoader, frameData);
+	AppendFrameDataFromObjects(m_GameObjects, *m_AssetLoader, frameData);
 
 	//UIManager에서 UI Data 가공예정
 }

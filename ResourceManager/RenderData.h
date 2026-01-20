@@ -194,8 +194,10 @@ namespace RenderData
 
 	enum RenderLayer
 	{
+		None,
 		OpaqueItems,
 		TransparentItems,
+		WallItems,
 		UIItems,
 		Layer_MAX_
 	};

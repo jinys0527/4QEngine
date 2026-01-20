@@ -36,30 +36,16 @@ struct SceneFileSnapshot
 	std::string contents;
 };
 
-inline std::shared_ptr<GameObject> FindSceneObject(Scene* scene, const std::string& name, bool* isOpaque)
+inline std::shared_ptr<GameObject> FindSceneObject(Scene* scene, const std::string& name)
 {
 	if (!scene)
 	{
 		return nullptr;
 	}
 
-	const auto& opaqueObjects = scene->GetOpaqueObjects();
-	if (auto it = opaqueObjects.find(name); it != opaqueObjects.end())
+	const auto& gameObjects = scene->GetGameObjects();
+	if (auto it = gameObjects.find(name); it != gameObjects.end())
 	{
-		if (isOpaque)
-		{
-			*isOpaque = true;
-		}
-		return it->second;
-	}
-
-	const auto& transparentObjects = scene->GetTransparentObjects();
-	if (auto it = transparentObjects.find(name); it != transparentObjects.end())
-	{
-		if (isOpaque)
-		{
-			*isOpaque = false;
-		}
 		return it->second;
 	}
 
@@ -77,14 +63,14 @@ inline std::shared_ptr<GameObject> EnsureSceneObjects(Scene* scene, const Object
 		return nullptr;
 	}
 
-	if (auto existing = FindSceneObject(scene, name, nullptr))
+	if (auto existing = FindSceneObject(scene, name))
 	{
 		return existing;
 	}
 
 	auto created = std::make_shared<GameObject>(scene->GetEventDispatcher());
 	created->Deserialize(snapshot.data);
-	scene->AddGameObject(created, snapshot.isOpaque);
+	scene->AddGameObject(created);
 	return created;
 }
 

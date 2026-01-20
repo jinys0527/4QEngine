@@ -60,6 +60,40 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 }
 
+//벽뚫 마스킹맵용 행렬
+void RenderPass::SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3& campos)
+{
+	if (!m_RenderContext.isEditCam)
+	{
+		XMMATRIX mTM, mView, mProj;
+		XMVECTOR maincampos = XMLoadFloat3(&campos); 
+		XMMATRIX targetworld = XMLoadFloat4x4(&item.world);
+		XMVECTOR targetpos = targetworld.r[3];
+		XMVECTOR look = targetpos;
+		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+
+		//if (XMVector4Equal(maincampos, look)) return;
+		mView = XMMatrixLookAtLH(maincampos, look, up);
+		mProj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
+
+		XMFLOAT4X4 m = {
+		0.5f,  0.0f, 0.0f, 0.0f,
+		0.0f, -0.5f, 0.0f, 0.0f,
+		0.0f,  0.0f, 1.0f, 0.0f,
+		0.5f,  0.5f, 0.0f, 1.0f
+		};
+
+		XMMATRIX mscale = XMLoadFloat4x4(&m);
+		mTM = mView * mProj * mscale;
+
+		XMStoreFloat4x4(&m_RenderContext.BCBuffer.mTextureMask, mTM);
+
+		m_RenderContext.BCBuffer.mTextureMask;
+
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+	}
+}
+
 
 void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 {
@@ -209,23 +243,29 @@ void RenderPass::DrawMesh(
 	}
 }
 
-bool RenderPass::ShouldIncludeRenderItem(const RenderData::RenderItem& /*item*/) const
+bool RenderPass::ShouldIncludeRenderItem(RenderData::RenderLayer /*layer*/, const RenderData::RenderItem& /*item*/) const 
 {
-	return true;
+	return false;
 }
 
 void RenderPass::BuildQueue(const RenderData::FrameData& frame)
 {
 	m_Queue.clear();
-	m_Queue.reserve(frame.renderItems.size());
-
-	for (size_t index = 0; index < frame.renderItems.size(); ++index)
+	size_t totalItems = 0;
+	for (const auto& [layer, items] : frame.renderItems)
 	{
-		for (const auto& [layer, items] : frame.renderItems)
+		totalItems += items.size();
+	}
+	m_Queue.reserve(totalItems);
+
+
+	for (const auto& [layer, items] : frame.renderItems) 
+	{
+		for (const auto& item : items) 
 		{
-			if (ShouldIncludeRenderItem(items[index]))
+			if (ShouldIncludeRenderItem(layer, item))
 			{
-				m_Queue.push_back(index);
+				m_Queue.push_back({ layer, &item });
 			}
 		}
 	}

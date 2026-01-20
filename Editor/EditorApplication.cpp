@@ -612,14 +612,12 @@ void EditorApplication::DrawHierarchy() {
 	if (ImGui::Button("Add GameObject")) // Button
 	{
 		const std::string name = MakeUniqueObjectName(*scene, "GameObject");
-		auto createdObject = scene->CreateGameObject(name, true); //일단 Opaque // GameObject 생성 후 바꾸는 게 좋아 보임;;  
-		//scene->CreateGameObject(name, false); //transparent
+		auto createdObject = scene->CreateGameObject(name); // GameObject 생성 후 바꾸는 걸로 변경했음
 		m_SelectedObjectName = name;
 
 		if (createdObject)
 		{
 			ObjectSnapshot snapshot;
-			snapshot.isOpaque = true;
 			createdObject->Serialize(snapshot.data);
 			Scene* scenePtr = scene.get();
 
@@ -642,8 +640,8 @@ void EditorApplication::DrawHierarchy() {
 	}
 
 	std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
-	std::unordered_map<GameObject*, bool> objectOpacity;
-	auto collectObjects = [&](const auto& objects, bool isOpaque)
+
+	auto collectObjects = [&](const auto& objects)
 		{
 			for (const auto& [name, object] : objects)
 			{
@@ -652,12 +650,10 @@ void EditorApplication::DrawHierarchy() {
 					continue;
 				}
 				objectLookup[name] = object;
-				objectOpacity[object.get()] = isOpaque;
 			}
 		};
 
-	collectObjects(scene->GetOpaqueObjects(), true);
-	collectObjects(scene->GetTransparentObjects(), false);
+	collectObjects(scene->GetGameObjects());
 
 	auto findObjectByName = [&](const std::string& name) -> std::shared_ptr<GameObject>
 		{
@@ -736,12 +732,14 @@ void EditorApplication::DrawHierarchy() {
 				current->Serialize(objectJson);
 				objectJson["clipboardId"] = currentId;
 				objectJson["parentId"] = parentId;
+        
 				if (isRoot && !rootParentName.empty())
 				{
 					objectJson["externalParentName"] = rootParentName;
 				}
 				const auto opacityIt = objectOpacity.find(current);
 				objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;
+
 				clipboard["objects"].push_back(std::move(objectJson));
 
 				if (!currentTransform)
@@ -764,8 +762,6 @@ void EditorApplication::DrawHierarchy() {
 			}
 
 			m_ObjectClipboard = std::move(clipboard);
-			const auto rootOpacityIt = objectOpacity.find(object.get());
-			m_ObjectClipboardIsOpaque = (rootOpacityIt != objectOpacity.end()) ? rootOpacityIt->second : true;
 			m_ObjectClipboardHasData = true;
 		};
 
@@ -1141,10 +1137,9 @@ void EditorApplication::DrawHierarchy() {
 				const std::string uniqueName = MakeUniqueObjectName(*scene, baseName);
 
 				objectJson["name"] = uniqueName;
-				const bool isOpaque = objectJson.value("isOpaque", true);
 				auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
 				newObject->Deserialize(objectJson);
-				scene->AddGameObject(newObject, isOpaque);
+				scene->AddGameObject(newObject);
 				createdObjects[clipboardId] = newObject;
 				m_SelectedObjectName = uniqueName;
 				didAdd = true;
@@ -1212,7 +1207,7 @@ void EditorApplication::DrawHierarchy() {
 
 			auto newObject = std::make_shared<GameObject>(scene->GetEventDispatcher());
 			newObject->Deserialize(pendingAdd.data);
-			scene->AddGameObject(newObject, m_ObjectClipboardIsOpaque);
+			scene->AddGameObject(newObject);
 			m_SelectedObjectName = uniqueName;
 			didAdd = true;
 		}
@@ -1275,27 +1270,20 @@ void EditorApplication::DrawInspector() {
 	}
 
 	// hierarchy 에서 선택한 object 
-	// Opaque
-	const auto& opaqueObjects = scene->GetOpaqueObjects();
-	const auto  opaqueIt = opaqueObjects.find(m_SelectedObjectName);
+	const auto& gameObjects = scene->GetGameObjects();
+	const auto  it = gameObjects.find(m_SelectedObjectName);
 
-	// Transparent
-	const auto& transparentObjects = scene->GetTransparentObjects();
-	const auto  transparentIt = transparentObjects.find(m_SelectedObjectName);
 
 	// 선택된 오브젝트가 없거나, 실체가 없는 경우
 	//second == Object 포인터
-	if ((opaqueIt == opaqueObjects.end() || !opaqueIt->second) && (transparentIt == transparentObjects.end() || !transparentIt->second))
+	if (it == gameObjects.end() || !it->second)
 	{
 		ImGui::Text("No Selected GameObject");
 		ImGui::End();
 		return;
 	}
 
-	auto it = (opaqueIt != opaqueObjects.end() && opaqueIt->second) ? opaqueIt : transparentIt;
 	auto selectedObject = it->second;
-
-	const bool selectedIsOpaque = (opaqueIt != opaqueObjects.end() && opaqueIt->second);
 
 	if (m_LastPendingSnapshotScenePath != m_CurrentScenePath)
 	{
@@ -1380,13 +1368,11 @@ void EditorApplication::DrawInspector() {
 			if (ImGui::MenuItem("Remove Component"))
 			{
 				ObjectSnapshot beforeSnapshot;
-				beforeSnapshot.isOpaque = selectedIsOpaque;
 				selectedObject->Serialize(beforeSnapshot.data);
 
 				if (selectedObject->RemoveComponentByTypeName(typeName))
 				{
 					ObjectSnapshot afterSnapshot;
-					afterSnapshot.isOpaque = selectedIsOpaque;
 					selectedObject->Serialize(afterSnapshot.data);
 
 					Scene* scenePtr = scene.get();
@@ -1430,7 +1416,6 @@ void EditorApplication::DrawInspector() {
 					if (activated && m_PendingPropertySnapshots.find(propertyKey) == m_PendingPropertySnapshots.end())
 					{
 						PendingPropertySnapshot pendingSnapshot;
-						pendingSnapshot.beforeSnapshot.isOpaque = selectedIsOpaque;
 						selectedObject->Serialize(pendingSnapshot.beforeSnapshot.data);
 						m_PendingPropertySnapshots.emplace(propertyKey, std::move(pendingSnapshot));
 					}
@@ -1453,7 +1438,6 @@ void EditorApplication::DrawInspector() {
 							{
 								ObjectSnapshot beforeSnapshot = itSnapshot->second.beforeSnapshot;
 								ObjectSnapshot afterSnapshot;
-								afterSnapshot.isOpaque = selectedIsOpaque;
 								selectedObject->Serialize(afterSnapshot.data);
 
 								Scene* scenePtr = scene.get();
@@ -1478,7 +1462,6 @@ void EditorApplication::DrawInspector() {
 				if (auto* meshComponent = dynamic_cast<MeshComponent*>(component))
 				{
 					ObjectSnapshot beforeSnapshot;
-					beforeSnapshot.isOpaque = selectedIsOpaque;
 					selectedObject->Serialize(beforeSnapshot.data);
 
 					const bool updated = DrawSubMeshOverridesEditor(*meshComponent, *m_AssetLoader);
@@ -1486,7 +1469,6 @@ void EditorApplication::DrawInspector() {
 					if (updated)
 					{
 						ObjectSnapshot afterSnapshot;
-						afterSnapshot.isOpaque = selectedIsOpaque;
 						selectedObject->Serialize(afterSnapshot.data);
 
 						Scene* scenePtr = scene.get();
@@ -1546,7 +1528,6 @@ void EditorApplication::DrawInspector() {
 			if (ImGui::MenuItem(typeName.c_str()))
 			{
 				ObjectSnapshot beforeSnapshot;
-				beforeSnapshot.isOpaque = selectedIsOpaque;
 				selectedObject->Serialize(beforeSnapshot.data);
 
 				auto comp = ComponentFactory::Instance().Create(typeName);
@@ -1555,7 +1536,6 @@ void EditorApplication::DrawInspector() {
 					selectedObject->AddComponent(std::move(comp));
 
 					ObjectSnapshot afterSnapshot;
-					afterSnapshot.isOpaque = selectedIsOpaque;
 					selectedObject->Serialize(afterSnapshot.data);
 
 					Scene* scenePtr = scene.get();
@@ -2312,20 +2292,12 @@ void EditorApplication::DrawGizmo()
 		return;
 	}
 
-	const auto& opaqueObjects = scene->GetOpaqueObjects();
-	const auto& transparentObjects = scene->GetTransparentObjects();
+	const auto& gameObjects = scene->GetGameObjects();
 
 	std::shared_ptr<GameObject> selectedObject;
-	bool selectedIsOpaque = true;
-	if (const auto opaqueIt = opaqueObjects.find(m_SelectedObjectName); opaqueIt != opaqueObjects.end())
+	if (const auto it = gameObjects.find(m_SelectedObjectName); it != gameObjects.end())
 	{
-		selectedObject = opaqueIt->second;
-		selectedIsOpaque = true;
-	}
-	else if (const auto transparentIt = transparentObjects.find(m_SelectedObjectName); transparentIt != transparentObjects.end())
-	{
-		selectedObject = transparentIt->second;
-		selectedIsOpaque = false;
+		selectedObject = it->second;
 	}
 
 	if (!selectedObject)
@@ -2414,7 +2386,6 @@ void EditorApplication::DrawGizmo()
 
 	if (usingNow && !wasUsing)
 	{
-		beforeSnapshot.isOpaque = selectedIsOpaque;
 		selectedObject->Serialize(beforeSnapshot.data);
 		pendingObjectName = selectedObject->GetName();
 		gizmoUpdated = false;
@@ -2442,11 +2413,9 @@ void EditorApplication::DrawGizmo()
 
 	if (!usingNow && wasUsing && hasSnapshot && gizmoUpdated)
 	{
-		bool isOpaque = beforeSnapshot.isOpaque;
-		if (auto targetObject = FindSceneObject(scene.get(), pendingObjectName, &isOpaque))
+		if (auto targetObject = FindSceneObject(scene.get(), pendingObjectName))
 		{
 			ObjectSnapshot afterSnapshot;
-			afterSnapshot.isOpaque = isOpaque;
 			targetObject->Serialize(afterSnapshot.data);
 
 			const char* opLabel = "Gizmo Edit";
