@@ -174,20 +174,6 @@
                     },
                     {
                         "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "SubMeshMaterialOverrides": []
-                        },
-                        "type": "MeshComponent"
-                    },
-                    {
-                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -202,6 +188,26 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
+                            "Speed": 5.0
+                        },
+                        "type": "PlayerMovementComponent"
                     }
                 ],
                 "name": "GameObject"
@@ -294,6 +300,20 @@
                     },
                     {
                         "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
+                    },
+                    {
+                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -308,20 +328,6 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
-                    },
-                    {
-                        "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "SubMeshMaterialOverrides": []
-                        },
-                        "type": "MeshComponent"
                     }
                 ],
                 "name": "GameObject1",
@@ -332,20 +338,20 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 3.5654072761535645,
-                                "y": 0.006056555081158876,
-                                "z": -4.474606990814209
+                                "x": 9.490728378295898,
+                                "y": 3.674067556858063e-07,
+                                "z": -3.589195489883423
                             },
                             "Rotation": {
-                                "w": 0.9007270932197571,
+                                "w": 1.0,
                                 "x": -0.0,
-                                "y": 0.4343855381011963,
+                                "y": -1.4901161193847656e-08,
                                 "z": -0.0
                             },
                             "Scale": {
-                                "x": 0.21466095745563507,
-                                "y": 0.2146533727645874,
-                                "z": 0.21466095745563507
+                                "x": 1.0,
+                                "y": 0.9999597072601318,
+                                "z": 1.0
                             }
                         },
                         "type": "TransformComponent"
@@ -415,20 +421,6 @@
                     },
                     {
                         "data": {
-                            "Mesh": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "MeshHandle": {
-                                "assetIndex": 0,
-                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
-                            },
-                            "SubMeshMaterialOverrides": []
-                        },
-                        "type": "MeshComponent"
-                    },
-                    {
-                        "data": {
                             "CastShadow": true,
                             "Material": {
                                 "assetIndex": 0,
@@ -443,6 +435,20 @@
                             "Visible": true
                         },
                         "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "Mesh": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "MeshHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
+                            },
+                            "SubMeshMaterialOverrides": []
+                        },
+                        "type": "MeshComponent"
                     }
                 ],
                 "name": "GameObject11",
@@ -453,20 +459,20 @@
                     {
                         "data": {
                             "Position": {
-                                "x": 0.0,
-                                "y": 4.0,
-                                "z": -11.0
+                                "x": -1.843092918395996,
+                                "y": 0.8647019267082214,
+                                "z": -1.4695475101470947
                             },
                             "Rotation": {
-                                "w": 0.9914448857307434,
-                                "x": 0.13052619993686676,
-                                "y": 0.0,
-                                "z": 0.0
+                                "w": 0.8930212259292603,
+                                "x": 0.11756853014230728,
+                                "y": 0.43066930770874023,
+                                "z": -0.05669860169291496
                             },
                             "Scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "x": 0.21466095745563507,
+                                "y": 0.21466131508350372,
+                                "z": 0.21466098725795746
                             }
                         },
                         "type": "TransformComponent"
@@ -474,14 +480,14 @@
                     {
                         "data": {
                             "Eye": {
-                                "x": 0.0,
-                                "y": 4.0,
+                                "x": -1.1920928955078125e-07,
+                                "y": 3.999999523162842,
                                 "z": -11.0
                             },
                             "FarZ": 100.0,
                             "Look": {
-                                "x": 0.0,
-                                "y": 3.741180896759033,
+                                "x": -1.3644793739331362e-07,
+                                "y": 3.741180419921875,
                                 "z": -10.034073829650879
                             },
                             "NearZ": 1.0,
@@ -500,7 +506,7 @@
                                 "fov": 0.7853981852531433
                             },
                             "Up": {
-                                "x": 0.0,
+                                "x": -2.1450136955536436e-07,
                                 "y": 0.9659257531166077,
                                 "z": 0.2588190734386444
                             },
@@ -512,7 +518,8 @@
                         "type": "CameraComponent"
                     }
                 ],
-                "name": "Main Camera"
+                "name": "Main Camera",
+                "parent": "GameObject"
             }
         ],
         "transparent": [

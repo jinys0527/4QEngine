@@ -797,7 +797,7 @@ void EditorApplication::DrawHierarchy() {
 			return true;
 		};
 
-
+	std::vector<std::string> pendingDeletes;
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -809,11 +809,14 @@ void EditorApplication::DrawHierarchy() {
 		{
 			pasteClipboardObject();
 		}
+		if (ImGui::IsKeyPressed(ImGuiKey_Delete) && selectedObject && *selectedObject)
+		{
+			pendingDeletes.push_back((*selectedObject)->GetName());
+		}
 	}
 
 
 	ImGui::Separator();
-	std::vector<std::string> pendingDeletes;
 
 	if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 	{
@@ -1104,8 +1107,10 @@ void EditorApplication::DrawHierarchy() {
 		drawHierarchyNode(drawHierarchyNode, root);
 	}
 
-	if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && !ImGui::IsAnyItemHovered())
+	const ImVec2 dropRegion = ImGui::GetContentRegionAvail();
+	if (dropRegion.x > 0.0f && dropRegion.y > 0.0f)
 	{
+		ImGui::InvisibleButton("##HierarchyDropTarget", dropRegion);
 		if (ImGui::BeginDragDropTarget())
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
