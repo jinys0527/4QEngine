@@ -2,18 +2,24 @@
 
 void TransparentPass::Execute(const RenderData::FrameData& frame)
 {
+    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+#pragma region Init
+    //SetRenderTarget()		Opaque단계에서 처리
+    //SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());        Opaque단계에서 처리
+    SetBlendState(BS::ALPHABLEND);
+    SetRasterizerState(RS::CULLBACK);
+    SetDepthStencilState(DS::DEPTH_ON);
+    SetSamplerState();
+
+#pragma endregion
+
     SetCameraCB(frame);
 
     SetDirLight(frame);
 
-    SetBlendState(BS::ALPHABLEND);
-    SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_ON);
-
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
     //임시 벽뚫 이미지 바인딩
     m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());

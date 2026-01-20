@@ -4,7 +4,20 @@
 
 void PostPass::Execute(const RenderData::FrameData& frame)
 {
+    if (m_RenderContext.isEditCam)
+        return;
+
+    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+#pragma region Init
     SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+    SetBlendState(BS::ALPHABLEND);
+    SetRasterizerState(RS::SOLID);
+    SetDepthStencilState(DS::DEPTH_OFF);
+    SetSamplerState();
+
+#pragma endregion
+
     //먼저 화면전체 Quad그리기
     const auto& context = frame.context;
 
@@ -21,16 +34,12 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
-
-    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
     dxdc->PSSetShaderResources(1, 1, m_RenderContext.pTexRvScene_Blur.GetAddressOf());
     dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthRV.GetAddressOf());
-    SetDepthStencilState(DS::DEPTH_OFF);
 
     m_RenderContext.DrawFSTriangle();
 

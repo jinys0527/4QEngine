@@ -4,22 +4,27 @@
 
 void DepthPass::Execute(const RenderData::FrameData& frame)
 {
+    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+#pragma region Init
+    SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Depth.Get());
+    SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
+    SetBlendState(BS::DEFAULT);
+    SetRasterizerState(RS::CULLBACK);
+    SetDepthStencilState(DS::DEPTH_ON);
+
+#pragma endregion
+
     const auto& context = frame.context;
     if (frame.lights.empty())
         return;
     const auto& mainlight = frame.lights[0];
 
+    //만약 에디터 카메라 기준으로도 뎁스 기록하려면 여기아래에 에딧카메라 if문해서 넣으면됨
     m_RenderContext.CameraCBuffer.mView = context.gameCamera.view;
     m_RenderContext.CameraCBuffer.mProj = context.gameCamera.proj;
     m_RenderContext.CameraCBuffer.mVP = context.gameCamera.viewProj;
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
-
-    m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Depth.Get());
-    m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
-
-    SetDepthStencilState(DS::DEPTH_ON);
 
     for (const auto& queueItem : GetQueue())
     {
