@@ -5,4 +5,6 @@
 #include "SkeletonBin.h"
 #include "MetaJson.h"
 
+void ImportAll();
+
 void ImportFBX(const std::string& FBXPath, const std::string& outDir);

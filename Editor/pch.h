@@ -1,6 +1,5 @@
 ﻿#pragma once
 //Editor
-
 #include<windows.h>
 #include<objbase.h>
 #include <stdio.h>
@@ -13,6 +12,12 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <type_traits>
+#include <utility>
+#include <cmath>
+#include <DirectXCollision.h>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "d3d11.lib")
@@ -37,6 +42,7 @@
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
+#include <imgui_internal.h>
 
 namespace DX
 {

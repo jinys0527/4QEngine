@@ -2,11 +2,12 @@
 #include "GameApplication.h"
 #include "GameObject.h"
 //#include "Reflection.h"
-#include <imgui.h>
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
-
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#include "Engine.h"
+#include "Renderer.h"
+#include "SceneManager.h"
+#include "ServiceRegistry.h"
+#include "SoundManager.h"
+#include "InputManager.h"
 
 
 bool GameApplication::Initialize()
@@ -19,22 +20,13 @@ bool GameApplication::Initialize()
 		return false;
 	}
 
-	//m_Engine.GetRenderer().Initialize(m_hwnd);
+	//m_Renderer.Initialize(m_hwnd);
 
 	//m_Engine.GetAssetManager().Init(L"../Resource");
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
-
+	m_Services.Get<SoundManager>().Init();
 	m_SceneManager.Initialize();
-
-#ifdef _EDITOR
-	ImGui::CreateContext();
-	ImGui_ImplWin32_Init(m_hwnd);
-
-	ImGui_ImplDX11_Init(m_Engine.GetRenderer().GetD3DDevice(), m_Engine.GetRenderer().GetD3DContext());
-
-	ID3D11RenderTargetView* rtvs[] = { m_Engine.GetRenderer().GetD3DRenderTargetView() };
-#endif
-
+	m_InputManager = &m_Services.Get<InputManager>();
 	return true;
 }
 
@@ -46,9 +38,7 @@ void GameApplication::Run()
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-#ifndef _EDITOR
-			if (false == m_Engine.GetInputManager().OnHandleMessage(msg))
-#endif
+			if (false == m_InputManager->OnHandleMessage(msg))
 				TranslateMessage(&msg);
 
 			DispatchMessage(&msg);
@@ -67,22 +57,10 @@ void GameApplication::Run()
 void GameApplication::Finalize()
 {
 	__super::Destroy();
-
-#ifdef _EDITOR
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-#endif
 }
 
 bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-#ifdef _EDITOR
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
-	{
-		return true; // ImGui가 메시지를 처리했으면 true 반환
-	}
-#endif
 	return false;
 }
 
@@ -92,9 +70,13 @@ void GameApplication::UpdateLogic()
 
 void GameApplication::Update()
 {
-#ifndef _EDITOR
-	m_SceneManager.Update(m_Engine.GetTimer().DeltaTime());
-	m_SoundManager.Update();
+
+	float dTime = m_Engine.GetTime();
+	dTime *= m_GameSpeed;
+	m_SceneManager.StateUpdate(dTime);
+	m_SceneManager.Update(dTime);
+	
+	m_Services.Get<SoundManager>().Update();
 	// FixedUpdate
 	{
 
@@ -104,8 +86,8 @@ void GameApplication::Update()
 		}
 
 	}
-#else
-#endif
+
+
 }
 
 void GameApplication::Render()
@@ -125,30 +107,6 @@ void GameApplication::Render()
 	//m_Engine.GetRenderer().Present();
 }
 
-#ifdef _EDITOR
-void GameApplication::RenderImGUI()
-{
-	ID3D11DeviceContext* pd3dDeviceContext = nullptr;
-	pd3dDeviceContext = m_Engine.GetRenderer().GetD3DContext();
-	ID3D11RenderTargetView* rtvs[] = { m_Engine.GetRenderer().GetD3DRenderTargetView() };
-
-	if (pd3dDeviceContext == nullptr || rtvs[0] == nullptr)
-	{
-		return; // 렌더링 컨텍스트나 뷰가 없으면 리턴
-	}
-	m_Engine.GetRenderer().GetD3DContext()->OMSetRenderTargets(1, rtvs, nullptr);
-
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	m_Editor.Update();
-
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-}
-#endif
 
 void GameApplication::OnResize(int width, int height)
 {

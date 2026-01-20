@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "json.hpp"
 
+class TransformComponent;
 
 class GameObject : public Object 
 {
@@ -16,7 +17,11 @@ public:
 
 	void AddComponent(std::unique_ptr<Component> comp)	//Deserialize용
 	{
+		if (!CanAddComponent(typeid(*comp)))
+			return;
+
 		comp->SetOwner(this);
+		comp->Start();
 		m_Components[comp->GetTypeName()].emplace_back(std::move(comp));
 	}
 
@@ -34,6 +39,6 @@ public:
 	GameObject& operator=(GameObject&&)      = delete;
 
 protected:
-	//TransformComponent* m_Transform;
+	TransformComponent* m_Transform;
 };
 

@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include "RenderPass.h"
 
-// 불투명한 물체 
+// https://www.notion.so/2e921c4cb4638000aa7bc4303b216816 참고
+
 class OpaquePass : public RenderPass
 {
 public:
@@ -10,9 +11,9 @@ public:
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:
-    bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const override
+    bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
         // 예: 투명/블렌딩 제외 같은 조건
-        return true;
+        return layer == RenderData::OpaqueItems;
     }
 };

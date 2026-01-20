@@ -1,14 +1,14 @@
 ﻿#include "AssetLoader.h"
 
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <cstdint>
 #include <unordered_map>
 #include <iostream>
-
-#include "json.hpp"
-using nlohmann::json;
-namespace fs = std::filesystem;
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 
 namespace
 {
@@ -35,6 +35,7 @@ namespace
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
 		uint32_t subMeshCount = 0;
+		uint32_t instanceCount = 0;
 		uint32_t stringTableBytes = 0;
 		AABBf    bounds{};
 	};
@@ -44,7 +45,15 @@ namespace
 		uint32_t indexStart;
 		uint32_t indexCount;
 		uint32_t materialNameOffset;
+		uint32_t nameOffset;
 		AABBf    bounds{};
+		uint32_t instanceStart = 0;      // InstanceTransform 배열 시작 인덱스
+		uint32_t instanceCount = 0;      // 이 submesh의 인스턴스 개수
+	};
+
+	struct InstanceTransformBin
+	{
+		float m[16]; // XMFLOAT4X4 그대로 memcpy 가능(로우메이저 전제)
 	};
 
 	struct Vertex
@@ -57,8 +66,8 @@ namespace
 
 	struct VertexSkinned : Vertex
 	{
-		uint16_t boneIndex[4] = { 0,0,0,0 };
-		uint16_t boneWeight[4] = { 0,0,0,0 }; // normalized to 0..65535
+		uint16_t boneIndex [4] = { 0, 0, 0, 0 };
+		uint16_t boneWeight[4] = { 0, 0, 0, 0 };
 	};
 
 	struct MatBinHeader
@@ -85,18 +94,21 @@ namespace
 
 	struct SkelBinHeader
 	{
-		uint32_t magic = 0x534B454C; // "SKEL"
-		uint16_t version = 1;
-		uint16_t boneCount = 0;
+		uint32_t magic            = 0x534B454C; // "SKEL"
+		uint16_t version          = 2;
+		uint16_t boneCount        = 0;
 		uint32_t stringTableBytes = 0;
+
+		uint32_t upperCount		  = 0;
+		uint32_t lowerCount		  = 0;
 	};
 
 	struct BoneBin
 	{
 		uint32_t nameOffset = 0;
 		int32_t  parentIndex = -1;
-		float inverseBindPose[16]; // Row-Major
-		float localBind[16];
+		float	 inverseBindPose[16]; // Row-Major
+		float	 localBind[16];
 	};
 #pragma pack(pop)
 
@@ -126,6 +138,23 @@ namespace
 		return (baseDir / path).lexically_normal();
 	}
 
+	std::string ToLowerCopy(std::string value)
+	{
+		std::transform(value.begin(), value.end(), value.begin(),
+			[](unsigned char c)
+			{
+				return static_cast<char>(std::tolower(c));
+			});
+		return value;
+	}
+
+	bool ContainsTokenIgnoreCase(const std::string& value, const std::string& token)
+	{
+		const std::string lowerValue = ToLowerCopy(value);
+		const std::string lowerToken = ToLowerCopy(token);
+		return lowerValue.find(lowerToken) != std::string::npos;
+	}
+
 	void LogMaterialBinTextures(
 		const std::string& materialBinPath,
 		const std::vector<MatData>& mats,
@@ -147,12 +176,6 @@ namespace
 				{
 					continue;
 				}
-
-				std::cout << "[MaterialBin] path=" << materialBinPath
-					<< " material=" << materialName
-					<< " slot=" << t
-					<< " texture=" << texPathRaw
-					<< std::endl;
 			}
 		}
 	}
@@ -195,20 +218,116 @@ namespace
 		}
 	}
 
+	template <typename HandleType>
+	uint64_t MakeHandleKey(const HandleType& handle)
+	{
+		return (static_cast<uint64_t>(handle.generation) << 32) | handle.id;
+	}
+
+	template <typename HandleType>
+	void StoreReferenceIfMissing(
+		std::unordered_map<uint64_t, AssetRef>& out,
+		const HandleType& handle,
+		const std::string& assetMetaPath,
+		UINT32 index
+	)
+	{
+		const uint64_t key = MakeHandleKey(handle);
+		if (out.find(key) != out.end())
+		{
+			return;
+		}
+		
+		out.emplace(key, AssetRef{ assetMetaPath, index });
+	}
+
 	RenderData::Vertex ToRenderVertex(const Vertex& in)
 	{
 		RenderData::Vertex out{};
 		out.position = { in.px, in.py, in.pz };
-		out.normal = { in.nx, in.ny, in.nz };
-		out.uv = { in.u, in.v };
-		out.tangent = { in.tx, in.ty, in.tz, in.handedness };
+		out.normal   = { in.nx, in.ny, in.nz };
+		out.uv       = { in.u, in.v };
+		out.tangent  = { in.tx, in.ty, in.tz, in.handedness };
 		return out;
 	}
 
 	RenderData::Vertex ToRenderVertex(const VertexSkinned& in)
 	{
-		return ToRenderVertex(static_cast<const Vertex&>(in));
+		RenderData::Vertex out = ToRenderVertex(static_cast<const Vertex&>(in));
+		out.boneIndices = { in.boneIndex[0], in.boneIndex[1], in.boneIndex[2], in.boneIndex[3] };
+		const float invWeight = 1.0f / 65535.0f;
+		out.boneWeights = {
+			static_cast<float>(in.boneWeight[0])* invWeight,
+			static_cast<float>(in.boneWeight[1])* invWeight,
+			static_cast<float>(in.boneWeight[2])* invWeight,
+			static_cast<float>(in.boneWeight[3])* invWeight
+		};
+		return out;
 	}
+
+#ifdef _DEBUG
+	void WriteMeshBinLoadDebugJson(
+		const fs::path& meshPath,
+		const MeshBinHeader& header,
+		const std::vector<SubMeshBin>& subMeshes,
+		const RenderData::MeshData& meshData)
+	{
+		json root;
+		root["path"] = meshPath.generic_string();
+		root["header"] = {
+			{"magic", header.magic},
+			{"version", header.version},
+			{"flags", header.flags},
+			{"vertexCount", header.vertexCount},
+			{"indexCount", header.indexCount},
+			{"subMeshCount", header.subMeshCount},
+			{"stringTableBytes", header.stringTableBytes},
+			{"bounds", {
+				{"min", { header.bounds.min[0], header.bounds.min[1], header.bounds.min[2] }},
+				{"max", { header.bounds.max[0], header.bounds.max[1], header.bounds.max[2] }}
+			}}
+		};
+
+		root["subMeshes"] = json::array();
+		for (const auto& subMesh : subMeshes)
+		{
+			root["subMeshes"].push_back({
+				{"indexStart", subMesh.indexStart},
+				{"indexCount", subMesh.indexCount},
+				{"materialNameOffset", subMesh.materialNameOffset},
+				{"nameOffset", subMesh.nameOffset},
+				{"bounds", {
+					{"min", { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] }},
+					{"max", { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] }}
+				}}
+				});
+		}
+
+		root["isSkinned"] = meshData.hasSkinning ? true : false;
+		root["vertices"] = json::array();
+		for (const auto& v : meshData.vertices)
+		{
+			root["vertices"].push_back({
+				{"pos", { v.position.x, v.position.y, v.position.z }},
+				{"normal", { v.normal.x, v.normal.y, v.normal.z }},
+				{"uv", { v.uv.x, v.uv.y }},
+				{"tangent", { v.tangent.x, v.tangent.y, v.tangent.z, v.tangent.w }},
+				{"boneIndex", { v.boneIndices[0], v.boneIndices[1], v.boneIndices[2], v.boneIndices[3] }},
+				{"boneWeight", { v.boneWeights[0], v.boneWeights[1], v.boneWeights[2], v.boneWeights[3] }}
+				});
+		}
+
+		root["indices"] = meshData.indices;
+
+		fs::path debugPath = meshPath;
+		debugPath += ".load.debug.json";
+		std::ofstream ofs(debugPath);
+		if (ofs)
+		{
+			ofs << root.dump(2);
+		}
+	}
+#endif
 
 	RenderData::AnimationClip ParseAnimationJson(const json& j)
 	{
@@ -263,6 +382,465 @@ namespace
 	}
 }
 
+#ifdef _DEBUG
+bool IsZeroMatrix(const float* m)
+{
+	for (int i = 0; i < 16; ++i)
+	{
+		if (m[i] != 0.0f)
+			return false;
+	}
+	return true;
+}
+
+void WriteSkeletonLoadDebug(const fs::path& skelPath, const RenderData::Skeleton& skeleton)
+{
+	std::ofstream ofs(skelPath.string() + ".load.debug.txt");
+	if (!ofs)
+		return;
+
+	ofs << "boneCount=" << skeleton.bones.size() << "\n";
+	for (size_t i = 0; i < skeleton.bones.size(); ++i)
+	{
+		const auto& bone = skeleton.bones[i];
+		ofs << "bone[" << i << "] name=" << bone.name
+			<< " parentIndex=" << bone.parentIndex
+			<< " bindPoseZero=" << (IsZeroMatrix(reinterpret_cast<const float*>(&bone.bindPose)) ? "true" : "false")
+			<< " inverseBindPoseZero=" << (IsZeroMatrix(reinterpret_cast<const float*>(&bone.inverseBindPose)) ? "true" : "false")
+			<< "\n";
+		ofs << "  bindPose=";
+		const float* bind = reinterpret_cast<const float*>(&bone.bindPose);
+		for (int m = 0; m < 16; ++m)
+			ofs << bind[m] << (m == 15 ? "\n" : ",");
+		ofs << "  inverseBindPose=";
+		const float* inv = reinterpret_cast<const float*>(&bone.inverseBindPose);
+		for (int m = 0; m < 16; ++m)
+			ofs << inv[m] << (m == 15 ? "\n" : ",");
+	}
+}
+
+void WriteAnimationLoadDebug(const fs::path& animPath, const RenderData::AnimationClip& clip)
+{
+	std::ofstream ofs(animPath.string() + ".load.debug.txt");
+	if (!ofs)
+		return;
+
+	size_t totalKeys = 0;
+	for (const auto& track : clip.tracks)
+		totalKeys += track.keyFrames.size();
+
+	ofs << "name=" << clip.name << "\n";
+	ofs << "duration=" << clip.duration << "\n";
+	ofs << "ticksPerSecond=" << clip.ticksPerSecond << "\n";
+	ofs << "tracks=" << clip.tracks.size() << "\n";
+	ofs << "totalKeys=" << totalKeys << "\n";
+
+	for (size_t i = 0; i < clip.tracks.size(); ++i)
+	{
+		const auto& track = clip.tracks[i];
+		ofs << "track[" << i << "] boneIndex=" << track.boneIndex
+			<< " keys=" << track.keyFrames.size() << "\n";
+	}
+}
+#endif
+
+AssetLoader::AssetLoader()
+{
+	SetActive(this);
+}
+
+AssetLoader::~AssetLoader()
+{
+	m_Meshes.Clear();
+	m_Materials.Clear();
+	m_Textures.Clear();
+	m_Skeletons.Clear();
+	m_Animations.Clear();
+	m_AssetsByPath.clear();
+	m_MeshRefs.clear();
+	m_MaterialRefs.clear();
+	m_TextureRefs.clear();
+	m_SkeletonRefs.clear();
+	m_AnimationRefs.clear();
+}
+
+void AssetLoader::SetActive(AssetLoader* loader)
+{
+	s_ActiveLoader = loader;
+}
+
+AssetLoader* AssetLoader::GetActive()
+{
+	return s_ActiveLoader;
+}
+
+void AssetLoader::LoadAll()
+{
+	const fs::path assetRoot = "../ResourceOutput";
+	if (fs::exists(assetRoot) && fs::is_directory(assetRoot))
+	{
+		for (const auto& dirEntry : fs::directory_iterator(assetRoot))
+		{
+			if (!dirEntry.is_directory())
+				continue;
+
+			fs::path metaDir = dirEntry.path() / "Meta";
+			if (!fs::exists(metaDir) || !fs::is_directory(metaDir))
+				continue;
+
+			for (const auto& fileEntry : fs::directory_iterator(metaDir))
+			{
+				if (!fileEntry.is_regular_file())
+					continue;
+
+				const fs::path& path = fileEntry.path();
+				if (path.extension() != ".json")
+					continue;
+
+				const std::string filename = path.filename().string();
+				if (filename.find(".shader.json") != std::string::npos)
+				{
+					LoadShaderAsset(path.string());
+					continue;
+				}
+
+				if (filename.find(".asset.json") == std::string::npos)
+					continue;
+
+				LoadAsset(path.string());
+			}
+		}
+	}
+
+	const fs::path shaderRoot = "../MRenderer/fx";
+	LoadShaderSources(shaderRoot);
+}
+
+void AssetLoader::LoadShaderSources(const fs::path& shaderDir)
+{
+	if (!fs::exists(shaderDir) || !fs::is_directory(shaderDir))
+	{
+		return;
+	}
+
+	for (const auto& fileEntry : fs::directory_iterator(shaderDir))
+	{
+		if (!fileEntry.is_regular_file())
+		{
+			continue;
+		}
+
+		const fs::path& path = fileEntry.path();
+		if (path.extension() != ".hlsl")
+		{
+			continue;
+		}
+
+		const std::string stem = path.stem().string();
+		const bool isVertexShader = ContainsTokenIgnoreCase(stem, "_vs");
+		const bool isPixelShader = ContainsTokenIgnoreCase(stem, "_ps");
+		if (!isVertexShader && !isPixelShader)
+		{
+			continue;
+		}
+
+		if (isVertexShader)
+		{
+			VertexShaderHandle handle = m_VertexShaders.Load(path.generic_string(), [path]()
+				{
+					auto data = std::make_unique<RenderData::VertexShaderData>();
+					data->path = path.generic_string();
+					return data;
+				});
+			if (!stem.empty())
+			{
+				m_VertexShaders.SetDisplayName(handle, stem);
+			}
+			StoreReferenceIfMissing(m_VertexShaderRefs, handle, path.generic_string(), 0u);
+		}
+
+		if (isPixelShader)
+		{
+			PixelShaderHandle handle = m_PixelShaders.Load(path.generic_string(), [path]()
+				{
+					auto data = std::make_unique<RenderData::PixelShaderData>();
+					data->path = path.generic_string();
+					return data;
+				});
+			if (!stem.empty())
+			{
+				m_PixelShaders.SetDisplayName(handle, stem);
+			}
+			StoreReferenceIfMissing(m_PixelShaderRefs, handle, path.generic_string(), 0u);
+		}
+	}
+}
+
+const AssetLoader::AssetLoadResult* AssetLoader::GetAsset(const std::string& assetMetaPath) const
+{
+	auto it = m_AssetsByPath.find(assetMetaPath);
+	if (it == m_AssetsByPath.end())
+	{
+		return nullptr;
+	}
+
+	return &it->second;
+}
+
+MaterialHandle AssetLoader::ResolveMaterial(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return MaterialHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return MaterialHandle::Invalid();
+	}
+
+	if (index >= asset->materials.size())
+	{
+		return MaterialHandle::Invalid();
+	}
+
+	return asset->materials[index];
+}
+
+MeshHandle AssetLoader::ResolveMesh(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return MeshHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return MeshHandle::Invalid();
+	}
+
+	if (index >= asset->meshes.size())
+	{
+		return MeshHandle::Invalid();
+	}
+
+	return asset->meshes[index];
+}
+
+TextureHandle AssetLoader::ResolveTexture(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return TextureHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return TextureHandle::Invalid();
+	}
+
+	if (index >= asset->textures.size())
+	{
+		return TextureHandle::Invalid();
+	}
+
+	return asset->textures[index];
+}
+
+SkeletonHandle AssetLoader::ResolveSkeleton(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return SkeletonHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return SkeletonHandle::Invalid();
+	}
+
+	if (index != 0u)
+	{
+		return SkeletonHandle::Invalid();
+	}
+
+	return asset->skeleton;
+}
+
+AnimationHandle AssetLoader::ResolveAnimation(const std::string& assetMetaPath, UINT32 index) const
+{
+	if (assetMetaPath.empty())
+	{
+		return AnimationHandle::Invalid();
+	}
+
+	const auto* asset = GetAsset(assetMetaPath);
+	if (!asset)
+	{
+		return AnimationHandle::Invalid();
+	}
+
+	if (index >= asset->animations.size())
+	{
+		return AnimationHandle::Invalid();
+	}
+
+	return asset->animations[index];
+}
+
+ShaderAssetHandle AssetLoader::ResolveShaderAsset(const std::string& shaderMetaPath, UINT32 index)
+{
+	(void)index;
+	return LoadShaderAsset(shaderMetaPath);
+}
+
+VertexShaderHandle AssetLoader::ResolveVertexShader(const VertexShaderRef& ref)
+{
+	if (ref.assetPath.empty())
+	{
+		return VertexShaderHandle::Invalid();
+	}
+
+	const fs::path shaderPath = ref.assetPath;
+	VertexShaderHandle handle = m_VertexShaders.Load(shaderPath.generic_string(), [shaderPath]()
+		{
+			auto data = std::make_unique<RenderData::VertexShaderData>();
+			data->path = shaderPath.generic_string();
+			return data;
+		});
+
+	StoreReferenceIfMissing(m_VertexShaderRefs, handle, shaderPath.generic_string(), 0u);
+	return handle;
+}
+
+PixelShaderHandle AssetLoader::ResolvePixelShader(const PixelShaderRef& ref)
+{
+	if (ref.assetPath.empty())
+	{
+		return PixelShaderHandle::Invalid();
+	}
+
+	const fs::path shaderPath = ref.assetPath;
+	PixelShaderHandle handle = m_PixelShaders.Load(shaderPath.generic_string(), [shaderPath]()
+		{
+			auto data = std::make_unique<RenderData::PixelShaderData>();
+			data->path = shaderPath.generic_string();
+			return data;
+		});
+
+	StoreReferenceIfMissing(m_PixelShaderRefs, handle, shaderPath.generic_string(), 0u);
+	return handle;
+}
+
+bool AssetLoader::GetMaterialAssetReference(MaterialHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_MaterialRefs.find(MakeHandleKey(handle));
+	if (it == m_MaterialRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetMeshAssetReference(MeshHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_MeshRefs.find(MakeHandleKey(handle));
+	if (it == m_MeshRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetTextureAssetReference(TextureHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_TextureRefs.find(MakeHandleKey(handle));
+	if (it == m_TextureRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetShaderAssetReference(ShaderAssetHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_ShaderAssetRefs.find(MakeHandleKey(handle));
+	if (it == m_ShaderAssetRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetVertexShaderAssetReference(VertexShaderHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_VertexShaderRefs.find(MakeHandleKey(handle));
+	if (it == m_VertexShaderRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetPixelShaderAssetReference(PixelShaderHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_PixelShaderRefs.find(MakeHandleKey(handle));
+	if (it == m_PixelShaderRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetSkeletonAssetReference(SkeletonHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_SkeletonRefs.find(MakeHandleKey(handle));
+	if (it == m_SkeletonRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+bool AssetLoader::GetAnimationAssetReference(AnimationHandle handle, std::string& outPath, UINT32& outIndex) const
+{
+	auto it = m_AnimationRefs.find(MakeHandleKey(handle));
+	if (it == m_AnimationRefs.end())
+	{
+		return false;
+	}
+
+	outPath = it->second.assetPath;
+	outIndex = it->second.assetIndex;
+	return true;
+}
+
+
 AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMetaPath)
 {
 	AssetLoadResult result{};
@@ -281,12 +859,347 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 	const fs::path baseDir = (metaDir / pathJson.value("baseDir", "")).lexically_normal();
 	const fs::path textureDir = (baseDir / pathJson.value("textureDir", "")).lexically_normal();
 
-	const json filesJson = meta.value("files", json::object());
-	const std::string materialsFile = filesJson.value("materials", "");
-	const std::string skeletonFile = filesJson.value("skeleton", "");
-
 	std::vector<MaterialHandle> materialHandles;
 	std::unordered_map<std::string, MaterialHandle> materialByName;
+	
+	LoadMaterials(meta, baseDir, textureDir, result, materialHandles, materialByName, assetMetaPath);
+
+	LoadSkeletons(meta, baseDir, result, assetMetaPath);
+
+	LoadMeshes(meta, baseDir, result, materialHandles, materialByName, assetMetaPath);
+
+	LoadAnimations(meta, baseDir, result, assetMetaPath);
+
+	m_AssetsByPath[assetMetaPath] = result;
+	return result;
+}
+
+ShaderAssetHandle AssetLoader::LoadShaderAsset(const std::string& shaderMetaPath)
+{
+	if (shaderMetaPath.empty())
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	json meta = json::object();
+	std::string shaderName;
+	std::string vsFile;
+	std::string psFile;
+	const fs::path metaPath(shaderMetaPath);
+	const fs::path baseDir = metaPath.parent_path();
+	{
+		std::ifstream ifs(shaderMetaPath);
+		if (ifs)
+		{
+			ifs >> meta;
+			shaderName = meta.value("name", "");
+			vsFile = meta.value("vs", "");
+			psFile = meta.value("ps", "");
+		}
+	}
+	
+	const std::string shaderKey = shaderMetaPath;
+	ShaderAssetHandle handle = m_ShaderAssets.Load(shaderKey, [vsFile, psFile, baseDir, this]()
+		{
+			auto data = std::make_unique<RenderData::ShaderAssetData>();
+
+			if (!vsFile.empty())
+			{
+				const fs::path vsPath = ResolvePath(baseDir, vsFile);
+				VertexShaderHandle vsHandle = m_VertexShaders.Load(vsPath.generic_string(), [vsPath]()
+					{
+						auto vsData = std::make_unique<RenderData::VertexShaderData>();
+						vsData->path = vsPath.generic_string();
+						return vsData;
+					});
+				data->vertexShader = vsHandle;
+				StoreReferenceIfMissing(m_VertexShaderRefs, vsHandle, vsPath.generic_string(), 0u);
+			}
+
+			if (!psFile.empty())
+			{
+				const fs::path psPath = ResolvePath(baseDir, psFile);
+				PixelShaderHandle psHandle = m_PixelShaders.Load(psPath.generic_string(), [psPath]()
+					{
+						auto psData = std::make_unique<RenderData::PixelShaderData>();
+						psData->path = psPath.generic_string();
+						return psData;
+					});
+				data->pixelShader = psHandle;
+				StoreReferenceIfMissing(m_PixelShaderRefs, psHandle, psPath.generic_string(), 0u);
+			}
+
+			return data;
+		});
+
+	if (!shaderName.empty())
+	{
+		m_ShaderAssets.SetDisplayName(handle, shaderName);
+	}
+
+	StoreReferenceIfMissing(m_ShaderAssetRefs, handle, shaderMetaPath, 0u);
+	return handle;
+}
+
+static std::string HashShaderKey(const std::string& key)
+{
+	const size_t hashValue = std::hash<std::string>{}(key);
+	std::ostringstream oss;
+	oss << std::hex << hashValue;
+	return oss.str();
+}
+
+ShaderAssetHandle AssetLoader::EnsureShaderAssetForStages(VertexShaderHandle vertexShader, PixelShaderHandle pixelShader)
+{
+	if (!vertexShader.IsValid() || !pixelShader.IsValid())
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	std::string vsPath;
+	std::string psPath;
+	UINT32 vsIndex = 0;
+	UINT32 psIndex = 0;
+	if (!GetVertexShaderAssetReference(vertexShader, vsPath, vsIndex))
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	if (!GetPixelShaderAssetReference(pixelShader, psPath, psIndex))
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	const std::string key = vsPath + "|" + psPath;
+	const std::string hash = HashShaderKey(key);
+	const std::string assetName = "AutoShader_" + hash;
+
+	const fs::path metaRoot = fs::path("../ResourceOutput") / "ShaderAssets" / "Meta";
+	const fs::path metaPath = metaRoot / (assetName + ".shader.json");
+	if (fs::exists(metaPath))
+	{
+		return LoadShaderAsset(metaPath.string());
+	}
+
+	fs::create_directories(metaRoot);
+	json meta = json::object();
+	meta["name"] = assetName;
+	meta["vs"] = vsPath;
+	meta["ps"] = psPath;
+
+	std::ofstream out(metaPath);
+	if (!out)
+	{
+		return ShaderAssetHandle::Invalid();
+	}
+
+	out << meta.dump(4);
+	out.close();
+	return LoadShaderAsset(metaPath.string());
+}
+
+
+void AssetLoader::LoadMeshes(
+	json& meta, 
+	const fs::path& baseDir, 
+	AssetLoadResult& result, 
+	std::vector<MaterialHandle>& materialHandles, 
+	std::unordered_map<std::string, MaterialHandle>& materialByName,
+	const std::string& assetMetaPath
+)
+{
+	if (meta.contains("meshes") && meta["meshes"].is_array())
+	{
+		for (const auto& meshJson : meta["meshes"])
+		{
+			UINT32 meshIndex = 0;
+			const std::string meshFile = meshJson.value("file", "");
+			if (meshFile.empty())
+			{
+				++meshIndex;
+				continue;
+			}
+
+			const fs::path meshPath = ResolvePath(baseDir, meshFile);
+			std::ifstream meshStream(meshPath, std::ios::binary);
+			if (!meshStream)
+			{
+				++meshIndex;
+				continue;
+			}
+
+			MeshBinHeader header{};
+			meshStream.read(reinterpret_cast<char*>(&header), sizeof(header));
+			if (header.magic != kMeshMagic)
+			{
+				++meshIndex;
+				continue;
+			}
+
+			std::vector<SubMeshBin> subMeshes(header.subMeshCount);
+			meshStream.read(reinterpret_cast<char*>(subMeshes.data()), sizeof(SubMeshBin) * subMeshes.size());
+
+			//instanceTransforms 읽기
+			std::vector<InstanceTransformBin> instanceTransforms;
+			if (header.version >= 3 && header.instanceCount > 0)
+			{
+				instanceTransforms.resize(header.instanceCount);
+				meshStream.read(reinterpret_cast<char*>(instanceTransforms.data()),
+					sizeof(InstanceTransformBin) * instanceTransforms.size());
+			}
+
+			RenderData::MeshData meshData{};
+			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
+
+			meshData.vertices.reserve(header.vertexCount);
+			if (meshData.hasSkinning)
+			{
+				std::vector<VertexSkinned> vertices(header.vertexCount);
+				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(VertexSkinned) * vertices.size());
+				for (const auto& v : vertices)
+				{
+					meshData.vertices.push_back(ToRenderVertex(v));
+				}
+			}
+			else
+			{
+				std::vector<Vertex> vertices(header.vertexCount);
+				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(Vertex) * vertices.size());
+				for (const auto& v : vertices)
+				{
+					meshData.vertices.push_back(ToRenderVertex(v));
+				}
+			}
+
+			meshData.indices.resize(header.indexCount);
+			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
+
+#ifdef _DEBUG
+			// 			std::cout << "[MeshBin] load mesh=" << meshPath.filename().string()
+			// 				<< " verts=" << meshData.vertices.size()
+			// 				<< " indices=" << meshData.indices.size()
+			// 				<< " skinned=" << meshData.hasSkinning
+			// 				<< std::endl;
+			// 			for (auto i = 0; i < meshData.vertices.size(); ++i)
+			// 			{
+			// 				const auto& v = meshData.vertices[i];
+			// 				std::cout << "[MeshBin] v" << i
+			// 					<< " pos=(" << v.position.x << "," << v.position.y << "," << v.position.z << ")"
+			// 					<< " n=(" << v.normal.x << "," << v.normal.y << "," << v.normal.z << ")"
+			// 					<< " uv=(" << v.uv.x << "," << v.uv.y << ")"
+			// 					<< " t=(" << v.tangent.x << "," << v.tangent.y << "," << v.tangent.z << "," << v.tangent.w << ")"
+			// 					<< std::endl;
+			// 			}
+			// 			for (size_t i = 0; i + 2 < meshData.indices.size(); i += 3)
+			// 			{
+			// 				std::cout << "[MeshBin] tri" << (i / 3)
+			// 					<< " idx=(" << meshData.indices[i] << "," << meshData.indices[i + 1] << "," << meshData.indices[i + 2] << ")"
+			// 					<< std::endl;
+			// 			}
+#endif
+
+			std::string stringTable;
+			if (header.stringTableBytes > 0)
+			{
+				stringTable.resize(header.stringTableBytes);
+				meshStream.read(stringTable.data(), header.stringTableBytes);
+			}
+
+#ifdef _DEBUG
+			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+#endif
+
+			meshData.subMeshes.reserve(subMeshes.size());
+			for (const auto& subMesh : subMeshes)
+			{
+				const std::string materialName = ReadStringAtOffset(stringTable, subMesh.materialNameOffset);
+				const std::string subName = ReadStringAtOffset(stringTable, subMesh.nameOffset);
+
+				auto resolveMat = [&]() -> MaterialHandle
+					{
+						if (!materialName.empty())
+						{
+							auto it = materialByName.find(materialName);
+							if (it != materialByName.end()) return it->second;
+						}
+						if (materialHandles.size() == 1) return materialHandles.front();
+						return MaterialHandle::Invalid();
+					};
+
+				const MaterialHandle mat = resolveMat();
+
+				// v2 (또는 v3인데 instanceTransforms 없음) -> 1개만, identity
+				if (header.version < 3 || instanceTransforms.empty() || subMesh.instanceCount == 0)
+				{
+					RenderData::MeshData::SubMesh out{};
+					out.indexStart = subMesh.indexStart;
+					out.indexCount = subMesh.indexCount;
+					out.material = mat;
+					out.name = subName;
+
+					DirectX::XMFLOAT4X4 id{};
+					id._11 = id._22 = id._33 = id._44 = 1.0f;
+					out.localToWorld = id;
+
+					meshData.subMeshes.push_back(std::move(out));
+					continue;
+				}
+
+				// v3 -> instanceCount 만큼 풀어서 push
+				const uint32_t start = subMesh.instanceStart;
+				const uint32_t count = subMesh.instanceCount;
+
+				for (uint32_t i = 0; i < count; ++i)
+				{
+					const uint32_t idx = start + i;
+					if (idx >= (uint32_t)instanceTransforms.size()) break;
+
+					RenderData::MeshData::SubMesh out{};
+					out.indexStart = subMesh.indexStart;
+					out.indexCount = subMesh.indexCount;
+					out.material = mat;
+					out.name = subName;
+					out.localToWorld._11 = instanceTransforms[idx].m[0];
+					out.localToWorld._12 = instanceTransforms[idx].m[1];
+					out.localToWorld._13 = instanceTransforms[idx].m[2];
+					out.localToWorld._14 = instanceTransforms[idx].m[3];
+					out.localToWorld._21 = instanceTransforms[idx].m[4];
+					out.localToWorld._22 = instanceTransforms[idx].m[5];
+					out.localToWorld._23 = instanceTransforms[idx].m[6];
+					out.localToWorld._24 = instanceTransforms[idx].m[7];
+					out.localToWorld._31 = instanceTransforms[idx].m[8];
+					out.localToWorld._32 = instanceTransforms[idx].m[9];
+					out.localToWorld._33 = instanceTransforms[idx].m[10];
+					out.localToWorld._34 = instanceTransforms[idx].m[11];
+					out.localToWorld._41 = instanceTransforms[idx].m[12];
+					out.localToWorld._42 = instanceTransforms[idx].m[13];
+					out.localToWorld._43 = instanceTransforms[idx].m[14];
+					out.localToWorld._44 = instanceTransforms[idx].m[15];
+
+					meshData.subMeshes.push_back(std::move(out));
+				}
+			}
+
+			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
+				{
+					return std::make_unique<RenderData::MeshData>(meshData);
+				});
+			result.meshes.push_back(handle);
+
+			if (handle.IsValid())
+			{
+				StoreReferenceIfMissing(m_MeshRefs, handle, assetMetaPath, meshIndex);
+			}
+			++meshIndex;
+		}
+	}
+}
+
+void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::path& textureDir, AssetLoadResult& result, std::vector<MaterialHandle>& materialHandles, std::unordered_map<std::string, MaterialHandle>& materialByName, const std::string& assetMetaPath)
+{
+	const json filesJson = meta.value("files", json::object());
+	const std::string materialsFile = filesJson.value("materials", "");
+
 	if (!materialsFile.empty())
 	{
 		const fs::path materialPath = ResolvePath(baseDir, materialsFile);
@@ -306,8 +1219,6 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					stringTable.resize(header.stringTableBytes);
 					matStream.read(stringTable.data(), header.stringTableBytes);
 				}
-
-				LogMaterialBinTextures(materialPath.generic_string(), mats, stringTable);
 
 				materialHandles.reserve(mats.size());
 				materialByName.reserve(mats.size());
@@ -353,7 +1264,11 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 								return tex;
 							});
 						material.textures[static_cast<size_t>(slot)] = textureHandle;
-						PushUnique(result.textures, textureHandle);
+						if (PushUnique(result.textures, textureHandle))
+						{
+							const UINT32 textureIndex = static_cast<UINT32>(result.textures.size() - 1);
+							StoreReferenceIfMissing(m_TextureRefs, textureHandle, assetMetaPath, textureIndex);
+						}
 					}
 
 					const std::string materialKey = materialPath.generic_string() + ":" + materialName;
@@ -365,11 +1280,18 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					materialHandles.push_back(handle);
 					materialByName.emplace(materialName, handle);
 					result.materials.push_back(handle);
+					StoreReferenceIfMissing(m_MaterialRefs, handle, assetMetaPath, static_cast<UINT32>(i));
 				}
 			}
 		}
 	}
+}
 
+void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadResult& result, const std::string& assetMetaPath)
+{
+	const json filesJson = meta.value("files", json::object());
+	const std::string skeletonFile = filesJson.value("skeleton", "");
+	
 	if (!skeletonFile.empty())
 	{
 		const fs::path skelPath = ResolvePath(baseDir, skeletonFile);
@@ -398,118 +1320,53 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 					RenderData::Bone out{};
 					out.name = ReadStringAtOffset(stringTable, bone.nameOffset);
 					out.parentIndex = bone.parentIndex;
+					std::memcpy(&out.bindPose, bone.localBind, sizeof(float) * 16);
 					std::memcpy(&out.inverseBindPose, bone.inverseBindPose, sizeof(float) * 16);
 					skeleton.bones.push_back(std::move(out));
 				}
+
+				if (header.upperCount > 0)
+				{
+					std::vector<int32_t> indices(header.upperCount);
+					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
+					skeleton.upperBodyBones.assign(indices.begin(), indices.end());
+				}
+				if (header.lowerCount > 0)
+				{
+					std::vector<int32_t> indices(header.lowerCount);
+					skelStream.read(reinterpret_cast<char*>(indices.data()), sizeof(int32_t) * indices.size());
+					skeleton.lowerBodyBones.assign(indices.begin(), indices.end());
+				}
+
+#ifdef _DEBUG
+				//WriteSkeletonLoadDebug(skelPath, skeleton);
+#endif
 
 				result.skeleton = m_Skeletons.Load(skelPath.generic_string(), [skeleton]()
 					{
 						return std::make_unique<RenderData::Skeleton>(skeleton);
 					});
+
+				if (result.skeleton.IsValid())
+				{
+					StoreReferenceIfMissing(m_SkeletonRefs, result.skeleton, assetMetaPath, 0u);
+				}
 			}
 		}
 	}
+}
 
-	if (meta.contains("meshes") && meta["meshes"].is_array())
-	{
-		for (const auto& meshJson : meta["meshes"])
-		{
-			const std::string meshFile = meshJson.value("file", "");
-			if (meshFile.empty())
-			{
-				continue;
-			}
-
-			const fs::path meshPath = ResolvePath(baseDir, meshFile);
-			std::ifstream meshStream(meshPath, std::ios::binary);
-			if (!meshStream)
-			{
-				continue;
-			}
-
-			MeshBinHeader header{};
-			meshStream.read(reinterpret_cast<char*>(&header), sizeof(header));
-			if (header.magic != kMeshMagic)
-			{
-				continue;
-			}
-
-			std::vector<SubMeshBin> subMeshes(header.subMeshCount);
-			meshStream.read(reinterpret_cast<char*>(subMeshes.data()), sizeof(SubMeshBin) * subMeshes.size());
-
-			RenderData::MeshData meshData{};
-			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
-
-			std::string stringTable;
-			if (header.stringTableBytes > 0)
-			{
-				stringTable.resize(header.stringTableBytes);
-				meshStream.read(stringTable.data(), header.stringTableBytes);
-			}
-
-			meshData.subMeshes.reserve(subMeshes.size());
-			for (const auto& subMesh : subMeshes)
-			{
-				RenderData::MeshData::SubMesh out{};
-				out.indexStart = subMesh.indexStart;
-				out.indexCount = subMesh.indexCount;
-
-				const std::string materialName = ReadStringAtOffset(stringTable, subMesh.materialNameOffset);
-				if (!materialName.empty())
-				{
-					auto it = materialByName.find(materialName);
-					if (it != materialByName.end())
-					{
-						out.material = it->second;
-					}
-				}
-				else if (materialHandles.size() == 1)
-				{
-					out.material = materialHandles.front();
-				}
-
-				meshData.subMeshes.push_back(out);
-			}
-
-
-			meshData.vertices.reserve(header.vertexCount);
-			if (meshData.hasSkinning)
-			{
-				std::vector<VertexSkinned> vertices(header.vertexCount);
-				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(VertexSkinned) * vertices.size());
-				for (const auto& v : vertices)
-				{
-					meshData.vertices.push_back(ToRenderVertex(v));
-				}
-			}
-			else
-			{
-				std::vector<Vertex> vertices(header.vertexCount);
-				meshStream.read(reinterpret_cast<char*>(vertices.data()), sizeof(Vertex) * vertices.size());
-				for (const auto& v : vertices)
-				{
-					meshData.vertices.push_back(ToRenderVertex(v));
-				}
-			}
-
-			meshData.indices.resize(header.indexCount);
-			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
-
-			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
-				{
-					return std::make_unique<RenderData::MeshData>(meshData);
-				});
-			result.meshes.push_back(handle);
-		}
-	}
-
+void AssetLoader::LoadAnimations(json& meta, const fs::path& baseDir, AssetLoadResult& result, const std::string& assetMetaPath)
+{
 	if (meta.contains("animations") && meta["animations"].is_array())
 	{
+		UINT32 animationIndex = 0;
 		for (const auto& animJson : meta["animations"])
 		{
 			const std::string animFile = animJson.value("file", "");
 			if (animFile.empty())
 			{
+				++animationIndex;
 				continue;
 			}
 
@@ -517,6 +1374,7 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			std::ifstream animStream(animPath);
 			if (!animStream)
 			{
+				++animationIndex;
 				continue;
 			}
 
@@ -524,14 +1382,21 @@ AssetLoader::AssetLoadResult AssetLoader::LoadAsset(const std::string& assetMeta
 			animStream >> animData;
 			RenderData::AnimationClip clip = ParseAnimationJson(animData);
 
+#ifdef _DEBUG
+			//WriteAnimationLoadDebug(animPath, clip);
+#endif
+
 			AnimationHandle handle = m_Animations.Load(animPath.generic_string(), [clip]()
 				{
 					return std::make_unique<RenderData::AnimationClip>(clip);
 				});
 
 			result.animations.push_back(handle);
+			if (handle.IsValid())
+			{
+				StoreReferenceIfMissing(m_AnimationRefs, handle, assetMetaPath, animationIndex);
+			}
+			++animationIndex;
 		}
 	}
-
-	return result;
 }

@@ -3,10 +3,12 @@
 
 bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 {
-	ImGui::Begin("Scene View");
-
+	ImGui::Begin(m_WindowName.c_str());
+	m_DrawList = ImGui::GetWindowDrawList();
+	m_IsHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+	m_HasViewportRect = false;
 	ImVec2 available = ImGui::GetContentRegionAvail();
-    ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
+	ImVec2 clamped = ImVec2((std::max)(1.0f, available.x), (std::max)(1.0f, available.y));
 
 	const bool sizeChanged = (static_cast<int>(clamped.x) != static_cast<int>(m_ViewportSize.x))
 		|| (static_cast<int>(clamped.y) != static_cast<int>(m_ViewportSize.y));
@@ -14,7 +16,17 @@ bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 
 	if (renderTarget.GetShaderResourceView())
 	{
-		ImGui::Image(reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()), clamped, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+		//ImGui::Image(reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()), clamped, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+
+		// ★
+		ImGui::Image(
+			reinterpret_cast<ImTextureID>(renderTarget.GetShaderResourceView()),
+			clamped,
+			ImVec2(0.0f, 0.0f),
+			ImVec2(1.0f, 1.0f));
+		m_ViewportRectMin = ImGui::GetItemRectMin();
+		m_ViewportRectMax = ImGui::GetItemRectMax();
+		m_HasViewportRect = true;
 	}
 	else
 	{
@@ -25,3 +37,4 @@ bool EditorViewport::Draw(const RenderTargetContext& renderTarget)
 
 	return sizeChanged;
 }
+

@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Component.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIObject.cpp">
       <Filter>Objects\Source Files</Filter>
@@ -11,28 +11,28 @@
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIComponent.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TransformComponent.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CameraComponent.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LightComponent.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MaterialComponent.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeshComponent.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeshRenderer.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CameraObject.cpp">
       <Filter>Objects\Source Files</Filter>
@@ -41,13 +41,64 @@
       <Filter>Reflection\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ComponentRegistration.cpp">
-      <Filter>Components\Source Files</Filter>
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletalMeshComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletalMeshRenderer.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerMovementComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIFSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionFSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimFSMComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FSMEventRegistry.cpp">
+      <Filter>Components\Utils\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FSMActionRegistry.cpp">
+      <Filter>Components\Utils\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionalLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SpotLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RectLightComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIButtonComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIProgressBarComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UISliderComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UITextComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Component.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
@@ -61,27 +112,6 @@
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CoreTypes.h" />
-    <ClInclude Include="UIComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TransformComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CameraComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LightComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshComponent.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshRenderer.h">
-      <Filter>Components\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CameraObject.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
@@ -94,16 +124,94 @@
     <ClInclude Include="Serializer.h">
       <Filter>Reflection\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletalMeshComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletalMeshRenderer.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerMovementComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimFSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionFSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIFSMComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimBlendCurveFunction.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraSettings.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FSMActionRegistry.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FSMEventRegistry.h">
+      <Filter>Components\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpotLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RectLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIButtonComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIProgressBarComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UISliderComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UITextComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">
       <UniqueIdentifier>{52d4bb5d-f8cb-4636-98f0-0862c24516da}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components\Header Files">
-      <UniqueIdentifier>{ad8dc0c8-27c0-4262-8902-68dfeac53f6e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components\Source Files">
-      <UniqueIdentifier>{8e2edd01-4c5b-4c65-9cde-083e98d3cdb3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Objects">
       <UniqueIdentifier>{556b89d4-05ce-4ab7-b3fe-e4ddf6ff7a23}</UniqueIdentifier>
@@ -122,6 +230,33 @@
     </Filter>
     <Filter Include="Reflection\Source Files">
       <UniqueIdentifier>{8c211b32-5e0f-4eb8-b840-2ce14980ebaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Utils">
+      <UniqueIdentifier>{5cf8f405-2299-4f82-95bd-4b61ddd3ca6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UserDefine">
+      <UniqueIdentifier>{f514e728-7262-400f-8bee-3f218074c7a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UserDefine\Header Files">
+      <UniqueIdentifier>{be4e40f7-a961-4976-8d81-1dcff3a844d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UserDefine\Source Files">
+      <UniqueIdentifier>{fde05868-3eac-4265-8de8-8562608ae124}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Default">
+      <UniqueIdentifier>{b48fea57-c118-4f76-8011-8e6341929e57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Default\Header Files">
+      <UniqueIdentifier>{ad8dc0c8-27c0-4262-8902-68dfeac53f6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Default\Source Files">
+      <UniqueIdentifier>{8e2edd01-4c5b-4c65-9cde-083e98d3cdb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Utils\Header Files">
+      <UniqueIdentifier>{f5581adb-113b-43ff-8677-5458bb91d7f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Utils\Source Files">
+      <UniqueIdentifier>{c7443698-6f50-4d0f-9468-826b8502fc60}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

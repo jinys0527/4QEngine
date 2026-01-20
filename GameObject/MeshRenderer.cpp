@@ -5,13 +5,35 @@
 #include "Object.h"
 #include "ReflectionMacro.h"
 REGISTER_COMPONENT(MeshRenderer)
+REGISTER_PROPERTY_READONLY_LOADABLE(MeshRenderer, Mesh)
+REGISTER_PROPERTY_READONLY_LOADABLE(MeshRenderer, Material)
+REGISTER_PROPERTY(MeshRenderer, Visible)
+REGISTER_PROPERTY(MeshRenderer, CastShadow)
+REGISTER_PROPERTY(MeshRenderer, ReceiveShadow)
+REGISTER_PROPERTY(MeshRenderer, RenderLayer)
 
-bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
+void MeshRenderer::SetRenderLayer(const UINT8& layer)
+{
+	m_RenderLayer = layer;
+
+	auto* owner = GetOwner();
+	if (!owner)
+		return;
+
+	owner->SetLayer(static_cast<RenderData::RenderLayer>(layer));
+}
+
+const UINT8& MeshRenderer::GetRenderLayer() const
+{
+	return m_RenderLayer;
+}
+
+bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out)
 {
 	if (!m_Visible)
 		return false;
 
-	MeshHandle mesh = MeshHandle::Invalid();
+	MeshHandle     mesh     = MeshHandle::Invalid();
 	MaterialHandle material = MaterialHandle::Invalid();
 	ResolveHandles(mesh, material);
 
@@ -22,10 +44,10 @@ bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out) const
 	if (!transform)
 		return false;
 
-	out.mesh = mesh;
+	out.mesh     = mesh;
 	out.material = material;
-	out.world = transform->GetWorldMatrix();
-	out.sortKey = BuildSortKey(mesh, material, m_RenderLayer);
+	out.world    = transform->GetWorldMatrix();
+	out.sortKey  = BuildSortKey(mesh, material, m_RenderLayer);
 	return true;
 }
 
@@ -35,22 +57,6 @@ void MeshRenderer::Update(float deltaTime)
 
 void MeshRenderer::OnEvent(EventType type, const void* data)
 {
-}
-
-void MeshRenderer::Serialize(nlohmann::json& j) const
-{
-	j["visible"]                = m_Visible;
-	j["castShadow"]             = m_CastShadow;
-	j["receiveShadow"]          = m_ReceiveShadow;
-	j["renderLayer"]            = m_RenderLayer;
-}
-
-void MeshRenderer::Deserialize(const nlohmann::json& j)
-{
-	m_Visible       = j.value("visible", true);
-	m_CastShadow    = j.value("castShadow", true);
-	m_ReceiveShadow = j.value("receiveShadow", true);
-	m_RenderLayer   = static_cast<UINT8>(j.value("renderLayer", 0));
 }
 
 
@@ -75,9 +81,9 @@ UINT64 MeshRenderer::BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT
 	return key;
 }
 
-void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const
+void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material)
 {
-	mesh = m_MeshHandle;
+	mesh     = m_MeshHandle;
 	material = m_MaterialHandle;
 
 	const Object* owner = GetOwner();
@@ -91,6 +97,12 @@ void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) co
 		if (const auto* meshComponent = owner->GetComponent<MeshComponent>())
 		{
 			mesh = meshComponent->GetMeshHandle();
+			// 파생값 갱신 (읽기전용 표시용)
+			MeshRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetMeshAssetReference(mesh, ref.assetPath, ref.assetIndex);
+
+			LoadSetMesh(ref); // 또는 내부 갱신 함수
 		}
 	}
 
@@ -99,6 +111,12 @@ void MeshRenderer::ResolveHandles(MeshHandle& mesh, MaterialHandle& material) co
 		if (const auto* materialComponent = owner->GetComponent<MaterialComponent>())
 		{
 			material = materialComponent->GetMaterialHandle();
+			// 파생값 갱신 (읽기전용 표시용)
+			MaterialRef ref{};
+			if (auto* loader = AssetLoader::GetActive())
+				loader->GetMaterialAssetReference(material, ref.assetPath, ref.assetIndex);
+
+			LoadSetMaterial(ref); // 또는 내부 갱신 함수
 		}
 	}
 }

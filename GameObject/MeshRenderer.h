@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Component.h"
 #include "RenderData.h"
+#include "ResourceRefs.h"
 
 class TransformComponent;
 
@@ -15,38 +16,50 @@ public:
 	MeshRenderer() = default;
 	virtual ~MeshRenderer() = default;
 
-	void SetMeshHandle(MeshHandle handle) { m_MeshHandle = handle; }
-	MeshHandle GetMeshHandle() const { return m_MeshHandle; }
+	void LoadSetMesh(const MeshRef& meshRef)
+	{
+		m_Mesh = meshRef;
+	}
 
-	void SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
-	MaterialHandle GetMaterialHandle() const { return m_MaterialHandle; }
+	const MeshRef& GetMesh() const { return m_Mesh; }
 
-	void SetVisible(bool visible) { m_Visible = visible; }
-	bool IsVisible() const { return m_Visible; }
-	void SetCastShadow(bool castShadow) { m_CastShadow = castShadow; }
-	bool CastShadow() const { return m_CastShadow; }
-	void SetReceiveShadow(bool receiveShadow) { m_ReceiveShadow = receiveShadow; }
-	bool ReceiveShadow() const { return m_ReceiveShadow; }
 
-	void  SetRenderLayer(UINT8 layer) { m_RenderLayer = layer; }
-	UINT8 GetRenderLayer() const     { return m_RenderLayer;  }
+	void LoadSetMaterial(const MaterialRef& materialRef)
+	{
+		m_Material = materialRef;
+	}
 
-	bool BuildRenderItem(RenderData::RenderItem& out) const;
+	const MaterialRef& GetMaterial() const { return m_Material; }
 
-	void Update(float deltaTime) override;
+
+	void  SetRenderLayer(const UINT8& layer);
+	const UINT8& GetRenderLayer() const;
+
+	void		SetVisible(bool visible) { m_Visible = visible; }
+	const bool& GetVisible() const		 { return m_Visible;    }
+
+	void		SetCastShadow(bool castShadow) { m_CastShadow = castShadow; }
+	const bool& GetCastShadow() const		   { return m_CastShadow;	    }
+
+	void		SetReceiveShadow(bool receiveShadow) { m_ReceiveShadow = receiveShadow; }
+	const bool& GetReceiveShadow() const		     { return m_ReceiveShadow;	        }
+
+	virtual bool BuildRenderItem(RenderData::RenderItem& out);
+
+	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize(nlohmann::json& j) const override;
-	void Deserialize(const nlohmann::json& j) override;
-
 private:
-	static UINT64 BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT8 layer);
-	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material) const;
-	TransformComponent* GetTransform() const;
+	void ResolveHandles(MeshHandle& mesh, MaterialHandle& material);
 
 protected:
-	MeshHandle     m_MeshHandle     = MeshHandle::Invalid();
-	MaterialHandle m_MaterialHandle = MaterialHandle::Invalid();
+	static UINT64 BuildSortKey(MeshHandle mesh, MaterialHandle material, UINT8 layer);
+	TransformComponent* GetTransform() const;
+
+	MeshHandle     m_MeshHandle      = MeshHandle::Invalid();
+	MaterialHandle m_MaterialHandle  = MaterialHandle::Invalid();
+	MeshRef		   m_Mesh;
+	MaterialRef	   m_Material;
 	bool  m_Visible                  = true;
 	bool  m_CastShadow               = true;
 	bool  m_ReceiveShadow            = true;

@@ -7,8 +7,10 @@
 class GameManager : public IEventListener
 {
 public:
-	GameManager(EventDispatcher& eventDispatcher);
+	GameManager();
 	~GameManager();
+
+	void SetEventDispatcher(EventDispatcher& eventDispatcher) { m_EventDispatcher = eventDispatcher; }
 
 	void Reset();
 

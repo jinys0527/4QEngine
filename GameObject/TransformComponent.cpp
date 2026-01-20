@@ -8,6 +8,7 @@ REGISTER_PROPERTY(TransformComponent, Position)
 REGISTER_PROPERTY(TransformComponent, Rotation)
 REGISTER_PROPERTY(TransformComponent, Scale)
 
+
 void TransformComponent::SetParent(TransformComponent* newParent)
 {
 	assert(newParent != this);
@@ -15,6 +16,77 @@ void TransformComponent::SetParent(TransformComponent* newParent)
 
 	m_Parent = newParent;
 	m_Parent->AddChild(this);
+
+	SetDirty();
+}
+
+void TransformComponent::SetParentKeepLocal(TransformComponent* newParent)
+{
+	assert(newParent != this);
+	assert(m_Parent == nullptr);
+
+	m_Parent = newParent;
+	m_Parent->m_Children.push_back(this);
+
+	SetDirty();
+}
+
+void TransformComponent::SetParentKeepWorld(TransformComponent* newParent)
+{
+	assert(newParent != this);
+
+	// 1. 부모 변경 전에 월드 저장
+	XMFLOAT4X4 worldBefore = GetWorldMatrix();
+
+	// 2. 기존 부모 제거
+	if (m_Parent)
+		DetachFromParentKeepWorld();
+
+	// 3. 부모 설정
+	m_Parent = newParent;
+	newParent->m_Children.push_back(this);
+
+	// 4. Local = World * inverse(ParentWorld)
+	XMFLOAT4X4 parentInvWorld = newParent->GetInverseWorldMatrix();
+	XMFLOAT4X4 local = Mul(worldBefore, parentInvWorld);
+
+	XMFLOAT4X4 localNoPivot = RemovePivot(local, GetPivotPoint());
+	DecomposeMatrix(localNoPivot, m_Position, m_Rotation, m_Scale);
+
+	SetDirty();
+}
+
+void TransformComponent::DetachFromParentKeepWorld()
+{
+	if (!m_Parent) return;
+
+	XMFLOAT4X4 worldBefore = GetWorldMatrix();
+
+	auto* parent = m_Parent;
+	parent->m_Children.erase(
+		std::remove(parent->m_Children.begin(), parent->m_Children.end(), this),
+		parent->m_Children.end()
+	);
+
+	m_Parent = nullptr;
+
+	XMFLOAT4X4 noPivot = RemovePivot(worldBefore, GetPivotPoint());
+	DecomposeMatrix(noPivot, m_Position, m_Rotation, m_Scale);
+
+	SetDirty();
+}
+
+void TransformComponent::DetachFromParentKeepLocal()
+{
+	if (m_Parent == nullptr) return;
+
+	auto* parent = m_Parent;
+	m_Parent = nullptr;
+
+	parent->m_Children.erase(
+		std::remove(parent->m_Children.begin(), parent->m_Children.end(), this),
+		parent->m_Children.end()
+	);
 
 	SetDirty();
 }
@@ -32,9 +104,10 @@ void TransformComponent::DetachFromParent()
 
 void TransformComponent::AddChild(TransformComponent* child)
 {
-	XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
-	childLocalTM = Mul(childLocalTM, GetInverseWorldMatrix());
-
+	//XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
+	//childLocalTM = Mul(childLocalTM, GetInverseWorldMatrix());
+	XMFLOAT4X4 childWorldTM = child->GetWorldMatrix();
+	XMFLOAT4X4 childLocalTM = Mul(childWorldTM, GetInverseWorldMatrix());
 	XMFLOAT4X4 mNoPivot = RemovePivot(childLocalTM, child->GetPivotPoint());
 	DecomposeMatrix(mNoPivot, child->m_Position, child->m_Rotation, child->m_Scale);
 
@@ -43,9 +116,9 @@ void TransformComponent::AddChild(TransformComponent* child)
 
 void TransformComponent::RemoveChild(TransformComponent* child)
 {
-	XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
-	childLocalTM = Mul(childLocalTM, m_WorldMatrix);
-
+	//XMFLOAT4X4 childLocalTM = child->GetLocalMatrix();
+	//XMFLOAT4X4 childLocalTM = child->GetWorldMatrix();childLocalTM = Mul(childLocalTM, m_WorldMatrix);
+	XMFLOAT4X4 childLocalTM = child->GetWorldMatrix();
 	XMFLOAT4X4 mNoPivot = RemovePivot(childLocalTM, child->GetPivotPoint());
 	DecomposeMatrix(mNoPivot, child->m_Position, child->m_Rotation, child->m_Scale);
 
@@ -53,6 +126,20 @@ void TransformComponent::RemoveChild(TransformComponent* child)
 		std::remove(m_Children.begin(), m_Children.end(), child),
 			m_Children.end()
 	);
+}
+
+void TransformComponent::SetRotationEuler(const XMFLOAT3& rot)
+{	// 쿼터니언 -> 오일러 변환
+	// 변환 순서
+	// degree -> radian -> Quater
+
+	XMFLOAT3 rotRad{ XMConvertToRadians(rot.x),XMConvertToRadians(rot.y),XMConvertToRadians(rot.z) };
+		
+
+	XMFLOAT4 result{};
+	XMStoreFloat4(&result, XMQuaternionRotationRollPitchYaw(rotRad.x, rotRad.y, rotRad.z));
+	m_Rotation = result;
+	SetDirty();
 }
 
 void TransformComponent::Translate(const XMFLOAT3& delta)
@@ -128,43 +215,17 @@ void TransformComponent::SetPivotPreset(TransformPivotPreset preset, const XMFLO
 
 void TransformComponent::Update(float deltaTime)
 {
+
 }
 
 void TransformComponent::OnEvent(EventType type, const void* data)
 {
 }
 
-void TransformComponent::Serialize(nlohmann::json& j) const
-{
-	j["position"]["x"] = m_Position.x;
-	j["position"]["y"] = m_Position.y;
-	j["position"]["z"] = m_Position.z;
-
-	j["rotation"]["x"] = m_Rotation.x;
-	j["rotation"]["y"] = m_Rotation.y;
-	j["rotation"]["z"] = m_Rotation.z;
-	j["rotation"]["w"] = m_Rotation.w;
-	
-	j["scale"]["x"] = m_Scale.x;
-	j["scale"]["y"] = m_Scale.y;
-	j["scale"]["z"] = m_Scale.z;
-}
 
 void TransformComponent::Deserialize(const nlohmann::json& j)
 {
-	m_Position.x = j["position"]["x"];
-	m_Position.y = j["position"]["y"];
-	m_Position.z = j["position"]["z"];
-
-	m_Rotation.x = j["rotation"]["x"];
-	m_Rotation.y = j["rotation"]["y"];
-	m_Rotation.z = j["rotation"]["z"];
-	m_Rotation.w = j["rotation"]["w"];
-
-	m_Scale.x = j["scale"]["x"];
-	m_Scale.y = j["scale"]["y"];
-	m_Scale.z = j["scale"]["z"];
-
+	Component::Deserialize(j);
 	UpdateMatrices();
 }
 
@@ -174,6 +235,7 @@ void TransformComponent::UpdateMatrices()
 
 	if (m_Parent)
 	{
+		//m_WorldMatrix = Mul( m_Parent->m_WorldMatrix, m_LocalMatrix); //☆
 		m_WorldMatrix = Mul(m_LocalMatrix, m_Parent->m_WorldMatrix);
 	}
 	else

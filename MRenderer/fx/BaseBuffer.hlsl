@@ -1,0 +1,158 @@
+#ifndef BASEBUFFER_HLSL
+#define BASEBUFFER_HLSL
+
+cbuffer BaseBuffer : register(b0)
+{
+    matrix mWorld;
+    matrix mWorldInvTranspose;
+    matrix mTextureMask;
+};
+
+cbuffer CameraBuffer : register(b1)
+{
+    matrix mView;
+    matrix mProj;
+    matrix mVP;
+    matrix mSkyBox;
+    matrix mShadow;
+    float3 cameraPos;
+    float padding;
+};
+
+struct Light
+{
+    matrix mLightVP; 
+
+    float4 Color; 
+
+    float3 Pos; 
+    float Range; 
+
+    float3 worldDir; 
+    float  padding0; 
+
+    float3 viewDir; 
+    float Intensity; 
+
+    float SpotInnerAngle;
+    float SpotOutterAngle;
+    float AttenuationRadius;
+    float padding1;
+
+    uint CastShadow;
+    float3 padding; 
+};
+
+cbuffer LightBuffer : register(b2)
+{
+    Light lights[16];
+    uint lightcount;
+    float3 lightpadding;
+};
+
+cbuffer SkinningBuffer : register(b3)
+{
+    matrix bones[128];
+    uint count;
+    float3 skinningpadding;
+};
+
+
+
+
+
+
+//인풋(고정)
+struct VSInput_PNUT
+{
+    float3 pos : POSITION;
+    float3 nrm : NORMAL;
+    float2 uv : TEXCOORD0;
+    float4 T : TANGENT;
+    uint4 boneIndices : BONEINDICES;
+    float4 boneWeights : BONEWEIGHTS;
+};
+
+//아웃풋
+//기본
+struct VSOutput
+{
+    float4 pos : SV_POSITION;
+    float4 nrm : NORMAL;
+    float2 uv : TEXCOORD0;
+    float4 wPos : TEXCOORD1;
+};
+
+struct VSOutput_PU
+{
+    float4 pos : SV_POSITION;
+    float2 uv : TEXCOORD0;
+};
+
+//큐브맵
+struct VSOutput_PUVW
+{
+    float4 pos : SV_POSITION;
+    float3 uvw : TEXCOORD0;
+};
+
+//그림자 매핑 테스트
+struct VSOutput_Shadow
+{
+    float4 pos : SV_POSITION;
+    float4 uvshadow : TEXCOORD0;
+};
+
+//벽 테스트
+struct VSOutput_Wall
+{
+    float4 pos : SV_POSITION;
+    float4 uvmask : TEXCOORD0;
+    float2 uv : TEXCOORD1;
+
+};
+
+//그리드
+struct VSOutput_P
+{
+    float4 pos : SV_POSITION;
+    float4 originPos : TEXCOORD0;
+};
+
+//PBR
+struct VSOutput_PBR
+{
+    float4 pos : SV_POSITION;
+    float4 nrm : NORMAL;
+    float2 uv : TEXCOORD0;
+    float4 wPos : TEXCOORD1;
+    float4 vPos : TEXCOORD2;
+    float3 envUVW : TEXCOORD3;
+    float4 T : TEXCOORD4;
+};
+
+//ShaderResourceView
+Texture2D g_RTView : register(t0);
+Texture2D g_Blur : register(t1);
+Texture2D g_ShadowMap : register(t2);
+TextureCube g_SkyBox : register(t3);
+Texture2D g_DepthMap : register(t4);
+Texture2D g_Mask_Wall : register(t5);
+
+
+Texture2D g_Albedo : register(t11);
+Texture2D g_Normal : register(t12);
+Texture2D g_Metalic : register(t13);
+Texture2D g_Roughness : register(t14);
+Texture2D g_AO : register(t15);
+Texture2D g_Env : register(t16);
+
+//Sampler State
+SamplerState smpWrap : register(s0);
+SamplerState smpMirror : register(s1);
+SamplerState smpClamp : register(s2);
+SamplerState smpBoreder : register(s3);
+SamplerState smpBorderShadow : register(s4);
+
+
+#endif

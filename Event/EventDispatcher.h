@@ -9,6 +9,24 @@ public:
 	void AddListener(EventType type, IEventListener* listener);
 	void RemoveListener(EventType type, IEventListener* listener);
 	void Dispatch(EventType type, const void* data);
+	std::vector<IEventListener*>* FindListeners(EventType type)
+	{
+		if (m_Listeners.empty())
+			return nullptr;
+
+		auto it = m_Listeners.find(type);
+		if (it == m_Listeners.end())
+			return nullptr;
+		return &it->second;
+	}
+
+	const std::vector<IEventListener*>* FindListeners(EventType type) const
+	{
+		auto it = m_Listeners.find(type);
+		if (it == m_Listeners.end())
+			return nullptr;
+		return &it->second;
+	}
 
 private :
 	std::unordered_map<EventType, std::vector<IEventListener*>> m_Listeners;
