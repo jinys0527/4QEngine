@@ -34,15 +34,14 @@ public:
 	virtual void StateUpdate(float deltaTime);	// Light, Camera, Fog Update 
 	virtual void Render(RenderData::FrameData& data) const;
 
-	void AddGameObject      (std::shared_ptr<GameObject> gameObject, bool isOpaque);
-	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject, bool isOpaque);
-	std::shared_ptr<GameObject> CreateGameObject(const std::string& name, bool isOpaque = true);
+	void AddGameObject      (std::shared_ptr<GameObject> gameObject);
+	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject);
+	std::shared_ptr<GameObject> CreateGameObject(const std::string& name);
 
 
 	// For Editor map 자체 Getter( 수정 불가능 상태 )
 	// 수정 해야하는 경우 양 const 제거 ( Add GameObject 는 editor에서 call 하면, Scene의 add object 작동 editor map 직접 수정 X)
-	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetOpaqueObjects     () const { return m_OpaqueObjects;      }
-	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetTransparentObjects() const { return m_TransparentObjects; }
+	const std::unordered_map<std::string, std::shared_ptr<GameObject>>& GetGameObjects     () const { return m_GameObjects;      }
 
 	void SetGameCamera(std::shared_ptr<CameraObject> cameraObject);
 	std::shared_ptr<CameraObject> GetGameCamera() { return m_GameCamera; }
@@ -72,8 +71,8 @@ public:
 	bool GetIsPause         ()           { return m_Pause;  }
 
 protected:
-	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_OpaqueObjects;
-	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_TransparentObjects;
+	std::unordered_map<std::string, std::shared_ptr<GameObject>> m_GameObjects;
+
 	ServiceRegistry& m_Services;
 	SceneManager*    m_SceneManager = nullptr;
 	GameManager*     m_GameManager = nullptr;

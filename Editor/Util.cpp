@@ -24,9 +24,8 @@
 #define DRAG_SPEED 0.01f
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
 {
-	const auto& opaqueObjects = scene.GetOpaqueObjects();
-	const auto& transparentObjects = scene.GetTransparentObjects();
-	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
+	const auto& gameObjects = scene.GetGameObjects();
+	return gameObjects.find(name) != gameObjects.end();
 }
 
 // 이름 변경용 helper 
