@@ -5,10 +5,16 @@
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
-	
-
+	ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+#pragma region Init
+	//SetRenderTarget()		아래에서 카메라에 따라 처리
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+	SetBlendState(BS::DEFAULT);
+	SetRasterizerState(RS::CULLBACK);
+	SetDepthStencilState(DS::DEPTH_ON);
 	SetSamplerState();
 
+#pragma endregion
 
     SetCameraCB(frame);
     if (m_RenderContext.isEditCam)
@@ -25,6 +31,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
 		SetDepthStencilState(DS::DEPTH_OFF);
 		m_RenderContext.DrawFullscreenQuad();
+		SetDepthStencilState(DS::DEPTH_ON);
     }
 
 
@@ -32,14 +39,9 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
     SetDirLight(frame);
 
     //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
 
 	//터레인 그리기
-	SetBlendState(BS::DEFAULT);
-	SetRasterizerState(RS::CULLBACK);
-	SetDepthStencilState(DS::DEPTH_ON);
-
 	XMMATRIX mTM, mScale, mRotate, mTrans;
 	mScale = XMMatrixScaling(50, 50, 1);
 	mRotate = XMMatrixRotationX(XM_PI / 2);
@@ -63,10 +65,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 	//현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
 	//ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
-
-	SetBlendState(BS::DEFAULT);
-	SetRasterizerState(RS::CULLBACK);
-	SetDepthStencilState(DS::DEPTH_ON);
 
 	for (const auto& queueItem : GetQueue())
 	{
