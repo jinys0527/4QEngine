@@ -737,8 +737,8 @@ void EditorApplication::DrawHierarchy() {
 				{
 					objectJson["externalParentName"] = rootParentName;
 				}
-				const auto opacityIt = objectOpacity.find(current);
-				objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;
+				/*const auto opacityIt = objectOpacity.find(current);
+				objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;*/
 
 				clipboard["objects"].push_back(std::move(objectJson));
 
@@ -794,6 +794,9 @@ void EditorApplication::DrawHierarchy() {
 		};
 
 	std::vector<std::string> pendingDeletes;
+
+
+
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
 		ImGuiIO& io = ImGui::GetIO();

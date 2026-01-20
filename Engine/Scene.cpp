@@ -117,24 +117,12 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 		trans->DetachFromParent();
 	}
 
-	if (isOpaque)
-	{
-		auto it = m_OpaqueObjects.find(gameObject->m_Name);
-		if (it != m_OpaqueObjects.end())
-		{
-			
-			gameObject->SetScene(nullptr);
-			m_OpaqueObjects.erase(gameObject->m_Name);
-		}
-	}
-	else
-
+	auto it = m_GameObjects.find(gameObject->m_Name);
+	if (it != m_GameObjects.end())
 	{
 		if (auto* trans = gameObject->GetComponent<TransformComponent>())
 		{
-			gameObject->SetScene(nullptr);
-			m_TransparentObjects.erase(gameObject->m_Name);
-
+			trans->DetachFromParent();
 		}
 		gameObject->SetScene(nullptr);
 		m_GameObjects.erase(gameObject->m_Name);
