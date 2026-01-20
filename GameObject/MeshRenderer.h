@@ -33,7 +33,7 @@ public:
 
 
 	void  SetRenderLayer(const UINT8& layer);
-	const UINT8& GetRenderLayer () const             { return m_RenderLayer;  }
+	const UINT8& GetRenderLayer() const;
 
 	void		SetVisible(bool visible) { m_Visible = visible; }
 	const bool& GetVisible() const		 { return m_Visible;    }

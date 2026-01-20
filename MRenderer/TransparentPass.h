@@ -20,13 +20,12 @@ class TransparentPass : public RenderPass
 {
 public:
     TransparentPass(RenderContext& context, AssetLoader& assetloader) : RenderPass(context, assetloader) {}
-    std::string_view GetName() const override { return "Opaque"; }
+    std::string_view GetName() const override { return "Transparent"; }
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:
     bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
-        return false;
-        //return layer == RenderData::TransparentItems;
+        return layer == RenderData::TransparentItems;
     }
 };

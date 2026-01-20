@@ -756,9 +756,11 @@ void AppendFrameDataFromObjects(
 				{
 					if (!renderer) continue;
 
+					const auto renderLayer = static_cast<RenderData::RenderLayer>(renderer->GetRenderLayer());
+
 					RenderData::RenderItem baseItem{};
 					const MeshComponent* meshComponent = nullptr;
-					if (!BuildSkeletalBaseItem(*gameObject, *renderer, gameObject->GetLayer(), frameData, baseItem, meshComponent))
+					if (!BuildSkeletalBaseItem(*gameObject, *renderer, renderLayer, frameData, baseItem, meshComponent))
 						continue;
 
 					const auto* meshData = assetLoader.GetMeshes().Get(baseItem.mesh);
@@ -768,7 +770,7 @@ void AppendFrameDataFromObjects(
 					EmitSubMeshes(*meshData, baseItem, overrides, assetLoader,
 						[&](RenderData::RenderItem&& item)
 						{
-							frameData.renderItems[gameObject->GetLayer()].push_back(std::move(item));
+							frameData.renderItems[renderLayer].push_back(std::move(item));
 						});
 				}
 
@@ -784,9 +786,11 @@ void AppendFrameDataFromObjects(
 			{
 				if (!renderer) continue;
 
+				const auto renderLayer = static_cast<RenderData::RenderLayer>(renderer->GetRenderLayer());
+
 				RenderData::RenderItem baseItem{};
 				const MeshComponent* meshComponent = nullptr;
-				if (!BuildStaticBaseItem(*gameObject, *renderer, gameObject->GetLayer(), baseItem, meshComponent))
+				if (!BuildStaticBaseItem(*gameObject, *renderer, renderLayer, baseItem, meshComponent))
 					continue;
 
 				auto* meshData = assetLoader.GetMeshes().Get(baseItem.mesh);
@@ -796,7 +800,7 @@ void AppendFrameDataFromObjects(
 				EmitSubMeshes(*meshData, baseItem, overrides, assetLoader,
 					[&](RenderData::RenderItem&& item)
 					{
-						frameData.renderItems[gameObject->GetLayer()].push_back(std::move(item));
+						frameData.renderItems[renderLayer].push_back(std::move(item));
 					});
 			}
 		}

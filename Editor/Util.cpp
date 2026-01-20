@@ -1138,7 +1138,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			int current = static_cast<int>(value);
 			if (ImGui::Combo(property.GetName().c_str(), &current, kLayers, IM_ARRAYSIZE(kLayers)))
 			{
-				const UINT8 updated = static_cast<UINT8>(std::clamp(current, 0, 2));
+				const UINT8 updated = static_cast<UINT8>(std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kLayers) - 1)));
 				property.SetValue(component, &updated);
 				result.updated = true;
 			}

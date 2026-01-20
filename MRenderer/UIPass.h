@@ -20,7 +20,7 @@ class UIPass : public RenderPass
 {
 public:
     UIPass(RenderContext& context, AssetLoader& assetloader) : RenderPass(context, assetloader) {}
-    std::string_view GetName() const override { return "Opaque"; }
+    std::string_view GetName() const override { return "UI"; }
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:

@@ -401,7 +401,7 @@ void AnimationComponent::RefreshDerivedAfterClipChanged()
 	{
 		BuildBindPosePalette(*skel, m_SkinningPalette);
 		skeletal->LoadSetSkinningPalette(m_SkinningPalette);
-		AppendSkinningPaletteDebug(GetOwner(), *skel, nullptr, "bind_pose_fallback");
+		//AppendSkinningPaletteDebug(GetOwner(), *skel, nullptr, "bind_pose_fallback");
 		return;
 	}
 
