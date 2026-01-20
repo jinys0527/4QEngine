@@ -17,6 +17,7 @@ class Component
 public:
 	Component() = default;
 	virtual ~Component() = default;
+	virtual void Start() {}
 	virtual void Update(float deltaTime) = 0;
 	virtual void OnEvent(EventType type, const void* data) abstract;
 	virtual const char* GetTypeName() const = 0;
@@ -33,8 +34,9 @@ public:
 		}
 	}
 
-	virtual void Serialize(nlohmann::json& j) const = 0;
-	virtual void Deserialize(const nlohmann::json& j) = 0;
+	// Property 순회로 변경
+	virtual void Serialize(nlohmann::json& j) const;
+	virtual void Deserialize(const nlohmann::json& j);
 
 	using HandlerType = std::function<void(void*)>;
 	void RegisterMessageHandler(myCore::MessageID msg, HandlerType handler)

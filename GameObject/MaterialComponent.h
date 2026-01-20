@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Component.h"
 #include "RenderData.h"
+#include "ResourceRefs.h"
+#include "AssetLoader.h"
 
 class MaterialComponent : public Component
 {
@@ -13,17 +15,27 @@ public:
 	MaterialComponent() = default;
 	virtual ~MaterialComponent() = default;
 
-	void SetMaterialHandle(MaterialHandle handle) { m_MaterialHandle = handle; }
-	MaterialHandle GetMaterialHandle() const      { return m_MaterialHandle;   }
+	void SetMaterialHandle(const MaterialHandle& handle)
+	{ 
+		m_MaterialHandle = handle;
+		// 파생값 갱신 (읽기전용 표시용)
+		MaterialRef ref{};
+		if (auto* loader = AssetLoader::GetActive())
+			loader->GetMaterialAssetReference(handle, ref.assetPath, ref.assetIndex);
 
-	void SetMaterialAssetReference(const std::string& assetPath, UINT32 materialIndex)
-	{
-		m_MaterialAssetPath = assetPath;
-		m_MaterialAssetIndex = materialIndex;
+		LoadSetMaterial(ref); // 또는 내부 갱신 함수
+
+		RefreshDerivedAfterMaterialChanged(); // 여기서 텍스처 포함 파생 갱신
 	}
 
-	const std::string& GetMaterialAssetPath() const { return m_MaterialAssetPath; }
-	UINT32 GetMaterialAssetIndex() const { return m_MaterialAssetIndex; }
+	const MaterialHandle& GetMaterialHandle() const						  { return m_MaterialHandle;   }
+
+	void LoadSetMaterial(const MaterialRef& materialRef)
+	{
+		m_Material = materialRef;
+	}
+
+	const MaterialRef& GetMaterial () const { return m_Material;  }
 
 
 	void SetOverrides(const RenderData::MaterialData& overrides);
@@ -34,15 +46,13 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize(nlohmann::json& j) const override;
-	void Deserialize(const nlohmann::json& j) override;
-
 protected:
-	MaterialHandle m_MaterialHandle;
-	std::string m_MaterialAssetPath;
-	UINT32 m_MaterialAssetIndex = 0;
+	void RefreshDerivedAfterMaterialChanged();
+
+	MaterialHandle			 m_MaterialHandle;
+	MaterialRef				 m_Material;
 	RenderData::MaterialData m_Overrides;
-	bool m_UseOverrides = false;
+	bool					 m_UseOverrides = false;
 };
 
 

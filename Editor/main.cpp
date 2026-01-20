@@ -2,12 +2,14 @@
 #include "pch.h"
 #include "EditorApplication.h"
 #include "SceneManager.h"
+#include "Renderer.h"
+#include "Engine.h"
+#include "EventDispatcher.h"
+#include "InputManager.h"
+#include "AssetLoader.h"
 #include "SoundManager.h"
 #include "UIManager.h"
-#include "Engine.h"
-#include "AssetLoader.h"
-#include "Renderer.h"
-#include "Importer.h"
+#include "ServiceRegistry.h"
 
 
 //namespace
@@ -23,18 +25,23 @@ int main()
 	if (FAILED(hr)) {
 		return -1;
 	}
-	Engine engine;
-	SoundManager soundManager;
-	UIManager uiManager(engine.GetEventDispatcher());
-	SceneManager sceneManager(engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, uiManager);
-	AssetLoader assetLoader;
+
+	ServiceRegistry services;
+
+	auto& inputManager = services.Register<InputManager>();
+	auto& assetLoader = services.Register<AssetLoader>();
+	auto& soundManager = services.Register<SoundManager>();
+	auto& uiManager = services.Register<UIManager>();
+
 	Renderer renderer(assetLoader);
+	Engine engine(services, renderer);
+	SceneManager sceneManager(services);
+
 	 //<<-- FrameData 강제 필요 but imgui 는 필요 없음
 	//Editor는 시작시 사용하는 모든 fbx load
-	//ImportFBX("../Dying.fbx", "../test");
-	//ImportFBX("../Unarmed Walk Forward.fbx", "../test");
+	
 
-	EditorApplication app(engine,renderer, sceneManager, soundManager);
+	EditorApplication app(services, engine, renderer, sceneManager);
 	if (!app.Initialize())
 	{
 		CoUninitialize();
@@ -47,8 +54,6 @@ int main()
 	app.Finalize();
 	//
 
-
-	//uiManager.Reset();
 	sceneManager.Reset();
 	engine.Reset();
 

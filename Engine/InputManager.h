@@ -1,18 +1,20 @@
 ﻿#pragma once
 #include <unordered_set>
 #include <windows.h>
-#include "EventDispatcher.h"
 #include "Event.h"
 
 inline int GetXFromLParam(LPARAM lp) { return (int)(short)(LOWORD(lp)); }
 inline int GetYFromLParam(LPARAM lp) { return (int)(short)(HIWORD(lp)); }
 
+class EventDispatcher;
 
 class InputManager
 {
 public:
-	InputManager(EventDispatcher& dispatcher);
+	InputManager() = default;
 	~InputManager() = default;
+
+	void SetEventDispatcher(EventDispatcher* eventDispatcher);
 	void Update         ();
 	void OnKeyDown      (char key);
 	void OnKeyUp        (char key);
@@ -27,6 +29,6 @@ private:
 	Events::MouseState       m_Mouse;
 	Events::MouseState       m_MousePrev;
 
-	EventDispatcher&         m_EventDispatcher;				// 참조 보관
+	EventDispatcher*       m_EventDispatcher;				// 참조 보관
 };
 

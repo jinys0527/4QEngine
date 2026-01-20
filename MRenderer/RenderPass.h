@@ -6,6 +6,7 @@
 #include "RenderData.h"
 #include "DX11.h"
 #include "Buffers.h"
+#include "MathHelper.h"
 
 // 렌더 패스의 공통 인터페이스
 // 새로운 렌더 패스를 작성을 위한 부모 클래스
@@ -22,14 +23,40 @@ public:
 	virtual void Setup(const RenderData::FrameData& frame);
 	virtual void Execute(const RenderData::FrameData& frame) = 0;		//여기서 Draw까지 호출
 
+	void SetBlendState(BS state);
+	void SetDepthStencilState(DS state);
+	void SetRasterizerState(RS state);
+	void SetSamplerState();
+	void SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview);
+
+	virtual void SetBaseCB(const RenderData::RenderItem& item);
+	virtual void SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3& campos);
+	virtual void SetCameraCB(const RenderData::FrameData& frame);
+	virtual void SetDirLight(const RenderData::FrameData& frame);
+	virtual void SetVertex(const RenderData::RenderItem& item);
+	virtual void DrawMesh(
+		ID3D11Buffer* vb,
+		ID3D11Buffer* ib,
+		ID3D11VertexShader* vs,
+		ID3D11PixelShader* ps,
+		BOOL useSubMesh,
+		UINT indexCount,
+		UINT indexStart
+	);
 protected:
-	virtual bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const;
-	const std::vector<size_t>& GetQueue() const { return m_Queue; }
+	struct RenderQueueItem
+	{
+		RenderData::RenderLayer layer = RenderData::Layer_MAX_;
+		const RenderData::RenderItem* item = nullptr;
+	};
+
+	virtual bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const;
+	const std::vector<RenderQueueItem>& GetQueue() const { return m_Queue; }
 
 private:
 	void BuildQueue(const RenderData::FrameData& frame);
 
-	std::vector<size_t> m_Queue;
+	std::vector<RenderQueueItem> m_Queue;
 	bool m_Enabled = true;
 
 protected:

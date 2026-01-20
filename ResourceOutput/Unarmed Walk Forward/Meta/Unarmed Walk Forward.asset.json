@@ -1,0 +1,27 @@
+{
+  "animations": [
+    {
+      "file": "Anims/Unarmed Walk Forward_mixamo.com_0.anim.json",
+      "name": "mixamo.com_0"
+    }
+  ],
+  "files": {
+    "materials": "Mats/Unarmed Walk Forward.matbin",
+    "skeleton": "Skels/Unarmed Walk Forward.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/Unarmed Walk Forward.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "Unarmed Walk Forward",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  },
+  "skeletonMeta": {
+    "lowerBodyBones": [],
+    "upperBodyBones": []
+  }
+}

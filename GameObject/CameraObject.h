@@ -5,12 +5,13 @@
 class CameraObject : public GameObject
 {
 public:
+
 	CameraObject(EventDispatcher eventDispatcher, float width, float height);
 	virtual ~CameraObject() = default;
 
 	XMFLOAT4X4 GetViewMatrix();
 	XMFLOAT4X4 GetProjMatrix();
-	CameraComponent::Viewport   GetViewportSize() const;
+	Viewport   GetViewportSize() const;
 	const XMFLOAT3& GetEye () const { return m_CameraComp->GetEye();  }
 	const XMFLOAT3& GetLook() const { return m_CameraComp->GetLook(); }
 	const XMFLOAT3& GetUp  () const { return m_CameraComp->GetUp();   }

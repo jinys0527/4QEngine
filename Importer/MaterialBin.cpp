@@ -152,11 +152,15 @@ static std::string GetTexPath(
 		const std::string extension = EmbeddedTextureExtension(texture);
 		if (!EmbeddedTextureHasType(embeddedUsage, index, type))
 		{
-			return "Textures/embedded_" + std::to_string(index) + "_texture." + extension;
+			return "embedded_" + std::to_string(index) + "_texture." + extension;
 		}
 
-		const std::string suffix = TextureTypeSuffix(type);
-		return "Textures/embedded_" + std::to_string(index) + "_" + suffix + "." + extension;
+		std::string suffix = TextureTypeSuffix(type);
+		if (!suffix.empty())
+		{
+			suffix[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(suffix[0])));
+		}
+		return "embedded_" + std::to_string(index) + "_" + suffix + "." + extension;
 	}
 
 	return ResolveExternalTexturePath(externalTextureRemap, rawPath);

@@ -18,7 +18,7 @@ public:
 	static constexpr const char* StaticTypeName = "TransformComponent";
 	const char* GetTypeName() const override;
 
-	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 0), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
+	TransformComponent() : Component(), m_Position(0, 0, 0), m_Rotation(0, 0, 0, 1), m_Scale(1, 1, 1), m_IsDirty(false), m_Parent(nullptr)
 	{
 		m_LocalMatrix = Identity();
 		m_WorldMatrix = Identity();
@@ -36,15 +36,25 @@ public:
 	void SetParent(TransformComponent* newParent);
 	void DetachFromParent();
 
+	void SetParentKeepLocal(TransformComponent* newParent);
+	void DetachFromParentKeepLocal();
+
+	void SetParentKeepWorld(TransformComponent* newParent);
+	void DetachFromParentKeepWorld();
+	
+	
+
 	void AddChild(TransformComponent* child);
 	void RemoveChild(TransformComponent* child);
 
 	void SetPosition(const XMFLOAT3& pos) { m_Position = pos; SetDirty(); }
 	void SetRotation(const XMFLOAT4& rot) { m_Rotation = rot; SetDirty(); }
+	void SetRotationEuler(const XMFLOAT3& rot); //
 	void SetScale(const XMFLOAT3& scale) { m_Scale = scale; SetDirty(); }
 	
 	const XMFLOAT3& GetPosition() const { return m_Position; }
 	const XMFLOAT4& GetRotation() const { return m_Rotation; }
+	// const XMFLOAT3& GetRotationEuler() const { return } 필요할때 구현
 	const XMFLOAT3& GetScale() const { return m_Scale; }
 
 	void Translate(const XMFLOAT3& delta);
@@ -66,7 +76,7 @@ public:
 	void Update (float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void Serialize  (nlohmann::json& j) const override;
+	//void Serialize  (nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
 	std::vector<TransformComponent*>& GetChildrens()
@@ -87,7 +97,7 @@ private:
 
 private:
 	XMFLOAT3 m_Position = { 0.0f, 0.0f, 0.0f };
-	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 0.0f };
+	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 1.0f }; //quaternion
 	XMFLOAT3 m_Scale    = { 1.0f, 1.0f, 1.0f };
 
 	XMFLOAT3 m_Pivot    = { 0.0f, 0.0f, 0.0f };
@@ -97,7 +107,6 @@ private:
 
 	XMFLOAT4X4 m_LocalMatrix;
 	XMFLOAT4X4 m_WorldMatrix;
-
 	bool m_IsDirty = true;
 
 };

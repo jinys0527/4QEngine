@@ -7,6 +7,11 @@
 #include "GameManager.h"
 #include "Importer.h"
 #include "AssetLoader.h"
+#include "EventDispatcher.h"
+#include "Device.h"
+#include "InputManager.h"
+#include "Renderer.h"
+#include "ServiceRegistry.h"
 
 namespace
 {
@@ -23,41 +28,26 @@ int main()
 	if (FAILED(hr))
 		return -1;
 
-    Engine engine;
-    SoundManager soundManager/*engine.GetSoundAssetManager()*/;
-    GameManager gameManager(engine.GetEventDispatcher());
-    UIManager uiManager(engine.GetEventDispatcher());
-	SceneManager sceneManager(/*engine.GetRenderer(),*/ engine.GetEventDispatcher(), /*engine.GetAssetManager(), engine.GetSoundAssetManager(), */soundManager, gameManager, uiManager);
-    ImportFBX("../Dying.fbx", "../test");
-    ImportFBX("../Unarmed Walk Forward.fbx", "../test");
-	ImportFBX("../all.fbx", "../test");
-	ImportFBX("../cycle.fbx", "../test");
-    ImportFBX("../hiroshi.fbx", "../test");
-    ImportFBX("../shinchan.fbx", "../test");
+    ServiceRegistry services;
 
-#ifdef _EDITOR
-    Editor editor(sceneManager);
+	auto& inputManager = services.Register<InputManager>();
+	auto& assetLoader = services.Register<AssetLoader>();
+	auto& soundManager = services.Register<SoundManager>();
+	auto& uiManager = services.Register<UIManager>();
+    auto& gameManager = services.Register<GameManager>();
 
-    g_pMainApp = new GameApplication(engine, sceneManager, soundManager, editor);
-#else
-    g_pMainApp = new GameApplication(engine, sceneManager, soundManager);
-#endif
- 	
+	Renderer renderer(assetLoader);
+	Engine engine(services, renderer);
+	SceneManager sceneManager(services);
+
+    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager);
  
  	if (!g_pMainApp->Initialize())
  	{
  		std::cerr << "Failed to initialize sample code." << std::endl;
  		return -1;
  	}
-    AssetLoader loader;
-
-    AssetLoader::AssetLoadResult result = loader.LoadAsset("../test/Dying/Meta/Dying.asset.json");
-    loader.LoadAsset("../test/Unarmed Walk Forward/Meta/Unarmed Walk Forward.asset.json");
-    loader.LoadAsset("../test/all/Meta/all.asset.json");
-    loader.LoadAsset("../test/cycle/Meta/cycle.asset.json");
-    loader.LoadAsset("../test/hiroshi/Meta/hiroshi.asset.json");
-    loader.LoadAsset("../test/shinchan/Meta/shinchan.asset.json");
-
+   
     // 2) 메쉬/머티리얼 핸들 꺼내기
     //if (!result.meshes.empty())
     //{
@@ -132,8 +122,6 @@ int main()
  
  	delete g_pMainApp;
     
-    gameManager.Reset();
-    uiManager.Reset();
     sceneManager.Reset();
     engine.Reset();
 

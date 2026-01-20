@@ -23,7 +23,9 @@ public:
 	UINT GetHeight() const { return m_Height; }
 
 	ID3D11ShaderResourceView* GetShaderResourceView() const { return m_ShaderResourceView.Get(); }
+	void SetShaderResourceView(ID3D11ShaderResourceView* view) { m_ShaderResourceView = view; }
 
+	void SetDevice(ID3D11Device* device, ID3D11DeviceContext* dxdc) { m_pDevice = device; m_pDXDC = dxdc; }
 private:
 	UINT m_Width = 0;
 	UINT m_Height = 0;
@@ -35,4 +37,7 @@ private:
 	ComPtr<ID3D11ShaderResourceView> m_ShaderResourceView;
 	ComPtr<ID3D11Texture2D> m_DepthTexture;
 	ComPtr<ID3D11DepthStencilView> m_DepthStencilView;
+
+	ComPtr<ID3D11Device>		m_pDevice;
+	ComPtr<ID3D11DeviceContext> m_pDXDC;
 };

@@ -1,29 +1,52 @@
 ﻿#include "pch.h"
 #include "SceneManager.h"
+#include "ServiceRegistry.h"
+#include "GameManager.h"
+#include "UIManager.h"
+#include "DefaultScene.h"
 
 void SceneManager::Initialize()
 {
-	m_SoundManager.Init();
-
 	/*m_UIManager.Start();
 	m_UIManager.SetCurrentScene("TitleScene");*/
-
+	m_UIManager = &m_Services.Get<UIManager>();
+	m_GameManager = &m_Services.Get<GameManager>();
 }
 
 void SceneManager::Update(float deltaTime)
 {
 	if (!m_CurrentScene)
 		return;
+	if (m_CurrentScene->GetIsPause())
+		deltaTime = 0.0f;
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
+
 	if (totalTime >= 0.016f)
 		m_CurrentScene->FixedUpdate();
+
 	m_CurrentScene->Update(deltaTime);
+}
+
+void SceneManager::StateUpdate(float deltaTime)
+{
+	if (!m_CurrentScene)
+		return;
+
+	m_CurrentScene->StateUpdate(deltaTime);
 }
 
 void SceneManager::Render()
 {
+	if (!m_CurrentScene)
+	{
+		return;
+	}
+
+	RenderData::FrameData frameData{};
+	m_CurrentScene->Render(frameData);
+	//m_Renderer.Draw(frameData);
 	/*std::vector<RenderInfo> renderInfo;
 	std::vector<UIRenderInfo> uiRenderInfo;
 	std::vector<UITextInfo> uiTextInfo;
@@ -35,7 +58,7 @@ std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shar
 {
 	m_Scenes[name] = scene;
 
-	m_Scenes[name]->SetGameManager(&m_GameManager);
+	m_Scenes[name]->SetGameManager(&m_Services.Get<GameManager>());
 
 	return m_Scenes[name];
 }
@@ -46,7 +69,7 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	if (it != m_Scenes.end())
 	{
 		m_CurrentScene = it->second;
-
+		
 		//m_Camera = m_CurrentScene->GetMainCamera();
 		//m_Renderer.SetCamera(m_Camera);
 	}
@@ -68,7 +91,7 @@ void SceneManager::ChangeScene(const std::string& name)
 		m_CurrentScene->Enter();
 		//m_Camera = m_CurrentScene->GetMainCamera();
 		//m_Renderer.SetCamera(m_Camera);
-		m_UIManager.SetCurrentScene(name);
+		m_UIManager->SetCurrentScene(name);
 	}
 }
 

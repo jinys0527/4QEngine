@@ -1,0 +1,5 @@
+{
+    "name": "Demo",
+    "ps": "../../../MRenderer/fx/Demo_PS.hlsl",
+    "vs": "../../../MRenderer/fx/Demo_VS.hlsl"
+}

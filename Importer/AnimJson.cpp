@@ -66,6 +66,46 @@ static json ClipToJson(const AnimationClip& clip)
 	};
 }
 
+
+#ifdef _DEBUG
+static void WriteAnimationDebug(
+	const std::string& outPath,
+	const AnimationClip& clip,
+	const std::vector<std::string>& missingBones,
+	uint32_t skippedEmptyTracks)
+{
+	std::ofstream ofs(outPath + ".debug.txt");
+	if (!ofs)
+		return;
+
+	size_t totalKeys = 0;
+	for (const auto& track : clip.tracks)
+		totalKeys += track.keyFrames.size();
+
+	ofs << "name=" << clip.name << "\n";
+	ofs << "duration=" << clip.duration << "\n";
+	ofs << "ticksPerSecond=" << clip.ticksPerSecond << "\n";
+	ofs << "tracks=" << clip.tracks.size() << "\n";
+	ofs << "totalKeys=" << totalKeys << "\n";
+	ofs << "skippedEmptyTracks=" << skippedEmptyTracks << "\n";
+
+	for (size_t i = 0; i < clip.tracks.size(); ++i)
+	{
+		const auto& track = clip.tracks[i];
+		ofs << "track[" << i << "] boneIndex=" << track.boneIndex
+			<< " keys=" << track.keyFrames.size() << "\n";
+	}
+
+	if (!missingBones.empty())
+	{
+		ofs << "missingBones=" << missingBones.size() << "\n";
+		for (const auto& name : missingBones)
+			ofs << "  " << name << "\n";
+	}
+}
+#endif
+
+
 bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const std::string& baseName, const std::unordered_map<std::string, uint32_t>& boneNameToIndex, std::vector<std::string>& outAnimFiles)
 {
 	outAnimFiles.clear();
@@ -88,6 +128,9 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 
 		clip.tracks.reserve(anim->mNumChannels);
 
+		uint32_t skippedEmptyTracks = 0;
+		std::unordered_set<std::string> missingBoneNames;
+
 		for (uint32_t c = 0; c < anim->mNumChannels; ++c)
 		{
 			const aiNodeAnim* nodeAnim = anim->mChannels[c];
@@ -96,7 +139,10 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 			const std::string nodeName = nodeAnim->mNodeName.C_Str();
 			auto it = boneNameToIndex.find(nodeName);
 			if (it == boneNameToIndex.end())
+			{
+				missingBoneNames.insert(nodeName);
 				continue;	// 스켈레톤에 없으면 스킵
+			}
 
 			AnimationTrack track{};
 			track.boneIndex = static_cast<int32_t>(it->second);
@@ -104,7 +150,10 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 			std::vector<double> timesTick;
 			CollectUnionTimesTicks(nodeAnim, timesTick);
 			if (timesTick.empty())
+			{
+				++skippedEmptyTracks;
 				continue;
+			}
 
 
 			track.keyFrames.reserve(timesTick.size());
@@ -137,6 +186,12 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 		std::ofstream ofs(outPath);
 		if (!ofs) return false;
 		ofs << j.dump(2);
+
+#ifdef _DEBUG
+		//std::vector<std::string> missingBones(missingBoneNames.begin(), missingBoneNames.end());
+		//std::sort(missingBones.begin(), missingBones.end());
+		//WriteAnimationDebug(outPath, clip, missingBones, skippedEmptyTracks);
+#endif
 
 		outAnimFiles.push_back(fileName);
 	}

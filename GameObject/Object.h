@@ -6,7 +6,9 @@
 #include <vector>
 #include "CoreTypes.h"
 #include "Component.h"
-//#include "RenderData.h"
+#include "RenderData.h"
+
+class Scene;
 
 class Object
 {
@@ -21,11 +23,16 @@ public:
 	{
 		static_assert(std::is_constructible_v<T, Args...>, "Invalid constructor arguments for T.");
 
+		if (!CanAddComponent(typeid(T)))
+			return nullptr;
+
 		auto comp = std::make_unique<T>(std::forward<Args>(args)...);
 		comp->SetOwner(this);  // 필요한 경우
+
 		T* ptr = comp.get();
 
 		m_Components[T::StaticTypeName].emplace_back(std::move(comp));
+		
 		return ptr;
 	}
 
@@ -62,6 +69,26 @@ public:
 	}
 
 	template<typename T>
+	std::vector<T*> GetComponentsDerived() const
+	{
+		std::vector<T*> result;
+
+		for (const auto& [typeName, components] : m_Components)
+		{
+			for (const auto& comp : components)
+			{
+				if (auto ptr = dynamic_cast<T*>(comp.get()))
+				{
+					result.push_back(ptr);
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	template<typename T>
 	void RemoveComponent(T* Component)
 	{
 		auto it = m_Components.find(T::StaticTypeName);
@@ -74,8 +101,21 @@ public:
 			m_Components.erase(it);
 	}
 
+	bool CanAddComponent(const std::type_info& type) const;
+	
+	template<typename T>
+	bool HasComponent() const
+	{
+		return GetComponent<T>() != nullptr;
+	}
+
 	std::vector<std::string> GetComponentTypeNames() const;
 
+	Component* GetComponentByTypeName(const std::string& typeName, int index = 0) const;
+	std::vector<Component*> GetComponentsByTypeName(const std::string& typeName) const;
+	bool RemoveComponentByTypeName(const std::string& typeName, int index = 0); // 삭제
+
+	virtual void Start();
 	virtual void Update(float deltaTime);
 
 	virtual void FixedUpdate();
@@ -90,15 +130,23 @@ public:
 		return m_Name;
 	}
 
+	void SetScene(Scene* scene) { m_Scene = scene; }
+	Scene* GetScene() const		{ return m_Scene;  }
+
 	void SendMessages(const myCore::MessageID msg, void* data = nullptr);
 
 	void SendEvent(const std::string& evt);
 
 	EventDispatcher& GetEventDispatcher() const { return m_EventDispatcher; }
 
+	void SetLayer(RenderData::RenderLayer layer) { m_Layer = layer; }
+	RenderData::RenderLayer GetLayer() const { return m_Layer; }
+
 protected:
 	std::string m_Name;
 	std::unordered_map<std::string, std::vector<std::unique_ptr<Component>>> m_Components;
 	EventDispatcher& m_EventDispatcher;
+	Scene*		m_Scene;
+	RenderData::RenderLayer m_Layer = RenderData::RenderLayer::None;
 };
 
