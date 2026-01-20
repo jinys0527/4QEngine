@@ -158,6 +158,27 @@
                 },
                 {
                     "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 0,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Visible": true
+                    },
+                    "type": "SkeletalMeshRenderer"
+                },
+                {
+                    "data": {
                         "BlendConfig": {
                             "blendTime": 0.20000000298023224,
                             "blendType": 0,
@@ -177,27 +198,6 @@
                         }
                     },
                     "type": "AnimationComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 0,
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Visible": true
-                    },
-                    "type": "SkeletalMeshRenderer"
                 },
                 {
                     "data": {
@@ -312,27 +312,6 @@
                 },
                 {
                     "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
-                        },
-                        "Visible": true
-                    },
-                    "type": "SkeletalMeshRenderer"
-                },
-                {
-                    "data": {
                         "BlendConfig": {
                             "blendTime": 0.20000000298023224,
                             "blendType": 0,
@@ -352,6 +331,27 @@
                         }
                     },
                     "type": "AnimationComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Unarmed Walk Forward\\Meta\\Unarmed Walk Forward.asset.json"
+                        },
+                        "Visible": true
+                    },
+                    "type": "SkeletalMeshRenderer"
                 },
                 {
                     "data": {

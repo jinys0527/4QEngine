@@ -145,6 +145,7 @@
     <ClCompile Include="ShadowPass.cpp" />
     <ClCompile Include="TransparentPass.cpp" />
     <ClCompile Include="UIPass.cpp" />
+    <ClCompile Include="WallPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BlurPass.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="TransparentPass.h" />
     <ClInclude Include="UIPass.h" />
+    <ClInclude Include="WallPass.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\Animation.hlsl">

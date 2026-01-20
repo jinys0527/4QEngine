@@ -1,12 +1,12 @@
-﻿#include "TransparentPass.h"
+﻿#include "WallPass.h"
 
-void TransparentPass::Execute(const RenderData::FrameData& frame)
+void WallPass::Execute(const RenderData::FrameData & frame)
 {
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
     //SetRenderTarget()		Opaque단계에서 처리
     //SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());        Opaque단계에서 처리
-    SetBlendState(BS::ALPHABLEND);
+    SetBlendState(BS::ALPHABLEND_WALL);
     SetRasterizerState(RS::CULLBACK);
     SetDepthStencilState(DS::DEPTH_ON);
     SetSamplerState();
@@ -14,9 +14,7 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
 #pragma endregion
 
     SetCameraCB(frame);
-
     SetDirLight(frame);
-
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
@@ -61,23 +59,22 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                     {
                         const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
                         if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+                        {
+                            vertexShader = shaderIt->second.vertexShader.Get();
+                        }
+                    }
 
-								if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
-								{
-									vertexShader = shaderIt->second.vertexShader.Get();
-								}
-							}
+                    if (pixelShaders && shaderAsset->pixelShader.IsValid())
+                    {
+                        const auto shaderIt = pixelShaders->find(shaderAsset->pixelShader);
+                        if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+                        {
+                            pixelShader = shaderIt->second.pixelShader.Get();
+                        }
+                    }
+                }
+            }
 
-							if (pixelShaders && shaderAsset->pixelShader.IsValid())
-							{
-								const auto shaderIt = pixelShaders->find(shaderAsset->pixelShader);
-								if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
-								{
-									pixelShader = shaderIt->second.pixelShader.Get();
-								}
-							}
-						}
-					}
             if (vertexShaders && mat->vertexShader.IsValid())
             {
                 const auto shaderIt = vertexShaders->find(mat->vertexShader);
@@ -110,7 +107,6 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                 m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
             }
         }
-
 
         if (vertexBuffers && indexBuffers && indexcounts && item.mesh.IsValid())
         {
