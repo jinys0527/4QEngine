@@ -85,6 +85,18 @@
     <ClCompile Include="RectLightComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UIButtonComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIProgressBarComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UISliderComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UITextComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -182,6 +194,18 @@
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RectLightComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIButtonComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIProgressBarComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UISliderComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UITextComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

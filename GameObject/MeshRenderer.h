@@ -32,7 +32,7 @@ public:
 	const MaterialRef& GetMaterial() const { return m_Material; }
 
 
-	void  SetRenderLayer (const UINT8& layer)        { m_RenderLayer = layer; }
+	void  SetRenderLayer(const UINT8& layer);
 	const UINT8& GetRenderLayer () const             { return m_RenderLayer;  }
 
 	void		SetVisible(bool visible) { m_Visible = visible; }

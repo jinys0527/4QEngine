@@ -24,9 +24,8 @@
 #define DRAG_SPEED 0.01f
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
 {
-	const auto& opaqueObjects = scene.GetOpaqueObjects();
-	const auto& transparentObjects = scene.GetTransparentObjects();
-	return opaqueObjects.find(name) != opaqueObjects.end() || transparentObjects.find(name) != transparentObjects.end();
+	const auto& gameObjects = scene.GetGameObjects();
+	return gameObjects.find(name) != gameObjects.end();
 }
 
 // 이름 변경용 helper 
@@ -1135,7 +1134,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		property.GetValue(component, &value);
 		if (property.GetName() == "RenderLayer")
 		{
-			static constexpr const char* kLayers[] = { "Opaque", "Transparent", "UI" };
+			static constexpr const char* kLayers[] = { "None", "Opaque", "Transparent", "Wall", "UI" };
 			int current = static_cast<int>(value);
 			if (ImGui::Combo(property.GetName().c_str(), &current, kLayers, IM_ARRAYSIZE(kLayers)))
 			{

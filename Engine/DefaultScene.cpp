@@ -13,14 +13,14 @@ void DefaultScene::Initialize()
 
 	gamecamera->SetName("Main Camera");
 	SetGameCamera(gamecamera); // Main Camera
-	AddGameObject(gamecamera, true);
+	AddGameObject(gamecamera);
 	
 
 	//editorCam
 	auto editorCamera = std::make_shared<CameraObject>(GetEventDispatcher(), 1280.0f, 720.0f);
 	editorCamera->SetName("Editor Camera");
 	SetEditorCamera(editorCamera);
-	AddGameObject(editorCamera, true);
+	AddGameObject(editorCamera);
 	if (auto* editorCameraComponent = editorCamera->GetComponent<CameraComponent>())
 	{
 		editorCameraComponent->SetNearZ(0.1f);
@@ -43,7 +43,7 @@ void DefaultScene::Initialize()
 		light->SetIntensity(1.0f);
 		light->SetDirection({ 0.0f, -1.0f, 0.0f });
 	}
-	AddGameObject(lightObject,false); // Light는 TransparentObjects로 등록
+	AddGameObject(lightObject); // Light는 TransparentObjects로 등록
 }
 
 void DefaultScene::Finalize()
@@ -58,22 +58,13 @@ void DefaultScene::Leave()
 void DefaultScene::FixedUpdate()
 {
 
-	for (const auto& [name, gameObject] : m_OpaqueObjects)
+	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)
 		{
 			gameObject->FixedUpdate();
 		}
 	}
-
-	for (const auto& [name, gameObject] : m_TransparentObjects)
-	{
-		if (gameObject)
-		{
-			gameObject->FixedUpdate();
-		}
-	}
-
 }
 
 void DefaultScene::Update(float deltaTime)
@@ -83,22 +74,13 @@ void DefaultScene::Update(float deltaTime)
 	// 문제 생기는 경우
 	// Upcasting 하던가, GameObject 자체에 멤버로 투명 불투병 bool 갖고, 이거 따라서 분류해서 Render 주던가
 
-	for (const auto& [name, gameObject] : m_OpaqueObjects)
+	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)
 		{
 			gameObject->Update(deltaTime);
 		}
 	}
-
-	for (const auto& [name, gameObject] : m_TransparentObjects)
-	{
-		if (gameObject)
-		{
-			gameObject->Update(deltaTime);
-		}
-	}
-
 }
 
 void DefaultScene::StateUpdate(float deltaTime)

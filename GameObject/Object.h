@@ -6,7 +6,7 @@
 #include <vector>
 #include "CoreTypes.h"
 #include "Component.h"
-//#include "RenderData.h"
+#include "RenderData.h"
 
 class Scene;
 
@@ -139,10 +139,14 @@ public:
 
 	EventDispatcher& GetEventDispatcher() const { return m_EventDispatcher; }
 
+	void SetLayer(RenderData::RenderLayer layer) { m_Layer = layer; }
+	RenderData::RenderLayer GetLayer() const { return m_Layer; }
+
 protected:
 	std::string m_Name;
 	std::unordered_map<std::string, std::vector<std::unique_ptr<Component>>> m_Components;
 	EventDispatcher& m_EventDispatcher;
 	Scene*		m_Scene;
+	RenderData::RenderLayer m_Layer = RenderData::RenderLayer::None;
 };
 
