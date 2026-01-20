@@ -738,9 +738,6 @@ void EditorApplication::DrawHierarchy() {
 
 	auto copySelectedObjects = [&](const std::vector<std::shared_ptr<GameObject>>& objects)
 		{
-			{
-				return;
-			}
 
 			nlohmann::json clipboard = nlohmann::json::object();
 			clipboard["objects"] = nlohmann::json::array();
@@ -1079,6 +1076,118 @@ void EditorApplication::DrawHierarchy() {
 			}
 			return a->GetName() < b->GetName();
 		});
+
+	std::vector<std::string> hierarchyOrder;
+	hierarchyOrder.reserve(objectLookup.size());
+	auto collectHierarchyOrder = [&](auto&& self, GameObject* object) -> void
+		{
+			if (!object)
+			{
+				return;
+			}
+			hierarchyOrder.push_back(object->GetName());
+			auto* transform = object->GetComponent<TransformComponent>();
+			if (!transform)
+			{
+				return;
+			}
+			for (auto* childTransform : transform->GetChildrens())
+			{
+				if (!childTransform)
+				{
+					continue;
+				}
+				auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
+				if (!childOwner)
+				{
+					continue;
+				}
+				self(self, childOwner);
+			}
+		};
+
+	for (auto* root : rootObjects)
+	{
+		collectHierarchyOrder(collectHierarchyOrder, root);
+	}
+
+	std::unordered_map<std::string, size_t> hierarchyIndex;
+	hierarchyIndex.reserve(hierarchyOrder.size());
+	for (size_t i = 0; i < hierarchyOrder.size(); ++i)
+	{
+		hierarchyIndex[hierarchyOrder[i]] = i;
+	}
+
+	auto selectRange = [&](const std::string& startName, const std::string& endName)
+		{
+			const auto startIt = hierarchyIndex.find(startName);
+			const auto endIt = hierarchyIndex.find(endName);
+			if (startIt == hierarchyIndex.end() || endIt == hierarchyIndex.end())
+			{
+				setPrimarySelection(endName);
+				return;
+			}
+
+			const size_t startIndex = startIt->second;
+			const size_t endIndex = endIt->second;
+			const size_t rangeStart = std::min(startIndex, endIndex);
+			const size_t rangeEnd = (std::max)(startIndex, endIndex);
+
+			m_SelectedObjectNames.clear();
+			for (size_t i = rangeStart; i <= rangeEnd && i < hierarchyOrder.size(); ++i)
+			{
+				m_SelectedObjectNames.insert(hierarchyOrder[i]);
+			}
+			m_SelectedObjectName = endName;
+		};
+
+	auto handleSelectionClick = [&](const std::string& name, ImGuiIO& io)
+		{
+			if (io.KeyShift && !m_SelectedObjectName.empty())
+			{
+				selectRange(m_SelectedObjectName, name);
+			}
+			else if (io.KeyCtrl)
+			{
+				toggleSelection(name);
+			}
+			else if (m_SelectedObjectNames.size() > 1
+				&& m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end())
+			{
+				m_SelectedObjectName = name;
+			}
+			else
+			{
+				setPrimarySelection(name);
+			}
+		};
+
+	auto splitDragPayloadNames = [&](const char* payloadData) -> std::vector<std::string>
+		{
+			std::vector<std::string> names;
+			if (!payloadData)
+			{
+				return names;
+			}
+			std::string data(payloadData);
+			size_t start = 0;
+			while (start <= data.size())
+			{
+				const size_t end = data.find('\n', start);
+				const size_t length = (end == std::string::npos) ? data.size() - start : end - start;
+				if (length > 0)
+				{
+					names.emplace_back(data.substr(start, length));
+				}
+				if (end == std::string::npos)
+				{
+					break;
+				}
+				start = end + 1;
+			}
+			return names;
+		};
+
 	auto drawHierarchyNode = [&](auto&& self, GameObject* object) -> void
 		{
 			if (!object) { return; }
@@ -1102,14 +1211,7 @@ void EditorApplication::DrawHierarchy() {
 				ImGui::TreeNodeEx(name.c_str(), flags);
 				if (ImGui::IsItemClicked())
 				{
-					if (io.KeyCtrl)
-					{
-						toggleSelection(name);
-					}
-					else
-					{
-						setPrimarySelection(name);
-					}
+					handleSelectionClick(name, io);
 				}
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
@@ -1177,13 +1279,45 @@ void EditorApplication::DrawHierarchy() {
 
 				if (ImGui::BeginDragDropSource())
 				{
-					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					std::string payloadNames;
+					const bool isMulti = m_SelectedObjectNames.size() > 1
+						&& m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end();
+					if (isMulti)
+					{
+						auto roots = gatherSelectedRoots();
+						for (size_t i = 0; i < roots.size(); ++i)
+						{
+							if (!roots[i])
+							{
+								continue;
+							}
+							if (!payloadNames.empty())
+							{
+								payloadNames.push_back('\n');
+							}
+							payloadNames += roots[i]->GetName();
+						}
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECTS", payloadNames.c_str(), payloadNames.size() + 1);
+					}
+					else
+					{
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					}
 					ImGui::TextUnformatted(name.c_str());
 					ImGui::EndDragDropSource();
 				}
 
 				if (ImGui::BeginDragDropTarget())
 				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECTS"))
+					{
+						const char* payloadData = static_cast<const char*>(payload->Data);
+						auto names = splitDragPayloadNames(payloadData);
+						for (const auto& childName : names)
+						{
+							reparentObject(childName, name);
+						}
+					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
 					{
 						const char* payloadName = static_cast<const char*>(payload->Data);
@@ -1199,14 +1333,7 @@ void EditorApplication::DrawHierarchy() {
 				const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
 				if (ImGui::IsItemClicked())
 				{
-					if (io.KeyCtrl)
-					{
-						toggleSelection(name);
-					}
-					else
-					{
-						setPrimarySelection(name);
-					}
+					handleSelectionClick(name, io);
 				}
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
@@ -1271,13 +1398,45 @@ void EditorApplication::DrawHierarchy() {
 
 				if (ImGui::BeginDragDropSource())
 				{
-					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					std::string payloadNames;
+					const bool isMulti = m_SelectedObjectNames.size() > 1
+						&& m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end();
+					if (isMulti)
+					{
+						auto roots = gatherSelectedRoots();
+						for (size_t i = 0; i < roots.size(); ++i)
+						{
+							if (!roots[i])
+							{
+								continue;
+							}
+							if (!payloadNames.empty())
+							{
+								payloadNames.push_back('\n');
+							}
+							payloadNames += roots[i]->GetName();
+						}
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECTS", payloadNames.c_str(), payloadNames.size() + 1);
+					}
+					else
+					{
+						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
+					}
 					ImGui::TextUnformatted(name.c_str());
 					ImGui::EndDragDropSource();
 				}
 
 				if (ImGui::BeginDragDropTarget())
 				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECTS"))
+					{
+						const char* payloadData = static_cast<const char*>(payload->Data);
+						auto names = splitDragPayloadNames(payloadData);
+						for (const auto& childName : names)
+						{
+							reparentObject(childName, name);
+						}
+					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
 					{
 						const char* payloadName = static_cast<const char*>(payload->Data);
@@ -1322,6 +1481,15 @@ void EditorApplication::DrawHierarchy() {
 		ImGui::InvisibleButton("##HierarchyDropTarget", dropRegion);
 		if (ImGui::BeginDragDropTarget())
 		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECTS"))
+			{
+				const char* payloadData = static_cast<const char*>(payload->Data);
+				auto names = splitDragPayloadNames(payloadData);
+				for (const auto& childName : names)
+				{
+					detachObject(childName);
+				}
+			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
 			{
 				const char* payloadName = static_cast<const char*>(payload->Data);
