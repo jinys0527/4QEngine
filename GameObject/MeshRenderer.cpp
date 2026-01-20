@@ -12,6 +12,16 @@ REGISTER_PROPERTY(MeshRenderer, CastShadow)
 REGISTER_PROPERTY(MeshRenderer, ReceiveShadow)
 REGISTER_PROPERTY(MeshRenderer, RenderLayer)
 
+void MeshRenderer::SetRenderLayer(const UINT8& layer)
+{
+	m_RenderLayer = layer;
+
+	auto* owner = GetOwner();
+	if (!owner)
+		return;
+
+	owner->SetLayer(static_cast<RenderData::RenderLayer>(layer));
+}
 
 bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out)
 {

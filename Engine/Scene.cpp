@@ -199,7 +199,7 @@ void Scene::Serialize(nlohmann::json& j) const
 	//
 	//	GameObject 영역
 	//
-	j["gameObjects"] = nlohmann::json::object();
+	j["gameObjects"] = nlohmann::json::array();
 
 	// map -> vector 복사
 	std::vector<std::pair<std::string, std::shared_ptr<GameObject>>> gameObjects(
@@ -251,11 +251,19 @@ void ProcessWithErase(
 	std::unordered_set<std::string> names;
 	for (const auto& gameObjectJson : arr)
 	{
+		if (!gameObjectJson.is_object() || !gameObjectJson.contains("name") || !gameObjectJson.at("name").is_string())
+		{
+			continue;
+		}
 		names.insert(gameObjectJson.at("name").get<std::string>());
 	}
 
 	for (const auto& gameObjectJson : arr)
 	{
+		if (!gameObjectJson.is_object() || !gameObjectJson.contains("name") || !gameObjectJson.at("name").is_string())
+		{
+			continue;
+		}
 		std::string name = gameObjectJson.at("name").get<std::string>();
 
 		auto it = objContainer.find(name);
@@ -288,6 +296,29 @@ void ProcessWithErase(
 void Scene::Deserialize(const nlohmann::json& j)
 {
 	const auto& goRoot = j.at("gameObjects"); //GameObject Root
+	nlohmann::json mergedGameObjects = nlohmann::json::array();
+	auto appendGameObjectArray = [&](const nlohmann::json& arr)
+		{
+			for (const auto& gameObjectJson : arr)
+			{
+				mergedGameObjects.push_back(gameObjectJson);
+			}
+		};
+	if (goRoot.is_array())
+	{
+		appendGameObjectArray(goRoot);
+	}
+	else if (goRoot.is_object())
+	{
+		for (const auto& [key, value] : goRoot.items())
+		{
+			if (value.is_array())
+			{
+				appendGameObjectArray(value);
+			}
+		}
+	}
+
 	const nlohmann::json* editorRoot = nullptr;
 	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
 	if (j.contains("editor"))
@@ -331,7 +362,7 @@ void Scene::Deserialize(const nlohmann::json& j)
 	}
 
 	// 오브젝트 자동 역직렬화
-	ProcessWithErase(goRoot, m_GameObjects, GetEventDispatcher(), this);
+	ProcessWithErase(mergedGameObjects, m_GameObjects, GetEventDispatcher(), this);
 
 	std::unordered_map<std::string, std::shared_ptr<GameObject>> objectLookup;
 	for (const auto& [name, object] : m_GameObjects)
@@ -343,6 +374,10 @@ void Scene::Deserialize(const nlohmann::json& j)
 		{
 			for (const auto& gameObjectJson : arr)
 			{
+				if (!gameObjectJson.is_object() || !gameObjectJson.contains("name") || !gameObjectJson.at("name").is_string())
+				{
+					continue;
+				}
 				const std::string name = gameObjectJson.at("name").get<std::string>();
 				auto childIt = objectLookup.find(name);
 				if (childIt == objectLookup.end())
@@ -395,6 +430,7 @@ void Scene::Deserialize(const nlohmann::json& j)
 				}
 			}
 		};
+	applyParentLinks(mergedGameObjects);
 	//UI
 }
 

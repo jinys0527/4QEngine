@@ -7,12 +7,6 @@
 REGISTER_COMPONENT_DERIVED(SkeletalMeshRenderer, MeshRenderer)
 REGISTER_PROPERTY_READONLY_LOADABLE(SkeletalMeshRenderer, Skeleton)
 
-void MeshRenderer::SetRenderLayer(const UINT8& layer)
-{
-	m_RenderLayer = layer;
-	GetOwner()->SetLayer(static_cast<RenderData::RenderLayer>(layer));
-}
-
 bool SkeletalMeshRenderer::BuildRenderItem(RenderData::RenderItem& out)
 {
 	if (!m_Visible)
