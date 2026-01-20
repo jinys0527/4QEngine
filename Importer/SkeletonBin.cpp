@@ -11,13 +11,43 @@ static void MatToRowMajor16(const aiMatrix4x4& m, float out16[16])
 	out16[12] = m.a4; out16[13] = m.b4; out16[14] = m.c4; out16[15] = m.d4;
 }
 
-#ifdef _DEBUG
 static std::string ReadStringAtOffset(const std::string& table, uint32_t offset)
 {
 	if (offset >= table.size())
 		return {};
 	return std::string(&table[offset]);
 }
+
+static const aiNode* FindNodeByName(const aiNode* node, const std::string& name)
+{
+	if (!node)
+		return nullptr;
+
+	if (name == node->mName.C_Str())
+		return node;
+
+	for (uint32_t i = 0; i < node->mNumChildren; ++i)
+	{
+		if (const aiNode* found = FindNodeByName(node->mChildren[i], name))
+		{
+			return found;
+		}
+	}
+
+	return nullptr;
+}
+
+static aiMatrix4x4 GetGlobalTransform(const aiNode* node)
+{
+	aiMatrix4x4 global = node ? node->mTransformation : aiMatrix4x4();
+	for (const aiNode* parent = node ? node->mParent : nullptr; parent; parent = parent->mParent)
+	{
+		global = parent->mTransformation * global;
+	}
+	return global;
+}
+
+#ifdef _DEBUG
 
 static void WriteSkeletonDebug(const std::string& outSkelBin, const SkeletonBuildResult& skel)
 {
@@ -365,7 +395,24 @@ bool ImportFBXToSkelBin(
 	std::ofstream ofs(outSkelBin, std::ios::binary);
 	if (!ofs) return false;
 
-	aiMatrix4x4 globalInverse = scene->mRootNode->mTransformation;
+	const aiNode* rootNode = scene->mRootNode;
+	for (const auto& bone : skel.bones)
+	{
+		if (bone.parentIndex >= 0)
+			continue;
+
+		const std::string rootName = ReadStringAtOffset(skel.stringTable, bone.nameOffset);
+		if (rootName.empty())
+			break;
+
+		if (const aiNode* node = FindNodeByName(scene->mRootNode, rootName))
+		{
+			rootNode = node;
+		}
+		break;
+	}
+
+	aiMatrix4x4 globalInverse = GetGlobalTransform(rootNode);
 	globalInverse.Inverse();
 	float globalInverseRowMajor[16]{};
 	MatToRowMajor16(globalInverse, globalInverseRowMajor);

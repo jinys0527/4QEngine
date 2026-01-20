@@ -114,7 +114,8 @@ namespace
 		const size_t boneCount = skeleton.bones.size();
 		outPalette.resize(boneCount);
 		std::vector<DirectX::XMFLOAT4X4> globalPose(boneCount);
-		const auto globalInverse = DirectX::XMLoadFloat4x4(&skeleton.globalInverseTransform);
+
+		const auto globalInvRoot = DirectX::XMLoadFloat4x4(&skeleton.globalInverseTransform);
 
 		for (size_t i = 0; i < boneCount; ++i)
 		{
@@ -124,7 +125,7 @@ namespace
 			if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < boneCount)
 			{
 				const auto parent = DirectX::XMLoadFloat4x4(&globalPose[static_cast<size_t>(parentIndex)]);
-				const auto global = MathUtils::Mul(local, parent);
+				const auto global = MathUtils::Mul(local, parent); // local * parent (네 방식)
 				DirectX::XMStoreFloat4x4(&globalPose[i], global);
 			}
 			else
@@ -134,7 +135,11 @@ namespace
 
 			const auto global = DirectX::XMLoadFloat4x4(&globalPose[i]);
 			const auto invBind = DirectX::XMLoadFloat4x4(&skeleton.bones[i].inverseBindPose);
-			const auto skin = DirectX::XMMatrixMultiply(globalInverse, DirectX::XMMatrixMultiply(invBind, global));
+
+			// 핵심: root 보정 포함
+			const auto globalFixed = MathUtils::Mul(global, globalInvRoot);   // global * globalInvRoot
+			const auto skin = MathUtils::Mul(invBind, globalFixed);    // invBind * globalFixed
+
 			DirectX::XMStoreFloat4x4(&outPalette[i], skin);
 		}
 	}
@@ -707,9 +712,9 @@ void AnimationComponent::BuildPoseFromLocal(const RenderData::Skeleton& skeleton
 	m_LocalPose.resize(boneCount);
 	m_GlobalPose.resize(boneCount);
 	m_SkinningPalette.resize(boneCount);
-	const auto globalInverse = DirectX::XMLoadFloat4x4(&skeleton.globalInverseTransform);
 
 	const size_t poseCount = localPoses.size();
+	const auto globalInvRoot = DirectX::XMLoadFloat4x4(&skeleton.globalInverseTransform);
 
 	for (size_t i = 0; i < boneCount; ++i)
 	{
@@ -721,7 +726,7 @@ void AnimationComponent::BuildPoseFromLocal(const RenderData::Skeleton& skeleton
 		if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < boneCount)
 		{
 			const auto parent = DirectX::XMLoadFloat4x4(&m_GlobalPose[static_cast<size_t>(parentIndex)]);
-			const auto global = MathUtils::Mul(local, parent);
+			const auto global = MathUtils::Mul(local, parent); // local * parent (네 방식)
 			DirectX::XMStoreFloat4x4(&m_GlobalPose[i], global);
 		}
 		else
@@ -731,7 +736,11 @@ void AnimationComponent::BuildPoseFromLocal(const RenderData::Skeleton& skeleton
 
 		const auto global = DirectX::XMLoadFloat4x4(&m_GlobalPose[i]);
 		const auto invBind = DirectX::XMLoadFloat4x4(&skeleton.bones[i].inverseBindPose);
-		const auto skin    = DirectX::XMMatrixMultiply(globalInverse, DirectX::XMMatrixMultiply(invBind, global ));
+
+		// 핵심: root 보정 포함
+		const auto globalFixed = MathUtils::Mul(global, globalInvRoot);   // global * globalInvRoot
+		const auto skin = MathUtils::Mul(invBind, globalFixed);    // invBind * globalFixed
+
 		DirectX::XMStoreFloat4x4(&m_SkinningPalette[i], skin);
 	}
 

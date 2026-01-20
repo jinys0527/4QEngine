@@ -280,6 +280,54 @@ namespace
 	}
 
 #ifdef _DEBUG
+	struct SkinningStats
+	{
+		size_t zeroWeightVertexCount = 0;
+		uint16_t maxBoneIndex = 0;
+		std::vector<double> boneWeightSums;
+		std::vector<size_t> boneWeightVertexCounts;
+	};
+
+	SkinningStats GatherSkinningStats(const RenderData::MeshData& meshData)
+	{
+		SkinningStats stats{};
+
+		for (const auto& v : meshData.vertices)
+		{
+			const float weightSum = v.boneWeights[0] + v.boneWeights[1] + v.boneWeights[2] + v.boneWeights[3];
+			if (weightSum <= 0.0f)
+			{
+				++stats.zeroWeightVertexCount;
+			}
+
+			for (size_t i = 0; i < v.boneIndices.size(); ++i)
+			{
+				const float weight = v.boneWeights[i];
+				if (weight <= 0.0f)
+					continue;
+
+				const uint16_t boneIndex = v.boneIndices[i];
+				if (boneIndex > stats.maxBoneIndex)
+				{
+					stats.maxBoneIndex = boneIndex;
+				}
+
+				if (stats.boneWeightSums.size() <= boneIndex)
+				{
+					stats.boneWeightSums.resize(boneIndex + 1, 0.0);
+					stats.boneWeightVertexCounts.resize(boneIndex + 1, 0);
+				}
+
+				stats.boneWeightSums[boneIndex] += weight;
+				++stats.boneWeightVertexCounts[boneIndex];
+			}
+		}
+
+		return stats;
+	}
+#endif
+
+#ifdef _DEBUG
 	void WriteMeshBinLoadDebugJson(
 		const fs::path& meshPath,
 		const MeshBinHeader& header,
@@ -318,6 +366,17 @@ namespace
 		}
 
 		root["isSkinned"] = meshData.hasSkinning ? true : false;
+		if (meshData.hasSkinning)
+		{
+			const auto stats = GatherSkinningStats(meshData);
+			root["skinningStats"] = {
+				{"zeroWeightVertexCount", stats.zeroWeightVertexCount},
+				{"maxBoneIndex", stats.maxBoneIndex},
+				{"boneWeightSums", stats.boneWeightSums},
+				{"boneWeightVertexCounts", stats.boneWeightVertexCounts}
+			};
+		}
+
 		root["vertices"] = json::array();
 		for (const auto& v : meshData.vertices)
 		{
@@ -1024,9 +1083,9 @@ void AssetLoader::LoadMeshes(
 {
 	if (meta.contains("meshes") && meta["meshes"].is_array())
 	{
+		UINT32 meshIndex = 0;
 		for (const auto& meshJson : meta["meshes"])
 		{
-			UINT32 meshIndex = 0;
 			const std::string meshFile = meshJson.value("file", "");
 			if (meshFile.empty())
 			{
@@ -1089,6 +1148,20 @@ void AssetLoader::LoadMeshes(
 			meshStream.read(reinterpret_cast<char*>(meshData.indices.data()), sizeof(uint32_t) * meshData.indices.size());
 
 #ifdef _DEBUG
+			if (meshData.hasSkinning)
+			{
+				const auto stats = GatherSkinningStats(meshData);
+				if (stats.zeroWeightVertexCount > 0)
+				{
+					std::cout << "[Skinning] mesh=" << meshPath.filename().string()
+						<< " zeroWeightVertices=" << stats.zeroWeightVertexCount
+						<< " maxBoneIndex=" << stats.maxBoneIndex
+						<< std::endl;
+				}
+			}
+#endif
+
+#ifdef _DEBUG
 			// 			std::cout << "[MeshBin] load mesh=" << meshPath.filename().string()
 			// 				<< " verts=" << meshData.vertices.size()
 			// 				<< " indices=" << meshData.indices.size()
@@ -1120,7 +1193,7 @@ void AssetLoader::LoadMeshes(
 			}
 
 #ifdef _DEBUG
-			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+			WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
 #endif
 
 			meshData.subMeshes.reserve(subMeshes.size());
