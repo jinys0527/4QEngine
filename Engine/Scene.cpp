@@ -105,13 +105,31 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 {
 	if(!gameObject) return;
 
+	if (auto* trans = gameObject->GetComponent<TransformComponent>())
+	{
+		const auto children = trans->GetChildrens();
+		for (auto* childTransform : children)
+		{
+			if (!childTransform)
+			{
+				continue;
+			}
+			auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
+			if (!childOwner)
+			{
+				continue;
+			}
+			RemoveGameObjectByName(childOwner->GetName());
+		}
+		trans->DetachFromParent();
+	}
+
 	if (isOpaque)
 	{
 		auto it = m_OpaqueObjects.find(gameObject->m_Name);
 		if (it != m_OpaqueObjects.end())
 		{
-			if (auto* trans = gameObject->GetComponent<TransformComponent>())
-				trans->DetachFromParent();
+			
 			gameObject->SetScene(nullptr);
 			m_OpaqueObjects.erase(gameObject->m_Name);
 		}
@@ -121,8 +139,6 @@ void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject, bool isOpaq
 		auto it = m_TransparentObjects.find(gameObject->m_Name);
 		if (it != m_TransparentObjects.end())
 		{
-			if (auto* trans = gameObject->GetComponent<TransformComponent>())
-				trans->DetachFromParent();
 			gameObject->SetScene(nullptr);
 			m_TransparentObjects.erase(gameObject->m_Name);
 		}
