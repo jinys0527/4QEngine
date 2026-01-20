@@ -85,7 +85,7 @@ void FrustumPass::Execute(const RenderData::FrameData& frame)
 	SetBlendState(BS::DEFAULT);
 	SetRasterizerState(RS::WIREFRM);
 	SetDepthStencilState(DS::DEPTH_ON);
-	SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+	//SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get());
 	SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
 	UINT stride = sizeof(DirectX::XMFLOAT3);

@@ -1,20 +1,7 @@
 ﻿#pragma once
 #include "RenderPass.h"
 
-// 모든 물체를 그린 후 블러를 그리기 위한 렌더 패스
-// Input: 
-// - FrameData: None
-// - ShaderResourceView: m_RenderContext.pTexRvScene_Imgui
-// - Depthview: None
-// - Viewport: ScreenSize / 2
-// - BlendState: DEFAULT or nullptr,        
-// - RasterizeState: CULLBACK or SOLID		안전을 위한 SOLID
-// - DepthStencilState: Depth OFF, StencilOFF
-// - InputLayout: pos, nrm, uv, Tangent
-// output:
-// - RenderTarget: m_RenderContext.pRTView (main RT)
-// - Depthview: m_RenderContext.pDSViewScene_Depth (Updated from Opaque DepthPass)
-//
+// https://www.notion.so/2e921c4cb4638000aa7bc4303b216816 참고
 
 
 class BlurPass : public RenderPass

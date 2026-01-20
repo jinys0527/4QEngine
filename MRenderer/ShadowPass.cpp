@@ -2,11 +2,20 @@
 
 void ShadowPass::Execute(const RenderData::FrameData& frame)
 {
+    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+#pragma region Init
+    SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
+    SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
+    SetBlendState(BS::DEFAULT);
+    SetRasterizerState(RS::CULLBACK);
+    SetDepthStencilState(DS::DEPTH_ON);
+
+#pragma endregion
     const auto& context = frame.context;
     if (frame.lights.empty())
         return;
-    const auto& mainlight = frame.lights[0];
 
+    const auto& mainlight = frame.lights[0];
 
     //0번이 전역광이라고 가정...
     XMMATRIX lightview, lightproj;
@@ -45,13 +54,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
 
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
-    SetBlendState(BS::DEFAULT);
-    SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_ON);
 
-    m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, m_RenderContext.pDSViewScene_Shadow.Get());
-    m_RenderContext.pDXDC->ClearDepthStencilView(m_RenderContext.pDSViewScene_Shadow.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
-    SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
     for (const auto& queueItem : GetQueue())
     {
         const auto& item = *queueItem.item;
