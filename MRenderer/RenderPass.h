@@ -30,6 +30,7 @@ public:
 	void SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview);
 
 	virtual void SetBaseCB(const RenderData::RenderItem& item);
+	virtual void SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3& campos);
 	virtual void SetCameraCB(const RenderData::FrameData& frame);
 	virtual void SetDirLight(const RenderData::FrameData& frame);
 	virtual void SetVertex(const RenderData::RenderItem& item);
@@ -43,13 +44,19 @@ public:
 		UINT indexStart
 	);
 protected:
-	virtual bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const;
-	const std::vector<size_t>& GetQueue() const { return m_Queue; }
+	struct RenderQueueItem
+	{
+		RenderData::RenderLayer layer = RenderData::Layer_MAX_;
+		const RenderData::RenderItem* item = nullptr;
+	};
+
+	virtual bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const;
+	const std::vector<RenderQueueItem>& GetQueue() const { return m_Queue; }
 
 private:
 	void BuildQueue(const RenderData::FrameData& frame);
 
-	std::vector<size_t> m_Queue;
+	std::vector<RenderQueueItem> m_Queue;
 	bool m_Enabled = true;
 
 protected:

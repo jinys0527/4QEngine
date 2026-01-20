@@ -116,6 +116,7 @@ private:
 	HRESULT CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB);
 	HRESULT CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
 	HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
+	HRESULT RTTexCreateMipMap(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
 	HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
 	HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);				//일반 DS용
@@ -236,5 +237,10 @@ protected:
 	ComPtr<ID3D11VertexShader> m_pVS_Shadow;
 	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
 	ComPtr<ID3DBlob> m_pVSCode_Shadow;
+
+	//FullScreenTriangle
+protected:
+	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
+	ComPtr<ID3DBlob> m_pVSCode_FSTriangle;
 
 };

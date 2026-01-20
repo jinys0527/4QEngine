@@ -71,6 +71,17 @@ float CastShadow(float4 uv)
     return PCF(uv);
 }
 
+float4 Masking(float4 uv)
+{
+    uv.xy /= uv.w;
+    
+    float4 mask = g_Mask_Wall.Sample(smpBoreder, uv.xy);
+    
+    
+    
+    return mask;
+}
+
 
 float4 SpecularLight_Point(float4 pos, float4 nrm, Light light)
 {

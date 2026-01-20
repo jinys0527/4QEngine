@@ -1,0 +1,85 @@
+{
+  "animations": [],
+  "files": {
+    "materials": "Mats/SKM_Quinn_Simple.matbin",
+    "skeleton": "Skels/SKM_Quinn_Simple.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/SKM_Quinn_Simple.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "SKM_Quinn_Simple",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  },
+  "skeletonMeta": {
+    "lowerBodyBones": [
+      0,
+      1,
+      72,
+      73,
+      74,
+      75,
+      64,
+      65,
+      66,
+      67,
+      78,
+      77,
+      70,
+      69
+    ],
+    "upperBodyBones": [
+      2,
+      3,
+      4,
+      10,
+      11,
+      12,
+      15,
+      37,
+      38,
+      39,
+      42,
+      7,
+      9,
+      28,
+      29,
+      30,
+      32,
+      33,
+      34,
+      17,
+      18,
+      19,
+      25,
+      26,
+      27,
+      21,
+      22,
+      23,
+      55,
+      56,
+      57,
+      59,
+      60,
+      61,
+      44,
+      45,
+      46,
+      52,
+      53,
+      54,
+      48,
+      49,
+      50,
+      35,
+      14,
+      62,
+      41
+    ]
+  }
+}

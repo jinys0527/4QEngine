@@ -319,13 +319,11 @@
                                 "assetIndex": 0,
                                 "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "Mesh": {
+                            "MeshHandle": {
                                 "assetIndex": 0,
                                 "assetPath": "../ResourceOutput\\building\\Meta\\building.asset.json"
                             },
-                            "ReceiveShadow": true,
-                            "RenderLayer": 0,
-                            "Visible": true
+                            "SubMeshMaterialOverrides": []
                         },
                         "type": "MeshRenderer"
                     }

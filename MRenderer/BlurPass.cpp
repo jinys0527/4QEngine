@@ -17,16 +17,17 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
     SetRenderTarget(m_RenderContext.pRTView_Blur.Get(), nullptr);
-    SetViewPort(m_RenderContext.WindowSize.width / 8, m_RenderContext.WindowSize.height / 8, m_RenderContext.pDXDC.Get());      //가로세로 절반
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());      //가로세로 절반
 
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
 
-    dxdc->VSSetShader(m_RenderContext.VS_Quad.Get(), nullptr, 0);
+    dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Quad.Get(), nullptr, 0);
 
-    m_RenderContext.DrawFullscreenQuad();
+    SetDepthStencilState(DS::DEPTH_OFF);
+    m_RenderContext.DrawFSTriangle();
 
-
+    dxdc->GenerateMips(m_RenderContext.pTexRvScene_Blur.Get());
 }

@@ -24,9 +24,9 @@ public:
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:
-    bool ShouldIncludeRenderItem(const RenderData::RenderItem& item) const override
+    bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
         // 예: 투명/블렌딩 제외 같은 조건
-        return false;
+        return layer == RenderData::UIItems;
     }
 };
