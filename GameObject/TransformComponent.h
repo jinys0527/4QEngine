@@ -34,9 +34,15 @@ public:
 	TransformComponent* GetParent() const { return m_Parent; }
 
 	void SetParent(TransformComponent* newParent);
+	void DetachFromParent();
+
 	void SetParentKeepLocal(TransformComponent* newParent);
 	void DetachFromParentKeepLocal();
-	void DetachFromParent();
+
+	void SetParentKeepWorld(TransformComponent* newParent);
+	void DetachFromParentKeepWorld();
+	
+	
 
 	void AddChild(TransformComponent* child);
 	void RemoveChild(TransformComponent* child);

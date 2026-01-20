@@ -126,6 +126,11 @@ bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 void EditorApplication::UpdateInput()
 {
 	ImGuiIO& io = ImGui::GetIO();
+
+	if (m_EditorState == EditorPlayState::Play) {
+		return;
+	}
+
 	if (!io.WantTextInput)
 	{
 		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))
@@ -856,9 +861,9 @@ void EditorApplication::DrawHierarchy() {
 
 		if (childTransform->GetParent())
 		{
-			childTransform->DetachFromParentKeepLocal();
+			childTransform->DetachFromParentKeepWorld();
 		}
-		childTransform->SetParentKeepLocal(parentTransform);
+		childTransform->SetParentKeepWorld(parentTransform);
 
 		SceneStateSnapshot afterState = CaptureSceneState(scene);
 		m_UndoManager.Push(UndoManager::Command{
@@ -1102,9 +1107,9 @@ void EditorApplication::DrawHierarchy() {
 				}
 				if (childTransform->GetParent())
 				{
-					childTransform->DetachFromParentKeepLocal();
+					childTransform->DetachFromParentKeepWorld();
 				}
-				childTransform->SetParentKeepLocal(parentTransform);
+				childTransform->SetParentKeepWorld(parentTransform);
 			}
 		}
 		else if (pendingAdd.data.contains("components") && pendingAdd.data["components"].is_array())
@@ -1589,7 +1594,7 @@ void EditorApplication::DrawFolderView()
 	{
 		ImGui::EndDisabled();
 	}
-	ImGui::EndDisabled();
+	
 	ImGui::SameLine();
 	if (m_CurrentScenePath.empty())
 	{
@@ -1853,10 +1858,12 @@ void EditorApplication::DrawFolderView()
 									});
 							}
 						}
+						
 					}
 					ImGui::PopID();
 				}
 			}
+			ImGui::EndDisabled();
 		};
 
 	drawDirectory(drawDirectory, m_ResourceRoot);
