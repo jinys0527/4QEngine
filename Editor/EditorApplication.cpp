@@ -530,6 +530,7 @@ void EditorApplication::DrawMainMenuBar()
 	}
 }
 
+
 void EditorApplication::DrawHierarchy() {
 	ImGui::Begin("Hierarchy");
 
@@ -737,13 +738,13 @@ void EditorApplication::DrawHierarchy() {
 
 	auto copySelectedObjects = [&](const std::vector<std::shared_ptr<GameObject>>& objects)
 		{
-			if (objects.empty())
 			{
 				return;
 			}
 
 			nlohmann::json clipboard = nlohmann::json::object();
 			clipboard["objects"] = nlohmann::json::array();
+
 
 			std::unordered_map<GameObject*, int> objectIds;
 			int nextId = 0;
@@ -753,7 +754,6 @@ void EditorApplication::DrawHierarchy() {
 				{
 					continue;
 				}
-
 				std::string rootParentName;
 				if (auto* rootTransform = root->GetComponent<TransformComponent>())
 				{
@@ -768,33 +768,29 @@ void EditorApplication::DrawHierarchy() {
 						}
 					}
 				}
-			}
-			
+					std::vector<GameObject*> stack;
+					stack.push_back(root.get());
+					while (!stack.empty())
+					{
+						GameObject* current = stack.back();
+						stack.pop_back();
 
-			std::vector<GameObject*> stack;
-			stack.push_back(root.get());
-			while (!stack.empty())
-				{
-				GameObject* current = stack.back();
-				stack.pop_back();
-
-				if (!current)
-				{
-					continue;
-				}
-
-				const bool isRoot = (current == root.get());
-				auto* currentTransform = current->GetComponent<TransformComponent>();
-				GameObject* parentObject = (!isRoot && currentTransform && currentTransform->GetParent())
-					? dynamic_cast<GameObject*>(currentTransform->GetParent()->GetOwner())
-					: nullptr;
-
+						if (!current)
+						{
+							continue;
+						}
+						const bool isRoot = (current == root.get());
+						auto* currentTransform = current->GetComponent<TransformComponent>();
+						GameObject* parentObject = (!isRoot && currentTransform && currentTransform->GetParent())
+							? dynamic_cast<GameObject*>(currentTransform->GetParent()->GetOwner())
+							: nullptr;
 
 					if (objectIds.find(current) == objectIds.end())
 					{
 						objectIds[current] = nextId++;
 					}
-					
+
+
 					const int currentId = objectIds[current];
 					int parentId = -1;
 					if (parentObject)
@@ -805,7 +801,6 @@ void EditorApplication::DrawHierarchy() {
 						}
 						parentId = objectIds[parentObject];
 					}
-				
 
 					nlohmann::json objectJson;
 					current->Serialize(objectJson);
@@ -816,28 +811,27 @@ void EditorApplication::DrawHierarchy() {
 					{
 						objectJson["externalParentName"] = rootParentName;
 					}
-
 					clipboard["objects"].push_back(std::move(objectJson));
 
 					if (!currentTransform)
 					{
 						continue;
 					}
+
 					for (auto* childTransform : currentTransform->GetChildrens())
 					{
-						if (!childTransform)
-						{
-							continue;
-						}
-						auto* childObject = dynamic_cast<GameObject*>(childTransform->GetOwner());
-						if (childObject)
-						{
-							stack.push_back(childObject);
-						}
+					if (!childTransform)
+					{
+						continue;
+					}
+					auto* childObject = dynamic_cast<GameObject*>(childTransform->GetOwner());
+					if (childObject)
+					{
+						stack.push_back(childObject);
 					}
 				}
 			}
-
+		}
 			m_ObjectClipboard = std::move(clipboard);
 			m_ObjectClipboardHasData = true;
 		};
