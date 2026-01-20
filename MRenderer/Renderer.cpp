@@ -121,6 +121,9 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
+
+
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
@@ -584,6 +587,27 @@ void Renderer::CreateContext()
 
 	m_RenderContext.VS_Shadow				= m_pVS_Shadow;
 	m_RenderContext.PS_Shadow				= m_pPS_Shadow;
+
+	//FullScreenTriangle
+	m_RenderContext.VS_FSTriangle			= m_pVS_FSTriangle;
+	m_RenderContext.DrawFSTriangle =
+		[this]()
+		{
+			// 정점 버퍼를 바인딩 해제 (이전에 쓰던 버퍼가 영향을 주지 않도록)
+			UINT stride = 0;
+			UINT offset = 0;
+			ID3D11Buffer* nullBuffer = nullptr;
+			m_pDXDC->IASetVertexBuffers(0, 1, &nullBuffer, &stride, &offset);
+
+			// 인덱스 버퍼도 필요 없음
+			m_pDXDC->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
+
+			// 토폴로지는 삼각형 리스트
+			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
+			m_pDXDC->Draw(3, 0);
+		};
 
 
 
@@ -1781,6 +1805,28 @@ HRESULT Renderer::CreateBlendState()
 	bd.IndependentBlendEnable = FALSE;
 
 	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ALPHABLEND].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	rtb = {};
+	rtb.BlendEnable = TRUE;
+	rtb.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtb.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rtb.BlendOp = D3D11_BLEND_OP_ADD;
+	rtb.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtb.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd = {};
+	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = FALSE;
+	bd.IndependentBlendEnable = FALSE;
+
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ALPHABLEND_WALL].GetAddressOf());
 	if (FAILED(hr))
 	{
 		ERROR_MSG_HR(hr);

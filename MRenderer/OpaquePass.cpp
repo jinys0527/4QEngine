@@ -64,7 +64,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	//현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
 	//ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
-	SetBlendState(BS::ALPHABLEND);
+	SetBlendState(BS::DEFAULT);
 	SetRasterizerState(RS::CULLBACK);
 	SetDepthStencilState(DS::DEPTH_ON);
 

@@ -186,4 +186,8 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader>			VS_Shadow;
 	ComPtr<ID3D11PixelShader>			PS_Shadow;
 
+	//FullScreenTriangle
+	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
+	std::function<void()>				DrawFSTriangle;
+
 };

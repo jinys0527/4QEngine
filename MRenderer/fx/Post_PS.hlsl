@@ -19,7 +19,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     coc = abs(DepthMap - focusDist) / focusRange;
     coc = saturate(coc);
     
-    
     float4 dofColor;
 
     if (coc < 0.33f)

@@ -238,4 +238,9 @@ protected:
 	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
 	ComPtr<ID3DBlob> m_pVSCode_Shadow;
 
+	//FullScreenTriangle
+protected:
+	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
+	ComPtr<ID3DBlob> m_pVSCode_FSTriangle;
+
 };
