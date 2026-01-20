@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <unordered_set>
 
 void OpaquePass::Execute(const RenderData::FrameData& frame)
 {
@@ -71,6 +72,27 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		const auto& item = *queueItem.item;
 		SetBaseCB(item);
 		SetMaskingTM(item, frame.context.gameCamera.cameraPos);
+#ifdef _DEBUG
+// 		if (const auto* mesh = m_AssetLoader.GetMeshes().Get(item.mesh))
+// 		{
+// 			if (mesh->hasSkinning)
+// 			{
+// 				const UINT32 paletteCount = item.skinningPaletteCount;
+// 				if (paletteCount == 0 || mesh->maxBoneIndex >= paletteCount)
+// 				{
+// 					static std::unordered_set<UINT32> warnedMeshes;
+// 					if (warnedMeshes.insert(item.mesh.id).second)
+// 					{
+// 						std::cout << "[Skinning] meshId=" << item.mesh.id
+// 							<< " maxBoneIndex=" << mesh->maxBoneIndex
+// 							<< " paletteCount=" << paletteCount
+// 							<< " skeletonId=" << item.skeleton.id
+// 							<< "\n";
+// 					}
+// 				}
+// 			}
+// 		}
+#endif
 		if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 		{
 			const size_t paletteStart = item.skinningPaletteOffset;

@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BlurPass.cpp" />
+    <ClCompile Include="DebugLinePass.cpp" />
     <ClCompile Include="DepthPass.cpp" />
     <ClCompile Include="DX11.cpp" />
     <ClCompile Include="DXMath.cpp" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="BlurPass.h" />
     <ClInclude Include="Buffers.h" />
+    <ClInclude Include="DebugLinePass.h" />
     <ClInclude Include="DepthPass.h" />
     <ClInclude Include="DX11.h" />
     <ClInclude Include="DXMath.h" />

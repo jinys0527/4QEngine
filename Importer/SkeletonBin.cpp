@@ -5,9 +5,9 @@
 static void MatToRowMajor16(const aiMatrix4x4& m, float out16[16])
 {
 	// transpose (Assimp -> DX)
-	out16[0]  = m.a1; out16[1]  = m.b1; out16[2]  = m.c1; out16[3]  = m.d1;
-	out16[4]  = m.a2; out16[5]  = m.b2; out16[6]  = m.c2; out16[7]  = m.d2;
-	out16[8]  = m.a3; out16[9]  = m.b3; out16[10] = m.c3; out16[11] = m.d3;
+	out16[0] = m.a1; out16[1] = m.b1; out16[2] = m.c1; out16[3] = m.d1;
+	out16[4] = m.a2; out16[5] = m.b2; out16[6] = m.c2; out16[7] = m.d2;
+	out16[8] = m.a3; out16[9] = m.b3; out16[10] = m.c3; out16[11] = m.d3;
 	out16[12] = m.a4; out16[13] = m.b4; out16[14] = m.c4; out16[15] = m.d4;
 }
 
@@ -77,6 +77,33 @@ static void CollectUsedBoneNames(const aiScene* scene, std::unordered_set<std::s
 	}
 }
 
+static void CollectRequiredBoneNames(
+	const aiNode* node,
+	const std::unordered_set<std::string>& usedBoneNames,
+	std::unordered_set<std::string>& outRequired,
+	std::vector<std::string>& ancestors)
+{
+	if (!node) return;
+
+	const std::string name = node->mName.C_Str();
+	ancestors.push_back(name);
+
+	if (usedBoneNames.find(name) != usedBoneNames.end())
+	{
+		for (const auto& ancestor : ancestors)
+		{
+			outRequired.insert(ancestor);
+		}
+	}
+
+	for (uint32_t i = 0; i < node->mNumChildren; ++i)
+	{
+		CollectRequiredBoneNames(node->mChildren[i], usedBoneNames, outRequired, ancestors);
+	}
+
+	ancestors.pop_back();
+}
+
 static bool IsUsedBoneNode(const aiNode* node, const std::unordered_set<std::string>& usedBoneName)
 {
 	if (!node) return false;
@@ -126,7 +153,7 @@ static void TraverseAndRegisterBones(const aiNode* node,
 		// 중복 방지
 		if (outSkel.boneNameToIndex.find(name) == outSkel.boneNameToIndex.end())
 		{
-			BoneBin bb{}; 
+			BoneBin bb{};
 
 			bb.nameOffset = AddString(outSkel.stringTable, name);
 			bb.parentIndex = -1;
@@ -179,7 +206,7 @@ SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene)
 {
 	SkeletonBuildResult out;
 	if (!scene || !scene->mRootNode) return out;
-	
+
 	std::unordered_set<std::string> usedBoneNames;
 	CollectUsedBoneNames(scene, usedBoneNames);
 
@@ -187,8 +214,16 @@ SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene)
 	if (usedBoneNames.empty())
 		return out;
 
-	// 1) aiNode 트리에서 used bone 노드만 등록(순서 고정)
-	TraverseAndRegisterBones(scene->mRootNode, usedBoneNames, out);
+	std::unordered_set<std::string> requiredBoneNames;
+	std::vector<std::string> ancestors;
+	ancestors.reserve(64);
+	CollectRequiredBoneNames(scene->mRootNode, usedBoneNames, requiredBoneNames, ancestors);
+
+	if (requiredBoneNames.empty())
+		return out;
+
+	// 1) aiNode 트리에서 used bone + 부모 노드 등록(순서 고정)
+	TraverseAndRegisterBones(scene->mRootNode, requiredBoneNames, out);
 
 	// 2) parentIndex 채우기(노드 기반)
 	FillParentIndicesFromNodes(scene->mRootNode, out);
@@ -201,7 +236,7 @@ SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene)
 
 bool ImportFBXToSkelBin(
 	const aiScene* scene,
-	const std::string& outSkelBin, 
+	const std::string& outSkelBin,
 	std::unordered_map<std::string, uint32_t>& outBoneNameToIndex,
 	nlohmann::json& skeletonMeta)
 {
@@ -215,15 +250,15 @@ bool ImportFBXToSkelBin(
 	outBoneNameToIndex = skel.boneNameToIndex;
 
 #ifdef _DEBUG
-	//WriteSkeletonDebug(outSkelBin, skel);
+	WriteSkeletonDebug(outSkelBin, skel);
 #endif
 
 	if (skel.bones.empty())
 		return true;
 
 	SkelBinHeader header{};
-	header.version          = 2;
-	header.boneCount        = (uint16_t)skel.bones.size();
+	header.version = 3;
+	header.boneCount = (uint16_t)skel.bones.size();
 	header.stringTableBytes = (uint32_t)skel.stringTable.size();
 	std::vector<int32_t>		   upperBodyIndices;
 	std::vector<int32_t>		   lowerBodyIndices;
@@ -323,14 +358,21 @@ bool ImportFBXToSkelBin(
 		autoFillFromUnrealNames();
 	}
 
-	header.upperCount          = static_cast<uint32_t>(upperBodyIndices.size());
-	header.lowerCount          = static_cast<uint32_t>(lowerBodyIndices.size());
+	header.upperCount = static_cast<uint32_t>(upperBodyIndices.size());
+	header.lowerCount = static_cast<uint32_t>(lowerBodyIndices.size());
 
 
 	std::ofstream ofs(outSkelBin, std::ios::binary);
 	if (!ofs) return false;
 
+	aiMatrix4x4 globalInverse = scene->mRootNode->mTransformation;
+	globalInverse.Inverse();
+	float globalInverseRowMajor[16]{};
+	MatToRowMajor16(globalInverse, globalInverseRowMajor);
+
 	ofs.write(reinterpret_cast<const char*>(&header), sizeof(header));
+	ofs.write(reinterpret_cast<const char*>(globalInverseRowMajor), sizeof(float) * 16);
+
 	if (!skel.bones.empty())
 		ofs.write(reinterpret_cast<const char*>(skel.bones.data()), sizeof(BoneBin) * skel.bones.size());
 	if (!skel.stringTable.empty())

@@ -1,59 +1,58 @@
 name=mixamo.com
 duration=1.36667
 ticksPerSecond=30
-tracks=8
-totalKeys=336
+tracks=52
+totalKeys=2184
 skippedEmptyTracks=0
-track[0] boneIndex=5 keys=42
-track[1] boneIndex=0 keys=42
-track[2] boneIndex=9 keys=42
-track[3] boneIndex=10 keys=42
-track[4] boneIndex=12 keys=42
-track[5] boneIndex=13 keys=42
-track[6] boneIndex=4 keys=42
-track[7] boneIndex=34 keys=42
-missingBones=44
-  mixamorig:LeftArm_$AssimpFbx$_Rotation
-  mixamorig:LeftFoot_$AssimpFbx$_Rotation
-  mixamorig:LeftHandIndex1_$AssimpFbx$_Rotation
-  mixamorig:LeftHandIndex2_$AssimpFbx$_Rotation
-  mixamorig:LeftHandIndex3_$AssimpFbx$_Rotation
-  mixamorig:LeftHandMiddle1_$AssimpFbx$_Rotation
-  mixamorig:LeftHandMiddle2_$AssimpFbx$_Rotation
-  mixamorig:LeftHandMiddle3_$AssimpFbx$_Rotation
-  mixamorig:LeftHandPinky1_$AssimpFbx$_Rotation
-  mixamorig:LeftHandPinky2_$AssimpFbx$_Rotation
-  mixamorig:LeftHandPinky3_$AssimpFbx$_Rotation
-  mixamorig:LeftHandRing1_$AssimpFbx$_Rotation
-  mixamorig:LeftHandRing2_$AssimpFbx$_Rotation
-  mixamorig:LeftHandRing3_$AssimpFbx$_Rotation
-  mixamorig:LeftHandThumb1_$AssimpFbx$_Rotation
-  mixamorig:LeftLeg_$AssimpFbx$_Rotation
-  mixamorig:LeftShoulder_$AssimpFbx$_Rotation
-  mixamorig:LeftToeBase_$AssimpFbx$_Rotation
-  mixamorig:LeftUpLeg_$AssimpFbx$_Rotation
-  mixamorig:RightArm_$AssimpFbx$_Rotation
-  mixamorig:RightFoot_$AssimpFbx$_Rotation
-  mixamorig:RightForeArm_$AssimpFbx$_Rotation
-  mixamorig:RightHandIndex1_$AssimpFbx$_Rotation
-  mixamorig:RightHandIndex2_$AssimpFbx$_Rotation
-  mixamorig:RightHandIndex3_$AssimpFbx$_Rotation
-  mixamorig:RightHandMiddle1_$AssimpFbx$_Rotation
-  mixamorig:RightHandMiddle2_$AssimpFbx$_Rotation
-  mixamorig:RightHandMiddle3_$AssimpFbx$_Rotation
-  mixamorig:RightHandPinky1_$AssimpFbx$_Rotation
-  mixamorig:RightHandPinky2_$AssimpFbx$_Rotation
-  mixamorig:RightHandPinky3_$AssimpFbx$_Rotation
-  mixamorig:RightHandRing1_$AssimpFbx$_Rotation
-  mixamorig:RightHandRing2_$AssimpFbx$_Rotation
-  mixamorig:RightHandRing3_$AssimpFbx$_Rotation
-  mixamorig:RightHandThumb1_$AssimpFbx$_Rotation
-  mixamorig:RightHandThumb2_$AssimpFbx$_Rotation
-  mixamorig:RightHandThumb3_$AssimpFbx$_Rotation
-  mixamorig:RightLeg_$AssimpFbx$_Rotation
-  mixamorig:RightShoulder_$AssimpFbx$_Rotation
-  mixamorig:RightToeBase_$AssimpFbx$_Rotation
-  mixamorig:RightUpLeg_$AssimpFbx$_Rotation
-  mixamorig:Spine1_$AssimpFbx$_Rotation
-  mixamorig:Spine2_$AssimpFbx$_Rotation
-  mixamorig:Spine_$AssimpFbx$_Rotation
+track[0] boneIndex=15 keys=42
+track[1] boneIndex=1 keys=42
+track[2] boneIndex=23 keys=42
+track[3] boneIndex=174 keys=42
+track[4] boneIndex=25 keys=42
+track[5] boneIndex=26 keys=42
+track[6] boneIndex=36 keys=42
+track[7] boneIndex=40 keys=42
+track[8] boneIndex=44 keys=42
+track[9] boneIndex=49 keys=42
+track[10] boneIndex=53 keys=42
+track[11] boneIndex=57 keys=42
+track[12] boneIndex=75 keys=42
+track[13] boneIndex=79 keys=42
+track[14] boneIndex=83 keys=42
+track[15] boneIndex=62 keys=42
+track[16] boneIndex=66 keys=42
+track[17] boneIndex=70 keys=42
+track[18] boneIndex=29 keys=42
+track[19] boneIndex=31 keys=42
+track[20] boneIndex=32 keys=42
+track[21] boneIndex=170 keys=42
+track[22] boneIndex=19 keys=42
+track[23] boneIndex=178 keys=42
+track[24] boneIndex=166 keys=42
+track[25] boneIndex=14 keys=42
+track[26] boneIndex=92 keys=42
+track[27] boneIndex=191 keys=42
+track[28] boneIndex=96 keys=42
+track[29] boneIndex=98 keys=42
+track[30] boneIndex=114 keys=42
+track[31] boneIndex=118 keys=42
+track[32] boneIndex=122 keys=42
+track[33] boneIndex=127 keys=42
+track[34] boneIndex=131 keys=42
+track[35] boneIndex=135 keys=42
+track[36] boneIndex=153 keys=42
+track[37] boneIndex=157 keys=42
+track[38] boneIndex=161 keys=42
+track[39] boneIndex=140 keys=42
+track[40] boneIndex=144 keys=42
+track[41] boneIndex=148 keys=42
+track[42] boneIndex=101 keys=42
+track[43] boneIndex=105 keys=42
+track[44] boneIndex=109 keys=42
+track[45] boneIndex=187 keys=42
+track[46] boneIndex=88 keys=42
+track[47] boneIndex=195 keys=42
+track[48] boneIndex=183 keys=42
+track[49] boneIndex=4 keys=42
+track[50] boneIndex=8 keys=42
+track[51] boneIndex=12 keys=42

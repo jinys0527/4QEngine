@@ -42,6 +42,7 @@ namespace RenderData
 		std::vector<UINT32>   indices;
 		std::vector<SubMesh>  subMeshes;
 		BOOL hasSkinning = false;
+		UINT32 maxBoneIndex = 0;
 	};
 
 	enum class MaterialTextureSlot : uint8_t
@@ -130,6 +131,7 @@ namespace RenderData
 		std::vector<Bone>			bones;
 		std::vector<int>			upperBodyBones;
 		std::vector<int>			lowerBodyBones;
+		XMFLOAT4X4                  globalInverseTransform{};
 	};
 
 	struct AnimationKeyFrame
@@ -190,6 +192,8 @@ namespace RenderData
 		UINT32		   indexCount = 0;
 		bool		   useSubMesh = false;
 		XMFLOAT4X4     localToWorld{};
+		UINT32		   globalPoseOffset = 0;
+		UINT32		   globalPoseCount = 0;
 	};
 
 	enum RenderLayer
@@ -208,5 +212,6 @@ namespace RenderData
 		std::unordered_map<RenderLayer, std::vector<RenderItem>> renderItems;
 		std::vector<LightData>  lights;
 		std::vector<XMFLOAT4X4> skinningPalettes;
+		std::vector<XMFLOAT4X4> globalPoses;
 	};
 }
