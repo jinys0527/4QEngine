@@ -215,7 +215,7 @@ bool ImportFBXToSkelBin(
 	outBoneNameToIndex = skel.boneNameToIndex;
 
 #ifdef _DEBUG
-	WriteSkeletonDebug(outSkelBin, skel);
+	//WriteSkeletonDebug(outSkelBin, skel);
 #endif
 
 	if (skel.bones.empty())

@@ -23,6 +23,11 @@ void MeshRenderer::SetRenderLayer(const UINT8& layer)
 	owner->SetLayer(static_cast<RenderData::RenderLayer>(layer));
 }
 
+const UINT8& MeshRenderer::GetRenderLayer() const
+{
+	return m_RenderLayer;
+}
+
 bool MeshRenderer::BuildRenderItem(RenderData::RenderItem& out)
 {
 	if (!m_Visible)
