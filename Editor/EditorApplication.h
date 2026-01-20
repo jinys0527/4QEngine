@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <array>
 #include <unordered_map>
+#include <unordered_set>
 #include "UndoManager.h"
 #include "Snapshot.h"
 
@@ -101,6 +102,7 @@ private:
 	EditorPlayState       m_EditorState = EditorPlayState::Stop;
 	// Hier
 	std::string m_SelectedObjectName;
+	std::unordered_set<std::string> m_SelectedObjectNames;
 
 	//이름 변경 관련
 	std::string m_LastSelectedObjectName;

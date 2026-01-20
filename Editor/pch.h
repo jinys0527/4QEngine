@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 #include <cmath>
+#include <unordered_set>
 #include <DirectXCollision.h>
 
 #pragma comment(lib, "ole32.lib")
