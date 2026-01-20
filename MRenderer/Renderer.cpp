@@ -121,6 +121,9 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
+
+
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
@@ -196,7 +199,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_RenderContext.isEditCam = m_IsEditCam;
 	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
 	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui.Get(), clearColor);
-	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+	//m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
 
 	m_Pipeline.Execute(frame);
 
@@ -217,7 +220,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
 	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor);
-	m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
+	//m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
 
 	m_Pipeline.Execute(frame);
 
@@ -585,6 +588,27 @@ void Renderer::CreateContext()
 	m_RenderContext.VS_Shadow				= m_pVS_Shadow;
 	m_RenderContext.PS_Shadow				= m_pPS_Shadow;
 
+	//FullScreenTriangle
+	m_RenderContext.VS_FSTriangle			= m_pVS_FSTriangle;
+	m_RenderContext.DrawFSTriangle =
+		[this]()
+		{
+			// 정점 버퍼를 바인딩 해제 (이전에 쓰던 버퍼가 영향을 주지 않도록)
+			UINT stride = 0;
+			UINT offset = 0;
+			ID3D11Buffer* nullBuffer = nullptr;
+			m_pDXDC->IASetVertexBuffers(0, 1, &nullBuffer, &stride, &offset);
+
+			// 인덱스 버퍼도 필요 없음
+			m_pDXDC->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
+
+			// 토폴로지는 삼각형 리스트
+			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
+			m_pDXDC->Draw(3, 0);
+		};
+
 
 
 	//DrawQuad함수
@@ -601,7 +625,7 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 			m_pDXDC->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
+			//m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
 		};
@@ -949,6 +973,36 @@ HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Te
 	return hr;
 }
 
+HRESULT Renderer::RTTexCreateMipMap(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)
+{
+	//텍스처 정보 구성.
+	D3D11_TEXTURE2D_DESC td = {};
+	//ZeroMemory(&td, sizeof(td));
+	td.Width = width;						//텍스처크기(1:1)
+	td.Height = height;
+	td.MipLevels = 0;						//밉맵 생성 안함
+	td.ArraySize = 1;
+	td.Format = fmt;							//텍스처 포멧 (DXGI_FORMAT_R8G8B8A8_UNORM 등..)
+	td.SampleDesc.Count = 1;					// AA 없음.
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;		//용도 : RT + SRV
+	td.CPUAccessFlags = 0;
+	td.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+	//텍스처 생성.
+	ID3D11Texture2D* pTex = NULL;
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, &pTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	//성공후 외부로 리턴.
+	if (ppTex) *ppTex = pTex;
+
+	return hr;
+}
 
 HRESULT Renderer::RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView)
 {
@@ -1306,6 +1360,7 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 	CreateDepthStencilState();
 	CreateSamplerState();
 	CreateRasterState();
+	CreateBlendState();
 
 	CreateRenderTarget_Other();
 }
@@ -1458,7 +1513,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 #pragma region Blur
 	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
-	RTTexCreate(m_WindowSize.width / 8, m_WindowSize.height / 8, fmt, m_pRTScene_Blur.GetAddressOf());
+	RTTexCreateMipMap(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Blur.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Blur.Get(), m_pRTView_Blur.GetAddressOf());
@@ -1750,6 +1805,28 @@ HRESULT Renderer::CreateBlendState()
 	bd.IndependentBlendEnable = FALSE;
 
 	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ALPHABLEND].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	rtb = {};
+	rtb.BlendEnable = TRUE;
+	rtb.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtb.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rtb.BlendOp = D3D11_BLEND_OP_ADD;
+	rtb.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtb.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd = {};
+	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = FALSE;
+	bd.IndependentBlendEnable = FALSE;
+
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::ALPHABLEND_WALL].GetAddressOf());
 	if (FAILED(hr))
 	{
 		ERROR_MSG_HR(hr);
