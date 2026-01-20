@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Object.h"
+#include "UIPrimitives.h"
 #include <windows.h>
 
 class UIObject : public Object
@@ -39,6 +40,22 @@ public:
 	}
 	bool IsVisible();
 
+	void SetBounds(const UIRect& bounds)
+	{
+		m_Bounds = bounds;
+		m_HasBounds = true;
+	}
+
+	const UIRect& GetBounds() const 
+	{
+		return m_Bounds;
+	}
+
+	bool HasBounds() const
+	{
+		return m_HasBounds;
+	}
+
 	// UI 오브젝트 컴포넌트 추가/삭제 시 플래그 갱신 예시 (UIObject 내부)
 	void UpdateInteractableFlags();
 	
@@ -52,5 +69,8 @@ protected:
 	int  m_ZOrder = 0;
 	bool m_IsFullScreen = false;
 	bool m_IsVisible = true;
+
+	UIRect m_Bounds{};
+	bool m_HasBounds = false;
 };
 

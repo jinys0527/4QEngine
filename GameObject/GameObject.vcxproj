@@ -241,6 +241,10 @@
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimBlendCurveFunction.h" />
     <ClInclude Include="AnimFSMComponent.h" />
+    <ClInclude Include="Border.h" />
+    <ClInclude Include="Canvas.h" />
+    <ClInclude Include="UIPrimitives.h" />
+    <ClInclude Include="HorizontalBox.h" />
     <ClInclude Include="RectLightComponent.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraObject.h" />
@@ -262,7 +266,9 @@
     <ClInclude Include="PointLightComponent.h" />
     <ClInclude Include="Reflection.h" />
     <ClInclude Include="ReflectionMacro.h" />
+    <ClInclude Include="ScaleBox.h" />
     <ClInclude Include="Serializer.h" />
+    <ClInclude Include="SizeBox.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="SkeletalMeshRenderer.h" />
     <ClInclude Include="SpotLightComponent.h" />
@@ -278,6 +284,9 @@
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
     <ClCompile Include="AnimFSMComponent.cpp" />
+    <ClCompile Include="Border.cpp" />
+    <ClCompile Include="Canvas.cpp" />
+    <ClCompile Include="HorizontalBox.cpp" />
     <ClCompile Include="RectLightComponent.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CameraObject.cpp" />
@@ -297,6 +306,8 @@
     <ClCompile Include="PlayerMovementComponent.cpp" />
     <ClCompile Include="PointLightComponent.cpp" />
     <ClCompile Include="Reflection.cpp" />
+    <ClCompile Include="ScaleBox.cpp" />
+    <ClCompile Include="SizeBox.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
     <ClCompile Include="SpotLightComponent.cpp" />

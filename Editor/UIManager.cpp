@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "UIManager.h"
 #include "Event.h"
+#include "UIButtonComponent.h"
+#include "UISliderComponent.h"
 #include <algorithm>
 
 UIManager::~UIManager()
@@ -154,11 +156,52 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
 	if (ui->hasButton)
 	{
+		auto buttons = ui->GetComponents<UIButtonComponent>();
+		for (auto* button : buttons)
+		{
+			if (!button)
+				continue;
 
+			if (type == EventType::Pressed)
+			{
+				button->HandlePressed();
+			}
+			else if (type == EventType::Released)
+			{
+				button->HandleReleased();
+			}
+			else if (type == EventType::Hovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				const bool isHovered = ui->HitCheck(mouseData->pos);
+				button->HandleHover(isHovered);
+			}
+		}
 	}
 	if (ui->hasSlider)
 	{
+		auto sliders = ui->GetComponents<UISliderComponent>();
+		for (auto* slider : sliders)
+		{
+			if (!slider)
+				continue;
 
+			if (type == EventType::Dragged)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				const auto bounds = ui->GetBounds();
+				float normalizedValue = 0.0f;
+				if (bounds.width > 0.0f)
+				{
+					normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+				}
+				slider->HandleDrag(normalizedValue);
+			}
+			else if (type == EventType::Released)
+			{
+				slider->HandleReleased();
+			}
+		}
 	}
 }
 

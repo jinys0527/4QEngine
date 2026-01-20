@@ -10,9 +10,6 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
@@ -58,9 +55,6 @@
     <ClCompile Include="FSMComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIFSMComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CollisionFSMComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
@@ -86,16 +80,37 @@
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIButtonComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIProgressBarComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UISliderComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
+      <Filter>Components\UI\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UITextComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UISliderComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIProgressBarComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Border.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Canvas.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIFSMComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HorizontalBox.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScaleBox.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SizeBox.cpp">
+      <Filter>Components\UI\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -154,9 +169,6 @@
     <ClInclude Include="TransformComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UIComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PlayerMovementComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
@@ -167,9 +179,6 @@
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FSMComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIFSMComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AnimBlendCurveFunction.h">
@@ -196,17 +205,41 @@
     <ClInclude Include="RectLightComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UISliderComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="UIButtonComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIProgressBarComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UISliderComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
+      <Filter>Components\UI\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UITextComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Canvas.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Border.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIFSMComponent.h">
       <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HorizontalBox.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScaleBox.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SizeBox.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIPrimitives.h">
+      <Filter>Components\UI\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -257,6 +290,15 @@
     </Filter>
     <Filter Include="Components\Utils\Source Files">
       <UniqueIdentifier>{c7443698-6f50-4d0f-9468-826b8502fc60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UI">
+      <UniqueIdentifier>{b5282095-d491-4302-80e9-ae9f28cadf13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UI\Header Files">
+      <UniqueIdentifier>{081c0552-1489-4e32-a7ce-5ade14fdc6e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UI\Source Files">
+      <UniqueIdentifier>{7ab5e483-4e88-45e3-92e1-8f135a320427}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

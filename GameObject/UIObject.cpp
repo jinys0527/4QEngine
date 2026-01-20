@@ -1,5 +1,7 @@
 ﻿#include "UIObject.h"
 #include "Object.h"
+#include "UIButtonComponent.h"
+#include "UISliderComponent.h"
 
 UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 {
@@ -151,7 +153,16 @@ UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 
 bool UIObject::HitCheck(const POINT& pos)
 {
-	return true;
+	if (!m_IsVisible)
+		return false;
+
+	if (!m_HasBounds)
+		return true;
+
+	return pos.x >= m_Bounds.x
+		&& pos.y >= m_Bounds.y
+		&& pos.x <= (m_Bounds.x + m_Bounds.width)
+		&& pos.y <= (m_Bounds.y + m_Bounds.height);
 }
 
 bool UIObject::IsFullScreen()
@@ -166,5 +177,6 @@ bool UIObject::IsVisible()
 
 void UIObject::UpdateInteractableFlags()
 {
-
+	hasButton = !GetComponents<UIButtonComponent>().empty();
+	hasSlider = !GetComponents<UISliderComponent>().empty();
 }

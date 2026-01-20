@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include "UIManager.h"
 #include "Event.h"
+#include "UIButtonComponent.h"
+#include "UISliderComponent.h"
 #include <algorithm>
 
 UIManager::~UIManager()
@@ -10,10 +12,33 @@ UIManager::~UIManager()
 
 void UIManager::Start()
 {
-	m_EventDispatcher.AddListener(EventType::Pressed, this);
-	m_EventDispatcher.AddListener(EventType::Hovered, this);
-	m_EventDispatcher.AddListener(EventType::Dragged, this);
-	m_EventDispatcher.AddListener(EventType::Released, this);
+
+}
+
+void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
+{
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Pressed))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Pressed, this);
+	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Hovered))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Hovered, this);
+	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Dragged))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Dragged, this);
+	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Released))
+	{
+		m_EventDispatcher->RemoveListener(EventType::Released, this);
+	}
+
+	m_EventDispatcher = eventDispatcher;
+	m_EventDispatcher->AddListener(EventType::Pressed, this);
+	m_EventDispatcher->AddListener(EventType::Hovered, this);
+	m_EventDispatcher->AddListener(EventType::Dragged, this);
+	m_EventDispatcher->AddListener(EventType::Released, this);
 }
 
 
@@ -131,11 +156,52 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
 	if (ui->hasButton)
 	{
+		auto buttons = ui->GetComponents<UIButtonComponent>();
+		for (auto* button : buttons)
+		{
+			if (!button)
+				continue;
 
+			if (type == EventType::Pressed)
+			{
+				button->HandlePressed();
+			}
+			else if (type == EventType::Released)
+			{
+				button->HandleReleased();
+			}
+			else if (type == EventType::Hovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				const bool isHovered = ui->HitCheck(mouseData->pos);
+				button->HandleHover(isHovered);
+			}
+		}
 	}
 	if (ui->hasSlider)
 	{
+		auto sliders = ui->GetComponents<UISliderComponent>();
+		for (auto* slider : sliders)
+		{
+			if (!slider)
+				continue;
 
+			if (type == EventType::Dragged)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				const auto bounds = ui->GetBounds();
+				float normalizedValue = 0.0f;
+				if (bounds.width > 0.0f)
+				{
+					normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+				}
+				slider->HandleDrag(normalizedValue);
+			}
+			else if (type == EventType::Released)
+			{
+				slider->HandleReleased();
+			}
+		}
 	}
 }
 
@@ -168,10 +234,6 @@ void UIManager::RefreshUIListForCurrentScene()
 
 void UIManager::Reset()
 {
-	m_EventDispatcher.RemoveListener(EventType::Pressed, this);
-	m_EventDispatcher.RemoveListener(EventType::Hovered, this);
-	m_EventDispatcher.RemoveListener(EventType::Dragged, this);
-	m_EventDispatcher.RemoveListener(EventType::Released, this);
 	m_UIObjects.clear();
 	m_ActiveUI = nullptr;
 }

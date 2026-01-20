@@ -10,6 +10,7 @@
 #include "MeshComponent.h"
 #include "FSMComponent.h"
 #include "AnimationComponent.h"
+#include "UIPrimitives.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -80,6 +81,67 @@ struct Serializer<XMFLOAT2> {
 //	static void ToJson(nlohmann::json& j, const MyEnum& v) { j = static_cast<int>(v); }
 //	static void FromJson(const nlohmann::json& j, MyEnum& v) { v = static_cast<MyEnum>(j.get<int>()); }
 //};
+
+// UI
+template<>
+struct Serializer<UISize> {
+	static void ToJson(nlohmann::json& j, const UISize& v) {
+		j = { {"width", v.width}, {"height", v.height} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UISize& v) {
+		v.width  = j.value("width", 0.0f);
+		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIRect> {
+	static void ToJson(nlohmann::json& j, const UIRect& v) {
+		j = { {"x", v.x}, {"y", v.y}, {"width", v.width}, {"height", v.height} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UIRect& v) {
+		v.x      = j.value("x", 0.0f);
+		v.y      = j.value("y", 0.0f);
+		v.width  = j.value("width", 0.0f);
+		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIPadding> {
+	static void ToJson(nlohmann::json& j, const UIPadding& v) {
+		j = { {"left", v.left}, {"top", v.top}, {"right", v.right}, {"bottom", v.bottom} };
+	}
+	static void FromJson(const nlohmann::json& j, UIPadding& v) {
+		v.left   = j.value("left", 0.0f);
+		v.top    = j.value("top", 0.0f);
+		v.right  = j.value("right", 0.0f);
+		v.bottom = j.value("bottom", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIStretch> {
+	static void ToJson(nlohmann::json& j, const UIStretch& v) {
+		j = static_cast<int>(v); 
+	}
+	static void FromJson(const nlohmann::json& j, UIStretch& v) { 
+		v = static_cast<UIStretch>(j.get<int>()); 
+	}
+};
+
+template<>
+struct Serializer<UIStretchDirection> {
+	static void ToJson(nlohmann::json& j, const UIStretchDirection& v) { 
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIStretchDirection& v) {
+		v = static_cast<UIStretchDirection>(j.get<int>()); 
+	}
+};
+
 
 // Camera
 template<>

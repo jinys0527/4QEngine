@@ -50,6 +50,8 @@ public:
 
 	void Reset();
 
+	void SetEventDispatcher(EventDispatcher* eventDispatcher);
+
 	void SetCurrentScene(std::string currentSceneName) 
 	{
 		m_CurrentSceneName = currentSceneName;
@@ -77,7 +79,7 @@ private:
 	UIObject* m_LastHoveredUI = nullptr;
 	bool m_FullScreenUIActive = false;
 	int m_FullScreenZ = -1;
-	EventDispatcher& m_EventDispatcher; 
+	EventDispatcher* m_EventDispatcher; 
 	std::string m_CurrentSceneName;
 	void DispatchToTopUI(EventType type, const void* data);
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>> m_UIObjects;
