@@ -1,0 +1,18 @@
+{
+  "animations": [
+    {
+      "file": "Anims/untitled_Armature_Armature_mixamo.com_Layer0_0.anim.json",
+      "name": "Armature_Armature_mixamo.com_Layer0_0"
+    }
+  ],
+  "files": {
+    "materials": "Mats/untitled.matbin",
+    "skeleton": "Skels/untitled.skelbin"
+  },
+  "meshes": [],
+  "name": "untitled",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  }
+}

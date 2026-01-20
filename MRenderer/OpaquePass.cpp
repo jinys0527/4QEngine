@@ -8,7 +8,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
 	//SetRenderTarget()		아래에서 카메라에 따라 처리
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+	SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 	SetBlendState(BS::DEFAULT);
 	SetRasterizerState(RS::CULLBACK);
 	SetDepthStencilState(DS::DEPTH_ON);
@@ -16,14 +16,14 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 #pragma endregion
 
-    SetCameraCB(frame);
-    if (m_RenderContext.isEditCam)
-    {
-        SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get());
-    }
-    else if (!m_RenderContext.isEditCam)
-    {
-        SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+	SetCameraCB(frame);
+	if (m_RenderContext.isEditCam)
+	{
+		SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get());
+	}
+	else if (!m_RenderContext.isEditCam)
+	{
+		SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get());
 
 		//임시 스카이박스 테스트
 		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
@@ -32,13 +32,13 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		SetDepthStencilState(DS::DEPTH_OFF);
 		m_RenderContext.DrawFullscreenQuad();
 		SetDepthStencilState(DS::DEPTH_ON);
-    }
+	}
 
 
-    //빛 상수 버퍼 set
-    SetDirLight(frame);
+	//빛 상수 버퍼 set
+	SetDirLight(frame);
 
-    //★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
+	//★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
 
 
 	//터레인 그리기
@@ -87,14 +87,14 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 			}
 			UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
 
-					m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
-				}
-				else if (m_RenderContext.pSkinCB)
-				{
-					m_RenderContext.SkinCBuffer.boneCount = 0;
-					UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
-					m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
-				}
+			m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
+		}
+		else if (m_RenderContext.pSkinCB)
+		{
+			m_RenderContext.SkinCBuffer.boneCount = 0;
+			UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
+			m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
+		}
 
 		const auto* vertexBuffers = m_RenderContext.vertexBuffers;
 		const auto* indexBuffers = m_RenderContext.indexBuffers;
@@ -202,6 +202,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				//DrawMesh(vb, ib, m_RenderContext.inputLayout.Get(), m_RenderContext.VS.Get(), m_RenderContext.PS.Get(), useSubMesh, indexCount, indexStart);
 				DrawMesh(vb, ib, vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
+
+				//DrawBones(vertexShader, pixelShader, m_RenderContext.SkinCBuffer.boneCount);
 			}
 		}
 	}
