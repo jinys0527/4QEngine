@@ -197,42 +197,17 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
-	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
-	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui.Get(), clearColor);
-	//m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
-
 	m_Pipeline.Execute(frame);
 
-	//그리드
-	//m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	//UpdateGrid(frame);
-	//DrawGrid();
-	
-
-	//rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Imgui.Get());
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
 
 
 	//edit카메라로 draw
 	m_IsEditCam = true;
 	m_RenderContext.isEditCam = m_IsEditCam;
-
-
-	SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
-	m_pDXDC->ClearRenderTargetView(m_pRTView_Imgui_edit.Get(), clearColor);
-	//m_pDXDC->ClearDepthStencilView(m_pDSViewScene_Depth.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);	//새로 생성한 깊이 버퍼
-
 	m_Pipeline.Execute(frame);
 
-	//그리드
-	//m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_Imgui_edit.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	//UpdateGrid(frame);
-	//DrawGrid();
-
-
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
-
-	ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_pDXDC.Get(), m_pRTView.Get(), m_pDSViewScene_Depth.Get(), 1, 0);
 }
 
 void Renderer::InitVB(const RenderData::FrameData& frame)

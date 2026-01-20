@@ -36,9 +36,30 @@ void RenderPass::SetSamplerState()
 	m_RenderContext.pDXDC->PSSetSamplers(4, 1, m_RenderContext.SState[SS::BORDER_SHADOW].GetAddressOf());
 }
 
+//클리어까지 동시 실행
 void RenderPass::SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview)
 {
-	m_RenderContext.pDXDC->OMSetRenderTargets(1, &rtview, dsview);
+	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
+
+	if (rtview)
+	{
+		m_RenderContext.pDXDC->OMSetRenderTargets(1, &rtview, dsview);
+		m_RenderContext.pDXDC->ClearRenderTargetView(rtview, clearColor);
+	}
+	else
+	{
+		m_RenderContext.pDXDC->OMSetRenderTargets(0, nullptr, dsview);
+	}
+
+	if (dsview)
+	{
+		m_RenderContext.pDXDC->ClearDepthStencilView(
+			dsview,
+			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+			1.0f,
+			0
+		);
+	}
 }
 
 void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
