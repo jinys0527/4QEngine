@@ -126,6 +126,11 @@ bool EditorApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 void EditorApplication::UpdateInput()
 {
 	ImGuiIO& io = ImGui::GetIO();
+
+	if (m_EditorState == EditorPlayState::Play) {
+		return;
+	}
+
 	if (!io.WantTextInput)
 	{
 		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))
@@ -678,6 +683,17 @@ void EditorApplication::DrawHierarchy() {
 
 			std::unordered_map<GameObject*, int> objectIds;
 			int nextId = 0;
+			std::string rootParentName;
+			if (auto* rootTransform = object->GetComponent<TransformComponent>())
+			{
+				if (auto* rootParent = rootTransform->GetParent())
+				{
+					if (auto* rootParentOwner = dynamic_cast<GameObject*>(rootParent->GetOwner()))
+					{
+						rootParentName = rootParentOwner->GetName();
+					}
+				}
+			}
 			std::vector<GameObject*> stack;
 			stack.push_back(object.get());
 			while (!stack.empty())
@@ -716,6 +732,14 @@ void EditorApplication::DrawHierarchy() {
 				current->Serialize(objectJson);
 				objectJson["clipboardId"] = currentId;
 				objectJson["parentId"] = parentId;
+        
+				if (isRoot && !rootParentName.empty())
+				{
+					objectJson["externalParentName"] = rootParentName;
+				}
+				const auto opacityIt = objectOpacity.find(current);
+				objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;
+
 				clipboard["objects"].push_back(std::move(objectJson));
 
 				if (!currentTransform)
@@ -769,7 +793,7 @@ void EditorApplication::DrawHierarchy() {
 			return true;
 		};
 
-
+	std::vector<std::string> pendingDeletes;
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -781,11 +805,14 @@ void EditorApplication::DrawHierarchy() {
 		{
 			pasteClipboardObject();
 		}
+		if (ImGui::IsKeyPressed(ImGuiKey_Delete) && selectedObject && *selectedObject)
+		{
+			pendingDeletes.push_back((*selectedObject)->GetName());
+		}
 	}
 
 
 	ImGui::Separator();
-	std::vector<std::string> pendingDeletes;
 
 	if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 	{
@@ -848,9 +875,9 @@ void EditorApplication::DrawHierarchy() {
 
 		if (childTransform->GetParent())
 		{
-			childTransform->DetachFromParentKeepLocal();
+			childTransform->DetachFromParentKeepWorld();
 		}
-		childTransform->SetParentKeepLocal(parentTransform);
+		childTransform->SetParentKeepWorld(parentTransform);
 
 		SceneStateSnapshot afterState = CaptureSceneState(scene);
 		m_UndoManager.Push(UndoManager::Command{
@@ -865,6 +892,37 @@ void EditorApplication::DrawHierarchy() {
 			}
 			});
 		};
+
+	auto detachObject = [&](const std::string& childName)
+		{
+			auto childObject = findObjectByName(childName);
+			if (!childObject)
+			{
+				return;
+			}
+
+			auto* childTransform = childObject->GetComponent<TransformComponent>();
+			if (!childTransform || !childTransform->GetParent())
+			{
+				return;
+			}
+
+			SceneStateSnapshot beforeState = CaptureSceneState(scene);
+			childTransform->DetachFromParentKeepWorld();
+			SceneStateSnapshot afterState = CaptureSceneState(scene);
+			m_UndoManager.Push(UndoManager::Command{
+				"Detach GameObject",
+				[this, beforeState]()
+				{
+					RestoreSceneState(beforeState);
+				},
+				[this, afterState]()
+				{
+					RestoreSceneState(afterState);
+				}
+				});
+		};
+
 
 	std::vector<GameObject*> rootObjects;
 	rootObjects.reserve(objectLookup.size());
@@ -1045,6 +1103,24 @@ void EditorApplication::DrawHierarchy() {
 		drawHierarchyNode(drawHierarchyNode, root);
 	}
 
+	const ImVec2 dropRegion = ImGui::GetContentRegionAvail();
+	if (dropRegion.x > 0.0f && dropRegion.y > 0.0f)
+	{
+		ImGui::InvisibleButton("##HierarchyDropTarget", dropRegion);
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
+			{
+				const char* payloadName = static_cast<const char*>(payload->Data);
+				if (payloadName)
+				{
+					detachObject(payloadName);
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
+
 	for (auto& pendingAdd : pendingAdds)
 	{
 		bool didAdd = false;
@@ -1068,35 +1144,60 @@ void EditorApplication::DrawHierarchy() {
 				m_SelectedObjectName = uniqueName;
 				didAdd = true;
 			}
-
 			for (const auto& objectJson : pendingAdd.data["objects"])
-			{
+				{
 				const int clipboardId = objectJson.value("clipboardId", -1);
 				const int parentId = objectJson.value("parentId", -1);
-				if (clipboardId < 0 || parentId < 0)
+				if (clipboardId < 0)
 				{
 					continue;
 				}
 
 				auto childIt = createdObjects.find(clipboardId);
-				auto parentIt = createdObjects.find(parentId);
-				if (childIt == createdObjects.end() || parentIt == createdObjects.end())
+				if (childIt == createdObjects.end())
 				{
 					continue;
 				}
 
 				auto* childTransform = childIt->second->GetComponent<TransformComponent>();
-				auto* parentTransform = parentIt->second->GetComponent<TransformComponent>();
-				if (!childTransform || !parentTransform)
+				if (!childTransform)
 				{
 					continue;
 				}
+
+				TransformComponent* parentTransform = nullptr;
+				if (parentId >= 0)
+				{
+					auto parentIt = createdObjects.find(parentId);
+					if (parentIt != createdObjects.end())
+					{
+						parentTransform = parentIt->second->GetComponent<TransformComponent>();
+					}
+				}
+				if (!parentTransform)
+				{
+					const std::string parentName = objectJson.value("externalParentName", "");
+					if (!parentName.empty())
+					{
+						auto parentObject = findObjectByName(parentName);
+						if (parentObject)
+						{
+							parentTransform = parentObject->GetComponent<TransformComponent>();
+						}
+					}
+				}
+				if (!parentTransform)
+				{
+					continue;
+				}
+
 				if (childTransform->GetParent())
 				{
 					childTransform->DetachFromParentKeepLocal();
 				}
 				childTransform->SetParentKeepLocal(parentTransform);
 			}
+				
 		}
 		else if (pendingAdd.data.contains("components") && pendingAdd.data["components"].is_array())
 		{
@@ -1565,7 +1666,7 @@ void EditorApplication::DrawFolderView()
 	{
 		ImGui::EndDisabled();
 	}
-	ImGui::EndDisabled();
+	
 	ImGui::SameLine();
 	if (m_CurrentScenePath.empty())
 	{
@@ -1829,10 +1930,12 @@ void EditorApplication::DrawFolderView()
 									});
 							}
 						}
+						
 					}
 					ImGui::PopID();
 				}
 			}
+			ImGui::EndDisabled();
 		};
 
 	drawDirectory(drawDirectory, m_ResourceRoot);
