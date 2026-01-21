@@ -1,0 +1,58 @@
+name=mixamo.com
+duration=8.33333
+ticksPerSecond=30
+tracks=52
+totalKeys=12302
+skippedEmptyTracks=0
+track[0] boneIndex=15 keys=251
+track[1] boneIndex=1 keys=251
+track[2] boneIndex=25 keys=251
+track[3] boneIndex=101 keys=251
+track[4] boneIndex=27 keys=251
+track[5] boneIndex=28 keys=251
+track[6] boneIndex=36 keys=251
+track[7] boneIndex=37 keys=1
+track[8] boneIndex=38 keys=251
+track[9] boneIndex=40 keys=251
+track[10] boneIndex=41 keys=251
+track[11] boneIndex=42 keys=251
+track[12] boneIndex=48 keys=251
+track[13] boneIndex=49 keys=251
+track[14] boneIndex=50 keys=251
+track[15] boneIndex=44 keys=251
+track[16] boneIndex=45 keys=251
+track[17] boneIndex=46 keys=251
+track[18] boneIndex=31 keys=251
+track[19] boneIndex=33 keys=1
+track[20] boneIndex=34 keys=251
+track[21] boneIndex=97 keys=251
+track[22] boneIndex=21 keys=251
+track[23] boneIndex=105 keys=251
+track[24] boneIndex=93 keys=251
+track[25] boneIndex=14 keys=251
+track[26] boneIndex=58 keys=251
+track[27] boneIndex=118 keys=251
+track[28] boneIndex=60 keys=251
+track[29] boneIndex=61 keys=251
+track[30] boneIndex=75 keys=251
+track[31] boneIndex=76 keys=251
+track[32] boneIndex=77 keys=251
+track[33] boneIndex=79 keys=251
+track[34] boneIndex=80 keys=251
+track[35] boneIndex=81 keys=251
+track[36] boneIndex=87 keys=251
+track[37] boneIndex=88 keys=251
+track[38] boneIndex=89 keys=251
+track[39] boneIndex=83 keys=251
+track[40] boneIndex=84 keys=251
+track[41] boneIndex=85 keys=251
+track[42] boneIndex=64 keys=251
+track[43] boneIndex=68 keys=1
+track[44] boneIndex=72 keys=251
+track[45] boneIndex=114 keys=251
+track[46] boneIndex=54 keys=251
+track[47] boneIndex=122 keys=251
+track[48] boneIndex=110 keys=251
+track[49] boneIndex=4 keys=251
+track[50] boneIndex=8 keys=251
+track[51] boneIndex=12 keys=251

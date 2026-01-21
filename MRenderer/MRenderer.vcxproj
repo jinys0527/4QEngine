@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BlurPass.cpp" />
+    <ClCompile Include="DebugLinePass.cpp" />
     <ClCompile Include="DepthPass.cpp" />
     <ClCompile Include="DX11.cpp" />
     <ClCompile Include="DXMath.cpp" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="BlurPass.h" />
     <ClInclude Include="Buffers.h" />
+    <ClInclude Include="DebugLinePass.h" />
     <ClInclude Include="DepthPass.h" />
     <ClInclude Include="DX11.h" />
     <ClInclude Include="DXMath.h" />
@@ -164,11 +166,23 @@
     <ClInclude Include="UIPass.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="fx\Animation.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="fx\BaseBuffer.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="fx\Demo.fx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Ani_PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Ani_VS.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>

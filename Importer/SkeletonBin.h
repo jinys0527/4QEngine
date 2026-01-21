@@ -6,7 +6,7 @@
 struct SkelBinHeader
 {
 	uint32_t magic                  = 0x534B454C; // "SKEL"
-	uint16_t version                = 2;
+	uint16_t version                = 3;
 	uint16_t boneCount              = 0;
 	uint32_t stringTableBytes       = 0;
 							        

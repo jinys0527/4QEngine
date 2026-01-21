@@ -6,7 +6,7 @@
 #include "PostPass.h"
 #include "FrustumPass.h"
 #include "RenderTargetContext.h"
-
+#include "DebugLinePass.h"
 #include "Renderer.h"
 
 #include <algorithm>
@@ -133,7 +133,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
-
+	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
 
 
