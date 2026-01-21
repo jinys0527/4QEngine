@@ -131,6 +131,12 @@ struct VSOutput_PBR
     float4 T : TEXCOORD4;
 };
 
+//임시 반드시 지울것
+struct VSOutputLine
+{
+    float4 pos : SV_POSITION;
+};
+
 //ShaderResourceView
 Texture2D g_RTView : register(t0);
 Texture2D g_Blur : register(t1);

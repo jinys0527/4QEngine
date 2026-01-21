@@ -43,6 +43,12 @@ public:
 		UINT indexCount,
 		UINT indexStart
 	);
+
+	void DrawBones(
+		ID3D11VertexShader* vs,
+		ID3D11PixelShader* ps,
+		UINT boneCount
+	);
 protected:
 	struct RenderQueueItem
 	{
