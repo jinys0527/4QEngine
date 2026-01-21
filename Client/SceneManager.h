@@ -61,6 +61,6 @@ private:
 	std::filesystem::path scenesPath = "../Resources/Scenes"; //Resource 파일 경로
 	bool m_ShouldQuit = false;
 
-	std::string m_ChangeSceneName;
+	std::string m_ChangeSceneName = "";
 };
 

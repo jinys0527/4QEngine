@@ -107,6 +107,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -121,20 +135,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Box"
@@ -227,20 +227,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -255,6 +241,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 }
             ],
             "name": "Box1",
@@ -462,9 +462,25 @@
                 },
                 {
                     "data": {
-                        "Speed": 5.0
+                        "BlendConfig": {
+                            "blendTime": 0.20000000298023224,
+                            "blendType": 0,
+                            "curveName": "Linear",
+                            "fromClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "toClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            }
+                        },
+                        "ClipHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                        }
                     },
-                    "type": "PlayerMovementComponent"
+                    "type": "AnimationComponent"
                 },
                 {
                     "data": {
@@ -489,25 +505,9 @@
                 },
                 {
                     "data": {
-                        "BlendConfig": {
-                            "blendTime": 0.20000000298023224,
-                            "blendType": 0,
-                            "curveName": "Linear",
-                            "fromClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            },
-                            "toClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            }
-                        },
-                        "ClipHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        }
+                        "Speed": 5.0
                     },
-                    "type": "AnimationComponent"
+                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {

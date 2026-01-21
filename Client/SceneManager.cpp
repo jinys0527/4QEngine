@@ -155,7 +155,11 @@ void SceneManager::ChangeScene(const std::string& name)
 
 void SceneManager::ChangeScene()
 {
-	ChangeScene(m_ChangeSceneName);
+	// 현재 이름과 다르면 Change 
+	if (m_ChangeSceneName == m_CurrentScene->GetName()) {
+		ChangeScene(m_ChangeSceneName);
+		m_ChangeSceneName = "";
+	}
 }
 
 void SceneManager::SetChangeScene(std::string name)

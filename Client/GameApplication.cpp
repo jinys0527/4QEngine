@@ -32,6 +32,9 @@ bool GameApplication::Initialize()
 	m_Services.Get<SoundManager>().Init();
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
+	// GameManager에 SceneManager 등록
+
+	//Component에서 GameManager(singleton) ChangeScene(" ")호출 -> 등록된 SceneManager 의 SetChangeScene 호출
 	
 	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 
@@ -74,6 +77,7 @@ bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void GameApplication::UpdateLogic()
 {
+	m_SceneManager.ChangeScene();
 }
 
 void GameApplication::Update()
