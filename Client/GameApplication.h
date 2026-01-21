@@ -42,11 +42,13 @@ private:
 
 	float m_fFrameCount;
 	float m_GameSpeed = 1.0f;
-
+	RenderTargetContext   m_SceneRenderTarget;
 	ServiceRegistry& m_Services;
 	Engine&			 m_Engine;
 	Renderer&		 m_Renderer;
 	SceneManager&	 m_SceneManager;
 	InputManager&    m_InputManager;
+	AssetLoader* m_AssetLoader;
+	SoundManager* m_SoundManager;
 };
 

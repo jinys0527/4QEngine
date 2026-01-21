@@ -18,7 +18,7 @@ void SceneManager::Initialize()
 	m_GameManager = &m_Services.Get<GameManager>();
 	m_InputManager = &m_Services.Get<InputManager>();
 
-	std::filesystem::path scenesPath = std::filesystem::path("Resources") / "Scenes";
+	std::filesystem::path scenesPath = "../Resources/Scenes";
 	LoadGameScenesFromDirectory(scenesPath);
 	if (!m_CurrentScene)
 	{
@@ -59,12 +59,7 @@ void SceneManager::Render()
 
 	RenderData::FrameData frameData{};
 	m_CurrentScene->Render(frameData);
-	//m_Renderer.Draw(frameData);
-	/*std::vector<RenderInfo> renderInfo;
-	std::vector<UIRenderInfo> uiRenderInfo;
-	std::vector<UITextInfo> uiTextInfo;
-	m_CurrentScene->Render(renderInfo, uiRenderInfo, uiTextInfo);
-	m_Renderer.Draw(renderInfo, uiRenderInfo, uiTextInfo);*/
+
 }
 
 std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shared_ptr<Scene> scene)
@@ -82,7 +77,7 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
-		std::cout << name << " Scene Find" << std::endl;
+		
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
 		m_Camera = m_CurrentScene->GetGameCamera().get();
@@ -157,6 +152,7 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 		std::cout << "Unvaild directory" << std::endl;
 		return;
 	}
+
 	std::vector<std::filesystem::path> sceneFiles;
 	for (const auto& entry : std::filesystem::directory_iterator(directoryPath))
 	{
@@ -175,8 +171,11 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 	}
 
 	std::sort(sceneFiles.begin(), sceneFiles.end());
+
+
 	for (const auto& path : sceneFiles)
 	{
+		std::cout << path << " Scene Find" << std::endl;
 		LoadGameSceneFromJson(path);
 	}
 
@@ -189,7 +188,6 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 
 bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 {
-	std::cout << "Start Load Scene" << std::endl;
 	if (filepath.empty()) {
 		std::cout << "No Scene Name"<<std::endl;
 		return false;

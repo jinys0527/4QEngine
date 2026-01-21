@@ -187,8 +187,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
 {
 	EnsureMeshBuffers(frame);
+	//메인 카메라로 draw
+	m_IsEditCam = false;
+	m_RenderContext.isEditCam = m_IsEditCam;
 	m_Pipeline.Execute(frame);
-	Flip(m_pSwapChain.Get());
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)

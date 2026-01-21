@@ -19,13 +19,19 @@ bool GameApplication::Initialize()
 	{
 		return false;
 	}
+	m_Engine.CreateDevice(m_hwnd);
 
-	//m_Renderer.Initialize(m_hwnd);
-	//m_Engine.GetAssetManager().Init(L"../Resource");
-	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
+	m_AssetLoader = &m_Services.Get<AssetLoader>();
+	m_AssetLoader->LoadAll();
+	m_SoundManager = &m_Services.Get<SoundManager>();
+	m_SoundManager->Init();
+
 	m_Services.Get<SoundManager>().Init();
+	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
-	//m_InputManager = &m_Services.Get<InputManager>();
+	
+	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+
 	return true;
 }
 
@@ -89,6 +95,7 @@ void GameApplication::Update()
 
 void GameApplication::Render()
 {
+	if (!m_Engine.GetD3DDXDC()) return;
 	//m_Engine.GetRenderer().RenderBegin();
 
 	m_SceneManager.Render();
