@@ -12,6 +12,7 @@ VSOutput_PBR VS_Main(VSInput_PNUT input)
     
     float4 nrm;
     nrm = float4(input.nrm, 0.0f);
+    nrm = mul(nrm, mWorldInvTranspose);
     
     float3 eR = float3(1, 1, 1);
     
