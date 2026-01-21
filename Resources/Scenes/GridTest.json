@@ -1,0 +1,2649 @@
+{
+    "editor": {
+        "EditorCamera": {
+            "eye": {
+                "x": -4.010689735412598,
+                "y": 6.570236682891846,
+                "z": -6.292079448699951
+            },
+            "look": {
+                "x": -3.3941688537597656,
+                "y": 6.021509647369385,
+                "z": -5.727455139160156
+            },
+            "up": {
+                "x": 0.4046661853790283,
+                "y": 0.8360016345977783,
+                "z": 0.3706030249595642
+            }
+        }
+    },
+    "gameObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Color": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "Direction": {
+                            "x": 0.0,
+                            "y": -1.0,
+                            "z": 0.0
+                        },
+                        "Intensity": 1.0,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "type": "DirectionalLightComponent"
+                }
+            ],
+            "name": "DirectionalLight"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -4.010689735412598,
+                            "y": 6.570236682891846,
+                            "z": -6.292079448699951
+                        },
+                        "Rotation": {
+                            "w": 0.8769283890724182,
+                            "x": 0.2620880901813507,
+                            "y": 0.38600197434425354,
+                            "z": -0.11536465585231781
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": -4.010689735412598,
+                            "y": 6.570236682891846,
+                            "z": -6.292079448699951
+                        },
+                        "FarZ": 1000.0,
+                        "Look": {
+                            "x": -3.3941688537597656,
+                            "y": 6.021509647369385,
+                            "z": -5.727455139160156
+                        },
+                        "NearZ": 0.10000000149011612,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7846534252166748,
+                            "fov": 0.7853981852531433
+                        },
+                        "Up": {
+                            "x": 0.4046661853790283,
+                            "y": 0.8360016345977783,
+                            "z": 0.3706030249595642
+                        },
+                        "Viewport": {
+                            "height": 808.0,
+                            "width": 1442.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Editor Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.36654311418533325,
+                            "z": 1.5466344356536865
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                }
+            ],
+            "name": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -11.0
+                        },
+                        "Rotation": {
+                            "w": 0.9914448857307434,
+                            "x": 0.13052619993686676,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -11.0
+                        },
+                        "FarZ": 100.0,
+                        "Look": {
+                            "x": 0.0,
+                            "y": 3.741180896759033,
+                            "z": -10.034073829650879
+                        },
+                        "NearZ": 1.0,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7846534252166748,
+                            "fov": 0.7853981852531433
+                        },
+                        "Up": {
+                            "x": 0.0,
+                            "y": 0.9659257531166077,
+                            "z": 0.2588190734386444
+                        },
+                        "Viewport": {
+                            "height": 808.0,
+                            "width": 1442.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Main Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.2537464201450348,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 2.0,
+                            "y": 0.0,
+                            "z": -0.004998654127120972
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile1",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 7.264401435852051,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile2",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 1.1161001920700073,
+                            "y": 0.0,
+                            "z": -1.532374382019043
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile3",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.2537464201450348,
+                            "y": 0.0,
+                            "z": -3.045780658721924
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile4",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 2.862353801727295,
+                            "y": 0.0,
+                            "z": -1.5373730659484863
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile11",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 3.7472288608551025,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile12",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 2.0,
+                            "y": 0.0,
+                            "z": -3.050779342651367
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile13",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 8.126754760742188,
+                            "y": 0.0,
+                            "z": -1.532374382019043
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile21",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 7.264401435852051,
+                            "y": 0.0,
+                            "z": -3.045780658721924
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile22",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 1.1161001920700073,
+                            "y": 0.0,
+                            "z": -4.578154563903809
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile31",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 5.495195388793945,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile111",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 2.862353801727295,
+                            "y": 0.0,
+                            "z": -4.58315372467041
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile112",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 4.609582901000977,
+                            "y": 0.0,
+                            "z": -1.532374382019043
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile121",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 3.7472288608551025,
+                            "y": 0.0,
+                            "z": -3.045780658721924
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile122",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 8.126754760742188,
+                            "y": 0.0,
+                            "z": -4.578154563903809
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile211",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 6.35754919052124,
+                            "y": 0.0,
+                            "z": -1.532374382019043
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile1111",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 5.495195388793945,
+                            "y": 0.0,
+                            "z": -3.045780658721924
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile1112",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 4.609582901000977,
+                            "y": 0.0,
+                            "z": -4.578154563903809
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "name": "Tile1211",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 6.35754919052124,
+                            "y": 0.0,
+                            "z": -4.578154563903809
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\HexTile_01\\Meta\\HexTile_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Tile11111",
+            "parent": "Grid"
+        }
+    ]
+}
