@@ -52,7 +52,7 @@ cbuffer LightBuffer : register(b2)
 
 cbuffer SkinningBuffer : register(b3)
 {
-    matrix bones[128];
+    matrix bones[256];
     uint count;
     float3 skinningpadding;
 };
