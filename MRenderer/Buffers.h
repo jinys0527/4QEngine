@@ -56,7 +56,7 @@ struct LightConstBuffer
 	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
-constexpr size_t kMaxSkinningBones = 128;
+constexpr size_t kMaxSkinningBones = 256;
 
 struct SkinningConstBuffer
 {

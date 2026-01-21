@@ -264,6 +264,34 @@ void RenderPass::DrawMesh(
 	}
 }
 
+void RenderPass::DrawBones(ID3D11VertexShader* vs, ID3D11PixelShader* ps, UINT boneCount)
+{
+	ID3D11DeviceContext* dc = m_RenderContext.pDXDC.Get();
+
+	// VB/IB 안 씀
+	dc->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	dc->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
+
+	// InputLayout 필요 없음 (SV_VertexID만 사용)
+	dc->IASetInputLayout(nullptr);
+
+	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	dc->VSSetShader(vs, nullptr, 0);
+	dc->PSSetShader(ps, nullptr, 0);
+
+	// 기존 CB들
+	dc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+	dc->PSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+	dc->VSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
+	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
+	dc->VSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+	dc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+
+	// 본 N개 -> 라인 버텍스 2N개
+	dc->Draw(boneCount * 2, 0);
+}
+
 bool RenderPass::ShouldIncludeRenderItem(RenderData::RenderLayer /*layer*/, const RenderData::RenderItem& /*item*/) const 
 {
 	return false;
