@@ -10,7 +10,7 @@ public:
 	GameManager();
 	~GameManager();
 
-	void SetEventDispatcher(EventDispatcher& eventDispatcher) { m_EventDispatcher = eventDispatcher; }
+	void SetEventDispatcher(EventDispatcher& eventDispatcher) { m_EventDispatcher = &eventDispatcher; }
 
 	void Reset();
 
@@ -20,6 +20,6 @@ public:
 
 private:
 
-	EventDispatcher& m_EventDispatcher;
+	EventDispatcher* m_EventDispatcher = nullptr;
 };
 

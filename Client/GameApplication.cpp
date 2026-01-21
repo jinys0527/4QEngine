@@ -12,16 +12,15 @@
 
 bool GameApplication::Initialize()
 {
-	const wchar_t* className = L"PDA";
-	const wchar_t* windowName = L"PDA";
+	const wchar_t* className = L"APT";
+	const wchar_t* windowName = L"APT";
 
-	if (false == Create(className, windowName, 1920, 1080))
+	if (false == Create(className, windowName, 1920, 1080)) // 해상도 변경
 	{
 		return false;
 	}
 
 	//m_Renderer.Initialize(m_hwnd);
-
 	//m_Engine.GetAssetManager().Init(L"../Resource");
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
 	m_Services.Get<SoundManager>().Init();
@@ -99,11 +98,6 @@ void GameApplication::Render()
 	m_SceneManager.Render();
 
 	//m_Engine.GetRenderer().RenderEnd(false);
-
-#ifdef _EDITOR
-	RenderImGUI();
-#endif
-
 	//m_Engine.GetRenderer().Present();
 }
 

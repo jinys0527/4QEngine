@@ -2,7 +2,7 @@
 #include <iostream>
 #include "GameManager.h"
 
-GameManager::GameManager(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher)
+GameManager::GameManager()
 {
 
 }

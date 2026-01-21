@@ -1,6 +1,8 @@
 ﻿#pragma once
+// Game / Client 용
 #include <memory>
 #include <unordered_map>
+#include <filesystem>
 #include <string>
 #include "Scene.h"
 
@@ -8,6 +10,8 @@ class ServiceRegistry;
 class GameManager;
 class UIManager;
 class CameraObject;
+class InputManager; 
+
 
 class SceneManager
 {
@@ -45,12 +49,15 @@ public:
 
 private:
 	ServiceRegistry& m_Services;
+	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath);
+	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	CameraObject*   m_Camera = nullptr;
 	GameManager*	m_GameManager;
 	UIManager*		m_UIManager;
+	InputManager*	m_InputManager;
 	
 	bool m_ShouldQuit = false;
 

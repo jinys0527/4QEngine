@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿// Game / Client
+#include "pch.h"
 #include "EditorApplication.h"
 #include "CameraObject.h"
 #include "CameraComponent.h"

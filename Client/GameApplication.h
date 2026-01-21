@@ -8,12 +8,14 @@ class Engine;
 class Renderer;
 class SceneManager;
 class GameObject;
+class InputManager;
 
 class GameApplication : public NzWndBase
 {
 
 public:
-	GameApplication(ServiceRegistry& serviceRegistry, Engine& engine, Renderer& renderer, SceneManager& sceneManager) : NzWndBase(), m_Services(serviceRegistry), m_Engine(engine), m_Renderer(renderer), m_SceneManager(sceneManager) { }
+	GameApplication(ServiceRegistry& serviceRegistry, Engine& engine, Renderer& renderer, SceneManager& sceneManager, InputManager& InputManager) : 
+		NzWndBase(), m_Services(serviceRegistry), m_Engine(engine), m_Renderer(renderer), m_SceneManager(sceneManager), m_InputManager(InputManager) { }
 	virtual ~GameApplication() = default;
 
 	bool Initialize();
@@ -23,12 +25,11 @@ public:
 	bool OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) override;
 
 private:
-	void UpdateInput();
+	//void UpdateInput();
 	void UpdateLogic();
 	void Update();
 
 	void Render();
-	void RenderImGUI();
 	
 	void OnResize(int width, int height) override;
 	void OnClose() override;
@@ -45,6 +46,6 @@ private:
 	Engine&			 m_Engine;
 	Renderer&		 m_Renderer;
 	SceneManager&	 m_SceneManager;
-	InputManager*    m_InputManager;
+	InputManager&    m_InputManager;
 };
 
