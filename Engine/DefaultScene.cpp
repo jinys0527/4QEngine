@@ -68,12 +68,7 @@ void DefaultScene::FixedUpdate()
 }
 
 void DefaultScene::Update(float deltaTime)
-{	// ★★★★★★★★★★★★★★★★★★★★★★★★★
-	// Object Update를 따로 하면 문제 생길 수 있음 
-	// 투명 끝나고 -> 불투명 Update 하면. Logic에서 문제 생길 수 도 
-	// 문제 생기는 경우
-	// Upcasting 하던가, GameObject 자체에 멤버로 투명 불투병 bool 갖고, 이거 따라서 분류해서 Render 주던가
-
+{	
 	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)

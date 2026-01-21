@@ -2,6 +2,11 @@
  
 #include "NzWndBase.h"
 #include <wrl/client.h>
+#include "RenderData.h"
+#include "Engine.h"
+#include "RenderTargetContext.h"
+
+
 
 class ServiceRegistry;
 class Engine;
@@ -9,6 +14,8 @@ class Renderer;
 class SceneManager;
 class GameObject;
 class InputManager;
+class AssetLoader;
+class SoundManager;
 
 class GameApplication : public NzWndBase
 {
@@ -39,15 +46,20 @@ private:
 	//GameObject* m_Obstacle;
 
 
-
-	float m_fFrameCount;
 	float m_GameSpeed = 1.0f;
+	float m_fFrameCount = 0.0f;
+	UINT64 m_FrameIndex = 0;
+	
 	RenderTargetContext   m_SceneRenderTarget;
 	ServiceRegistry& m_Services;
 	Engine&			 m_Engine;
 	Renderer&		 m_Renderer;
+
+	RenderData::FrameData m_FrameData;
+
 	SceneManager&	 m_SceneManager;
 	InputManager&    m_InputManager;
+
 	AssetLoader* m_AssetLoader;
 	SoundManager* m_SoundManager;
 };

@@ -211,6 +211,41 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
 }
+//Backbuffer Draw
+void Renderer::RenderToBackBuffer()
+{
+	ID3D11DeviceContext* dxdc = m_pDXDC.Get();
+	if (!dxdc || !m_pRTView || !m_pTexRvScene_Post)
+	{
+		return;
+	}
+
+	dxdc->OMSetRenderTargets(1, m_pRTView.GetAddressOf(), nullptr);
+	SetViewPort(m_WindowSize.width, m_WindowSize.height, dxdc);
+
+	dxdc->OMSetBlendState(m_BState[BS::DEFAULT].Get(), nullptr, 0xFFFFFFFF);
+	dxdc->RSSetState(m_RState[RS::SOLID].Get());
+	dxdc->OMSetDepthStencilState(m_DSState[DS::DEPTH_OFF].Get(), 0);
+
+	dxdc->PSSetSamplers(0, 1, m_SState[SS::WRAP].GetAddressOf());
+	dxdc->PSSetSamplers(1, 1, m_SState[SS::MIRROR].GetAddressOf());
+	dxdc->PSSetSamplers(2, 1, m_SState[SS::CLAMP].GetAddressOf());
+	dxdc->PSSetSamplers(3, 1, m_SState[SS::BORDER].GetAddressOf());
+	dxdc->PSSetSamplers(4, 1, m_SState[SS::BORDER_SHADOW].GetAddressOf());
+
+	dxdc->VSSetShader(m_pVS_FSTriangle.Get(), nullptr, 0);
+	dxdc->PSSetShader(m_pPS_Quad.Get(), nullptr, 0);
+	dxdc->PSSetShaderResources(0, 1, m_pTexRvScene_Post.GetAddressOf());
+
+	if (m_RenderContext.DrawFSTriangle)
+	{
+		m_RenderContext.DrawFSTriangle();
+	}
+
+	ID3D11ShaderResourceView* nullSrv = nullptr;
+	dxdc->PSSetShaderResources(0, 1, &nullSrv);
+}
+
 
 void Renderer::InitVB(const RenderData::FrameData& frame)
 {

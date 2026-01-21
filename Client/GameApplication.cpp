@@ -8,6 +8,8 @@
 #include "ServiceRegistry.h"
 #include "SoundManager.h"
 #include "InputManager.h"
+#include "CameraComponent.h"
+#include "CameraObject.h"
 
 
 bool GameApplication::Initialize()
@@ -43,9 +45,9 @@ void GameApplication::Run()
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			/*if (false == m_InputManager->OnHandleMessage(msg))
-				TranslateMessage(&msg);*/
-
+			if (false == m_InputManager.OnHandleMessage(msg)) {
+				TranslateMessage(&msg);
+			}
 			DispatchMessage(&msg);
 		}
 		else
@@ -98,10 +100,32 @@ void GameApplication::Render()
 	if (!m_Engine.GetD3DDXDC()) return;
 	//m_Engine.GetRenderer().RenderBegin();
 
-	m_SceneManager.Render();
+	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
-	//m_Engine.GetRenderer().RenderEnd(false);
-	//m_Engine.GetRenderer().Present();
+	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	if (auto gameCamera = scene->GetGameCamera())
+	{
+		if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
+		{
+			cameraComponent->SetViewport({ static_cast<float>(m_width), static_cast<float>(m_height) });
+		}
+	}
+
+	scene->Render(m_FrameData);
+	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
+	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
+	m_Renderer.RenderFrame(m_FrameData);
+	m_Renderer.RenderToBackBuffer();
+	Flip(m_Renderer.GetSwapChain().Get());
 }
 
 
