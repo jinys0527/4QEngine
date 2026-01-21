@@ -2480,6 +2480,24 @@ void EditorApplication::DrawUIEditorPreview()
 	ImGui::TextDisabled("UI Editor Preview");
 	ImGui::Separator();
 
+	ImGui::BeginDisabled(m_EditorState == EditorPlayState::Play || m_EditorState == EditorPlayState::Pause);
+	if (ImGui::Button("Save Scene"))
+	{
+		auto scene = m_SceneManager.GetCurrentScene();
+		if (scene)
+		{
+			std::filesystem::path savePath = m_CurrentScenePath;
+			if (savePath.empty())
+			{
+				savePath = m_ResourceRoot / (scene->GetName() + ".json");
+			}
+			m_PendingSavePath = savePath;
+			m_OpenSaveConfirm = true;
+		}
+	}
+	ImGui::EndDisabled();
+	ImGui::Separator();
+
 	ImGui::Columns(2, "UIDemoColumns", true);
 
 	ImGui::BeginChild("WidgetTreePanel", ImVec2(0, 0), true);
@@ -2896,6 +2914,163 @@ void EditorApplication::DrawUIEditorPreview()
 					return pointerHash ^ (nameHash + 0x9e3779b97f4a7c15ULL + (pointerHash << 6) + (pointerHash >> 2));
 				};
 
+			struct GroupEditSnapshot
+			{
+				std::unordered_map<std::string, nlohmann::json> beforeSnapshots;
+				std::unordered_map<std::string, UIRect> startWorldBounds;
+				UIRect startBounds{};
+				bool updated = false;
+			};
+			static std::unordered_map<size_t, GroupEditSnapshot> pendingGroupEdits;
+			static size_t lastGroupSelectionHash = 0;
+
+			auto captureGroupSnapshots = [&](const std::unordered_set<std::string>& names,
+				std::unordered_map<std::string, nlohmann::json>& outSnapshots)
+				{
+					outSnapshots.clear();
+					if (it == uiObjectsByScene.end())
+					{
+						return;
+					}
+					for (const auto& name : names)
+					{
+						auto itObj = it->second.find(name);
+						if (itObj != it->second.end() && itObj->second)
+						{
+							nlohmann::json snapshot;
+							itObj->second->Serialize(snapshot);
+							outSnapshots.emplace(name, std::move(snapshot));
+						}
+					}
+				};
+
+			auto applyGroupSnapshots = [&](const std::unordered_map<std::string, nlohmann::json>& snapshots)
+				{
+					if (!uiManager)
+					{
+						return;
+					}
+					auto& map = uiManager->GetUIObjects();
+					auto itScene = map.find(sceneName);
+					if (itScene == map.end())
+					{
+						return;
+					}
+					for (const auto& [name, snapshot] : snapshots)
+					{
+						auto itObj = itScene->second.find(name);
+						if (itObj != itScene->second.end() && itObj->second)
+						{
+							itObj->second->DeSerialize(snapshot);
+							itObj->second->UpdateInteractableFlags();
+						}
+					}
+				};
+
+			auto pushUIGroupSnapshotUndo = [&](const std::string& label,
+				const std::unordered_map<std::string, nlohmann::json>& beforeSnapshots,
+				const std::unordered_map<std::string, nlohmann::json>& afterSnapshots)
+				{
+					m_UndoManager.Push(UndoManager::Command{
+						label,
+						[applyGroupSnapshots, beforeSnapshots]()
+						{
+							applyGroupSnapshots(beforeSnapshots);
+						},
+						[applyGroupSnapshots, afterSnapshots]()
+						{
+							applyGroupSnapshots(afterSnapshots);
+						}
+						});
+				};
+
+			auto getWorldBoundsForLayout = [&](const std::string& name,
+				const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+				auto&& getWorldBoundsRef,
+				std::unordered_map<std::string, UIRect>& cache,
+				std::unordered_set<std::string>& visiting) -> UIRect
+				{
+					auto cached = cache.find(name);
+					if (cached != cache.end())
+					{
+						return cached->second;
+					}
+
+					auto itObj = uiMap.find(name);
+					if (itObj == uiMap.end() || !itObj->second)
+					{
+						return UIRect{};
+					}
+
+					if (!visiting.insert(name).second)
+					{
+						return itObj->second->GetBounds();
+					}
+
+					const auto& uiObject = itObj->second;
+					UIRect local = uiObject->GetBounds();
+					const std::string& parentName = uiObject->GetParentName();
+					if (parentName.empty() || uiMap.find(parentName) == uiMap.end())
+					{
+						cache[name] = local;
+						visiting.erase(name);
+						return local;
+					}
+
+					UIRect parentBounds = getWorldBoundsRef(parentName, uiMap, getWorldBoundsRef, cache, visiting);
+					const UIAnchor anchorMin = uiObject->GetAnchorMin();
+					const UIAnchor anchorMax = uiObject->GetAnchorMax();
+					const UIAnchor pivot = uiObject->GetPivot();
+
+					const float anchorLeft = parentBounds.x + parentBounds.width * anchorMin.x;
+					const float anchorTop = parentBounds.y + parentBounds.height * anchorMin.y;
+					const float anchorRight = parentBounds.x + parentBounds.width * anchorMax.x;
+					const float anchorBottom = parentBounds.y + parentBounds.height * anchorMax.y;
+
+					const bool stretchX = anchorMin.x != anchorMax.x;
+					const bool stretchY = anchorMin.y != anchorMax.y;
+					const float baseWidth = stretchX ? (anchorRight - anchorLeft) : 0.0f;
+					const float baseHeight = stretchY ? (anchorBottom - anchorTop) : 0.0f;
+
+					const float width = stretchX ? (baseWidth + local.width) : local.width;
+					const float height = stretchY ? (baseHeight + local.height) : local.height;
+
+					UIRect world;
+					world.width = width;
+					world.height = height;
+					world.x = anchorLeft + local.x - width * pivot.x;
+					world.y = anchorTop + local.y - height * pivot.y;
+
+					cache[name] = world;
+					visiting.erase(name);
+					return world;
+				};
+
+			auto setLocalFromWorldForLayout = [&](UIObject& uiObject, const UIRect& worldBounds, const UIRect& parentBounds)
+				{
+					const UIAnchor anchorMin = uiObject.GetAnchorMin();
+					const UIAnchor anchorMax = uiObject.GetAnchorMax();
+					const UIAnchor pivot = uiObject.GetPivot();
+
+					const float anchorLeft = parentBounds.x + parentBounds.width * anchorMin.x;
+					const float anchorTop = parentBounds.y + parentBounds.height * anchorMin.y;
+					const float anchorRight = parentBounds.x + parentBounds.width * anchorMax.x;
+					const float anchorBottom = parentBounds.y + parentBounds.height * anchorMax.y;
+
+					const bool stretchX = anchorMin.x != anchorMax.x;
+					const bool stretchY = anchorMin.y != anchorMax.y;
+					const float baseWidth = stretchX ? (anchorRight - anchorLeft) : 0.0f;
+					const float baseHeight = stretchY ? (anchorBottom - anchorTop) : 0.0f;
+
+					UIRect local = uiObject.GetBounds();
+					local.width = stretchX ? (worldBounds.width - baseWidth) : worldBounds.width;
+					local.height = stretchY ? (worldBounds.height - baseHeight) : worldBounds.height;
+					local.x = worldBounds.x - anchorLeft + worldBounds.width * pivot.x;
+					local.y = worldBounds.y - anchorTop + worldBounds.height * pivot.y;
+					uiObject.SetBounds(local);
+				};
+
+
 			ImGui::SeparatorText("Layout");
 			ImGui::Text("Parent");
 			ImGui::SameLine();
@@ -2945,9 +3120,12 @@ void EditorApplication::DrawUIEditorPreview()
 			UIAnchor anchorMax = selectedObject->GetAnchorMax();
 			UIAnchor pivot = selectedObject->GetPivot();
 			float rotation = selectedObject->GetRotationDegrees();
+			UIRect bounds = selectedObject->GetBounds();
 			float anchorMinValues[2] = { anchorMin.x, anchorMin.y };
 			float anchorMaxValues[2] = { anchorMax.x, anchorMax.y };
 			float pivotValues[2] = { pivot.x, pivot.y };
+			float positionValues[2] = { bounds.x, bounds.y };
+			float sizeValues[2] = { bounds.width, bounds.height };
 
 			const bool anchorMinChanged = ImGui::DragFloat2("Anchor Min", anchorMinValues, 0.01f, 0.0f, 1.0f);
 			if (anchorMinChanged)
@@ -2976,6 +3154,230 @@ void EditorApplication::DrawUIEditorPreview()
 				selectedObject->SetRotationDegrees(rotation);
 			}
 			recordUILongEdit(makeUILayoutKey("Rotation"), rotationChanged, "Edit UI Rotation");
+
+			const bool positionChanged = ImGui::DragFloat2("Position", positionValues, 1.0f, -10000.0f, 10000.0f);
+			if (positionChanged)
+			{
+				bounds.x = positionValues[0];
+				bounds.y = positionValues[1];
+				selectedObject->SetBounds(bounds);
+			}
+			recordUILongEdit(makeUILayoutKey("Position"), positionChanged, "Edit UI Position");
+
+			const bool sizeChanged = ImGui::DragFloat2("Size", sizeValues, 1.0f, -10000.0f, 10000.0f);
+			if (sizeChanged)
+			{
+				bounds.width = sizeValues[0];
+				bounds.height = sizeValues[1];
+				selectedObject->SetBounds(bounds);
+			}
+			recordUILongEdit(makeUILayoutKey("Size"), sizeChanged, "Edit UI Size");
+
+			size_t selectionHash = 0;
+			if (m_SelectedUIObjectNames.size() > 1)
+			{
+				for (const auto& name : m_SelectedUIObjectNames)
+				{
+					const size_t nameHash = std::hash<std::string>{}(name);
+					selectionHash ^= nameHash + 0x9e3779b97f4a7c15ULL + (selectionHash << 6) + (selectionHash >> 2);
+				}
+				if (selectionHash != lastGroupSelectionHash)
+				{
+					pendingGroupEdits.clear();
+					lastGroupSelectionHash = selectionHash;
+				}
+			}
+			else
+			{
+				pendingGroupEdits.clear();
+				lastGroupSelectionHash = 0;
+			}
+
+			if (m_SelectedUIObjectNames.size() > 1)
+			{
+				std::unordered_map<std::string, UIRect> boundsCache;
+				std::unordered_set<std::string> visiting;
+				UIRect combined{};
+				bool first = true;
+				for (const auto& name : m_SelectedUIObjectNames)
+				{
+					const auto bounds = getWorldBoundsForLayout(name, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+					if (first)
+					{
+						combined = bounds;
+						first = false;
+					}
+					else
+					{
+						const float minX = min(combined.x, bounds.x);
+						const float minY = min(combined.y, bounds.y);
+						const float maxX = max(combined.x + combined.width, bounds.x + bounds.width);
+						const float maxY = max(combined.y + combined.height, bounds.y + bounds.height);
+						combined.x = minX;
+						combined.y = minY;
+						combined.width = maxX - minX;
+						combined.height = maxY - minY;
+					}
+				}
+
+				float groupPosition[2] = { combined.x, combined.y };
+				float groupSize[2] = { combined.width, combined.height };
+				const size_t groupPositionKey = makeUILayoutKey("GroupPosition") ^ selectionHash;
+				const size_t groupSizeKey = makeUILayoutKey("GroupSize") ^ selectionHash;
+
+				auto ensureGroupSnapshot = [&](size_t key, const UIRect& startBounds)
+					{
+						if (pendingGroupEdits.find(key) != pendingGroupEdits.end())
+						{
+							return;
+						}
+						GroupEditSnapshot snapshot;
+						captureGroupSnapshots(m_SelectedUIObjectNames, snapshot.beforeSnapshots);
+						snapshot.startBounds = startBounds;
+						snapshot.startWorldBounds.clear();
+						if (it != uiObjectsByScene.end())
+						{
+							for (const auto& name : m_SelectedUIObjectNames)
+							{
+								std::unordered_map<std::string, UIRect> localCache;
+								std::unordered_set<std::string> localVisiting;
+								snapshot.startWorldBounds[name] = getWorldBoundsForLayout(name, it->second, getWorldBoundsForLayout, localCache, localVisiting);
+							}
+						}
+						pendingGroupEdits.emplace(key, std::move(snapshot));
+					};
+
+				const bool groupPositionChanged = ImGui::DragFloat2("Group Position", groupPosition, 1.0f, -10000.0f, 10000.0f);
+				if (ImGui::IsItemActivated())
+				{
+					ensureGroupSnapshot(groupPositionKey, combined);
+				}
+				if (groupPositionChanged)
+				{
+					auto itPending = pendingGroupEdits.find(groupPositionKey);
+					UIRect baseBounds = (itPending != pendingGroupEdits.end()) ? itPending->second.startBounds : combined;
+					const float deltaX = groupPosition[0] - baseBounds.x;
+					const float deltaY = groupPosition[1] - baseBounds.y;
+					for (const auto& name : m_SelectedUIObjectNames)
+					{
+						auto itObj = it->second.find(name);
+						if (itObj == it->second.end() || !itObj->second)
+						{
+							continue;
+						}
+						UIRect worldBounds = baseBounds;
+						if (itPending != pendingGroupEdits.end())
+						{
+							auto itWorld = itPending->second.startWorldBounds.find(name);
+							if (itWorld != itPending->second.startWorldBounds.end())
+							{
+								worldBounds = itWorld->second;
+							}
+						}
+						else
+						{
+							worldBounds = getWorldBoundsForLayout(name, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+						}
+						worldBounds.x += deltaX;
+						worldBounds.y += deltaY;
+
+						UIRect parentBounds{};
+						const std::string parentName = itObj->second->GetParentName();
+						if (!parentName.empty() && it->second.find(parentName) != it->second.end())
+						{
+							parentBounds = getWorldBoundsForLayout(parentName, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+						}
+						setLocalFromWorldForLayout(*itObj->second, worldBounds, parentBounds);
+					}
+					if (itPending != pendingGroupEdits.end())
+					{
+						itPending->second.updated = true;
+					}
+				}
+				if (ImGui::IsItemDeactivatedAfterEdit())
+				{
+					auto itPending = pendingGroupEdits.find(groupPositionKey);
+					if (itPending != pendingGroupEdits.end())
+					{
+						if (itPending->second.updated)
+						{
+							std::unordered_map<std::string, nlohmann::json> afterSnapshots;
+							captureGroupSnapshots(m_SelectedUIObjectNames, afterSnapshots);
+							pushUIGroupSnapshotUndo("Move UI Group", itPending->second.beforeSnapshots, afterSnapshots);
+						}
+						pendingGroupEdits.erase(itPending);
+					}
+				}
+
+				const bool groupSizeChanged = ImGui::DragFloat2("Group Size", groupSize, 1.0f, 1.0f, 100000.0f);
+				if (ImGui::IsItemActivated())
+				{
+					ensureGroupSnapshot(groupSizeKey, combined);
+				}
+				if (groupSizeChanged)
+				{
+					auto itPending = pendingGroupEdits.find(groupSizeKey);
+					const UIRect baseBounds = (itPending != pendingGroupEdits.end()) ? itPending->second.startBounds : combined;
+					const float safeWidth = (baseBounds.width != 0.0f) ? baseBounds.width : 1.0f;
+					const float safeHeight = (baseBounds.height != 0.0f) ? baseBounds.height : 1.0f;
+					const float scaleX = groupSize[0] / safeWidth;
+					const float scaleY = groupSize[1] / safeHeight;
+
+					for (const auto& name : m_SelectedUIObjectNames)
+					{
+						auto itObj = it->second.find(name);
+						if (itObj == it->second.end() || !itObj->second)
+						{
+							continue;
+						}
+						UIRect startBounds = baseBounds;
+						if (itPending != pendingGroupEdits.end())
+						{
+							auto itWorld = itPending->second.startWorldBounds.find(name);
+							if (itWorld != itPending->second.startWorldBounds.end())
+							{
+								startBounds = itWorld->second;
+							}
+						}
+						else
+						{
+							startBounds = getWorldBoundsForLayout(name, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+						}
+
+						UIRect worldBounds = startBounds;
+						worldBounds.x = baseBounds.x + (startBounds.x - baseBounds.x) * scaleX;
+						worldBounds.y = baseBounds.y + (startBounds.y - baseBounds.y) * scaleY;
+						worldBounds.width = max(1.0f, startBounds.width * scaleX);
+						worldBounds.height = max(1.0f, startBounds.height * scaleY);
+
+						UIRect parentBounds{};
+						const std::string parentName = itObj->second->GetParentName();
+						if (!parentName.empty() && it->second.find(parentName) != it->second.end())
+						{
+							parentBounds = getWorldBoundsForLayout(parentName, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+						}
+						setLocalFromWorldForLayout(*itObj->second, worldBounds, parentBounds);
+					}
+					if (itPending != pendingGroupEdits.end())
+					{
+						itPending->second.updated = true;
+					}
+				}
+				if (ImGui::IsItemDeactivatedAfterEdit())
+				{
+					auto itPending = pendingGroupEdits.find(groupSizeKey);
+					if (itPending != pendingGroupEdits.end())
+					{
+						if (itPending->second.updated)
+						{
+							std::unordered_map<std::string, nlohmann::json> afterSnapshots;
+							captureGroupSnapshots(m_SelectedUIObjectNames, afterSnapshots);
+							pushUIGroupSnapshotUndo("Resize UI Group", itPending->second.beforeSnapshots, afterSnapshots);
+						}
+						pendingGroupEdits.erase(itPending);
+					}
+				}
+			}
 
 			ImGui::SeparatorText("Align");
 			if (m_SelectedUIObjectNames.size() > 1)
@@ -3220,6 +3622,9 @@ void EditorApplication::DrawUIEditorPreview()
 		static bool hasDragSelectionBounds = false;
 		static ImVec2 dragRotationCenter{ 0.0f, 0.0f };
 		static float dragStartAngle = 0.0f;
+		static float canvasZoom = 1.0f;
+		static ImVec2 canvasPan{ 0.0f, 0.0f };
+		static float nudgeStep = 1.0f;
 		enum class HandleDragMode
 		{
 			None,
@@ -3236,6 +3641,18 @@ void EditorApplication::DrawUIEditorPreview()
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(120.0f);
 		ImGui::DragFloat("##SnapSize", &snapSize, 1.0f, 1.0f, 200.0f, "%.0f");
+
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(120.0f);
+		ImGui::DragFloat("Zoom", &canvasZoom, 0.01f, 0.1f, 5.0f, "%.2f");
+		ImGui::SameLine();
+		if (ImGui::Button("Reset View"))
+		{
+			canvasZoom = 1.0f;
+			canvasPan = { 0.0f, 0.0f };
+		}
+		ImGui::SetNextItemWidth(120.0f);
+		ImGui::DragFloat("Nudge", &nudgeStep, 0.5f, 0.5f, 100.0f, "%.1f");
 
 		if (drawList && scene && uiManager)
 		{
@@ -3372,6 +3789,58 @@ void EditorApplication::DrawUIEditorPreview()
 					}
 				};
 
+			auto nudgeSelection = [&](float deltaX, float deltaY)
+				{
+					if (m_SelectedUIObjectNames.empty() || it == uiObjectsByScene.end())
+					{
+						return;
+					}
+
+					std::unordered_map<std::string, nlohmann::json> beforeSnapshots;
+					std::unordered_map<std::string, nlohmann::json> afterSnapshots;
+					captureUISnapshots(m_SelectedUIObjectNames, beforeSnapshots);
+
+					std::unordered_map<std::string, UIRect> boundsCache;
+					std::unordered_set<std::string> visiting;
+
+					for (const auto& name : m_SelectedUIObjectNames)
+					{
+						auto itObj = it->second.find(name);
+						if (itObj == it->second.end() || !itObj->second)
+						{
+							continue;
+						}
+
+						UIRect worldBounds = getWorldBounds(name, it->second, getWorldBounds, boundsCache, visiting);
+						worldBounds.x += deltaX;
+						worldBounds.y += deltaY;
+
+						UIRect parentBounds{};
+						const std::string parentName = itObj->second->GetParentName();
+						if (!parentName.empty() && it->second.find(parentName) != it->second.end())
+						{
+							parentBounds = getWorldBounds(parentName, it->second, getWorldBounds, boundsCache, visiting);
+						}
+						setLocalFromWorld(*itObj->second, worldBounds, parentBounds);
+					}
+
+					captureUISnapshots(m_SelectedUIObjectNames, afterSnapshots);
+					if (beforeSnapshots != afterSnapshots)
+					{
+						m_UndoManager.Push(UndoManager::Command{
+							"Nudge UI Objects",
+							[applyUISnapshots, beforeSnapshots]()
+							{
+								applyUISnapshots(beforeSnapshots);
+							},
+							[applyUISnapshots, afterSnapshots]()
+							{
+								applyUISnapshots(afterSnapshots);
+							}
+							});
+					}
+				};
+
 			ImVec2 maxExtent{ 0.0f, 0.0f };
 			if (it != uiObjectsByScene.end())
 			{
@@ -3391,7 +3860,10 @@ void EditorApplication::DrawUIEditorPreview()
 
 			const float scaleX = (maxExtent.x > 0.0f) ? (canvasAvail.x / maxExtent.x) : 1.0f;
 			const float scaleY = (maxExtent.y > 0.0f) ? (canvasAvail.y / maxExtent.y) : 1.0f;
-			const float scale = std::min(scaleX, scaleY);
+			const float baseScale = std::min(scaleX, scaleY);
+			canvasZoom = std::clamp(canvasZoom, 0.1f, 5.0f);
+			const float scale = baseScale * canvasZoom;
+			const ImVec2 viewOrigin = { canvasPos.x + canvasPan.x, canvasPos.y + canvasPan.y };
 
 			const ImU32 background = IM_COL32(30, 30, 36, 255);
 			drawList->AddRectFilled(canvasPos, { canvasPos.x + canvasAvail.x, canvasPos.y + canvasAvail.y }, background, 6.0f);
@@ -3399,11 +3871,14 @@ void EditorApplication::DrawUIEditorPreview()
 
 			if (snapEnabled && snapSize > 1.0f)
 			{
-				for (float x = canvasPos.x; x < canvasPos.x + canvasAvail.x; x += snapSize)
+				const float gridStep = snapSize * scale;
+				const float offsetX = std::fmod(canvasPan.x, gridStep);
+				const float offsetY = std::fmod(canvasPan.y, gridStep);
+				for (float x = canvasPos.x + offsetX; x < canvasPos.x + canvasAvail.x; x += gridStep)
 				{
 					drawList->AddLine({ x, canvasPos.y }, { x, canvasPos.y + canvasAvail.y }, IM_COL32(45, 45, 50, 90));
 				}
-				for (float y = canvasPos.y; y < canvasPos.y + canvasAvail.y; y += snapSize)
+				for (float y = canvasPos.y + offsetY; y < canvasPos.y + canvasAvail.y; y += gridStep)
 				{
 					drawList->AddLine({ canvasPos.x, y }, { canvasPos.x + canvasAvail.x, y }, IM_COL32(45, 45, 50, 90));
 				}
@@ -3423,7 +3898,7 @@ void EditorApplication::DrawUIEditorPreview()
 					}
 
 					const auto bounds = getWorldBounds(name, it->second, getWorldBounds, boundsCache, visiting);
-					const ImVec2 min = { canvasPos.x + bounds.x * scale, canvasPos.y + bounds.y * scale };
+					const ImVec2 min = { viewOrigin.x + bounds.x * scale, viewOrigin.y + bounds.y * scale };
 					const ImVec2 max = { min.x + bounds.width * scale, min.y + bounds.height * scale };
 					const bool selected = (m_SelectedUIObjectNames.find(uiObject->GetName()) != m_SelectedUIObjectNames.end());
 					if (selected)
@@ -3554,7 +4029,7 @@ void EditorApplication::DrawUIEditorPreview()
 
 				if (!first)
 				{
-					const ImVec2 min = { canvasPos.x + combined.x * scale, canvasPos.y + combined.y * scale };
+					const ImVec2 min = { viewOrigin.x + combined.x * scale, viewOrigin.y + combined.y * scale };
 					const ImVec2 max = { min.x + combined.width * scale, min.y + combined.height * scale };
 					drawList->AddRect(min, max, IM_COL32(160, 200, 255, 180), 0.0f, 0, 2.0f);
 					const float handleSize = 6.0f;
@@ -3587,6 +4062,49 @@ void EditorApplication::DrawUIEditorPreview()
 			const bool canvasHovered = ImGui::IsItemHovered();
 			ImGuiIO& io = ImGui::GetIO();
 
+			if (canvasHovered && io.KeyCtrl && io.MouseWheel != 0.0f)
+			{
+				const float prevZoom = canvasZoom;
+				canvasZoom = std::clamp(canvasZoom + io.MouseWheel * 0.1f, 0.1f, 5.0f);
+				if (canvasZoom != prevZoom)
+				{
+					const ImVec2 mousePos = io.MousePos;
+					const ImVec2 localBefore = {
+						(mousePos.x - viewOrigin.x) / (baseScale * prevZoom),
+						(mousePos.y - viewOrigin.y) / (baseScale * prevZoom)
+					};
+					canvasPan.x = mousePos.x - canvasPos.x - localBefore.x * (baseScale * canvasZoom);
+					canvasPan.y = mousePos.y - canvasPos.y - localBefore.y * (baseScale * canvasZoom);
+				}
+			}
+
+			if (canvasHovered && ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+			{
+				canvasPan.x += io.MouseDelta.x;
+				canvasPan.y += io.MouseDelta.y;
+			}
+
+			if (canvasHovered && !io.WantTextInput && !isDragging && !m_SelectedUIObjectNames.empty())
+			{
+				const float step = io.KeyShift ? (nudgeStep * 10.0f) : nudgeStep;
+				if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+				{
+					nudgeSelection(-step, 0.0f);
+				}
+				if (ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+				{
+					nudgeSelection(step, 0.0f);
+				}
+				if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+				{
+					nudgeSelection(0.0f, -step);
+				}
+				if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+				{
+					nudgeSelection(0.0f, step);
+				}
+			}
+
 			auto getHandleHit = [&](const ImVec2& mouse,
 				const std::array<ImVec2, 4>& corners,
 				const ImVec2& rotationHandle) -> HandleDragMode
@@ -3615,12 +4133,36 @@ void EditorApplication::DrawUIEditorPreview()
 					return HandleDragMode::None;
 				};
 
+			
+			auto getBorderHit = [&](const UIRect& bounds, const ImVec2& localPoint, float threshold) -> HandleDragMode
+				{
+					const float centerX = bounds.x + bounds.width * 0.5f;
+					const float centerY = bounds.y + bounds.height * 0.5f;
+					const bool nearLeft = std::abs(localPoint.x - bounds.x) <= threshold;
+					const bool nearRight = std::abs(localPoint.x - (bounds.x + bounds.width)) <= threshold;
+					const bool nearTop = std::abs(localPoint.y - bounds.y) <= threshold;
+					const bool nearBottom = std::abs(localPoint.y - (bounds.y + bounds.height)) <= threshold;
+
+					if (nearLeft && nearTop) return HandleDragMode::ResizeTL;
+					if (nearRight && nearTop) return HandleDragMode::ResizeTR;
+					if (nearLeft && nearBottom) return HandleDragMode::ResizeBL;
+					if (nearRight && nearBottom) return HandleDragMode::ResizeBR;
+					if (nearLeft) return (localPoint.y < centerY) ? HandleDragMode::ResizeTL : HandleDragMode::ResizeBL;
+					if (nearRight) return (localPoint.y < centerY) ? HandleDragMode::ResizeTR : HandleDragMode::ResizeBR;
+					if (nearTop) return (localPoint.x < centerX) ? HandleDragMode::ResizeTL : HandleDragMode::ResizeTR;
+					if (nearBottom) return (localPoint.x < centerX) ? HandleDragMode::ResizeBL : HandleDragMode::ResizeBR;
+
+					return HandleDragMode::None;
+				};
+
+			bool clickedOnUI = false;
+
 			if (selectedObject && selectedObject->HasBounds() && m_SelectedUIObjectNames.size() == 1)
 			{
 				std::unordered_map<std::string, UIRect> boundsCache;
 				std::unordered_set<std::string> visiting;
 				const auto bounds = getWorldBounds(selectedObject->GetName(), it->second, getWorldBounds, boundsCache, visiting);
-				const ImVec2 min = { canvasPos.x + bounds.x * scale, canvasPos.y + bounds.y * scale };
+				const ImVec2 min = { viewOrigin.x + bounds.x * scale, viewOrigin.y + bounds.y * scale };
 				const ImVec2 max = { min.x + bounds.width * scale, min.y + bounds.height * scale };
 				const float handleSize = 6.0f;
 				const ImU32 handleColor = IM_COL32(200, 200, 200, 255);
@@ -3672,7 +4214,9 @@ void EditorApplication::DrawUIEditorPreview()
 			if (canvasHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && it != uiObjectsByScene.end())
 			{
 				const ImVec2 mousePos = io.MousePos;
-				const ImVec2 localPos = { (mousePos.x - canvasPos.x) / scale, (mousePos.y - canvasPos.y) / scale };
+				const ImVec2 localPosHit = { (mousePos.x - viewOrigin.x) / scale, (mousePos.y - viewOrigin.y) / scale };
+				const float interactionScale = (baseScale > 0.0f) ? baseScale : 1.0f;
+				const ImVec2 localPosDrag = { (mousePos.x - viewOrigin.x) / interactionScale, (mousePos.y - viewOrigin.y) / interactionScale };
 				UIObject* hitObject = nullptr;
 				int hitZ = std::numeric_limits<int>::min();
 				std::unordered_map<std::string, UIRect> boundsCache;
@@ -3691,8 +4235,8 @@ void EditorApplication::DrawUIEditorPreview()
 					const float cosA = std::cos(-rotationRadians);
 					const float sinA = std::sin(-rotationRadians);
 					const ImVec2 localPoint = {
-						center.x + (localPos.x - center.x) * cosA - (localPos.y - center.y) * sinA,
-						center.y + (localPos.x - center.x) * sinA + (localPos.y - center.y) * cosA
+						center.x + (localPosHit.x - center.x) * cosA - (localPosHit.y - center.y) * sinA,
+						center.y + (localPosHit.x - center.x) * sinA + (localPosHit.y - center.y) * cosA
 					};
 					const bool inside = localPoint.x >= bounds.x && localPoint.x <= bounds.x + bounds.width
 						&& localPoint.y >= bounds.y && localPoint.y <= bounds.y + bounds.height;
@@ -3709,11 +4253,17 @@ void EditorApplication::DrawUIEditorPreview()
 					if (m_SelectedUIObjectNames.size() == 1)
 					{
 						const auto bounds = getWorldBounds(selectedObject->GetName(), it->second, getWorldBounds, boundsCache, visiting);
-						const ImVec2 min = { canvasPos.x + bounds.x * scale, canvasPos.y + bounds.y * scale };
+						const ImVec2 min = { viewOrigin.x + bounds.x * scale, viewOrigin.y + bounds.y * scale };
 						const ImVec2 max = { min.x + bounds.width * scale, min.y + bounds.height * scale };
 						const float rotationRadians = XMConvertToRadians(selectedObject->GetRotationDegrees());
 						const ImVec2 center = { (min.x + max.x) * 0.5f, (min.y + max.y) * 0.5f };
 						const ImVec2 half = { (max.x - min.x) * 0.5f, (max.y - min.y) * 0.5f };
+						const ImVec2 localPoint = {
+							center.x + (localPosHit.x - center.x) * std::cos(-rotationRadians)
+								- (localPosHit.y - center.y) * std::sin(-rotationRadians),
+							center.y + (localPosHit.x - center.x) * std::sin(-rotationRadians)
+								+ (localPosHit.y - center.y) * std::cos(-rotationRadians)
+						};
 						auto rotatePoint = [&](const ImVec2& point)
 							{
 								const float cosA = std::cos(rotationRadians);
@@ -3743,16 +4293,25 @@ void EditorApplication::DrawUIEditorPreview()
 							direction = { 0.0f, -1.0f };
 						}
 						const ImVec2 rotationHandle = { topCenter.x + direction.x * 20.0f, topCenter.y + direction.y * 20.0f };
-						const HandleDragMode handleHit = getHandleHit(mousePos, corners, rotationHandle);
+
+						HandleDragMode handleHit = getHandleHit(mousePos, corners, rotationHandle);
+						if (handleHit == HandleDragMode::None)
+						{
+							const float maxThreshold = std::min(bounds.width, bounds.height) * 0.25f;
+							const float borderThreshold = std::min(6.0f / scale, maxThreshold);
+							handleHit = getBorderHit(bounds, localPoint, borderThreshold);
+						}
+
 						if (handleHit != HandleDragMode::None)
 						{
+							clickedOnUI = true;
 							m_SelectedUIObjectName = selectedObject->GetName();
 							m_SelectedUIObjectNames.clear();
 							m_SelectedUIObjectNames.insert(selectedObject->GetName());
 							draggingName = selectedObject->GetName();
 							isDragging = true;
 							dragMode = handleHit;
-							dragOffset = localPos;
+							dragOffset = localPosDrag;
 							dragStartWorldBounds.clear();
 							dragStartRotations.clear();
 							dragStartWorldBounds[selectedObject->GetName()] = bounds;
@@ -3763,7 +4322,7 @@ void EditorApplication::DrawUIEditorPreview()
 							if (dragMode == HandleDragMode::Rotate)
 							{
 								dragRotationCenter = { bounds.x + bounds.width * 0.5f, bounds.y + bounds.height * 0.5f };
-								dragStartAngle = std::atan2(localPos.y - dragRotationCenter.y, localPos.x - dragRotationCenter.x);
+								dragStartAngle = std::atan2(localPosDrag.y - dragRotationCenter.y, localPosDrag.x - dragRotationCenter.x);
 							}
 							hitObject = nullptr;
 						}
@@ -3794,7 +4353,7 @@ void EditorApplication::DrawUIEditorPreview()
 						}
 						if (!first)
 						{
-							const ImVec2 min = { canvasPos.x + combined.x * scale, canvasPos.y + combined.y * scale };
+							const ImVec2 min = { viewOrigin.x + combined.x * scale, viewOrigin.y + combined.y * scale };
 							const ImVec2 max = { min.x + combined.width * scale, min.y + combined.height * scale };
 							std::array<ImVec2, 4> corners = { min, {max.x, min.y}, {max.x, max.y}, {min.x, max.y} };
 							const ImVec2 center = { (min.x + max.x) * 0.5f, (min.y + max.y) * 0.5f };
@@ -3811,12 +4370,21 @@ void EditorApplication::DrawUIEditorPreview()
 								direction = { 0.0f, -1.0f };
 							}
 							const ImVec2 rotationHandle = { topCenter.x + direction.x * 20.0f, topCenter.y + direction.y * 20.0f };
-							const HandleDragMode handleHit = getHandleHit(mousePos, corners, rotationHandle);
+							
+							HandleDragMode handleHit = getHandleHit(mousePos, corners, rotationHandle);
+							if (handleHit == HandleDragMode::None)
+							{
+								const float maxThreshold = std::min(combined.width, combined.height) * 0.25f;
+								const float borderThreshold = std::min(6.0f / scale, maxThreshold);
+								handleHit = getBorderHit(combined, localPosHit, borderThreshold);
+							}
+
 							if (handleHit != HandleDragMode::None)
 							{
+								clickedOnUI = true;
 								isDragging = true;
 								dragMode = handleHit;
-								dragOffset = localPos;
+								dragOffset = localPosDrag;
 								dragStartWorldBounds.clear();
 								dragStartRotations.clear();
 								for (const auto& name : m_SelectedUIObjectNames)
@@ -3834,7 +4402,7 @@ void EditorApplication::DrawUIEditorPreview()
 								if (dragMode == HandleDragMode::Rotate)
 								{
 									dragRotationCenter = { combined.x + combined.width * 0.5f, combined.y + combined.height * 0.5f };
-									dragStartAngle = std::atan2(localPos.y - dragRotationCenter.y, localPos.x - dragRotationCenter.x);
+									dragStartAngle = std::atan2(localPosDrag.y - dragRotationCenter.y, localPosDrag.x - dragRotationCenter.x);
 								}
 								hitObject = nullptr;
 							}
@@ -3844,6 +4412,25 @@ void EditorApplication::DrawUIEditorPreview()
 
 				if (hitObject)
 				{
+					clickedOnUI = true;
+					HandleDragMode borderMode = HandleDragMode::None;
+					{
+						std::unordered_map<std::string, UIRect> hitBoundsCache;
+						std::unordered_set<std::string> hitVisiting;
+						const auto hitBounds = getWorldBounds(hitObject->GetName(), it->second, getWorldBounds, hitBoundsCache, hitVisiting);
+						const float rotationRadians = XMConvertToRadians(hitObject->GetRotationDegrees());
+						const ImVec2 center = { hitBounds.x + hitBounds.width * 0.5f, hitBounds.y + hitBounds.height * 0.5f };
+						const float cosA = std::cos(-rotationRadians);
+						const float sinA = std::sin(-rotationRadians);
+						const ImVec2 localPoint = {
+							center.x + (localPosHit.x - center.x) * cosA - (localPosHit.y - center.y) * sinA,
+							center.y + (localPosHit.x - center.x) * sinA + (localPosHit.y - center.y) * cosA
+						};
+						const float maxThreshold = std::min(hitBounds.width, hitBounds.height) * 0.25f;
+						const float borderThreshold = std::min(6.0f / scale, maxThreshold);
+						borderMode = getBorderHit(hitBounds, localPoint, borderThreshold);
+					}
+
 					const bool append = io.KeyShift;
 					if (!append)
 					{
@@ -3856,9 +4443,9 @@ void EditorApplication::DrawUIEditorPreview()
 					m_SelectedUIObjectName = hitObject->GetName();
 					draggingName = hitObject->GetName();
 					isDragging = true;
-					dragMode = HandleDragMode::Move;
+					dragMode = (borderMode != HandleDragMode::None) ? borderMode : HandleDragMode::Move;
 					const auto bounds = getWorldBounds(hitObject->GetName(), it->second, getWorldBounds, boundsCache, visiting);
-					dragOffset = { localPos.x - bounds.x, localPos.y - bounds.y };
+					dragOffset = { localPosDrag.x - bounds.x, localPosDrag.y - bounds.y };
 					dragStartWorldBounds.clear();
 					dragStartRotations.clear();
 					dragStartSelectionBounds = UIRect{};
@@ -3876,13 +4463,20 @@ void EditorApplication::DrawUIEditorPreview()
 				}
 			}
 
+			if (canvasHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !clickedOnUI)
+			{
+				m_SelectedUIObjectNames.clear();
+				m_SelectedUIObjectName.clear();
+			}
+
 			if (isDragging && io.MouseDown[ImGuiMouseButton_Left] && it != uiObjectsByScene.end())
 			{
 				const ImVec2 mousePos = io.MousePos;
-				const ImVec2 localPos = { (mousePos.x - canvasPos.x) / scale, (mousePos.y - canvasPos.y) / scale };
+				const ImVec2 localPos = { (mousePos.x - viewOrigin.x) / scale, (mousePos.y - viewOrigin.y) / scale };
 				std::unordered_map<std::string, UIRect> boundsCache;
 				std::unordered_set<std::string> visiting;
 				const float minSize = 10.0f;
+				const bool keepAspect = io.KeyShift;
 
 				if (dragMode == HandleDragMode::Move)
 				{
@@ -3992,6 +4586,36 @@ void EditorApplication::DrawUIEditorPreview()
 							break;
 						}
 
+						if (keepAspect && selection.height > 0.0f)
+						{
+							const float aspect = selection.width / selection.height;
+							const float adjustedWidth = max(minSize, newSelection.width);
+							const float adjustedHeight = max(minSize, adjustedWidth / aspect);
+							newSelection.width = adjustedWidth;
+							newSelection.height = adjustedHeight;
+							switch (dragMode)
+							{
+							case HandleDragMode::ResizeTL:
+								newSelection.x = selection.x + selection.width - newSelection.width;
+								newSelection.y = selection.y + selection.height - newSelection.height;
+								break;
+							case HandleDragMode::ResizeTR:
+								newSelection.x = selection.x;
+								newSelection.y = selection.y + selection.height - newSelection.height;
+								break;
+							case HandleDragMode::ResizeBL:
+								newSelection.x = selection.x + selection.width - newSelection.width;
+								newSelection.y = selection.y;
+								break;
+							case HandleDragMode::ResizeBR:
+								newSelection.x = selection.x;
+								newSelection.y = selection.y;
+								break;
+							default:
+								break;
+							}
+						}
+
 						if (snapEnabled && snapSize > 1.0f)
 						{
 							newSelection.x = std::round(newSelection.x / snapSize) * snapSize;
@@ -4038,6 +4662,7 @@ void EditorApplication::DrawUIEditorPreview()
 							UIRect bounds = dragStartWorldBounds.count(found->second->GetName())
 								? dragStartWorldBounds.at(found->second->GetName())
 								: getWorldBounds(found->second->GetName(), it->second, getWorldBounds, boundsCache, visiting);
+							const UIRect startBounds = bounds;
 							const float rotationRadians = XMConvertToRadians(found->second->GetRotationDegrees());
 							const ImVec2 center = { bounds.x + bounds.width * 0.5f, bounds.y + bounds.height * 0.5f };
 							const float cosA = std::cos(-rotationRadians);
@@ -4047,27 +4672,61 @@ void EditorApplication::DrawUIEditorPreview()
 								center.y + (localPos.x - center.x) * sinA + (localPos.y - center.y) * cosA
 							};
 
+							const float startAspect = (bounds.height != 0.0f) ? (bounds.width / bounds.height) : 1.0f;
 							switch (dragMode)
 							{
 							case HandleDragMode::ResizeTL:
 								bounds.width = max(minSize, bounds.width + (bounds.x - localPoint.x));
 								bounds.height = max(minSize, bounds.height + (bounds.y - localPoint.y));
-								bounds.x = localPoint.x;
-								bounds.y = localPoint.y;
+								if (keepAspect)
+								{
+									bounds.height = max(minSize, bounds.width / startAspect);
+									bounds.x = startBounds.x + (startBounds.width - bounds.width);
+									bounds.y = startBounds.y + (startBounds.height - bounds.height);
+								}
+								else
+								{
+									bounds.x = localPoint.x;
+									bounds.y = localPoint.y;
+								}
 								break;
 							case HandleDragMode::ResizeTR:
 								bounds.width = max(minSize, localPoint.x - bounds.x);
 								bounds.height = max(minSize, bounds.height + (bounds.y - localPoint.y));
-								bounds.y = localPoint.y;
+								if (keepAspect)
+								{
+									bounds.height = max(minSize, bounds.width / startAspect);
+									bounds.x = startBounds.x;
+									bounds.y = startBounds.y + (startBounds.height - bounds.height);
+								}
+								else
+								{
+									bounds.y = localPoint.y;
+								}
 								break;
 							case HandleDragMode::ResizeBL:
 								bounds.width = max(minSize, bounds.width + (bounds.x - localPoint.x));
-								bounds.x = localPoint.x;
 								bounds.height = max(minSize, localPoint.y - bounds.y);
+								if (keepAspect)
+								{
+									bounds.height = max(minSize, bounds.width / startAspect);
+									bounds.x = startBounds.x + (startBounds.width - bounds.width);
+									bounds.y = startBounds.y;
+								}
+								else
+								{
+									bounds.x = localPoint.x;
+								}
 								break;
 							case HandleDragMode::ResizeBR:
 								bounds.width = max(minSize, localPoint.x - bounds.x);
 								bounds.height = max(minSize, localPoint.y - bounds.y);
+								if (keepAspect)
+								{
+									bounds.height = max(minSize, bounds.width / startAspect);
+									bounds.x = startBounds.x;
+									bounds.y = startBounds.y;
+								}
 								break;
 							default:
 								break;
