@@ -25,7 +25,7 @@ bool GameApplication::Initialize()
 	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
 	m_Services.Get<SoundManager>().Init();
 	m_SceneManager.Initialize();
-	m_InputManager = &m_Services.Get<InputManager>();
+	//m_InputManager = &m_Services.Get<InputManager>();
 	return true;
 }
 
@@ -37,8 +37,8 @@ void GameApplication::Run()
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			if (false == m_InputManager->OnHandleMessage(msg))
-				TranslateMessage(&msg);
+			/*if (false == m_InputManager->OnHandleMessage(msg))
+				TranslateMessage(&msg);*/
 
 			DispatchMessage(&msg);
 		}
@@ -85,14 +85,10 @@ void GameApplication::Update()
 		}
 
 	}
-
-
 }
 
 void GameApplication::Render()
 {
-	//m_Engine.GetRenderer().SetTransform(D2D1::Matrix3x2F::Identity());
-
 	//m_Engine.GetRenderer().RenderBegin();
 
 	m_SceneManager.Render();

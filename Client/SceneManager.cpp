@@ -3,11 +3,11 @@
 #include "SceneManager.h"
 #include "ServiceRegistry.h"
 #include "GameManager.h"
+#include "Scene.h"
 #include "UIManager.h"
 #include "DefaultScene.h"
 #include "InputManager.h"
 #include "json.hpp"
-#include <fstream>
 
 
 void SceneManager::Initialize()
@@ -22,8 +22,7 @@ void SceneManager::Initialize()
 	LoadGameScenesFromDirectory(scenesPath);
 	if (!m_CurrentScene)
 	{
-		std::filesystem::path fallbackPath = std::filesystem::path("Client") / "GameScene.json";
-		LoadGameSceneFromJson(fallbackPath);
+		std::cerr << "No scene loaded from " << scenesPath.string() << std::endl;
 	}
 }
 
@@ -83,28 +82,21 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
+		std::cout << name << " Scene Find" << std::endl;
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
+		m_Camera = m_CurrentScene->GetGameCamera().get();
+		m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+		m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
-
-		if (m_InputManager)
-		{
-			m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-		}
-		if (m_UIManager)
-		{
-			//UI 생기면 그때
-			//m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-			//m_UIManager->SetCurrentScene(name);
-		}
-		if (m_GameManager)
-		{
-			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
-		}
-
-		if (m_UIManager) {
-			m_UIManager->SetCurrentScene(name);
-		}
+// 		if (m_GameManager)
+// 		{
+// 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+// 		}
+// 
+// 		if (m_UIManager) {
+// 			m_UIManager->SetCurrentScene(name);
+// 		}
 	}
 }
 
@@ -162,9 +154,10 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 	std::cout << "Testing" << std::endl;
 	if (directoryPath.empty() || !std::filesystem::exists(directoryPath))
 	{
+		std::cout << "Unvaild directory" << std::endl;
 		return;
 	}
-
+	std::vector<std::filesystem::path> sceneFiles;
 	for (const auto& entry : std::filesystem::directory_iterator(directoryPath))
 	{
 		if (!entry.is_regular_file())
@@ -178,6 +171,12 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 			continue;
 		}
 
+		sceneFiles.push_back(path);
+	}
+
+	std::sort(sceneFiles.begin(), sceneFiles.end());
+	for (const auto& path : sceneFiles)
+	{
 		LoadGameSceneFromJson(path);
 	}
 
@@ -185,10 +184,12 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 	{
 		SetCurrentScene(m_Scenes.begin()->first);
 	}
+	return;
 }
 
 bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 {
+	std::cout << "Start Load Scene" << std::endl;
 	if (filepath.empty()) {
 		std::cout << "No Scene Name"<<std::endl;
 		return false;
@@ -203,7 +204,7 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 	nlohmann::json j;
 	ifs >> j;
 
-	auto loadedScene = std::make_shared<Scene>(m_Services);
+	auto loadedScene = std::make_shared<DefaultScene>(m_Services);
 	loadedScene->SetName(filepath.stem().string());
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);

@@ -15,7 +15,8 @@ class GameApplication : public NzWndBase
 
 public:
 	GameApplication(ServiceRegistry& serviceRegistry, Engine& engine, Renderer& renderer, SceneManager& sceneManager, InputManager& InputManager) : 
-		NzWndBase(), m_Services(serviceRegistry), m_Engine(engine), m_Renderer(renderer), m_SceneManager(sceneManager), m_InputManager(InputManager) { }
+		NzWndBase(), m_Services(serviceRegistry), m_Engine(engine), m_Renderer(renderer), 
+		m_SceneManager(sceneManager), m_InputManager(InputManager) { }
 	virtual ~GameApplication() = default;
 
 	bool Initialize();
