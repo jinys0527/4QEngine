@@ -262,6 +262,7 @@
     <ClInclude Include="PointLightComponent.h" />
     <ClInclude Include="Reflection.h" />
     <ClInclude Include="ReflectionMacro.h" />
+    <ClInclude Include="SceneChangeTestComponent.h" />
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="SkeletalMeshRenderer.h" />
@@ -297,6 +298,7 @@
     <ClCompile Include="PlayerMovementComponent.cpp" />
     <ClCompile Include="PointLightComponent.cpp" />
     <ClCompile Include="Reflection.cpp" />
+    <ClCompile Include="SceneChangeTestComponent.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
     <ClCompile Include="SpotLightComponent.cpp" />
