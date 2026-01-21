@@ -96,6 +96,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_pDXDC = dxdc;
 
 	DXSetup(hWnd, width, height);
+	SetupText();
+
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
+	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
 
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
@@ -142,7 +146,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	
 	//블러 테스트
 	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
-	HRESULT hr = S_OK;
+	 hr = S_OK;
 	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
@@ -617,6 +621,11 @@ void Renderer::CreateContext()
 			UpdateGrid(frame);
 		};
 
+	m_RenderContext.MyDrawText =
+		[this](float width, float height)
+		{
+			RenderTextCenter(width, height);
+		};
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
@@ -799,6 +808,7 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
 	return hr;
 }
 
@@ -1986,6 +1996,15 @@ void Renderer::CreateQuadIB()
 {
 	m_QuadIndexCounts = static_cast<UINT>(quadIndices.size());
 	CreateIndexBuffer(m_pDevice.Get(), quadIndices.data(), static_cast<UINT>(quadIndices.size() * sizeof(UINT)), m_QuadIndexBuffers.GetAddressOf());
+}
+
+void Renderer::SetupText()
+{
+	ComPtr<ID3D11DeviceContext1> dc1;
+	m_pDXDC.As(&dc1);
+
+	m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(dc1.Get());
+	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/myfont.spritefont");
 }
 
 //핸들 개수 최대값 가져오는 함수

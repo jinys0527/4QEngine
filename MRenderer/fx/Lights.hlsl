@@ -129,7 +129,7 @@ float4 Masking(float4 uv)
 {
     uv.xy /= uv.w;
     
-    float4 mask = g_Mask_Wall.Sample(smpBoreder, uv.xy);
+    float4 mask = g_Mask_Wall.Sample(smpBorder, uv.xy);
     
     
     

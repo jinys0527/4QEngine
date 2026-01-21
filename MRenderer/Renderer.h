@@ -243,4 +243,43 @@ protected:
 	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
 	ComPtr<ID3DBlob> m_pVSCode_FSTriangle;
 
+private:
+	std::unique_ptr<DirectX::SpriteBatch> m_SpriteBatch;
+	std::unique_ptr<DirectX::SpriteFont>  m_SpriteFont;
+
+	void SetupText();
+	void RenderTextCenter(int screenW, int screenH)
+	{
+		const wchar_t* msg = L"HELLO";
+
+		// 글자 크기(픽셀) 측정
+		DirectX::XMVECTOR size = m_SpriteFont->MeasureString(msg);
+		float textW = DirectX::XMVectorGetX(size);
+		float textH = DirectX::XMVectorGetY(size);
+
+		// 중앙 좌표 계산
+		float x = (screenW - textW) * 0.5f;
+		float y = (screenH - textH) * 0.5f;
+
+		m_pDXDC->ClearState();
+		m_pDXDC->OMSetRenderTargets(1, m_pRTView_Post.GetAddressOf(), nullptr);
+		SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
+
+		OutputDebugStringA("Before SpriteBatch Begin\n");
+		m_SpriteBatch->Begin();
+		OutputDebugStringA("After Begin\n");
+
+		m_SpriteFont->DrawString(
+			m_SpriteBatch.get(),
+			msg,
+			DirectX::XMFLOAT2(x, y),
+			DirectX::Colors::White
+		);
+
+
+		OutputDebugStringA("After DrawString\n");
+		m_SpriteBatch->End();
+		OutputDebugStringA("After End\n");
+	}
+
 };

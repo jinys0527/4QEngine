@@ -190,4 +190,6 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
 
+	//텍스트 그리기
+	std::function<void(float width, float height)> MyDrawText;
 };

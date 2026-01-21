@@ -1,0 +1,18 @@
+{
+  "animations": [],
+  "files": {
+    "materials": "Mats/character_test2.matbin",
+    "skeleton": "Skels/character_test2.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/character_test2.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "character_test2",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  }
+}

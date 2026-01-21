@@ -157,7 +157,7 @@ Texture2D g_Env : register(t16);
 SamplerState smpWrap : register(s0);
 SamplerState smpMirror : register(s1);
 SamplerState smpClamp : register(s2);
-SamplerState smpBoreder : register(s3);
+SamplerState smpBorder : register(s3);
 SamplerState smpBorderShadow : register(s4);
 
 
