@@ -244,6 +244,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ClientScene.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Editor.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -259,6 +260,7 @@
     <ClInclude Include="ServiceRegistry.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ClientScene.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Editor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

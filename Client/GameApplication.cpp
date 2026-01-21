@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿
+#include "pch.h"
 #include "GameApplication.h"
 #include "GameObject.h"
 //#include "Reflection.h"
@@ -111,7 +112,7 @@ void GameApplication::Render()
 	{
 		return;
 	}
-
+	// 현재 Scene의 Camera 받기
 	if (auto gameCamera = scene->GetGameCamera())
 	{
 		if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())

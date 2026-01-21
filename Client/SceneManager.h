@@ -49,7 +49,7 @@ public:
 
 private:
 	ServiceRegistry& m_Services;
-	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath);
+	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames);
 	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
@@ -58,7 +58,7 @@ private:
 	GameManager*	m_GameManager;
 	UIManager*		m_UIManager;
 	InputManager*	m_InputManager;
-	
+	std::filesystem::path scenesPath = "../Resources/Scenes"; //Resource 파일 경로
 	bool m_ShouldQuit = false;
 
 	std::string m_ChangeSceneName;

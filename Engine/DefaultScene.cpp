@@ -9,6 +9,7 @@
 
 void DefaultScene::Initialize()
 {
+	// Editor에서  Scene 생성 시 기본적인 Setting
 	auto gamecamera = std::make_shared<CameraObject>(GetEventDispatcher(), 1280.0f, 720.0f);
 
 	gamecamera->SetName("Main Camera");

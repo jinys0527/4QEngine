@@ -5,6 +5,7 @@
 #include "GameManager.h"
 #include "Scene.h"
 #include "UIManager.h"
+#include "ClientScene.h"
 #include "DefaultScene.h"
 #include "InputManager.h"
 #include "json.hpp"
@@ -12,14 +13,23 @@
 
 void SceneManager::Initialize()
 {
-	/*m_UIManager.Start();
-	m_UIManager.SetCurrentScene("TitleScene");*/
-	m_UIManager = &m_Services.Get<UIManager>();
-	m_GameManager = &m_Services.Get<GameManager>();
+	
+	m_UIManager    = &m_Services.Get<UIManager>();
+	m_GameManager  = &m_Services.Get<GameManager>();
 	m_InputManager = &m_Services.Get<InputManager>();
+	// Sound Manager
 
-	std::filesystem::path scenesPath = "../Resources/Scenes";
-	LoadGameScenesFromDirectory(scenesPath);
+	//std::filesystem::path scenesPath = "../Resources/Scenes";
+
+	// Game에서 로드할 것 여기서 명시 
+	// 첫번째만 중요 나머지는 이름으로 변경할 것임
+	LoadGameScenesFromDirectory(scenesPath,{
+		"Game Test", // 제일 처음 실행될 Scene
+		"Game Test2",
+		//"BossStage"
+		});
+
+	//Load 실패
 	if (!m_CurrentScene)
 	{
 		std::cerr << "No scene loaded from " << scenesPath.string() << std::endl;
@@ -30,15 +40,17 @@ void SceneManager::Update(float deltaTime)
 {
 	if (!m_CurrentScene)
 		return;
+
 	if (m_CurrentScene->GetIsPause())
 		deltaTime = 0.0f;
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
 
-	if (totalTime >= 0.016f)
+	if (totalTime >= 0.016f) {
 		m_CurrentScene->FixedUpdate();
-
+	}
+	
 	m_CurrentScene->Update(deltaTime);
 }
 
@@ -49,6 +61,8 @@ void SceneManager::StateUpdate(float deltaTime)
 
 	m_CurrentScene->StateUpdate(deltaTime);
 }
+
+
 
 void SceneManager::Render()
 {
@@ -61,6 +75,8 @@ void SceneManager::Render()
 	m_CurrentScene->Render(frameData);
 
 }
+
+
 
 std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shared_ptr<Scene> scene)
 {
@@ -84,6 +100,7 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
+		// 생기면 넣기
 // 		if (m_GameManager)
 // 		{
 // 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
@@ -102,8 +119,11 @@ std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
 
 void SceneManager::ChangeScene(const std::string& name)
 {
-	if(m_CurrentScene)
+
+	if (m_CurrentScene) {
 		m_CurrentScene->Leave();
+	}
+
 
 	auto it = m_Scenes.find(name);
 
@@ -144,34 +164,40 @@ void SceneManager::SetChangeScene(std::string name)
 	m_ChangeSceneName = name;
 }
 
-void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath)
+void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames)
 {
-	std::cout << "Testing" << std::endl;
+
 	if (directoryPath.empty() || !std::filesystem::exists(directoryPath))
 	{
-		std::cout << "Unvaild directory" << std::endl;
+		std::cout << "Invalid directory" << std::endl;
 		return;
 	}
 
+	// 빠른 검색을 위해 set 사용
+	std::unordered_set<std::string> sceneNameSet(
+		sceneNames.begin(), sceneNames.end());
+
 	std::vector<std::filesystem::path> sceneFiles;
+
 	for (const auto& entry : std::filesystem::directory_iterator(directoryPath))
 	{
 		if (!entry.is_regular_file())
-		{
 			continue;
-		}
 
 		const auto& path = entry.path();
+
 		if (path.extension() != ".json")
-		{
 			continue;
-		}
+
+		// 파일명 (확장자 제거)
+		std::string fileName = path.stem().string();
+
+		// 명시된 이름만 허용
+		if (sceneNameSet.find(fileName) == sceneNameSet.end())
+			continue;
 
 		sceneFiles.push_back(path);
 	}
-
-	std::sort(sceneFiles.begin(), sceneFiles.end());
-
 
 	for (const auto& path : sceneFiles)
 	{
@@ -183,7 +209,7 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 	{
 		SetCurrentScene(m_Scenes.begin()->first);
 	}
-	return;
+
 }
 
 bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
@@ -202,7 +228,7 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 	nlohmann::json j;
 	ifs >> j;
 
-	auto loadedScene = std::make_shared<DefaultScene>(m_Services);
+	auto loadedScene = std::make_shared<ClientScene>(m_Services);
 	loadedScene->SetName(filepath.stem().string());
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);

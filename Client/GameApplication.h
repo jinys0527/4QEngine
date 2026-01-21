@@ -7,7 +7,6 @@
 #include "RenderTargetContext.h"
 
 
-
 class ServiceRegistry;
 class Engine;
 class Renderer;
@@ -41,9 +40,6 @@ private:
 	
 	void OnResize(int width, int height) override;
 	void OnClose() override;
-
-	//GameObject* m_Player;
-	//GameObject* m_Obstacle;
 
 
 	float m_GameSpeed = 1.0f;
