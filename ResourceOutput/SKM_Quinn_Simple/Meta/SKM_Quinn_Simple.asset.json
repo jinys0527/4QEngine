@@ -4,12 +4,7 @@
     "materials": "Mats/SKM_Quinn_Simple.matbin",
     "skeleton": "Skels/SKM_Quinn_Simple.skelbin"
   },
-  "meshes": [
-    {
-      "file": "Meshes/SKM_Quinn_Simple.meshbin",
-      "isSkinned": false
-    }
-  ],
+  "meshes": [],
   "name": "SKM_Quinn_Simple",
   "path": {
     "baseDir": "..",
