@@ -22,10 +22,9 @@ void SceneManager::Initialize()
 	//std::filesystem::path scenesPath = "../Resources/Scenes";
 
 	// Game에서 로드할 것 여기서 명시 
-	// 첫번째만 중요 나머지는 이름으로 변경할 것임
 	LoadGameScenesFromDirectory(scenesPath,{
-		"Game Test", // 제일 처음 실행될 Scene
-		"Game Test2",
+		"Game Test2", // 제일 처음 실행될 Scene
+		"Game Test",
 		//"BossStage"
 		});
 
@@ -173,41 +172,25 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 		return;
 	}
 
-	// 빠른 검색을 위해 set 사용
-	std::unordered_set<std::string> sceneNameSet(
-		sceneNames.begin(), sceneNames.end());
-
-	std::vector<std::filesystem::path> sceneFiles;
-
-	for (const auto& entry : std::filesystem::directory_iterator(directoryPath))
+	for (const auto& sceneName : sceneNames)
 	{
-		if (!entry.is_regular_file())
+		std::filesystem::path scenePath =
+			directoryPath / (sceneName + ".json");
+
+		if (!std::filesystem::exists(scenePath))
+		{
+			std::cout << "Scene not found: " << sceneName << std::endl;
 			continue;
+		}
 
-		const auto& path = entry.path();
-
-		if (path.extension() != ".json")
-			continue;
-
-		// 파일명 (확장자 제거)
-		std::string fileName = path.stem().string();
-
-		// 명시된 이름만 허용
-		if (sceneNameSet.find(fileName) == sceneNameSet.end())
-			continue;
-
-		sceneFiles.push_back(path);
+		std::cout << scenePath << " Scene Find" << std::endl;
+		LoadGameSceneFromJson(scenePath);
 	}
 
-	for (const auto& path : sceneFiles)
+	// 첫 번째 Scene을 Entry Scene으로 설정
+	if (!m_CurrentScene && !sceneNames.empty())
 	{
-		std::cout << path << " Scene Find" << std::endl;
-		LoadGameSceneFromJson(path);
-	}
-
-	if (!m_CurrentScene && !m_Scenes.empty())
-	{
-		SetCurrentScene(m_Scenes.begin()->first);
+		SetCurrentScene(sceneNames.front());
 	}
 
 }
