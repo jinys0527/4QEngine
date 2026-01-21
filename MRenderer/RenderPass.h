@@ -62,6 +62,7 @@ protected:
 private:
 	void BuildQueue(const RenderData::FrameData& frame);
 
+
 	std::vector<RenderQueueItem> m_Queue;
 	bool m_Enabled = true;
 

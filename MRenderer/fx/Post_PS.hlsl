@@ -7,9 +7,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 Blur1 = g_Blur.SampleLevel(smpClamp, i.uv, 1);
     float4 Blur2 = g_Blur.SampleLevel(smpClamp, i.uv, 2);
     float4 Blur3 = g_Blur.SampleLevel(smpClamp, i.uv, 3);
-    
-    float4 val = g_ShadowMap.Sample(smpClamp, i.uv);
-    
+        
     float DepthMap = g_DepthMap.Sample(smpClamp, i.uv).r;
     
     //Circle of Confusion
@@ -38,8 +36,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     }
     
     
-    float blurMask = val.r;
-    float4 tex = lerp(RTView, dofColor, blurMask);
+    float4 tex = lerp(RTView, dofColor, 1);
     tex.a = 1;
     return RTView;
 }
