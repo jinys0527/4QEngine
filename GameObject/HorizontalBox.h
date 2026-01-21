@@ -34,6 +34,10 @@ public:
 	void AddSlot(const HorizontalBoxSlot& slot);
 	const std::vector<HorizontalBoxSlot>& GetSlots() const { return m_Slots; }
 
+	std::vector<HorizontalBoxSlot>& GetSlots() { return m_Slots; }
+	bool RemoveSlotByChild(const UIObject* child);
+	void ClearSlots();
+
 	std::vector<UIRect> ArrangeChildren(float startX, float startY, const UISize& availableSize) const;
 
 private:

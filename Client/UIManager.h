@@ -4,9 +4,12 @@
 #include <memory>
 #include <windows.h>
 //#include "RenderData.h"
+#include <functional>
 #include "UIObject.h"
 #include "EventDispatcher.h"
 #include "json.hpp"
+
+struct HorizontalBoxSlot;
 
 class UIManager : public IEventListener
 {
@@ -28,6 +31,14 @@ public:
 			auto it2 = uiMap.find(uiObject->m_Name);
 			if (it2 != uiMap.end())
 			{
+				if (uiObject && m_ActiveUI == uiObject.get())
+				{
+					m_ActiveUI = nullptr;
+				}
+				if (uiObject && m_LastHoveredUI == uiObject.get())
+				{
+					m_LastHoveredUI = nullptr;
+				}
 				uiMap.erase(it2);
 				if (uiMap.empty())  // 씬 내 UI가 다 지워지면 씬 키도 지울 수 있음 (선택 사항)
 				{
@@ -67,10 +78,40 @@ public:
 	{
 		return m_UIObjects;
 	}
+
+	std::shared_ptr<UIObject> FindUIObject(const std::string& sceneName, const std::string& objectName);
+
+	template<typename ComponentType, typename Func>
+	bool ApplyToComponent(const std::string& sceneName, const std::string& objectName, Func&& func)
+	{
+		auto uiObject = FindUIObject(sceneName, objectName);
+		if (!uiObject)
+		{
+			return false;
+		}
+
+		auto* component = uiObject->GetComponent<ComponentType>();
+		if (!component)
+		{
+			return false;
+		}
+
+		func(*component);
+		return true;
+	}
+
 	// UIManager: UI가 변경될 때 호출하는 함수
 	void UpdateSortedUI(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap);
 
 	void RefreshUIListForCurrentScene();
+
+	bool RegisterButtonOnClicked(const std::string& sceneName, const std::string& objectName, std::function<void()> callback);
+	bool ClearButtonOnClicked(const std::string& sceneName, const std::string& objectName);
+	bool RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot);
+	bool RemoveHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName);
+	bool ClearHorizontalSlots(const std::string& sceneName, const std::string& horizontalName);
+	bool ApplyHorizontalLayout(const std::string& sceneName, const std::string& horizontalName);
+
 
 	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
 	void DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data);

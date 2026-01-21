@@ -3,6 +3,7 @@
 #include "UIManager.h"
 #include "Event.h"
 #include "UIButtonComponent.h"
+#include "HorizontalBox.h"
 #include "UISliderComponent.h"
 #include <algorithm>
 
@@ -68,6 +69,151 @@ void UIManager::Update(float deltaTime)
 	{
 		pair.second->Update(deltaTime);
 	}
+}
+
+std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, const std::string& objectName)
+{
+	auto it = m_UIObjects.find(sceneName);
+	if (it == m_UIObjects.end())
+	{
+		return nullptr;
+	}
+
+	auto itObj = it->second.find(objectName);
+	if (itObj == it->second.end())
+	{
+		return nullptr;
+	}
+
+	return itObj->second;
+}
+
+bool UIManager::RegisterButtonOnClicked(const std::string& sceneName, const std::string& objectName, std::function<void()> callback)
+{
+	auto callbackCopy = std::move(callback);
+	return ApplyToComponent<UIButtonComponent>(sceneName, objectName, [callback = std::move(callbackCopy)](UIButtonComponent& button) mutable
+		{
+			button.SetOnClicked(std::move(callback));
+		});
+}
+
+bool UIManager::ClearButtonOnClicked(const std::string& sceneName, const std::string& objectName)
+{
+	return ApplyToComponent<UIButtonComponent>(sceneName, objectName, [](UIButtonComponent& button)
+		{
+			button.SetOnClicked(nullptr);
+		});
+}
+
+bool UIManager::RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot)
+{
+	auto child = FindUIObject(sceneName, childName);
+	if (!child)
+	{
+		return false;
+	}
+
+	const bool applied = ApplyToComponent<HorizontalBox>(sceneName, horizontalName, [&](HorizontalBox& horizontal)
+		{
+			HorizontalBoxSlot updatedSlot = slot;
+			updatedSlot.child = child.get();
+			horizontal.AddSlot(updatedSlot);
+		});
+	if (!applied)
+	{
+		return false;
+	}
+
+	child->SetParentName(horizontalName);
+	ApplyHorizontalLayout(sceneName, horizontalName);
+	return true;
+}
+
+bool UIManager::RemoveHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName)
+{
+	auto child = FindUIObject(sceneName, childName);
+	if (!child)
+	{
+		return false;
+	}
+
+	auto parent = FindUIObject(sceneName, horizontalName);
+	if (!parent)
+	{
+		return false;
+	}
+
+	auto* horizontal = parent->GetComponent<HorizontalBox>();
+	if (!horizontal)
+	{
+		return false;
+	}
+
+	if (!horizontal->RemoveSlotByChild(child.get()))
+	{
+		return false;
+	}
+	child->ClearParentName();
+	ApplyHorizontalLayout(sceneName, horizontalName);
+	return true;
+}
+
+bool UIManager::ClearHorizontalSlots(const std::string& sceneName, const std::string& horizontalName)
+{
+	auto parent = FindUIObject(sceneName, horizontalName);
+	if (!parent)
+	{
+		return false;
+	}
+
+	auto* horizontal = parent->GetComponent<HorizontalBox>();
+	if (!horizontal)
+	{
+		return false;
+	}
+
+	for (auto& slot : horizontal->GetSlots())
+	{
+		if (slot.child)
+		{
+			slot.child->ClearParentName();
+		}
+	}
+	horizontal->ClearSlots();
+	return true;
+}
+
+bool UIManager::ApplyHorizontalLayout(const std::string& sceneName, const std::string& horizontalName)
+{
+	auto parent = FindUIObject(sceneName, horizontalName);
+	if (!parent)
+	{
+		return false;
+	}
+
+	auto* horizontal = parent->GetComponent<HorizontalBox>();
+	if (!horizontal)
+	{
+		return false;
+	}
+
+	const UIRect parentBounds = parent->GetBounds();
+	const UISize availableSize{ parentBounds.width, parentBounds.height };
+	const auto arranged = horizontal->ArrangeChildren(parentBounds.x, parentBounds.y, availableSize);
+	const auto& slots = horizontal->GetSlots();
+	const size_t count = min(arranged.size(), slots.size());
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		UIObject* child = slots[i].child;
+		if (!child)
+		{
+			continue;
+		}
+		child->SetBounds(arranged[i]);
+	}
+
+	return true;
 }
 
 void UIManager::OnEvent(EventType type, const void* data)
@@ -212,7 +358,14 @@ void UIManager::RefreshUIListForCurrentScene()
 	if (it != uiObjects.end())
 	{
 		UpdateSortedUI(it->second);
+		return;
 	}
+
+	m_SortedUI.clear();
+	m_FullScreenUIActive = false;
+	m_FullScreenZ = -1;
+	m_ActiveUI = nullptr;
+	m_LastHoveredUI = nullptr;
 }
 
 void UIManager::SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const

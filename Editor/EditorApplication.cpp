@@ -30,6 +30,7 @@
 #include "UIButtonComponent.h"
 #include "UIProgressBarComponent.h"
 #include "UIPrimitives.h"
+#include "HorizontalBox.h"
 #include "UISliderComponent.h"
 #include "UITextComponent.h"
 #include <cmath>
@@ -3127,24 +3128,59 @@ void EditorApplication::DrawUIEditorPreview()
 			float positionValues[2] = { bounds.x, bounds.y };
 			float sizeValues[2] = { bounds.width, bounds.height };
 
+			auto captureWorldBounds = [&]() -> UIRect
+				{
+					if (it != uiObjectsByScene.end())
+					{
+						std::unordered_map<std::string, UIRect> boundsCache;
+						std::unordered_set<std::string> visiting;
+						return getWorldBoundsForLayout(selectedObject->GetName(), it->second, getWorldBoundsForLayout, boundsCache, visiting);
+					}
+					return selectedObject->GetBounds();
+				};
+
+			auto captureParentBounds = [&]() -> UIRect
+				{
+					UIRect parentBounds{};
+					const std::string parentName = selectedObject->GetParentName();
+					if (!parentName.empty() && it != uiObjectsByScene.end())
+					{
+						auto itParent = it->second.find(parentName);
+						if (itParent != it->second.end())
+						{
+							std::unordered_map<std::string, UIRect> boundsCache;
+							std::unordered_set<std::string> visiting;
+							parentBounds = getWorldBoundsForLayout(parentName, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+						}
+					}
+					return parentBounds;
+				};
+
+
 			const bool anchorMinChanged = ImGui::DragFloat2("Anchor Min", anchorMinValues, 0.01f, 0.0f, 1.0f);
 			if (anchorMinChanged)
 			{
+				UIRect worldBounds = captureWorldBounds();
 				selectedObject->SetAnchorMin(clampAnchor(UIAnchor{ anchorMinValues[0], anchorMinValues[1] }));
+				setLocalFromWorldForLayout(*selectedObject, worldBounds, captureParentBounds());
 			}
 			recordUILongEdit(makeUILayoutKey("AnchorMin"), anchorMinChanged, "Edit UI Anchor Min");
 
 			const bool anchorMaxChanged = ImGui::DragFloat2("Anchor Max", anchorMaxValues, 0.01f, 0.0f, 1.0f);
 			if (anchorMaxChanged)
 			{
+				UIRect worldBounds = captureWorldBounds();
 				selectedObject->SetAnchorMax(clampAnchor(UIAnchor{ anchorMaxValues[0], anchorMaxValues[1] }));
+				setLocalFromWorldForLayout(*selectedObject, worldBounds, captureParentBounds());
 			}
 			recordUILongEdit(makeUILayoutKey("AnchorMax"), anchorMaxChanged, "Edit UI Anchor Max");
 
 			const bool pivotChanged = ImGui::DragFloat2("Pivot", pivotValues, 0.01f, 0.0f, 1.0f);
 			if (pivotChanged)
 			{
+				UIRect worldBounds = captureWorldBounds();
 				selectedObject->SetPivot(clampAnchor(UIAnchor{ pivotValues[0], pivotValues[1] }));
+				setLocalFromWorldForLayout(*selectedObject, worldBounds, captureParentBounds());
 			}
 			recordUILongEdit(makeUILayoutKey("Pivot"), pivotChanged, "Edit UI Pivot");
 
@@ -3452,13 +3488,20 @@ void EditorApplication::DrawUIEditorPreview()
 				ImGui::SameLine();
 				if (ImGui::Button("Remove"))
 				{
-					nlohmann::json beforeSnapshot;
-					selectedObject->Serialize(beforeSnapshot);
-					selectedObject->RemoveComponentByTypeName(componentType);
-					selectedObject->UpdateInteractableFlags();
-					nlohmann::json afterSnapshot;
-					selectedObject->Serialize(afterSnapshot);
-					pushUISnapshotUndo("Remove UI Component", beforeSnapshot, afterSnapshot);
+					if (ImGui::Button("Remove"))
+					{
+						nlohmann::json beforeSnapshot;
+						selectedObject->Serialize(beforeSnapshot);
+						selectedObject->RemoveComponentByTypeName(componentType);
+						selectedObject->UpdateInteractableFlags();
+						if (uiManager)
+						{
+							uiManager->RefreshUIListForCurrentScene();
+						}
+						nlohmann::json afterSnapshot;
+						selectedObject->Serialize(afterSnapshot);
+						pushUISnapshotUndo("Remove UI Component", beforeSnapshot, afterSnapshot);
+					}
 				}
 				ImGui::PopID();
 			}
@@ -3501,6 +3544,10 @@ void EditorApplication::DrawUIEditorPreview()
 					selectedObject->Serialize(beforeSnapshot);
 					selectedObject->AddComponentByTypeName(selectedTypeName);
 					selectedObject->UpdateInteractableFlags();
+					if (uiManager)
+					{
+						uiManager->RefreshUIListForCurrentScene();
+					}
 					nlohmann::json afterSnapshot;
 					selectedObject->Serialize(afterSnapshot);
 					pushUISnapshotUndo("Add UI Component", beforeSnapshot, afterSnapshot);
@@ -3520,6 +3567,7 @@ void EditorApplication::DrawUIEditorPreview()
 			if (m_AssetLoader)
 			{
 				ImGui::SeparatorText("Properties");
+				bool uiPropertiesUpdated = false;
 				auto componentTypesForEdit = selectedObject->GetComponentTypeNames();
 				for (const auto& componentType : componentTypesForEdit)
 				{
@@ -3543,6 +3591,7 @@ void EditorApplication::DrawUIEditorPreview()
 								const bool updated = editResult.updated;
 								const bool activated = editResult.activated;
 								const bool deactivated = editResult.deactivated;
+								uiPropertiesUpdated = uiPropertiesUpdated || updated;
 								const size_t propertyKey = MakePropertyKey(component, prop->GetName());
 
 								if (activated && m_PendingUIPropertySnapshots.find(propertyKey) == m_PendingUIPropertySnapshots.end())
@@ -3585,6 +3634,81 @@ void EditorApplication::DrawUIEditorPreview()
 						ImGui::TreePop();
 					}
 					ImGui::PopID();
+				}
+				if (uiPropertiesUpdated && uiManager)
+				{
+					uiManager->RefreshUIListForCurrentScene();
+				}
+			}
+			ImGui::SeparatorText("Editor Bindings");
+			if (uiManager)
+			{
+				const std::string selectedName = selectedObject->GetName();
+				if (selectedObject->GetComponent<UIButtonComponent>())
+				{
+					if (ImGui::Button("Bind Button Toggle Visibility"))
+					{
+						uiManager->RegisterButtonOnClicked(sceneName, selectedName, [uiManager, sceneName, selectedName]()
+							{
+								auto target = uiManager->FindUIObject(sceneName, selectedName);
+								if (!target)
+								{
+									return;
+								}
+								target->SetIsVisible(!target->IsVisible());
+							});
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Clear Button Binding"))
+					{
+						uiManager->ClearButtonOnClicked(sceneName, selectedName);
+					}
+				}
+
+				if (selectedObject->GetComponent<HorizontalBox>())
+				{
+					if (ImGui::Button("Register Selected As Horizontal Slots"))
+					{
+						for (const auto& name : m_SelectedUIObjectNames)
+						{
+							if (name == selectedName)
+							{
+								continue;
+							}
+							auto child = uiManager->FindUIObject(sceneName, name);
+							if (!child)
+							{
+								continue;
+							}
+							const auto bounds = child->GetBounds();
+							HorizontalBoxSlot slot;
+							slot.child = child.get();
+							slot.desiredSize = UISize{ bounds.width, bounds.height };
+							slot.padding = 0.0f;
+							slot.fillWeight = 1.0f;
+							slot.alignment = UIHorizontalAlignment::Left;
+							uiManager->RegisterHorizontalSlot(sceneName, selectedName, name, slot);
+						}
+						uiManager->RefreshUIListForCurrentScene();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Remove Selected From Horizontal"))
+					{
+						for (const auto& name : m_SelectedUIObjectNames)
+						{
+							if (name == selectedName)
+							{
+								continue;
+							}
+							uiManager->RemoveHorizontalSlot(sceneName, selectedName, name);
+						}
+						uiManager->RefreshUIListForCurrentScene();
+					}
+					if (ImGui::Button("Clear Horizontal Slots"))
+					{
+						uiManager->ClearHorizontalSlots(sceneName, selectedName);
+						uiManager->RefreshUIListForCurrentScene();
+					}
 				}
 			}
 			else
@@ -3841,25 +3965,10 @@ void EditorApplication::DrawUIEditorPreview()
 					}
 				};
 
-			ImVec2 maxExtent{ 0.0f, 0.0f };
-			if (it != uiObjectsByScene.end())
-			{
-				std::unordered_map<std::string, UIRect> boundsCache;
-				std::unordered_set<std::string> visiting;
+			const ImVec2 designCanvasSize{ 1920.0f, 1080.0f };
+			const float scaleX = (designCanvasSize.x > 0.0f) ? (canvasAvail.x / designCanvasSize.x) : 1.0f;
+			const float scaleY = (designCanvasSize.y > 0.0f) ? (canvasAvail.y / designCanvasSize.y) : 1.0f;
 
-				for (const auto& [name, uiObject] : it->second)
-				{
-					if (uiObject && uiObject->HasBounds())
-					{
-						const auto bounds = getWorldBounds(name, it->second, getWorldBounds, boundsCache, visiting);
-						maxExtent.x = max(maxExtent.x, bounds.x + bounds.width);
-						maxExtent.y = max(maxExtent.y, bounds.y + bounds.height);
-					}
-				}
-			}
-
-			const float scaleX = (maxExtent.x > 0.0f) ? (canvasAvail.x / maxExtent.x) : 1.0f;
-			const float scaleY = (maxExtent.y > 0.0f) ? (canvasAvail.y / maxExtent.y) : 1.0f;
 			const float baseScale = std::min(scaleX, scaleY);
 			canvasZoom = std::clamp(canvasZoom, 0.1f, 5.0f);
 			const float scale = baseScale * canvasZoom;
