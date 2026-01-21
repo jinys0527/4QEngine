@@ -49,6 +49,8 @@ public:
 
 	void SetChangeScene(std::string name);
 
+	UIManager* GetUIManager() const { return m_UIManager; }
+
 private:
 	ServiceRegistry& m_Services;
 

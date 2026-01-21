@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "UIPrimitives.h"
 #include <windows.h>
+#include "json.hpp"
 
 class UIObject : public Object
 {
@@ -12,6 +13,9 @@ public:
 
 	//void Render(std::vector<UIRenderInfo>& renderInfo);
 	//void Render(std::vector<UITextInfo>& textInfo);
+
+	void Serialize(nlohmann::json& j) const;
+	void DeSerialize(const nlohmann::json& j);
 
 	void SetZOrder(int zOrder) { m_ZOrder = zOrder; }
 	int GetZOrder () const     { return m_ZOrder;   }
@@ -56,6 +60,19 @@ public:
 		return m_HasBounds;
 	}
 
+	void SetParentName(const std::string& name) { m_ParentName = name;  }
+	void ClearParentName()						{ m_ParentName.clear(); }
+	const std::string& GetParentName() const    { return m_ParentName;  }
+
+	void SetAnchorMin(const UIAnchor& anchor) { m_AnchorMin = anchor; }
+	void SetAnchorMax(const UIAnchor& anchor) { m_AnchorMax = anchor; }
+	void SetPivot(const UIAnchor& anchor) { m_Pivot = anchor; }
+	const UIAnchor& GetAnchorMin() const { return m_AnchorMin; }
+	const UIAnchor& GetAnchorMax() const { return m_AnchorMax; }
+	const UIAnchor& GetPivot() const     { return m_Pivot;	   }	
+	void SetRotationDegrees(const float& degree) { m_RotationDegrees = degree; }
+	const float& GetRotationDegrees() const		 { return m_RotationDegrees;   }
+
 	// UI 오브젝트 컴포넌트 추가/삭제 시 플래그 갱신 예시 (UIObject 내부)
 	void UpdateInteractableFlags();
 	
@@ -72,5 +89,11 @@ protected:
 
 	UIRect m_Bounds{};
 	bool m_HasBounds = false;
+
+	std::string m_ParentName;
+	UIAnchor m_AnchorMin{ 0.0f, 0.0f };
+	UIAnchor m_AnchorMax{ 0.0f, 0.0f };
+	UIAnchor m_Pivot{ 0.0f, 0.0f };
+	float m_RotationDegrees = 0.0f;
 };
 

@@ -152,6 +152,11 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 
+	if (m_UIManager && j.contains("ui"))
+	{
+		m_UIManager->DeSerializeSceneUI(loadedScene->GetName(), j.at("ui"));
+	}
+
 	return true;
 }
 
@@ -176,6 +181,12 @@ bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 
+	if (m_UIManager && data.contains("ui"))
+	{
+		m_UIManager->DeSerializeSceneUI(loadedScene->GetName(), data.at("ui"));
+	}
+
+
 	return true;
 }
 
@@ -195,6 +206,14 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 
 	nlohmann::json j;
 	m_CurrentScene->Serialize(j);
+
+	if (m_UIManager)
+	{
+		nlohmann::json uiData;
+		m_UIManager->SerializeSceneUI(m_CurrentScene->GetName(), uiData);
+		j["ui"] = uiData;
+	}
+
 	ofs << j.dump(4);
 	return true;
 	

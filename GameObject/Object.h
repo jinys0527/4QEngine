@@ -115,6 +115,8 @@ public:
 	std::vector<Component*> GetComponentsByTypeName(const std::string& typeName) const;
 	bool RemoveComponentByTypeName(const std::string& typeName, int index = 0); // 삭제
 
+	Component* AddComponentByTypeName(const std::string& typeName);
+
 	virtual void Start();
 	virtual void Update(float deltaTime);
 

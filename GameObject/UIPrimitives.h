@@ -8,6 +8,12 @@ struct UISize
 	float height = 0.0f;
 };
 
+struct UIAnchor
+{
+	float x = 0.0f;
+	float y = 0.0f;
+};
+
 struct UIRect
 {
 	float x      = 0.0f;

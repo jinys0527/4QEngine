@@ -6,11 +6,12 @@
 //#include "RenderData.h"
 #include "UIObject.h"
 #include "EventDispatcher.h"
+#include "json.hpp"
 
 class UIManager : public IEventListener
 {
 public:
-	UIManager(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher) {}
+	UIManager() {}
 	virtual ~UIManager();
 
 	void AddUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
@@ -70,6 +71,9 @@ public:
 	void UpdateSortedUI(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap);
 
 	void RefreshUIListForCurrentScene();
+
+	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
+	void DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data);
 
 private:
 	// UIManager 멤버 변수에 추가 (헤더에 선언)

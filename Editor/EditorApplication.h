@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <array>
 #include <unordered_map>
+#include <unordered_set>
 #include "UndoManager.h"
 #include "Snapshot.h"
 
@@ -68,6 +69,7 @@ private:
 	void DrawFolderView();
 	void DrawResourceBrowser();
 	void DrawGizmo();
+	void DrawUIEditorPreview();
 
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
 
@@ -116,6 +118,13 @@ private:
 	std::unordered_map<size_t, PendingPropertySnapshot> m_PendingPropertySnapshots;
 	std::filesystem::path m_LastPendingSnapshotScenePath;
 
+	struct PendingUIPropertySnapshot
+	{
+		nlohmann::json beforeSnapshot;
+		bool updated = false;
+	};
+	std::unordered_map<size_t, PendingUIPropertySnapshot> m_PendingUIPropertySnapshots;
+
 	nlohmann::json m_ObjectClipboard;
 	bool m_ObjectClipboardHasData = false;
 	bool m_ObjectClipboardIsOpaque = true;
@@ -134,4 +143,8 @@ private:
 	bool m_OpenDeleteConfirm = false;
 
 	UndoManager m_UndoManager;
+
+	std::string m_SelectedUIObjectName;
+	std::unordered_set<std::string> m_SelectedUIObjectNames;
+	std::string m_LastSelectedUIObjectName;
 };

@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "UIButtonComponent.h"
 #include "UISliderComponent.h"
+#include "Reflection.h"
 
 UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 {
@@ -150,6 +151,98 @@ UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
 //		renderInfo.emplace_back(info);
 //	}
 //}
+
+void UIObject::Serialize(nlohmann::json& j) const
+{
+	j["name"] = m_Name;
+	j["bounds"] = { {"x", m_Bounds.x}, {"y", m_Bounds.y}, {"w", m_Bounds.width}, {"h", m_Bounds.height} };
+	j["hasBounds"] = m_HasBounds;
+	j["parent"] = m_ParentName;
+	j["anchorMin"] = { {"x", m_AnchorMin.x}, {"y", m_AnchorMin.y} };
+	j["anchorMax"] = { {"x", m_AnchorMax.x}, {"y", m_AnchorMax.y} };
+	j["pivot"] = { {"x", m_Pivot.x}, {"y", m_Pivot.y} };
+	j["rotation"] = m_RotationDegrees;
+	j["zOrder"] = m_ZOrder;
+	j["visible"] = m_IsVisible;
+
+	nlohmann::json components = nlohmann::json::array();
+	for (const auto& [typeName, comps] : m_Components)
+	{
+		for (const auto& comp : comps)
+		{
+			if (!comp)
+			{
+				continue;
+			}
+			nlohmann::json compJson;
+			compJson["type"] = typeName;
+			nlohmann::json data = nlohmann::json::object();
+			comp->Serialize(data);
+			compJson["data"] = data;
+			components.push_back(compJson);
+		}
+	}
+	j["components"] = components;
+}
+
+void UIObject::DeSerialize(const nlohmann::json& j)
+{
+	m_Name = j.value("name", m_Name);
+	if (j.contains("bounds"))
+	{
+		const auto& bounds = j.at("bounds");
+		m_Bounds.x = bounds.value("x", m_Bounds.x);
+		m_Bounds.y = bounds.value("y", m_Bounds.y);
+		m_Bounds.width = bounds.value("w", m_Bounds.width);
+		m_Bounds.height = bounds.value("h", m_Bounds.height);
+		m_HasBounds = j.value("hasBounds", true);
+	}
+	m_ParentName = j.value("parent", "");
+	if (j.contains("anchorMin"))
+	{
+		const auto& anchorMin = j.at("anchorMin");
+		m_AnchorMin.x = anchorMin.value("x", m_AnchorMin.x);
+		m_AnchorMin.y = anchorMin.value("y", m_AnchorMin.y);
+	}
+	if (j.contains("anchorMax"))
+	{
+		const auto& anchorMax = j.at("anchorMax");
+		m_AnchorMax.x = anchorMax.value("x", m_AnchorMax.x);
+		m_AnchorMax.y = anchorMax.value("y", m_AnchorMax.y);
+	}
+	if (j.contains("pivot"))
+	{
+		const auto& pivot = j.at("pivot");
+		m_Pivot.x = pivot.value("x", m_Pivot.x);
+		m_Pivot.y = pivot.value("y", m_Pivot.y);
+	}
+	m_RotationDegrees = j.value("rotation", m_RotationDegrees);
+	m_ZOrder = j.value("zOrder", m_ZOrder);
+	m_IsVisible = j.value("visible", m_IsVisible);
+
+	m_Components.clear();
+	if (j.contains("components"))
+	{
+		for (const auto& compJson : j.at("components"))
+		{
+			const std::string typeName = compJson.value("type", "");
+			if (typeName.empty())
+			{
+				continue;
+			}
+			Component* component = AddComponentByTypeName(typeName);
+			if (!component)
+			{
+				continue;
+			}
+			if (compJson.contains("data"))
+			{
+				component->Deserialize(compJson.at("data"));
+			}
+		}
+	}
+	UpdateInteractableFlags();
+}
 
 bool UIObject::HitCheck(const POINT& pos)
 {

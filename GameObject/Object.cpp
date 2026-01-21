@@ -1,6 +1,7 @@
 ﻿#include "Object.h"
 #include "SkeletalMeshRenderer.h"
 #include "SkeletalMeshComponent.h"
+#include "Reflection.h"
 
 Object::Object(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher)
 {
@@ -89,6 +90,26 @@ bool Object::RemoveComponentByTypeName(const std::string& typeName, int index)
 		m_Components.erase(it);
 	}
 	return true;
+}
+
+Component* Object::AddComponentByTypeName(const std::string& typeName)
+{
+	auto* typeInfo = ComponentRegistry::Instance().Find(typeName);
+	if (!typeInfo || !typeInfo->factory)
+	{
+		return nullptr;
+	}
+
+	auto comp = typeInfo->factory();
+	if (!comp)
+	{
+		return nullptr;
+	}
+
+	comp->SetOwner(this);
+	Component* ptr = comp.get();
+	m_Components[typeName].emplace_back(std::move(comp));
+	return ptr;
 }
 
 void Object::Update(float deltaTime)

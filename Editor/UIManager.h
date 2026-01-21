@@ -5,6 +5,7 @@
 #include <windows.h>
 //#include "RenderData.h"
 #include "UIObject.h"
+#include "json.hpp"
 
 class EventDispatcher;
 
@@ -72,6 +73,8 @@ public:
 
 	void RefreshUIListForCurrentScene();
 
+	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
+	void DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data);
 private:
 	// UIManager 멤버 변수에 추가 (헤더에 선언)
 	std::vector<UIObject*> m_SortedUI;

@@ -215,7 +215,51 @@ void UIManager::RefreshUIListForCurrentScene()
 	}
 }
 
+void UIManager::SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const
+{
+	out = nlohmann::json::array();
+	auto it = m_UIObjects.find(sceneName);
+	if (it == m_UIObjects.end())
+	{
+		return;
+	}
 
+	for (const auto& [name, uiObject] : it->second)
+	{
+		if (!uiObject)
+		{
+			continue;
+		}
+		nlohmann::json entry;
+		uiObject->Serialize(entry);
+		out.push_back(entry);
+	}
+}
+
+void UIManager::DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data)
+{
+	if (!m_EventDispatcher)
+	{
+		return;
+	}
+
+	auto& uiMap = m_UIObjects[sceneName];
+	uiMap.clear();
+
+	if (!data.is_array())
+	{
+		return;
+	}
+
+	for (const auto& entry : data)
+	{
+		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
+		uiObject->DeSerialize(entry);
+		uiObject->UpdateInteractableFlags();
+		uiMap[uiObject->GetName()] = uiObject;
+	}
+	UpdateSortedUI(uiMap);
+}
 //void UIManager::Render(std::vector<UIRenderInfo>& uiRenderInfo, std::vector<UITextInfo>& uiTextInfo)
 //{
 //	auto it = m_UIObjects.find(m_CurrentSceneName);
