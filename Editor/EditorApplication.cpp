@@ -749,7 +749,7 @@ void EditorApplication::DrawHierarchy() {
 				current->Serialize(objectJson);
 				objectJson["clipboardId"] = currentId;
 				objectJson["parentId"] = parentId;
-        
+
 				if (isRoot && !rootParentName.empty())
 				{
 					objectJson["externalParentName"] = rootParentName;
@@ -1165,7 +1165,7 @@ void EditorApplication::DrawHierarchy() {
 				didAdd = true;
 			}
 			for (const auto& objectJson : pendingAdd.data["objects"])
-				{
+			{
 				const int clipboardId = objectJson.value("clipboardId", -1);
 				const int parentId = objectJson.value("parentId", -1);
 				if (clipboardId < 0)
@@ -1217,7 +1217,7 @@ void EditorApplication::DrawHierarchy() {
 				}
 				childTransform->SetParentKeepLocal(parentTransform);
 			}
-				
+
 		}
 		else if (pendingAdd.data.contains("components") && pendingAdd.data["components"].is_array())
 		{
@@ -1686,7 +1686,7 @@ void EditorApplication::DrawFolderView()
 	{
 		ImGui::EndDisabled();
 	}
-	
+
 	ImGui::SameLine();
 	if (m_CurrentScenePath.empty())
 	{
@@ -1950,7 +1950,7 @@ void EditorApplication::DrawFolderView()
 									});
 							}
 						}
-						
+
 					}
 					ImGui::PopID();
 				}
@@ -2482,6 +2482,7 @@ void EditorApplication::DrawGizmo()
 
 void EditorApplication::DrawUIEditorPreview()
 {
+	ImGui::SetNextWindowSize(ImVec2(1920, 1080), ImGuiCond_Once);
 	ImGui::Begin("UI Editor");
 	ImGui::TextDisabled("UI Editor Preview");
 	ImGui::Separator();
@@ -4216,7 +4217,7 @@ void EditorApplication::DrawUIEditorPreview()
 				ImGui::TextDisabled("Asset loader not available for property editing.");
 			}
 		}
-	
+
 		else
 		{
 			m_PendingUIPropertySnapshots.clear();
@@ -4244,6 +4245,7 @@ void EditorApplication::DrawUIEditorPreview()
 		static std::unordered_map<std::string, float> dragStartRotations;
 		static UIRect dragStartSelectionBounds{};
 		static bool hasDragSelectionBounds = false;
+		static std::unordered_set<std::string> dragTargetNames;
 		static ImVec2 dragRotationCenter{ 0.0f, 0.0f };
 		static float dragStartAngle = 0.0f;
 		static float canvasZoom = 1.0f;
@@ -4411,6 +4413,124 @@ void EditorApplication::DrawUIEditorPreview()
 							itObj->second->UpdateInteractableFlags();
 						}
 					}
+				};
+
+			auto isHorizontalSlotChild = [&](const std::string& name) -> bool
+				{
+					if (it == uiObjectsByScene.end())
+					{
+						return false;
+					}
+
+					auto itObj = it->second.find(name);
+					if (itObj == it->second.end() || !itObj->second)
+					{
+						return false;
+					}
+
+					const std::string& parentName = itObj->second->GetParentName();
+					if (parentName.empty())
+					{
+						return false;
+					}
+
+					auto itParent = it->second.find(parentName);
+					if (itParent == it->second.end() || !itParent->second)
+					{
+						return false;
+					}
+
+					auto* horizontal = itParent->second->GetComponent<HorizontalBox>();
+					if (!horizontal)
+					{
+						return false;
+					}
+
+					for (const auto& slot : horizontal->GetSlots())
+					{
+						if (slot.child == itObj->second.get())
+						{
+							return true;
+						}
+						if (!slot.childName.empty() && slot.childName == name)
+						{
+							return true;
+						}
+					}
+
+					return false;
+				};
+
+			auto selectionHasHorizontalSlotChild = [&](const std::unordered_set<std::string>& selection) -> bool
+				{
+					for (const auto& name : selection)
+					{
+						if (isHorizontalSlotChild(name))
+						{
+							return true;
+						}
+					}
+					return false;
+				};
+
+			auto resolveDragTargets = [&](const std::unordered_set<std::string>& selection) -> std::unordered_set<std::string>
+				{
+					std::unordered_set<std::string> targets;
+					if (it == uiObjectsByScene.end())
+					{
+						return targets;
+					}
+
+					for (const auto& name : selection)
+					{
+						auto itObj = it->second.find(name);
+						if (itObj == it->second.end() || !itObj->second)
+						{
+							continue;
+						}
+
+						const std::string& parentName = itObj->second->GetParentName();
+						if (!parentName.empty())
+						{
+							auto itParent = it->second.find(parentName);
+							if (itParent != it->second.end() && itParent->second)
+							{
+								if (auto* horizontal = itParent->second->GetComponent<HorizontalBox>())
+								{
+									for (const auto& slot : horizontal->GetSlots())
+									{
+										if (slot.child == itObj->second.get() || (!slot.childName.empty() && slot.childName == name))
+										{
+											targets.insert(parentName);
+											break;
+										}
+									}
+									if (targets.find(parentName) != targets.end())
+									{
+										continue;
+									}
+								}
+							}
+						}
+
+						targets.insert(name);
+					}
+
+					return targets;
+				};
+
+			auto computeDragOffset = [&](const ImVec2& localPos, const std::unordered_set<std::string>& targets) -> ImVec2
+				{
+					if (targets.size() != 1)
+					{
+						return localPos;
+					}
+
+					const std::string& targetName = *targets.begin();
+					std::unordered_map<std::string, UIRect> boundsCache;
+					std::unordered_set<std::string> visiting;
+					const auto bounds = getWorldBounds(targetName, it->second, getWorldBounds, boundsCache, visiting);
+					return { localPos.x - bounds.x, localPos.y - bounds.y };
 				};
 
 			auto nudgeSelection = [&](float deltaX, float deltaY)
@@ -4742,7 +4862,7 @@ void EditorApplication::DrawUIEditorPreview()
 					return HandleDragMode::None;
 				};
 
-			
+
 			auto getBorderHit = [&](const UIRect& bounds, const ImVec2& localPoint, float threshold) -> HandleDragMode
 				{
 					const float centerX = bounds.x + bounds.width * 0.5f;
@@ -4917,22 +5037,37 @@ void EditorApplication::DrawUIEditorPreview()
 							m_SelectedUIObjectName = selectedObject->GetName();
 							m_SelectedUIObjectNames.clear();
 							m_SelectedUIObjectNames.insert(selectedObject->GetName());
+
+							if (selectionHasHorizontalSlotChild(m_SelectedUIObjectNames))
+							{
+								handleHit = HandleDragMode::Move;
+							}
+
+							dragTargetNames = resolveDragTargets(m_SelectedUIObjectNames);
 							draggingName = selectedObject->GetName();
 							isDragging = true;
 							dragMode = handleHit;
-							dragOffset = localPosDrag;
+							dragOffset = (dragMode == HandleDragMode::Move) ? computeDragOffset(localPosDrag, dragTargetNames) : localPosDrag;
 							dragStartWorldBounds.clear();
 							dragStartRotations.clear();
-							dragStartWorldBounds[selectedObject->GetName()] = bounds;
-							dragStartRotations[selectedObject->GetName()] = selectedObject->GetRotationDegrees();
+							for (const auto& name : dragTargetNames)
+							{
+								auto itObj = it->second.find(name);
+								if (itObj != it->second.end() && itObj->second)
+								{
+									dragStartWorldBounds[name] = getWorldBounds(name, it->second, getWorldBounds, boundsCache, visiting);
+									dragStartRotations[name] = itObj->second->GetRotationDegrees();
+								}
+							}
 							dragStartSelectionBounds = bounds;
 							hasDragSelectionBounds = true;
-							captureUISnapshots(m_SelectedUIObjectNames, dragStartSnapshots);
+							captureUISnapshots(dragTargetNames, dragStartSnapshots);
 							if (dragMode == HandleDragMode::Rotate)
 							{
 								dragRotationCenter = { bounds.x + bounds.width * 0.5f, bounds.y + bounds.height * 0.5f };
 								dragStartAngle = std::atan2(localPosDrag.y - dragRotationCenter.y, localPosDrag.x - dragRotationCenter.x);
 							}
+
 							hitObject = nullptr;
 						}
 					}
@@ -4979,7 +5114,7 @@ void EditorApplication::DrawUIEditorPreview()
 								direction = { 0.0f, -1.0f };
 							}
 							const ImVec2 rotationHandle = { topCenter.x + direction.x * 20.0f, topCenter.y + direction.y * 20.0f };
-							
+
 							HandleDragMode handleHit = getHandleHit(mousePos, corners, rotationHandle);
 							if (handleHit == HandleDragMode::None)
 							{
@@ -4991,12 +5126,18 @@ void EditorApplication::DrawUIEditorPreview()
 							if (handleHit != HandleDragMode::None)
 							{
 								clickedOnUI = true;
+								if (selectionHasHorizontalSlotChild(m_SelectedUIObjectNames))
+								{
+									handleHit = HandleDragMode::Move;
+								}
+
+								dragTargetNames = resolveDragTargets(m_SelectedUIObjectNames);
 								isDragging = true;
 								dragMode = handleHit;
-								dragOffset = localPosDrag;
+								dragOffset = (dragMode == HandleDragMode::Move) ? computeDragOffset(localPosDrag, dragTargetNames) : localPosDrag;
 								dragStartWorldBounds.clear();
 								dragStartRotations.clear();
-								for (const auto& name : m_SelectedUIObjectNames)
+								for (const auto& name : dragTargetNames)
 								{
 									auto itObj = it->second.find(name);
 									if (itObj != it->second.end() && itObj->second)
@@ -5007,12 +5148,13 @@ void EditorApplication::DrawUIEditorPreview()
 								}
 								dragStartSelectionBounds = combined;
 								hasDragSelectionBounds = true;
-								captureUISnapshots(m_SelectedUIObjectNames, dragStartSnapshots);
+								captureUISnapshots(dragTargetNames, dragStartSnapshots);
 								if (dragMode == HandleDragMode::Rotate)
 								{
 									dragRotationCenter = { combined.x + combined.width * 0.5f, combined.y + combined.height * 0.5f };
 									dragStartAngle = std::atan2(localPosDrag.y - dragRotationCenter.y, localPosDrag.x - dragRotationCenter.x);
 								}
+
 								hitObject = nullptr;
 							}
 						}
@@ -5050,16 +5192,22 @@ void EditorApplication::DrawUIEditorPreview()
 						m_SelectedUIObjectNames.erase(hitObject->GetName());
 					}
 					m_SelectedUIObjectName = hitObject->GetName();
+					if (selectionHasHorizontalSlotChild(m_SelectedUIObjectNames))
+					{
+						borderMode = HandleDragMode::Move;
+					}
+
+					dragTargetNames = resolveDragTargets(m_SelectedUIObjectNames);
 					draggingName = hitObject->GetName();
 					isDragging = true;
 					dragMode = (borderMode != HandleDragMode::None) ? borderMode : HandleDragMode::Move;
 					const auto bounds = getWorldBounds(hitObject->GetName(), it->second, getWorldBounds, boundsCache, visiting);
-					dragOffset = { localPosDrag.x - bounds.x, localPosDrag.y - bounds.y };
+					dragOffset = (dragMode == HandleDragMode::Move) ? computeDragOffset(localPosDrag, dragTargetNames) : localPosDrag;
 					dragStartWorldBounds.clear();
 					dragStartRotations.clear();
 					dragStartSelectionBounds = UIRect{};
 					hasDragSelectionBounds = false;
-					for (const auto& name : m_SelectedUIObjectNames)
+					for (const auto& name : dragTargetNames)
 					{
 						auto itObj = it->second.find(name);
 						if (itObj != it->second.end() && itObj->second)
@@ -5068,7 +5216,7 @@ void EditorApplication::DrawUIEditorPreview()
 							dragStartRotations[name] = itObj->second->GetRotationDegrees();
 						}
 					}
-					captureUISnapshots(m_SelectedUIObjectNames, dragStartSnapshots);
+					captureUISnapshots(dragTargetNames, dragStartSnapshots);
 				}
 			}
 
@@ -5086,10 +5234,11 @@ void EditorApplication::DrawUIEditorPreview()
 				std::unordered_set<std::string> visiting;
 				const float minSize = 10.0f;
 				const bool keepAspect = io.KeyShift;
+				const auto& dragSelection = dragTargetNames.empty() ? m_SelectedUIObjectNames : dragTargetNames;
 
 				if (dragMode == HandleDragMode::Move)
 				{
-					for (const auto& name : m_SelectedUIObjectNames)
+					for (const auto& name : dragSelection)
 					{
 						auto itObj = it->second.find(name);
 						if (itObj == it->second.end() || !itObj->second)
@@ -5125,7 +5274,7 @@ void EditorApplication::DrawUIEditorPreview()
 					const float deltaRadians = currentAngle - dragStartAngle;
 					const float deltaDegrees = XMConvertToDegrees(deltaRadians);
 
-					for (const auto& name : m_SelectedUIObjectNames)
+					for (const auto& name : dragSelection)
 					{
 						auto itObj = it->second.find(name);
 						if (itObj == it->second.end() || !itObj->second)
@@ -5136,7 +5285,7 @@ void EditorApplication::DrawUIEditorPreview()
 						const float startRotation = dragStartRotations.count(name) ? dragStartRotations.at(name) : itObj->second->GetRotationDegrees();
 						itObj->second->SetRotationDegrees(startRotation + deltaDegrees);
 
-						if (m_SelectedUIObjectNames.size() > 1)
+						if (dragSelection.size() > 1)
 						{
 							UIRect startBounds = dragStartWorldBounds.count(name)
 								? dragStartWorldBounds.at(name)
@@ -5165,7 +5314,7 @@ void EditorApplication::DrawUIEditorPreview()
 				}
 				else
 				{
-					if (m_SelectedUIObjectNames.size() > 1 && hasDragSelectionBounds)
+					if (dragSelection.size() > 1 && hasDragSelectionBounds)
 					{
 						UIRect selection = dragStartSelectionBounds;
 						UIRect newSelection = selection;
@@ -5236,7 +5385,7 @@ void EditorApplication::DrawUIEditorPreview()
 						const float scaleX = selection.width > 0.0f ? (newSelection.width / selection.width) : 1.0f;
 						const float scaleY = selection.height > 0.0f ? (newSelection.height / selection.height) : 1.0f;
 
-						for (const auto& name : m_SelectedUIObjectNames)
+						for (const auto& name : dragSelection)
 						{
 							auto itObj = it->second.find(name);
 							if (itObj == it->second.end() || !itObj->second)
@@ -5370,7 +5519,7 @@ void EditorApplication::DrawUIEditorPreview()
 
 				if (it != uiObjectsByScene.end())
 				{
-					captureUISnapshots(m_SelectedUIObjectNames, dragEndSnapshots);
+					captureUISnapshots(dragTargetNames.empty() ? m_SelectedUIObjectNames : dragTargetNames, dragEndSnapshots);
 				}
 
 				if (!dragStartSnapshots.empty() && !dragEndSnapshots.empty())
@@ -5443,6 +5592,7 @@ void EditorApplication::DrawUIEditorPreview()
 				dragEndSnapshots.clear();
 				dragStartWorldBounds.clear();
 				dragStartRotations.clear();
+				dragTargetNames.clear();
 				hasDragSelectionBounds = false;
 			}
 		}

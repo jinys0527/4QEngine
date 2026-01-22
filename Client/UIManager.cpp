@@ -2,6 +2,7 @@
 #include "UIManager.h"
 #include "Event.h"
 #include "UIButtonComponent.h"
+#include "UIImageComponent.h"
 #include "HorizontalBox.h"
 #include "MaterialComponent.h"
 #include "UIProgressBarComponent.h"
@@ -260,19 +261,47 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			continue;
 		}
 
-		
 		const auto& bounds   = uiObject->GetBounds();
 		const int baseZOrder = uiObject->GetZOrder();
-		MaterialHandle baseMaterial = MaterialHandle::Invalid();
-		if (auto* material = uiObject->GetComponent<MaterialComponent>())
-		{
-			baseMaterial = material->GetMaterialHandle();
-		}
+		const auto* imageComponent = uiObject->GetComponent<UIImageComponent>();
 
 		auto uiComp = uiObject->GetComponent<UIComponent>();
 		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
 
-		auto appendElement = [&](const UIRect& rect, int zOrder, const MaterialHandle& material)
+		auto applyOverrides = [&](RenderData::UIElement& element,
+			const TextureHandle& texture,
+			const ShaderAssetHandle& shaderAsset,
+			const VertexShaderHandle& vertexShader,
+			const PixelShaderHandle& pixelShader
+			)
+			{
+				const bool hasOverrides = texture.IsValid() || shaderAsset.IsValid()
+					|| vertexShader.IsValid() || pixelShader.IsValid();
+				if (!hasOverrides)
+				{
+					return;
+				}
+
+				element.useMaterialOverrides = true;
+				element.materialOverrides.textureHandle = texture;
+				element.materialOverrides.shaderAsset = shaderAsset;
+				element.materialOverrides.vertexShader = vertexShader;
+				element.materialOverrides.pixelShader = pixelShader;
+			};
+
+		auto applyImageOverrides = [&](RenderData::UIElement& element, const UIImageComponent* image)
+			{
+				if (!image)
+					return;
+
+				applyOverrides(element,
+					image->GetTextureHandle(),
+					image->GetShaderAssetHandle(),
+					image->GetVertexShaderHandle(),
+					image->GetPixelShaderHandle());
+			};
+
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image)
 			{
 				RenderData::UIElement element{};
 				element.position = { rect.x, rect.y };
@@ -281,36 +310,37 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 				element.zOrder = zOrder;
 				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
 				element.opacity = opacity;
-				element.material = material;
+				applyImageOverrides(element, image);
 				frameData.uiElements.push_back(element);
 			};
 
 		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
 		{
-			MaterialHandle backgroundMaterial = progress->GetBackgroundMaterialHandle();
-			if (!backgroundMaterial.IsValid())
-			{
-				backgroundMaterial = baseMaterial;
-			}
-			MaterialHandle fillMaterial = progress->GetFillMaterialHandle();
-			if (!fillMaterial.IsValid())
-			{
-				fillMaterial = backgroundMaterial;
-			}
-
-			appendElement(bounds, baseZOrder, backgroundMaterial);
+			appendElement(bounds, baseZOrder, nullptr);
+			auto& backgroundElement = frameData.uiElements.back();
+			applyOverrides(backgroundElement,
+				progress->GetBackgroundTextureHandle(),
+				progress->GetBackgroundShaderAssetHandle(),
+				progress->GetBackgroundVertexShaderHandle(),
+				progress->GetBackgroundPixelShaderHandle());
 
 			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
 			if (percent > 0.0f)
 			{
 				UIRect fillRect = bounds;
 				fillRect.width = bounds.width * percent;
-				appendElement(fillRect, baseZOrder + 1, fillMaterial);
+				appendElement(fillRect, baseZOrder + 1, nullptr);
+				auto& fillElement = frameData.uiElements.back();
+				applyOverrides(fillElement,
+					progress->GetFillTextureHandle(),
+					progress->GetFillShaderAssetHandle(),
+					progress->GetFillVertexShaderHandle(),
+					progress->GetFillPixelShaderHandle());
 			}
 		}
 		else
 		{
-			appendElement(bounds, baseZOrder, baseMaterial);
+			appendElement(bounds, baseZOrder, imageComponent);
 		}
 
 		if (auto* textComp = uiObject->GetComponent<UITextComponent>())

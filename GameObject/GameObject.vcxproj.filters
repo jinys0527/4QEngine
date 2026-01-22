@@ -112,6 +112,9 @@
     <ClCompile Include="SizeBox.cpp">
       <Filter>Components\UI\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UIImageComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -239,6 +242,9 @@
       <Filter>Components\UI\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIPrimitives.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIImageComponent.h">
       <Filter>Components\UI\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

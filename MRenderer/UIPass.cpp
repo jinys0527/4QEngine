@@ -14,7 +14,7 @@ void UIPass::Execute(const RenderData::FrameData & frame)
     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, tm);
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, tm);
 
-    XMMATRIX mProj = XMMatrixOrthographicOffCenterLH(0, (float)m_RenderContext.WindowSize.width, (float)m_RenderContext.WindowSize.height, 0.0f, 1.0f, 100.0f);
+    XMMATRIX mProj = XMMatrixOrthographicOffCenterLH(0, (float)m_RenderContext.WindowSize.width, (float)m_RenderContext.WindowSize.height, 0.0f, 0.0f, 1.0f);
 
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, mProj);
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
@@ -76,13 +76,7 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 		{
 			textureHandle = element.materialOverrides.textureHandle;
 		}
-		else if (element.material.IsValid())
-		{
-			if (const auto* material = m_AssetLoader.GetMaterials().Get(element.material))
-			{
-				textureHandle = material->textures[static_cast<size_t>(RenderData::MaterialTextureSlot::Albedo)];
-			}
-		}
+		
 		ID3D11ShaderResourceView* srv = nullptr;
 		if (textureHandle.IsValid() && m_RenderContext.textures)
 		{

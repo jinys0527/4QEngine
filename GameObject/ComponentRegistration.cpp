@@ -25,6 +25,7 @@
 #include "Border.h"
 #include "Canvas.h"
 #include "HorizontalBox.h"
+#include "UIImageComponent.h"
 
 
 // 중앙 등록 .cpp
@@ -59,6 +60,7 @@ extern "C" {
 	void Link_Border();
 	void Link_Canvas();
 	void Link_HorizontalBox();
+	void Link_UIImageComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -95,6 +97,7 @@ void LinkEngineComponents() {
 	Link_Border();
 	Link_Canvas();
 	Link_HorizontalBox();
+	Link_UIImageComponent();
 
 	RegisterFSMBaseDefinitions();
 	RegisterUIFSMDefinitions();

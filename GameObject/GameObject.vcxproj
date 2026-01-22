@@ -243,6 +243,7 @@
     <ClInclude Include="AnimFSMComponent.h" />
     <ClInclude Include="Border.h" />
     <ClInclude Include="Canvas.h" />
+    <ClInclude Include="UIImageComponent.h" />
     <ClInclude Include="UIPrimitives.h" />
     <ClInclude Include="HorizontalBox.h" />
     <ClInclude Include="RectLightComponent.h" />
@@ -315,6 +316,7 @@
     <ClCompile Include="UIButtonComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
     <ClCompile Include="UIFSMComponent.cpp" />
+    <ClCompile Include="UIImageComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
     <ClCompile Include="UIProgressBarComponent.cpp" />
     <ClCompile Include="UISliderComponent.cpp" />

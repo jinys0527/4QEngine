@@ -77,72 +77,6 @@
                             "z": -11.0
                         },
                         "Rotation": {
-                            "w": 0.9914448857307434,
-                            "x": 0.13052619993686676,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Eye": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
-                        },
-                        "FarZ": 100.0,
-                        "Look": {
-                            "x": 0.0,
-                            "y": 3.741180896759033,
-                            "z": -10.034073829650879
-                        },
-                        "NearZ": 1.0,
-                        "Ortho": {
-                            "height": 10.0,
-                            "width": 10.0
-                        },
-                        "OrthoOffCenter": {
-                            "bottom": -1.0,
-                            "left": -1.0,
-                            "right": 1.0,
-                            "top": 1.0
-                        },
-                        "Perspective": {
-                            "aspect": 1.7846534252166748,
-                            "fov": 0.7853981852531433
-                        },
-                        "Up": {
-                            "x": 0.0,
-                            "y": 0.9659257531166077,
-                            "z": 0.2588190734386444
-                        },
-                        "Viewport": {
-                            "height": 808.0,
-                            "width": 1442.0
-                        }
-                    },
-                    "type": "CameraComponent"
-                }
-            ],
-            "name": "Main Camera"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
-                        },
-                        "Rotation": {
                             "w": 0.9915472269058228,
                             "x": 0.11838186532258987,
                             "y": -0.052728187292814255,
@@ -204,6 +138,72 @@
                 {
                     "data": {
                         "Position": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -11.0
+                        },
+                        "Rotation": {
+                            "w": 0.9914448857307434,
+                            "x": 0.13052619993686676,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -11.0
+                        },
+                        "FarZ": 100.0,
+                        "Look": {
+                            "x": 0.0,
+                            "y": 3.741180896759033,
+                            "z": -10.034073829650879
+                        },
+                        "NearZ": 1.0,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7846534252166748,
+                            "fov": 0.7853981852531433
+                        },
+                        "Up": {
+                            "x": 0.0,
+                            "y": 0.9659257531166077,
+                            "z": 0.2588190734386444
+                        },
+                        "Viewport": {
+                            "height": 808.0,
+                            "width": 1442.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Main Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
                             "x": 5.960464477539063e-08,
                             "y": 0.0,
                             "z": 0.0
@@ -221,27 +221,6 @@
                         }
                     },
                     "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Visible": true
-                    },
-                    "type": "SkeletalMeshRenderer"
                 },
                 {
                     "data": {
@@ -264,6 +243,27 @@
                         }
                     },
                     "type": "AnimationComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Visible": true
+                    },
+                    "type": "SkeletalMeshRenderer"
                 },
                 {
                     "data": {
@@ -369,10 +369,18 @@
                 "bounds": {
                     "h": 80.0,
                     "w": 200.0,
-                    "x": 509.0,
-                    "y": 524.0
+                    "x": 479.0,
+                    "y": 354.0
                 },
                 "components": [
+                    {
+                        "data": {
+                            "Opacity": 1.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIComponent"
+                    },
                     {
                         "data": {
                             "Opacity": 1.0,
@@ -412,14 +420,6 @@
                             "ZOrder": 0
                         },
                         "type": "HorizontalBox"
-                    },
-                    {
-                        "data": {
-                            "Opacity": 1.0,
-                            "Visible": true,
-                            "ZOrder": 0
-                        },
-                        "type": "UIComponent"
                     }
                 ],
                 "hasBounds": true,
@@ -445,8 +445,8 @@
                 "bounds": {
                     "h": 80.0,
                     "w": 66.66667175292969,
-                    "x": 0.0,
-                    "y": 0.0
+                    "x": 509.0,
+                    "y": 524.0
                 },
                 "components": [
                     {
@@ -456,6 +456,47 @@
                             "ZOrder": 0
                         },
                         "type": "UIComponent"
+                    },
+                    {
+                        "data": {
+                            "BackgroundPixelShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "BackgroundShaderAssetHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "BackgroundTextureHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            },
+                            "BackgroundVertexShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillPixelShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillShaderAssetHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillTextureHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillVertexShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "Opacity": 1.0,
+                            "Percent": 0.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIProgressBarComponent"
                     }
                 ],
                 "hasBounds": true,
@@ -481,8 +522,8 @@
                 "bounds": {
                     "h": 80.0,
                     "w": 66.66667175292969,
-                    "x": 66.66667175292969,
-                    "y": 0.0
+                    "x": 575.6666870117188,
+                    "y": 524.0
                 },
                 "components": [
                     {
@@ -492,6 +533,47 @@
                             "ZOrder": 0
                         },
                         "type": "UIComponent"
+                    },
+                    {
+                        "data": {
+                            "BackgroundPixelShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "BackgroundShaderAssetHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "BackgroundTextureHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\all\\Meta\\all.asset.json"
+                            },
+                            "BackgroundVertexShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillPixelShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillShaderAssetHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillTextureHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillVertexShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "Opacity": 1.0,
+                            "Percent": 0.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIProgressBarComponent"
                     }
                 ],
                 "hasBounds": true,
@@ -517,8 +599,8 @@
                 "bounds": {
                     "h": 80.0,
                     "w": 66.66667175292969,
-                    "x": 133.33334350585938,
-                    "y": 0.0
+                    "x": 642.3333740234375,
+                    "y": 524.0
                 },
                 "components": [
                     {
@@ -528,6 +610,47 @@
                             "ZOrder": 0
                         },
                         "type": "UIComponent"
+                    },
+                    {
+                        "data": {
+                            "BackgroundPixelShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "BackgroundShaderAssetHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "BackgroundTextureHandle": {
+                                "assetIndex": 0,
+                                "assetPath": "../ResourceOutput\\shinchan\\Meta\\shinchan.asset.json"
+                            },
+                            "BackgroundVertexShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillPixelShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillShaderAssetHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillTextureHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "FillVertexShaderHandle": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "Opacity": 1.0,
+                            "Percent": 0.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIProgressBarComponent"
                     }
                 ],
                 "hasBounds": true,

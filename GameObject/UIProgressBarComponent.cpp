@@ -4,8 +4,14 @@
 
 REGISTER_COMPONENT_DERIVED(UIProgressBarComponent, UIComponent)
 REGISTER_PROPERTY(UIProgressBarComponent, Percent)
-REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundMaterialHandle)
-REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillMaterialHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundTextureHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundShaderAssetHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundVertexShaderHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundPixelShaderHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillTextureHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillShaderAssetHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillVertexShaderHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillPixelShaderHandle)
 
 void UIProgressBarComponent::Update(float deltaTime)
 {

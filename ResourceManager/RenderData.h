@@ -68,14 +68,6 @@ namespace RenderData
 		PixelShaderHandle  pixelShader  = PixelShaderHandle::Invalid();
 	};
 
-	struct UIMaterialData
-	{
-		TextureHandle      textureHandle = TextureHandle::Invalid();
-		ShaderAssetHandle  shaderAsset   = ShaderAssetHandle::Invalid();
-		VertexShaderHandle vertexShader  = VertexShaderHandle::Invalid();
-		PixelShaderHandle  pixelShader   = PixelShaderHandle::Invalid();
-	};
-
 	struct TextureData
 	{
 		std::string path;
@@ -183,6 +175,14 @@ namespace RenderData
 		FLOAT         padding = 0.0f;
 	};
 
+	struct UIMaterialData
+	{
+		TextureHandle      textureHandle = TextureHandle::Invalid();
+		ShaderAssetHandle  shaderAsset   = ShaderAssetHandle::Invalid();
+		VertexShaderHandle vertexShader  = VertexShaderHandle::Invalid();
+		PixelShaderHandle  pixelShader   = PixelShaderHandle::Invalid();
+	};
+
 	struct UIElement
 	{
 		XMFLOAT2	   position { 0.0f, 0.0f };
@@ -191,7 +191,6 @@ namespace RenderData
 		FLOAT		   opacity  = 1.0f;
 		FLOAT		   rotation = 0.0f;
 		INT32		   zOrder   = 0;
-		MaterialHandle material = MaterialHandle::Invalid();
 		UIMaterialData materialOverrides{};
 		bool           useMaterialOverrides = false;
 	};

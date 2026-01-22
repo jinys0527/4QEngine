@@ -1387,7 +1387,116 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+	if (typeInfo == typeid(VertexShaderHandle))
+	{
+		VertexShaderHandle value{};
+		property.GetValue(component, &value);
 
+		const std::string* key = assetLoader.GetVertexShaders().GetKey(value);
+		const std::string* displayName = assetLoader.GetVertexShaders().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_VERTEX_SHADER"))
+			{
+				const VertexShaderHandle dropped = *static_cast<const VertexShaderHandle*>(payload->Data);
+				value = dropped;
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				result.updated = true;
+			}
+		}
+
+		return result;
+	}
+
+	if (typeInfo == typeid(PixelShaderHandle))
+	{
+		PixelShaderHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetPixelShaders().GetKey(value);
+		const std::string* displayName = assetLoader.GetPixelShaders().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_PIXEL_SHADER"))
+			{
+				const PixelShaderHandle dropped = *static_cast<const PixelShaderHandle*>(payload->Data);
+				value = dropped;
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				result.updated = true;
+			}
+		}
+
+		return result;
+	}
+
+	if (typeInfo == typeid(ShaderAssetHandle))
+	{
+		ShaderAssetHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetShaderAssets().GetKey(value);
+		const std::string* displayName = assetLoader.GetShaderAssets().GetDisplayName(value);
+	
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str()); 
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER_ASSET"))
+			{
+				const ShaderAssetHandle dropped = *static_cast<const ShaderAssetHandle*>(payload->Data);
+				value = dropped;
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				result.updated = true;
+			}
+		}
+
+		return result;
+	}
 
 	if (typeInfo == typeid(RenderData::MaterialData))
 	{
