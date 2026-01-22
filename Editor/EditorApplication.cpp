@@ -346,6 +346,10 @@ void EditorApplication::Render() {
 
 void EditorApplication::RenderImGUI() {
 	//★★
+	//텍스트 그리기전 리소스 해제
+	ID3D11ShaderResourceView* nullSRV[128] = {};
+	m_Engine.GetD3DDXDC()->PSSetShaderResources(0, 128, nullSRV);
+
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -382,7 +386,6 @@ void EditorApplication::RenderImGUI() {
 		SetupEditorDockLayout();
 		dockBuilt = false;
 	}
-
 
 	ImGui::Render();  // Gui들그리기
 

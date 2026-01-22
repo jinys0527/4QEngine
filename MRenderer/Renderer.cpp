@@ -200,12 +200,12 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
 	EnsureMeshBuffers(frame);
-	////메인 카메라로 draw
-	//m_IsEditCam = false;
-	//m_RenderContext.isEditCam = m_IsEditCam;
-	//m_Pipeline.Execute(frame);
+	//메인 카메라로 draw
+	m_IsEditCam = false;
+	m_RenderContext.isEditCam = m_IsEditCam;
+	m_Pipeline.Execute(frame);
 
-	//rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
+	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
 
 
 	//edit카메라로 draw
