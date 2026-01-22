@@ -73,6 +73,12 @@ struct VSInput_PNUT
     float4 boneWeights : BONEWEIGHTS;
 };
 
+//(디버그용)
+struct VSInput_P
+{
+    float3 pos : POSITION;
+};
+
 //아웃풋
 //기본
 struct VSOutput
@@ -153,11 +159,17 @@ Texture2D g_Roughness : register(t14);
 Texture2D g_AO : register(t15);
 Texture2D g_Env : register(t16);
 
+texture2D g_UI_01 : register(t21);
+texture2D g_UI_02 : register(t22);
+texture2D g_UI_03 : register(t23);
+texture2D g_UI_04 : register(t24);
+texture2D g_UI_05 : register(t25);
+
 //Sampler State
 SamplerState smpWrap : register(s0);
 SamplerState smpMirror : register(s1);
 SamplerState smpClamp : register(s2);
-SamplerState smpBoreder : register(s3);
+SamplerState smpBorder : register(s3);
 SamplerState smpBorderShadow : register(s4);
 
 

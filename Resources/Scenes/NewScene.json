@@ -1,0 +1,603 @@
+{
+    "editor": {
+        "EditorCamera": {
+            "eye": {
+                "x": 0.0843927189707756,
+                "y": 2.1949310302734375,
+                "z": -3.928717851638794
+            },
+            "look": {
+                "x": 0.21819016337394714,
+                "y": 1.910589337348938,
+                "z": -2.979377031326294
+            },
+            "up": {
+                "x": 0.03968215361237526,
+                "y": 0.9587230086326599,
+                "z": 0.2815591096878052
+            }
+        }
+    },
+    "gameObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Color": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "Direction": {
+                            "x": 1.0,
+                            "y": -1.0,
+                            "z": 1.0
+                        },
+                        "Intensity": 1.0,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "type": "DirectionalLightComponent"
+                }
+            ],
+            "name": "DirectionalLight"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0843927189707756,
+                            "y": 2.1949310302734375,
+                            "z": -3.928717851638794
+                        },
+                        "Rotation": {
+                            "w": 0.9872028231620789,
+                            "x": 0.14330914616584778,
+                            "y": 0.06922473758459091,
+                            "z": -0.010049139149487019
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": 0.0843927189707756,
+                            "y": 2.1949310302734375,
+                            "z": -3.928717851638794
+                        },
+                        "FarZ": 1000.0,
+                        "Look": {
+                            "x": 0.21819016337394714,
+                            "y": 1.910589337348938,
+                            "z": -2.979377031326294
+                        },
+                        "NearZ": 0.10000000149011612,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7846534252166748,
+                            "fov": 0.7853981852531433
+                        },
+                        "Up": {
+                            "x": 0.03968215361237526,
+                            "y": 0.9587230086326599,
+                            "z": 0.2815591096878052
+                        },
+                        "Viewport": {
+                            "height": 808.0,
+                            "width": 1442.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Editor Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Visible": true
+                    },
+                    "type": "SkeletalMeshRenderer"
+                },
+                {
+                    "data": {
+                        "BlendConfig": {
+                            "blendTime": 0.20000000298023224,
+                            "blendType": 0,
+                            "curveName": "Linear",
+                            "fromClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "toClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            }
+                        },
+                        "ClipHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        }
+                    },
+                    "type": "AnimationComponent"
+                },
+                {
+                    "data": {
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "SkeletonHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "SkeletalMeshComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../MRenderer/fx/Demo_Ani_PS.hlsl"
+                                },
+                                "roughness": 0.5527864098548889,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../MRenderer/fx/Demo_Ani_VS.hlsl"
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "GameObject"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 4.494309902191162,
+                            "y": 0.0,
+                            "z": 0.23804306983947754
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\PBR.shader.json"
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "GameObject1"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 1.6167327165603638,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.082810640335083,
+                            "y": 1.082900047302246,
+                            "z": 1.082810640335083
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../MRenderer/fx/Demo_Ani_PS.hlsl"
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../MRenderer/fx/Demo_VS.hlsl"
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "GameObject2"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -11.0
+                        },
+                        "Rotation": {
+                            "w": 0.9914448857307434,
+                            "x": 0.13052619993686676,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -11.0
+                        },
+                        "FarZ": 100.0,
+                        "Look": {
+                            "x": 0.0,
+                            "y": 3.741180896759033,
+                            "z": -10.034073829650879
+                        },
+                        "NearZ": 1.0,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7777777910232544,
+                            "fov": 0.7853981852531433
+                        },
+                        "Up": {
+                            "x": 0.0,
+                            "y": 0.9659257531166077,
+                            "z": 0.2588190734386444
+                        },
+                        "Viewport": {
+                            "height": 720.0,
+                            "width": 1280.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Main Camera"
+        }
+    ]
+}

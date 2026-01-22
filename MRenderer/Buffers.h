@@ -29,7 +29,7 @@ struct Light
 {
 	XMFLOAT4X4 mLightViewProj{};
 
-	XMFLOAT4   Color{ 1,1,1,0 };
+	XMFLOAT4   Color{ 1,1,1,1 };
 
 	XMFLOAT3   Pos{ 0,0,0 };
 	float      Range = 0;
@@ -63,6 +63,17 @@ struct SkinningConstBuffer
 	XMFLOAT4X4 bones[kMaxSkinningBones]{};
 	UINT boneCount = 0;
 	float padding[3]{ 0.0f, 0.0f, 0.0f };
+};
+
+struct UIBuffer
+{
+	XMFLOAT4X4  TextPosition{};
+	XMFLOAT4	TextColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	XMFLOAT4	Color{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	FLOAT		Opacity;
+	float		padding[3] = { 0, 0 };
 };
 
 struct VertexShaderResources
@@ -99,6 +110,8 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pSkinCB;
 	LightConstBuffer			LightCBuffer;
 	ComPtr<ID3D11Buffer>		pLightCB;
+	UIBuffer					UIBuffer;
+	ComPtr<ID3D11Buffer>		pUIB;
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
@@ -108,6 +121,7 @@ struct RenderContext
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
 	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
+	ComPtr<ID3D11InputLayout> InputLayout_P = nullptr;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
@@ -190,4 +204,6 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
 
+	//텍스트 그리기
+	std::function<void(float width, float height)> MyDrawText;
 };

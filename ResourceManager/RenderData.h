@@ -196,6 +196,24 @@ namespace RenderData
 		UINT32		   globalPoseCount = 0;
 	};
 
+	struct UIElement
+	{
+		XMFLOAT2 position{ 0.0f, 0.0f };
+		XMFLOAT2 size{ 0.0f, 0.0f };
+		XMFLOAT4 color{ 1.0f,1.0f, 1.0f,1.0f };
+		FLOAT    opacity = 1.0f;
+		FLOAT    rotation = 0.0f;
+		INT32    zOrder = 0;
+	};
+
+	struct UITextElement
+	{
+		XMFLOAT2    position{ 0.0f, 0.0f };
+		XMFLOAT4    color{ 1.0f,1.0f, 1.0f,1.0f };
+		FLOAT       fontSize = 16.0f;
+		std::string text;
+	};
+
 	enum RenderLayer
 	{
 		None,
@@ -213,5 +231,7 @@ namespace RenderData
 		std::vector<LightData>  lights;
 		std::vector<XMFLOAT4X4> skinningPalettes;
 		std::vector<XMFLOAT4X4> globalPoses;
+		std::vector<UIElement>	uiElements;
+		std::vector<UITextElement> uiTexts;
 	};
 }

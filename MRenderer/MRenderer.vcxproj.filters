@@ -25,6 +25,12 @@
     <Filter Include="RenderPass\Source Files">
       <UniqueIdentifier>{54b687b2-7415-42a4-845d-bf75f32fc623}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HLSL\0_VS">
+      <UniqueIdentifier>{403d0be8-19de-47fa-8b86-43bff56cd789}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL\1_PS">
+      <UniqueIdentifier>{eb9bc4a6-7228-4426-b474-2cefbb4df304}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DX11.cpp">
@@ -130,77 +136,77 @@
     <FxCompile Include="fx\Demo.fx">
       <Filter>HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="fx\Demo_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_VS_POS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="fx\Lights.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Quad_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Quad_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_PS_POS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_PBR_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_PBR_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Post_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Post_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Test_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Test_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\SkyBox_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\SkyBox_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_Shadow_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_Shadow_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Frustum_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_Wall_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_Wall_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_FullScreen_Triangle_VS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_Ani_PS.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="fx\Demo_Ani_VS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="fx\Animation.hlsl">
       <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Ani_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_FullScreen_Triangle_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_PBR_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Shadow_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_VS_POS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Wall_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Post_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Quad_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Test_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\SkyBox_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Ani_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_PBR_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_PS_POS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Shadow_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Wall_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Frustum_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Post_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Quad_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\SkyBox_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Test_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

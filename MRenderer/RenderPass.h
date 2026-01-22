@@ -54,6 +54,8 @@ protected:
 	{
 		RenderData::RenderLayer layer = RenderData::Layer_MAX_;
 		const RenderData::RenderItem* item = nullptr;
+		const RenderData::UIElement* uielement = nullptr;
+		const RenderData::UITextElement* uitextelement = nullptr;
 	};
 
 	virtual bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const;
@@ -61,6 +63,7 @@ protected:
 
 private:
 	void BuildQueue(const RenderData::FrameData& frame);
+
 
 	std::vector<RenderQueueItem> m_Queue;
 	bool m_Enabled = true;

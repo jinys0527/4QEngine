@@ -74,14 +74,59 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
             }
             UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
 
-            m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+            m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
         }
         else if (m_RenderContext.pSkinCB)
         {
             m_RenderContext.SkinCBuffer.boneCount = 0;
             UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pSkinCB.Get(), &m_RenderContext.SkinCBuffer, sizeof(SkinningConstBuffer));
-            m_RenderContext.pDXDC->VSSetConstantBuffers(1, 1, m_RenderContext.pSkinCB.GetAddressOf());
+            m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
         }
+
+#pragma region ShaderSet
+        const auto* vertexShaders = m_RenderContext.vertexShaders;
+
+        ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
+
+        const RenderData::MaterialData* mat = nullptr;
+        if (item.useMaterialOverrides)
+        {
+            mat = &item.materialOverrides;
+        }
+        else if (item.material.IsValid())
+        {
+            mat = m_AssetLoader.GetMaterials().Get(item.material);
+        }
+
+        if (mat)
+        {
+            if (mat->shaderAsset.IsValid())
+            {
+                const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
+                if (shaderAsset)
+                {
+                    if (vertexShaders && shaderAsset->vertexShader.IsValid())
+                    {
+                        const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
+                        if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+                        {
+                            vertexShader = shaderIt->second.vertexShader.Get();
+                        }
+                    }
+                }
+            }
+
+            if (vertexShaders && mat->vertexShader.IsValid())
+            {
+                const auto shaderIt = vertexShaders->find(mat->vertexShader);
+                if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+                {
+                    vertexShader = shaderIt->second.vertexShader.Get();
+                }
+            }
+        }
+#pragma endregion
+
 
         const auto* vertexBuffers = m_RenderContext.vertexBuffers;
         const auto* indexBuffers = m_RenderContext.indexBuffers;
@@ -102,7 +147,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
                 const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
                 if (vb && ib)
                 {
-                    DrawMesh(vb, ib, m_RenderContext.VS_Shadow.Get(), nullptr, useSubMesh, indexCount, indexStart);
+                    DrawMesh(vb, ib, vertexShader, nullptr, useSubMesh, indexCount, indexStart);
                 }
             }
         }

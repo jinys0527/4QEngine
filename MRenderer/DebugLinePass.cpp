@@ -178,7 +178,7 @@ void DebugLinePass::Execute(const RenderData::FrameData& frame)
 	ID3D11Buffer* vb = m_VertexBuffer.Get();
 	ID3D11DeviceContext* dc = m_RenderContext.pDXDC.Get();
 
-	dc->IASetInputLayout(m_RenderContext.InputLayout.Get());
+	dc->IASetInputLayout(m_RenderContext.InputLayout_P.Get());
 	dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
@@ -190,4 +190,6 @@ void DebugLinePass::Execute(const RenderData::FrameData& frame)
 	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
 
 	dc->Draw(static_cast<UINT>(lineVertices.size()), 0);
+
+
 }

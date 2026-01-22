@@ -96,6 +96,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_pDXDC = dxdc;
 
 	DXSetup(hWnd, width, height);
+	SetupText();
+
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
+	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
 
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
@@ -131,9 +135,9 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
 
 
@@ -142,7 +146,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	
 	//블러 테스트
 	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
-	HRESULT hr = S_OK;
+	 hr = S_OK;
 	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
@@ -530,12 +534,15 @@ void Renderer::CreateContext()
 	m_RenderContext.SkinCBuffer				= m_SkinCBuffer;
 	m_RenderContext.pLightCB				= m_pLightCB;		
 	m_RenderContext.LightCBuffer			= m_LightCBuffer;
-
+	m_RenderContext.pUIB					= m_pUIB;
+	m_RenderContext.UIBuffer				= m_UIBuffer;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
 	m_RenderContext.VSCode					= m_pVSCode;
 	m_RenderContext.InputLayout				= m_pInputLayout;
+	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
+
 
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
@@ -618,7 +625,9 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
+			OutputDebugStringA("Drawing 3D Object Start\n");
 			m_pDXDC->Draw(3, 0);
+			OutputDebugStringA("Drawing 3D Object End\n");
 		};
 
 
@@ -639,7 +648,9 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			//m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
+			OutputDebugStringA("Drawing 3D Object Start\n");
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
+			OutputDebugStringA("Drawing 3D Object End\n");
 		};
 
 	m_RenderContext.DrawGrid =
@@ -654,6 +665,11 @@ void Renderer::CreateContext()
 			UpdateGrid(frame);
 		};
 
+	m_RenderContext.MyDrawText =
+		[this](float width, float height)
+		{
+			RenderTextCenter(width, height);
+		};
 }
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
@@ -836,6 +852,29 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
+	// 정점 입력구조 Input layout
+	D3D11_INPUT_ELEMENT_DESC layout2[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
+	UINT numElements2 = ARRAYSIZE(layout2);
+
+	// 정접 입력구조 객체 생성 Create the input layout
+	hr = m_pDevice->CreateInputLayout(layout2,
+		numElements2,
+		m_pVSCode_P->GetBufferPointer(),
+		m_pVSCode_P->GetBufferSize(),
+		m_pInputLayout_P.GetAddressOf()
+	);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
 	return hr;
 }
 
@@ -870,6 +909,15 @@ HRESULT Renderer::CreateConstBuffer()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(UIBuffer), m_pUIB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
 
 
 	return hr;
@@ -1921,7 +1969,7 @@ void Renderer::CreateGridVB()
 	const float s = m_CellSize;
 	const float half = N * s;
 
-	std::vector<VertexP> v;
+	std::vector<RenderData::Vertex> v;
 	v.reserve((N * 2 + 1) * 4);
 
 	XMFLOAT3 cMajor(1, 1, 1), cMinor(0.7f, 0.7f, 0.7f);
@@ -1931,20 +1979,20 @@ void Renderer::CreateGridVB()
 	{ 
 		float x = i * s;
 		//XMFLOAT3 col = (i == 0) ? cAxisZ : ((i % 5 == 0) ? cMajor : cMinor);
-		v.push_back({ XMFLOAT3(-half, 0, x)});
-		v.push_back({ XMFLOAT3(+half, 0, x)});
+		v.push_back({ XMFLOAT3(-half, 0.01f, x)});
+		v.push_back({ XMFLOAT3(+half, 0.01f, x)});
 
 		float z = i * s;
 		//col = (i == 0) ? cAxisX : ((i % 5 == 0) ? cMajor : cMinor);
-		v.push_back({ XMFLOAT3(z, 0, -half)});
-		v.push_back({ XMFLOAT3(z, 0, +half)});
+		v.push_back({ XMFLOAT3(z, 0.01f, -half) });
+		v.push_back({ XMFLOAT3(z, 0.01f, +half)});
 	}
 
 	m_GridVertexCount = (UINT)v.size();
 
 	D3D11_BUFFER_DESC bd{};
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.ByteWidth = UINT(v.size() * sizeof(VertexP));
+	bd.ByteWidth = UINT(v.size() * sizeof(RenderData::Vertex));
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
 	D3D11_SUBRESOURCE_DATA sd{ v.data(), 0, 0 };
 	m_pDevice->CreateBuffer(&bd, &sd, m_GridVB.GetAddressOf());
@@ -2003,7 +2051,7 @@ void Renderer::DrawGrid()
 {
 	m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
 	m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	UINT strideC = sizeof(VertexP), offsetC = 0;
+	UINT strideC = sizeof(RenderData::Vertex), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);
 	m_pDXDC->VSSetShader(m_pVS_P.Get(), nullptr, 0);
 	m_pDXDC->PSSetShader(m_pPS_P.Get(), nullptr, 0);
@@ -2023,6 +2071,15 @@ void Renderer::CreateQuadIB()
 {
 	m_QuadIndexCounts = static_cast<UINT>(quadIndices.size());
 	CreateIndexBuffer(m_pDevice.Get(), quadIndices.data(), static_cast<UINT>(quadIndices.size() * sizeof(UINT)), m_QuadIndexBuffers.GetAddressOf());
+}
+
+void Renderer::SetupText()
+{
+	ComPtr<ID3D11DeviceContext1> dc1;
+	m_pDXDC.As(&dc1);
+
+	m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(dc1.Get());
+	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/myfont.spritefont");
 }
 
 //핸들 개수 최대값 가져오는 함수

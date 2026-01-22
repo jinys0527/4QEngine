@@ -155,10 +155,13 @@ private:
 	SkinningConstBuffer			m_SkinCBuffer;
 	ComPtr<ID3D11Buffer>		m_pLightCB;
 	LightConstBuffer			m_LightCBuffer;
+	ComPtr<ID3D11Buffer>		m_pUIB;
+	UIBuffer					m_UIBuffer;
 
 
 	//임시
-	ComPtr<ID3D11InputLayout> m_pInputLayout;			
+	ComPtr<ID3D11InputLayout> m_pInputLayout;
+	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
 	//임시 쉐이더코드
 	ComPtr<ID3D11VertexShader> m_pVS;
 	ComPtr<ID3D11PixelShader> m_pPS;
@@ -183,8 +186,6 @@ private:
 
 //그리드
 private:
-	struct VertexP { XMFLOAT3 pos;};
-
 	ComPtr<ID3D11Buffer> m_GridVB;
 	//ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
 
@@ -242,5 +243,47 @@ protected:
 protected:
 	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
 	ComPtr<ID3DBlob> m_pVSCode_FSTriangle;
+
+private:
+	std::unique_ptr<DirectX::SpriteBatch> m_SpriteBatch;
+	std::unique_ptr<DirectX::SpriteFont>  m_SpriteFont;
+
+	void SetupText();
+	void RenderTextCenter(int screenW, int screenH)
+	{
+		const wchar_t* msg = L"HELLO";
+
+		// 1. 측정 및 계산
+		DirectX::XMVECTOR size = m_SpriteFont->MeasureString(msg);
+		float x = (screenW - DirectX::XMVectorGetX(size)) * 0.5f;
+		float y = (screenH - DirectX::XMVectorGetY(size)) * 0.5f;
+
+		// 2. 파이프라인 정리 (핵심)
+		// 모든 셰이더 리소스를 해제하여 Hazard 방지
+		ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+		m_pDXDC->PSSetShaderResources(0, 128, nullSRVs);
+
+		// 깊이 버퍼 해제 (Hazard #9 방지)
+		// 현재 사용중인 렌더 타겟만 설정하고 DepthStencil은 nullptr로 설정
+		m_pDXDC->OMSetRenderTargets(1, m_pRTView_Post.GetAddressOf(), nullptr);
+
+		// 3. 뷰포트 설정
+		SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
+
+		// 4. SpriteBatch 실행
+		// SpriteBatch가 자체적으로 InputLayout, BlendState, DepthStencil 등을 설정하도록 둠
+		OutputDebugStringA("Before SpriteBatch Begin\n");
+		m_SpriteBatch->Begin();
+
+		m_SpriteFont->DrawString(
+			m_SpriteBatch.get(),
+			msg,
+			DirectX::XMFLOAT2(x, y),
+			DirectX::Colors::Black
+		);
+
+		m_SpriteBatch->End();
+		OutputDebugStringA("After End\n");
+	}
 
 };
