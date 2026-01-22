@@ -1,0 +1,18 @@
+{
+  "animations": [],
+  "files": {
+    "materials": "Mats/toilet_tile_blue.matbin",
+    "skeleton": "Skels/toilet_tile_blue.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/toilet_tile_blue.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "toilet_tile_blue",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  }
+}

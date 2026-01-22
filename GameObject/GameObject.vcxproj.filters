@@ -98,7 +98,10 @@
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SceneChangeTestComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentTemplate.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -212,7 +215,10 @@
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SceneChangeTestComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentTemplate.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
