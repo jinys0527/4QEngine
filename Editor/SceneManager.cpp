@@ -4,6 +4,7 @@
 #include "DefaultScene.h"
 #include "json.hpp"
 #include <fstream>
+#include <iostream>
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "GameManager.h"
@@ -18,7 +19,7 @@ void SceneManager::Initialize()
 
 	// 씬없는 경우.. 인데
 	// ★★★★★★★★★★★★★★
-	// Editor의 경우 m_Scenes 로 여러개를 들고 있을 필요가 없음.
+	// Editor의 경우 m_Scenes 로 여러개를 들고 있을 필요가 없음. -> 이제 있음 Play모드 시 게임 흐름 보려면 
 	// 자기가 쓰는 Scene 하나만 있으면됨.
 	// 다른 Scene의 경우 경로에서 Scenedata json으로 띄우기만 하면 됨.
 	// 그냥 Default 생성
@@ -94,8 +95,6 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 		m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 	}
 
-
-
 }
 
 std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
@@ -105,18 +104,43 @@ std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
 
 void SceneManager::ChangeScene(const std::string& name)
 {
-	if (m_CurrentScene) {
-		m_CurrentScene->Leave();
+	if (name.empty())
+	{
+		return;
 	}
+
+	if (!m_CurrentScene)
+	{
+		return;
+	}
+
+	if (m_CurrentScene->GetName() == name)
+	{
+		return;
+	}
+
+	auto targetScene = FindSceneByName(name);
+	if (!targetScene)
+	{
+		return;
+	}
+
+	m_CurrentScene->Leave();
+	SetCurrentScene(targetScene);
 }
 
 void SceneManager::ChangeScene()
 {
-	if (m_ChangeSceneName != m_CurrentScene->GetName()) {
-		ChangeScene(m_ChangeSceneName);
-		m_ChangeSceneName = "";
+	if (!m_CurrentScene)
+	{
+		return;
 	}
 
+	if (m_ChangeSceneName != m_CurrentScene->GetName())
+	{
+		ChangeScene(m_ChangeSceneName);
+		m_ChangeSceneName.clear();
+	}
 
 }
 
@@ -125,6 +149,49 @@ void SceneManager::SetChangeScene(std::string name)
 	m_ChangeSceneName = name;
 }
 
+
+std::shared_ptr<Scene> SceneManager::FindSceneByName(const std::string& name) const
+{
+	if (name.empty())
+	{
+		return nullptr;
+	}
+
+	for (const auto& scene : m_Scenes)
+	{
+		if (scene && scene->GetName() == name)
+		{
+			return scene;
+		}
+	}
+
+	return nullptr;
+}
+
+void SceneManager::AddOrReplaceScene(const std::shared_ptr<Scene>& scene)
+{
+	if (!scene)
+	{
+		return;
+	}
+
+	const auto& name = scene->GetName();
+	if (name.empty())
+	{
+		return;
+	}
+
+	for (auto& existing : m_Scenes)
+	{
+		if (existing && existing->GetName() == name)
+		{
+			existing = scene;
+			return;
+		}
+	}
+
+	m_Scenes.push_back(scene);
+}
 
 void SceneManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
@@ -174,6 +241,7 @@ bool SceneManager::CreateNewScene(const std::filesystem::path& filePath)
 	newScene->SetName(filePath.stem().string());
 	newScene->Initialize();
 	newScene->SetIsPause(true);
+	//AddOrReplaceScene(newScene);
 	SetCurrentScene(newScene);
 	m_CurrentScenePath = filePath;
 
@@ -203,6 +271,7 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);
 	loadedScene->SetIsPause(true);
+	//AddOrReplaceScene(loadedScene);
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 
@@ -227,6 +296,7 @@ bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::
 	loadedScene->Initialize();
 	loadedScene->Deserialize(data);
 	loadedScene->SetIsPause(true);
+	//AddOrReplaceScene(loadedScene);
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 
@@ -254,4 +324,35 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 	
 }
 
+bool SceneManager::RegisterSceneFromJson(const std::filesystem::path& filePath)
+{
+	if (filePath.empty())
+	{
+		return false;
+	}
+
+	const auto sceneName = filePath.stem().string();
+	if (FindSceneByName(sceneName))
+	{
+		return false;
+	}
+
+	std::ifstream ifs(filePath);
+	if (!ifs.is_open())
+	{
+		return false;
+	}
+
+	nlohmann::json j;
+	ifs >> j;
+
+	auto loadedScene = std::make_shared<DefaultScene>(m_Services);
+	loadedScene->SetName(sceneName);
+	loadedScene->Initialize();
+	loadedScene->Deserialize(j);
+	loadedScene->SetIsPause(true);
+	AddOrReplaceScene(loadedScene);
+
+	return true;
+}
 

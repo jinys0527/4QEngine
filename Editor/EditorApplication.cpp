@@ -50,7 +50,6 @@ bool EditorApplication::Initialize()
 	m_AssetLoader->LoadAll();
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
-
 	m_InputManager = &m_Services.Get<InputManager>();
 
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
@@ -92,7 +91,7 @@ void EditorApplication::Run() {
 			m_Engine.UpdateTime();
 			Update();
 			m_Engine.UpdateInput();
-			//UpdateLogic();  //★
+			UpdateLogic();  //★
 			Render();
 
 		}
@@ -143,6 +142,14 @@ void EditorApplication::UpdateInput()
 			ClearPendingPropertySnapshots();
 			m_UndoManager.Redo();
 		}
+	}
+}
+
+void EditorApplication::UpdateLogic()
+{
+	if (m_EditorState == EditorPlayState::Play)
+	{
+		m_SceneManager.ChangeScene();
 	}
 }
 
@@ -2253,6 +2260,10 @@ void EditorApplication::DrawFolderView()
 					const std::string label = name;
 					const bool selected = (m_SelectedResourcePath == entry.path());
 					const bool isSceneFile = entry.path().extension() == ".json";
+
+					if (isSceneFile) {
+						m_SceneManager.RegisterSceneFromJson(entry.path()); //Scene 모두 등록
+					}
 					ImGui::PushID(label.c_str());
 					if (isSceneFile && selected)
 					{

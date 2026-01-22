@@ -8,6 +8,7 @@
 #include "InputManager.h"
 #include "AssetLoader.h"
 #include "SoundManager.h"
+#include "GameManager.h"
 #include "UIManager.h"
 #include "ServiceRegistry.h"
 
@@ -32,6 +33,7 @@ int main()
 	auto& assetLoader = services.Register<AssetLoader>();
 	auto& soundManager = services.Register<SoundManager>();
 	auto& uiManager = services.Register<UIManager>();
+	auto& gameManager = services.Register<GameManager>();
 
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);
@@ -41,7 +43,7 @@ int main()
 	//Editor는 시작시 사용하는 모든 fbx load
 	
 
-	EditorApplication app(services, engine, renderer, sceneManager);
+	EditorApplication app(services, engine, renderer, sceneManager); //service Rocation 있으니 생성자에 안받아도 되지않나
 	if (!app.Initialize())
 	{
 		CoUninitialize();
