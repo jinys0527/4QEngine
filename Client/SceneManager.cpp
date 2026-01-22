@@ -105,12 +105,6 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		{
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 		}
-
-		// 생기면 넣기
-// 		if (m_GameManager)
-// 		{
-// 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
-// 		}
 // 
 // 		if (m_UIManager) {
 // 			m_UIManager->SetCurrentScene(name);
@@ -165,7 +159,7 @@ void SceneManager::ChangeScene()
 	// 현재 이름과 다르면 Change 
 	if (m_ChangeSceneName != m_CurrentScene->GetName()) {
 		ChangeScene(m_ChangeSceneName);
-		m_ChangeSceneName = "";
+		m_ChangeSceneName.clear();
 	}
 }
 

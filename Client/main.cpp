@@ -42,7 +42,7 @@ int main()
 	SceneManager sceneManager(services);
   
 
-    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager, inputManager);
+    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager, inputManager); //service Rocation 있으니 생성자에 안받아도 되지않나
  
  	if (!g_pMainApp->Initialize())
  	{

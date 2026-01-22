@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -8.97841739654541,
-                "y": 11.944757461547852,
-                "z": -13.293190002441406
+                "x": -0.834204912185669,
+                "y": 27.69985008239746,
+                "z": -20.090164184570313
             },
             "look": {
-                "x": -8.43094253540039,
-                "y": 11.369600296020508,
-                "z": -12.685352325439453
+                "x": -0.6995565891265869,
+                "y": 27.021350860595703,
+                "z": -19.368009567260742
             },
             "up": {
-                "x": 0.38492316007614136,
-                "y": 0.8180431723594666,
-                "z": 0.42736342549324036
+                "x": 0.1243651807308197,
+                "y": 0.7346007227897644,
+                "z": 0.6670045852661133
             }
         }
     },
@@ -24,15 +24,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 0.0,
-                            "y": 3.8546125888824463,
-                            "z": -3.7485122680664063
+                            "x": 2.1723523139953613,
+                            "y": 1.563052773475647,
+                            "z": 4.796018123626709
                         },
                         "Rotation": {
-                            "w": 0.9990482330322266,
-                            "x": 0.0,
+                            "w": 1.0,
+                            "x": -0.0,
                             "y": 0.0,
-                            "z": 0.04361938685178757
+                            "z": -0.0
                         },
                         "Scale": {
                             "x": 1.0,
@@ -137,16 +137,16 @@
                     "type": "MeshRenderer"
                 }
             ],
-            "name": "Box"
+            "name": "Box1"
         },
         {
             "components": [
                 {
                     "data": {
                         "Position": {
-                            "x": 5.010489463806152,
-                            "y": 0.0,
-                            "z": -3.173856735229492
+                            "x": 5.282537460327148,
+                            "y": 1.563052773475647,
+                            "z": 4.796018123626709
                         },
                         "Rotation": {
                             "w": 1.0,
@@ -257,8 +257,127 @@
                     "type": "MeshComponent"
                 }
             ],
-            "name": "Box1",
-            "parent": "Box"
+            "name": "Box11"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 2.1723523139953613,
+                            "y": 4.266051769256592,
+                            "z": 4.796018123626709
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Box12"
         },
         {
             "components": [
@@ -292,9 +411,9 @@
                             "z": 1.0
                         },
                         "Direction": {
-                            "x": 1.5399999618530273,
+                            "x": 0.0,
                             "y": -1.0,
-                            "z": -1.0
+                            "z": 0.0
                         },
                         "Intensity": 1.0,
                         "Position": {
@@ -313,15 +432,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -8.97841739654541,
-                            "y": 11.944757461547852,
-                            "z": -13.293190002441406
+                            "x": -0.834204912185669,
+                            "y": 27.69985008239746,
+                            "z": -20.090164184570313
                         },
                         "Rotation": {
-                            "w": 0.8900728225708008,
-                            "x": 0.2815837562084198,
-                            "y": 0.34174835681915283,
-                            "z": -0.10811563581228256
+                            "w": 0.9273367524147034,
+                            "x": 0.3627334535121918,
+                            "y": 0.08571396768093109,
+                            "z": -0.03352748230099678
                         },
                         "Scale": {
                             "x": 1.0,
@@ -334,15 +453,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -8.97841739654541,
-                            "y": 11.944757461547852,
-                            "z": -13.293190002441406
+                            "x": -0.834204912185669,
+                            "y": 27.69985008239746,
+                            "z": -20.090164184570313
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -8.43094253540039,
-                            "y": 11.369600296020508,
-                            "z": -12.685352325439453
+                            "x": -0.6995565891265869,
+                            "y": 27.021350860595703,
+                            "z": -19.368009567260742
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -360,9 +479,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.38492316007614136,
-                            "y": 0.8180431723594666,
-                            "z": 0.42736342549324036
+                            "x": 0.1243651807308197,
+                            "y": 0.7346007227897644,
+                            "z": 0.6670045852661133
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -385,9 +504,9 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 0.0,
+                            "x": 3.0414113998413086,
                             "y": 0.0,
-                            "z": 0.0
+                            "z": 0.47168397903442383
                         },
                         "Rotation": {
                             "w": -0.014648539014160633,
@@ -424,7 +543,7 @@
                                 "metallic": 0.0,
                                 "pixelShader": {
                                     "assetIndex": 0,
-                                    "assetPath": "../MRenderer/fx/Demo_Ani_PS.hlsl"
+                                    "assetPath": ""
                                 },
                                 "roughness": 0.7487671971321106,
                                 "shaderAsset": {
@@ -459,7 +578,7 @@
                                 ],
                                 "vertexShader": {
                                     "assetIndex": 0,
-                                    "assetPath": "../MRenderer/fx/Demo_Ani_VS.hlsl"
+                                    "assetPath": ""
                                 }
                             }
                         }
@@ -468,25 +587,17 @@
                 },
                 {
                     "data": {
-                        "BlendConfig": {
-                            "blendTime": 0.20000000298023224,
-                            "blendType": 0,
-                            "curveName": "Linear",
-                            "fromClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            },
-                            "toClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            }
-                        },
-                        "ClipHandle": {
+                        "Mesh": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        }
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
                     },
-                    "type": "AnimationComponent"
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -501,41 +612,15 @@
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 1,
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
                         "Visible": true
                     },
-                    "type": "SkeletalMeshRenderer"
+                    "type": "MeshRenderer"
                 },
                 {
                     "data": {
                         "Speed": 5.0
                     },
                     "type": "PlayerMovementComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
-                        "SkeletonHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "SkeletalMeshComponent"
                 }
             ],
             "name": "GameObject"
@@ -545,20 +630,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -0.3222320079803467,
-                            "y": 4.0,
-                            "z": 10.99523639678955
+                            "x": 6.728115558624268,
+                            "y": 7.440000057220459,
+                            "z": 12.792533874511719
                         },
                         "Rotation": {
-                            "w": 0.014523215591907501,
-                            "x": 0.0019120110664516687,
-                            "y": 0.9913384318351746,
-                            "z": -0.13051220774650574
+                            "w": -0.2582824230194092,
+                            "x": -0.054899465292692184,
+                            "y": 0.9434314966201782,
+                            "z": -0.20053258538246155
                         },
                         "Scale": {
-                            "x": 0.9999960660934448,
-                            "y": 0.9999997019767761,
-                            "z": 0.9999963641166687
+                            "x": 0.9999958276748657,
+                            "y": 0.9999993443489075,
+                            "z": 0.9999966025352478
                         }
                     },
                     "type": "TransformComponent"
@@ -566,15 +651,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -2.9802322387695313e-08,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -4.058588027954102,
+                            "y": 7.440000057220459,
+                            "z": -12.118316650390625
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": -2.9732859729847405e-08,
-                            "y": 3.741180896759033,
-                            "z": -10.034073829650879
+                            "x": -3.5704329013824463,
+                            "y": 7.033263206481934,
+                            "z": -11.346131324768066
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -588,17 +673,17 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7846534252166748,
+                            "aspect": 1.5604395866394043,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 1.3865787629185888e-08,
-                            "y": 0.9659257531166077,
-                            "z": 0.2588190734386444
+                            "x": 0.21734067797660828,
+                            "y": 0.9135454893112183,
+                            "z": 0.3437989354133606
                         },
                         "Viewport": {
-                            "height": 808.0,
-                            "width": 1442.0
+                            "height": 546.0,
+                            "width": 852.0
                         }
                     },
                     "type": "CameraComponent"

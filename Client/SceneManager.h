@@ -1,5 +1,5 @@
-﻿#pragma once
-// Game / Client 용
+﻿// Game / Client 용
+#pragma once
 #include <memory>
 #include <unordered_map>
 #include <filesystem>

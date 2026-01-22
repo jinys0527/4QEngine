@@ -60,7 +60,9 @@ void SceneChangeTestComponent::SceneChange()
 	if (!scene)
 		return;
 
-	std::cout << "SceneChange Request" << std::endl;
+	std::cout << "SceneChange Request(In Component) : " << m_TargetScene << std::endl;
+
+
 	auto& services = scene->GetServices();
 	auto& gameManager = services.Get<GameManager>();
 	gameManager.RequestSceneChange(m_TargetScene);
