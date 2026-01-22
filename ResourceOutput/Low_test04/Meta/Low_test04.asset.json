@@ -4,12 +4,7 @@
     "materials": "Mats/Low_test04.matbin",
     "skeleton": "Skels/Low_test04.skelbin"
   },
-  "meshes": [
-    {
-      "file": "Meshes/Low_test04.meshbin",
-      "isSkinned": false
-    }
-  ],
+  "meshes": [],
   "name": "Low_test04",
   "path": {
     "baseDir": "..",

@@ -53,7 +53,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	m_RenderContext.pDXDC->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
 	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
 	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
-	//m_RenderContext.DrawFullscreenQuad();
+	m_RenderContext.DrawFullscreenQuad();
 	//터레인 끝
 
 	m_RenderContext.UpdateGrid(frame);

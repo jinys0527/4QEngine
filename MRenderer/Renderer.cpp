@@ -534,7 +534,8 @@ void Renderer::CreateContext()
 	m_RenderContext.SkinCBuffer				= m_SkinCBuffer;
 	m_RenderContext.pLightCB				= m_pLightCB;		
 	m_RenderContext.LightCBuffer			= m_LightCBuffer;
-
+	m_RenderContext.pUIB					= m_pUIB;
+	m_RenderContext.UIBuffer				= m_UIBuffer;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
@@ -884,6 +885,15 @@ HRESULT Renderer::CreateConstBuffer()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(UIBuffer), m_pUIB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+
 
 
 	return hr;

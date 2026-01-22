@@ -16,9 +16,7 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     SetBlendState(BS::ALPHABLEND);
     SetRasterizerState(RS::SOLID);
     SetDepthStencilState(DS::DEPTH_OFF);
-    SetSamplerState();
-
-    
+    SetSamplerState();    
 #pragma endregion
 
     //먼저 화면전체 Quad그리기

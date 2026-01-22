@@ -155,6 +155,8 @@ private:
 	SkinningConstBuffer			m_SkinCBuffer;
 	ComPtr<ID3D11Buffer>		m_pLightCB;
 	LightConstBuffer			m_LightCBuffer;
+	ComPtr<ID3D11Buffer>		m_pUIB;
+	UIBuffer					m_UIBuffer;
 
 
 	//임시
