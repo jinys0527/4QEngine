@@ -11,7 +11,7 @@ class InputManager;
 
 class CameraObject;
 // editor 용으로 수정 필요
-class SceneManager
+class SceneManager : public IEventListener
 {
 	friend class Editor;
 public:
@@ -33,6 +33,10 @@ public:
 	std::shared_ptr<Scene> GetCurrentScene() const;
 	void ChangeScene(const std::string& name);
 	void ChangeScene();
+
+	void SetEventDispatcher(EventDispatcher* eventDispatcher);
+	void OnEvent(EventType type, const void* data) override;
+
 	bool CreateNewScene(const std::filesystem::path& filePath);
 	bool LoadSceneFromJson(const std::filesystem::path& filePath);
 	bool LoadSceneFromJsonData(const nlohmann::json& data, const std::filesystem::path& filePath);
@@ -55,10 +59,12 @@ private:
 	//std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	std::shared_ptr<CameraObject> m_Camera = nullptr;
-	
+	GameManager*		  m_GameManager;
 	InputManager*		  m_InputManager;
 	UIManager*			  m_UIManager;
+	EventDispatcher* m_EventDispatcher = nullptr;
 	std::filesystem::path m_CurrentScenePath;
 	bool				  m_ShouldQuit;
+
 	std::string			  m_ChangeSceneName;
 };

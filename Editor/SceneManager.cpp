@@ -6,6 +6,7 @@
 #include <fstream>
 #include "Renderer.h"
 #include "ServiceRegistry.h"
+#include "GameManager.h"
 #include "InputManager.h"
 #include "UIManager.h"
 
@@ -23,6 +24,8 @@ void SceneManager::Initialize()
 	// 그냥 Default 생성
 	m_InputManager = &m_Services.Get<InputManager>();
 	m_UIManager = &m_Services.Get<UIManager>();
+	m_GameManager = &m_Services.Get<GameManager>();
+
 	auto emptyScene = std::make_shared<DefaultScene>(m_Services);
 	emptyScene->SetSceneManager(this);
 	emptyScene->SetName("Untitled Scene");
@@ -84,7 +87,14 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-	//m_Renderer.SetCamera(m_Camera);
+	SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+
+	if (m_GameManager)
+	{
+		m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+	}
+
+
 
 }
 
@@ -95,17 +105,61 @@ std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
 
 void SceneManager::ChangeScene(const std::string& name)
 {
-
+	if (m_CurrentScene) {
+		m_CurrentScene->Leave();
+	}
 }
 
 void SceneManager::ChangeScene()
 {
-	ChangeScene(m_ChangeSceneName);
+	if (m_ChangeSceneName != m_CurrentScene->GetName()) {
+		ChangeScene(m_ChangeSceneName);
+		m_ChangeSceneName = "";
+	}
+
+
 }
 
 void SceneManager::SetChangeScene(std::string name)
 {
 	m_ChangeSceneName = name;
+}
+
+
+void SceneManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
+{
+	if (m_EventDispatcher == eventDispatcher)
+	{
+		return;
+	}
+
+	if (m_EventDispatcher)
+	{
+		m_EventDispatcher->RemoveListener(EventType::SceneChangeRequested, this);
+	}
+
+	m_EventDispatcher = eventDispatcher;
+
+	if (m_EventDispatcher)
+	{
+		m_EventDispatcher->AddListener(EventType::SceneChangeRequested, this);
+	}
+}
+
+void SceneManager::OnEvent(EventType type, const void* data)
+{
+	if (type != EventType::SceneChangeRequested || !data)
+	{
+		return;
+	}
+
+	const auto* request = static_cast<const Events::SceneChangeRequest*>(data);
+	if (!request)
+	{
+		return;
+	}
+
+	SetChangeScene(request->name);
 }
 
 bool SceneManager::CreateNewScene(const std::filesystem::path& filePath)
