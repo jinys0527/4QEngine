@@ -107,20 +107,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -135,6 +121,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 }
             ],
             "name": "Box1"
@@ -227,6 +227,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -241,20 +255,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Box11"
@@ -347,6 +347,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -361,20 +375,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Box12"
@@ -530,7 +530,7 @@
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                            "assetPath": ""
                         },
                         "Overrides": {
                             "overrides": {
@@ -553,11 +553,11 @@
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                                        "assetPath": ""
                                     },
                                     {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                                        "assetIndex": 0,
+                                        "assetPath": ""
                                     },
                                     {
                                         "assetIndex": 0,
@@ -587,34 +587,34 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                            "assetPath": ""
                         },
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                            "assetPath": ""
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 1,
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
