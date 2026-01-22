@@ -244,6 +244,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ClientScene.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Editor.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -253,12 +254,14 @@
     </ClInclude>
     <ClInclude Include="DefaultScene.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="GameManager.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ServiceRegistry.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ClientScene.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Editor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -268,6 +271,7 @@
     </ClCompile>
     <ClCompile Include="DefaultScene.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

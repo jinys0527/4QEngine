@@ -1,8 +1,8 @@
 ﻿#pragma once
- 
+
 #include "FSM.h"
 #include "EventDispatcher.h"
-
+#include "Event.h"
 
 class GameManager : public IEventListener
 {
@@ -10,7 +10,7 @@ public:
 	GameManager();
 	~GameManager();
 
-	void SetEventDispatcher(EventDispatcher& eventDispatcher) { m_EventDispatcher = eventDispatcher; }
+	void SetEventDispatcher(EventDispatcher& eventDispatcher) { m_EventDispatcher = &eventDispatcher; }
 
 	void Reset();
 
@@ -18,8 +18,10 @@ public:
 
 	void Initial();
 
+	void RequestSceneChange(const std::string& name);
+
 private:
 
-	EventDispatcher& m_EventDispatcher;
-};
+	EventDispatcher* m_EventDispatcher = nullptr;
 
+};

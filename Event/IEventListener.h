@@ -24,6 +24,9 @@ enum class EventType
 	CollisionStay,
 	CollisionExit,
 	CollisionTrigger,
+
+	//Scene
+	SceneChangeRequested,
 };
 
 class IEventListener

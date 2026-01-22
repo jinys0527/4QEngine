@@ -81,9 +81,9 @@ void Scene::Render(RenderData::FrameData& frameData) const
 
 void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
-	if (!gameObject)
+	if (!gameObject) {
 		return;
-
+	}
 	gameObject->SetScene(this);
 
 	if (gameObject->m_Name == "Main Camera")
@@ -93,6 +93,8 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 
 	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
+
+
 
 void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
@@ -341,6 +343,8 @@ void Scene::Deserialize(const nlohmann::json& j)
 	}
 
 	const nlohmann::json* editorRoot = nullptr;
+
+
 	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
 	if (j.contains("editor"))
 	{

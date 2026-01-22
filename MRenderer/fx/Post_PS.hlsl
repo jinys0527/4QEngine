@@ -41,5 +41,5 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float blurMask = val.r;
     float4 tex = lerp(RTView, dofColor, blurMask);
     tex.a = 1;
-    return tex;
+    return RTView;
 }

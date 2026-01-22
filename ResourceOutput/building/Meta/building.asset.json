@@ -4,12 +4,7 @@
     "materials": "Mats/building.matbin",
     "skeleton": "Skels/building.skelbin"
   },
-  "meshes": [
-    {
-      "file": "Meshes/building.meshbin",
-      "isSkinned": false
-    }
-  ],
+  "meshes": [],
   "name": "building",
   "path": {
     "baseDir": "..",

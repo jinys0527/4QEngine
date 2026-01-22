@@ -20,7 +20,7 @@ public:
 	void InitializeTest(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc);		//Editor의 Renderer 초기화
 	void RenderFrame(const RenderData::FrameData& frame);
 	void RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2);
-
+	void RenderToBackBuffer();
 	void InitVB(const RenderData::FrameData& frame);
 	void InitIB(const RenderData::FrameData& frame);
 	void EnsureMeshBuffers(const RenderData::FrameData& frame);
