@@ -74,14 +74,16 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 
 	for (const auto& slot : m_Slots)
 	{
+		const float slotPadding = (slot.alignment == UIHorizontalAlignment::Fill) ? 0.0f : slot.padding;
 		if (slot.alignment == UIHorizontalAlignment::Fill)
 		{
 			totalFillWeight += slot.fillWeight;
 		}
 		else
 		{
-			totalFixedWidth += slot.desiredSize.width + slot.padding * 2.0f;
+			totalFixedWidth += slot.desiredSize.width;
 		}
+		totalFixedWidth += slotPadding * 2.0f;
 	}
 
 	float remaining = availableSize.width - totalFixedWidth;
@@ -89,16 +91,17 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 
 	for (const auto& slot : m_Slots)
 	{
+		const float slotPadding = (slot.alignment == UIHorizontalAlignment::Fill) ? 0.0f : slot.padding;
 		float width = slot.desiredSize.width;
 		if (slot.alignment == UIHorizontalAlignment::Fill && totalFillWeight > 0.0f)
 		{
 			width = max(0.0f, remaining * (slot.fillWeight / totalFillWeight));
 		}
 
-		const float x = cursorX + slot.padding;
+		const float x = cursorX + slotPadding;
 		arranged.push_back(UIRect{ x, startY, width, availableSize.height });
 
-		cursorX += width + slot.padding * 2.0f;
+		cursorX += width + slotPadding * 2.0f;
 	}
 
 	return arranged;

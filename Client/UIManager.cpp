@@ -3,6 +3,8 @@
 #include "Event.h"
 #include "UIButtonComponent.h"
 #include "HorizontalBox.h"
+#include "MaterialComponent.h"
+#include "UIProgressBarComponent.h"
 #include "UITextComponent.h"
 #include "UISliderComponent.h"
 #include <algorithm>
@@ -258,18 +260,58 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			continue;
 		}
 
-		RenderData::UIElement element{};
-		const auto& bounds = uiObject->GetBounds();
-		element.position   = { bounds.x, bounds.y };
-		element.size       = { bounds.width, bounds.height };
-		element.rotation   = uiObject->GetRotationDegrees();
-		element.zOrder     = uiObject->GetZOrder();
-		if (auto* base = uiObject->GetComponent<UIComponent>())
+		
+		const auto& bounds   = uiObject->GetBounds();
+		const int baseZOrder = uiObject->GetZOrder();
+		MaterialHandle baseMaterial = MaterialHandle::Invalid();
+		if (auto* material = uiObject->GetComponent<MaterialComponent>())
 		{
-			element.opacity = base->GetOpacity();
+			baseMaterial = material->GetMaterialHandle();
 		}
-		frameData.uiElements.push_back(element);
 
+		auto uiComp = uiObject->GetComponent<UIComponent>();
+		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
+
+		auto appendElement = [&](const UIRect& rect, int zOrder, const MaterialHandle& material)
+			{
+				RenderData::UIElement element{};
+				element.position = { rect.x, rect.y };
+				element.size = { rect.width, rect.height };
+				element.rotation = uiObject->GetRotationDegrees();
+				element.zOrder = zOrder;
+				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+				element.opacity = opacity;
+				element.material = material;
+				frameData.uiElements.push_back(element);
+			};
+
+		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
+		{
+			MaterialHandle backgroundMaterial = progress->GetBackgroundMaterialHandle();
+			if (!backgroundMaterial.IsValid())
+			{
+				backgroundMaterial = baseMaterial;
+			}
+			MaterialHandle fillMaterial = progress->GetFillMaterialHandle();
+			if (!fillMaterial.IsValid())
+			{
+				fillMaterial = backgroundMaterial;
+			}
+
+			appendElement(bounds, baseZOrder, backgroundMaterial);
+
+			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
+			if (percent > 0.0f)
+			{
+				UIRect fillRect = bounds;
+				fillRect.width = bounds.width * percent;
+				appendElement(fillRect, baseZOrder + 1, fillMaterial);
+			}
+		}
+		else
+		{
+			appendElement(bounds, baseZOrder, baseMaterial);
+		}
 
 		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
 		{

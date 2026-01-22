@@ -130,6 +130,14 @@ struct RenderContext
 	ComPtr<ID3D11PixelShader> PS_Post;
 	ComPtr<ID3DBlob> VSCode_Post;
 
+	ComPtr<ID3D11VertexShader> VS_UI;
+	ComPtr<ID3D11PixelShader> PS_UI;
+	ComPtr<ID3DBlob> VSCode_UI;
+
+	ComPtr<ID3D11Buffer> UIQuadVertexBuffer;
+	ComPtr<ID3D11Buffer> UIQuadIndexBuffer;
+	UINT UIQuadIndexCount = 0;
+	ComPtr<ID3D11ShaderResourceView> UIWhiteTexture;
 
 	//imgui용 == Scene Draw용
 	bool isEditCam = false;

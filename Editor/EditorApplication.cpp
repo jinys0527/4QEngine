@@ -2581,6 +2581,156 @@ void EditorApplication::DrawUIEditorPreview()
 					});
 			};
 
+		auto captureUISnapshots = [&](const std::unordered_set<std::string>& names,
+			std::unordered_map<std::string, nlohmann::json>& outSnapshots)
+			{
+				outSnapshots.clear();
+				if (it == uiObjectsByScene.end())
+				{
+					return;
+				}
+				for (const auto& name : names)
+				{
+					auto itObj = it->second.find(name);
+					if (itObj != it->second.end() && itObj->second)
+					{
+						nlohmann::json snapshot;
+						itObj->second->Serialize(snapshot);
+						outSnapshots.emplace(name, std::move(snapshot));
+					}
+				}
+			};
+
+		auto applyUISnapshots = [&](const std::unordered_map<std::string, nlohmann::json>& snapshots)
+			{
+				if (!uiManager)
+				{
+					return;
+				}
+				auto& map = uiManager->GetUIObjects();
+				auto itScene = map.find(sceneName);
+				if (itScene == map.end())
+				{
+					return;
+				}
+				for (const auto& [name, snapshot] : snapshots)
+				{
+					auto itObj = itScene->second.find(name);
+					if (itObj != itScene->second.end() && itObj->second)
+					{
+						itObj->second->Deserialize(snapshot);
+						itObj->second->UpdateInteractableFlags();
+					}
+				}
+			};
+
+		auto pushUIGroupSnapshotUndo = [&](const std::string& label,
+			const std::unordered_map<std::string, nlohmann::json>& beforeSnapshots,
+			const std::unordered_map<std::string, nlohmann::json>& afterSnapshots)
+			{
+				m_UndoManager.Push(UndoManager::Command{
+					label,
+					[applyUISnapshots, beforeSnapshots]()
+					{
+						applyUISnapshots(beforeSnapshots);
+					},
+					[applyUISnapshots, afterSnapshots]()
+					{
+						applyUISnapshots(afterSnapshots);
+					}
+					});
+			};
+
+		auto reparentUIObject = [&](const std::string& childName, const std::string& newParentName)
+			{
+				if (!uiManager)
+				{
+					return;
+				}
+
+				auto child = getUIObjectByName(childName);
+				if (!child)
+				{
+					return;
+				}
+
+				const std::string oldParentName = child->GetParentName();
+				if (oldParentName == newParentName)
+				{
+					return;
+				}
+
+				std::unordered_set<std::string> snapshotTargets{ childName };
+				if (!oldParentName.empty())
+				{
+					snapshotTargets.insert(oldParentName);
+				}
+				if (!newParentName.empty())
+				{
+					snapshotTargets.insert(newParentName);
+				}
+
+				std::unordered_map<std::string, nlohmann::json> beforeSnapshots;
+				captureUISnapshots(snapshotTargets, beforeSnapshots);
+
+				if (!oldParentName.empty())
+				{
+					auto oldParent = getUIObjectByName(oldParentName);
+					if (oldParent)
+					{
+						if (oldParent->GetComponent<HorizontalBox>())
+						{
+							uiManager->RemoveHorizontalSlot(sceneName, oldParentName, childName);
+						}
+						else if (oldParent->GetComponent<Canvas>())
+						{
+							uiManager->RemoveCanvasSlot(sceneName, oldParentName, childName);
+						}
+					}
+				}
+
+				if (newParentName.empty())
+				{
+					child->ClearParentName();
+				}
+				else
+				{
+					auto newParent = getUIObjectByName(newParentName);
+					if (newParent)
+					{
+						if (newParent->GetComponent<HorizontalBox>())
+						{
+							const auto bounds = child->GetBounds();
+							HorizontalBoxSlot slot;
+							slot.child = child.get();
+							slot.desiredSize = UISize{ bounds.width, bounds.height };
+							slot.padding = 0.0f;
+							slot.fillWeight = 1.0f;
+							slot.alignment = UIHorizontalAlignment::Fill;
+							uiManager->RegisterHorizontalSlot(sceneName, newParentName, childName, slot);
+						}
+						else if (newParent->GetComponent<Canvas>())
+						{
+							CanvasSlot slot;
+							slot.child = child.get();
+							slot.rect = child->GetBounds();
+							uiManager->RegisterCanvasSlot(sceneName, newParentName, childName, slot);
+						}
+						else
+						{
+							child->SetParentName(newParentName);
+						}
+					}
+				}
+
+				uiManager->RefreshUIListForCurrentScene();
+
+				std::unordered_map<std::string, nlohmann::json> afterSnapshots;
+				captureUISnapshots(snapshotTargets, afterSnapshots);
+				pushUIGroupSnapshotUndo("Change UI Parent", beforeSnapshots, afterSnapshots);
+			};
+
+
 		if (!m_SelectedUIObjectName.empty() && !getUIObjectByName(m_SelectedUIObjectName))
 		{
 			m_SelectedUIObjectName.clear();
@@ -2804,12 +2954,7 @@ void EditorApplication::DrawUIEditorPreview()
 								{
 									if (!isDescendant(it->second, name, droppedName))
 									{
-										nlohmann::json beforeSnapshot;
-										itDrop->second->Serialize(beforeSnapshot);
-										itDrop->second->SetParentName(name);
-										nlohmann::json afterSnapshot;
-										itDrop->second->Serialize(afterSnapshot);
-										pushUISnapshotUndo("Change UI Parent", beforeSnapshot, afterSnapshot);
+										reparentUIObject(droppedName, name);
 									}
 								}
 							}
@@ -2930,66 +3075,6 @@ void EditorApplication::DrawUIEditorPreview()
 			static std::unordered_map<size_t, GroupEditSnapshot> pendingGroupEdits;
 			static size_t lastGroupSelectionHash = 0;
 
-			auto captureGroupSnapshots = [&](const std::unordered_set<std::string>& names,
-				std::unordered_map<std::string, nlohmann::json>& outSnapshots)
-				{
-					outSnapshots.clear();
-					if (it == uiObjectsByScene.end())
-					{
-						return;
-					}
-					for (const auto& name : names)
-					{
-						auto itObj = it->second.find(name);
-						if (itObj != it->second.end() && itObj->second)
-						{
-							nlohmann::json snapshot;
-							itObj->second->Serialize(snapshot);
-							outSnapshots.emplace(name, std::move(snapshot));
-						}
-					}
-				};
-
-			auto applyGroupSnapshots = [&](const std::unordered_map<std::string, nlohmann::json>& snapshots)
-				{
-					if (!uiManager)
-					{
-						return;
-					}
-					auto& map = uiManager->GetUIObjects();
-					auto itScene = map.find(sceneName);
-					if (itScene == map.end())
-					{
-						return;
-					}
-					for (const auto& [name, snapshot] : snapshots)
-					{
-						auto itObj = itScene->second.find(name);
-						if (itObj != itScene->second.end() && itObj->second)
-						{
-							itObj->second->Deserialize(snapshot);
-							itObj->second->UpdateInteractableFlags();
-						}
-					}
-				};
-
-			auto pushUIGroupSnapshotUndo = [&](const std::string& label,
-				const std::unordered_map<std::string, nlohmann::json>& beforeSnapshots,
-				const std::unordered_map<std::string, nlohmann::json>& afterSnapshots)
-				{
-					m_UndoManager.Push(UndoManager::Command{
-						label,
-						[applyGroupSnapshots, beforeSnapshots]()
-						{
-							applyGroupSnapshots(beforeSnapshots);
-						},
-						[applyGroupSnapshots, afterSnapshots]()
-						{
-							applyGroupSnapshots(afterSnapshots);
-						}
-						});
-				};
-
 			auto getWorldBoundsForLayout = [&](const std::string& name,
 				const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
 				auto&& getWorldBoundsRef,
@@ -3084,12 +3169,7 @@ void EditorApplication::DrawUIEditorPreview()
 			{
 				if (ImGui::Selectable("<None>", selectedObject->GetParentName().empty()))
 				{
-					nlohmann::json beforeSnapshot;
-					selectedObject->Serialize(beforeSnapshot);
-					selectedObject->ClearParentName();
-					nlohmann::json afterSnapshot;
-					selectedObject->Serialize(afterSnapshot);
-					pushUISnapshotUndo("Change UI Parent", beforeSnapshot, afterSnapshot);
+					reparentUIObject(selectedObject->GetName(), "");
 				}
 				for (const auto& [name, uiObject] : it->second)
 				{
@@ -3100,12 +3180,7 @@ void EditorApplication::DrawUIEditorPreview()
 					const bool isSelected = (selectedObject->GetParentName() == name);
 					if (ImGui::Selectable(name.c_str(), isSelected))
 					{
-						nlohmann::json beforeSnapshot;
-						selectedObject->Serialize(beforeSnapshot);
-						selectedObject->SetParentName(name);
-						nlohmann::json afterSnapshot;
-						selectedObject->Serialize(afterSnapshot);
-						pushUISnapshotUndo("Change UI Parent", beforeSnapshot, afterSnapshot);
+						reparentUIObject(selectedObject->GetName(), "");
 					}
 					if (isSelected)
 					{
@@ -3205,6 +3280,19 @@ void EditorApplication::DrawUIEditorPreview()
 			}
 			recordUILongEdit(makeUILayoutKey("Position"), positionChanged, "Edit UI Position");
 
+			bool hasHorizontalParent = false;
+			const std::string parentName = selectedObject->GetParentName();
+			if (!parentName.empty() && it != uiObjectsByScene.end())
+			{
+				auto itParent = it->second.find(parentName);
+				if (itParent != it->second.end() && itParent->second)
+				{
+					hasHorizontalParent = itParent->second->GetComponent<HorizontalBox>() != nullptr;
+				}
+			}
+
+			ImGui::BeginDisabled(hasHorizontalParent);
+
 			const bool sizeChanged = ImGui::DragFloat2("Size", sizeValues, 1.0f, -10000.0f, 10000.0f);
 			if (sizeChanged)
 			{
@@ -3213,6 +3301,7 @@ void EditorApplication::DrawUIEditorPreview()
 				selectedObject->SetBounds(bounds);
 			}
 			recordUILongEdit(makeUILayoutKey("Size"), sizeChanged, "Edit UI Size");
+			ImGui::EndDisabled();
 
 			size_t selectionHash = 0;
 			if (m_SelectedUIObjectNames.size() > 1)
@@ -3273,7 +3362,7 @@ void EditorApplication::DrawUIEditorPreview()
 							return;
 						}
 						GroupEditSnapshot snapshot;
-						captureGroupSnapshots(m_SelectedUIObjectNames, snapshot.beforeSnapshots);
+						captureUISnapshots(m_SelectedUIObjectNames, snapshot.beforeSnapshots);
 						snapshot.startBounds = startBounds;
 						snapshot.startWorldBounds.clear();
 						if (it != uiObjectsByScene.end())
@@ -3343,7 +3432,7 @@ void EditorApplication::DrawUIEditorPreview()
 						if (itPending->second.updated)
 						{
 							std::unordered_map<std::string, nlohmann::json> afterSnapshots;
-							captureGroupSnapshots(m_SelectedUIObjectNames, afterSnapshots);
+							captureUISnapshots(m_SelectedUIObjectNames, afterSnapshots);
 							pushUIGroupSnapshotUndo("Move UI Group", itPending->second.beforeSnapshots, afterSnapshots);
 						}
 						pendingGroupEdits.erase(itPending);
@@ -3412,7 +3501,7 @@ void EditorApplication::DrawUIEditorPreview()
 						if (itPending->second.updated)
 						{
 							std::unordered_map<std::string, nlohmann::json> afterSnapshots;
-							captureGroupSnapshots(m_SelectedUIObjectNames, afterSnapshots);
+							captureUISnapshots(m_SelectedUIObjectNames, afterSnapshots);
 							pushUIGroupSnapshotUndo("Resize UI Group", itPending->second.beforeSnapshots, afterSnapshots);
 						}
 						pendingGroupEdits.erase(itPending);
@@ -3493,20 +3582,17 @@ void EditorApplication::DrawUIEditorPreview()
 				ImGui::SameLine();
 				if (ImGui::Button("Remove"))
 				{
-					if (ImGui::Button("Remove"))
+					nlohmann::json beforeSnapshot;
+					selectedObject->Serialize(beforeSnapshot);
+					selectedObject->RemoveComponentByTypeName(componentType);
+					selectedObject->UpdateInteractableFlags();
+					if (uiManager)
 					{
-						nlohmann::json beforeSnapshot;
-						selectedObject->Serialize(beforeSnapshot);
-						selectedObject->RemoveComponentByTypeName(componentType);
-						selectedObject->UpdateInteractableFlags();
-						if (uiManager)
-						{
-							uiManager->RefreshUIListForCurrentScene();
-						}
-						nlohmann::json afterSnapshot;
-						selectedObject->Serialize(afterSnapshot);
-						pushUISnapshotUndo("Remove UI Component", beforeSnapshot, afterSnapshot);
+						uiManager->RefreshUIListForCurrentScene();
 					}
+					nlohmann::json afterSnapshot;
+					selectedObject->Serialize(afterSnapshot);
+					pushUISnapshotUndo("Remove UI Component", beforeSnapshot, afterSnapshot);
 				}
 				ImGui::PopID();
 			}
@@ -3650,6 +3736,23 @@ void EditorApplication::DrawUIEditorPreview()
 					if (selectedObject->GetComponent<Canvas>())
 					{
 						uiManager->ApplyCanvasLayout(sceneName, selectedObject->GetName());
+					}
+
+					const std::string parentName = selectedObject->GetParentName();
+					if (!parentName.empty() && it != uiObjectsByScene.end())
+					{
+						auto itParent = it->second.find(parentName);
+						if (itParent != it->second.end() && itParent->second)
+						{
+							if (itParent->second->GetComponent<HorizontalBox>())
+							{
+								uiManager->ApplyHorizontalLayout(sceneName, parentName);
+							}
+							if (itParent->second->GetComponent<Canvas>())
+							{
+								uiManager->ApplyCanvasLayout(sceneName, parentName);
+							}
+						}
 					}
 				}
 			}
@@ -3823,7 +3926,7 @@ void EditorApplication::DrawUIEditorPreview()
 							slot.desiredSize = UISize{ bounds.width, bounds.height };
 							slot.padding = 0.0f;
 							slot.fillWeight = 1.0f;
-							slot.alignment = UIHorizontalAlignment::Left;
+							slot.alignment = UIHorizontalAlignment::Fill;
 							uiManager->RegisterHorizontalSlot(sceneName, selectedName, name, slot);
 						}
 						uiManager->RefreshUIListForCurrentScene();

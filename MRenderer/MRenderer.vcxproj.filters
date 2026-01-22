@@ -187,6 +187,12 @@
     <FxCompile Include="fx\Demo_FullScreen_Triangle_VS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="fx\UI_PS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_VS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

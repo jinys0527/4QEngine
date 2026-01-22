@@ -8,6 +8,7 @@
 #include "UISliderComponent.h"
 #include "UITextComponent.h"
 #include "Canvas.h"
+#include "MaterialComponent.h"
 #include <algorithm>
 
 UIManager::~UIManager()
@@ -307,7 +308,7 @@ bool UIManager::ApplyHorizontalLayout(const std::string& sceneName, const std::s
 
 	const UIRect parentBounds = parent->GetBounds();
 	const UISize availableSize{ parentBounds.width, parentBounds.height };
-	const auto arranged = horizontal->ArrangeChildren(parentBounds.x, parentBounds.y, availableSize);
+	const auto arranged = horizontal->ArrangeChildren(0, 0, availableSize);
 	const auto& slots = horizontal->GetSlots();
 	const size_t count = min(arranged.size(), slots.size());
 
@@ -444,18 +445,58 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			continue;
 		}
 
-		RenderData::UIElement element{};
-		const auto& bounds = uiObject->GetBounds();
-		element.position = { bounds.x, bounds.y };
-		element.size	 = { bounds.width, bounds.height };
-		element.rotation = uiObject->GetRotationDegrees();
-		element.zOrder   = uiObject->GetZOrder();
-		if (auto* base = uiObject->GetComponent<UIComponent>())
-		{
-			element.opacity = base->GetOpacity();
-		}
-		frameData.uiElements.push_back(element);
 
+		const auto& bounds = uiObject->GetBounds();
+		const int baseZOrder = uiObject->GetZOrder();
+		MaterialHandle baseMaterial = MaterialHandle::Invalid();
+		if (auto* material = uiObject->GetComponent<MaterialComponent>())
+		{
+			baseMaterial = material->GetMaterialHandle();
+		}
+
+		auto uiComp = uiObject->GetComponent<UIComponent>();
+		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
+
+		auto appendElement = [&](const UIRect& rect, int zOrder, const MaterialHandle& material)
+			{
+				RenderData::UIElement element{};
+				element.position = { rect.x, rect.y };
+				element.size = { rect.width, rect.height };
+				element.rotation = uiObject->GetRotationDegrees();
+				element.zOrder = zOrder;
+				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+				element.opacity = opacity;
+				element.material = material;
+				frameData.uiElements.push_back(element);
+			};
+
+		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
+		{
+			MaterialHandle backgroundMaterial = progress->GetBackgroundMaterialHandle();
+			if (!backgroundMaterial.IsValid())
+			{
+				backgroundMaterial = baseMaterial;
+			}
+			MaterialHandle fillMaterial = progress->GetFillMaterialHandle();
+			if (!fillMaterial.IsValid())
+			{
+				fillMaterial = backgroundMaterial;
+			}
+
+			appendElement(bounds, baseZOrder, backgroundMaterial);
+
+			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
+			if (percent > 0.0f)
+			{
+				UIRect fillRect = bounds;
+				fillRect.width = bounds.width * percent;
+				appendElement(fillRect, baseZOrder + 1, fillMaterial);
+			}
+		}
+		else
+		{
+			appendElement(bounds, baseZOrder, baseMaterial);
+		}
 
 		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
 		{
@@ -470,7 +511,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 	std::sort(frameData.uiElements.begin(), frameData.uiElements.end(), [](const RenderData::UIElement& a, const RenderData::UIElement& b)
 		{
 			return a.zOrder < b.zOrder;
-		}); 
+		});
 }
 
 void UIManager::OnEvent(EventType type, const void* data)

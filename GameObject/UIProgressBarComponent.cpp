@@ -4,6 +4,8 @@
 
 REGISTER_COMPONENT_DERIVED(UIProgressBarComponent, UIComponent)
 REGISTER_PROPERTY(UIProgressBarComponent, Percent)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundMaterialHandle)
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillMaterialHandle)
 
 void UIProgressBarComponent::Update(float deltaTime)
 {

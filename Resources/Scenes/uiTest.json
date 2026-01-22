@@ -354,5 +354,193 @@
             "name": "GameObject"
         }
     ],
-    "ui": []
+    "ui": {
+        "bindings": {},
+        "objects": [
+            {
+                "anchorMax": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "anchorMin": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "bounds": {
+                    "h": 80.0,
+                    "w": 200.0,
+                    "x": 509.0,
+                    "y": 524.0
+                },
+                "components": [
+                    {
+                        "data": {
+                            "Opacity": 1.0,
+                            "Slots": [
+                                {
+                                    "alignment": 3,
+                                    "child": "UIObject1",
+                                    "desiredSize": {
+                                        "h": 80.0,
+                                        "w": 200.0
+                                    },
+                                    "fillWeight": 1.0,
+                                    "padding": 0.0
+                                },
+                                {
+                                    "alignment": 3,
+                                    "child": "UIObject2",
+                                    "desiredSize": {
+                                        "h": 80.0,
+                                        "w": 200.0
+                                    },
+                                    "fillWeight": 1.0,
+                                    "padding": 0.0
+                                },
+                                {
+                                    "alignment": 3,
+                                    "child": "UIObject3",
+                                    "desiredSize": {
+                                        "h": 80.0,
+                                        "w": 200.0
+                                    },
+                                    "fillWeight": 1.0,
+                                    "padding": 0.0
+                                }
+                            ],
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "HorizontalBox"
+                    },
+                    {
+                        "data": {
+                            "Opacity": 1.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIComponent"
+                    }
+                ],
+                "hasBounds": true,
+                "name": "UIObject",
+                "parent": "",
+                "pivot": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "rotation": 0.0,
+                "visible": true,
+                "zOrder": 0
+            },
+            {
+                "anchorMax": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "anchorMin": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "bounds": {
+                    "h": 80.0,
+                    "w": 66.66667175292969,
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "components": [
+                    {
+                        "data": {
+                            "Opacity": 1.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIComponent"
+                    }
+                ],
+                "hasBounds": true,
+                "name": "UIObject1",
+                "parent": "UIObject",
+                "pivot": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "rotation": 0.0,
+                "visible": true,
+                "zOrder": 0
+            },
+            {
+                "anchorMax": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "anchorMin": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "bounds": {
+                    "h": 80.0,
+                    "w": 66.66667175292969,
+                    "x": 66.66667175292969,
+                    "y": 0.0
+                },
+                "components": [
+                    {
+                        "data": {
+                            "Opacity": 1.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIComponent"
+                    }
+                ],
+                "hasBounds": true,
+                "name": "UIObject2",
+                "parent": "UIObject",
+                "pivot": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "rotation": 0.0,
+                "visible": true,
+                "zOrder": 0
+            },
+            {
+                "anchorMax": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "anchorMin": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "bounds": {
+                    "h": 80.0,
+                    "w": 66.66667175292969,
+                    "x": 133.33334350585938,
+                    "y": 0.0
+                },
+                "components": [
+                    {
+                        "data": {
+                            "Opacity": 1.0,
+                            "Visible": true,
+                            "ZOrder": 0
+                        },
+                        "type": "UIComponent"
+                    }
+                ],
+                "hasBounds": true,
+                "name": "UIObject3",
+                "parent": "UIObject",
+                "pivot": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "rotation": 0.0,
+                "visible": true,
+                "zOrder": 0
+            }
+        ]
+    }
 }

@@ -108,6 +108,8 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
 	
+	LoadVertexShader(_T("../MRenderer/fx/UI_VS.hlsl"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/UI_PS.hlsl"), m_pPS_UI.GetAddressOf());
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
@@ -177,7 +179,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	CreateQuadVB();
 	CreateQuadIB();
 
-
+	CreateUIWhiteTexture();
 
 	CreateContext();		//마지막에 실행
 
@@ -517,6 +519,14 @@ void Renderer::CreateContext()
 	m_RenderContext.PS_Post					= m_pPS_Post;
 	m_RenderContext.VSCode_Post				= m_pVSCode_Post;
 
+	m_RenderContext.VS_UI = m_pVS_UI;
+	m_RenderContext.PS_UI = m_pPS_UI;
+	m_RenderContext.VSCode_UI = m_pVSCode_UI;
+	m_RenderContext.UIQuadVertexBuffer = m_QuadVertexBuffers;
+	m_RenderContext.UIQuadIndexBuffer = m_QuadIndexBuffers;
+	m_RenderContext.UIQuadIndexCount = m_QuadIndexCounts;
+	m_RenderContext.UIWhiteTexture = m_UIWhiteTexture;
+
 
 	m_RenderContext.RState					= m_RState;
 	m_RenderContext.DSState					= m_DSState;
@@ -618,6 +628,38 @@ void Renderer::CreateContext()
 		};
 
 }
+
+void Renderer::CreateUIWhiteTexture()
+{
+	if (!m_pDevice)
+	{
+		return;
+	}
+
+	const UINT32 whitePixel = 0xFFFFFFFF;
+	D3D11_TEXTURE2D_DESC desc{};
+	desc.Width = 1;
+	desc.Height = 1;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_IMMUTABLE;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	D3D11_SUBRESOURCE_DATA data{};
+	data.pSysMem = &whitePixel;
+	data.SysMemPitch = sizeof(UINT32);
+
+	ComPtr<ID3D11Texture2D> texture;
+	if (FAILED(m_pDevice->CreateTexture2D(&desc, &data, texture.GetAddressOf())))
+	{
+		return;
+	}
+
+	m_pDevice->CreateShaderResourceView(texture.Get(), nullptr, m_UIWhiteTexture.GetAddressOf());
+}
+
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
 	HRESULT hr = S_OK;

@@ -84,6 +84,8 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+	m_UIManager->SetCurrentScene(m_CurrentScene->GetName());
+	m_UIManager->RefreshUIListForCurrentScene();
 	//m_Renderer.SetCamera(m_Camera);
 
 }
@@ -264,8 +266,15 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 	mergedData["editor"] = currentData.value("editor", nlohmann::json::object());
 	mergedData["gameObjects"] = mergeNamedArray(mergedData.value("gameObjects", nlohmann::json::array()),
 		currentData.value("gameObjects", nlohmann::json::array()));
-	mergedData["ui"] = mergeNamedArray(mergedData.value("ui", nlohmann::json::array()),
-		currentData.value("ui", nlohmann::json::array()));
+	const nlohmann::json currentUi = currentData.value("ui", nlohmann::json::array());
+	if (currentUi.is_object())
+	{
+		mergedData["ui"] = currentUi;
+	}
+	else
+	{
+		mergedData["ui"] = mergeNamedArray(mergedData.value("ui", nlohmann::json::array()), currentUi);
+	}
 
 	std::ofstream ofs(filePath);
 	if (!ofs.is_open())

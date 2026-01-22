@@ -181,6 +181,13 @@ private:
 	ComPtr<ID3D11PixelShader> m_pPS_Post;
 	ComPtr<ID3DBlob> m_pVSCode_Post;
 
+	//UI
+	ComPtr<ID3D11VertexShader> m_pVS_UI;
+	ComPtr<ID3D11PixelShader> m_pPS_UI;
+	ComPtr<ID3DBlob> m_pVSCode_UI;
+	ComPtr<ID3D11ShaderResourceView> m_UIWhiteTexture;
+
+
 //그리드
 private:
 	struct VertexP { XMFLOAT3 pos;};
@@ -223,6 +230,7 @@ protected:
 
 	void CreateQuadVB();
 	void CreateQuadIB();
+	void CreateUIWhiteTexture();
 
 	//블러 테스트
 	ComPtr<ID3D11ShaderResourceView> m_Vignetting;
