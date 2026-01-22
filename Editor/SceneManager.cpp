@@ -119,14 +119,17 @@ void SceneManager::ChangeScene(const std::string& name)
 		return;
 	}
 
-	auto targetScene = FindSceneByName(name);
-	if (!targetScene)
+	const auto* scenePath = FindScenePathByName(name);
+	if (!scenePath)
 	{
 		return;
 	}
-
+	const bool wasPaused = m_CurrentScene->GetIsPause();
 	m_CurrentScene->Leave();
-	SetCurrentScene(targetScene);
+	if (LoadSceneFromJson(*scenePath))
+	{
+		m_CurrentScene->SetIsPause(wasPaused);
+	}
 }
 
 void SceneManager::ChangeScene()
@@ -150,47 +153,19 @@ void SceneManager::SetChangeScene(std::string name)
 }
 
 
-std::shared_ptr<Scene> SceneManager::FindSceneByName(const std::string& name) const
+const std::filesystem::path* SceneManager::FindScenePathByName(const std::string& name) const
 {
 	if (name.empty())
 	{
 		return nullptr;
 	}
 
-	for (const auto& scene : m_Scenes)
+	auto it = m_Scenes.find(name);
+	if (it == m_Scenes.end())
 	{
-		if (scene && scene->GetName() == name)
-		{
-			return scene;
-		}
+		return nullptr;
 	}
-
-	return nullptr;
-}
-
-void SceneManager::AddOrReplaceScene(const std::shared_ptr<Scene>& scene)
-{
-	if (!scene)
-	{
-		return;
-	}
-
-	const auto& name = scene->GetName();
-	if (name.empty())
-	{
-		return;
-	}
-
-	for (auto& existing : m_Scenes)
-	{
-		if (existing && existing->GetName() == name)
-		{
-			existing = scene;
-			return;
-		}
-	}
-
-	m_Scenes.push_back(scene);
+	return &it->second;
 }
 
 void SceneManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
@@ -332,26 +307,18 @@ bool SceneManager::RegisterSceneFromJson(const std::filesystem::path& filePath)
 	}
 
 	const auto sceneName = filePath.stem().string();
-	if (FindSceneByName(sceneName))
+	if (FindScenePathByName(sceneName))
 	{
 		return false;
 	}
 
-	std::ifstream ifs(filePath);
-	if (!ifs.is_open())
+	
+	if (!std::filesystem::exists(filePath))
 	{
 		return false;
 	}
 
-	nlohmann::json j;
-	ifs >> j;
-
-	auto loadedScene = std::make_shared<DefaultScene>(m_Services);
-	loadedScene->SetName(sceneName);
-	loadedScene->Initialize();
-	loadedScene->Deserialize(j);
-	loadedScene->SetIsPause(true);
-	AddOrReplaceScene(loadedScene);
+	m_Scenes.emplace(sceneName, filePath);
 
 	return true;
 }

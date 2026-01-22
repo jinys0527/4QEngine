@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -9.603841781616211,
-                "y": 29.403507232666016,
-                "z": -22.12388038635254
+                "x": -0.834204912185669,
+                "y": 27.69985008239746,
+                "z": -20.090164184570313
             },
             "look": {
-                "x": -9.381235122680664,
-                "y": 28.622148513793945,
-                "z": -21.540849685668945
+                "x": -0.6995565891265869,
+                "y": 27.021350860595703,
+                "z": -19.368009567260742
             },
             "up": {
-                "x": 0.27870723605155945,
-                "y": 0.6240821480751038,
-                "z": 0.729961633682251
+                "x": 0.1243651807308197,
+                "y": 0.7346007227897644,
+                "z": 0.6670045852661133
             }
         }
     },
@@ -144,6 +144,246 @@
                 {
                     "data": {
                         "Position": {
+                            "x": 5.282537460327148,
+                            "y": 1.563052773475647,
+                            "z": 4.796018123626709
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Box11"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 2.1723523139953613,
+                            "y": 4.266051769256592,
+                            "z": 4.796018123626709
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.5,
+                                    "g": 0.5,
+                                    "r": 0.5
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hiroshi\\Meta\\hiroshi.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Box\\Meta\\Box.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                }
+            ],
+            "name": "Box12"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
                             "x": 0.0,
                             "y": 0.0,
                             "z": 0.0
@@ -192,15 +432,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -9.603841781616211,
-                            "y": 29.403507232666016,
-                            "z": -22.12388038635254
+                            "x": -0.834204912185669,
+                            "y": 27.69985008239746,
+                            "z": -20.090164184570313
                         },
                         "Rotation": {
-                            "w": 0.8861904144287109,
-                            "x": 0.4263531565666199,
-                            "y": 0.1634247601032257,
-                            "z": -0.07862524688243866
+                            "w": 0.9273367524147034,
+                            "x": 0.3627334535121918,
+                            "y": 0.08571396768093109,
+                            "z": -0.03352748230099678
                         },
                         "Scale": {
                             "x": 1.0,
@@ -213,15 +453,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -9.603841781616211,
-                            "y": 29.403507232666016,
-                            "z": -22.12388038635254
+                            "x": -0.834204912185669,
+                            "y": 27.69985008239746,
+                            "z": -20.090164184570313
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -9.381235122680664,
-                            "y": 28.622148513793945,
-                            "z": -21.540849685668945
+                            "x": -0.6995565891265869,
+                            "y": 27.021350860595703,
+                            "z": -19.368009567260742
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -235,16 +475,16 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7868648767471313,
+                            "aspect": 1.7846534252166748,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.27870723605155945,
-                            "y": 0.6240821480751038,
-                            "z": 0.729961633682251
+                            "x": 0.1243651807308197,
+                            "y": 0.7346007227897644,
+                            "z": 0.6670045852661133
                         },
                         "Viewport": {
-                            "height": 807.0,
+                            "height": 808.0,
                             "width": 1442.0
                         }
                     },
@@ -264,20 +504,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 0.0,
+                            "x": 3.0414113998413086,
                             "y": 0.0,
-                            "z": 0.0
+                            "z": 0.47168397903442383
                         },
                         "Rotation": {
-                            "w": 1.0,
+                            "w": -0.014648539014160633,
                             "x": 0.0,
-                            "y": 0.0,
+                            "y": 0.9998927116394043,
                             "z": 0.0
                         },
                         "Scale": {
-                            "x": 1.0,
+                            "x": 1.0000039339065552,
                             "y": 1.0,
-                            "z": 1.0
+                            "z": 1.0000039339065552
                         }
                     },
                     "type": "TransformComponent"
@@ -286,11 +526,11 @@
                     "data": {
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\SKM_Quinn_Simple\\Meta\\SKM_Quinn_Simple.asset.json"
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\SKM_Quinn_Simple\\Meta\\SKM_Quinn_Simple.asset.json"
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
                         },
                         "Overrides": {
                             "overrides": {
@@ -305,7 +545,7 @@
                                     "assetIndex": 0,
                                     "assetPath": ""
                                 },
-                                "roughness": 0.5527864098548889,
+                                "roughness": 0.7487671971321106,
                                 "shaderAsset": {
                                     "assetIndex": 0,
                                     "assetPath": ""
@@ -313,11 +553,11 @@
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
                                     },
                                     {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
                                     },
                                     {
                                         "assetIndex": 0,
@@ -347,14 +587,28 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\SKM_Quinn_Simple\\Meta\\SKM_Quinn_Simple.asset.json"
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
                         },
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                            "assetPath": "../ResourceOutput\\Sitting Laughing\\Meta\\Sitting Laughing.asset.json"
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 1,
@@ -364,17 +618,9 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
+                        "Speed": 5.0
                     },
-                    "type": "MeshComponent"
+                    "type": "PlayerMovementComponent"
                 }
             ],
             "name": "GameObject"
@@ -384,20 +630,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 1.1910629272460938,
-                            "y": 3.2637789249420166,
-                            "z": -7.82218599319458
+                            "x": 6.728115558624268,
+                            "y": 7.440000057220459,
+                            "z": 12.792533874511719
                         },
                         "Rotation": {
-                            "w": 0.9780463576316833,
-                            "x": 0.20788976550102234,
-                            "y": -0.014077997766435146,
-                            "z": 0.002991833258420229
+                            "w": -0.2582824230194092,
+                            "x": -0.054899465292692184,
+                            "y": 0.9434314966201782,
+                            "z": -0.20053258538246155
                         },
                         "Scale": {
-                            "x": 0.9997948408126831,
-                            "y": 0.9999987483024597,
-                            "z": 0.9998884797096252
+                            "x": 0.9999958276748657,
+                            "y": 0.9999993443489075,
+                            "z": 0.9999966025352478
                         }
                     },
                     "type": "TransformComponent"
@@ -405,15 +651,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": 1.1910629272460938,
-                            "y": 3.2637789249420166,
-                            "z": -7.82218599319458
+                            "x": -4.058588027954102,
+                            "y": 7.440000057220459,
+                            "z": -12.118316650390625
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": 1.1647690534591675,
-                            "y": 2.8570430278778076,
-                            "z": -6.909018516540527
+                            "x": -3.5704329013824463,
+                            "y": 7.033263206481934,
+                            "z": -11.346131324768066
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -427,17 +673,17 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7846534252166748,
+                            "aspect": 1.5604395866394043,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": -0.01170564629137516,
-                            "y": 0.9135457873344421,
-                            "z": 0.40656739473342896
+                            "x": 0.21734067797660828,
+                            "y": 0.9135454893112183,
+                            "z": 0.3437989354133606
                         },
                         "Viewport": {
-                            "height": 808.0,
-                            "width": 1442.0
+                            "height": 546.0,
+                            "width": 852.0
                         }
                     },
                     "type": "CameraComponent"

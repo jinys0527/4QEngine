@@ -502,14 +502,16 @@ void EditorApplication::DrawMainMenuBar()
 		bool disablePause = (m_EditorState != EditorPlayState::Play);
 		bool disableStop = (m_EditorState == EditorPlayState::Stop);
 
+		// Pause -> Play 는 저장되지 않도록
 		ImGui::BeginDisabled(disablePlay);
 		if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
 		{
-			m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+			if (m_EditorState == EditorPlayState::Stop)
+			{
+				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+			}
 			m_SceneManager.GetCurrentScene()->SetIsPause(false);
 			m_EditorState = EditorPlayState::Play;
-
-
 		}
 		ImGui::EndDisabled();
 

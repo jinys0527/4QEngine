@@ -2,7 +2,6 @@
 #pragma once
 #include <memory>
 #include <unordered_map>
-#include <vector>
 #include <string>
 #include "Scene.h"
 
@@ -58,12 +57,11 @@ public:
 
 private:
 
-	std::shared_ptr<Scene> FindSceneByName(const std::string& name) const;
-	void AddOrReplaceScene(const std::shared_ptr<Scene>& scene);
+	const std::filesystem::path* FindScenePathByName(const std::string& name) const;
 
 	ServiceRegistry& m_Services;
 
-	std::vector<std::shared_ptr<Scene>> m_Scenes;
+	std::unordered_map<std::string, std::filesystem::path> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	std::shared_ptr<CameraObject> m_Camera = nullptr;
 	GameManager*		  m_GameManager;
