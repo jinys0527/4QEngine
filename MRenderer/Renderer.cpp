@@ -134,10 +134,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
-	//m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
-	//m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
 
 
@@ -541,6 +541,8 @@ void Renderer::CreateContext()
 	m_RenderContext.PS						= m_pPS;
 	m_RenderContext.VSCode					= m_pVSCode;
 	m_RenderContext.InputLayout				= m_pInputLayout;
+	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
+
 
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
@@ -850,6 +852,28 @@ HRESULT Renderer::CreateInputLayout()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
+	// 정점 입력구조 Input layout
+	D3D11_INPUT_ELEMENT_DESC layout2[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,       0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
+	UINT numElements2 = ARRAYSIZE(layout2);
+
+	// 정접 입력구조 객체 생성 Create the input layout
+	hr = m_pDevice->CreateInputLayout(layout2,
+		numElements2,
+		m_pVSCode_P->GetBufferPointer(),
+		m_pVSCode_P->GetBufferSize(),
+		m_pInputLayout_P.GetAddressOf()
+	);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
 
 	return hr;
 }
@@ -1955,13 +1979,13 @@ void Renderer::CreateGridVB()
 	{ 
 		float x = i * s;
 		//XMFLOAT3 col = (i == 0) ? cAxisZ : ((i % 5 == 0) ? cMajor : cMinor);
-		v.push_back({ XMFLOAT3(-half, 0, x)});
-		v.push_back({ XMFLOAT3(+half, 0, x)});
+		v.push_back({ XMFLOAT3(-half, 0.01f, x)});
+		v.push_back({ XMFLOAT3(+half, 0.01f, x)});
 
 		float z = i * s;
 		//col = (i == 0) ? cAxisX : ((i % 5 == 0) ? cMajor : cMinor);
-		v.push_back({ XMFLOAT3(z, 0, -half)});
-		v.push_back({ XMFLOAT3(z, 0, +half)});
+		v.push_back({ XMFLOAT3(z, 0.01f, -half) });
+		v.push_back({ XMFLOAT3(z, 0.01f, +half)});
 	}
 
 	m_GridVertexCount = (UINT)v.size();

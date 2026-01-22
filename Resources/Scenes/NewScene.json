@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": 2.577802896499634,
-                "y": 3.650583267211914,
-                "z": -3.628608465194702
+                "x": 0.0843927189707756,
+                "y": 2.1949310302734375,
+                "z": -3.928717851638794
             },
             "look": {
-                "x": 2.5593059062957764,
-                "y": 3.1000492572784424,
-                "z": -2.7940006256103516
+                "x": 0.21819016337394714,
+                "y": 1.910589337348938,
+                "z": -2.979377031326294
             },
             "up": {
-                "x": -0.012198332697153091,
-                "y": 0.8348127603530884,
-                "z": 0.5503988265991211
+                "x": 0.03968215361237526,
+                "y": 0.9587230086326599,
+                "z": 0.2815591096878052
             }
         }
     },
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 2.577802896499634,
-                            "y": 3.650583267211914,
-                            "z": -3.628608465194702
+                            "x": 0.0843927189707756,
+                            "y": 2.1949310302734375,
+                            "z": -3.928717851638794
                         },
                         "Rotation": {
-                            "w": 0.9577545523643494,
-                            "x": 0.287373423576355,
-                            "y": -0.010611828416585922,
-                            "z": 0.0031841236632317305
+                            "w": 0.9872028231620789,
+                            "x": 0.14330914616584778,
+                            "y": 0.06922473758459091,
+                            "z": -0.010049139149487019
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": 2.577802896499634,
-                            "y": 3.650583267211914,
-                            "z": -3.628608465194702
+                            "x": 0.0843927189707756,
+                            "y": 2.1949310302734375,
+                            "z": -3.928717851638794
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": 2.5593059062957764,
-                            "y": 3.1000492572784424,
-                            "z": -2.7940006256103516
+                            "x": 0.21819016337394714,
+                            "y": 1.910589337348938,
+                            "z": -2.979377031326294
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -119,9 +119,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": -0.012198332697153091,
-                            "y": 0.8348127603530884,
-                            "z": 0.5503988265991211
+                            "x": 0.03968215361237526,
+                            "y": 0.9587230086326599,
+                            "z": 0.2815591096878052
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -158,9 +158,24 @@
                 },
                 {
                     "data": {
-                        "Speed": 5.0
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Visible": true
                     },
-                    "type": "PlayerMovementComponent"
+                    "type": "SkeletalMeshRenderer"
                 },
                 {
                     "data": {
@@ -186,24 +201,9 @@
                 },
                 {
                     "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Visible": true
+                        "Speed": 5.0
                     },
-                    "type": "SkeletalMeshRenderer"
+                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {
@@ -318,6 +318,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -332,20 +346,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -438,20 +438,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -466,6 +452,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Low_test04\\Meta\\Low_test04.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {

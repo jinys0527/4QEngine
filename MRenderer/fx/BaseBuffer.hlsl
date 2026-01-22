@@ -73,6 +73,12 @@ struct VSInput_PNUT
     float4 boneWeights : BONEWEIGHTS;
 };
 
+//(디버그용)
+struct VSInput_P
+{
+    float3 pos : POSITION;
+};
+
 //아웃풋
 //기본
 struct VSOutput

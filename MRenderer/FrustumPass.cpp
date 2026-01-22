@@ -11,7 +11,7 @@ void FrustumPass::EnsureVertexBuffer()
 	}
 
 	D3D11_BUFFER_DESC desc = {};
-	desc.ByteWidth = static_cast<UINT>(sizeof(RenderData::Vertex) * 24);
+	desc.ByteWidth = static_cast<UINT>(sizeof(DirectX::XMFLOAT3) * 24);
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -27,7 +27,7 @@ void FrustumPass::UpdateVertices(const std::array<DirectX::XMFLOAT3, 24>& vertic
 		return;
 	}
 
-	std::memcpy(mapped.pData, vertices.data(), sizeof(RenderData::Vertex) * vertices.size());
+	std::memcpy(mapped.pData, vertices.data(), sizeof(DirectX::XMFLOAT3) * vertices.size());
 	m_RenderContext.pDXDC->Unmap(m_VertexBuffer.Get(), 0);
 }
 
@@ -88,12 +88,12 @@ void FrustumPass::Execute(const RenderData::FrameData& frame)
 	//SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get());
 	SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
-	UINT stride = sizeof(RenderData::Vertex);
+	UINT stride = sizeof(DirectX::XMFLOAT3);
 	UINT offset = 0;
 	ID3D11Buffer* vb = m_VertexBuffer.Get();
 	ID3D11DeviceContext* dc = m_RenderContext.pDXDC.Get();
 
-	dc->IASetInputLayout(m_RenderContext.InputLayout.Get());
+	dc->IASetInputLayout(m_RenderContext.InputLayout_P.Get());
 	dc->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 

@@ -160,7 +160,8 @@ private:
 
 
 	//임시
-	ComPtr<ID3D11InputLayout> m_pInputLayout;			
+	ComPtr<ID3D11InputLayout> m_pInputLayout;
+	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
 	//임시 쉐이더코드
 	ComPtr<ID3D11VertexShader> m_pVS;
 	ComPtr<ID3D11PixelShader> m_pPS;
