@@ -134,10 +134,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
 
 
@@ -200,12 +200,12 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
 	EnsureMeshBuffers(frame);
-	//메인 카메라로 draw
-	m_IsEditCam = false;
-	m_RenderContext.isEditCam = m_IsEditCam;
-	m_Pipeline.Execute(frame);
+	////메인 카메라로 draw
+	//m_IsEditCam = false;
+	//m_RenderContext.isEditCam = m_IsEditCam;
+	//m_Pipeline.Execute(frame);
 
-	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
+	//rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
 
 
 	//edit카메라로 draw
@@ -622,7 +622,9 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
+			OutputDebugStringA("Drawing 3D Object Start\n");
 			m_pDXDC->Draw(3, 0);
+			OutputDebugStringA("Drawing 3D Object End\n");
 		};
 
 
@@ -643,7 +645,9 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			//m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
+			OutputDebugStringA("Drawing 3D Object Start\n");
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
+			OutputDebugStringA("Drawing 3D Object End\n");
 		};
 
 	m_RenderContext.DrawGrid =
@@ -1931,7 +1935,7 @@ void Renderer::CreateGridVB()
 	const float s = m_CellSize;
 	const float half = N * s;
 
-	std::vector<VertexP> v;
+	std::vector<RenderData::Vertex> v;
 	v.reserve((N * 2 + 1) * 4);
 
 	XMFLOAT3 cMajor(1, 1, 1), cMinor(0.7f, 0.7f, 0.7f);
@@ -1954,7 +1958,7 @@ void Renderer::CreateGridVB()
 
 	D3D11_BUFFER_DESC bd{};
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.ByteWidth = UINT(v.size() * sizeof(VertexP));
+	bd.ByteWidth = UINT(v.size() * sizeof(RenderData::Vertex));
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
 	D3D11_SUBRESOURCE_DATA sd{ v.data(), 0, 0 };
 	m_pDevice->CreateBuffer(&bd, &sd, m_GridVB.GetAddressOf());
@@ -2013,7 +2017,7 @@ void Renderer::DrawGrid()
 {
 	m_pDXDC->IASetInputLayout(m_pInputLayout.Get());
 	m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	UINT strideC = sizeof(VertexP), offsetC = 0;
+	UINT strideC = sizeof(RenderData::Vertex), offsetC = 0;
 	m_pDXDC->IASetVertexBuffers(0, 1, m_GridVB.GetAddressOf(), &strideC, &offsetC);
 	m_pDXDC->VSSetShader(m_pVS_P.Get(), nullptr, 0);
 	m_pDXDC->PSSetShader(m_pPS_P.Get(), nullptr, 0);

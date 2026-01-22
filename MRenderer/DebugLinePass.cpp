@@ -15,7 +15,7 @@ void DebugLinePass::EnsureVertexBuffer(size_t vertexCount)
 	m_VertexCapacity = vertexCount;
 
 	D3D11_BUFFER_DESC desc = {};
-	desc.ByteWidth = static_cast<UINT>(sizeof(DirectX::XMFLOAT3) * m_VertexCapacity);
+	desc.ByteWidth = static_cast<UINT>(sizeof(RenderData::Vertex) * m_VertexCapacity);
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -36,7 +36,7 @@ void DebugLinePass::UpdateVertices(const std::vector<DirectX::XMFLOAT3>& vertice
 		return;
 	}
 
-	std::memcpy(mapped.pData, vertices.data(), sizeof(DirectX::XMFLOAT3) * vertices.size());
+	std::memcpy(mapped.pData, vertices.data(), sizeof(RenderData::Vertex) * vertices.size());
 	m_RenderContext.pDXDC->Unmap(m_VertexBuffer.Get(), 0);
 }
 
@@ -173,7 +173,7 @@ void DebugLinePass::Execute(const RenderData::FrameData& frame)
 	SetDepthStencilState(DS::DEPTH_ON);
 	SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
-	UINT stride = sizeof(DirectX::XMFLOAT3);
+	UINT stride = sizeof(RenderData::Vertex);
 	UINT offset = 0;
 	ID3D11Buffer* vb = m_VertexBuffer.Get();
 	ID3D11DeviceContext* dc = m_RenderContext.pDXDC.Get();
@@ -190,4 +190,6 @@ void DebugLinePass::Execute(const RenderData::FrameData& frame)
 	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
 
 	dc->Draw(static_cast<UINT>(lineVertices.size()), 0);
+
+
 }

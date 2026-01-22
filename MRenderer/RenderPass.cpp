@@ -254,6 +254,7 @@ void RenderPass::DrawMesh(
 	dc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
 
 
+	OutputDebugStringA("Drawing 3D Object Start\n");
 	if (useSubMesh)
 	{
 		dc->DrawIndexed(indexCount, indexStart, 0);
@@ -262,6 +263,7 @@ void RenderPass::DrawMesh(
 	{
 		dc->DrawIndexed(indexCount, 0, 0);
 	}
+	OutputDebugStringA("Drawing 3D Object End\n");
 }
 
 void RenderPass::DrawBones(ID3D11VertexShader* vs, ID3D11PixelShader* ps, UINT boneCount)

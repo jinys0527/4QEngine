@@ -183,8 +183,6 @@ private:
 
 //그리드
 private:
-	struct VertexP { XMFLOAT3 pos;};
-
 	ComPtr<ID3D11Buffer> m_GridVB;
 	//ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
 
@@ -252,22 +250,27 @@ private:
 	{
 		const wchar_t* msg = L"HELLO";
 
-		// 글자 크기(픽셀) 측정
+		// 1. 측정 및 계산
 		DirectX::XMVECTOR size = m_SpriteFont->MeasureString(msg);
-		float textW = DirectX::XMVectorGetX(size);
-		float textH = DirectX::XMVectorGetY(size);
+		float x = (screenW - DirectX::XMVectorGetX(size)) * 0.5f;
+		float y = (screenH - DirectX::XMVectorGetY(size)) * 0.5f;
 
-		// 중앙 좌표 계산
-		float x = (screenW - textW) * 0.5f;
-		float y = (screenH - textH) * 0.5f;
+		// 2. 파이프라인 정리 (핵심)
+		// 모든 셰이더 리소스를 해제하여 Hazard 방지
+		ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+		m_pDXDC->PSSetShaderResources(0, 128, nullSRVs);
 
-		m_pDXDC->ClearState();
+		// 깊이 버퍼 해제 (Hazard #9 방지)
+		// 현재 사용중인 렌더 타겟만 설정하고 DepthStencil은 nullptr로 설정
 		m_pDXDC->OMSetRenderTargets(1, m_pRTView_Post.GetAddressOf(), nullptr);
+
+		// 3. 뷰포트 설정
 		SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
 
+		// 4. SpriteBatch 실행
+		// SpriteBatch가 자체적으로 InputLayout, BlendState, DepthStencil 등을 설정하도록 둠
 		OutputDebugStringA("Before SpriteBatch Begin\n");
 		m_SpriteBatch->Begin();
-		OutputDebugStringA("After Begin\n");
 
 		m_SpriteFont->DrawString(
 			m_SpriteBatch.get(),
@@ -276,8 +279,6 @@ private:
 			DirectX::Colors::White
 		);
 
-
-		OutputDebugStringA("After DrawString\n");
 		m_SpriteBatch->End();
 		OutputDebugStringA("After End\n");
 	}

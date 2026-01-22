@@ -9,6 +9,8 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
+    ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+    dxdc->PSSetShaderResources(0, 128, nullSRVs);
     SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ALPHABLEND);
@@ -16,6 +18,7 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     SetDepthStencilState(DS::DEPTH_OFF);
     SetSamplerState();
 
+    
 #pragma endregion
 
     //먼저 화면전체 Quad그리기
@@ -46,6 +49,7 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11ShaderResourceView* nullSRV[128] = {};
     dxdc->PSSetShaderResources(0, 128, nullSRV);
+    
     m_RenderContext.MyDrawText(1920, 1080);
 
 
