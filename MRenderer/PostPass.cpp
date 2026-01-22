@@ -47,7 +47,6 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11ShaderResourceView* nullSRV[128] = {};
     dxdc->PSSetShaderResources(0, 128, nullSRV);
-    
     m_RenderContext.MyDrawText(1920, 1080);
 
 

@@ -38,5 +38,5 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     
     float4 tex = lerp(RTView, dofColor, 1);
     tex.a = 1;
-    return RTView;
+    return dofColor;
 }
