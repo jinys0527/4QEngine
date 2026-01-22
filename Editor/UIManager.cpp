@@ -4,7 +4,10 @@
 #include "Event.h"
 #include "UIButtonComponent.h"
 #include "HorizontalBox.h"
+#include "UIProgressBarComponent.h"
 #include "UISliderComponent.h"
+#include "UITextComponent.h"
+#include "Canvas.h"
 #include <algorithm>
 
 UIManager::~UIManager()
@@ -105,6 +108,103 @@ bool UIManager::ClearButtonOnClicked(const std::string& sceneName, const std::st
 		});
 }
 
+bool UIManager::RegisterSliderOnValueChanged(const std::string& sceneName, const std::string& objectName, std::function<void(float)> callback)
+{
+	auto callbackCopy = std::move(callback);
+	return ApplyToComponent<UISliderComponent>(sceneName, objectName, [callback = std::move(callbackCopy)](UISliderComponent& slider) mutable
+		{
+			slider.SetOnValueChanged(std::move(callback));
+		});
+}
+
+bool UIManager::ClearSliderOnValueChanged(const std::string& sceneName, const std::string& objectName)
+{
+	return ApplyToComponent<UISliderComponent>(sceneName, objectName, [](UISliderComponent& slider)
+		{
+			slider.SetOnValueChanged(nullptr);
+		});
+}
+
+bool UIManager::BindButtonToggleVisibility(const std::string& sceneName, const std::string& buttonName, const std::string& targetName)
+{
+	if (buttonName.empty() || targetName.empty())
+		return false;
+
+	m_ButtonBindingsByScene[sceneName][buttonName] = targetName;
+	return RegisterButtonOnClicked(sceneName, buttonName, [this, sceneName, targetName]()
+		{
+			auto target = FindUIObject(sceneName, targetName);
+			if (!target)
+			{
+				return;
+			}
+			target->SetIsVisible(!target->IsVisible());
+		});
+}
+
+bool UIManager::ClearButtonBinding(const std::string& sceneName, const std::string& buttonName)
+{
+	auto itScene = m_ButtonBindingsByScene.find(sceneName);
+	if (itScene != m_ButtonBindingsByScene.end())
+	{
+		itScene->second.erase(buttonName);
+	}
+	return ClearButtonOnClicked(sceneName, buttonName);
+}
+
+bool UIManager::BindSliderToProgress(const std::string& sceneName, const std::string& sliderName, const std::string& targetName)
+{
+	if (sliderName.empty() || targetName.empty())
+		return false;
+
+	m_SliderBindingsByScene[sceneName][sliderName] = targetName;
+	return RegisterSliderOnValueChanged(sceneName, sliderName, [this, sceneName, sliderName, targetName](float)
+		{
+			auto sliderObject = FindUIObject(sceneName, sliderName);
+			auto target = FindUIObject(sceneName, targetName);
+			if (!sliderObject || !target)
+				return;
+
+			auto* slider = sliderObject->GetComponent<UISliderComponent>();
+			auto* progress = target->GetComponent<UIProgressBarComponent>();
+			if (!slider || !progress)
+				return;
+
+			progress->SetPercent(slider->GetNormalizedValue());
+		});
+}
+
+bool UIManager::ClearSliderBinding(const std::string& sceneName, const std::string& sliderName)
+{
+	auto itScene = m_SliderBindingsByScene.find(sceneName);
+	if (itScene != m_SliderBindingsByScene.end())
+	{
+		itScene->second.erase(sliderName);
+	}
+
+	return ClearSliderOnValueChanged(sceneName, sliderName);
+}
+
+const std::unordered_map<std::string, std::string>& UIManager::GetButtonBindings(const std::string& sceneName) const
+{
+	static const std::unordered_map<std::string, std::string> empty;
+	auto it = m_ButtonBindingsByScene.find(sceneName);
+	if (it == m_ButtonBindingsByScene.end())
+		return empty;
+
+	return it->second;
+}
+
+const std::unordered_map<std::string, std::string>& UIManager::GetSliderBindings(const std::string& sceneName) const
+{
+	static const std::unordered_map<std::string, std::string> empty;
+	auto it = m_SliderBindingsByScene.find(sceneName);
+	if (it == m_SliderBindingsByScene.end())
+		return empty;
+
+	return it->second;
+}
+
 bool UIManager::RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot)
 {
 	auto child = FindUIObject(sceneName, childName);
@@ -116,7 +216,8 @@ bool UIManager::RegisterHorizontalSlot(const std::string& sceneName, const std::
 	const bool applied = ApplyToComponent<HorizontalBox>(sceneName, horizontalName, [&](HorizontalBox& horizontal)
 		{
 			HorizontalBoxSlot updatedSlot = slot;
-			updatedSlot.child = child.get();
+			updatedSlot.child     = child.get();
+			updatedSlot.childName = child->GetName();
 			horizontal.AddSlot(updatedSlot);
 		});
 	if (!applied)
@@ -174,9 +275,16 @@ bool UIManager::ClearHorizontalSlots(const std::string& sceneName, const std::st
 
 	for (auto& slot : horizontal->GetSlots())
 	{
-		if (slot.child)
+		UIObject* child = slot.child;
+		if (!child && !slot.childName.empty())
 		{
-			slot.child->ClearParentName();
+			auto resolved = FindUIObject(sceneName, slot.childName);
+			child = resolved ? resolved.get() : nullptr;
+		}
+
+		if (child)
+		{
+			child->ClearParentName();
 		}
 	}
 	horizontal->ClearSlots();
@@ -206,6 +314,11 @@ bool UIManager::ApplyHorizontalLayout(const std::string& sceneName, const std::s
 	for (size_t i = 0; i < count; ++i)
 	{
 		UIObject* child = slots[i].child;
+		if (!child && !slots[i].childName.empty())
+		{
+			auto resolved = FindUIObject(sceneName, slots[i].childName);
+			child = resolved ? resolved.get() : nullptr;
+		}
 		if (!child)
 		{
 			continue;
@@ -214,6 +327,150 @@ bool UIManager::ApplyHorizontalLayout(const std::string& sceneName, const std::s
 	}
 
 	return true;
+}
+
+bool UIManager::RegisterCanvasSlot(const std::string& sceneName, const std::string& canvasName, const std::string& childName, const CanvasSlot& slot)
+{
+	auto child = FindUIObject(sceneName, childName);
+	if (!child)
+		return false;
+
+	const bool applied = ApplyToComponent<Canvas>(sceneName, canvasName, [&](Canvas& canvas)
+		{
+			CanvasSlot updatedSlot = slot;
+			updatedSlot.child = child.get();
+			updatedSlot.childName = child->GetName();
+			canvas.AddSlot(slot);
+		});
+
+	if (!applied)
+		return false;
+
+	child->SetParentName(canvasName);
+	ApplyCanvasLayout(sceneName, canvasName);
+	return true;
+}
+
+bool UIManager::RemoveCanvasSlot(const std::string& sceneName, const std::string& canvasName, const std::string& childName)
+{
+	auto child = FindUIObject(sceneName, childName);
+	if (!child)
+		return false;
+
+	auto parent = FindUIObject(sceneName, canvasName);
+	if (!parent)
+		return false;
+
+	auto* canvas = parent->GetComponent<Canvas>();
+	if (!canvas)
+		return false;
+
+	if (!canvas->RemoveSlotByChild(child.get()))
+		return false;
+
+	child->ClearParentName();
+	ApplyCanvasLayout(sceneName, canvasName);
+	return true;
+}
+
+bool UIManager::ClearCanvasSlots(const std::string& sceneName, const std::string& canvasName)
+{
+	auto parent = FindUIObject(sceneName, canvasName);
+	if (!parent)
+		return false;
+
+	auto* canvas = parent->GetComponent<Canvas>();
+	if (!canvas)
+		return false;
+
+	for (auto& slot : canvas->GetSlots())
+	{
+		UIObject* child = slot.child;
+		if (!child && !slot.childName.empty())
+		{
+			auto resolved = FindUIObject(sceneName, slot.childName);
+			child = resolved ? resolved.get() : nullptr;
+		}
+		if (child)
+		{
+			child->ClearParentName();
+		}
+	}
+	canvas->ClearSlots();
+	return true;
+}
+
+bool UIManager::ApplyCanvasLayout(const std::string& sceneName, const std::string& canvasName)
+{
+	auto parent = FindUIObject(sceneName, canvasName);
+	if (!parent)
+		return false;
+
+	auto canvas = parent->GetComponent<Canvas>();
+	if (!canvas)
+		return false;
+
+	for (const auto& slot : canvas->GetSlots())
+	{
+		UIObject* child = slot.child;
+		if (!child && !slot.childName.empty())
+		{
+			auto resolved = FindUIObject(sceneName, slot.childName);
+			child = resolved ? resolved.get() : nullptr;
+		}
+		if (!child)
+		{
+			continue;
+		}
+		child->SetBounds(slot.rect);
+	}
+
+	return true;
+}
+
+void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
+{
+	frameData.uiElements.clear();
+	frameData.uiTexts.clear();
+
+	auto it = m_UIObjects.find(m_CurrentSceneName);
+	if (it == m_UIObjects.end())
+		return;
+
+	for (const auto& [name, uiObject] : it->second)
+	{
+		if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+		{
+			continue;
+		}
+
+		RenderData::UIElement element{};
+		const auto& bounds = uiObject->GetBounds();
+		element.position = { bounds.x, bounds.y };
+		element.size	 = { bounds.width, bounds.height };
+		element.rotation = uiObject->GetRotationDegrees();
+		element.zOrder   = uiObject->GetZOrder();
+		if (auto* base = uiObject->GetComponent<UIComponent>())
+		{
+			element.opacity = base->GetOpacity();
+		}
+		frameData.uiElements.push_back(element);
+
+
+		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
+		{
+			RenderData::UITextElement text{};
+			text.position = { bounds.x, bounds.y };
+			text.fontSize = textComp->GetFontSize();
+			text.text = textComp->GetText();
+			frameData.uiTexts.push_back(std::move(text));
+		}
+	}
+
+	std::sort(frameData.uiElements.begin(), frameData.uiElements.end(), [](const RenderData::UIElement& a, const RenderData::UIElement& b)
+		{
+			return a.zOrder < b.zOrder;
+		}); 
 }
 
 void UIManager::OnEvent(EventType type, const void* data)
@@ -370,26 +627,48 @@ void UIManager::RefreshUIListForCurrentScene()
 
 void UIManager::SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const
 {
-	out = nlohmann::json::array();
 	auto it = m_UIObjects.find(sceneName);
-	if (it == m_UIObjects.end())
+	nlohmann::json objects = nlohmann::json::array();
+	if (it != m_UIObjects.end())
 	{
-		return;
+		for (const auto& [name, uiObject] : it->second)
+		{
+			if (!uiObject)
+			{
+				continue;
+			}
+			nlohmann::json entry;
+			uiObject->Serialize(entry);
+			objects.push_back(entry);
+		}
 	}
 
-	for (const auto& [name, uiObject] : it->second)
+	nlohmann::json bindings = nlohmann::json::object();
+	auto itButtons = m_ButtonBindingsByScene.find(sceneName);
+	if (itButtons != m_ButtonBindingsByScene.end())
 	{
-		if (!uiObject)
+		for (const auto& [source, target] : itButtons->second)
 		{
-			continue;
+			bindings["buttons"][source] = target;
 		}
-		nlohmann::json entry;
-		uiObject->Serialize(entry);
-		out.push_back(entry);
 	}
+	auto itSliders = m_SliderBindingsByScene.find(sceneName);
+	if (itSliders != m_SliderBindingsByScene.end())
+	{
+		for (const auto& [source, target] : itSliders->second)
+		{
+			bindings["sliders"][source] = target;
+		}
+	}
+
+	out = nlohmann::json::object();
+	out["objects"] = objects;
+	out["bindings"] = bindings;
 }
 
-void UIManager::DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data)
+
+
+void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data)
 {
 	if (!m_EventDispatcher)
 	{
@@ -398,21 +677,152 @@ void UIManager::DeSerializeSceneUI(const std::string& sceneName, const nlohmann:
 
 	auto& uiMap = m_UIObjects[sceneName];
 	uiMap.clear();
+	m_ButtonBindingsByScene.erase(sceneName);
+	m_SliderBindingsByScene.erase(sceneName);
 
-	if (!data.is_array())
+	nlohmann::json objects = nlohmann::json::array();
+	if (data.is_array())
 	{
-		return;
+		objects = data;
+	}
+	else if (data.is_object())
+	{
+		if (data.contains("objects") && data["objects"].is_array())
+		{
+			objects = data["objects"];
+		}
+		if (data.contains("bindings") && data["bindings"].is_object())
+		{
+			const auto& bindings = data["bindings"];
+			if (bindings.contains("buttons") && bindings["buttons"].is_object())
+			{
+				for (auto itBind = bindings["buttons"].begin(); itBind != bindings["buttons"].end(); ++itBind)
+				{
+					m_ButtonBindingsByScene[sceneName][itBind.key()] = itBind.value().get<std::string>();
+				}
+			}
+			if (bindings.contains("sliders") && bindings["sliders"].is_object())
+			{
+				for (auto itBind = bindings["sliders"].begin(); itBind != bindings["sliders"].end(); ++itBind)
+				{
+					m_SliderBindingsByScene[sceneName][itBind.key()] = itBind.value().get<std::string>();
+				}
+			}
+		}
 	}
 
-	for (const auto& entry : data)
+	for (const auto& entry : objects)
 	{
 		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
-		uiObject->DeSerialize(entry);
+		uiObject->Deserialize(entry);
 		uiObject->UpdateInteractableFlags();
 		uiMap[uiObject->GetName()] = uiObject;
 	}
+
+	for (auto& [name, uiObject] : uiMap)
+	{
+		if (!uiObject)
+		{
+			continue;
+		}
+
+		if (auto* horizontal = uiObject->GetComponent<HorizontalBox>())
+		{
+			for (auto& slot : horizontal->GetSlotsRef())
+			{
+				if (!slot.child && !slot.childName.empty())
+				{
+					auto itChild = uiMap.find(slot.childName);
+					if (itChild != uiMap.end())
+					{
+						slot.child = itChild->second.get();
+					}
+				}
+				if (slot.child)
+				{
+					slot.child->SetParentName(uiObject->GetName());
+				}
+			}
+			ApplyHorizontalLayout(sceneName, name);
+		}
+
+		if (auto* canvas = uiObject->GetComponent<Canvas>())
+		{
+			for (auto& slot : canvas->GetSlotsRef())
+			{
+				if (!slot.child && !slot.childName.empty())
+				{
+					auto itChild = uiMap.find(slot.childName);
+					if (itChild != uiMap.end())
+					{
+						slot.child = itChild->second.get();
+					}
+				}
+				if (slot.child)
+				{
+					slot.child->SetParentName(uiObject->GetName());
+				}
+			}
+			ApplyCanvasLayout(sceneName, name);
+		}
+	}
+
+	if (auto itButtons = m_ButtonBindingsByScene.find(sceneName); itButtons != m_ButtonBindingsByScene.end())
+	{
+		for (const auto& [source, target] : itButtons->second)
+		{
+			BindButtonToggleVisibility(sceneName, source, target);
+		}
+	}
+	if (auto itSliders = m_SliderBindingsByScene.find(sceneName); itSliders != m_SliderBindingsByScene.end())
+	{
+		for (const auto& [source, target] : itSliders->second)
+		{
+			BindSliderToProgress(sceneName, source, target);
+		}
+	}
+
 	UpdateSortedUI(uiMap);
 }
+
+void UIManager::DispatchToTopUI(EventType type, const void* data)
+{
+}
+
+void UIManager::RemoveBindingsForObject(const std::string& sceneName, const std::string& objectName)
+{
+	auto itButtons = m_ButtonBindingsByScene.find(sceneName);
+	if (itButtons != m_ButtonBindingsByScene.end())
+	{
+		itButtons->second.erase(objectName);
+		for (auto it = itButtons->second.begin(); it != itButtons->second.end();)
+		{
+			if (it->second == objectName)
+			{
+				it = itButtons->second.erase(it);
+				continue;
+			}
+			++it;
+		}
+	}
+
+	auto itSliders = m_SliderBindingsByScene.find(sceneName);
+	if (itSliders != m_SliderBindingsByScene.end())
+	{
+		itSliders->second.erase(objectName);
+		for (auto it = itSliders->second.begin(); it != itSliders->second.end();)
+		{
+			if (it->second == objectName)
+			{
+				it = itSliders->second.erase(it);
+				continue;
+			}
+			++it;
+		}
+	}
+}
+
+
 //void UIManager::Render(std::vector<UIRenderInfo>& uiRenderInfo, std::vector<UITextInfo>& uiTextInfo)
 //{
 //	auto it = m_UIObjects.find(m_CurrentSceneName);

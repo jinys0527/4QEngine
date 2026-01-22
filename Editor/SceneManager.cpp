@@ -154,7 +154,7 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 
 	if (m_UIManager && j.contains("ui"))
 	{
-		m_UIManager->DeSerializeSceneUI(loadedScene->GetName(), j.at("ui"));
+		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
 	}
 
 	return true;
@@ -183,7 +183,7 @@ bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::
 
 	if (m_UIManager && data.contains("ui"))
 	{
-		m_UIManager->DeSerializeSceneUI(loadedScene->GetName(), data.at("ui"));
+		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), data.at("ui"));
 	}
 
 

@@ -46,6 +46,10 @@ void SceneManager::Render()
 
 	RenderData::FrameData frameData{};
 	m_CurrentScene->Render(frameData);
+	if (m_UIManager)
+	{
+		m_UIManager->BuildUIFrameData(frameData);
+	}
 	//m_Renderer.Draw(frameData);
 	/*std::vector<RenderInfo> renderInfo;
 	std::vector<UIRenderInfo> uiRenderInfo;

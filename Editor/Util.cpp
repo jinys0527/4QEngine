@@ -20,6 +20,9 @@
 #include "FSMActionRegistry.h"
 #include "FSMComponent.h"
 #include "FSMEventRegistry.h"
+#include "UIPrimitives.h"
+#include "HorizontalBox.h"
+#include "Canvas.h"
 
 #define DRAG_SPEED 0.01f
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
@@ -2002,6 +2005,290 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		RetargetOffsetsType value;
 		property.GetValue(component, &value);
 		ImGui::Text("%s: %zu offsets", property.GetName().c_str(), value.size());
+		return result;
+	}
+
+	if (typeInfo == typeid(UISize))
+	{
+		UISize value{};
+		property.GetValue(component, &value);
+		float data[2] = { value.width, value.height };
+		if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
+		{
+			value.width = data[0];
+			value.height = data[1];
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIPadding))
+	{
+		UIPadding value{};
+		property.GetValue(component, &value);
+		float data[4] = { value.left, value.top, value.right, value.bottom };
+		if (ImGui::DragFloat4(property.GetName().c_str(), data, DRAG_SPEED))
+		{
+			value.left = data[0];
+			value.top = data[1];
+			value.right = data[2];
+			value.bottom = data[3];
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<HorizontalBoxSlot>))
+	{
+		std::vector<HorizontalBoxSlot> slots;
+		property.GetValue(component, &slots);
+		bool updated = false;
+		bool activated = false;
+		bool deactivated = false;
+
+		auto alignmentLabel = [](UIHorizontalAlignment alignment)
+			{
+				switch (alignment)
+				{
+				case UIHorizontalAlignment::Left:
+					return "Left";
+				case UIHorizontalAlignment::Center:
+					return "Center";
+				case UIHorizontalAlignment::Right:
+					return "Right";
+				case UIHorizontalAlignment::Fill:
+					return "Fill";
+				default:
+					return "Left";
+				}
+			};
+
+		if (ImGui::TreeNode(property.GetName().c_str()))
+		{
+			for (size_t i = 0; i < slots.size(); ++i)
+			{
+				HorizontalBoxSlot& slot = slots[i];
+				ImGui::PushID(static_cast<int>(i));
+				ImGui::Separator();
+
+				std::string nameValue = slot.childName;
+				if (slot.child && nameValue.empty())
+				{
+					nameValue = slot.child->GetName();
+				}
+				std::array<char, 256> nameBuffer{};
+				CopyStringToBuffer(nameValue, nameBuffer);
+				if (ImGui::InputText("Child", nameBuffer.data(), nameBuffer.size()))
+				{
+					slot.childName = nameBuffer.data();
+					slot.child = nullptr;
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				float desiredValues[2] = { slot.desiredSize.width, slot.desiredSize.height };
+				if (ImGui::DragFloat2("Desired Size", desiredValues, DRAG_SPEED))
+				{
+					slot.desiredSize.width = desiredValues[0];
+					slot.desiredSize.height = desiredValues[1];
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::DragFloat("Padding", &slot.padding, DRAG_SPEED))
+				{
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::DragFloat("Fill Weight", &slot.fillWeight, DRAG_SPEED))
+				{
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				const char* alignmentPreview = alignmentLabel(slot.alignment);
+				if (ImGui::BeginCombo("Alignment", alignmentPreview))
+				{
+					const UIHorizontalAlignment options[] = {
+						UIHorizontalAlignment::Left,
+						UIHorizontalAlignment::Center,
+						UIHorizontalAlignment::Right,
+						UIHorizontalAlignment::Fill
+					};
+					for (const auto& option : options)
+					{
+						const bool isSelected = (slot.alignment == option);
+						if (ImGui::Selectable(alignmentLabel(option), isSelected))
+						{
+							slot.alignment = option;
+							updated = true;
+						}
+						if (isSelected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+					ImGui::EndCombo();
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::Button("Remove Slot"))
+				{
+					slots.erase(slots.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::PopID();
+					break;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				ImGui::PopID();
+			}
+
+			if (ImGui::Button("Add Slot"))
+			{
+				slots.emplace_back();
+				updated = true;
+			}
+			activated = activated || ImGui::IsItemActivated();
+			deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::TreePop();
+		}
+
+		if (updated)
+		{
+			property.SetValue(component, &slots);
+			result.updated = true;
+		}
+		result.activated = result.activated || activated;
+		result.deactivated = result.deactivated || deactivated;
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<CanvasSlot>))
+	{
+		std::vector<CanvasSlot> slots;
+		property.GetValue(component, &slots);
+		bool updated = false;
+		bool activated = false;
+		bool deactivated = false;
+
+		if (ImGui::TreeNode(property.GetName().c_str()))
+		{
+			for (size_t i = 0; i < slots.size(); ++i)
+			{
+				CanvasSlot& slot = slots[i];
+				ImGui::PushID(static_cast<int>(i));
+				ImGui::Separator();
+
+				std::string nameValue = slot.childName;
+				if (slot.child && nameValue.empty())
+				{
+					nameValue = slot.child->GetName();
+				}
+				std::array<char, 256> nameBuffer{};
+				CopyStringToBuffer(nameValue, nameBuffer);
+				if (ImGui::InputText("Child", nameBuffer.data(), nameBuffer.size()))
+				{
+					slot.childName = nameBuffer.data();
+					slot.child = nullptr;
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				float rectValues[4] = { slot.rect.x, slot.rect.y, slot.rect.width, slot.rect.height };
+				if (ImGui::DragFloat4("Rect", rectValues, DRAG_SPEED))
+				{
+					slot.rect.x = rectValues[0];
+					slot.rect.y = rectValues[1];
+					slot.rect.width = rectValues[2];
+					slot.rect.height = rectValues[3];
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::Button("Remove Slot"))
+				{
+					slots.erase(slots.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::PopID();
+					break;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				ImGui::PopID();
+			}
+
+			if (ImGui::Button("Add Slot"))
+			{
+				slots.emplace_back();
+				updated = true;
+			}
+			activated = activated || ImGui::IsItemActivated();
+			deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::TreePop();
+		}
+
+		if (updated)
+		{
+			property.SetValue(component, &slots);
+			result.updated = true;
+		}
+		result.activated = result.activated || activated;
+		result.deactivated = result.deactivated || deactivated;
+		return result;
+	}
+
+	if (typeInfo == typeid(UIStretch))
+	{
+		UIStretch value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kStretchLabels[] = { "None", "Scale To Fit", "Scale To Fill" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kStretchLabels, IM_ARRAYSIZE(kStretchLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kStretchLabels) - 1));
+			value = static_cast<UIStretch>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIStretchDirection))
+	{
+		UIStretchDirection value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kDirectionLabels[] = { "Both", "Down Only", "Up Only" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kDirectionLabels, IM_ARRAYSIZE(kDirectionLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kDirectionLabels) - 1));
+			value = static_cast<UIStretchDirection>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 		return result;
 	}
 

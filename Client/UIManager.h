@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 #include <windows.h>
-//#include "RenderData.h"
+#include "RenderData.h"
 #include <functional>
 #include "UIObject.h"
 #include "EventDispatcher.h"
@@ -105,16 +105,10 @@ public:
 
 	void RefreshUIListForCurrentScene();
 
-	bool RegisterButtonOnClicked(const std::string& sceneName, const std::string& objectName, std::function<void()> callback);
-	bool ClearButtonOnClicked(const std::string& sceneName, const std::string& objectName);
-	bool RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot);
-	bool RemoveHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName);
-	bool ClearHorizontalSlots(const std::string& sceneName, const std::string& horizontalName);
-	bool ApplyHorizontalLayout(const std::string& sceneName, const std::string& horizontalName);
-
+	void BuildUIFrameData(RenderData::FrameData& frameData) const;
 
 	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
-	void DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data);
+	void DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data);
 
 private:
 	// UIManager 멤버 변수에 추가 (헤더에 선언)

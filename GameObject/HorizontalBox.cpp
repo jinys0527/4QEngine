@@ -1,8 +1,10 @@
 ﻿#include "HorizontalBox.h"
 #include "ReflectionMacro.h"
+#include "UIObject.h"
 #include <algorithm>
 
 REGISTER_COMPONENT_DERIVED(HorizontalBox, UIComponent)
+REGISTER_PROPERTY(HorizontalBox, Slots)
 
 void HorizontalBox::Update(float deltaTime)
 {
@@ -16,14 +18,36 @@ void HorizontalBox::OnEvent(EventType type, const void* data)
 
 void HorizontalBox::AddSlot(const HorizontalBoxSlot& slot)
 {
-	m_Slots.push_back(slot);
+	HorizontalBoxSlot updatedSlot = slot;
+	if (updatedSlot.child && updatedSlot.childName.empty())
+	{
+		updatedSlot.childName = updatedSlot.child->GetName();
+	}
+	m_Slots.push_back(updatedSlot);
+}
+
+void HorizontalBox::SetSlots(const std::vector<HorizontalBoxSlot>& slots)
+{
+	m_Slots = slots;
+	for (auto& slot : m_Slots)
+	{
+		if (slot.child && slot.childName.empty())
+		{
+			slot.childName = slot.child->GetName();
+		}
+	}
 }
 
 bool HorizontalBox::RemoveSlotByChild(const UIObject* child)
 {
+	const std::string targetName = child ? child->GetName() : "";
 	const auto endIt = std::remove_if(m_Slots.begin(), m_Slots.end(), [&](const HorizontalBoxSlot& slot)
 		{
-			return slot.child == child;
+			if(slot.child == child)
+			{
+				return true;
+			}
+			return !targetName.empty() && slot.childName == targetName;
 		});
 
 	if (endIt == m_Slots.end())

@@ -7,6 +7,8 @@ REGISTER_PROPERTY(SizeBox, WidthOverride)
 REGISTER_PROPERTY(SizeBox, HeightOverride)
 REGISTER_PROPERTY(SizeBox, HasWidthOverride)
 REGISTER_PROPERTY(SizeBox, HasHeightOverride)
+REGISTER_PROPERTY(SizeBox, MinSize)
+REGISTER_PROPERTY(SizeBox, MaxSize)
 
 void SizeBox::Update(float deltaTime)
 {

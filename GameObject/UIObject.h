@@ -14,8 +14,8 @@ public:
 	//void Render(std::vector<UIRenderInfo>& renderInfo);
 	//void Render(std::vector<UITextInfo>& textInfo);
 
-	void Serialize(nlohmann::json& j) const;
-	void DeSerialize(const nlohmann::json& j);
+	void Serialize(nlohmann::json& j) const override;
+	void Deserialize(const nlohmann::json& j) override;
 
 	void SetZOrder(int zOrder) { m_ZOrder = zOrder; }
 	int GetZOrder () const     { return m_ZOrder;   }

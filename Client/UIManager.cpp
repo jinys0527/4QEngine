@@ -3,6 +3,7 @@
 #include "Event.h"
 #include "UIButtonComponent.h"
 #include "HorizontalBox.h"
+#include "UITextComponent.h"
 #include "UISliderComponent.h"
 #include <algorithm>
 
@@ -86,134 +87,6 @@ std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, 
 	}
 
 	return itObj->second;
-}
-
-bool UIManager::RegisterButtonOnClicked(const std::string& sceneName, const std::string& objectName, std::function<void()> callback)
-{
-	auto callbackCopy = std::move(callback);
-	return ApplyToComponent<UIButtonComponent>(sceneName, objectName, [callback = std::move(callbackCopy)](UIButtonComponent& button) mutable
-		{
-			button.SetOnClicked(std::move(callback));
-		});
-}
-
-bool UIManager::ClearButtonOnClicked(const std::string& sceneName, const std::string& objectName)
-{
-	return ApplyToComponent<UIButtonComponent>(sceneName, objectName, [](UIButtonComponent& button)
-		{
-			button.SetOnClicked(nullptr);
-		});
-}
-
-bool UIManager::RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot)
-{
-	auto child = FindUIObject(sceneName, childName);
-	if (!child)
-	{
-		return false;
-	}
-
-	const bool applied = ApplyToComponent<HorizontalBox>(sceneName, horizontalName, [&](HorizontalBox& horizontal)
-		{
-			HorizontalBoxSlot updatedSlot = slot;
-			updatedSlot.child = child.get();
-			horizontal.AddSlot(updatedSlot);
-		});
-	if (!applied)
-	{
-		return false;
-	}
-
-	child->SetParentName(horizontalName);
-	ApplyHorizontalLayout(sceneName, horizontalName);
-	return true;
-}
-
-bool UIManager::RemoveHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName)
-{
-	auto child = FindUIObject(sceneName, childName);
-	if (!child)
-	{
-		return false;
-	}
-
-	auto parent = FindUIObject(sceneName, horizontalName);
-	if (!parent)
-	{
-		return false;
-	}
-
-	auto* horizontal = parent->GetComponent<HorizontalBox>();
-	if (!horizontal)
-	{
-		return false;
-	}
-
-	if (!horizontal->RemoveSlotByChild(child.get()))
-	{
-		return false;
-	}
-	child->ClearParentName();
-	ApplyHorizontalLayout(sceneName, horizontalName);
-	return true;
-}
-
-bool UIManager::ClearHorizontalSlots(const std::string& sceneName, const std::string& horizontalName)
-{
-	auto parent = FindUIObject(sceneName, horizontalName);
-	if (!parent)
-	{
-		return false;
-	}
-
-	auto* horizontal = parent->GetComponent<HorizontalBox>();
-	if (!horizontal)
-	{
-		return false;
-	}
-
-	for (auto& slot : horizontal->GetSlots())
-	{
-		if (slot.child)
-		{
-			slot.child->ClearParentName();
-		}
-	}
-	horizontal->ClearSlots();
-	return true;
-}
-
-bool UIManager::ApplyHorizontalLayout(const std::string& sceneName, const std::string& horizontalName)
-{
-	auto parent = FindUIObject(sceneName, horizontalName);
-	if (!parent)
-	{
-		return false;
-	}
-
-	auto* horizontal = parent->GetComponent<HorizontalBox>();
-	if (!horizontal)
-	{
-		return false;
-	}
-
-	const UIRect parentBounds = parent->GetBounds();
-	const UISize availableSize{ parentBounds.width, parentBounds.height };
-	const auto arranged = horizontal->ArrangeChildren(parentBounds.x, parentBounds.y, availableSize);
-	const auto& slots = horizontal->GetSlots();
-	const size_t count = min(arranged.size(), slots.size());
-
-	for (size_t i = 0; i < count; ++i)
-	{
-		UIObject* child = slots[i].child;
-		if (!child)
-		{
-			continue;
-		}
-		child->SetBounds(arranged[i]);
-	}
-
-	return true;
 }
 
 void UIManager::OnEvent(EventType type, const void* data)
@@ -368,6 +241,52 @@ void UIManager::RefreshUIListForCurrentScene()
 	m_LastHoveredUI = nullptr;
 }
 
+
+void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
+{
+	frameData.uiElements.clear();
+	frameData.uiTexts.clear();
+
+	auto it = m_UIObjects.find(m_CurrentSceneName);
+	if (it == m_UIObjects.end())
+		return;
+
+	for (const auto& [name, uiObject] : it->second)
+	{
+		if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+		{
+			continue;
+		}
+
+		RenderData::UIElement element{};
+		const auto& bounds = uiObject->GetBounds();
+		element.position   = { bounds.x, bounds.y };
+		element.size       = { bounds.width, bounds.height };
+		element.rotation   = uiObject->GetRotationDegrees();
+		element.zOrder     = uiObject->GetZOrder();
+		if (auto* base = uiObject->GetComponent<UIComponent>())
+		{
+			element.opacity = base->GetOpacity();
+		}
+		frameData.uiElements.push_back(element);
+
+
+		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
+		{
+			RenderData::UITextElement text{};
+			text.position = { bounds.x, bounds.y };
+			text.fontSize = textComp->GetFontSize();
+			text.text = textComp->GetText();
+			frameData.uiTexts.push_back(std::move(text));
+		}
+	}
+
+	std::sort(frameData.uiElements.begin(), frameData.uiElements.end(), [](const RenderData::UIElement& a, const RenderData::UIElement& b)
+		{
+			return a.zOrder < b.zOrder;
+		});
+}
+
 void UIManager::SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const
 {
 	out = nlohmann::json::array();
@@ -389,7 +308,7 @@ void UIManager::SerializeSceneUI(const std::string& sceneName, nlohmann::json& o
 	}
 }
 
-void UIManager::DeSerializeSceneUI(const std::string& sceneName, const nlohmann::json& data)
+void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data)
 {
 	if (!m_EventDispatcher)
 	{
@@ -407,7 +326,7 @@ void UIManager::DeSerializeSceneUI(const std::string& sceneName, const nlohmann:
 	for (const auto& entry : data)
 	{
 		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
-		uiObject->DeSerialize(entry);
+		uiObject->Deserialize(entry);
 		uiObject->UpdateInteractableFlags();
 		uiMap[uiObject->GetName()] = uiObject;
 	}

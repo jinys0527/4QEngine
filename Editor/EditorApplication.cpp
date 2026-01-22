@@ -31,6 +31,7 @@
 #include "UIProgressBarComponent.h"
 #include "UIPrimitives.h"
 #include "HorizontalBox.h"
+#include "Canvas.h"
 #include "UISliderComponent.h"
 #include "UITextComponent.h"
 #include <cmath>
@@ -445,6 +446,10 @@ void EditorApplication::RenderSceneView() {
 	if (scene)
 	{
 		scene->Render(m_FrameData);
+		if (auto* uiManager = m_SceneManager.GetUIManager())
+		{
+			uiManager->BuildUIFrameData(m_FrameData);
+		}
 	}
 
 	//m_Renderer.RenderFrame(m_FrameData, m_SceneRenderTarget, m_SceneRenderTarget_edit);
@@ -2551,7 +2556,7 @@ void EditorApplication::DrawUIEditorPreview()
 						auto itObj = itScene->second.find(name);
 						if (itObj != itScene->second.end() && itObj->second)
 						{
-							itObj->second->DeSerialize(beforeSnapshot);
+							itObj->second->Deserialize(beforeSnapshot);
 							itObj->second->UpdateInteractableFlags();
 						}
 					},
@@ -2569,7 +2574,7 @@ void EditorApplication::DrawUIEditorPreview()
 						auto itObj = itScene->second.find(name);
 						if (itObj != itScene->second.end() && itObj->second)
 						{
-							itObj->second->DeSerialize(afterSnapshot);
+							itObj->second->Deserialize(afterSnapshot);
 							itObj->second->UpdateInteractableFlags();
 						}
 					}
@@ -2962,7 +2967,7 @@ void EditorApplication::DrawUIEditorPreview()
 						auto itObj = itScene->second.find(name);
 						if (itObj != itScene->second.end() && itObj->second)
 						{
-							itObj->second->DeSerialize(snapshot);
+							itObj->second->Deserialize(snapshot);
 							itObj->second->UpdateInteractableFlags();
 						}
 					}
@@ -3638,35 +3643,167 @@ void EditorApplication::DrawUIEditorPreview()
 				if (uiPropertiesUpdated && uiManager)
 				{
 					uiManager->RefreshUIListForCurrentScene();
+					if (selectedObject->GetComponent<HorizontalBox>())
+					{
+						uiManager->ApplyHorizontalLayout(sceneName, selectedObject->GetName());
+					}
+					if (selectedObject->GetComponent<Canvas>())
+					{
+						uiManager->ApplyCanvasLayout(sceneName, selectedObject->GetName());
+					}
 				}
 			}
 			ImGui::SeparatorText("Editor Bindings");
 			if (uiManager)
 			{
 				const std::string selectedName = selectedObject->GetName();
+				auto buildTargetList = [&](const std::function<bool(const std::shared_ptr<UIObject>&)>& predicate)
+					{
+						std::vector<std::string> targets;
+						if (it != uiObjectsByScene.end())
+						{
+							for (const auto& [name, uiObject] : it->second)
+							{
+								if (!uiObject || name == selectedName)
+								{
+									continue;
+								}
+								if (predicate(uiObject))
+								{
+									targets.push_back(name);
+								}
+							}
+						}
+						std::sort(targets.begin(), targets.end());
+						return targets;
+					};
+
+				auto resolveTargetName = [&](std::unordered_map<std::string, std::string>& bindings,
+					const std::vector<std::string>& targets,
+					const std::unordered_map<std::string, std::string>& activeBindings) -> std::string&
+					{
+						auto& targetName = bindings[selectedName];
+						auto itBinding = activeBindings.find(selectedName);
+						if (itBinding != activeBindings.end())
+						{
+							targetName = itBinding->second;
+						}
+						if (targets.empty())
+						{
+							targetName.clear();
+							return targetName;
+						}
+						if (targetName.empty() || std::find(targets.begin(), targets.end(), targetName) == targets.end())
+						{
+							targetName = targets.front();
+						}
+						return targetName;
+					};
+
 				if (selectedObject->GetComponent<UIButtonComponent>())
 				{
+					const auto& activeBindings = uiManager->GetButtonBindings(sceneName);
+					const auto buttonTargets = buildTargetList([](const std::shared_ptr<UIObject>&)
+						{
+							return true;
+						});
+
+					auto& buttonTarget = resolveTargetName(m_UIButtonBindingTargets, buttonTargets, activeBindings);
+
+					ImGui::Text("Button Target");
+					ImGui::SameLine();
+					const char* buttonPreview = buttonTarget.empty() ? "<None>" : buttonTarget.c_str();
+					if (ImGui::BeginCombo("##ButtonTarget", buttonPreview))
+					{
+						for (const auto& name : buttonTargets)
+						{
+							const bool isSelected = (buttonTarget == name);
+							if (ImGui::Selectable(name.c_str(), isSelected))
+							{
+								buttonTarget = name;
+							}
+							if (isSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
+					}
+					ImGui::BeginDisabled(buttonTarget.empty());
 					if (ImGui::Button("Bind Button Toggle Visibility"))
 					{
-						uiManager->RegisterButtonOnClicked(sceneName, selectedName, [uiManager, sceneName, selectedName]()
-							{
-								auto target = uiManager->FindUIObject(sceneName, selectedName);
-								if (!target)
-								{
-									return;
-								}
-								target->SetIsVisible(!target->IsVisible());
-							});
+						uiManager->BindButtonToggleVisibility(sceneName, selectedName, buttonTarget);
 					}
+					ImGui::EndDisabled();
+
 					ImGui::SameLine();
 					if (ImGui::Button("Clear Button Binding"))
 					{
-						uiManager->ClearButtonOnClicked(sceneName, selectedName);
+						uiManager->ClearButtonBinding(sceneName, selectedName);
+					}
+				}
+
+				if (selectedObject->GetComponent<UISliderComponent>())
+				{
+					const auto& activeBindings = uiManager->GetSliderBindings(sceneName);
+					const auto sliderTargets = buildTargetList([](const std::shared_ptr<UIObject>& target)
+						{
+							return target->GetComponent<UIProgressBarComponent>() != nullptr;
+						});
+					auto& sliderTarget = resolveTargetName(m_UISliderBindingTargets, sliderTargets, activeBindings);
+
+					ImGui::Text("Slider Target");
+					ImGui::SameLine();
+					const char* sliderPreview = sliderTarget.empty() ? "<None>" : sliderTarget.c_str();
+					if (ImGui::BeginCombo("##SliderTarget", sliderPreview))
+					{
+						for (const auto& name : sliderTargets)
+						{
+							const bool isSelected = (sliderTarget == name);
+							if (ImGui::Selectable(name.c_str(), isSelected))
+							{
+								sliderTarget = name;
+							}
+							if (isSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
+					}
+
+					ImGui::BeginDisabled(sliderTarget.empty());
+					if (ImGui::Button("Bind Slider -> Loading Progress"))
+					{
+						uiManager->BindSliderToProgress(sceneName, selectedName, sliderTarget);
+					}
+					ImGui::EndDisabled();
+					ImGui::SameLine();
+					if (ImGui::Button("Clear Slider Binding"))
+					{
+						uiManager->ClearSliderBinding(sceneName, selectedName);
 					}
 				}
 
 				if (selectedObject->GetComponent<HorizontalBox>())
 				{
+					auto alignmentLabel = [](UIHorizontalAlignment alignment)
+						{
+							switch (alignment)
+							{
+							case UIHorizontalAlignment::Left:
+								return "Left";
+							case UIHorizontalAlignment::Center:
+								return "Center";
+							case UIHorizontalAlignment::Right:
+								return "Right";
+							case UIHorizontalAlignment::Fill:
+								return "Fill";
+							default:
+								return "Left";
+							}
+						};
+
 					if (ImGui::Button("Register Selected As Horizontal Slots"))
 					{
 						for (const auto& name : m_SelectedUIObjectNames)
@@ -3708,6 +3845,266 @@ void EditorApplication::DrawUIEditorPreview()
 					{
 						uiManager->ClearHorizontalSlots(sceneName, selectedName);
 						uiManager->RefreshUIListForCurrentScene();
+					}
+
+					auto* horizontalBox = selectedObject->GetComponent<HorizontalBox>();
+					if (horizontalBox)
+					{
+						ImGui::SeparatorText("Horizontal Slots");
+						auto& slots = horizontalBox->GetSlotsRef();
+						if (slots.empty())
+						{
+							ImGui::TextDisabled("No slots registered.");
+						}
+						else if (ImGui::BeginTable("HorizontalSlotTable", 6, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg))
+						{
+							ImGui::TableSetupColumn("Child");
+							ImGui::TableSetupColumn("Desired Size");
+							ImGui::TableSetupColumn("Padding");
+							ImGui::TableSetupColumn("Fill Weight");
+							ImGui::TableSetupColumn("Alignment");
+							ImGui::TableSetupColumn("Order");
+							ImGui::TableHeadersRow();
+
+							bool reordered = false;
+							for (size_t i = 0; i < slots.size(); ++i)
+							{
+								HorizontalBoxSlot& slot = slots[i];
+								ImGui::PushID(static_cast<int>(i));
+								ImGui::TableNextRow();
+
+								ImGui::TableSetColumnIndex(0);
+								std::string displayName = slot.child ? slot.child->GetName() : slot.childName;
+								if (displayName.empty())
+								{
+									displayName = "<Missing>";
+								}
+								ImGui::TextUnformatted(displayName.c_str());
+
+								ImGui::TableSetColumnIndex(1);
+								float desiredValues[2] = { slot.desiredSize.width, slot.desiredSize.height };
+								const bool desiredChanged = ImGui::DragFloat2("##DesiredSize", desiredValues, 1.0f, 0.0f, 100000.0f);
+								if (desiredChanged)
+								{
+									slot.desiredSize.width = max(0.0f, desiredValues[0]);
+									slot.desiredSize.height = max(0.0f, desiredValues[1]);
+									uiManager->ApplyHorizontalLayout(sceneName, selectedName);
+								}
+								recordUILongEdit(makeUILayoutKey("HorizontalSlotDesired" + std::to_string(i)), desiredChanged, "Edit Horizontal Slot Desired Size");
+
+								ImGui::TableSetColumnIndex(2);
+								const bool paddingChanged = ImGui::DragFloat("##Padding", &slot.padding, 0.5f, 0.0f, 10000.0f);
+								if (paddingChanged)
+								{
+									slot.padding = max(0.0f, slot.padding);
+									uiManager->ApplyHorizontalLayout(sceneName, selectedName);
+								}
+								recordUILongEdit(makeUILayoutKey("HorizontalSlotPadding" + std::to_string(i)), paddingChanged, "Edit Horizontal Slot Padding");
+
+								ImGui::TableSetColumnIndex(3);
+								const bool weightChanged = ImGui::DragFloat("##FillWeight", &slot.fillWeight, 0.1f, 0.0f, 1000.0f);
+								if (weightChanged)
+								{
+									slot.fillWeight = max(0.0f, slot.fillWeight);
+									uiManager->ApplyHorizontalLayout(sceneName, selectedName);
+								}
+								recordUILongEdit(makeUILayoutKey("HorizontalSlotWeight" + std::to_string(i)), weightChanged, "Edit Horizontal Slot Fill Weight");
+
+								ImGui::TableSetColumnIndex(4);
+								const char* alignmentPreview = alignmentLabel(slot.alignment);
+								bool alignmentChanged = false;
+								if (ImGui::BeginCombo("##Alignment", alignmentPreview))
+								{
+									const UIHorizontalAlignment options[] = {
+										UIHorizontalAlignment::Left,
+										UIHorizontalAlignment::Center,
+										UIHorizontalAlignment::Right,
+										UIHorizontalAlignment::Fill
+									};
+									for (const auto& option : options)
+									{
+										const bool isSelected = (slot.alignment == option);
+										if (ImGui::Selectable(alignmentLabel(option), isSelected))
+										{
+											slot.alignment = option;
+											alignmentChanged = true;
+											uiManager->ApplyHorizontalLayout(sceneName, selectedName);
+										}
+										if (isSelected)
+										{
+											ImGui::SetItemDefaultFocus();
+										}
+									}
+									ImGui::EndCombo();
+								}
+								recordUILongEdit(makeUILayoutKey("HorizontalSlotAlignment" + std::to_string(i)), alignmentChanged, "Edit Horizontal Slot Alignment");
+
+								ImGui::TableSetColumnIndex(5);
+								bool moved = false;
+								nlohmann::json beforeSnapshot;
+								const bool canMoveUp = (i > 0);
+								const bool canMoveDown = (i + 1 < slots.size());
+								ImGui::BeginDisabled(!canMoveUp);
+								if (ImGui::SmallButton("Up"))
+								{
+									selectedObject->Serialize(beforeSnapshot);
+									moved = true;
+									std::swap(slots[i], slots[i - 1]);
+								}
+								ImGui::EndDisabled();
+								ImGui::SameLine();
+								ImGui::BeginDisabled(!canMoveDown);
+								if (ImGui::SmallButton("Down"))
+								{
+									selectedObject->Serialize(beforeSnapshot);
+									moved = true;
+									std::swap(slots[i], slots[i + 1]);
+								}
+								ImGui::EndDisabled();
+								if (moved)
+								{
+									nlohmann::json afterSnapshot;
+									selectedObject->Serialize(afterSnapshot);
+									pushUISnapshotUndo("Reorder Horizontal Slot", beforeSnapshot, afterSnapshot);
+									uiManager->ApplyHorizontalLayout(sceneName, selectedName);
+									reordered = true;
+								}
+
+								ImGui::PopID();
+								if (reordered)
+								{
+									break;
+								}
+							}
+							ImGui::EndTable();
+						}
+					}
+
+					if (selectedObject->GetComponent<Canvas>())
+					{
+						if (ImGui::Button("Register Selected As Canvas Slots"))
+						{
+							for (const auto& name : m_SelectedUIObjectNames)
+							{
+								if (name == selectedName)
+								{
+									continue;
+								}
+								auto child = uiManager->FindUIObject(sceneName, name);
+								if (!child)
+								{
+									continue;
+								}
+								CanvasSlot slot;
+								slot.child = child.get();
+								slot.rect = child->GetBounds();
+								uiManager->RegisterCanvasSlot(sceneName, selectedName, name, slot);
+							}
+							uiManager->RefreshUIListForCurrentScene();
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Remove Selected From Canvas"))
+						{
+							for (const auto& name : m_SelectedUIObjectNames)
+							{
+								if (name == selectedName)
+								{
+									continue;
+								}
+								uiManager->RemoveCanvasSlot(sceneName, selectedName, name);
+							}
+							uiManager->RefreshUIListForCurrentScene();
+						}
+						if (ImGui::Button("Clear Canvas Slots"))
+						{
+							uiManager->ClearCanvasSlots(sceneName, selectedName);
+							uiManager->RefreshUIListForCurrentScene();
+						}
+
+						auto* canvas = selectedObject->GetComponent<Canvas>();
+						if (canvas)
+						{
+							ImGui::SeparatorText("Canvas Slots");
+							auto& slots = canvas->GetSlotsRef();
+							if (slots.empty())
+							{
+								ImGui::TextDisabled("No slots registered.");
+							}
+							else if (ImGui::BeginTable("CanvasSlotTable", 3, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg))
+							{
+								ImGui::TableSetupColumn("Child");
+								ImGui::TableSetupColumn("Rect");
+								ImGui::TableSetupColumn("Order");
+								ImGui::TableHeadersRow();
+
+								bool reordered = false;
+								for (size_t i = 0; i < slots.size(); ++i)
+								{
+									CanvasSlot& slot = slots[i];
+									ImGui::PushID(static_cast<int>(i));
+									ImGui::TableNextRow();
+
+									ImGui::TableSetColumnIndex(0);
+									std::string displayName = slot.child ? slot.child->GetName() : slot.childName;
+									if (displayName.empty())
+									{
+										displayName = "<Missing>";
+									}
+									ImGui::TextUnformatted(displayName.c_str());
+
+									ImGui::TableSetColumnIndex(1);
+									float rectValues[4] = { slot.rect.x, slot.rect.y, slot.rect.width, slot.rect.height };
+									const bool rectChanged = ImGui::DragFloat4("##Rect", rectValues, 1.0f, -100000.0f, 100000.0f);
+									if (rectChanged)
+									{
+										slot.rect.x = rectValues[0];
+										slot.rect.y = rectValues[1];
+										slot.rect.width = rectValues[2];
+										slot.rect.height = rectValues[3];
+										uiManager->ApplyCanvasLayout(sceneName, selectedName);
+									}
+									recordUILongEdit(makeUILayoutKey("CanvasSlotRect" + std::to_string(i)), rectChanged, "Edit Canvas Slot Rect");
+
+									ImGui::TableSetColumnIndex(2);
+									bool moved = false;
+									nlohmann::json beforeSnapshot;
+									const bool canMoveUp = (i > 0);
+									const bool canMoveDown = (i + 1 < slots.size());
+									ImGui::BeginDisabled(!canMoveUp);
+									if (ImGui::SmallButton("Up"))
+									{
+										selectedObject->Serialize(beforeSnapshot);
+										moved = true;
+										std::swap(slots[i], slots[i - 1]);
+									}
+									ImGui::EndDisabled();
+									ImGui::SameLine();
+									ImGui::BeginDisabled(!canMoveDown);
+									if (ImGui::SmallButton("Down"))
+									{
+										selectedObject->Serialize(beforeSnapshot);
+										moved = true;
+										std::swap(slots[i], slots[i + 1]);
+									}
+									ImGui::EndDisabled();
+									if (moved)
+									{
+										nlohmann::json afterSnapshot;
+										selectedObject->Serialize(afterSnapshot);
+										pushUISnapshotUndo("Reorder Canvas Slot", beforeSnapshot, afterSnapshot);
+										uiManager->ApplyCanvasLayout(sceneName, selectedName);
+										reordered = true;
+									}
+
+									ImGui::PopID();
+									if (reordered)
+									{
+										break;
+									}
+								}
+								ImGui::EndTable();
+							}
+						}
 					}
 				}
 			}
@@ -3907,7 +4304,7 @@ void EditorApplication::DrawUIEditorPreview()
 						auto itObj = itScene->second.find(name);
 						if (itObj != itScene->second.end() && itObj->second)
 						{
-							itObj->second->DeSerialize(snapshot);
+							itObj->second->Deserialize(snapshot);
 							itObj->second->UpdateInteractableFlags();
 						}
 					}
@@ -4909,7 +5306,7 @@ void EditorApplication::DrawUIEditorPreview()
 									auto itObj = itScene->second.find(name);
 									if (itObj != itScene->second.end() && itObj->second)
 									{
-										itObj->second->DeSerialize(snapshot);
+										itObj->second->Deserialize(snapshot);
 										itObj->second->UpdateInteractableFlags();
 									}
 								}
@@ -4931,7 +5328,7 @@ void EditorApplication::DrawUIEditorPreview()
 									auto itObj = itScene->second.find(name);
 									if (itObj != itScene->second.end() && itObj->second)
 									{
-										itObj->second->DeSerialize(snapshot);
+										itObj->second->Deserialize(snapshot);
 										itObj->second->UpdateInteractableFlags();
 									}
 								}

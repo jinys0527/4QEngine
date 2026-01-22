@@ -34,6 +34,6 @@ void Component::Deserialize(const nlohmann::json& j) {
 		{
 			continue;
 		}
-		prop->DeSerialize(this, j);
+		prop->Deserialize(this, j);
 	}
 }

@@ -132,6 +132,9 @@ public:
 		return m_Name;
 	}
 
+	virtual void Serialize(nlohmann::json& j) const {}
+	virtual void Deserialize(const nlohmann::json& j) {}
+
 	void SetScene(Scene* scene) { m_Scene = scene; }
 	Scene* GetScene() const		{ return m_Scene;  }
 

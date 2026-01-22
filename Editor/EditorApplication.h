@@ -147,4 +147,7 @@ private:
 	std::string m_SelectedUIObjectName;
 	std::unordered_set<std::string> m_SelectedUIObjectNames;
 	std::string m_LastSelectedUIObjectName;
+
+	std::unordered_map<std::string, std::string> m_UIButtonBindingTargets;
+	std::unordered_map<std::string, std::string> m_UISliderBindingTargets;
 };

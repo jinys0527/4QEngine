@@ -3,6 +3,9 @@
 #include <vector>
 #include "json.hpp"
 #include "RenderData.h"
+#include "Canvas.h"
+#include "HorizontalBox.h"
+#include "UIObject.h"
 #include "ResourceRefs.h"
 #include "CameraSettings.h"
 #include "AssetLoader.h"
@@ -83,6 +86,106 @@ struct Serializer<XMFLOAT2> {
 //};
 
 // UI
+
+template <>
+struct Serializer<CanvasSlot> {
+	static void ToJson(nlohmann::json& j, const CanvasSlot& v) {
+		const std::string childName = v.child ? v.child->GetName() : v.childName;
+		j["child"] = childName;
+		j["rect"] = { {"x", v.rect.x}, {"y", v.rect.y}, {"w", v.rect.width}, {"h", v.rect.height} };
+	}
+	static void FromJson(const nlohmann::json& j, CanvasSlot& v) {
+		v.child = nullptr;
+		v.childName = j.value("child", "");
+		if (j.contains("rect")) {
+			const auto& rect = j.at("rect");
+			v.rect.x = rect.value("x", v.rect.x);
+			v.rect.y = rect.value("y", v.rect.y);
+			v.rect.width = rect.value("w", v.rect.width);
+			v.rect.height = rect.value("h", v.rect.height);
+		}
+	}
+};
+
+template <>
+struct Serializer<std::vector<CanvasSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<CanvasSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& slot : v) {
+			nlohmann::json entry;
+			Serializer<CanvasSlot>::ToJson(entry, slot);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<CanvasSlot>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			CanvasSlot slot{};
+			Serializer<CanvasSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+template <>
+struct Serializer<HorizontalBoxSlot> {
+	static void ToJson(nlohmann::json& j, const HorizontalBoxSlot& v) {
+		const std::string childName = v.child ? v.child->GetName() : v.childName;
+		j["child"] = childName;
+		j["desiredSize"] = { {"w", v.desiredSize.width}, {"h", v.desiredSize.height} };
+		j["padding"] = v.padding;
+		j["fillWeight"] = v.fillWeight;
+		j["alignment"] = static_cast<int>(v.alignment);
+	}
+	static void FromJson(const nlohmann::json& j, HorizontalBoxSlot& v) {
+		v.child = nullptr;
+		v.childName = j.value("child", "");
+		if (j.contains("desiredSize")) {
+			const auto& size = j.at("desiredSize");
+			v.desiredSize.width = size.value("w", v.desiredSize.width);
+			v.desiredSize.height = size.value("h", v.desiredSize.height);
+		}
+		v.padding = j.value("padding", v.padding);
+		v.fillWeight = j.value("fillWeight", v.fillWeight);
+		const int alignmentValue = j.value("alignment", static_cast<int>(v.alignment));
+		if (alignmentValue >= static_cast<int>(UIHorizontalAlignment::Left)
+			&& alignmentValue <= static_cast<int>(UIHorizontalAlignment::Fill)) {
+			v.alignment = static_cast<UIHorizontalAlignment>(alignmentValue);
+		}
+	}
+};
+
+template <>
+struct Serializer<std::vector<HorizontalBoxSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<HorizontalBoxSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& slot : v) {
+			nlohmann::json entry;
+			Serializer<HorizontalBoxSlot>::ToJson(entry, slot);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<HorizontalBoxSlot>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			HorizontalBoxSlot slot{};
+			Serializer<HorizontalBoxSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+
 template<>
 struct Serializer<UISize> {
 	static void ToJson(nlohmann::json& j, const UISize& v) {

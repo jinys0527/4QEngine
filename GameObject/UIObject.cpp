@@ -185,7 +185,7 @@ void UIObject::Serialize(nlohmann::json& j) const
 	j["components"] = components;
 }
 
-void UIObject::DeSerialize(const nlohmann::json& j)
+void UIObject::Deserialize(const nlohmann::json& j)
 {
 	m_Name = j.value("name", m_Name);
 	if (j.contains("bounds"))

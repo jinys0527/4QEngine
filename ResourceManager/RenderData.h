@@ -68,6 +68,14 @@ namespace RenderData
 		PixelShaderHandle  pixelShader  = PixelShaderHandle::Invalid();
 	};
 
+	struct UIMaterialData
+	{
+		TextureHandle      textureHandle = TextureHandle::Invalid();
+		ShaderAssetHandle  shaderAsset   = ShaderAssetHandle::Invalid();
+		VertexShaderHandle vertexShader  = VertexShaderHandle::Invalid();
+		PixelShaderHandle  pixelShader   = PixelShaderHandle::Invalid();
+	};
+
 	struct TextureData
 	{
 		std::string path;
@@ -168,11 +176,32 @@ namespace RenderData
 
 	struct FrameContext
 	{
-		UINT32       frameIndex = 0;
-		FLOAT        deltaTime = 0.0f;
+		UINT32        frameIndex = 0;
+		FLOAT         deltaTime = 0.0f;
 		CameraContext editorCamera{};
 		CameraContext gameCamera{};
-		FLOAT        padding = 0.0f;
+		FLOAT         padding = 0.0f;
+	};
+
+	struct UIElement
+	{
+		XMFLOAT2	   position { 0.0f, 0.0f };
+		XMFLOAT2	   size     { 0.0f, 0.0f };
+		XMFLOAT4	   color    { 1.0f,1.0f, 1.0f,1.0f };
+		FLOAT		   opacity  = 1.0f;
+		FLOAT		   rotation = 0.0f;
+		INT32		   zOrder   = 0;
+		MaterialHandle material = MaterialHandle::Invalid();
+		UIMaterialData materialOverrides{};
+		bool           useMaterialOverrides = false;
+	};
+	
+	struct UITextElement
+	{
+		XMFLOAT2    position { 0.0f, 0.0f };
+		XMFLOAT4    color    { 1.0f,1.0f, 1.0f,1.0f };
+		FLOAT       fontSize = 16.0f;
+		std::string text;
 	};
 
 	struct RenderItem
@@ -204,9 +233,11 @@ namespace RenderData
 
 	struct FrameData
 	{
-		FrameContext            context;
+		FrameContext                 context;
 		std::unordered_map<RenderLayer, std::vector<RenderItem>> renderItems;
-		std::vector<LightData>  lights;
-		std::vector<XMFLOAT4X4> skinningPalettes;
+		std::vector<LightData>       lights;
+		std::vector<XMFLOAT4X4>      skinningPalettes;
+		std::vector<UIElement>       uiElements;
+		std::vector<UITextElement>   uiTexts;
 	};
 }
