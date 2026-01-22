@@ -18,6 +18,9 @@ public :
 	void OnEvent(EventType type, const void* data) override;
 
 	void SceneChange();
+	void SetTargetScene(const std::string& name) { m_TargetScene = name; }
+	const std::string& GetTargetScene() const { return m_TargetScene; }
+
 private:
-	bool m_IsF12 = false;
+	std::string m_TargetScene;
 };

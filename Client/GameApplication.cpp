@@ -34,8 +34,6 @@ bool GameApplication::Initialize()
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
 
-	//Component에서 GameManager(singleton) ChangeScene(" ")호출 -> 등록된 SceneManager 의 SetChangeScene 호출
-	
 	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 
 	return true;

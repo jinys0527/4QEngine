@@ -24,3 +24,14 @@ void GameManager::Initial()
 {
 
 }
+
+void GameManager::RequestSceneChange(const std::string& name)
+{
+	if (!m_EventDispatcher)
+	{
+		return;
+	}
+
+	Events::SceneChangeRequest request{ name };
+	m_EventDispatcher->Dispatch(EventType::SceneChangeRequested, &request);
+}

@@ -1,12 +1,16 @@
 ﻿#include "SceneChangeTestComponent.h"
 #include "ReflectionMacro.h"
 #include "ServiceRegistry.h"
+#include "GameManager.h"
 #include "Object.h"
 #include "Event.h"
 #include "Scene.h"
+#include <iostream>
 
 
 REGISTER_COMPONENT(SceneChangeTestComponent)
+REGISTER_PROPERTY(SceneChangeTestComponent, TargetScene)
+
 
 SceneChangeTestComponent::SceneChangeTestComponent()
 {
@@ -27,26 +31,26 @@ void SceneChangeTestComponent::Start()
 
 void SceneChangeTestComponent::Update(float deltaTime)
 {
-	if (!GetOwner()->GetScene())
-		return;
-	if (m_IsF12) {
-
-		SceneChange();
-	}
+	(void)deltaTime;
 }
 
 void SceneChangeTestComponent::OnEvent(EventType type, const void* data)
 {
-	if (type == EventType::KeyUp) {
-		auto keyData = static_cast<const Events::KeyEvent*>(data);
-		if (!keyData) return;
-		bool isDown = (type == EventType::KeyDown);
-		switch (keyData->key) {
-		
-		case VK_F12: m_IsF12 = isDown; break;
-		default:break;
+	if (type != EventType::KeyUp)
+	{
+		return;
+	}
 
-		}
+	auto keyData = static_cast<const Events::KeyEvent*>(data);
+	if (!keyData)
+	{
+		return;
+	}
+
+	if (keyData->key == VK_F1)
+	{
+		SceneChange();
+		
 	}
 }
 
@@ -56,8 +60,8 @@ void SceneChangeTestComponent::SceneChange()
 	if (!scene)
 		return;
 
+	std::cout << "SceneChange Request" << std::endl;
 	auto& services = scene->GetServices();
 	auto& gameManager = services.Get<GameManager>();
-
-	//gameManager.RequestSceneChange("Game Test2");
+	gameManager.RequestSceneChange(m_TargetScene);
 }

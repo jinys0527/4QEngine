@@ -8,6 +8,7 @@
 #include "ClientScene.h"
 #include "DefaultScene.h"
 #include "InputManager.h"
+#include "Event.h"
 #include "json.hpp"
 
 
@@ -23,8 +24,8 @@ void SceneManager::Initialize()
 
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
-		"Game Test2", // 제일 처음 실행될 Scene
-		"Game Test",
+		"Game Test", // 제일 처음 실행될 Scene
+		"Game Test2",
 		//"BossStage"
 		});
 
@@ -98,6 +99,12 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		m_Camera = m_CurrentScene->GetGameCamera().get();
 		m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+		SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+
+		if (m_GameManager)
+		{
+			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+		}
 
 		// 생기면 넣기
 // 		if (m_GameManager)
@@ -134,7 +141,7 @@ void SceneManager::ChangeScene(const std::string& name)
 		{
 			m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		}
-
+		SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		//UI 생기면 그때
 		//if (m_UIManager)
 		//{
@@ -156,16 +163,53 @@ void SceneManager::ChangeScene(const std::string& name)
 void SceneManager::ChangeScene()
 {
 	// 현재 이름과 다르면 Change 
-	if (m_ChangeSceneName == m_CurrentScene->GetName()) {
+	if (m_ChangeSceneName != m_CurrentScene->GetName()) {
 		ChangeScene(m_ChangeSceneName);
 		m_ChangeSceneName = "";
 	}
 }
 
-void SceneManager::SetChangeScene(std::string name)
+void SceneManager::SetChangeScene(const std::string& name)
 {
 	m_ChangeSceneName = name;
 }
+
+void SceneManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
+{
+	if (m_EventDispatcher == eventDispatcher)
+	{
+		return;
+	}
+
+	if (m_EventDispatcher)
+	{
+		m_EventDispatcher->RemoveListener(EventType::SceneChangeRequested, this);
+	}
+
+	m_EventDispatcher = eventDispatcher;
+
+	if (m_EventDispatcher)
+	{
+		m_EventDispatcher->AddListener(EventType::SceneChangeRequested, this);
+	}
+}
+
+void SceneManager::OnEvent(EventType type, const void* data)
+{
+	if (type != EventType::SceneChangeRequested || !data)
+	{
+		return;
+	}
+
+	const auto* request = static_cast<const Events::SceneChangeRequest*>(data);
+	if (!request)
+	{
+		return;
+	}
+
+	SetChangeScene(request->name);
+}
+
 
 void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames)
 {

@@ -378,6 +378,12 @@
             "components": [
                 {
                     "data": {
+                        "TargetScene": "Game Test2"
+                    },
+                    "type": "SceneChangeTestComponent"
+                },
+                {
+                    "data": {
                         "Position": {
                             "x": 0.0,
                             "y": 0.0,
