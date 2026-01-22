@@ -47,7 +47,7 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11ShaderResourceView* nullSRV[128] = {};
     dxdc->PSSetShaderResources(0, 128, nullSRV);
-    m_RenderContext.MyDrawText(1920, 1080);
+    //m_RenderContext.MyDrawText(1920, 1080);
 
 
     //★아래 프레임데이터를 순회하면서 그리는게 필요없어 보이는데 어떻게 넘겨줄지 몰라서 일단 남김.

@@ -126,10 +126,10 @@ static std::string ResolveExternalTexturePath(
 	{
 		it = externalTextureRemap.find(baseName);
 		if (it != externalTextureRemap.end()) return it->second;
-		return baseName;  // ✅ 경로는 무시하고 파일명만 사용
+		return baseName;  
 	}
 
-	return {}; // 또는 rawPath 대신 empty로 처리
+	return {};
 }
 
 

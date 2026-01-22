@@ -279,7 +279,7 @@ private:
 			m_SpriteBatch.get(),
 			msg,
 			DirectX::XMFLOAT2(x, y),
-			DirectX::Colors::White
+			DirectX::Colors::Black
 		);
 
 		m_SpriteBatch->End();

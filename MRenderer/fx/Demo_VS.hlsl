@@ -12,7 +12,9 @@ VSOutput VS_Main(VSInput_PNUT input)
     
     float4 nrm;
     nrm = float4(input.nrm, 0.0f);
-    nrm = mul(nrm, mWorldInvTranspose);
+    //nrm = normalize(nrm);
+    nrm = normalize(mul(nrm, mWorldInvTranspose));
+    
 
     o.pos = pos;
     o.nrm = nrm;

@@ -12,9 +12,12 @@ VSOutput_PBR VS_Main(VSInput_PNUT input)
     
     float4 nrm;
     nrm = float4(input.nrm, 0.0f);
-    nrm = mul(nrm, mWorldInvTranspose);
+    nrm = normalize(mul(nrm, mWorldInvTranspose));
     
     float3 eR = float3(1, 1, 1);
+    
+    float4 T = float4(input.T.xyz, 0.0f);
+    T = mul(T, mWorld);
     
     
     o.pos = pos;
@@ -23,6 +26,6 @@ VSOutput_PBR VS_Main(VSInput_PNUT input)
     o.wPos = wPos;
     o.vPos = vPos;
     o.envUVW = eR;
-    o.T = input.T;
+    o.T = float4(normalize(T.xyz), input.T.w);
     return o;
 }

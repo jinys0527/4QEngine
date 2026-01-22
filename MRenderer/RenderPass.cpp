@@ -181,7 +181,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 		XMStoreFloat3(&dirlight.viewDir, dirV);
 
 		dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
-		dirlight.Intensity = 3.14f;
+		dirlight.Intensity = light.intensity;
 		dirlight.mLightViewProj = light.lightViewProj;
 		dirlight.CastShadow = light.castShadow;
 		dirlight.Range = light.range;
