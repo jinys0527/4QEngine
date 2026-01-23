@@ -1409,6 +1409,10 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		result.activated   = result.activated   || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
+		updated |= ImGui::DragFloat("Saturation", &value.saturation, 0.01f, 0.0f, 3.0f);
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
 		// Texture slots
 		static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
 		static_assert(std::size(kTextureLabels) == static_cast<size_t>(RenderData::MaterialTextureSlot::TEX_MAX));
