@@ -1,0 +1,27 @@
+{
+  "animations": [
+    {
+      "file": "Anims/Dying_mixamo.com_0.anim.json",
+      "name": "mixamo.com_0"
+    }
+  ],
+  "files": {
+    "materials": "Mats/Dying.matbin",
+    "skeleton": "Skels/Dying.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/Dying.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "Dying",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  },
+  "skeletonMeta": {
+    "lowerBodyBones": [],
+    "upperBodyBones": []
+  }
+}

@@ -253,7 +253,7 @@ private:
 	void SetupText();
 	void RenderTextCenter(int screenW, int screenH)
 	{
-		const wchar_t* msg = L"HELLO";
+		const wchar_t* msg = L"황재하\n진영상\n홍한울\n정성우\n권윤정\n박지훈\n이지원";
 
 		// 1. 측정 및 계산
 		DirectX::XMVECTOR size = m_SpriteFont->MeasureString(msg);

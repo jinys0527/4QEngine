@@ -2089,7 +2089,7 @@ void Renderer::SetupText()
 	m_pDXDC.As(&dc1);
 
 	m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(dc1.Get());
-	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/myfont.spritefont");
+	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/hangulfont.spritefont");
 }
 
 //핸들 개수 최대값 가져오는 함수
