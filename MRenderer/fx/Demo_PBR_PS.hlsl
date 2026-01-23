@@ -12,8 +12,12 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
             
     //감마
     float alpha = texAlbedo.a;
-    //texAlbedo.rgb = SRGBToLinear(texAlbedo.rgb);
-    
+        
+    float3 baseColor = texAlbedo.rgb;
+    float3 baseColorDiffuse = saturate(baseColor * lightness);
+    baseColorDiffuse = AdjustSaturation(baseColorDiffuse, saturation);
+
+    float4 texAlbedo_Diff = float4(baseColorDiffuse, alpha);
     float4 texMetal = texMetalr.xxxx;
     float4 texRough = texRoughr.xxxx;
     float4 texAO = texAOr.xxxx;
@@ -37,9 +41,9 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float3 lV = normalize(mul(lights[0].viewDir, (float3x3) mView));
     
     float specParam = 0.2f;
-    float4 dirLit = UE_DirectionalLighting(input.vPos, float4(nV, 0), float4(lV, 0), texAlbedo, texAO, texMetal, texRough, specParam);
+    float4 dirLit = UE_DirectionalLighting(input.vPos, float4(nV, 0), float4(lV, 0), texAlbedo_Diff, texAO, texMetal, texRough, specParam);
     //dirLit.rgb *= lerp(0.05f, 1.0f, shadowFactor);
-    
+
     float4 ptLit = 0;
     for (uint i = 1; i < lightcount; i++)
     {
@@ -47,15 +51,14 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
         input.vPos,
         float4(nV, 0),
         lights[i],
-        texAlbedo, texAO, texMetal, texRough,
+        texAlbedo_Diff, texAO, texMetal, texRough,
         specParam
         );
     }
-    
     float4 lit = dirLit + ptLit;
     
     //env
-    float4 F0 = ComputeF0(texAlbedo, texMetal, specParam);
+    float4 F0 = ComputeF0(float4(baseColor, 1.0f), texMetal, specParam);
     float ndotv = saturate(dot(eN, eL));
     float4 F = UE_Fresnel_Schlick(F0, ndotv);
     
@@ -71,16 +74,11 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float4 env = float4(envSpec, 1.0f) * 0.7f;
     env.a = 1;
     
-    float4 amb = /*g_GlobalAmbient * baseColor*/lights[0].Color * 0.1f * texAlbedo * (1.0f - texMetal) * texAO;
+    float4 amb = /*g_GlobalAmbient * baseColor*/lights[0].Color * 0.1f * texAlbedo_Diff * (1.0f - texMetal) * texAO;
     amb.a = 1;
     
     float4 col = lit + amb + env;
     
-    //채도 조절
-    //float saturation = 1.6f;
-    col.rgb = AdjustSaturation(col.rgb, saturation);
-    //명도 조절
-    col.rgb *= lightness;
     
     
     //그림자
@@ -96,7 +94,6 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //return float4(texMetal.xyz, 1);
     //return texRough ;
     //return texAO;    
-    
     
     
     return col;

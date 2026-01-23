@@ -62,7 +62,7 @@ cbuffer MaterialBuffer : register(b5)
 {
     float saturation;
     float lightness;
-    float2 padding;
+    float2 matpadding;
 };
 
 

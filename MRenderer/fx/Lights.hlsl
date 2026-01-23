@@ -310,7 +310,7 @@ float3 LinearToSRGB(float3 c)
 float3 AdjustSaturation(float3 color, float saturation)
 {
     // saturation: 1 = 원본, 0 = 흑백, 1보다 크면 더 쨍함
-    float luma = dot(color, float3(0.2126, 0.7152, 0.0722));
+    float luma = dot(color, float3(0.0526, 0.7152, 0.0722));
     return lerp(luma.xxx, color, saturation);
 }
 
@@ -340,7 +340,7 @@ float4 UE_PointLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
     BRDFResult brdf = BRDF_UE_Direct(float4(N.xyz, 0), float4(P.xyz, 1), float4(L, 0),
                                      base, metallic, roughness, ao, specularParam);
 
-    float4 radiance = lit.Color * lit.Intensity;
+    float4 radiance = lit.Color * max(lit.Intensity,0);
 
     float ndotl = saturate(dot(N.xyz, L));
 
