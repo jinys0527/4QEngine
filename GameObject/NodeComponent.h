@@ -28,11 +28,20 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override; 
 
-	void SetIsMoveable(const float& is) { m_IsMoveable = is;  };
+	void SetIsMoveable(const bool& is) { m_IsMoveable = is;  };
 	const bool& GetIsMoveable() const { return m_IsMoveable; }
 
-	const XMFLOAT3& GetNodePos() const { return m_pos; }
+	void SetQR(int q, int r) { m_Q = q; m_R = r;  }
+	
+
+	const int& GetQ() const { return m_Q; }
+	const int& GetR() const { return m_R; }
+	
+	//상태 발판 설정
+	void SetState(NodeState state) { m_State = state; }
 	NodeState GetState() const { return m_State; }
+
+	const int& GetStateInt() const { return m_StateInt; } // Debug
 
 	void ClearNeighbors();
 	void AddNeighbor(NodeComponent* node);
@@ -40,13 +49,11 @@ public:
 private:
 
 	bool m_IsMoveable = true; //장애물 있으면 Editor에서 배치할때 false로 설정하기
-
 	//Read Only Property
 	NodeState m_State = NodeState::Empty;
-
+	int m_Q; 
+	int m_R;
+	int m_StateInt = 0; // Debug
 	// Property 노출 X
-	XMFLOAT3 m_pos = { 0.0f,0.0f,0.0f };
-	
 	vector<NodeComponent*> m_Neighbors;
-	//
 };

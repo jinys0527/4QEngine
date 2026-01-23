@@ -8,7 +8,7 @@
 class EmptyComponent : public Component, public IEventListener {
 	friend class Editor;
 public:
-	static constexpr const char* staticTypeName = "EmptyComponent";
+	static constexpr const char* StaticTypeName = "EmptyComponent";
 	const char* GetTypeName() const override;
 
 	EmptyComponent();
