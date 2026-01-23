@@ -310,7 +310,7 @@ float3 LinearToSRGB(float3 c)
 float3 AdjustSaturation(float3 color, float saturation)
 {
     // saturation: 1 = 원본, 0 = 흑백, 1보다 크면 더 쨍함
-    float luma = dot(color, float3(0.0526, 0.7152, 0.0722));
+    float luma = dot(color, float3(0.0656, 0.7152, 0.0722));
     return lerp(luma.xxx, color, saturation);
 }
 

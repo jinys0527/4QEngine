@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -1.8711192607879639,
-                "y": 12.203153610229492,
-                "z": -24.973102569580078
+                "x": -5.622060775756836,
+                "y": 1.3023717403411865,
+                "z": -4.3118133544921875
             },
             "look": {
-                "x": -1.8756177425384521,
-                "y": 11.756895065307617,
-                "z": -24.078208923339844
+                "x": -5.625080585479736,
+                "y": 1.1455529928207397,
+                "z": -3.324190616607666
             },
             "up": {
-                "x": -0.0022432219702750444,
-                "y": 0.8949042558670044,
-                "z": 0.44625261425971985
+                "x": -0.00047946698032319546,
+                "y": 0.9876273274421692,
+                "z": 0.15681800246238708
             }
         }
     },
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -1.8711192607879639,
-                            "y": 12.203153610229492,
-                            "z": -24.973102569580078
+                            "x": -5.622060775756836,
+                            "y": 1.3023717403411865,
+                            "z": -4.3118133544921875
                         },
                         "Rotation": {
-                            "w": 0.9733684659004211,
-                            "x": 0.229232519865036,
-                            "y": -0.0024464637972414494,
-                            "z": 0.0005761454813182354
+                            "w": 0.9969009160995483,
+                            "x": 0.07865294814109802,
+                            "y": -0.001524084946140647,
+                            "z": 0.00012023236195091158
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -1.8711192607879639,
-                            "y": 12.203153610229492,
-                            "z": -24.973102569580078
+                            "x": -5.622060775756836,
+                            "y": 1.3023717403411865,
+                            "z": -4.3118133544921875
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -1.8756177425384521,
-                            "y": 11.756895065307617,
-                            "z": -24.078208923339844
+                            "x": -5.625080585479736,
+                            "y": 1.1455529928207397,
+                            "z": -3.324190616607666
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -119,9 +119,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": -0.0022432219702750444,
-                            "y": 0.8949042558670044,
-                            "z": 0.44625261425971985
+                            "x": -0.00047946698032319546,
+                            "y": 0.9876273274421692,
+                            "z": 0.15681800246238708
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -138,15 +138,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -13.560728073120117,
+                            "y": 1.524955153465271,
+                            "z": -1.7506322860717773
                         },
                         "Rotation": {
-                            "w": 0.9914448857307434,
-                            "x": 0.13052619993686676,
+                            "w": 0.9914448261260986,
+                            "x": 0.13052621483802795,
                             "y": 0.0,
-                            "z": 0.0
+                            "z": -0.0
                         },
                         "Scale": {
                             "x": 1.0,
@@ -159,15 +159,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -13.560728073120117,
+                            "y": 1.524955153465271,
+                            "z": -1.7506322860717773
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": 0.0,
-                            "y": 3.741180896759033,
-                            "z": -10.034073829650879
+                            "x": -13.560728073120117,
+                            "y": 1.2661360502243042,
+                            "z": -0.7847065329551697
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -224,20 +224,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -255,6 +241,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "Material": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
@@ -267,9 +267,9 @@
                             "overrides": {
                                 "baseColor": {
                                     "a": 1.0,
-                                    "b": 0.6595970988273621,
-                                    "g": 0.6595970988273621,
-                                    "r": 0.6595970988273621
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
                                 },
                                 "lightness": 1.0,
                                 "metallic": 0.0,
@@ -281,7 +281,7 @@
                                 "saturation": 1.0,
                                 "shaderAsset": {
                                     "assetIndex": 0,
-                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\PBR.shader.json"
+                                    "assetPath": ""
                                 },
                                 "textures": [
                                     {
@@ -346,6 +346,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -360,20 +374,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -468,6 +468,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_02\\Meta\\corridorWallCracked_02.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_02\\Meta\\corridorWallCracked_02.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -482,20 +496,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_02\\Meta\\corridorWallCracked_02.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_02\\Meta\\corridorWallCracked_02.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -590,6 +590,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_03\\Meta\\corridorWallCracked_03.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_03\\Meta\\corridorWallCracked_03.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -604,20 +618,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_03\\Meta\\corridorWallCracked_03.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_03\\Meta\\corridorWallCracked_03.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
