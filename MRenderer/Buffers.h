@@ -46,7 +46,8 @@ struct Light
 	float		padding1 = 0.0f;
 
 	UINT       CastShadow = TRUE;
-	float      padding[3]{ 0,0,0 };
+	UINT	   type = static_cast<UINT>(RenderData::LightType::None);
+	float      padding[2]{ 0,0 };
 };
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
@@ -79,6 +80,8 @@ struct UIBuffer
 struct MaterialBuffer
 {
 	FLOAT		saturation = 1.0f;
+	FLOAT		lightness = 1.0f;
+	float		padding[2] = { 0,0 };
 };
 
 struct VertexShaderResources

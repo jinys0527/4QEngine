@@ -412,7 +412,8 @@ struct Serializer<RenderData::MaterialData> {
 		j["overrides"]["baseColor"]["a"] = v.baseColor.w;
 		j["overrides"]["metallic"]       = v.metallic;
 		j["overrides"]["roughness"]      = v.roughness;
-		j["overrides"]["saturation"]	 = v.saturation;
+		j["overrides"]["saturation"] = v.saturation;
+		j["overrides"]["lightness"] = v.lightness;
 
 		// textures: TextureHandle[] -> TextureRef[] 로 저장
 		auto& outTex = j["overrides"]["textures"];
@@ -467,7 +468,8 @@ struct Serializer<RenderData::MaterialData> {
 		v.baseColor.w = j["overrides"]["baseColor"].value("a", 1.0f);
 		v.metallic    = j["overrides"].value("metallic", 0.0f);
 		v.roughness   = j["overrides"].value("roughness", 1.0f);
-		v.saturation  = j["overrides"].value("saturation", 1.0f);
+		v.saturation = j["overrides"].value("saturation", 1.0f);
+		v.saturation = j["overrides"].value("lightness", 1.0f);
 
 		// textures: TextureRef[] -> TextureHandle[] 로 복원
 		if (j["overrides"].contains("textures") && j["overrides"]["textures"].is_array())

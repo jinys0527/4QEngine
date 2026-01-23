@@ -39,10 +39,20 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float specParam = 0.2f;
     float4 dirLit = UE_DirectionalLighting(input.vPos, float4(nV, 0), float4(lV, 0), texAlbedo, texAO, texMetal, texRough, specParam);
     //dirLit.rgb *= lerp(0.05f, 1.0f, shadowFactor);
-    //return float4(nV, 1);
-    //float4 ptLit = UE_PointLighting(viewPos, float4(nV, 0), viewLitPos, baseColor, ao, metallic, roughness, specParam);
     
-    float4 lit = dirLit; //+ptLit;
+    float4 ptLit = 0;
+    for (uint i = 1; i < lightcount; i++)
+    {
+        ptLit += UE_PointLighting_FromLight(
+        input.vPos,
+        float4(nV, 0),
+        lights[i],
+        texAlbedo, texAO, texMetal, texRough,
+        specParam
+        );
+    }
+    
+    float4 lit = dirLit + ptLit;
     
     //env
     float4 F0 = ComputeF0(texAlbedo, texMetal, specParam);
@@ -69,6 +79,13 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //채도 조절
     //float saturation = 1.6f;
     col.rgb = AdjustSaturation(col.rgb, saturation);
+    //명도 조절
+    col.rgb *= lightness;
+    
+    
+    //그림자
+    float shadow = CastShadow(input.uvshadow);
+    col.rgb *= shadow;
     
     col.rgb = LinearToSRGB(col.rgb);
 

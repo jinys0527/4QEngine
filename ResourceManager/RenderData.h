@@ -63,7 +63,7 @@ namespace RenderData
 		FLOAT    metallic = 0.0f;
 		FLOAT    roughness = 1.0f;
 		FLOAT	 saturation = 1.0f;
-		FLOAT    padding[2]{ 0.0f, 0.0f };
+		FLOAT	 lightness = 1.0f;
 		std::array<TextureHandle, static_cast<size_t>(MaterialTextureSlot::TEX_MAX)> textures{};
 		ShaderAssetHandle  shaderAsset  = ShaderAssetHandle::Invalid();
 		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();

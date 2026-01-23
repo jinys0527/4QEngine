@@ -161,7 +161,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 	if (!frame.lights.empty())
 	{
 		const auto& light = frame.lights[0];
-
+		m_RenderContext.LightCBuffer.lightCount = 1;
 		XMFLOAT4X4 view; 
 		if (m_RenderContext.isEditCam)
 		{
@@ -188,6 +188,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 		dirlight.SpotInnerAngle = light.spotInnerAngle;
 		dirlight.SpotOutterAngle = light.spotOutterAngle;
 		dirlight.AttenuationRadius = light.attenuationRadius;
+		dirlight.type = static_cast<UINT>(light.type);
 
 		m_RenderContext.LightCBuffer.lights[0] = dirlight;
 
@@ -195,6 +196,39 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 
 	}
 
+}
+
+void RenderPass::SetOtherLights(const RenderData::FrameData& frame)
+{
+	if (!frame.lights.empty())
+	{
+		int index = 1;
+		for (const auto& light : frame.lights)
+		{
+			if (light.type == RenderData::LightType::Directional)
+				continue;
+			m_RenderContext.LightCBuffer.lightCount++;
+			
+			//포인트 라이트
+			if (light.type == RenderData::LightType::Point)
+			{
+				Light dirlight{};
+
+				dirlight.Pos = light.posiiton;
+				dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+				dirlight.Intensity = light.intensity;
+				dirlight.Range = light.range;
+				dirlight.type = static_cast<UINT>(light.type);
+
+				m_RenderContext.LightCBuffer.lights[index] = dirlight;
+
+				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
+			}
+
+
+			index++;
+		}
+	}
 }
 
 void RenderPass::SetVertex(const RenderData::RenderItem& item)

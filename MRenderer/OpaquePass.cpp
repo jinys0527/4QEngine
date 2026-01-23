@@ -39,6 +39,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 	//빛 상수 버퍼 set
 	SetDirLight(frame);
+	SetOtherLights(frame);
 
 	//★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
 
@@ -143,6 +144,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		{
 			//머티리얼 버퍼 업데이트
 			m_RenderContext.MatBuffer.saturation = mat->saturation;
+			m_RenderContext.MatBuffer.lightness = mat->lightness;
 			UpdateDynamicBuffer(dxdc, m_RenderContext.pMatB.Get(), &m_RenderContext.MatBuffer, sizeof(MaterialBuffer));
 			dxdc->VSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
 			dxdc->PSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());

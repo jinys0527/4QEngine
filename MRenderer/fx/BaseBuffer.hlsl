@@ -40,7 +40,8 @@ struct Light
     float padding1;
 
     uint CastShadow;
-    float3 padding; 
+    uint type;
+    float2 padding; 
 };
 
 cbuffer LightBuffer : register(b2)
@@ -60,6 +61,8 @@ cbuffer SkinningBuffer : register(b3)
 cbuffer MaterialBuffer : register(b5)
 {
     float saturation;
+    float lightness;
+    float2 padding;
 };
 
 
@@ -138,6 +141,7 @@ struct VSOutput_PBR
     float4 vPos : TEXCOORD2;
     float3 envUVW : TEXCOORD3;
     float4 T : TEXCOORD4;
+    float4 uvshadow : TEXCOORD5;
 };
 
 //임시 반드시 지울것

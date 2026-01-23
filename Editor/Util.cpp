@@ -1401,8 +1401,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		result.activated   = result.activated   || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
-		//★★★★
-		updated |= ImGui::DragFloat("Metallic", &value.metallic, 0.001f, 0.0f, 3.0f);
+		updated |= ImGui::DragFloat("Metallic", &value.metallic, 0.01f, 0.0f, 1.0f);
 		result.activated   = result.activated   || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
@@ -1411,6 +1410,10 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		updated |= ImGui::DragFloat("Saturation", &value.saturation, 0.01f, 0.0f, 3.0f);
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		updated |= ImGui::DragFloat("Lightness", &value.saturation, 0.01f, 0.0f, 3.0f);
 		result.activated = result.activated || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 

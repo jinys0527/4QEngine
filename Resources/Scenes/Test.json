@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": 0.0,
-                "y": 4.0,
-                "z": -11.0
+                "x": -6.215906620025635,
+                "y": 2.8309378623962402,
+                "z": -8.998403549194336
             },
             "look": {
-                "x": 0.0,
-                "y": 3.741180896759033,
-                "z": -10.034073829650879
+                "x": -5.759262561798096,
+                "y": 2.3764970302581787,
+                "z": -8.233576774597168
             },
             "up": {
-                "x": 0.0,
-                "y": 0.9659257531166077,
-                "z": 0.2588190734386444
+                "x": 0.23296251893043518,
+                "y": 0.890777051448822,
+                "z": 0.39018577337265015
             }
         }
     },
@@ -51,11 +51,11 @@
                             "z": 1.0
                         },
                         "Direction": {
-                            "x": 0.0,
+                            "x": -1.2799999713897705,
                             "y": -1.0,
-                            "z": 0.0
+                            "z": 1.0
                         },
-                        "Intensity": 1.0,
+                        "Intensity": 3.6500000953674316,
                         "Position": {
                             "x": 0.0,
                             "y": 0.0,
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -6.215906620025635,
+                            "y": 2.8309378623962402,
+                            "z": -8.998403549194336
                         },
                         "Rotation": {
-                            "w": 0.9914448857307434,
-                            "x": 0.13052619993686676,
-                            "y": 0.0,
-                            "z": 0.0
+                            "w": 0.9373113512992859,
+                            "x": 0.2252790778875351,
+                            "y": 0.25852659344673157,
+                            "z": -0.06213582679629326
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -6.215906620025635,
+                            "y": 2.8309378623962402,
+                            "z": -8.998403549194336
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": 0.0,
-                            "y": 3.741180896759033,
-                            "z": -10.034073829650879
+                            "x": -5.759262561798096,
+                            "y": 2.3764970302581787,
+                            "z": -8.233576774597168
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -119,9 +119,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.0,
-                            "y": 0.9659257531166077,
-                            "z": 0.2588190734386444
+                            "x": 0.23296251893043518,
+                            "y": 0.890777051448822,
+                            "z": 0.39018577337265015
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -138,20 +138,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -4.463308334350586,
+                            "y": 2.46728253364563,
+                            "z": -11.015339851379395
                         },
                         "Rotation": {
-                            "w": 0.9914448857307434,
-                            "x": 0.13052619993686676,
-                            "y": 0.0,
-                            "z": 0.0
+                            "w": 0.9918944239616394,
+                            "x": -0.0,
+                            "y": -0.12706482410430908,
+                            "z": -0.0
                         },
                         "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
+                            "x": 0.9999998211860657,
+                            "y": 0.9999997615814209,
+                            "z": 0.9999992251396179
                         }
                     },
                     "type": "TransformComponent"
@@ -159,15 +159,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": 0.0,
-                            "y": 4.0,
-                            "z": -11.0
+                            "x": -4.463308334350586,
+                            "y": 2.46728253364563,
+                            "z": -11.015339851379395
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": 0.0,
-                            "y": 3.741180896759033,
-                            "z": -10.034073829650879
+                            "x": -4.715378284454346,
+                            "y": 2.46728253364563,
+                            "z": -10.047630310058594
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -181,23 +181,188 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7777777910232544,
+                            "aspect": 1.7846534252166748,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
                             "x": 0.0,
-                            "y": 0.9659257531166077,
-                            "z": 0.2588190734386444
+                            "y": 1.0,
+                            "z": 0.0
                         },
                         "Viewport": {
-                            "height": 720.0,
-                            "width": 1280.0
+                            "height": 808.0,
+                            "width": 1442.0
                         }
                     },
                     "type": "CameraComponent"
                 }
             ],
             "name": "Main Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -5.2319016456604,
+                            "y": -2.384185791015625e-07,
+                            "z": -6.787712574005127
+                        },
+                        "Rotation": {
+                            "w": 0.9921942949295044,
+                            "x": -0.0,
+                            "y": -0.12470173835754395,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 0.9999959468841553,
+                            "y": 1.0,
+                            "z": 0.9999959468841553
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.3999999761581421,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "Player"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "AttenuationRadius": 0.0,
+                        "CastShadow": true,
+                        "Color": {
+                            "x": 1.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Intensity": 5.400000095367432,
+                        "Position": {
+                            "x": -4.800000190734863,
+                            "y": 1.600000023841858,
+                            "z": -7.099999904632568
+                        }
+                    },
+                    "type": "PointLightComponent"
+                },
+                {
+                    "data": {
+                        "Position": {
+                            "x": -4.794734001159668,
+                            "y": 1.6692163944244385,
+                            "z": -7.1541032791137695
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                }
+            ],
+            "name": "PointLight"
         }
     ]
 }
