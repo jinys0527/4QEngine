@@ -1,12 +1,27 @@
 ﻿#include "UISliderComponent.h"
 #include "ReflectionMacro.h"
 #include "UIButtonComponent.h"
+#include "UIFSMComponent.h"
 
 REGISTER_COMPONENT_DERIVED(UISliderComponent, UIComponent)
 REGISTER_PROPERTY(UISliderComponent, Value)
 REGISTER_PROPERTY(UISliderComponent, MinValue)
 REGISTER_PROPERTY(UISliderComponent, MaxValue)
+REGISTER_PROPERTY(UISliderComponent, FillDirection)
 REGISTER_PROPERTY_READONLY(UISliderComponent, IsDragging)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, BackgroundTextureHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, BackgroundShaderAssetHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, BackgroundVertexShaderHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, BackgroundPixelShaderHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, FillTextureHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, FillShaderAssetHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, FillVertexShaderHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, FillPixelShaderHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, HandleTextureHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, HandleShaderAssetHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, HandleVertexShaderHandle)
+REGISTER_PROPERTY_HANDLE(UISliderComponent, HandlePixelShaderHandle)
+
 
 void UISliderComponent::Update(float deltaTime)
 {
@@ -37,10 +52,22 @@ void UISliderComponent::SetRange(const float& minValue, const float& maxValue)
 
 void UISliderComponent::SetValue(const float& value)
 {
+	const float previous = m_Value;
 	m_Value = std::clamp(value, m_MinValue, m_MaxValue);
 	if (m_OnValueChanged)
 	{
 		m_OnValueChanged(m_Value);
+	}
+	if (m_Value != previous)
+	{
+		if (auto* owner = GetOwner())
+		{
+			if (auto* fsm = owner->GetComponent<UIFSMComponent>())
+			{
+				const float currentValue = m_Value;
+				fsm->TriggerEventByName("UI_SliderValueChanged", &currentValue);
+			}
+		}
 	}
 }
 

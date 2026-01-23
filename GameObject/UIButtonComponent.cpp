@@ -1,5 +1,6 @@
 ﻿#include "UIButtonComponent.h"
 #include "ReflectionMacro.h"
+#include "UIFSMComponent.h"
 
 REGISTER_COMPONENT_DERIVED(UIButtonComponent, UIComponent)
 REGISTER_PROPERTY(UIButtonComponent, IsEnabled)
@@ -31,6 +32,16 @@ void UIButtonComponent::HandleReleased()
 	if (m_IsPressed && m_OnClicked)
 	{
 		m_OnClicked();
+	}
+	if (m_IsPressed)
+	{
+		if (auto* owner = GetOwner())
+		{
+			if (auto* fsm = owner->GetComponent<UIFSMComponent>())
+			{
+				fsm->TriggerEventByName("UI_Clicked");
+			}
+		}
 	}
 
 	m_IsPressed = false;

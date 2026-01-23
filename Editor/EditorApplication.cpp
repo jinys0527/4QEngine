@@ -2753,10 +2753,9 @@ void EditorApplication::DrawUIEditorPreview()
 			auto uiObject = std::make_shared<UIObject>(scene->GetEventDispatcher());
 			uiObject->SetName(name);
 			uiObject->SetBounds(UIRect{ 20.0f, 20.0f, 200.0f, 80.0f });
-			uiObject->SetAnchorMin(UIAnchor{ 0.0f, 0.0f });;
-			uiObject->SetAnchorMax(UIAnchor{ 0.0f, 0.0f });;
-			uiObject->SetPivot(UIAnchor{ 0.0f, 0.0f });;
-			uiObject->AddComponent<UIComponent>();
+			uiObject->SetAnchorMin(UIAnchor{ 0.0f, 0.0f });
+			uiObject->SetAnchorMax(UIAnchor{ 0.0f, 0.0f });
+			uiObject->SetPivot(UIAnchor{ 0.0f, 0.0f });
 			uiObject->UpdateInteractableFlags();
 			uiManager->AddUI(sceneName, uiObject);
 			uiManager->RefreshUIListForCurrentScene();
@@ -2831,7 +2830,7 @@ void EditorApplication::DrawUIEditorPreview()
 							m_SelectedUIObjectName.clear();
 						}
 					}
-					});
+				});
 			}
 		}
 		ImGui::Separator();
@@ -2999,6 +2998,10 @@ void EditorApplication::DrawUIEditorPreview()
 
 		auto isUIComponentType = [](const std::string& typeName) -> bool
 			{
+				if (typeName == UIFSMComponent::StaticTypeName)
+				{
+					return true;
+				}
 				auto& registry = ComponentRegistry::Instance();
 				auto* typeInfo = registry.Find(typeName);
 				while (typeInfo)

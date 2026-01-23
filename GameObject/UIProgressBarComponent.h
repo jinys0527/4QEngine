@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "UIComponent.h"
+#include "UIPrimitives.h"
 #include "ResourceHandle.h"
 #include "UIImageComponent.h"
 
@@ -39,8 +40,11 @@ public:
 	void SetFillPixelShaderHandle(const PixelShaderHandle& handle) { m_FillPixelShaderHandle = handle; }
 	const PixelShaderHandle& GetFillPixelShaderHandle() const { return m_FillPixelShaderHandle; }
 
+	void SetFillDirection(const UIFillDirection& direction) { m_FillDirection = direction; }
+	const UIFillDirection& GetFillDirection() const { return m_FillDirection; }
 private:
 	float m_Percent = 0.0f;
+	UIFillDirection m_FillDirection = UIFillDirection::LeftToRight;
 
 	TextureHandle m_BackgroundTextureHandle = TextureHandle::Invalid();
 	ShaderAssetHandle m_BackgroundShaderAssetHandle = ShaderAssetHandle::Invalid();

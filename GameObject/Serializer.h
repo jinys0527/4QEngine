@@ -12,6 +12,7 @@
 #include "ResourceHandle.h"
 #include "MeshComponent.h"
 #include "FSMComponent.h"
+#include "UIFSMComponent.h"
 #include "AnimationComponent.h"
 #include "UIPrimitives.h"
 
@@ -245,6 +246,15 @@ struct Serializer<UIStretchDirection> {
 	}
 };
 
+template<>
+struct Serializer<UIFillDirection> {
+	static void ToJson(nlohmann::json& j, const UIFillDirection& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIFillDirection& v) {
+		v = static_cast<UIFillDirection>(j.get<int>());
+	}
+};
 
 // Camera
 template<>
@@ -854,7 +864,75 @@ struct Serializer<FSMState> {
 	}
 };
 
+template<>
+struct Serializer<UIFSMEventCallback> {
+	static void ToJson(nlohmann::json& j, const UIFSMEventCallback& v) {
+		j["eventName"] = v.eventName;
+		j["callbackId"] = v.callbackId;
+	}
+	static void FromJson(const nlohmann::json& j, UIFSMEventCallback& v) {
+		v.eventName = j.value("eventName", v.eventName);
+		v.callbackId = j.value("callbackId", v.callbackId);
+	}
+};
 
+template<>
+struct Serializer<std::vector<UIFSMEventCallback>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIFSMEventCallback>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v) {
+			nlohmann::json item;
+			Serializer<UIFSMEventCallback>::ToJson(item, entry);
+			j.push_back(std::move(item));
+		}
+	}
+	static void FromJson(const nlohmann::json& j, std::vector<UIFSMEventCallback>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		for (const auto& entry : j) {
+			UIFSMEventCallback item{};
+			Serializer<UIFSMEventCallback>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<UIFSMCallbackAction> {
+	static void ToJson(nlohmann::json& j, const UIFSMCallbackAction& v) {
+		j["callbackId"] = v.callbackId;
+		Serializer<std::vector<FSMAction>>::ToJson(j["actions"], v.actions);
+	}
+	static void FromJson(const nlohmann::json& j, UIFSMCallbackAction& v) {
+		v.callbackId = j.value("callbackId", v.callbackId);
+		Serializer<std::vector<FSMAction>>::FromJson(j.value("actions", nlohmann::json::array()), v.actions);
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIFSMCallbackAction>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIFSMCallbackAction>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v) {
+			nlohmann::json item;
+			Serializer<UIFSMCallbackAction>::ToJson(item, entry);
+			j.push_back(std::move(item));
+		}
+	}
+	static void FromJson(const nlohmann::json& j, std::vector<UIFSMCallbackAction>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		for (const auto& entry : j) {
+			UIFSMCallbackAction item{};
+			Serializer<UIFSMCallbackAction>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
 
 template<>
 struct Serializer<std::vector<FSMState>> {

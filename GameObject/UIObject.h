@@ -81,6 +81,7 @@ protected:
 	// UI 오브젝트에 컴포넌트 보유 여부 플래그 (UIObject 클래스에 추가)
 	bool hasButton = false;
 	bool hasSlider = false;
+	bool hasUIFSM  = false;
 
 
 	int  m_ZOrder = 0;

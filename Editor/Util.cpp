@@ -1718,6 +1718,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			index = 0;
 		}
 
+
 		if (!value.empty())
 		{
 			if (ImGui::InputInt("Index", &index))
@@ -1743,6 +1744,172 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		ImGui::PopID();
 		return result;
 	}
+
+	if (typeInfo == typeid(std::vector<UIFSMEventCallback>))
+	{
+		std::vector<UIFSMEventCallback> value;
+		property.GetValue(component, &value);
+
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		ImGui::PushID(property.GetName().c_str());
+
+		const auto& eventDefs = FSMEventRegistry::Instance().GetEvents();
+		std::vector<std::string> uiEventNames;
+		uiEventNames.reserve(eventDefs.size());
+		for (const auto& def : eventDefs)
+		{
+			if (def.category == "UI")
+			{
+				uiEventNames.push_back(def.name);
+			}
+		}
+
+		size_t index = 0;
+		while (index < value.size())
+		{
+			ImGui::PushID(static_cast<int>(index));
+			ImGui::Separator();
+
+			const char* preview = value[index].eventName.empty() ? "<None>" : value[index].eventName.c_str();
+			if (ImGui::BeginCombo("Event", preview))
+			{
+				for (const auto& name : uiEventNames)
+				{
+					const bool isSelected = (value[index].eventName == name);
+					if (ImGui::Selectable(name.c_str(), isSelected))
+					{
+						value[index].eventName = name;
+						updated = true;
+					}
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			std::array<char, 256> callbackBuffer{};
+			CopyStringToBuffer(value[index].callbackId, callbackBuffer);
+			if (ImGui::InputText("Callback", callbackBuffer.data(), callbackBuffer.size()))
+			{
+				value[index].callbackId = callbackBuffer.data();
+				updated = true;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long long>(index));
+				updated = true;
+				ImGui::PopID();
+				continue;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::PopID();
+			++index;
+		}
+
+		if (ImGui::Button("Add Callback"))
+		{
+			UIFSMEventCallback entry{};
+			if (!uiEventNames.empty())
+			{
+				entry.eventName = uiEventNames.front();
+			}
+			value.push_back(std::move(entry));
+			updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		ImGui::PopID();
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIFSMCallbackAction>))
+	{
+		std::vector<UIFSMCallbackAction> value;
+		property.GetValue(component, &value);
+
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		ImGui::PushID(property.GetName().c_str());
+
+		size_t index = 0;
+		while (index < value.size())
+		{
+			ImGui::PushID(static_cast<int>(index));
+			ImGui::Separator();
+
+			std::array<char, 256> callbackBuffer{};
+			CopyStringToBuffer(value[index].callbackId, callbackBuffer);
+			if (ImGui::InputText("Callback", callbackBuffer.data(), callbackBuffer.size()))
+			{
+				value[index].callbackId = callbackBuffer.data();
+				updated = true;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::TextUnformatted("Actions");
+			ImGui::Indent();
+			updated |= DrawFSMActionList("##CallbackActions", value[index].actions);
+			ImGui::Unindent();
+
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long long>(index));
+				updated = true;
+				ImGui::PopID();
+				continue;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::PopID();
+			++index;
+		}
+
+		if (ImGui::Button("Add Callback Action"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		ImGui::PopID();
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
 
 	if (typeInfo == typeid(FSMGraph))
 	{
@@ -2393,6 +2560,24 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		{
 			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kDirectionLabels) - 1));
 			value = static_cast<UIStretchDirection>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIFillDirection))
+	{
+		UIFillDirection value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kDirectionLabels[] = { "Left To Right", "Right To Left", "Top To Bottom", "Bottom To Top" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kDirectionLabels, IM_ARRAYSIZE(kDirectionLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kDirectionLabels) - 1));
+			value = static_cast<UIFillDirection>(clamped);
 			property.SetValue(component, &value);
 			result.updated = true;
 		}

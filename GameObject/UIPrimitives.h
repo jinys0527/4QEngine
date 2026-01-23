@@ -44,6 +44,15 @@ enum class UIStretchDirection
 	UpOnly
 };
 
+enum class UIFillDirection
+{
+	LeftToRight,
+	RightToLeft,
+	TopToBottom,
+	BottomToTop
+};
+
+
 inline float ClampUIValue(float value, float minValue, float maxValue)
 {
 	if (maxValue < minValue)

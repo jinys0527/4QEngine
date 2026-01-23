@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "UIButtonComponent.h"
 #include "UISliderComponent.h"
+#include "UIFSMComponent.h"
 #include "Reflection.h"
 
 UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
@@ -272,4 +273,5 @@ void UIObject::UpdateInteractableFlags()
 {
 	hasButton = !GetComponents<UIButtonComponent>().empty();
 	hasSlider = !GetComponents<UISliderComponent>().empty();
+	hasUIFSM  = !GetComponents<UIFSMComponent>().empty();
 }

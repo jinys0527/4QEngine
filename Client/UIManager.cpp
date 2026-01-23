@@ -7,6 +7,7 @@
 #include "MaterialComponent.h"
 #include "UIProgressBarComponent.h"
 #include "UITextComponent.h"
+#include "UIFSMComponent.h"
 #include "UISliderComponent.h"
 #include <algorithm>
 
@@ -111,7 +112,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!(ui->hasButton || ui->hasSlider))
+			if (!(ui->hasButton || ui->hasSlider||ui->hasUIFSM))
 				continue;
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
@@ -140,7 +141,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!ui->hasButton)
+			if (!(ui->hasButton || ui->hasUIFSM))
 				continue;
 
 			SendEventToUI(ui.get(), type, data);
@@ -222,6 +223,22 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 			else if (type == EventType::Released)
 			{
 				slider->HandleReleased();
+			}
+		}
+	}
+	if (ui->hasUIFSM)
+	{
+		auto* fsm = ui->GetComponent<UIFSMComponent>();
+		if (fsm)
+		{
+			if (type == EventType::Hovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				if (!ui->HitCheck(mouseData->pos))
+				{
+					return;
+				}
+				fsm->OnEvent(type, data);
 			}
 		}
 	}
@@ -314,6 +331,31 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 				frameData.uiElements.push_back(element);
 			};
 
+		auto buildFillRect = [](const UIRect& rect, float ratio, UIFillDirection direction)
+			{
+				UIRect fill = rect;
+				switch (direction)
+				{
+				case UIFillDirection::LeftToRight:
+					fill.width = rect.width * ratio;
+					break;
+				case UIFillDirection::RightToLeft:
+					fill.width = rect.width * ratio;
+					fill.x = rect.x + rect.width - fill.width;
+					break;
+				case UIFillDirection::TopToBottom:
+					fill.height = rect.height * ratio;
+					break;
+				case UIFillDirection::BottomToTop:
+					fill.height = rect.height * ratio;
+					fill.y = rect.y + rect.height - fill.height;
+					break;
+				default:
+					break;
+				}
+				return fill;
+			};
+
 		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
 		{
 			appendElement(bounds, baseZOrder, nullptr);
@@ -327,8 +369,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
 			if (percent > 0.0f)
 			{
-				UIRect fillRect = bounds;
-				fillRect.width = bounds.width * percent;
+				UIRect fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
 				appendElement(fillRect, baseZOrder + 1, nullptr);
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,
@@ -336,6 +377,61 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					progress->GetFillShaderAssetHandle(),
 					progress->GetFillVertexShaderHandle(),
 					progress->GetFillPixelShaderHandle());
+			}
+		}
+		else if (auto* slider = uiObject->GetComponent<UISliderComponent>())
+		{
+			appendElement(bounds, baseZOrder, nullptr);
+			auto& backgroundElement = frameData.uiElements.back();
+			applyOverrides(backgroundElement,
+				slider->GetBackgroundTextureHandle(),
+				slider->GetBackgroundShaderAssetHandle(),
+				slider->GetBackgroundVertexShaderHandle(),
+				slider->GetBackgroundPixelShaderHandle());
+
+			const float normalized = std::clamp(slider->GetNormalizedValue(), 0.0f, 1.0f);
+			if (normalized > 0.0f)
+			{
+				UIRect fillRect = buildFillRect(bounds, normalized, slider->GetFillDirection());
+				appendElement(fillRect, baseZOrder + 1, nullptr);
+				auto& fillElement = frameData.uiElements.back();
+				applyOverrides(fillElement,
+					slider->GetFillTextureHandle(),
+					slider->GetFillShaderAssetHandle(),
+					slider->GetFillVertexShaderHandle(),
+					slider->GetFillPixelShaderHandle());
+			}
+
+			const UIFillDirection fillDirection = slider->GetFillDirection();
+			const bool isVertical = fillDirection == UIFillDirection::TopToBottom
+				|| fillDirection == UIFillDirection::BottomToTop;
+			const float handleSize = std::min(bounds.width, bounds.height);
+			if (handleSize > 0.0f)
+			{
+				UIRect handleRect = bounds;
+				handleRect.width = handleSize;
+				handleRect.height = handleSize;
+				if (isVertical)
+				{
+					const float ratio = fillDirection == UIFillDirection::BottomToTop ? 1.0f - normalized : normalized;
+					handleRect.x = bounds.x + (bounds.width - handleSize) * 0.5f;
+					handleRect.y = bounds.y + bounds.height * ratio - handleSize * 0.5f;
+					handleRect.y = std::clamp(handleRect.y, bounds.y, bounds.y + bounds.height - handleSize);
+				}
+				else
+				{
+					const float ratio = fillDirection == UIFillDirection::RightToLeft ? 1.0f - normalized : normalized;
+					handleRect.x = bounds.x + bounds.width * ratio - handleSize * 0.5f;
+					handleRect.x = std::clamp(handleRect.x, bounds.x, bounds.x + bounds.width - handleSize);
+					handleRect.y = bounds.y + (bounds.height - handleSize) * 0.5f;
+				}
+				appendElement(handleRect, baseZOrder + 2, nullptr);
+				auto& handleElement = frameData.uiElements.back();
+				applyOverrides(handleElement,
+					slider->GetHandleTextureHandle(),
+					slider->GetHandleShaderAssetHandle(),
+					slider->GetHandleVertexShaderHandle(),
+					slider->GetHandlePixelShaderHandle());
 			}
 		}
 		else
