@@ -36,12 +36,17 @@ extern "C" {
 	void Link_AnimationComponent();
 	void Link_SkeletalMeshComponent();
 	void Link_SkeletalMeshRenderer();
-	void Link_PlayerMovementComponent();
 	void Link_FSMComponent();
 	void Link_CollisionFSMComponent();
 	void Link_AnimFSMComponent();
 	void Link_UIFSMComponent();
+	
+	//User Defined
 	void Link_SceneChangeTestComponent();
+	void Link_PlayerMovementComponent();
+	void Link_GridSystemComponent();
+	void Link_NodeComponent();
+	
 }
 
 void RegisterUIFSMDefinitions();
@@ -64,15 +69,21 @@ void LinkEngineComponents() {
 	Link_AnimationComponent();
 	Link_SkeletalMeshComponent();
 	Link_SkeletalMeshRenderer();
-	Link_PlayerMovementComponent();
 	Link_FSMComponent();
 	Link_CollisionFSMComponent();
 	Link_AnimFSMComponent();
 	Link_UIFSMComponent();
-	Link_SceneChangeTestComponent();
+	
 
 	RegisterFSMBaseDefinitions();
 	RegisterUIFSMDefinitions();
 	RegisterCollisionFSMDefinitions();
 	RegisterAnimFSMDefinitions();
+
+
+	//User Defined
+	Link_SceneChangeTestComponent();
+	Link_PlayerMovementComponent();
+	Link_GridSystemComponent();
+	Link_NodeComponent();
 }
