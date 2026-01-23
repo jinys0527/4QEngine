@@ -536,6 +536,8 @@ void Renderer::CreateContext()
 	m_RenderContext.LightCBuffer			= m_LightCBuffer;
 	m_RenderContext.pUIB					= m_pUIB;
 	m_RenderContext.UIBuffer				= m_UIBuffer;
+	m_RenderContext.pMatB					= m_pMatB;
+	m_RenderContext.MatBuffer				= m_MatBuffer;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
@@ -917,6 +919,12 @@ HRESULT Renderer::CreateConstBuffer()
 		return hr;
 	}
 
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(MaterialBuffer), m_pMatB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 
 

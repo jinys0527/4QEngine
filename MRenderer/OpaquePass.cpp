@@ -26,14 +26,15 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	{
 		SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get());
 
-		//임시 스카이박스 테스트
-		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
-		m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
-		m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
-		SetDepthStencilState(DS::DEPTH_OFF);
-		m_RenderContext.DrawFullscreenQuad();
-		SetDepthStencilState(DS::DEPTH_ON);
 	}
+
+	//임시 스카이박스 테스트
+	m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
+	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
+	SetDepthStencilState(DS::DEPTH_OFF);
+	m_RenderContext.DrawFullscreenQuad();
+	SetDepthStencilState(DS::DEPTH_ON);
 
 
 	//빛 상수 버퍼 set
@@ -138,9 +139,19 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		{
 			mat = m_AssetLoader.GetMaterials().Get(item.material);
 		}
+		if (mat)
+		{
+			//머티리얼 버퍼 업데이트
+			m_RenderContext.MatBuffer.saturation = mat->saturation;
+			UpdateDynamicBuffer(dxdc, m_RenderContext.pMatB.Get(), &m_RenderContext.MatBuffer, sizeof(MaterialBuffer));
+			dxdc->VSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
+			dxdc->PSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
+
+		}
 
 		if (textures && mat)
 		{
+
 			if (mat->shaderAsset.IsValid())
 			{
 				const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);

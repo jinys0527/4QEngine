@@ -57,7 +57,10 @@ cbuffer SkinningBuffer : register(b3)
     float3 skinningpadding;
 };
 
-
+cbuffer MaterialBuffer : register(b5)
+{
+    float saturation;
+};
 
 
 

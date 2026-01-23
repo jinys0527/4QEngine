@@ -65,6 +65,11 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     amb.a = 1;
     
     float4 col = lit + amb + env;
+    
+    //채도 조절
+    //float saturation = 1.6f;
+    col.rgb = AdjustSaturation(col.rgb, saturation);
+    
     col.rgb = LinearToSRGB(col.rgb);
 
     col.a = alpha;

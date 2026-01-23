@@ -157,6 +157,8 @@ private:
 	LightConstBuffer			m_LightCBuffer;
 	ComPtr<ID3D11Buffer>		m_pUIB;
 	UIBuffer					m_UIBuffer;
+	ComPtr<ID3D11Buffer>		m_pMatB;
+	MaterialBuffer				m_MatBuffer;
 
 
 	//임시

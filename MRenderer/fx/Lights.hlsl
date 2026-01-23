@@ -305,6 +305,13 @@ float3 LinearToSRGB(float3 c)
     return pow(saturate(c), 1.0f / 2.2f);
 }
 
+//채도 조절
+float3 AdjustSaturation(float3 color, float saturation)
+{
+    // saturation: 1 = 원본, 0 = 흑백, 1보다 크면 더 쨍함
+    float luma = dot(color, float3(0.2126, 0.7152, 0.0722));
+    return lerp(luma.xxx, color, saturation);
+}
 // Point Light ----------------------------------------------------------------
 //float4 UE_PointLighting(float4 viewPos, float4 viewNrm, float4 viewLitPos,
 //                        float4 base, float4 ao, float4 metallic, float4 roughness,

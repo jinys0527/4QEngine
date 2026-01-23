@@ -76,6 +76,11 @@ struct UIBuffer
 	float		padding[3] = { 0, 0 };
 };
 
+struct MaterialBuffer
+{
+	FLOAT		saturation = 1.0f;
+};
+
 struct VertexShaderResources
 {
 	ComPtr<ID3D11VertexShader>	vertexShader;
@@ -112,6 +117,8 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pLightCB;
 	UIBuffer					UIBuffer;
 	ComPtr<ID3D11Buffer>		pUIB;
+	MaterialBuffer				MatBuffer;
+	ComPtr<ID3D11Buffer>		pMatB;
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
