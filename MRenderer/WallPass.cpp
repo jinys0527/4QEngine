@@ -26,7 +26,7 @@ void WallPass::Execute(const RenderData::FrameData & frame)
     {
         const auto& item = *queueItem.item;
         SetBaseCB(item);
-        SetMaskingTM(item, frame.context.gameCamera.cameraPos);
+        SetMaskingTM(item, frame.context.gameCamera.cameraPos);             //현재는 각 오브젝트 전부 바라보고 있음, 후에 플레이어 정보를 받아서 플레이어쪽을 바라보도록 해야함, for문 위에서 미리 한번만 세팅해두는 방식이 좋을 듯
 
         const auto* vertexBuffers = m_RenderContext.vertexBuffers;
         const auto* indexBuffers = m_RenderContext.indexBuffers;

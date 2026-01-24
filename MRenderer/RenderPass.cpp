@@ -93,7 +93,7 @@ void RenderPass::SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3
 		XMVECTOR look = targetpos;
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-		//if (XMVector4Equal(maincampos, look)) return;
+		if (XMVector3Equal(maincampos, look)) return;
 		mView = XMMatrixLookAtLH(maincampos, look, up);
 		mProj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
 
