@@ -137,9 +137,9 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<WallPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
-	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
