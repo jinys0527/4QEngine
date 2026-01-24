@@ -28,7 +28,6 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
     {
         const auto& item = *queueItem.item;
         SetBaseCB(item);
-        SetMaskingTM(item, frame.context.gameCamera.cameraPos);
 
         const auto* vertexBuffers = m_RenderContext.vertexBuffers;
         const auto* indexBuffers = m_RenderContext.indexBuffers;

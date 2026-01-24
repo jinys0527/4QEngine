@@ -6,6 +6,7 @@
 #include "BlurPass.h"
 #include "PostPass.h"
 #include "FrustumPass.h"
+#include "RefractionPass.h"
 #include "RenderTargetContext.h"
 #include "DebugLinePass.h"
 #include "Renderer.h"
@@ -136,6 +137,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<WallPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
@@ -601,6 +603,12 @@ void Renderer::CreateContext()
 	m_RenderContext.pRTScene_Blur			= m_pRTScene_Blur;
 	m_RenderContext.pTexRvScene_Blur		= m_pTexRvScene_Blur;
 	m_RenderContext.pRTView_Blur			= m_pRTView_Blur;
+
+	m_RenderContext.pRTScene_Refraction		= m_pRTScene_Refraction;
+	m_RenderContext.pTexRvScene_Refraction	= m_pTexRvScene_Refraction;
+	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
+
+
 
 	m_RenderContext.Vignetting				= m_Vignetting;
 
@@ -1548,14 +1556,17 @@ HRESULT Renderer::ReCreateRenderTarget()
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
 	RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
 	RTSRViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pTexRvScene_Imgui_edit.GetAddressOf());
+	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
 
 	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
 	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());

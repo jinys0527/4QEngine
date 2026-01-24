@@ -74,6 +74,9 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 
 	m_RenderContext.BCBuffer.mWorld = tm;
 
+	m_RenderContext.BCBuffer.ScreenSize.x = m_RenderContext.WindowSize.width;
+	m_RenderContext.BCBuffer.ScreenSize.y = m_RenderContext.WindowSize.height;
+
 	XMMATRIX world = XMLoadFloat4x4(&tm);
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);

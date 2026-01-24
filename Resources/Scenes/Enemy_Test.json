@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -4.198269844055176,
-                "y": 2.456786632537842,
-                "z": -8.94829273223877
+                "x": 0.5755810737609863,
+                "y": 6.2493062019348145,
+                "z": -14.52237319946289
             },
             "look": {
-                "x": -4.839839935302734,
-                "y": 1.9823064804077148,
-                "z": -8.345584869384766
+                "x": 0.2609042227268219,
+                "y": 5.8535685539245605,
+                "z": -13.6596040725708
             },
             "up": {
-                "x": -0.3458183705806732,
-                "y": 0.8802662491798401,
-                "z": 0.3248707950115204
+                "x": -0.13559958338737488,
+                "y": 0.918363630771637,
+                "z": 0.3717808723449707
             }
         }
     },
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -4.198269844055176,
-                            "y": 2.456786632537842,
-                            "z": -8.94829273223877
+                            "x": 0.5755810737609863,
+                            "y": 6.2493062019348145,
+                            "z": -14.52237319946289
                         },
                         "Rotation": {
-                            "w": 0.8898963928222656,
-                            "x": 0.22456291317939758,
-                            "y": -0.3849904537200928,
-                            "z": 0.09715130180120468
+                            "w": 0.9644423723220825,
+                            "x": 0.19895395636558533,
+                            "y": -0.1703902781009674,
+                            "z": 0.03514981269836426
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -4.198269844055176,
-                            "y": 2.456786632537842,
-                            "z": -8.94829273223877
+                            "x": 0.5755810737609863,
+                            "y": 6.2493062019348145,
+                            "z": -14.52237319946289
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -4.839839935302734,
-                            "y": 1.9823064804077148,
-                            "z": -8.345584869384766
+                            "x": 0.2609042227268219,
+                            "y": 5.8535685539245605,
+                            "z": -13.6596040725708
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -119,9 +119,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": -0.3458183705806732,
-                            "y": 0.8802662491798401,
-                            "z": 0.3248707950115204
+                            "x": -0.13559958338737488,
+                            "y": 0.918363630771637,
+                            "z": 0.3717808723449707
                         },
                         "Viewport": {
                             "height": 793.0,
@@ -138,9 +138,131 @@
                 {
                     "data": {
                         "Position": {
+                            "x": -8.741972923278809,
+                            "y": 0.0,
+                            "z": -7.763860702514648
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 2,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\Refraction.shader.json"
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "GameObject"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
                             "x": -4.463308334350586,
                             "y": 2.46728253364563,
-                            "z": -11.015339851379395
+                            "z": -12.254189491271973
                         },
                         "Rotation": {
                             "w": 0.9918944239616394,
@@ -161,13 +283,13 @@
                         "Eye": {
                             "x": -4.463308334350586,
                             "y": 2.46728253364563,
-                            "z": -11.015339851379395
+                            "z": -12.254189491271973
                         },
                         "FarZ": 100.0,
                         "Look": {
                             "x": -4.715378284454346,
                             "y": 2.46728253364563,
-                            "z": -10.047630310058594
+                            "z": -11.286479949951172
                         },
                         "NearZ": 1.0,
                         "Ortho": {

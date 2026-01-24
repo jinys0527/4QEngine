@@ -11,6 +11,8 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorld = XMFLOAT4X4{};
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
+	XMFLOAT2		ScreenSize{ 1920,1080 };
+	float			padding[2]{ 0,0 };
 };
 
 struct CameraConstBuffer
@@ -192,6 +194,10 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
 
+	//Refraction용
+	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
 
 
 	std::function<void()> DrawFullscreenQuad;

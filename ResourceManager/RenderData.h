@@ -221,6 +221,7 @@ namespace RenderData
 		OpaqueItems,
 		TransparentItems,
 		WallItems,
+		RefractionItems,
 		UIItems,
 		Layer_MAX_
 	};

@@ -81,6 +81,9 @@
     <ClCompile Include="WallPass.cpp">
       <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RefractionPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -132,6 +135,9 @@
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WallPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RefractionPass.h">
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -222,6 +228,12 @@
     </FxCompile>
     <FxCompile Include="fx\Demo_Ani_VS.hlsl">
       <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Refraction_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Refraction_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
