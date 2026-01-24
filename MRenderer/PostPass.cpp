@@ -13,7 +13,7 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShaderResources(0, 128, nullSRVs);
     SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
-    SetBlendState(BS::ALPHABLEND);
+    SetBlendState(BS::DEFAULT);
     SetRasterizerState(RS::SOLID);
     SetDepthStencilState(DS::DEPTH_OFF);
     SetSamplerState();    

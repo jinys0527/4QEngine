@@ -31,7 +31,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
 
     
     float3 nW = normalize(N);
-    return float4(nW, 1);
+    //return float4(nW, 1);
     float3 nV = normalize(mul(nW, (float3x3) mView));
     float3 eN = normalize(nW);
     float3 eL = normalize(cameraPos - input.wPos.xyz);

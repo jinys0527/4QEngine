@@ -115,7 +115,7 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7846534252166748,
+                            "aspect": 1.818411111831665,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
@@ -124,7 +124,7 @@
                             "z": 0.3248707950115204
                         },
                         "Viewport": {
-                            "height": 808.0,
+                            "height": 793.0,
                             "width": 1442.0
                         }
                     },
@@ -224,20 +224,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -252,6 +238,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -334,9 +334,9 @@
                         },
                         "Intensity": 5.400000095367432,
                         "Position": {
-                            "x": -4.800000190734863,
-                            "y": 1.600000023841858,
-                            "z": -7.099999904632568
+                            "x": -4.794734001159668,
+                            "y": 1.6692163944244385,
+                            "z": -7.1541032791137695
                         }
                     },
                     "type": "PointLightComponent"
