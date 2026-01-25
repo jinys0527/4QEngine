@@ -31,6 +31,12 @@ public:
 						    DirectX::XMFLOAT3& outOrigin,
 						    DirectX::XMFLOAT3& outDirection) const;
 
+	bool BuildPickRay      (const DirectX::XMFLOAT4X4& view,
+						    const DirectX::XMFLOAT4X4& proj,
+						    const Events::MouseState& mouseState,
+						    DirectX::XMFLOAT3& outOrigin,
+						    DirectX::XMFLOAT3& outDirection) const;
+
 	void SetEnabled(bool enabled);
 	bool IsEnabled () const       { return m_Enabled;    }
 

@@ -143,7 +143,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::MouseLeftClick)
 	{
-		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), rayOrigin, rayDir))
+		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, rayOrigin, rayDir))
 			return;
 
 		m_DragPlaneY = transComp->GetPosition().y;
@@ -166,7 +166,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (type != EventType::Dragged || !m_IsDragging)
 		return;
 
-	if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), rayOrigin, rayDir))
+	if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, rayOrigin, rayDir))
 		return;
 
 	DirectX::XMFLOAT3 hit{};

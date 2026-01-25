@@ -158,10 +158,24 @@
                 },
                 {
                     "data": {
-                        "DragSpeed": 0.009999999776482582,
-                        "Speed": 5.0
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Visible": true
                     },
-                    "type": "PlayerMovementComponent"
+                    "type": "SkeletalMeshRenderer"
                 },
                 {
                     "data": {
@@ -187,24 +201,10 @@
                 },
                 {
                     "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Skeleton": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        },
-                        "Visible": true
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
                     },
-                    "type": "SkeletalMeshRenderer"
+                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {

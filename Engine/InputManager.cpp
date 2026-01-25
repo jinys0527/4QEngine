@@ -256,7 +256,12 @@ bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view,
 								DirectX::XMFLOAT3& outOrigin, 
 								DirectX::XMFLOAT3& outDirection) const
 {
-	if (!m_HasViewportRect)
+	return BuildPickRay(view, proj, m_Mouse, outOrigin, outDirection);
+}
+
+bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& proj, const Events::MouseState& mouseState, DirectX::XMFLOAT3& outOrigin, DirectX::XMFLOAT3& outDirection) const
+{
+		if (!m_HasViewportRect)
 		return false;
 
 	const float width  = static_cast<float>(m_ViewportRect.right - m_ViewportRect.left);
@@ -264,8 +269,8 @@ bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view,
 	if (width <= 0.0f || height <= 0.0f)
 		return false;
 
-	const float x = static_cast<float>(m_Mouse.pos.x);
-	const float y = static_cast<float>(m_Mouse.pos.y);
+	const float x = static_cast<float>(mouseState.pos.x);
+	const float y = static_cast<float>(mouseState.pos.y);
 
 	const float vpX = static_cast<float>(m_ViewportRect.left);
 	const float vpY = static_cast<float>(m_ViewportRect.top);
