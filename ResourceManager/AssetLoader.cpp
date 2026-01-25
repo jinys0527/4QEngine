@@ -1193,7 +1193,7 @@ void AssetLoader::LoadMeshes(
 			}
 
 #ifdef _DEBUG
-			WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
 #endif
 
 			meshData.subMeshes.reserve(subMeshes.size());
