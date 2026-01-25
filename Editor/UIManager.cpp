@@ -28,6 +28,10 @@ void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 	{
 		m_EventDispatcher->RemoveListener(EventType::Dragged, this);
 	}
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::MouseLeftDoubleClick))
+	{
+		m_EventDispatcher->RemoveListener(EventType::MouseLeftDoubleClick, this);
+	}
 	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Released))
 	{
 		m_EventDispatcher->RemoveListener(EventType::Released, this);
@@ -37,6 +41,7 @@ void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 	m_EventDispatcher->AddListener(EventType::Pressed, this);
 	m_EventDispatcher->AddListener(EventType::Hovered, this);
 	m_EventDispatcher->AddListener(EventType::Dragged, this);
+	m_EventDispatcher->AddListener(EventType::MouseLeftDoubleClick, this);
 	m_EventDispatcher->AddListener(EventType::Released, this);
 }
 
@@ -101,9 +106,36 @@ void UIManager::OnEvent(EventType type, const void* data)
 	{
 		if (m_ActiveUI)
 		{
-			SendEventToUI(m_ActiveUI, type, data);
+			if (type == EventType::Dragged)
+			{
+				m_EventDispatcher->Dispatch(EventType::UIDragged, data);
+				SendEventToUI(m_ActiveUI, EventType::UIDragged, data);
+			}
+			else
+			{
+				SendEventToUI(m_ActiveUI, type, data);
+			}
 			if (type == EventType::Released)
 				m_ActiveUI = nullptr;
+		}
+	}
+	else if (type == EventType::MouseLeftDoubleClick)
+	{
+		for (auto& pair : uiMap)
+		{
+			auto& ui = pair.second;
+			if (!ui->IsVisible())
+				continue;
+			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
+				continue;
+			if (!(ui->hasButton || ui->hasSlider))
+				continue;
+			if (!ui->HitCheck(mouseData->pos))
+				continue;
+
+			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, data);
+			SendEventToUI(ui.get(), EventType::UIDoubleClicked, data);
+			break;
 		}
 	}
 	else if (type == EventType::Hovered)

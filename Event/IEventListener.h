@@ -8,16 +8,19 @@ enum class EventType
 	MouseLeftClick,
 	MouseLeftClickHold,
 	MouseLeftClickUp,
+	MouseLeftDoubleClick,
 	MouseRightClick,
 	MouseRightClickHold,
 	MouseRightClickUp,
+	Dragged,
 
 	//UI
 	Hovered,
 	Pressed,
 	Released,
 	Moved,
-	Dragged,
+	UIDragged,
+	UIDoubleClicked,
 
 	//Collision
 	CollisionEnter,

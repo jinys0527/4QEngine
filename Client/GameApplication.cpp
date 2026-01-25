@@ -58,7 +58,6 @@ void GameApplication::Run()
 		{
 			m_Engine.UpdateTime();
 			Update();
-			m_Engine.UpdateInput();
 			UpdateLogic();
 			Render();
 		}

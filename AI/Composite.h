@@ -8,7 +8,7 @@ class Composite : public Node
 public:
 	void AddChild(std::shared_ptr<Node> node)
 	{
-		m_Children.push_back(node);
+		m_Children.push_back(std::move(node));
 	}
 
 protected:

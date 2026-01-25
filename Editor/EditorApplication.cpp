@@ -155,7 +155,11 @@ void EditorApplication::UpdateLogic()
 
 void EditorApplication::Update()
 {
-	float dTime = m_Engine.GetTime();
+	float dTime = m_Engine.GetTime(); 
+	if (m_InputManager)
+	{
+		m_InputManager->SetEnabled(m_EditorState == EditorPlayState::Play);
+	}
 	UpdateInput();
 	m_SceneManager.StateUpdate(dTime);
 	m_SceneManager.Update(dTime);

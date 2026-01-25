@@ -10,6 +10,7 @@
 #include "GameManager.h"
 #include "InputManager.h"
 #include "UIManager.h"
+#include "CameraObject.h"
 
 //editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
@@ -85,6 +86,7 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 	m_CurrentScene = scene;
 	m_CurrentScene->Enter();
 	m_Camera = m_CurrentScene->GetGameCamera();
+	m_InputManager->SetViewportRect({ 0, 0, static_cast<LONG>(m_Camera->GetViewportSize().Width), static_cast<LONG>(m_Camera->GetViewportSize().Height) });
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());

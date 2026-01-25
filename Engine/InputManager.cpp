@@ -2,15 +2,32 @@
 #include "InputManager.h"
 #include "EventDispatcher.h"
 #include "Event.h"
+#include "RayHelper.h"
 #include <iostream>
+#include <cstdlib>
 
 void InputManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
 	m_EventDispatcher = eventDispatcher;
 }
 
+void InputManager::SetEnabled(bool enabled)
+{
+	if (m_Enabled == enabled)
+		return;
+
+	m_Enabled = enabled;
+	if (!m_Enabled)
+	{
+		ResetState();
+	}
+}
+
 void InputManager::Update()
 {
+	if (!m_Enabled)
+		return;
+
 	for (const auto& key : m_KeysDown)
 	{
 		if (!m_KeysDownPrev.contains(key))
@@ -31,25 +48,73 @@ void InputManager::Update()
 
 	m_KeysDownPrev = m_KeysDown;
 
-	//마우스 좌클릭 이벤트
+	const ULONGLONG now = GetTickCount64();
+
+	// pending 싱글클릭 타임아웃 체크(프레임마다)
+	if (m_PendingLeftClick)
+	{
+		const ULONGLONG elapsed = now - m_PendingLeftClickTime;
+		if (elapsed > static_cast<ULONGLONG>(m_DoubleClickThereshlodsMs))
+		{
+			// 더블클릭 윈도우 지나면 싱글 확정 발사
+			m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
+			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse);
+			m_PendingLeftClick = false;
+		}
+	}
+
+	// 마우스 좌클릭
 	if (!m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
-		m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_Mouse);
-		m_EventDispatcher->Dispatch(EventType::Pressed, &m_Mouse);
+		// 더블 클릭 판정 : pending 존재 + 시간 / 거리 조건 만족
+		bool isDoubleClick = false;
+
+		if (m_PendingLeftClick)
+		{
+			const ULONGLONG elapsed = now - m_PendingLeftClickTime;
+			const int dx = std::abs(m_Mouse.pos.x - m_PendingLeftClickPos.x);
+			const int dy = std::abs(m_Mouse.pos.y - m_PendingLeftClickPos.y);
+
+			isDoubleClick = (elapsed <= static_cast<ULONGLONG>(m_DoubleClickThereshlodsMs))
+				&& (dx <= m_DoubleClickMaxDistance && dy <= m_DoubleClickMaxDistance);
+		}
+
+		if (isDoubleClick)
+		{
+			// 더블클릭이면 pending 싱글 취소 + 더블만 발사
+			m_PendingLeftClick = false;
+			m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
+		}
+
+		else
+		{
+			// 첫 클릭은 pending으로 저장만(싱글클릭 이벤트 실행 X)
+			m_PendingLeftClick = true;
+			m_PendingLeftClickTime = now;
+			m_PendingLeftClickPos = m_Mouse.pos;
+
+			// 클릭 당시 마우스 상태를 저장해둠.
+			m_PendingLeftClickMouse = m_Mouse;
+		}
+
+
 	}
+
+	// 좌클릭 홀드
 	else if (m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
 		m_EventDispatcher->Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
 		m_EventDispatcher->Dispatch(EventType::Dragged, &m_Mouse);
 	}
-	else if(m_MousePrev.leftPressed && !m_Mouse.leftPressed)
+	// 좌클릭 업
+	else if (m_MousePrev.leftPressed && !m_Mouse.leftPressed)
 	{
 		m_EventDispatcher->Dispatch(EventType::MouseLeftClickUp, &m_Mouse);
 		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse);
 	}
 	
 
-
+	// 우클릭
 	if (m_MousePrev.rightPressed == false && m_Mouse.rightPressed)
 	{
 		m_EventDispatcher->Dispatch(EventType::MouseRightClick, &m_Mouse);
@@ -65,7 +130,7 @@ void InputManager::Update()
 	
 
 
-	//버튼위에 호버됐는지 확인하기 위해 매번 보내야함
+	// Hovered : 매 프레임
 	m_EventDispatcher->Dispatch(EventType::Hovered, &m_Mouse);
 
 	m_MousePrev = m_Mouse;
@@ -88,6 +153,9 @@ bool InputManager::IsKeyPressed(char key) const
 
 bool InputManager::OnHandleMessage(const MSG& msg)
 {
+	if (!m_Enabled)
+		return false;
+
 	switch (msg.message)
 	{
 
@@ -148,4 +216,82 @@ void InputManager::HandleMsgMouse(const MSG& msg)
 		ReleaseCapture();
 	} 
 
+}
+
+void InputManager::SetViewportRect(const RECT& rect)
+{
+	m_ViewportRect    = rect;
+	m_HasViewportRect = true;
+}
+
+void InputManager::ClearViewportRect()
+{
+	m_ViewportRect    = { 0,0,0,0 };
+	m_HasViewportRect = false;
+}
+
+bool InputManager::TryGetMouseNDC(DirectX::XMFLOAT2& outNdc) const
+{
+	if (!m_HasViewportRect)
+		return false;
+
+	const float width  = static_cast<float>(m_ViewportRect.right - m_ViewportRect.left);
+	const float height = static_cast<float>(m_ViewportRect.bottom - m_ViewportRect.top);
+	if (width <= 0.0f || height <= 0.0f)
+		return false;
+
+	const float x = static_cast<float>(m_Mouse.pos.x - m_ViewportRect.left);
+	const float y = static_cast<float>(m_Mouse.pos.y - m_ViewportRect.top);
+
+	const float nx = (x / width) * 2.0f - 1.0f;
+	const float ny = 1.0f - (y / height) * 2.0f;
+
+	outNdc = { nx, ny };
+	return true;
+
+}
+
+bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, 
+								const DirectX::XMFLOAT4X4& proj, 
+								DirectX::XMFLOAT3& outOrigin, 
+								DirectX::XMFLOAT3& outDirection) const
+{
+	if (!m_HasViewportRect)
+		return false;
+
+	const float width  = static_cast<float>(m_ViewportRect.right - m_ViewportRect.left);
+	const float height = static_cast<float>(m_ViewportRect.bottom - m_ViewportRect.top);
+	if (width <= 0.0f || height <= 0.0f)
+		return false;
+
+	const float x = static_cast<float>(m_Mouse.pos.x);
+	const float y = static_cast<float>(m_Mouse.pos.y);
+
+	const float vpX = static_cast<float>(m_ViewportRect.left);
+	const float vpY = static_cast<float>(m_ViewportRect.top);
+
+	const auto viewMat = DirectX::XMLoadFloat4x4(&view);
+	const auto projMat = DirectX::XMLoadFloat4x4(&proj);
+
+	const Ray ray = MakePickRayLH(
+		                           x,
+		                           y,
+		                           vpX,
+		                           vpY,
+		                           width,
+		                           height,
+		                           viewMat,
+		                           projMat);
+
+	outOrigin    = ray.m_Pos;
+	outDirection = ray.m_Dir;
+	return true;
+}
+
+void InputManager::ResetState()
+{
+	m_KeysDown.clear();
+	m_KeysDownPrev.clear();
+	m_Mouse     = Events::MouseState{};
+	m_MousePrev = Events::MouseState{};
 }
