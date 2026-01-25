@@ -386,6 +386,19 @@ void EditorApplication::RenderImGUI() {
 		UpdateSceneViewport();
 	}
 
+	if (m_InputManager && m_GameViewport.HasViewportRect())
+	{
+		const ImVec2 rectMin = m_GameViewport.GetViewportRectMin();
+		const ImVec2 rectMax = m_GameViewport.GetViewportRectMax();
+		POINT clientMin{ static_cast<LONG>(rectMin.x), static_cast<LONG>(rectMin.y) };
+		POINT clientMax{ static_cast<LONG>(rectMax.x), static_cast<LONG>(rectMax.y) };
+
+		ScreenToClient(m_hwnd, &clientMin);
+		ScreenToClient(m_hwnd, &clientMax);
+
+		m_InputManager->SetViewportRect({ clientMin.x, clientMin.y, clientMax.x, clientMax.y });
+	}
+
 	UpdateEditorCamera();
 	DrawGizmo();
 
