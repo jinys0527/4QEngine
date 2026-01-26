@@ -63,5 +63,5 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
 
     dofColor.a = 1;
-    return dofColor;
+    return RTView;
 }
