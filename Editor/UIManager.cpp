@@ -24,13 +24,13 @@ void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 	{
 		m_EventDispatcher->RemoveListener(EventType::Hovered, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Dragged))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDragged))
 	{
-		m_EventDispatcher->RemoveListener(EventType::Dragged, this);
+		m_EventDispatcher->RemoveListener(EventType::UIDragged, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::MouseLeftDoubleClick))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDoubleClicked))
 	{
-		m_EventDispatcher->RemoveListener(EventType::MouseLeftDoubleClick, this);
+		m_EventDispatcher->RemoveListener(EventType::UIDoubleClicked, this);
 	}
 	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Released))
 	{
@@ -40,8 +40,8 @@ void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 	m_EventDispatcher = eventDispatcher;
 	m_EventDispatcher->AddListener(EventType::Pressed, this);
 	m_EventDispatcher->AddListener(EventType::Hovered, this);
-	m_EventDispatcher->AddListener(EventType::Dragged, this);
-	m_EventDispatcher->AddListener(EventType::MouseLeftDoubleClick, this);
+	m_EventDispatcher->AddListener(EventType::UIDragged, this);
+	m_EventDispatcher->AddListener(EventType::UIDoubleClicked, this);
 	m_EventDispatcher->AddListener(EventType::Released, this);
 }
 
@@ -104,15 +104,14 @@ void UIManager::OnEvent(EventType type, const void* data)
 			break;
 		}
 	}
-	else if (type == EventType::Dragged || type == EventType::Released)
+	else if (type == EventType::UIDragged || type == EventType::Released)
 	{
 		if (m_ActiveUI)
 		{
 			if (mouseData)
 				mouseData->handled = true;
-			if (type == EventType::Dragged)
+			if (type == EventType::UIDragged)
 			{
-				m_EventDispatcher->Dispatch(EventType::UIDragged, data);
 				SendEventToUI(m_ActiveUI, EventType::UIDragged, data);
 			}
 			else
@@ -123,7 +122,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 				m_ActiveUI = nullptr;
 		}
 	}
-	else if (type == EventType::MouseLeftDoubleClick)
+	else if (type == EventType::UIDoubleClicked)
 	{
 		for (auto& pair : uiMap)
 		{
@@ -139,7 +138,6 @@ void UIManager::OnEvent(EventType type, const void* data)
 
 			if (mouseData)
 				mouseData->handled = true;
-			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, data);
 			SendEventToUI(ui.get(), EventType::UIDoubleClicked, data);
 			break;
 		}

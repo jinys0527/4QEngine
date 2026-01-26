@@ -89,7 +89,9 @@ void InputManager::Update()
 			// 더블클릭이면 pending 싱글 취소 + 더블만 발사
 			m_PendingLeftClick = false;
 			m_Mouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
+			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, &m_Mouse);
+			if(!m_Mouse.handled)
+				m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
 		}
 
 		else
@@ -110,11 +112,11 @@ void InputManager::Update()
 	else if (m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
 		m_Mouse.handled = false;
-		m_EventDispatcher->Dispatch(EventType::Dragged, &m_Mouse);
+		m_EventDispatcher->Dispatch(EventType::UIDragged, &m_Mouse);
 		if (!m_Mouse.handled)
 		{
 			m_Mouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
+			m_EventDispatcher->Dispatch(EventType::Dragged, &m_Mouse);
 		}
 	}
 	// 좌클릭 업
