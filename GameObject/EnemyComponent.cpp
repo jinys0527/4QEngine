@@ -3,6 +3,8 @@
 #include "Object.h"
 
 REGISTER_COMPONENT(EnemyComponent)
+REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
+REGISTER_PROPERTY_READONLY(EnemyComponent, R)
 
 EnemyComponent::EnemyComponent() {
 

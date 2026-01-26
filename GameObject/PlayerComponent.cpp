@@ -3,6 +3,8 @@
 #include "Object.h"
 
 REGISTER_COMPONENT(PlayerComponent)
+REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
+REGISTER_PROPERTY_READONLY(PlayerComponent, R)
 
 PlayerComponent::PlayerComponent() {
 

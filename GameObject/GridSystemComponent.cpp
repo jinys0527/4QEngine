@@ -1,5 +1,6 @@
 ﻿
 #include <cmath>
+#include <queue>
 #include <unordered_map>
 #include "GridSystemComponent.h"
 #include "TransformComponent.h"
@@ -8,6 +9,8 @@
 #include "Scene.h"
 #include "NodeComponent.h"
 #include "GameObject.h"
+#include "PlayerComponent.h"
+#include "EnemyComponent.h"
 
 REGISTER_COMPONENT(GridSystemComponent)
 REGISTER_PROPERTY_READONLY(GridSystemComponent, NodesCount)
@@ -97,6 +100,8 @@ void GridSystemComponent::Start()
 
 void GridSystemComponent::Update(float deltaTime) {
 	(void)deltaTime;
+	
+	UpdateMoveRange(m_PlayerNode, 6);
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)
@@ -107,6 +112,7 @@ void GridSystemComponent::OnEvent(EventType type, const void* data)
 
 void GridSystemComponent::ScanNodes()
 {
+	m_NodesCount = 0;
 	m_Nodes.clear();
 	m_NodesByAxial.clear();
 	if (!GetOwner()) { return; }
@@ -120,14 +126,32 @@ void GridSystemComponent::ScanNodes()
 	m_NodesByAxial.reserve(objects.size());
 
 
-	//등록 과정 ( Transform 기반 Axial 좌표변환 후 등록)
+	//등록 과정 ( Transform 기반 Axial 좌표변환 후 등록) ** Enemy, Player 도 추가
 	for (const auto& [name, object] : objects) {
 		if(!object){ continue;}
 
 		auto* node = object->GetComponent<NodeComponent>();
-		if(!node) { continue; }
-		auto* trans = object->GetComponent<TransformComponent>();
 
+		if(!node) { 
+			auto* enemy =  object->GetComponent<EnemyComponent>();
+			if (!enemy) {
+				//Player 처리
+				auto* player = object->GetComponent<PlayerComponent>();
+				if (!player) { continue; }
+				auto* trans = object->GetComponent<TransformComponent>();
+				const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
+				player->SetQR(axial.q, axial.r);
+				continue;
+			}
+			//Enemy 처리
+			auto* trans = object->GetComponent<TransformComponent>();
+			const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
+			enemy->SetQR(axial.q, axial.r);
+			continue;
+		}
+
+		// node처리
+		auto* trans = object->GetComponent<TransformComponent>();
 		const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 
 
@@ -139,6 +163,81 @@ void GridSystemComponent::ScanNodes()
 		m_NodesCount++; // debuging 용ㅤ
 	}
 
+}
+
+// Axial 좌표로 Node 찾기
+NodeComponent* GridSystemComponent::GetNodeByKey(const AxialKey& key) const
+{
+	auto it = m_NodesByAxial.find(key);
+	if (it == m_NodesByAxial.end())
+	{
+		return nullptr;
+	}
+	return it->second;
+}
+
+void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
+{
+	for (auto* node : m_Nodes)
+	{
+		if (!node)
+		{
+			continue;
+		}
+		node->SetInMoveRange(false);
+	}
+
+	if (!startNode || range <= 0)
+	{
+		return;
+	}
+
+	std::unordered_map<NodeComponent*, int> distances;
+	std::queue<NodeComponent*> frontier;
+
+	distances[startNode] = 0;
+	frontier.push(startNode);
+	startNode->SetInMoveRange(true);
+
+	while (!frontier.empty())
+	{
+		NodeComponent* current = frontier.front();
+		frontier.pop();
+
+		const int currentDistance = distances[current];
+		if (currentDistance >= range)
+		{
+			continue;
+		}
+
+		for (auto* neighbor : current->GetNeighbors())
+		{
+			if (!neighbor)
+			{
+				continue;
+			}
+
+			if (neighbor->GetState() != NodeState::Empty)
+			{
+				continue;
+			}
+
+			if (!neighbor->GetIsMoveable())
+			{
+				continue;
+			}
+
+			if (distances.find(neighbor) != distances.end())
+			{
+				continue;
+			}
+
+			const int nextDistance = currentDistance + 1;
+			distances[neighbor] = nextDistance;
+			neighbor->SetInMoveRange(true);
+			frontier.push(neighbor);
+		}
+	}
 }
 
 void GridSystemComponent::MakeGraph()

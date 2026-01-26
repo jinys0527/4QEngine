@@ -26,17 +26,17 @@ public:
 	void Start() override;
 
 	void Update(float deltaTime) override;
-	void OnEvent(EventType type, const void* data) override; 
+	void OnEvent(EventType type, const void* data) override;
 
-	void SetIsMoveable(const bool& is) { m_IsMoveable = is;  };
+	void SetIsMoveable(const bool& is) { m_IsMoveable = is; };
 	const bool& GetIsMoveable() const { return m_IsMoveable; }
 
-	void SetQR(int q, int r) { m_Q = q; m_R = r;  }
-	
+	void SetQR(int q, int r) { m_Q = q; m_R = r; }
+
 
 	const int& GetQ() const { return m_Q; }
 	const int& GetR() const { return m_R; }
-	
+
 	//상태 발판 설정
 	void SetState(NodeState state) { m_State = state; }
 	NodeState GetState() const { return m_State; }
@@ -46,9 +46,13 @@ public:
 	void ClearNeighbors();
 	void AddNeighbor(NodeComponent* node);
 	const vector<NodeComponent*>& GetNeighbors() const { return m_Neighbors; }
+
+	void SetInMoveRange(bool isInMoveRange) { m_IsInMoveRange = isInMoveRange; }
+	bool IsInMoveRange() const { return m_IsInMoveRange; }
 private:
 
-	bool m_IsMoveable = true; //장애물 있으면 Editor에서 배치할때 false로 설정하기
+	bool m_IsMoveable = true;	  //장애물 있으면 Editor에서 배치할때 false로 설정하기
+	bool m_IsInMoveRange = false; // 이동가능 범위에 있는지
 	//Read Only Property
 	NodeState m_State = NodeState::Empty;
 	int m_Q; 

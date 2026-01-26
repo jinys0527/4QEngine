@@ -46,14 +46,19 @@ public:
 	void OnEvent(EventType type, const void* data) override; // IEventListener 필요
 	const vector<NodeComponent*>& GetNodes() const { return m_Nodes; }
 	const int& GetNodesCount() const { return m_NodesCount; }
+	NodeComponent* GetNodeByKey(const AxialKey& key) const;
 
 private:
 
 	void ScanNodes(); // Scene 순회 후 Nodes 등록
 	void MakeGraph();// 위치기반 노드 연결
+	void UpdateMoveRange(NodeComponent* startNode, int range);
+
 	void CalculatePath(); // 길찾기
 	// node 받기
 	vector<NodeComponent*> m_Nodes;
+	NodeComponent* m_PlayerNode;
+
 	std::unordered_map<AxialKey, NodeComponent*, AxialKeyHash> m_NodesByAxial;
 	int m_NodesCount = 0; //for Debug
 

@@ -15,7 +15,11 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override; // IEventListener 필요
 
+	void SetQR(int q, int r) { m_Q = q, m_R = r; }
+	const int& GetQ() const { return m_Q; }
+	const int& GetR() const { return m_R; }
 private:
-
+	int m_Q;
+	int m_R;
 
 };
