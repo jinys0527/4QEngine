@@ -1,0 +1,24 @@
+﻿#pragma once
+#include "Component.h"
+
+class PlayerComponent : public Component, public IEventListener {
+	friend class Editor;
+public:
+	static constexpr const char* StaticTypeName = "PlayerComponent";
+	const char* GetTypeName() const override;
+
+	PlayerComponent();
+	virtual ~PlayerComponent();
+
+	void Start() override;
+
+	void Update(float deltaTime) override;
+	void OnEvent(EventType type, const void* data) override; // IEventListener 필요
+
+	void SetQR(int q, int r) { m_Q = q, m_R = r; }
+	const int& GetQ() const { return m_Q; }
+	const int& GetR() const { return m_R; }
+private:
+	int m_Q;
+	int m_R;
+};

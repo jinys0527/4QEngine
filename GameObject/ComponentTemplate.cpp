@@ -1,6 +1,6 @@
 ﻿/// 만들기 귀찮아서 만들어둔 Template(c++ Template 아님)
 /// 복붙해서 쓰세요
-#include "EmptyComponent.h"
+#include "ComponentTemplate.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
 
@@ -25,10 +25,5 @@ void EmptyComponent::Start()
 
 void EmptyComponent::Update(float deltaTime) {
 
-
-}
-
-
-void PlayerMovementComponent::OnEvent(EventType type, const void* data) {
 
 }
