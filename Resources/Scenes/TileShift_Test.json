@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -7.815765857696533,
-                "y": 6.007729530334473,
-                "z": -11.572203636169434
+                "x": -3.723402500152588,
+                "y": 5.426827907562256,
+                "z": -9.740167617797852
             },
             "look": {
-                "x": -7.87013578414917,
-                "y": 5.490784645080566,
-                "z": -10.717913627624512
+                "x": -4.15849494934082,
+                "y": 4.843924045562744,
+                "z": -9.053933143615723
             },
             "up": {
-                "x": -0.03283299133181572,
-                "y": 0.856018602848053,
-                "z": 0.5159013271331787
+                "x": -0.3121282160282135,
+                "y": 0.8125410676002502,
+                "z": 0.4922935366630554
             }
         }
     },
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -7.815765857696533,
-                            "y": 6.007729530334473,
-                            "z": -11.572203636169434
+                            "x": -3.723402500152588,
+                            "y": 5.426827907562256,
+                            "z": -9.740167617797852
                         },
                         "Rotation": {
-                            "w": 0.9628459811210632,
-                            "x": 0.2681753635406494,
-                            "y": -0.030608341097831726,
-                            "z": 0.008524823933839798
+                            "w": 0.9142386317253113,
+                            "x": 0.29401445388793945,
+                            "y": -0.2654021978378296,
+                            "z": 0.08535192906856537
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -7.815765857696533,
-                            "y": 6.007729530334473,
-                            "z": -11.572203636169434
+                            "x": -3.723402500152588,
+                            "y": 5.426827907562256,
+                            "z": -9.740167617797852
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -7.87013578414917,
-                            "y": 5.490784645080566,
-                            "z": -10.717913627624512
+                            "x": -4.15849494934082,
+                            "y": 4.843924045562744,
+                            "z": -9.053933143615723
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -120,9 +120,9 @@
                         },
                         "ProjectionMode": 0,
                         "Up": {
-                            "x": -0.03283299133181572,
-                            "y": 0.856018602848053,
-                            "z": 0.5159013271331787
+                            "x": -0.3121282160282135,
+                            "y": 0.8125410676002502,
+                            "z": 0.4922935366630554
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -159,13 +159,30 @@
                 },
                 {
                     "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
                         "Mesh": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
                         },
                         "MeshHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
+                            "assetPath": ""
                         },
                         "SubMeshMaterialOverrides": [
                             {
@@ -516,30 +533,13 @@
                 },
                 {
                     "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 2,
-                            "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 0,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
                         "Material": {
                             "assetIndex": 2,
                             "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
                         },
                         "MaterialHandle": {
-                            "assetIndex": 2,
-                            "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
+                            "assetIndex": 0,
+                            "assetPath": ""
                         },
                         "Overrides": {
                             "overrides": {
@@ -563,8 +563,8 @@
                                 },
                                 "textures": [
                                     {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\Miyabi\\Meta\\Miyabi.asset.json"
+                                        "assetIndex": 0,
+                                        "assetPath": ""
                                     },
                                     {
                                         "assetIndex": 0,
@@ -691,6 +691,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -705,20 +719,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -889,9 +889,9 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -5.176434516906738,
-                            "y": 0.3506612479686737,
-                            "z": -4.62572717666626
+                            "x": -7.26006555557251,
+                            "y": 0.37270987033843994,
+                            "z": -4.718649864196777
                         },
                         "Rotation": {
                             "w": 1.0,
@@ -909,14 +909,28 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                         },
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 1,
@@ -926,35 +940,21 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                         },
                         "Overrides": {
                             "overrides": {
                                 "baseColor": {
                                     "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
                                 },
                                 "lightness": 1.0,
                                 "metallic": 0.0,
@@ -962,7 +962,7 @@
                                     "assetIndex": 0,
                                     "assetPath": ""
                                 },
-                                "roughness": 0.22997033596038818,
+                                "roughness": 0.5,
                                 "saturation": 1.0,
                                 "shaderAsset": {
                                     "assetIndex": 0,
@@ -971,23 +971,23 @@
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                                        "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                                     },
                                     {
                                         "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                                        "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                                     },
                                     {
                                         "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                                        "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                                     },
                                     {
                                         "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                                        "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                                     },
                                     {
                                         "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
+                                        "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
                                     },
                                     {
                                         "assetIndex": 0,
@@ -1005,738 +1005,6 @@
                 }
             ],
             "name": "Tile"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -8.392662048339844,
-                            "y": 0.3506612479686737,
-                            "z": -2.7346694469451904
-                        },
-                        "Rotation": {
-                            "w": 1.0,
-                            "x": -0.0,
-                            "y": 0.0,
-                            "z": -0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.22997033596038818,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "Tile1"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -8.320479393005371,
-                            "y": 0.3506612479686737,
-                            "z": -6.3948588371276855
-                        },
-                        "Rotation": {
-                            "w": 1.0,
-                            "x": -0.0,
-                            "y": 0.0,
-                            "z": -0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.22997033596038818,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "Tile2"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -6.342143535614014,
-                            "y": 0.3506612479686737,
-                            "z": -2.6899280548095703
-                        },
-                        "Rotation": {
-                            "w": 1.0,
-                            "x": -0.0,
-                            "y": 0.0,
-                            "z": -0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.22997033596038818,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "Tile3"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -7.297674179077148,
-                            "y": 0.3506612479686737,
-                            "z": -4.59818172454834
-                        },
-                        "Rotation": {
-                            "w": 1.0,
-                            "x": -0.0,
-                            "y": 0.0,
-                            "z": -0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.22997033596038818,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "Tile4"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -6.224272727966309,
-                            "y": 0.3506612479686737,
-                            "z": -6.440999507904053
-                        },
-                        "Rotation": {
-                            "w": 1.0,
-                            "x": -0.0,
-                            "y": 0.0,
-                            "z": -0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.22997033596038818,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "Tile5"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -9.38748550415039,
-                            "y": 0.3506612479686737,
-                            "z": -4.551806449890137
-                        },
-                        "Rotation": {
-                            "w": 1.0,
-                            "x": -0.0,
-                            "y": 0.0,
-                            "z": -0.0
-                        },
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.02280512824654579,
-                                    "g": 0.2776021361351013,
-                                    "r": 0.8002434968948364
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.22997033596038818,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\beigeFlooringTile\\Meta\\beigeFlooringTile.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "Tile11"
         },
         {
             "components": [
@@ -1763,14 +1031,28 @@
                 },
                 {
                     "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
-                        },
                         "Mesh": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\waterTest\\Meta\\waterTest.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": ""
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 2,
@@ -1780,27 +1062,13 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\waterTest\\Meta\\waterTest.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\waterTest\\Meta\\waterTest.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "Material": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": ""
                         },
                         "Overrides": {
                             "overrides": {
@@ -1825,23 +1093,23 @@
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetPath": ""
                                     },
                                     {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetIndex": 0,
+                                        "assetPath": ""
                                     },
                                     {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetIndex": 0,
+                                        "assetPath": ""
                                     },
                                     {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetIndex": 0,
+                                        "assetPath": ""
                                     },
                                     {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetIndex": 0,
+                                        "assetPath": ""
                                     },
                                     {
                                         "assetIndex": 0,
