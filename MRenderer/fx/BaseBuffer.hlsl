@@ -1,7 +1,6 @@
 #ifndef BASEBUFFER_HLSL
 #define BASEBUFFER_HLSL
 
-// https://www.notion.so/GPU-2ea21c4cb4638021a66bf959e6db1ee4
 cbuffer BaseBuffer : register(b0)
 {
     matrix mWorld;
@@ -19,8 +18,7 @@ cbuffer CameraBuffer : register(b1)
     matrix mSkyBox;
     matrix mShadow;
     float3 cameraPos;
-    //float campadding;
-    float dTime;
+    float campadding;
 };
 
 struct Light
@@ -168,7 +166,6 @@ Texture2D g_ShadowMap : register(t2);
 TextureCube g_SkyBox : register(t3);
 Texture2D g_DepthMap : register(t4);
 Texture2D g_Mask_Wall : register(t5);
-Texture2D g_WaterNoise : register(t6);
 
 
 Texture2D g_Albedo : register(t11);

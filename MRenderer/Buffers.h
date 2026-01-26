@@ -24,8 +24,7 @@ struct CameraConstBuffer
 	XMFLOAT4X4  mShadow = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
-	//float		padding = 0.0f;
-	float dTime = 0.0f;
+	float		padding = 0.0f;
 };
 
 struct Light
@@ -220,10 +219,6 @@ struct RenderContext
 	//FullScreenTriangle
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
-
-	//물 노이즈
-	ComPtr<ID3D11ShaderResourceView>	WaterNoise;
-	float* dTime = nullptr;
 
 	//텍스트 그리기
 	std::function<void(float width, float height)> MyDrawText;
