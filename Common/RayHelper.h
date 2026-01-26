@@ -42,3 +42,24 @@ inline Ray MakePickRayLH(
 	XMStoreFloat3(&ray.m_Dir, dir);
 	return ray;
 }
+
+// ray와 y=planeY 평면 교차. 성공하면 t(>=0)와 hitPoint 반환.
+inline bool IntersectRayPlaneY(const Ray& ray, float planeY, float& outT, XMFLOAT3& outHit)
+{
+	// 평면: y = planeY
+	const float denom = ray.m_Dir.y;
+	if (std::fabs(denom) < 1e-6f)
+		return false; // 평행
+
+	const float t = (planeY - ray.m_Pos.y) / denom;
+	if (t < 0.0f)
+		return false; // 카메라 뒤쪽
+
+	outT = t;
+	outHit = {
+		ray.m_Pos.x + ray.m_Dir.x * t,
+		planeY,
+		ray.m_Pos.z + ray.m_Dir.z * t
+	};
+	return true;
+}

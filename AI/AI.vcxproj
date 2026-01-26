@@ -51,10 +51,32 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Blackboard.h" />
+    <ClInclude Include="BTExecutor.h" />
+    <ClInclude Include="BTInstance.h" />
+    <ClInclude Include="BTStatus.h" />
+    <ClInclude Include="Composite.h" />
+    <ClInclude Include="Decorator.h" />
     <ClInclude Include="FSM.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="Parallel.h" />
+    <ClInclude Include="Selector.h" />
+    <ClInclude Include="Sequance.h" />
+    <ClInclude Include="Service.h" />
+    <ClInclude Include="Task.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Blackboard.cpp" />
+    <ClCompile Include="BTExecutor.cpp" />
+    <ClCompile Include="Composite.cpp" />
+    <ClCompile Include="Decorator.cpp" />
     <ClCompile Include="FSM.cpp" />
+    <ClCompile Include="Node.cpp" />
+    <ClCompile Include="Parallel.cpp" />
+    <ClCompile Include="Selector.cpp" />
+    <ClCompile Include="Sequance.cpp" />
+    <ClCompile Include="Service.cpp" />
+    <ClCompile Include="Task.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -312,6 +334,11 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

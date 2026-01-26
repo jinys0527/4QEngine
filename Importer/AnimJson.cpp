@@ -188,9 +188,9 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 		ofs << j.dump(2);
 
 #ifdef _DEBUG
-		std::vector<std::string> missingBones(missingBoneNames.begin(), missingBoneNames.end());
-		std::sort(missingBones.begin(), missingBones.end());
-		WriteAnimationDebug(outPath, clip, missingBones, skippedEmptyTracks);
+		//std::vector<std::string> missingBones(missingBoneNames.begin(), missingBoneNames.end());
+		//std::sort(missingBones.begin(), missingBones.end());
+		//WriteAnimationDebug(outPath, clip, missingBones, skippedEmptyTracks);
 		//std::vector<std::string> missingBones(missingBoneNames.begin(), missingBoneNames.end());
 		//std::sort(missingBones.begin(), missingBones.end());
 		//WriteAnimationDebug(outPath, clip, missingBones, skippedEmptyTracks);

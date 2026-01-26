@@ -115,6 +115,9 @@
     <ClCompile Include="EnemyComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BoxColliderComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -243,6 +246,9 @@
     </ClInclude>
     <ClInclude Include="EnemyComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoxColliderComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
