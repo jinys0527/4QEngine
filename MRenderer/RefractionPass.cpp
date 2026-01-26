@@ -50,7 +50,7 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
 
 
     dxdc->OMSetRenderTargets(1, m_RenderContext.pRTView_Refraction.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-    SetDepthStencilState(DS::DEPTH_ON);
+    SetDepthStencilState(DS::DEPTH_ON_WRITE_OFF);
 
     for (const auto& queueItem : GetQueue())
     {

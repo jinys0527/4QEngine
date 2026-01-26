@@ -1710,6 +1710,13 @@ HRESULT Renderer::CreateDepthStencilState()
 		return hr;
 	}
 
+	ds.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	hr = m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_ON_WRITE_OFF].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 	ds.DepthEnable = FALSE;
 	hr = m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_OFF].GetAddressOf());
