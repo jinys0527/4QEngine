@@ -345,6 +345,7 @@
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="SkeletalMeshRenderer.h" />
+    <ClInclude Include="SkinningAnimationComponent.h" />
     <ClInclude Include="SpotLightComponent.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIButtonComponent.h" />
@@ -393,6 +394,7 @@
     <ClCompile Include="SceneChangeTestComponent.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
+    <ClCompile Include="SkinningAnimationComponent.cpp" />
     <ClCompile Include="SpotLightComponent.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIButtonComponent.cpp" />

@@ -116,6 +116,59 @@ namespace
 	constexpr uint32_t kMatMagic  = 0x4D41544C; // "MATL"
 	constexpr uint32_t kSkelMagic = 0x534B454C; // "SKEL"
 
+	void ExpandBounds(DirectX::XMFLOAT3& minOut, DirectX::XMFLOAT3& maxOut, const DirectX::XMFLOAT3& point)
+	{
+		minOut.x = min(minOut.x, point.x);
+		minOut.y = min(minOut.y, point.y);
+		minOut.z = min(minOut.z, point.z);
+
+		maxOut.x = max(maxOut.x, point.x);
+		maxOut.y = max(maxOut.y, point.y);
+		maxOut.z = max(maxOut.z, point.z);
+	}
+
+	void RebuildMeshBoundsFromSubMeshes(RenderData::MeshData& meshData)
+	{
+		if (meshData.subMeshes.empty())
+		{
+			return;
+		}
+
+		DirectX::XMFLOAT3 minOut{ FLT_MAX, FLT_MAX, FLT_MAX };
+		DirectX::XMFLOAT3 maxOut{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+		for (const auto& subMesh : meshData.subMeshes)
+		{
+			const DirectX::XMFLOAT3 min = subMesh.boundsMin;
+			const DirectX::XMFLOAT3 max = subMesh.boundsMax;
+
+			const DirectX::XMFLOAT3 corners[8] = {
+				{ min.x, min.y, min.z },
+				{ max.x, min.y, min.z },
+				{ max.x, max.y, min.z },
+				{ min.x, max.y, min.z },
+				{ min.x, min.y, max.z },
+				{ max.x, min.y, max.z },
+				{ max.x, max.y, max.z },
+				{ min.x, max.y, max.z }
+			};
+
+			const auto localToWorld = DirectX::XMLoadFloat4x4(&subMesh.localToWorld);
+			for (const auto& corner : corners)
+			{
+				const auto v = DirectX::XMLoadFloat3(&corner);
+				const auto transformed = DirectX::XMVector3TransformCoord(v, localToWorld);
+				DirectX::XMFLOAT3 worldCorner{};
+				DirectX::XMStoreFloat3(&worldCorner, transformed);
+				ExpandBounds(minOut, maxOut, worldCorner);
+			}
+		}
+
+		meshData.boundsMin = minOut;
+		meshData.boundsMax = maxOut;
+	}
+
+
 	std::string ReadStringAtOffset(const std::string& table, uint32_t offset)
 	{
 		if (offset >= table.size())
@@ -1272,6 +1325,8 @@ void AssetLoader::LoadMeshes(
 					meshData.subMeshes.push_back(std::move(out));
 				}
 			}
+
+			RebuildMeshBoundsFromSubMeshes(meshData);
 
 			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
 				{

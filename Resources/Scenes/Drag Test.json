@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": 3.926577568054199,
-                "y": 3.8762271404266357,
-                "z": -10.621159553527832
+                "x": -6.740973472595215,
+                "y": 8.352664947509766,
+                "z": -8.004631996154785
             },
             "look": {
-                "x": 3.5662009716033936,
-                "y": 3.5002315044403076,
-                "z": -9.767487525939941
+                "x": -6.4749860763549805,
+                "y": 7.756348133087158,
+                "z": -7.247230529785156
             },
             "up": {
-                "x": -0.14623019099235535,
-                "y": 0.9266214966773987,
-                "z": 0.34639498591423035
+                "x": 0.19758735597133636,
+                "y": 0.8027492761611938,
+                "z": 0.5626305341720581
             }
         }
     },
@@ -72,15 +72,198 @@
                 {
                     "data": {
                         "Position": {
-                            "x": 3.926577568054199,
-                            "y": 3.8762271404266357,
-                            "z": -10.621159553527832
+                            "x": -0.5444477796554565,
+                            "y": 1.541115164756775,
+                            "z": -0.15035071969032288
                         },
                         "Rotation": {
-                            "w": 0.9619728922843933,
-                            "x": 0.18773673474788666,
-                            "y": -0.19472773373126984,
-                            "z": 0.03800267353653908
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\Ani.shader.json"
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "SkeletonHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "SkeletalMeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "Visible": true
+                    },
+                    "type": "SkeletalMeshRenderer"
+                },
+                {
+                    "data": {
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
+                },
+                {
+                    "data": {
+                        "BlendConfig": {
+                            "blendTime": 0.20000000298023224,
+                            "blendType": 0,
+                            "curveName": "Linear",
+                            "fromClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "toClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            }
+                        },
+                        "ClipHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\animationTest\\Meta\\animationTest.asset.json"
+                        },
+                        "Playback": {
+                            "looping": true,
+                            "playing": true,
+                            "reverse": true,
+                            "speed": 1.0,
+                            "time": 0.0
+                        }
+                    },
+                    "type": "SkinningAnimationComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 1.8176794052124023,
+                            "y": 2.873319625854492,
+                            "z": 0.301082581281662
+                        },
+                        "LocalMin": {
+                            "x": -6.903855478412879e-07,
+                            "y": -2.9746928476015455e-07,
+                            "z": -0.1787036806344986
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Door"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -6.740973472595215,
+                            "y": 8.352664947509766,
+                            "z": -8.004631996154785
+                        },
+                        "Rotation": {
+                            "w": 0.9359033703804016,
+                            "x": 0.30957984924316406,
+                            "y": 0.15956060588359833,
+                            "z": -0.0527799166738987
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +276,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": 3.926577568054199,
-                            "y": 3.8762271404266357,
-                            "z": -10.621159553527832
+                            "x": -6.740973472595215,
+                            "y": 8.352664947509766,
+                            "z": -8.004631996154785
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": 3.5662009716033936,
-                            "y": 3.5002315044403076,
-                            "z": -9.767487525939941
+                            "x": -6.4749860763549805,
+                            "y": 7.756348133087158,
+                            "z": -7.247230529785156
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -115,16 +298,16 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7846534252166748,
+                            "aspect": 1.818411111831665,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": -0.14623019099235535,
-                            "y": 0.9266214966773987,
-                            "z": 0.34639498591423035
+                            "x": 0.19758735597133636,
+                            "y": 0.8027492761611938,
+                            "z": 0.5626305341720581
                         },
                         "Viewport": {
-                            "height": 808.0,
+                            "height": 793.0,
                             "width": 1442.0
                         }
                     },
@@ -158,35 +341,6 @@
                 },
                 {
                     "data": {
-                        "DragSpeed": 0.009999999776482582,
-                        "Speed": 5.0
-                    },
-                    "type": "PlayerMovementComponent"
-                },
-                {
-                    "data": {
-                        "BlendConfig": {
-                            "blendTime": 0.20000000298023224,
-                            "blendType": 0,
-                            "curveName": "Linear",
-                            "fromClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            },
-                            "toClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            }
-                        },
-                        "ClipHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        }
-                    },
-                    "type": "AnimationComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -205,6 +359,13 @@
                         "Visible": true
                     },
                     "type": "SkeletalMeshRenderer"
+                },
+                {
+                    "data": {
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {
@@ -292,8 +453,48 @@
                     "type": "SkeletalMeshComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8935972452163696,
+                            "y": 1.8501739501953125,
+                            "z": 0.17265503108501434
+                        },
+                        "LocalMin": {
+                            "x": -0.8935972452163696,
+                            "y": 0.00043961999472230673,
+                            "z": -0.14186210930347443
+                        }
+                    },
                     "type": "BoxColliderComponent"
+                },
+                {
+                    "data": {
+                        "BlendConfig": {
+                            "blendTime": 0.20000000298023224,
+                            "blendType": 0,
+                            "curveName": "Linear",
+                            "fromClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "toClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            }
+                        },
+                        "ClipHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Playback": {
+                            "looping": true,
+                            "playing": true,
+                            "reverse": false,
+                            "speed": 1.0,
+                            "time": 0.0
+                        }
+                    },
+                    "type": "SkinningAnimationComponent"
                 }
             ],
             "name": "GameObject"
@@ -323,6 +524,13 @@
                 },
                 {
                     "data": {
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -341,35 +549,6 @@
                         "Visible": true
                     },
                     "type": "SkeletalMeshRenderer"
-                },
-                {
-                    "data": {
-                        "BlendConfig": {
-                            "blendTime": 0.20000000298023224,
-                            "blendType": 0,
-                            "curveName": "Linear",
-                            "fromClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            },
-                            "toClip": {
-                                "assetIndex": 0,
-                                "assetPath": ""
-                            }
-                        },
-                        "ClipHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
-                        }
-                    },
-                    "type": "AnimationComponent"
-                },
-                {
-                    "data": {
-                        "DragSpeed": 0.009999999776482582,
-                        "Speed": 5.0
-                    },
-                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {
@@ -457,8 +636,48 @@
                     "type": "SkeletalMeshComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8935972452163696,
+                            "y": 1.8501739501953125,
+                            "z": 0.17265503108501434
+                        },
+                        "LocalMin": {
+                            "x": -0.8935972452163696,
+                            "y": 0.00043961999472230673,
+                            "z": -0.14186210930347443
+                        }
+                    },
                     "type": "BoxColliderComponent"
+                },
+                {
+                    "data": {
+                        "BlendConfig": {
+                            "blendTime": 0.20000000298023224,
+                            "blendType": 0,
+                            "curveName": "Linear",
+                            "fromClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "toClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            }
+                        },
+                        "ClipHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Playback": {
+                            "looping": true,
+                            "playing": true,
+                            "reverse": false,
+                            "speed": 1.0,
+                            "time": 0.0
+                        }
+                    },
+                    "type": "SkinningAnimationComponent"
                 }
             ],
             "name": "GameObject1"
@@ -488,6 +707,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -502,20 +735,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -581,7 +800,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -612,20 +842,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -640,6 +856,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -705,7 +935,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -736,20 +977,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -764,6 +991,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -829,7 +1070,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -860,20 +1112,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -888,6 +1126,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -953,7 +1205,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -984,20 +1247,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1012,6 +1261,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1077,7 +1340,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -1108,20 +1382,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1136,6 +1396,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1201,7 +1475,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -1232,20 +1517,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1260,6 +1531,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1325,7 +1610,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],
@@ -1356,20 +1652,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1384,6 +1666,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\herringbone_tile\\Meta\\herringbone_tile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1449,7 +1745,18 @@
                     "type": "MaterialComponent"
                 },
                 {
-                    "data": null,
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
                     "type": "BoxColliderComponent"
                 }
             ],

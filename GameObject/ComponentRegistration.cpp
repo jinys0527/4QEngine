@@ -9,15 +9,20 @@
 #include "MeshRenderer.h"
 #include "UIComponent.h"
 #include "AnimationComponent.h"
+#include "SkinningAnimationComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "SkeletalMeshRenderer.h"
-#include "PlayerMovementComponent.h"
 #include "FSMComponent.h"
 #include "CollisionFSMComponent.h"
 #include "AnimFSMComponent.h"
 #include "UIFSMComponent.h"
-#include "SceneChangeTestComponent.h"
 #include "BoxColliderComponent.h"
+#include "SceneChangeTestComponent.h"
+#include "PlayerMovementComponent.h"
+#include "GridSystemComponent.h"
+#include "NodeComponent.h"
+#include "PlayerComponent.h"
+#include "EnemyComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -35,12 +40,14 @@ extern "C" {
 	void Link_SpotLightComponent();
 	void Link_UIComponent();
 	void Link_AnimationComponent();
+	void Link_SkinningAnimationComponent();
 	void Link_SkeletalMeshComponent();
 	void Link_SkeletalMeshRenderer();
 	void Link_FSMComponent();
 	void Link_CollisionFSMComponent();
 	void Link_AnimFSMComponent();
 	void Link_UIFSMComponent();
+	void Link_BoxColliderComponent();
 	
 	//User Defined
 	void Link_SceneChangeTestComponent();
@@ -49,7 +56,6 @@ extern "C" {
 	void Link_NodeComponent();
 	void Link_PlayerComponent();
 	void Link_EnemyComponent();
-	void Link_BoxColliderComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -70,6 +76,7 @@ void LinkEngineComponents() {
 	Link_SpotLightComponent();
 	Link_UIComponent();
 	Link_AnimationComponent();
+	Link_SkinningAnimationComponent();
 	Link_SkeletalMeshComponent();
 	Link_SkeletalMeshRenderer();
 	Link_FSMComponent();

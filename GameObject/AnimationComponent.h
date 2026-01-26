@@ -37,6 +37,7 @@ public:
 		float speed   = 1.0f;
 		bool  looping = true;
 		bool  playing = true;
+		bool  reverse = false;
 	};
 
 	struct RetargetOffset
@@ -189,7 +190,7 @@ public:
 		m_Animations = animations;
 	}
 
-	void LoadSetPlayback(const PlaybackState& playback) { m_Playback = playback; }
+	void SetPlayback(const PlaybackState& playback) { m_Playback = playback; }
 	const PlaybackState& GetPlayback() const			{ return m_Playback;	 }
 
 	const BlendState& GetBlend() const { return m_Blend; }
@@ -233,6 +234,13 @@ public:
 
 	/// 컴포넌트 이벤트를 처리한다. (현재 구현은 비어있음)
 	void OnEvent(EventType type, const void* data) override;
+
+protected:
+	bool AdvancePlayback(float deltaTime);
+	const RenderData::AnimationClip* GetActiveClip() const;
+	static bool SampleTrackForBone(const RenderData::AnimationClip& clip, int boneIndex, float timeSec, LocalPose& outPose);
+	static bool SampleTrackByIndex(const RenderData::AnimationClip& clip, size_t trackIndex, float timeSec, LocalPose& outPose);
+	virtual void ApplyPoseToSkeletal(SkeletalMeshComponent* skeletal);
 
 private:
 	void EnsureResourceStores();
@@ -303,6 +311,8 @@ private:
 	float							 m_BoneMaskWeight			  = 1.0f;
 	float						     m_BoneMaskDefaultWeight	  = 0.0f;
 	bool						     m_AutoBoneMaskApplied		  = false;
+	
+
 
 	std::vector<DirectX::XMFLOAT4X4> m_LocalPose;
 	std::vector<DirectX::XMFLOAT4X4> m_GlobalPose;
