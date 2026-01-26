@@ -29,7 +29,8 @@ bool GameApplication::Initialize()
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
 
-	m_Services.Get<SoundManager>().Init();
+
+
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
@@ -56,7 +57,6 @@ void GameApplication::Run()
 		{
 			m_Engine.UpdateTime();
 			Update();
-			m_Engine.UpdateInput();
 			UpdateLogic();
 			Render();
 		}

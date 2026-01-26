@@ -34,7 +34,7 @@ void ClientScene::Finalize()
 
 void ClientScene::Leave()
 {
-
+	// Leave시 초기화 필요 -> 다른 씬으로 넘어가도 계속 유지되는 것들이 있음 <- 없애야함
 }
 
 void ClientScene::FixedUpdate()

@@ -36,6 +36,8 @@ namespace RenderData
 			MaterialHandle material = MaterialHandle::Invalid();
 			std::string name;
 			XMFLOAT4X4 localToWorld;
+			XMFLOAT3 boundsMin{ 0.0f, 0.0f, 0.0f };
+			XMFLOAT3 boundsMax{ 0.0f, 0.0f, 0.0f };
 		};
 
 		std::vector<Vertex>   vertices;
@@ -43,6 +45,8 @@ namespace RenderData
 		std::vector<SubMesh>  subMeshes;
 		BOOL hasSkinning = false;
 		UINT32 maxBoneIndex = 0;
+		XMFLOAT3 boundsMin{ 0.0f, 0.0f, 0.0f };
+		XMFLOAT3 boundsMax{ 0.0f, 0.0f, 0.0f };
 	};
 
 	enum class MaterialTextureSlot : uint8_t
@@ -195,6 +199,9 @@ namespace RenderData
 		XMFLOAT4X4     localToWorld{};
 		UINT32		   globalPoseOffset = 0;
 		UINT32		   globalPoseCount = 0;
+		XMFLOAT3	   boundsMin{ 0.0f, 0.0f, 0.0f };
+		XMFLOAT3	   boundsMax{ 0.0f, 0.0f, 0.0f };
+		bool		   hasBounds = false;
 	};
 
 	struct UIElement

@@ -471,18 +471,21 @@ static void EmitSubMeshes(
 	if (!meshData.subMeshes.empty())
 	{
 		size_t subMeshIndex = 0;
-		for (const auto& sm : meshData.subMeshes)
+		for (const auto& subMesh : meshData.subMeshes)
 		{
 			RenderData::RenderItem item = baseItem;
 
-			item.useSubMesh = true;
-			item.indexStart = sm.indexStart;
-			item.indexCount = sm.indexCount;
-			item.localToWorld = sm.localToWorld;
+			item.useSubMesh   = true;
+			item.indexStart   = subMesh.indexStart;
+			item.indexCount   = subMesh.indexCount;
+			item.localToWorld = subMesh.localToWorld;
+			item.boundsMin    = subMesh.boundsMin;
+			item.boundsMax    = subMesh.boundsMax;
+			item.hasBounds    = true;
 
 			// submesh material override + 에디터에서 수정하면 갱신되도록
-			if (!item.material.IsValid() && sm.material.IsValid())
-				item.material = sm.material;
+			if (!item.material.IsValid() && subMesh.material.IsValid())
+				item.material = subMesh.material;
 
 			if (overrides && subMeshIndex < overrides->size())
 			{
@@ -547,10 +550,13 @@ static void EmitSubMeshes(
 	else
 	{
 		RenderData::RenderItem item = baseItem;
-		item.useSubMesh = false;
-		item.indexStart = 0;
-		item.indexCount = static_cast<UINT32>(meshData.indices.size());
+		item.useSubMesh   = false;
+		item.indexStart   = 0;
+		item.indexCount   = static_cast<UINT32>(meshData.indices.size());
 		item.localToWorld = Identity();
+		item.boundsMin    = meshData.boundsMin;
+		item.boundsMax    = meshData.boundsMax;
+		item.hasBounds    = true;
 		if (overrides && !overrides->empty())
 		{
 			const auto& overrideData = overrides->front();

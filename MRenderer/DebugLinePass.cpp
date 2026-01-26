@@ -4,6 +4,53 @@
 #include <cstdint>
 #include <cstring>
 
+void AppendAabbLines(std::vector<DirectX::XMFLOAT3>& vertices,
+	const RenderData::RenderItem& item)
+{
+	if (!item.hasBounds)
+	{
+		return;
+	}
+
+	const auto world = DirectX::XMLoadFloat4x4(&item.world);
+	const auto localToWorld = DirectX::XMLoadFloat4x4(&item.localToWorld);
+	const auto worldMatrix = DirectX::XMMatrixMultiply(localToWorld, world);
+
+	const DirectX::XMFLOAT3 min = item.boundsMin;
+	const DirectX::XMFLOAT3 max = item.boundsMax;
+
+	const DirectX::XMFLOAT3 corners[8] = {
+		{ min.x, min.y, min.z },
+		{ max.x, min.y, min.z },
+		{ max.x, max.y, min.z },
+		{ min.x, max.y, min.z },
+		{ min.x, min.y, max.z },
+		{ max.x, min.y, max.z },
+		{ max.x, max.y, max.z },
+		{ min.x, max.y, max.z }
+	};
+
+	DirectX::XMFLOAT3 worldCorners[8]{};
+	for (size_t i = 0; i < 8; ++i)
+	{
+		const auto corner = DirectX::XMLoadFloat3(&corners[i]);
+		const auto transformed = DirectX::XMVector3TransformCoord(corner, worldMatrix);
+		DirectX::XMStoreFloat3(&worldCorners[i], transformed);
+	}
+
+	const uint8_t edges[24] = {
+		0, 1, 1, 2, 2, 3, 3, 0,
+		4, 5, 5, 6, 6, 7, 7, 4,
+		0, 4, 1, 5, 2, 6, 3, 7
+	};
+
+	for (size_t i = 0; i < 24; i += 2)
+	{
+		vertices.push_back(worldCorners[edges[i]]);
+		vertices.push_back(worldCorners[edges[i + 1]]);
+	}
+}
+
 void DebugLinePass::EnsureVertexBuffer(size_t vertexCount)
 {
 	if (m_VertexBuffer && m_VertexCapacity >= vertexCount)
@@ -53,6 +100,8 @@ void DebugLinePass::Execute(const RenderData::FrameData& frame)
 		(void)layer;
 		for (const auto& item : items)
 		{
+			AppendAabbLines(lineVertices, item);
+
 			if (!item.skeleton.IsValid() || (item.globalPoseCount == 0 && item.skinningPaletteCount == 0))
 			{
 				continue;

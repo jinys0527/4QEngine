@@ -21,6 +21,8 @@
 #include "DX11.h"
 #include "Importer.h"
 #include "Util.h"
+#include "BoxColliderComponent.h"
+#include "RayHelper.h"
 #include "json.hpp"
 #include "ImGuizmo.h"
 #include "MathHelper.h"
@@ -50,7 +52,6 @@ bool EditorApplication::Initialize()
 	m_AssetLoader->LoadAll();
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
-
 	m_InputManager = &m_Services.Get<InputManager>();
 
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
@@ -92,7 +93,7 @@ void EditorApplication::Run() {
 			m_Engine.UpdateTime();
 			Update();
 			m_Engine.UpdateInput();
-			//UpdateLogic();  //★
+			UpdateLogic();  //★
 			Render();
 
 		}
@@ -146,9 +147,21 @@ void EditorApplication::UpdateInput()
 	}
 }
 
+void EditorApplication::UpdateLogic()
+{
+	if (m_EditorState == EditorPlayState::Play)
+	{
+		m_SceneManager.ChangeScene();
+	}
+}
+
 void EditorApplication::Update()
 {
-	float dTime = m_Engine.GetTime();
+	float dTime = m_Engine.GetTime(); 
+	if (m_InputManager)
+	{
+		m_InputManager->SetEnabled(m_EditorState == EditorPlayState::Play);
+	}
 	UpdateInput();
 	m_SceneManager.StateUpdate(dTime);
 	m_SceneManager.Update(dTime);
@@ -327,6 +340,123 @@ void EditorApplication::UpdateEditorCamera()
 	}
 }
 
+void EditorApplication::HandleEditorViewportSelection()
+{
+	if (m_EditorState != EditorPlayState::Stop)
+	{
+		return;
+	}
+
+	if (!m_EditorViewport.HasViewportRect() || !m_EditorViewport.IsHovered())
+	{
+		return;
+	}
+
+	ImGuiIO& io = ImGui::GetIO();
+	if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+	{
+		return;
+	}
+
+	if (ImGuizmo::IsOver() || ImGuizmo::IsUsing())
+	{
+		return;
+	}
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	auto editorCamera = scene->GetEditorCamera().get();
+	if (!editorCamera)
+	{
+		return;
+	}
+
+	const ImVec2 rectMin = m_EditorViewport.GetViewportRectMin();
+	const ImVec2 rectMax = m_EditorViewport.GetViewportRectMax();
+	const float width = rectMax.x - rectMin.x;
+	const float height = rectMax.y - rectMin.y;
+	if (width <= 0.0f || height <= 0.0f)
+	{
+		return;
+	}
+
+	const XMFLOAT4X4 viewMatrix = editorCamera->GetViewMatrix();
+	const XMFLOAT4X4 projMatrix = editorCamera->GetProjMatrix();
+	const auto viewMat = DirectX::XMLoadFloat4x4(&viewMatrix);
+	const auto projMat = DirectX::XMLoadFloat4x4(&projMatrix);
+	const Ray pickRay = MakePickRayLH(io.MousePos.x, io.MousePos.y, rectMin.x, rectMin.y, width, height, viewMat, projMat);
+
+	const auto& gameObjects = scene->GetGameObjects();
+	float closestT = FLT_MAX;
+	GameObject* closestObject = nullptr;
+
+	for (const auto& [name, object] : gameObjects)
+	{
+		if (!object)
+		{
+			continue;
+		}
+
+		auto* collider = object->GetComponent<BoxColliderComponent>();
+		if (!collider || !collider->HasBounds())
+		{
+			continue;
+		}
+
+		float hitT = 0.0f;
+		if (!collider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, hitT))
+		{
+			continue;
+		}
+
+		if (hitT >= 0.0f && hitT < closestT)
+		{
+			closestT = hitT;
+			closestObject = object.get();
+		}
+	}
+
+	if (!closestObject)
+	{
+		return;
+	}
+
+	const std::string& targetName = closestObject->GetName();
+	if (targetName.empty())
+	{
+		return;
+	}
+
+	if (io.KeyCtrl)
+	{
+		if (m_SelectedObjectNames.erase(targetName) == 0)
+		{
+			m_SelectedObjectNames.insert(targetName);
+			m_SelectedObjectName = targetName;
+		}
+		else if (m_SelectedObjectName == targetName)
+		{
+			if (!m_SelectedObjectNames.empty())
+			{
+				m_SelectedObjectName = *m_SelectedObjectNames.begin();
+			}
+			else
+			{
+				m_SelectedObjectName.clear();
+			}
+		}
+		return;
+	}
+
+	m_SelectedObjectName = targetName;
+	m_SelectedObjectNames.clear();
+	m_SelectedObjectNames.insert(targetName);
+}
+
 void EditorApplication::Render() {
 	if (!m_Engine.GetD3DDXDC()) return; //★
 
@@ -375,6 +505,20 @@ void EditorApplication::RenderImGUI() {
 		UpdateSceneViewport();
 	}
 
+	if (m_InputManager && m_GameViewport.HasViewportRect())
+	{
+		const ImVec2 rectMin = m_GameViewport.GetViewportRectMin();
+		const ImVec2 rectMax = m_GameViewport.GetViewportRectMax();
+		POINT clientMin{ static_cast<LONG>(rectMin.x), static_cast<LONG>(rectMin.y) };
+		POINT clientMax{ static_cast<LONG>(rectMax.x), static_cast<LONG>(rectMax.y) };
+
+		ScreenToClient(m_hwnd, &clientMin);
+		ScreenToClient(m_hwnd, &clientMax);
+
+		m_InputManager->SetViewportRect({ clientMin.x, clientMin.y, clientMax.x, clientMax.y });
+	}
+
+	HandleEditorViewportSelection();
 	UpdateEditorCamera();
 	DrawGizmo();
 
@@ -498,14 +642,16 @@ void EditorApplication::DrawMainMenuBar()
 		bool disablePause = (m_EditorState != EditorPlayState::Play);
 		bool disableStop = (m_EditorState == EditorPlayState::Stop);
 
+		// Pause -> Play 는 저장되지 않도록
 		ImGui::BeginDisabled(disablePlay);
 		if (ImGui::Button("Play", ImVec2(buttonWidth, 0)))
 		{
-			m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+			if (m_EditorState == EditorPlayState::Stop)
+			{
+				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+			}
 			m_SceneManager.GetCurrentScene()->SetIsPause(false);
 			m_EditorState = EditorPlayState::Play;
-
-
 		}
 		ImGui::EndDisabled();
 
@@ -2256,6 +2402,10 @@ void EditorApplication::DrawFolderView()
 					const std::string label = name;
 					const bool selected = (m_SelectedResourcePath == entry.path());
 					const bool isSceneFile = entry.path().extension() == ".json";
+
+					if (isSceneFile) {
+						m_SceneManager.RegisterSceneFromJson(entry.path()); //Scene 모두 등록
+					}
 					ImGui::PushID(label.c_str());
 					if (isSceneFile && selected)
 					{

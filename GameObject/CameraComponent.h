@@ -61,8 +61,6 @@ public:
 	// 화면 크기 들어오면 aspect 갱신
 	void SetViewport(const Viewport& viewport);
 	const Viewport& GetViewport() const
-	
-
 	{
 		return m_Viewport;
 	}

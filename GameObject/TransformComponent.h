@@ -54,7 +54,7 @@ public:
 	
 	const XMFLOAT3& GetPosition() const { return m_Position; }
 	const XMFLOAT4& GetRotation() const { return m_Rotation; }
-	// const XMFLOAT3& GetRotationEuler() const { return } 필요할때 구현
+
 	const XMFLOAT3& GetScale() const { return m_Scale; }
 
 	void Translate(const XMFLOAT3& delta);

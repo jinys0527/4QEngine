@@ -17,6 +17,7 @@
 #include "AnimFSMComponent.h"
 #include "UIFSMComponent.h"
 #include "SceneChangeTestComponent.h"
+#include "BoxColliderComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -36,12 +37,19 @@ extern "C" {
 	void Link_AnimationComponent();
 	void Link_SkeletalMeshComponent();
 	void Link_SkeletalMeshRenderer();
-	void Link_PlayerMovementComponent();
 	void Link_FSMComponent();
 	void Link_CollisionFSMComponent();
 	void Link_AnimFSMComponent();
 	void Link_UIFSMComponent();
+	
+	//User Defined
 	void Link_SceneChangeTestComponent();
+	void Link_PlayerMovementComponent();
+	void Link_GridSystemComponent();
+	void Link_NodeComponent();
+	void Link_PlayerComponent();
+	void Link_EnemyComponent();
+	void Link_BoxColliderComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -64,15 +72,25 @@ void LinkEngineComponents() {
 	Link_AnimationComponent();
 	Link_SkeletalMeshComponent();
 	Link_SkeletalMeshRenderer();
-	Link_PlayerMovementComponent();
 	Link_FSMComponent();
 	Link_CollisionFSMComponent();
 	Link_AnimFSMComponent();
 	Link_UIFSMComponent();
 	Link_SceneChangeTestComponent();
+	Link_BoxColliderComponent();
+
 
 	RegisterFSMBaseDefinitions();
 	RegisterUIFSMDefinitions();
 	RegisterCollisionFSMDefinitions();
 	RegisterAnimFSMDefinitions();
+
+
+	//User Defined
+	Link_SceneChangeTestComponent();
+	Link_PlayerMovementComponent();
+	Link_GridSystemComponent();
+	Link_NodeComponent();
+	Link_PlayerComponent();
+	Link_EnemyComponent();
 }

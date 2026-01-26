@@ -28,6 +28,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "UI_Hovered", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Released", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Dragged", "UI" });
+	eventRegistry.RegisterEvent({ "UI_DoubleClicked", "UI" });
 }
 
 
@@ -61,7 +62,8 @@ UIFSMComponent::~UIFSMComponent()
 	GetEventDispatcher().RemoveListener(EventType::Pressed, this);
 	GetEventDispatcher().RemoveListener(EventType::Hovered, this);
 	GetEventDispatcher().RemoveListener(EventType::Released, this);
-	GetEventDispatcher().RemoveListener(EventType::Dragged, this);
+	GetEventDispatcher().RemoveListener(EventType::UIDragged, this);
+	GetEventDispatcher().RemoveListener(EventType::UIDoubleClicked, this);
 }
 
 void UIFSMComponent::Start()
@@ -71,7 +73,8 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
 	GetEventDispatcher().AddListener(EventType::Hovered, this);
 	GetEventDispatcher().AddListener(EventType::Released, this);
-	GetEventDispatcher().AddListener(EventType::Dragged, this);
+	GetEventDispatcher().AddListener(EventType::UIDragged, this);
+	GetEventDispatcher().AddListener(EventType::UIDoubleClicked, this);
 }
 
 std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const void* data)
@@ -84,8 +87,10 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("UI_Hovered");
 	case EventType::Released:
 		return std::string("UI_Released");
-	case EventType::Dragged:
+	case EventType::UIDragged:
 		return std::string("UI_Dragged");
+	case EventType::UIDoubleClicked:
+		return std::string("UI_DoubleClicked");
 	default:
 		return std::nullopt;
 	}

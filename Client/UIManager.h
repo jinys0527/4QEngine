@@ -72,6 +72,9 @@ public:
 
 	void RefreshUIListForCurrentScene();
 
+	bool IsPointOverUI(const POINT& pos) const;
+	bool IsDraggingUI() const { return m_ActiveUI != nullptr; }
+
 private:
 	// UIManager 멤버 변수에 추가 (헤더에 선언)
 	std::vector<UIObject*> m_SortedUI;
