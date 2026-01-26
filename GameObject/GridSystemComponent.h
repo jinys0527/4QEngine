@@ -3,6 +3,8 @@
 #include "NodeComponent.h"
 using namespace std;
 
+class PlayerComponent;
+class EnemyComponent;
 
 struct AxialKey {
 	int q = 0;
@@ -53,11 +55,16 @@ private:
 	void ScanNodes(); // Scene 순회 후 Nodes 등록
 	void MakeGraph();// 위치기반 노드 연결
 	void UpdateMoveRange(NodeComponent* startNode, int range);
+	void UpdateActorPositions();
+	void UpdateActorNodeState(const AxialKey& previous, const AxialKey& current, NodeState state);
+	
 
 	void CalculatePath(); // 길찾기
 	// node 받기
 	vector<NodeComponent*> m_Nodes;
-	NodeComponent* m_PlayerNode;
+	vector<EnemyComponent*> m_Enemies;
+	NodeComponent* m_PlayerNode = nullptr;
+	PlayerComponent* m_Player = nullptr;
 
 	std::unordered_map<AxialKey, NodeComponent*, AxialKeyHash> m_NodesByAxial;
 	int m_NodesCount = 0; //for Debug

@@ -100,7 +100,8 @@ void GridSystemComponent::Start()
 
 void GridSystemComponent::Update(float deltaTime) {
 	(void)deltaTime;
-	
+
+	UpdateActorPositions();
 	UpdateMoveRange(m_PlayerNode, 6);
 }
 
@@ -115,6 +116,10 @@ void GridSystemComponent::ScanNodes()
 	m_NodesCount = 0;
 	m_Nodes.clear();
 	m_NodesByAxial.clear();
+	m_Player = nullptr;
+	m_Enemies.clear();
+
+
 	if (!GetOwner()) { return; }
 	auto* scene = GetOwner()->GetScene();
 	if (!scene) { return; }
@@ -141,12 +146,14 @@ void GridSystemComponent::ScanNodes()
 				auto* trans = object->GetComponent<TransformComponent>();
 				const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 				player->SetQR(axial.q, axial.r);
+				m_Player = player;
 				continue;
 			}
 			//Enemy 처리
 			auto* trans = object->GetComponent<TransformComponent>();
 			const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 			enemy->SetQR(axial.q, axial.r);
+			m_Enemies.push_back(enemy);
 			continue;
 		}
 
@@ -156,11 +163,25 @@ void GridSystemComponent::ScanNodes()
 
 
 		node->SetQR(axial.q, axial.r);
+		node->SetState(NodeState::Empty); //?
 
 		m_Nodes.push_back(node);
 		m_NodesByAxial[{ axial.q, axial.r }] = node;
 
 		m_NodesCount++; // debuging 용ㅤ
+	}
+
+	if (m_Player) {
+		const AxialKey current{ m_Player->GetQ(), m_Player->GetR() };
+		UpdateActorNodeState(current, current, NodeState::HasPlayer);
+	}
+
+	for (auto* enemy : m_Enemies) {
+		if (!enemy) {
+			continue;
+		}
+		const AxialKey current{ enemy->GetQ(), enemy->GetR() };
+		UpdateActorNodeState(current, current, NodeState::HasMonster);
 	}
 
 }
@@ -239,6 +260,64 @@ void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 		}
 	}
 }
+
+//Player/ Enemy 변경에 따른 Node state Update
+void GridSystemComponent::UpdateActorPositions() 
+{
+	if (m_Player) {
+		auto* playerOwner = m_Player->GetOwner();
+		auto* trans = playerOwner ? playerOwner->GetComponent<TransformComponent>() : nullptr;
+		if (trans) {
+			const AxialKey previous{ m_Player->GetQ(), m_Player->GetR() };
+			const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
+			if (!(previous == current)) {
+				UpdateActorNodeState(previous, current, NodeState::HasPlayer);
+				m_Player->SetQR(current.q, current.r);
+			}
+		}
+	}
+
+	for (auto* enemy : m_Enemies) {
+		if (!enemy) {
+			continue;
+		}
+		auto* enemyOwner = enemy->GetOwner();
+		auto* trans = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
+		if (!trans) {
+			continue;
+		}
+		const AxialKey previous{ enemy->GetQ(), enemy->GetR() };
+		const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
+		if (!(previous == current)) {
+			UpdateActorNodeState(previous, current, NodeState::HasMonster);
+			enemy->SetQR(current.q, current.r);
+		}
+	}
+}
+
+void GridSystemComponent::UpdateActorNodeState(const AxialKey& previous, const AxialKey& current, NodeState state)
+{
+	if (!(previous == current)) {
+		auto it = m_NodesByAxial.find(previous);
+		if (it != m_NodesByAxial.end() && it->second) {
+			if (it->second->GetState() == state) {
+				it->second->SetState(NodeState::Empty);
+			}
+		}
+	}
+
+	auto it = m_NodesByAxial.find(current);
+	if (it != m_NodesByAxial.end() && it->second) {
+		it->second->SetState(state);
+		if (state == NodeState::HasPlayer) {
+			m_PlayerNode = it->second;
+		}
+	}
+	else if (state == NodeState::HasPlayer) {
+		m_PlayerNode = nullptr;
+	}
+}
+
 
 void GridSystemComponent::MakeGraph()
 {
