@@ -9,14 +9,13 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
-    ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
-    dxdc->PSSetShaderResources(0, 128, nullSRVs);
     SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
-    SetBlendState(BS::DEFAULT);
+    SetBlendState(BS::ALPHABLEND);
     SetRasterizerState(RS::SOLID);
     SetDepthStencilState(DS::DEPTH_OFF);
-    SetSamplerState();    
+    SetSamplerState();
+
 #pragma endregion
 
     //먼저 화면전체 Quad그리기
@@ -38,17 +37,11 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
-    dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
+    dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
     dxdc->PSSetShaderResources(1, 1, m_RenderContext.pTexRvScene_Blur.GetAddressOf());
     dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthRV.GetAddressOf());
 
     m_RenderContext.DrawFSTriangle();
-
-
-    ID3D11ShaderResourceView* nullSRV[128] = {};
-    dxdc->PSSetShaderResources(0, 128, nullSRV);
-    //m_RenderContext.MyDrawText(1920, 1080);
-
 
     //★아래 프레임데이터를 순회하면서 그리는게 필요없어 보이는데 어떻게 넘겨줄지 몰라서 일단 남김.
     //for (size_t index : GetQueue())

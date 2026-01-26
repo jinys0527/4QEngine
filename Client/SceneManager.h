@@ -1,22 +1,15 @@
 ﻿#pragma once
-// Game / Client 용
 #include <memory>
 #include <unordered_map>
-#include <filesystem>
 #include <string>
 #include "Scene.h"
-#include "EventDispatcher.h"
-#include "IEventListener.h"
-
 
 class ServiceRegistry;
 class GameManager;
 class UIManager;
 class CameraObject;
-class InputManager; 
 
-
-class SceneManager : public IEventListener
+class SceneManager
 {
 	friend class Editor;
 public:
@@ -41,7 +34,6 @@ public:
 
 	void Reset()
 	{
-		SetEventDispatcher(nullptr);
 		m_Scenes.clear();
 		m_CurrentScene.reset();
 	}
@@ -49,25 +41,19 @@ public:
 	void RequestQuit() { m_ShouldQuit = true; }
 	bool ShouldQuit() const { return m_ShouldQuit; }
 
-	void SetChangeScene(const std::string& name);
-	void SetEventDispatcher(EventDispatcher* eventDispatcher);
-	void OnEvent(EventType type, const void* data) override;
+	void SetChangeScene(std::string name);
 
 private:
 	ServiceRegistry& m_Services;
-	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames);
-	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::shared_ptr<Scene> m_CurrentScene;
 	CameraObject*   m_Camera = nullptr;
 	GameManager*	m_GameManager;
 	UIManager*		m_UIManager;
-	InputManager*	m_InputManager;
-	EventDispatcher* m_EventDispatcher = nullptr;
-	std::filesystem::path scenesPath = "../Resources/Scenes"; //Resource 파일 경로
+	
 	bool m_ShouldQuit = false;
 
-	std::string m_ChangeSceneName = "";
+	std::string m_ChangeSceneName;
 };
 

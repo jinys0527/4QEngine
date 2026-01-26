@@ -14,8 +14,7 @@ float4 DirectLight(float4 nrm)
     float4 L = float4(lights[0].viewDir, 0);
         
     //뷰공간으로 정보를 변환.
-    N = mul(N, mView);
-    L = mul(L, mView);
+    N = mul(N, mul(mWorld, mView));
     
     //각 벡터 노멀라이즈.
     N = normalize(N);
@@ -33,67 +32,13 @@ float4 DirectLight(float4 nrm)
 	return saturate(diff + amb);
 }
 
-float4 SpecularLight_Point(float4 pos, float4 nrm, Light light)
-{
-    float4 spec = 0;
-    spec.a = 1;
-    
-    float3 N = nrm.xyz;
-    N = normalize(N);
-    
-    float3 L = normalize(light.Pos - pos.xyz);
-
-    float3 V = normalize(cameraPos - pos.xyz);
-    
-    float3 H = normalize(L + V);
-
-    float NdotL = saturate(dot(N, L));
-    if (NdotL <= 0)
-        return 0;
-
-    float scalar = saturate(dot(H, N));
-    
-    scalar = pow(scalar, 80.f);
-    
-    spec.xyz = light.Color.xyz * scalar * NdotL;
-    
-    return saturate(spec);
-}
-
-float4 SpecularLight_Direction(float4 pos, float4 nrm)
-{
-    float4 spec = 0;
-    spec.a = 1;
-    
-    float3 N = nrm.xyz;
-    N = normalize(N);
-    
-    float3 L = normalize(lights[0].viewDir);
-
-    float3 V = normalize(cameraPos - pos.xyz);
-    
-    float3 H = normalize(L + V);
-
-    float NdotL = saturate(dot(N, L));
-    if (NdotL <= 0)
-        
-        return 0;
-    float scalar = saturate(dot(H, N));
-    
-    scalar = pow(scalar, 80.f);
-    
-    spec.xyz = lights[0].Color.xyz * scalar * NdotL;
-    
-    return saturate(spec);
-}
-
 float PCF(float4 smUV)
 {
     float2 uv = smUV.xy ;
     float curDepth = smUV.z;
 
     float offset = 1.0f / 4096.0f;
-    float bias = pow(0.5f, 11);
+    float bias = pow(0.5f, 23);
 
     float sum = 0.0f;
 
@@ -110,8 +55,7 @@ float PCF(float4 smUV)
             sum += (smDepth >= curDepth - bias) ? 1.0f : 0.0f;
         }
     }
-    //float shadow = smoothstep(0.0f, 16.0f, sum);
-    float shadow = sum / 16.0f;
+    float shadow = smoothstep(0.0f, 16.0f, sum);
     return max(shadow, 0.3f);
 }
 
@@ -131,11 +75,57 @@ float4 Masking(float4 uv)
 {
     uv.xy /= uv.w;
     
-    float4 mask = g_Mask_Wall.Sample(smpBorder, uv.xy);
+    float4 mask = g_Mask_Wall.Sample(smpBoreder, uv.xy);
     
     
     
     return mask;
+}
+
+
+float4 SpecularLight_Point(float4 pos, float4 nrm, Light light)
+{
+    float4 spec = 0;    spec.a = 1;
+    
+    float3 N = nrm.xyz;
+    N = normalize(N);
+    
+    float3 L = light.Pos - pos.xyz;
+
+    float3 V = normalize(cameraPos - pos.xyz);
+    
+    float3 H = normalize(L + V);
+
+    float scalar = saturate(dot(H, N));
+    
+    scalar = pow(scalar, 80.f);
+    
+    spec.xyz = light.Color.xyz * scalar;
+    
+    return saturate(spec);
+}
+
+float4 SpecularLight_Direction(float4 pos, float4 nrm)
+{
+    float4 spec = 0;
+    spec.a = 1;
+    
+    float3 N = nrm.xyz;
+    N = normalize(mul(N, (float3x3)mWorldInvTranspose));
+    
+    float3 L = normalize(lights[0].viewDir);
+
+    float3 V = normalize(cameraPos - pos.xyz);
+    
+    float3 H = normalize(L + V);
+
+    float scalar = saturate(dot(H, N));
+    
+    scalar = pow(scalar, 80.f);
+    
+    spec.xyz = lights[0].Color.xyz * scalar;
+    
+    return saturate(spec);
 }
 
 void BuildTBN(
@@ -156,7 +146,7 @@ void BuildTBN(
     N = normalize(inN);
 
     float3 n = texN.xyz * 2 - 1;
-    //n.y = -n.y; // GL → DX
+    n.y = -n.y; // GL → DX
     
     float3x3 mTBN = float3x3(T, B, N);
     n = normalize(mul(n, mTBN));
@@ -206,8 +196,11 @@ float4 UE_G_Smith(float ndotv, float ndotl, float4 roughness)
 
 
 // F0 from metallic workflow (UE style)
-float4 ComputeF0(float4 baseColor, float4 metallic, float specular)
+float4 ComputeF0(float4 baseColor, float4 metallic, float4 specular)
 {
+    // UE default dielectric F0 ~= 0.04.
+    // Specular input in UE is 0..1 and scales dielectric F0 around ~0.08 max.
+    // Common approximation: dielectricF0 = 0.08 * specular
     float4 dielectricF0 = 0.08 * specular;
     return lerp(dielectricF0, baseColor, metallic);
 }
@@ -229,9 +222,7 @@ BRDFResult BRDF_UE_Direct(float4 viewNrm, float4 viewPos, float4 viewLitDir,
     float4 P = viewPos;
     P.w = 1;
     float4 N = normalize(viewNrm);
-    float3 V3 = -P.xyz;
-    V3 = (dot(V3, V3) < 1e-8) ? float3(0, 0, 1) : normalize(V3);
-    float4 V = float4(V3, 0);
+    float4 V = normalize(-P);
     float4 L = normalize(viewLitDir);
 
     float4 H = normalize(V + L);
@@ -274,9 +265,9 @@ float4 UE_DirectionalLighting(float4 viewPos, float4 viewNrm, float4 viewLitDir,
     float4 N = viewNrm;
     float4 L = normalize(viewLitDir);
     L.w = 0;
-    //float4 V = normalize(-P);
+    float4 V = normalize(-P);
 
-    BRDFResult brdf = BRDF_UE_Direct(N, P, L, base, metallic, roughness, ao, specularParam);
+    BRDFResult brdf = BRDF_UE_Direct(N, V, L, base, metallic, roughness, ao, specularParam);
         
     float4 radianceDiff = lights[0].Color * lights[0].Intensity;
     float4 radianceSpec = lights[0].Color * lights[0].Intensity;
@@ -293,133 +284,45 @@ float4 UE_DirectionalLighting(float4 viewPos, float4 viewNrm, float4 viewLitDir,
     color.a = 1;
     //return float4(lights[0].Intensity, lights[0].Intensity, lights[0].Intensity, 1);
     
-    return color;
-}
-
-float3 SRGBToLinear(float3 c)
-{
-    return pow(saturate(c), 2.2f);
-}
-
-float3 LinearToSRGB(float3 c)
-{
-    return pow(saturate(c), 1.0f / 2.2f);
-}
-
-//채도 조절
-float3 AdjustSaturation(float3 color, float saturation)
-{
-    // saturation: 1 = 원본, 0 = 흑백, 1보다 크면 더 쨍함
-    float luma = dot(color, float3(0.0656, 0.7152, 0.0722));
-    return lerp(luma.xxx, color, saturation);
+    return saturate(color);
 }
 
 // Point Light ----------------------------------------------------------------
-float4 UE_PointLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
-                                  float4 base, float4 ao, float4 metallic, float4 roughness,
-                                  float specularParam)
-{
-    float4 P = viewPos; // view space
-    float4 N = normalize(viewNrm);
+//float4 UE_PointLighting(float4 viewPos, float4 viewNrm, float4 viewLitPos,
+//                        float4 base, float4 ao, float4 metallic, float4 roughness,
+//                        float specularParam)
+//{
+//    float4 P = viewPos;
+//    float4 LP = viewLitPos;
 
-    // light position: world -> view 변환
-    float3 litPosV = mul(float4(lit.Pos, 1.0f), mView).xyz;
+//    float4 N = normalize(viewNrm);
 
-    float3 toL = litPosV - P.xyz;
-    float dist2 = dot(toL, toL);
-    float dist = sqrt(max(dist2, 1e-8));
+//    float4 toL = LP - P;
+//    float dist2 = dot(toL, toL);
+//    float dist = sqrt(max(dist2, 1e-8));
+//    float4 L = toL / dist;
 
-    float3 L = toL / dist; // view space
-
-    // attenuation (range 기반)
-    float att = 1.0f / max(dist2, 1e-4);
-
-    float s = saturate(1.0f - dist / max(lit.Range, 1e-4));
-    att *= (s * s);
-
-    BRDFResult brdf = BRDF_UE_Direct(float4(N.xyz, 0), float4(P.xyz, 1), float4(L, 0),
-                                     base, metallic, roughness, ao, specularParam);
-
-    float4 radiance = lit.Color * max(lit.Intensity,0);
-
-    float ndotl = saturate(dot(N.xyz, L));
-
-    float4 color = (brdf.diffuse + brdf.specular) * radiance * ndotl * att;
-    color.a = 1;
-    return color;
-}
-
-//spotlight
-float4 UE_SpotLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
-                                 float4 base, float4 ao, float4 metallic, float4 roughness,
-                                 float specularParam)
-{
-    float4 P = viewPos; // view space
-    float4 N = normalize(viewNrm);
-
-// light position: world -> view
-    float3 litPosV = mul(float4(lit.Pos, 1.0f), mView).xyz;
+//    float4 V = normalize(-P);
 
 
-    float3 toL = litPosV - P.xyz;
-    float dist2 = dot(toL, toL);
-    float dist = sqrt(max(dist2, 1e-8));
-    float3 L = toL / dist; // view space (P -> Light)
+//    float att = rcp(max(dist2, 1e-4));
+//    float s = saturate(1.0 - dist / max(g_PointLit.Range, 1e-4));
+//    att *= (s * s);
 
+//    BRDFResult brdf = BRDF_UE_Direct(N, V, L, base, metallic, roughness, ao, specularParam);
 
-// ----------------------------
-// 거리 감쇠 (attenuation radius 기반)
-    float r = max(lit.Range, 1e-4);
-    float invR2 = 1.0f / (r * r);
+//    float4 radiance = g_PointLit.Diffuse * g_PointLit.Strength;
 
-
-// dist2가 r^2에 가까워질수록 0으로 감쇠
-    float att = saturate(1.0f - dist2 * invR2);
-    att *= att; // 부드럽게
-
-
-    //float fadeWidth = max(lit.AttenuationRadius * 0.1f, 0.01f); // 10% 정도 페이드
-    //float cutoff = smoothstep(lit.AttenuationRadius, lit.AttenuationRadius - fadeWidth, dist);
-    //att *= cutoff;
+//    float ndotl = saturate(dot(N, L));
     
-    float cutoff = step(dist, lit.AttenuationRadius);
-    att *= cutoff;
-    
-// ----------------------------
-// 각도 감쇠 (Spot)
-// lit.Dir : world space spotlight direction (Light가 바라보는 방향)
-    float3 litDirV = normalize(lit.viewDir);
+//    float4 albedo = (base * (1.0 - metallic)) * ao;
+
+//    float4 color = (brdf.diffuse + brdf.specular) * radiance * ndotl * att;
 
 
-// spotlight axis는 Light -> Pixel 방향이어야 함
-// 현재 L은 Pixel -> Light 이므로 반대로 뒤집어야 함
-    float3 lightToP = -L;
+//    color += g_PointLit.Ambient * albedo * att;
+//    color.a = 1;
 
-
-    float spotCos = dot(lightToP, litDirV);
-
-// lit.InnerAngle / lit.OuterAngle 가 "라디안"이라고 가정
-    float innerCos = cos(lit.SpotInnerAngle);
-    float outerCos = cos(lit.SpotOutterAngle);
-
-
-    float spot = smoothstep(outerCos, innerCos, spotCos);
-
-
-// ----------------------------
-    BRDFResult brdf = BRDF_UE_Direct(float4(N.xyz, 0), float4(P.xyz, 1), float4(L, 0),
-base, metallic, roughness, ao, specularParam);
-
-
-    float4 radiance = lit.Color * max(lit.Intensity, 0);
-
-
-    float ndotl = saturate(dot(N.xyz, L));
-
-
-    float4 color = (brdf.diffuse + brdf.specular) * radiance * ndotl * att * spot;
-    color.a = 1;
-    return color;
-}
-
+//    return saturate(color);
+//}
 #endif

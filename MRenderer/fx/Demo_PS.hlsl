@@ -14,5 +14,4 @@ float4 PS_Main(VSOutput i) : SV_TARGET
     final = albedo * diffuse + spec;
     
     return final;
-    return float4(i.nrm.xyz, 1);
 }

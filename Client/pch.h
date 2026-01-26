@@ -29,9 +29,7 @@
 #include <array>
 #include <list>
 #include <vector>
-#include <algorithm>
 #include <string>
-
 
 // 미리 컴파일된 헤더를 사용하는 경우 컴파일이 성공하려면 이 소스 파일이 필요합니다.
 // 
@@ -58,7 +56,7 @@
 #include <d2d1_3helper.h>            // D2D1::Helper 클래스들
 #include <dwrite_3.h>                // DirectWrite (최신 텍스트 엔진)
 #include <wincodec.h>                // WIC (이미지 로딩)
-#include <fstream>
+
 
 #define _USE_MATH_DEFINES
 #include <cmath>

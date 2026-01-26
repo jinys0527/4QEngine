@@ -364,9 +364,3 @@ MigrationBackup/
 FodyWeavers.xsd
 Sound/
 Engine/TestScene.cpp
-
-# 3D / textures
-# *.fbx
-# *.png
-# *.jpg
-# *.jpeg

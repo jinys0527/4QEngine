@@ -24,7 +24,7 @@ static void CollectUnionTimesTicks(const aiNodeAnim* anim, std::vector<double>& 
 
 	for (uint32_t i = 0; i < anim->mNumPositionKeys; ++i) outTimes.push_back(anim->mPositionKeys[i].mTime);
 	for (uint32_t i = 0; i < anim->mNumRotationKeys; ++i) outTimes.push_back(anim->mRotationKeys[i].mTime);
-	for (uint32_t i = 0; i < anim->mNumScalingKeys; ++i) outTimes.push_back(anim->mScalingKeys[i].mTime);
+	for (uint32_t i = 0; i < anim->mNumScalingKeys;  ++i) outTimes.push_back(anim->mScalingKeys[i].mTime);
 
 	std::sort(outTimes.begin(), outTimes.end());
 	outTimes.erase(std::unique(outTimes.begin(), outTimes.end()), outTimes.end());
@@ -188,9 +188,6 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 		ofs << j.dump(2);
 
 #ifdef _DEBUG
-		std::vector<std::string> missingBones(missingBoneNames.begin(), missingBoneNames.end());
-		std::sort(missingBones.begin(), missingBones.end());
-		WriteAnimationDebug(outPath, clip, missingBones, skippedEmptyTracks);
 		//std::vector<std::string> missingBones(missingBoneNames.begin(), missingBoneNames.end());
 		//std::sort(missingBones.begin(), missingBones.end());
 		//WriteAnimationDebug(outPath, clip, missingBones, skippedEmptyTracks);

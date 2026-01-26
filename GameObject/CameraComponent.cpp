@@ -9,7 +9,6 @@ REGISTER_PROPERTY(CameraComponent, Up)
 REGISTER_PROPERTY(CameraComponent, NearZ)
 REGISTER_PROPERTY(CameraComponent, FarZ)
 REGISTER_PROPERTY(CameraComponent, Viewport)
-REGISTER_PROPERTY(CameraComponent, ProjectionMode)
 REGISTER_PROPERTY(CameraComponent, Perspective)
 REGISTER_PROPERTY(CameraComponent, Ortho)
 REGISTER_PROPERTY(CameraComponent, OrthoOffCenter)
@@ -130,21 +129,6 @@ XMFLOAT4X4 CameraComponent::GetProjMatrix()
 {
 	RebuildProjIfDirty(); // 필요할 때만 계산
 	return m_Proj;
-}
-
-void CameraComponent::SetProjectionMode(const ProjectionMode& mode)
-{
-	if (m_Mode == mode)
-	{
-		return;
-	}
-
-	m_Mode = mode;
-	if (m_Mode == ProjectionMode::Perspective && m_Viewport.Height > 0.0f)
-	{
-		m_Perspective.Aspect = m_Viewport.Width / m_Viewport.Height;
-	}
-	m_ProjDirty = true;
 }
 
 void CameraComponent::SetEyeLookUp(const XMFLOAT3& eye, const XMFLOAT3& look, const XMFLOAT3& up)

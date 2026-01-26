@@ -115,7 +115,6 @@ static std::string ResolveExternalTexturePath(
 	const std::unordered_map<std::string, std::string>& externalTextureRemap,
 	const std::string& rawPath)
 {
-	//항상 파일명만 사용하도록 바꿈
 	if (rawPath.empty()) return {};
 
 	auto it = externalTextureRemap.find(rawPath);
@@ -126,10 +125,9 @@ static std::string ResolveExternalTexturePath(
 	{
 		it = externalTextureRemap.find(baseName);
 		if (it != externalTextureRemap.end()) return it->second;
-		return baseName;  
 	}
 
-	return {};
+	return rawPath;
 }
 
 

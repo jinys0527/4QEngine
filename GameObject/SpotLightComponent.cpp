@@ -15,7 +15,6 @@ SpotLightComponent::SpotLightComponent()
 
 void SpotLightComponent::Update(float deltaTime)
 {
-	LightComponent::Update(deltaTime);
 }
 
 void SpotLightComponent::OnEvent(EventType type, const void* data)

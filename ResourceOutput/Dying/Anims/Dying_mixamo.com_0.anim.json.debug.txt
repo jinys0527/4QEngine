@@ -1,58 +1,59 @@
 name=mixamo.com
 duration=4.4
 ticksPerSecond=30
-tracks=52
-totalKeys=3516
+tracks=4
+totalKeys=532
 skippedEmptyTracks=0
-track[0] boneIndex=12 keys=133
-track[1] boneIndex=1 keys=133
-track[2] boneIndex=20 keys=165
-track[3] boneIndex=186 keys=133
-track[4] boneIndex=24 keys=133
-track[5] boneIndex=28 keys=133
-track[6] boneIndex=45 keys=1
-track[7] boneIndex=49 keys=1
-track[8] boneIndex=53 keys=1
-track[9] boneIndex=58 keys=1
-track[10] boneIndex=62 keys=1
-track[11] boneIndex=66 keys=1
-track[12] boneIndex=84 keys=1
-track[13] boneIndex=88 keys=1
-track[14] boneIndex=92 keys=1
-track[15] boneIndex=71 keys=1
-track[16] boneIndex=75 keys=1
-track[17] boneIndex=79 keys=1
-track[18] boneIndex=32 keys=1
-track[19] boneIndex=36 keys=133
-track[20] boneIndex=40 keys=133
-track[21] boneIndex=182 keys=133
-track[22] boneIndex=16 keys=133
-track[23] boneIndex=190 keys=133
-track[24] boneIndex=178 keys=133
-track[25] boneIndex=10 keys=133
-track[26] boneIndex=101 keys=133
-track[27] boneIndex=203 keys=133
-track[28] boneIndex=105 keys=133
-track[29] boneIndex=109 keys=133
-track[30] boneIndex=126 keys=1
-track[31] boneIndex=130 keys=1
-track[32] boneIndex=134 keys=1
-track[33] boneIndex=139 keys=1
-track[34] boneIndex=143 keys=1
-track[35] boneIndex=147 keys=1
-track[36] boneIndex=165 keys=1
-track[37] boneIndex=169 keys=1
-track[38] boneIndex=173 keys=1
-track[39] boneIndex=152 keys=1
-track[40] boneIndex=156 keys=1
-track[41] boneIndex=160 keys=1
-track[42] boneIndex=113 keys=1
-track[43] boneIndex=117 keys=133
-track[44] boneIndex=121 keys=133
-track[45] boneIndex=199 keys=133
-track[46] boneIndex=97 keys=133
-track[47] boneIndex=207 keys=133
-track[48] boneIndex=195 keys=133
-track[49] boneIndex=4 keys=133
-track[50] boneIndex=6 keys=133
-track[51] boneIndex=7 keys=133
+track[0] boneIndex=5 keys=133
+track[1] boneIndex=0 keys=133
+track[2] boneIndex=2 keys=133
+track[3] boneIndex=3 keys=133
+missingBones=48
+  mixamorig1:LeftArm_$AssimpFbx$_Rotation
+  mixamorig1:LeftFoot_$AssimpFbx$_Rotation
+  mixamorig1:LeftForeArm_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandIndex1_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandIndex2_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandIndex3_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandMiddle1_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandMiddle2_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandMiddle3_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandPinky1_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandPinky2_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandPinky3_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandRing1_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandRing2_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandRing3_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandThumb1_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandThumb2_$AssimpFbx$_Rotation
+  mixamorig1:LeftHandThumb3_$AssimpFbx$_Rotation
+  mixamorig1:LeftHand_$AssimpFbx$_Rotation
+  mixamorig1:LeftLeg_$AssimpFbx$_Rotation
+  mixamorig1:LeftShoulder_$AssimpFbx$_Rotation
+  mixamorig1:LeftToeBase_$AssimpFbx$_Rotation
+  mixamorig1:LeftUpLeg_$AssimpFbx$_Rotation
+  mixamorig1:Neck_$AssimpFbx$_Rotation
+  mixamorig1:RightArm_$AssimpFbx$_Rotation
+  mixamorig1:RightFoot_$AssimpFbx$_Rotation
+  mixamorig1:RightForeArm_$AssimpFbx$_Rotation
+  mixamorig1:RightHandIndex1_$AssimpFbx$_Rotation
+  mixamorig1:RightHandIndex2_$AssimpFbx$_Rotation
+  mixamorig1:RightHandIndex3_$AssimpFbx$_Rotation
+  mixamorig1:RightHandMiddle1_$AssimpFbx$_Rotation
+  mixamorig1:RightHandMiddle2_$AssimpFbx$_Rotation
+  mixamorig1:RightHandMiddle3_$AssimpFbx$_Rotation
+  mixamorig1:RightHandPinky1_$AssimpFbx$_Rotation
+  mixamorig1:RightHandPinky2_$AssimpFbx$_Rotation
+  mixamorig1:RightHandPinky3_$AssimpFbx$_Rotation
+  mixamorig1:RightHandRing1_$AssimpFbx$_Rotation
+  mixamorig1:RightHandRing2_$AssimpFbx$_Rotation
+  mixamorig1:RightHandRing3_$AssimpFbx$_Rotation
+  mixamorig1:RightHandThumb1_$AssimpFbx$_Rotation
+  mixamorig1:RightHandThumb2_$AssimpFbx$_Rotation
+  mixamorig1:RightHandThumb3_$AssimpFbx$_Rotation
+  mixamorig1:RightHand_$AssimpFbx$_Rotation
+  mixamorig1:RightLeg_$AssimpFbx$_Rotation
+  mixamorig1:RightShoulder_$AssimpFbx$_Rotation
+  mixamorig1:RightToeBase_$AssimpFbx$_Rotation
+  mixamorig1:RightUpLeg_$AssimpFbx$_Rotation
+  mixamorig1:Spine_$AssimpFbx$_Rotation

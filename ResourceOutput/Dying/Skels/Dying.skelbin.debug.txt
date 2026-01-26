@@ -1,631 +1,196 @@
-boneCount=210
-bone[0] name=RootNode parentIndex=-1
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[1] name=mixamorig1:Hips parentIndex=0
+boneCount=65
+bone[0] name=mixamorig1:Hips parentIndex=-1
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.988801,0.00444275,1
   inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,-0.988801,-0.00444275,1
-bone[2] name=mixamorig1:Spine_$AssimpFbx$_Translation parentIndex=1
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.11233,0.00973716,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[3] name=mixamorig1:Spine_$AssimpFbx$_PreRotation parentIndex=2
-  localBind=1,0,0,0,0,0.996264,0.0863596,0,0,-0.0863596,0.996264,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[4] name=mixamorig1:Spine_$AssimpFbx$_Rotation parentIndex=3
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[5] name=mixamorig1:Spine parentIndex=4
+bone[1] name=mixamorig1:Spine parentIndex=0
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=1,0,0,0,0,0.996264,-0.0863596,0,0,0.0863596,0.996264,0,0,-1.09824,0.0809663,1
-bone[6] name=mixamorig1:Spine1 parentIndex=5
+bone[2] name=mixamorig1:Spine1 parentIndex=1
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.131543,-6.39888e-10,1
   inverseBindPose=1,0,0,0,0,0.996264,-0.0863597,0,0,0.0863597,0.996264,0,0,-1.22979,0.0809664,1
-bone[7] name=mixamorig1:Spine2 parentIndex=6
+bone[3] name=mixamorig1:Spine2 parentIndex=2
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.150335,1.06443e-10,1
   inverseBindPose=1,0,0,0,0,0.996264,-0.0863597,0,0,0.0863597,0.996264,0,0,-1.38012,0.0809664,1
-bone[8] name=mixamorig1:Neck_$AssimpFbx$_Translation parentIndex=7
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.169127,-1.34605e-08,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[9] name=mixamorig1:Neck_$AssimpFbx$_PreRotation parentIndex=8
-  localBind=1,0,0,0,0,0.996264,-0.0863597,0,0,0.0863597,0.996264,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[10] name=mixamorig1:Neck_$AssimpFbx$_Rotation parentIndex=9
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[11] name=mixamorig1:Neck parentIndex=10
+bone[4] name=mixamorig1:Neck parentIndex=3
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=1,0,0,0,0,1,-1.38778e-17,0,0,1.38778e-17,1,0,0,-1.55045,-0.0531286,1
-bone[12] name=mixamorig1:Head parentIndex=11
+bone[5] name=mixamorig1:Head parentIndex=4
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.0839508,-0.0275177,1
   inverseBindPose=1,0,0,0,0,1,-1.38778e-17,0,0,1.38778e-17,1,0,0,-1.6344,-0.0256109,1
-bone[13] name=mixamorig1:HeadTop_End parentIndex=12
+bone[6] name=mixamorig1:HeadTop_End parentIndex=5
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0.2056,-0.0673924,1
   inverseBindPose=1,0,0,0,0,1,-1.38778e-17,0,0,1.38778e-17,1,0,0,-1.84,0.0417816,1
-bone[14] name=mixamorig1:LeftShoulder_$AssimpFbx$_Translation parentIndex=7
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0726547,0.151161,0.00206217,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[15] name=mixamorig1:LeftShoulder_$AssimpFbx$_PreRotation parentIndex=14
-  localBind=-0.027899,-0.000227422,0.999611,0,0.971602,-0.235066,0.0270638,0,0.234969,0.971979,0.00677902,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[16] name=mixamorig1:LeftShoulder_$AssimpFbx$_Rotation parentIndex=15
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[17] name=mixamorig1:LeftShoulder parentIndex=16
+bone[7] name=mixamorig1:LeftShoulder parentIndex=3
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.027899,0.971603,0.234968,0,-0.0865525,-0.236525,0.967763,0,0.995857,0.0066624,0.0906933,0,0.0812487,0.291496,-1.50491,1
-bone[18] name=mixamorig1:LeftArm_$AssimpFbx$_Translation parentIndex=17
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-1.64364e-10,0.150985,1.1684e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[19] name=mixamorig1:LeftArm_$AssimpFbx$_PreRotation parentIndex=18
-  localBind=0.998464,-0.0554075,-4.65661e-10,0,0.0549489,0.9902,0.128392,0,-0.00711389,-0.128195,0.991723,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[20] name=mixamorig1:LeftArm_$AssimpFbx$_Rotation parentIndex=19
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[21] name=mixamorig1:LeftArm parentIndex=20
+bone[8] name=mixamorig1:LeftArm parentIndex=7
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.0816903,0.990716,0.108668,0,-0.0733144,-0.11471,0.99069,0,0.993958,0.0729628,0.0820043,0,0.0733385,-0.0496202,-1.51105,1
-bone[22] name=mixamorig1:LeftForeArm_$AssimpFbx$_Translation parentIndex=21
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,9.5892e-10,0.226446,-1.30996e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[23] name=mixamorig1:LeftForeArm_$AssimpFbx$_PreRotation parentIndex=22
-  localBind=0.970412,0.241456,-9.31323e-10,0,-0.240351,0.965972,0.0955442,0,0.0230697,-0.0927173,0.995425,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[24] name=mixamorig1:LeftForeArm_$AssimpFbx$_Rotation parentIndex=23
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[25] name=mixamorig1:LeftForeArm parentIndex=24
+bone[9] name=mixamorig1:LeftForeArm parentIndex=8
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.159941,0.987021,0.0144294,0,-0.0988425,0.00146925,0.995102,0,0.982165,-0.160584,0.0977946,0,0.00451068,-0.428671,-1.47685,1
-bone[26] name=mixamorig1:LeftHand_$AssimpFbx$_Translation parentIndex=25
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,4.31224e-11,0.272925,1.46977e-11,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[27] name=mixamorig1:LeftHand_$AssimpFbx$_PreRotation parentIndex=26
-  localBind=0.986899,0.0184095,-0.160288,0,-0.0587696,0.966235,-0.250871,0,0.150258,0.257004,0.954658,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[28] name=mixamorig1:LeftHand_$AssimpFbx$_Rotation parentIndex=27
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[29] name=mixamorig1:LeftHand parentIndex=28
+bone[10] name=mixamorig1:LeftHand parentIndex=9
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.173703,0.940675,0.291476,0,-0.257024,-0.242414,0.935508,0,0.950666,-0.237417,0.199668,0,0.228257,-0.307675,-1.58952,1
-bone[30] name=mixamorig1:LeftHandThumb1_$AssimpFbx$_Translation parentIndex=29
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.0284148,0.0334827,-0.014004,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[31] name=mixamorig1:LeftHandThumb1_$AssimpFbx$_PreRotation parentIndex=30
-  localBind=0.73766,0.675173,-1.49012e-08,0,-0.643215,0.702745,-0.304013,0,-0.205261,0.224258,0.952668,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[32] name=mixamorig1:LeftHandThumb1_$AssimpFbx$_Rotation parentIndex=31
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[33] name=mixamorig1:LeftHandThumb1 parentIndex=32
+bone[11] name=mixamorig1:LeftHandThumb1 parentIndex=10
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.763252,0.460713,0.452979,0,-0.353267,-0.289439,0.889622,0,0.540971,-0.839028,-0.0581603,0,-0.0410037,0.0741346,-1.63013,1
-bone[34] name=mixamorig1:LeftHandThumb2_$AssimpFbx$_Translation parentIndex=33
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.00131693,0.0368513,-5.1917e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[35] name=mixamorig1:LeftHandThumb2_$AssimpFbx$_PreRotation parentIndex=34
-  localBind=1,0,0,0,0,0.994449,-0.105216,0,0,0.105216,0.994449,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[36] name=mixamorig1:LeftHandThumb2_$AssimpFbx$_Rotation parentIndex=35
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[37] name=mixamorig1:LeftHandThumb2 parentIndex=36
+bone[12] name=mixamorig1:LeftHandThumb2 parentIndex=11
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.763252,0.410495,0.49894,0,-0.353267,-0.381436,0.85423,0,0.540971,-0.828252,-0.146117,0,-0.0423206,0.208593,-1.61716,1
-bone[38] name=mixamorig1:LeftHandThumb3_$AssimpFbx$_Translation parentIndex=37
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0017754,0.0356206,-8.06648e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[39] name=mixamorig1:LeftHandThumb3_$AssimpFbx$_PreRotation parentIndex=38
-  localBind=1,0,0,0,0,0.999486,0.0320732,0,0,-0.0320732,0.999486,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[40] name=mixamorig1:LeftHandThumb3_$AssimpFbx$_Rotation parentIndex=39
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[41] name=mixamorig1:LeftHandThumb3 parentIndex=40
+bone[13] name=mixamorig1:LeftHandThumb3 parentIndex=12
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.763251,0.426287,0.485517,0,-0.353267,-0.353842,0.866024,0,0.540971,-0.832512,-0.119477,0,-0.0440959,0.121016,-1.62188,1
-bone[42] name=mixamorig1:LeftHandThumb4 parentIndex=41
+bone[14] name=mixamorig1:LeftHandThumb4 parentIndex=13
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.00309233,0.0276809,-7.98283e-11,1
   inverseBindPose=0.763251,0.426287,0.485517,0,-0.353267,-0.353842,0.866024,0,0.540971,-0.832512,-0.119477,0,-0.0410036,0.0933351,-1.62188,1
-bone[43] name=mixamorig1:LeftHandIndex1_$AssimpFbx$_Translation parentIndex=29
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.034182,0.110331,0.000128275,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[44] name=mixamorig1:LeftHandIndex1_$AssimpFbx$_PreRotation parentIndex=43
-  localBind=0.972188,0.234204,4.65661e-10,0,-0.233881,0.97085,-0.0524374,0,-0.012281,0.050979,0.998624,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[45] name=mixamorig1:LeftHandIndex1_$AssimpFbx$_Rotation parentIndex=44
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[46] name=mixamorig1:LeftHandIndex1 parentIndex=45
+bone[15] name=mixamorig1:LeftHandIndex1 parentIndex=10
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.389181,0.857344,0.336897,0,-0.30665,-0.22429,0.925019,0,0.868622,-0.463309,0.175615,0,0.157241,-0.383844,-1.61199,1
-bone[47] name=mixamorig1:LeftHandIndex2_$AssimpFbx$_Translation parentIndex=46
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000886964,0.0314616,-4.13672e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[48] name=mixamorig1:LeftHandIndex2_$AssimpFbx$_PreRotation parentIndex=47
-  localBind=1,0,0,0,0,0.92444,-0.381327,0,0,0.381327,0.92444,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[49] name=mixamorig1:LeftHandIndex2_$AssimpFbx$_Rotation parentIndex=48
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[50] name=mixamorig1:LeftHandIndex2 parentIndex=49
+bone[16] name=mixamorig1:LeftHandIndex2 parentIndex=15
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.389181,0.664096,0.638369,0,-0.30665,-0.560077,0.769597,0,0.868622,-0.495268,-0.0143268,0,0.156355,0.230771,-1.64856,1
-bone[51] name=mixamorig1:LeftHandIndex3_$AssimpFbx$_Translation parentIndex=50
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000233123,0.0279509,-3.24142e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[52] name=mixamorig1:LeftHandIndex3_$AssimpFbx$_PreRotation parentIndex=51
-  localBind=1,0,0,0,0,0.977386,-0.211461,0,0,0.211461,0.977386,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[53] name=mixamorig1:LeftHandIndex3_$AssimpFbx$_Rotation parentIndex=52
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[54] name=mixamorig1:LeftHandIndex3 parentIndex=53
+bone[17] name=mixamorig1:LeftHandIndex3 parentIndex=16
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.389181,0.514088,0.764364,0,-0.30665,-0.710152,0.633759,0,0.868622,-0.481039,-0.118733,0,0.156588,0.546839,-1.56839,1
-bone[55] name=mixamorig1:LeftHandIndex4 parentIndex=54
+bone[18] name=mixamorig1:LeftHandIndex4 parentIndex=17
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000653837,0.023067,-1.4e-10,1
   inverseBindPose=0.389181,0.514088,0.764364,0,-0.30665,-0.710152,0.633759,0,0.868622,-0.481039,-0.118733,0,0.157242,0.523772,-1.56839,1
-bone[56] name=mixamorig1:LeftHandMiddle1_$AssimpFbx$_Translation parentIndex=29
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.0110638,0.116195,0.000813115,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[57] name=mixamorig1:LeftHandMiddle1_$AssimpFbx$_PreRotation parentIndex=56
-  localBind=0.996086,0.0883932,0,0,-0.0883929,0.996083,-0.00231257,0,-0.000204415,0.00230352,0.999997,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[58] name=mixamorig1:LeftHandMiddle1_$AssimpFbx$_Rotation parentIndex=57
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[59] name=mixamorig1:LeftHandMiddle1 parentIndex=58
+bone[19] name=mixamorig1:LeftHandMiddle1 parentIndex=10
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.256172,0.920962,0.293607,0,-0.277445,-0.220908,0.934999,0,0.925959,-0.320981,0.198926,0,0.200917,-0.439686,-1.59135,1
-bone[60] name=mixamorig1:LeftHandMiddle2_$AssimpFbx$_Translation parentIndex=59
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000491201,0.0334202,2.10503e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[61] name=mixamorig1:LeftHandMiddle2_$AssimpFbx$_PreRotation parentIndex=60
-  localBind=1,0,0,0,0,0.86724,-0.49789,0,0,0.49789,0.86724,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[62] name=mixamorig1:LeftHandMiddle2_$AssimpFbx$_Rotation parentIndex=61
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[63] name=mixamorig1:LeftHandMiddle2 parentIndex=62
+bone[20] name=mixamorig1:LeftHandMiddle2 parentIndex=19
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.256172,0.652511,0.713165,0,-0.277446,-0.657107,0.700881,0,0.925959,-0.377411,0.0127036,0,0.200425,0.382021,-1.61564,1
-bone[64] name=mixamorig1:LeftHandMiddle3_$AssimpFbx$_Translation parentIndex=63
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.00023362,0.0310954,2.26076e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[65] name=mixamorig1:LeftHandMiddle3_$AssimpFbx$_PreRotation parentIndex=64
-  localBind=1,0,0,0,0,0.998037,-0.0626224,0,0,0.0626224,0.998037,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[66] name=mixamorig1:LeftHandMiddle3_$AssimpFbx$_Rotation parentIndex=65
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[67] name=mixamorig1:LeftHandMiddle3 parentIndex=66
+bone[21] name=mixamorig1:LeftHandMiddle3 parentIndex=20
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.256172,0.606571,0.752627,0,-0.277446,-0.699709,0.658356,0,0.925959,-0.377466,-0.0109558,0,0.200659,0.451412,-1.59049,1
-bone[68] name=mixamorig1:LeftHandMiddle4 parentIndex=67
+bone[22] name=mixamorig1:LeftHandMiddle4 parentIndex=21
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000257582,0.0250118,2.99513e-10,1
   inverseBindPose=0.256172,0.606571,0.752627,0,-0.277446,-0.699709,0.658356,0,0.925959,-0.377466,-0.0109558,0,0.200917,0.4264,-1.59049,1
-bone[69] name=mixamorig1:LeftHandRing1_$AssimpFbx$_Translation parentIndex=29
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0118943,0.118758,0.000922713,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[70] name=mixamorig1:LeftHandRing1_$AssimpFbx$_PreRotation parentIndex=69
-  localBind=0.991447,-0.130509,-4.65661e-10,0,0.130213,0.989199,-0.0673084,0,0.00878432,0.0667327,0.997732,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[71] name=mixamorig1:LeftHandRing1_$AssimpFbx$_Rotation parentIndex=70
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[72] name=mixamorig1:LeftHandRing1 parentIndex=71
+bone[23] name=mixamorig1:LeftHandRing1 parentIndex=10
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.0494514,0.933514,0.355115,0,-0.223189,-0.33623,0.914952,0,0.97352,-0.124503,0.191722,0,0.270165,-0.286603,-1.61339,1
-bone[73] name=mixamorig1:LeftHandRing2_$AssimpFbx$_Translation parentIndex=72
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000265897,0.0298785,-6.91987e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[74] name=mixamorig1:LeftHandRing2_$AssimpFbx$_PreRotation parentIndex=73
-  localBind=1,0,0,0,0,0.925397,-0.378999,0,0,0.378999,0.925397,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[75] name=mixamorig1:LeftHandRing2_$AssimpFbx$_Rotation parentIndex=74
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[76] name=mixamorig1:LeftHandRing2 parentIndex=75
+bone[24] name=mixamorig1:LeftHandRing2 parentIndex=23
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.0494514,0.729283,0.682423,0,-0.223189,-0.657912,0.719263,0,0.97352,-0.187878,0.130233,0,0.270431,0.318601,-1.61297,1
-bone[77] name=mixamorig1:LeftHandRing3_$AssimpFbx$_Translation parentIndex=76
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000140552,0.0282895,-1.72622e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[78] name=mixamorig1:LeftHandRing3_$AssimpFbx$_PreRotation parentIndex=77
-  localBind=1,0,0,0,0,0.999886,-0.0150884,0,0,0.0150884,0.999886,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[79] name=mixamorig1:LeftHandRing3_$AssimpFbx$_Rotation parentIndex=78
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[80] name=mixamorig1:LeftHandRing3 parentIndex=79
+bone[25] name=mixamorig1:LeftHandRing3 parentIndex=24
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.0494514,0.718903,0.693349,0,-0.223189,-0.66869,0.709254,0,0.97352,-0.189821,0.127383,0,0.270291,0.314616,-1.60841,1
-bone[81] name=mixamorig1:LeftHandRing4 parentIndex=80
+bone[26] name=mixamorig1:LeftHandRing4 parentIndex=25
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000125347,0.022799,2.20542e-10,1
   inverseBindPose=0.0494514,0.718903,0.693349,0,-0.223189,-0.66869,0.709254,0,0.97352,-0.189821,0.127383,0,0.270165,0.291817,-1.60841,1
-bone[82] name=mixamorig1:LeftHandPinky1_$AssimpFbx$_Translation parentIndex=29
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0333515,0.102846,0.00252491,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[83] name=mixamorig1:LeftHandPinky1_$AssimpFbx$_PreRotation parentIndex=82
-  localBind=0.981323,-0.192367,1.86265e-09,0,0.187901,0.958541,-0.214227,0,0.0412102,0.210226,0.976784,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[84] name=mixamorig1:LeftHandPinky1_$AssimpFbx$_Rotation parentIndex=83
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[85] name=mixamorig1:LeftHandPinky1 parentIndex=84
+bone[27] name=mixamorig1:LeftHandPinky1 parentIndex=10
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.0104961,0.871872,0.489621,0,-0.205591,-0.481069,0.852235,0,0.978582,-0.0917166,0.184298,0,0.270236,-0.0158202,-1.63335,1
-bone[86] name=mixamorig1:LeftHandPinky2_$AssimpFbx$_Translation parentIndex=85
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000119419,0.0284997,-2.3092e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[87] name=mixamorig1:LeftHandPinky2_$AssimpFbx$_PreRotation parentIndex=86
-  localBind=1,0,0,0,0,0.999004,-0.0446172,0,0,0.0446172,0.999004,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[88] name=mixamorig1:LeftHandPinky2_$AssimpFbx$_Rotation parentIndex=87
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[89] name=mixamorig1:LeftHandPinky2 parentIndex=88
+bone[28] name=mixamorig1:LeftHandPinky2 parentIndex=27
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.0104963,0.849158,0.528034,0,-0.205591,-0.518614,0.829923,0,0.978582,-0.099848,0.180023,0,0.270117,0.0285999,-1.6337,1
-bone[90] name=mixamorig1:LeftHandPinky3_$AssimpFbx$_Translation parentIndex=89
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,9.31464e-06,0.0253309,1.44776e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[91] name=mixamorig1:LeftHandPinky3_$AssimpFbx$_PreRotation parentIndex=90
-  localBind=1,0,0,0,0,0.998603,0.0528319,0,0,-0.0528319,0.998603,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[92] name=mixamorig1:LeftHandPinky3_$AssimpFbx$_Rotation parentIndex=91
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[93] name=mixamorig1:LeftHandPinky3 parentIndex=92
+bone[29] name=mixamorig1:LeftHandPinky3 parentIndex=28
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.0104963,0.875869,0.482434,0,-0.205591,-0.474044,0.856163,0,0.978582,-0.0901977,0.185047,0,0.270107,-0.0830471,-1.63159,1
-bone[94] name=mixamorig1:LeftHandPinky4 parentIndex=93
+bone[30] name=mixamorig1:LeftHandPinky4 parentIndex=29
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000128733,0.0195785,-3.97851e-10,1
   inverseBindPose=-0.0104963,0.875869,0.482434,0,-0.205591,-0.474044,0.856163,0,0.978582,-0.0901977,0.185047,0,0.270236,-0.102626,-1.63159,1
-bone[95] name=mixamorig1:RightShoulder_$AssimpFbx$_Translation parentIndex=7
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.0726547,0.151074,0.00105999,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[96] name=mixamorig1:RightShoulder_$AssimpFbx$_PreRotation parentIndex=95
-  localBind=-0.0142319,0.000171155,-0.999899,0,-0.971603,-0.236217,0.0137887,0,-0.23619,0.9717,0.003528,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[97] name=mixamorig1:RightShoulder_$AssimpFbx$_Rotation parentIndex=96
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[98] name=mixamorig1:RightShoulder parentIndex=97
+bone[31] name=mixamorig1:RightShoulder parentIndex=3
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.0142319,-0.971603,-0.23619,0,0.0865215,-0.236525,0.967766,0,-0.996148,-0.00666243,0.0874307,0,-0.0811945,0.292204,-1.50474,1
-bone[99] name=mixamorig1:RightArm_$AssimpFbx$_Translation parentIndex=98
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,7.0593e-11,0.150985,1.17682e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[100] name=mixamorig1:RightArm_$AssimpFbx$_PreRotation parentIndex=99
-  localBind=0.996814,0.0797616,0,0,-0.0790828,0.98833,0.13019,0,0.0103841,-0.129775,0.991489,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[101] name=mixamorig1:RightArm_$AssimpFbx$_Rotation parentIndex=100
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[102] name=mixamorig1:RightArm parentIndex=101
+bone[32] name=mixamorig1:RightArm parentIndex=31
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.0916831,-0.989888,-0.108238,0,0.0673803,-0.114614,0.991122,0,-0.993506,0.0835761,0.0772071,0,-0.069672,-0.0499103,-1.5111,1
-bone[103] name=mixamorig1:RightForeArm_$AssimpFbx$_Translation parentIndex=102
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,3.21035e-10,0.226636,6.72845e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[104] name=mixamorig1:RightForeArm_$AssimpFbx$_PreRotation parentIndex=103
-  localBind=0.968667,-0.248365,9.31323e-10,0,0.247213,0.964176,0.0961747,0,-0.0238864,-0.0931613,0.995364,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[105] name=mixamorig1:RightForeArm_$AssimpFbx$_Rotation parentIndex=104
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[106] name=mixamorig1:RightForeArm parentIndex=105
+bone[33] name=mixamorig1:RightForeArm parentIndex=32
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.157043,-0.987502,-0.0133272,0,0.093735,0.00147015,0.995596,0,-0.983133,-0.1576,0.0927943,0,0.00119524,-0.429193,-1.47667,1
-bone[107] name=mixamorig1:RightHand_$AssimpFbx$_Translation parentIndex=106
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,1.43064e-09,0.272792,-1.13911e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[108] name=mixamorig1:RightHand_$AssimpFbx$_PreRotation parentIndex=107
-  localBind=0.984941,-0.0196319,0.171775,0,0.0618136,0.967849,-0.243819,0,-0.161466,0.250765,0.954487,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[109] name=mixamorig1:RightHand_$AssimpFbx$_Rotation parentIndex=108
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[110] name=mixamorig1:RightHand parentIndex=109
+bone[34] name=mixamorig1:RightHand parentIndex=33
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.171775,-0.942796,-0.285708,0,0.263313,-0.235528,0.935517,0,-0.949294,-0.235929,0.207793,0,-0.238697,-0.319302,-1.58569,1
-bone[111] name=mixamorig1:RightHandThumb1_$AssimpFbx$_Translation parentIndex=110
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0280467,0.0337661,-0.0144108,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[112] name=mixamorig1:RightHandThumb1_$AssimpFbx$_PreRotation parentIndex=111
-  localBind=0.771785,-0.635883,-7.45058e-09,0,0.604158,0.733279,-0.311922,0,0.198346,0.240737,0.950108,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[113] name=mixamorig1:RightHandThumb1_$AssimpFbx$_Rotation parentIndex=112
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[114] name=mixamorig1:RightHandThumb1 parentIndex=113
+bone[35] name=mixamorig1:RightHandThumb1 parentIndex=34
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.732082,-0.498435,-0.464348,0,0.35299,-0.305433,0.884369,0,-0.582628,-0.811341,-0.0476598,0,0.0186408,0.0700638,-1.63079,1
-bone[115] name=mixamorig1:RightHandThumb2_$AssimpFbx$_Translation parentIndex=114
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000139876,0.0369596,8.62067e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[116] name=mixamorig1:RightHandThumb2_$AssimpFbx$_PreRotation parentIndex=115
-  localBind=1,0,0,0,0,0.993363,-0.115022,0,0,0.115022,0.993363,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[117] name=mixamorig1:RightHandThumb2_$AssimpFbx$_Rotation parentIndex=116
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[118] name=mixamorig1:RightHandThumb2 parentIndex=117
+bone[36] name=mixamorig1:RightHandThumb2 parentIndex=35
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.732082,-0.441716,-0.518598,0,0.35299,-0.405128,0.843368,0,-0.582628,-0.800474,-0.140666,0,0.0185009,0.220462,-1.61616,1
-bone[119] name=mixamorig1:RightHandThumb3_$AssimpFbx$_Translation parentIndex=118
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000610284,0.0349243,-1.1041e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[120] name=mixamorig1:RightHandThumb3_$AssimpFbx$_PreRotation parentIndex=119
-  localBind=1,0,0,0,0,0.999384,0.0351032,0,0,-0.0351032,0.999384,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[121] name=mixamorig1:RightHandThumb3_$AssimpFbx$_Rotation parentIndex=120
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[122] name=mixamorig1:RightHandThumb3 parentIndex=121
+bone[37] name=mixamorig1:RightHandThumb3 parentIndex=36
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.732082,-0.459648,-0.502772,0,0.35299,-0.375273,0.85707,0,-0.582628,-0.804918,-0.11248,0,0.0178906,0.12869,-1.62167,1
-bone[123] name=mixamorig1:RightHandThumb4 parentIndex=122
+bone[38] name=mixamorig1:RightHandThumb4 parentIndex=37
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000750167,0.0260034,4.83233e-10,1
   inverseBindPose=0.732082,-0.459648,-0.502772,0,0.35299,-0.375273,0.85707,0,-0.582628,-0.804918,-0.11248,0,0.0186408,0.102687,-1.62167,1
-bone[124] name=mixamorig1:RightHandIndex1_$AssimpFbx$_Translation parentIndex=110
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0346,0.111856,0.00020871,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[125] name=mixamorig1:RightHandIndex1_$AssimpFbx$_PreRotation parentIndex=124
-  localBind=0.971959,-0.23515,0,0,0.233942,0.966966,-0.101231,0,0.0238045,0.0983924,0.994863,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[126] name=mixamorig1:RightHandIndex1_$AssimpFbx$_Rotation parentIndex=125
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[127] name=mixamorig1:RightHandIndex1 parentIndex=126
+bone[39] name=mixamorig1:RightHandIndex1 parentIndex=34
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.388657,-0.842544,-0.372916,0,0.311314,-0.260851,0.913806,0,-0.867197,-0.471251,0.160914,0,-0.164247,-0.320308,-1.62668,1
-bone[128] name=mixamorig1:RightHandIndex2_$AssimpFbx$_Translation parentIndex=127
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000733358,0.0294036,1.01804e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[129] name=mixamorig1:RightHandIndex2_$AssimpFbx$_PreRotation parentIndex=128
-  localBind=1,0,0,0,0,0.945256,-0.326331,0,0,0.326331,0.945256,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[130] name=mixamorig1:RightHandIndex2_$AssimpFbx$_Rotation parentIndex=129
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[131] name=mixamorig1:RightHandIndex2 parentIndex=130
+bone[40] name=mixamorig1:RightHandIndex2 parentIndex=39
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.388657,-0.674725,-0.627449,0,0.311314,-0.544774,0.778656,0,-0.867196,-0.497964,-0.00167835,0,-0.163514,0.200269,-1.65175,1
-bone[132] name=mixamorig1:RightHandIndex3_$AssimpFbx$_Translation parentIndex=131
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000283505,0.0275468,7.74109e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[133] name=mixamorig1:RightHandIndex3_$AssimpFbx$_PreRotation parentIndex=132
-  localBind=1,0,0,0,0,0.996251,-0.0865048,0,0,0.0865048,0.996251,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[134] name=mixamorig1:RightHandIndex3_$AssimpFbx$_Rotation parentIndex=133
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[135] name=mixamorig1:RightHandIndex3 parentIndex=134
+bone[41] name=mixamorig1:RightHandIndex3 parentIndex=40
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.388656,-0.617919,-0.683464,0,0.311314,-0.610089,0.728612,0,-0.867196,-0.495952,-0.0447482,0,-0.163797,0.314959,-1.63062,1
-bone[136] name=mixamorig1:RightHandIndex4 parentIndex=135
+bone[42] name=mixamorig1:RightHandIndex4 parentIndex=41
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000449853,0.0231341,-3.46347e-12,1
   inverseBindPose=0.388656,-0.617919,-0.683464,0,0.311314,-0.610089,0.728612,0,-0.867196,-0.495952,-0.0447482,0,-0.164247,0.291825,-1.63062,1
-bone[137] name=mixamorig1:RightHandMiddle1_$AssimpFbx$_Translation parentIndex=110
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.0116495,0.118014,0.00175442,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[138] name=mixamorig1:RightHandMiddle1_$AssimpFbx$_PreRotation parentIndex=137
-  localBind=0.997819,-0.066004,4.65661e-10,0,0.0658247,0.995108,-0.0736755,0,0.00486288,0.0735149,0.997282,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[139] name=mixamorig1:RightHandMiddle1_$AssimpFbx$_Rotation parentIndex=138
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[140] name=mixamorig1:RightHandMiddle1 parentIndex=139
+bone[43] name=mixamorig1:RightHandMiddle1 parentIndex=34
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.233629,-0.905827,-0.353406,0,0.278285,-0.285968,0.916941,0,-0.931652,-0.312571,0.185268,0,-0.220936,-0.334699,-1.6165,1
-bone[141] name=mixamorig1:RightHandMiddle2_$AssimpFbx$_Translation parentIndex=140
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000406269,0.032642,4.61886e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[142] name=mixamorig1:RightHandMiddle2_$AssimpFbx$_PreRotation parentIndex=141
-  localBind=1,0,0,0,0,0.895837,-0.444383,0,0,0.444383,0.895837,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[143] name=mixamorig1:RightHandMiddle2_$AssimpFbx$_Rotation parentIndex=142
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[144] name=mixamorig1:RightHandMiddle2 parentIndex=143
+bone[44] name=mixamorig1:RightHandMiddle2 parentIndex=43
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.233629,-0.654425,-0.719128,0,0.278285,-0.663653,0.69435,0,-0.931652,-0.362343,0.0270683,0,-0.22053,0.389266,-1.61136,1
-bone[145] name=mixamorig1:RightHandMiddle3_$AssimpFbx$_Translation parentIndex=144
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000173442,0.0298084,-2.40172e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[146] name=mixamorig1:RightHandMiddle3_$AssimpFbx$_PreRotation parentIndex=145
-  localBind=1,0,0,0,0,0.995693,-0.0927134,0,0,0.0927134,0.995693,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[147] name=mixamorig1:RightHandMiddle3_$AssimpFbx$_Rotation parentIndex=146
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[148] name=mixamorig1:RightHandMiddle3 parentIndex=147
+bone[45] name=mixamorig1:RightHandMiddle3 parentIndex=44
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.233628,-0.584934,-0.776705,0,0.278285,-0.72517,0.62983,0,-0.931652,-0.363292,-0.00664222,0,-0.220703,0.507304,-1.57109,1
-bone[149] name=mixamorig1:RightHandMiddle4 parentIndex=148
+bone[46] name=mixamorig1:RightHandMiddle4 parentIndex=45
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000232829,0.0255851,6.67323e-10,1
   inverseBindPose=0.233629,-0.584934,-0.776705,0,0.278285,-0.72517,0.62983,0,-0.931652,-0.363292,-0.00664222,0,-0.220936,0.481718,-1.57109,1
-bone[150] name=mixamorig1:RightHandRing1_$AssimpFbx$_Translation parentIndex=110
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.01199,0.119757,0.00288721,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[151] name=mixamorig1:RightHandRing1_$AssimpFbx$_PreRotation parentIndex=150
-  localBind=0.995,0.0998789,0,0,-0.0981895,0.978169,-0.183151,0,-0.0182929,0.182235,0.983085,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[152] name=mixamorig1:RightHandRing1_$AssimpFbx$_Rotation parentIndex=151
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[153] name=mixamorig1:RightHandRing1 parentIndex=152
+bone[47] name=mixamorig1:RightHandRing1 parentIndex=34
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.0767506,-0.886753,-0.455828,0,0.238472,-0.427581,0.871955,0,-0.968112,-0.175626,0.178649,0,-0.269426,-0.116264,-1.63757,1
-bone[154] name=mixamorig1:RightHandRing2_$AssimpFbx$_Translation parentIndex=153
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,8.30558e-05,0.0284494,1.98149e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[155] name=mixamorig1:RightHandRing2_$AssimpFbx$_PreRotation parentIndex=154
-  localBind=1,0,0,0,0,0.964851,-0.262799,0,0,0.262799,0.964851,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[156] name=mixamorig1:RightHandRing2_$AssimpFbx$_Rotation parentIndex=155
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[157] name=mixamorig1:RightHandRing2 parentIndex=156
+bone[48] name=mixamorig1:RightHandRing2 parentIndex=47
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.0767506,-0.735792,-0.672844,0,0.238472,-0.641701,0.728938,0,-0.968112,-0.216401,0.126215,0,-0.269509,0.290726,-1.61804,1
-bone[158] name=mixamorig1:RightHandRing3_$AssimpFbx$_Translation parentIndex=157
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-8.54707e-05,0.0291561,8.74811e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[159] name=mixamorig1:RightHandRing3_$AssimpFbx$_PreRotation parentIndex=158
-  localBind=1,0,0,0,0,0.992764,0.120084,0,0,-0.120084,0.992764,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[160] name=mixamorig1:RightHandRing3_$AssimpFbx$_Rotation parentIndex=159
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[161] name=mixamorig1:RightHandRing3 parentIndex=160
+bone[49] name=mixamorig1:RightHandRing3 parentIndex=48
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=0.0767506,-0.811266,-0.579618,0,0.238472,-0.549524,0.800721,0,-0.968112,-0.199679,0.151288,0,-0.269424,0.0653755,-1.63774,1
-bone[162] name=mixamorig1:RightHandRing4 parentIndex=161
+bone[50] name=mixamorig1:RightHandRing4 parentIndex=49
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,2.41476e-06,0.0197053,-4.69121e-10,1
   inverseBindPose=0.0767506,-0.811266,-0.579618,0,0.238472,-0.549524,0.800721,0,-0.968112,-0.199679,0.151288,0,-0.269426,0.0456703,-1.63774,1
-bone[163] name=mixamorig1:RightHandPinky1_$AssimpFbx$_Translation parentIndex=110
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.0342595,0.104435,0.00146665,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[164] name=mixamorig1:RightHandPinky1_$AssimpFbx$_PreRotation parentIndex=163
-  localBind=0.981944,0.189171,-1.86265e-09,0,-0.185494,0.96286,-0.196197,0,-0.0371148,0.192654,0.980565,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[165] name=mixamorig1:RightHandPinky1_$AssimpFbx$_Rotation parentIndex=164
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[166] name=mixamorig1:RightHandPinky1 parentIndex=165
+bone[51] name=mixamorig1:RightHandPinky1 parentIndex=34
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.00967622,-0.883588,-0.468165,0,0.214004,-0.459169,0.862187,0,-0.976785,-0.0918464,0.193535,0,-0.280905,-0.0586815,-1.63036,1
-bone[167] name=mixamorig1:RightHandPinky2_$AssimpFbx$_Translation parentIndex=166
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.000240708,0.0274462,-3.04851e-12,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[168] name=mixamorig1:RightHandPinky2_$AssimpFbx$_PreRotation parentIndex=167
-  localBind=1,0,0,0,0,0.995087,-0.0990014,0,0,0.0990014,0.995087,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[169] name=mixamorig1:RightHandPinky2_$AssimpFbx$_Rotation parentIndex=168
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[170] name=mixamorig1:RightHandPinky2 parentIndex=169
+bone[52] name=mixamorig1:RightHandPinky2 parentIndex=51
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.00967622,-0.832899,-0.553341,0,0.214004,-0.542271,0.812493,0,-0.976785,-0.110555,0.183491,0,-0.280665,0.075703,-1.63087,1
-bone[171] name=mixamorig1:RightHandPinky3_$AssimpFbx$_Translation parentIndex=170
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-8.17313e-05,0.024848,1.0536e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[172] name=mixamorig1:RightHandPinky3_$AssimpFbx$_PreRotation parentIndex=171
-  localBind=1,0,0,0,0,0.966065,0.258298,0,0,-0.258298,0.966065,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[173] name=mixamorig1:RightHandPinky3_$AssimpFbx$_Rotation parentIndex=172
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[174] name=mixamorig1:RightHandPinky3 parentIndex=173
+bone[53] name=mixamorig1:RightHandPinky3 parentIndex=52
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.00967634,-0.947561,-0.319428,0,0.214004,-0.314004,0.924989,0,-0.976785,-0.0594084,0.20582,0,-0.280583,-0.372122,-1.58867,1
-bone[175] name=mixamorig1:RightHandPinky4 parentIndex=174
+bone[54] name=mixamorig1:RightHandPinky4 parentIndex=53
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.000322439,0.0192488,-5.1563e-10,1
   inverseBindPose=-0.00967634,-0.947561,-0.319428,0,0.214004,-0.314004,0.924988,0,-0.976785,-0.0594083,0.205821,0,-0.280905,-0.39137,-1.58867,1
-bone[176] name=mixamorig1:LeftUpLeg_$AssimpFbx$_Translation parentIndex=1
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0.103655,-0.0623933,-0.00158264,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[177] name=mixamorig1:LeftUpLeg_$AssimpFbx$_PreRotation parentIndex=176
-  localBind=-0.99475,-0.101722,0.0111708,0,0.102334,-0.988806,0.108587,0,1.11759e-08,0.10916,0.994024,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[178] name=mixamorig1:LeftUpLeg_$AssimpFbx$_Rotation parentIndex=177
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[179] name=mixamorig1:LeftUpLeg parentIndex=178
+bone[55] name=mixamorig1:LeftUpLeg parentIndex=0
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.99475,0.102334,4.65661e-10,0,-0.101722,-0.988806,0.10916,0,0.0111708,0.108587,0.994024,0,0.197316,0.905119,-0.10397,1
-bone[180] name=mixamorig1:LeftLeg_$AssimpFbx$_Translation parentIndex=179
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,1.561e-09,0.434445,6.14527e-10,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[181] name=mixamorig1:LeftLeg_$AssimpFbx$_PreRotation parentIndex=180
-  localBind=0.999992,0.00395221,7.27596e-12,0,-0.00395114,0.999721,-0.0232986,0,-9.2081e-05,0.0232984,0.999729,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[182] name=mixamorig1:LeftLeg_$AssimpFbx$_Rotation parentIndex=181
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[183] name=mixamorig1:LeftLeg parentIndex=182
+bone[56] name=mixamorig1:LeftLeg parentIndex=55
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.994338,0.106236,0.00247582,0,-0.10563,-0.990671,0.0861025,0,0.0115999,0.0853534,0.996283,0,0.199174,0.472185,-0.092994,1
-bone[184] name=mixamorig1:LeftFoot_$AssimpFbx$_Translation parentIndex=183
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-2.75115e-09,0.399285,1.22574e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[185] name=mixamorig1:LeftFoot_$AssimpFbx$_PreRotation parentIndex=184
-  localBind=0.943101,0,-0.332506,0,-0.283707,0.521522,-0.804689,0,0.173409,0.853238,0.491848,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[186] name=mixamorig1:LeftFoot_$AssimpFbx$_Rotation parentIndex=185
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[187] name=mixamorig1:LeftFoot parentIndex=186
+bone[57] name=mixamorig1:LeftFoot parentIndex=56
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.938584,0.335512,-0.0805653,0,-0.128249,-0.555975,-0.821245,0,-0.32033,-0.760476,0.564858,0,0.218763,0.0563433,0.0510009,1
-bone[188] name=mixamorig1:LeftToeBase_$AssimpFbx$_Translation parentIndex=187
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,4.82197e-11,0.170998,-5.6466e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[189] name=mixamorig1:LeftToeBase_$AssimpFbx$_PreRotation parentIndex=188
-  localBind=0.992405,0,-0.123013,0,-0.0699084,0.822821,-0.563984,0,0.101218,0.5683,0.816572,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[190] name=mixamorig1:LeftToeBase_$AssimpFbx$_Rotation parentIndex=189
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[191] name=mixamorig1:LeftToeBase parentIndex=190
+bone[58] name=mixamorig1:LeftToeBase parentIndex=57
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.921545,0.387119,0.0298828,0,-0.0262509,0.0146669,-0.999548,0,-0.387383,-0.921913,-0.00335407,0,0.210827,-0.138397,-0.0013695,1
-bone[192] name=mixamorig1:LeftToe_End parentIndex=191
+bone[59] name=mixamorig1:LeftToe_End parentIndex=58
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,6.12571e-10,0.0642638,-9.72709e-12,1
   inverseBindPose=-0.921545,0.387119,0.0298828,0,-0.0262509,0.0146669,-0.999548,0,-0.387383,-0.921913,-0.00335407,0,0.210827,-0.202661,-0.0013695,1
-bone[193] name=mixamorig1:RightUpLeg_$AssimpFbx$_Translation parentIndex=1
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,-0.103655,-0.0623933,-0.000422339,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[194] name=mixamorig1:RightUpLeg_$AssimpFbx$_PreRotation parentIndex=193
-  localBind=-0.994747,0.101784,-0.010888,0,-0.102365,-0.989104,0.105806,0,-3.25963e-09,0.106365,0.994327,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[195] name=mixamorig1:RightUpLeg_$AssimpFbx$_Rotation parentIndex=194
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[196] name=mixamorig1:RightUpLeg parentIndex=195
+bone[60] name=mixamorig1:RightUpLeg parentIndex=0
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.994747,-0.102365,9.31323e-10,0,0.101784,-0.989104,0.106365,0,-0.010888,0.105806,0.994327,0,-0.197361,0.905278,-0.102535,1
-bone[197] name=mixamorig1:RightLeg_$AssimpFbx$_Translation parentIndex=196
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,1.18309e-09,0.434314,-1.46871e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[198] name=mixamorig1:RightLeg_$AssimpFbx$_PreRotation parentIndex=197
-  localBind=0.999992,-0.00397091,-3.63798e-12,0,0.00396962,0.999668,-0.0254762,0,0.000101164,0.025476,0.999675,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[199] name=mixamorig1:RightLeg_$AssimpFbx$_Rotation parentIndex=198
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[200] name=mixamorig1:RightLeg parentIndex=199
+bone[61] name=mixamorig1:RightLeg parentIndex=60
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.994333,-0.10628,-0.00270848,0,0.105711,-0.991081,0.0811419,0,-0.011308,0.0803957,0.996699,0,-0.199229,0.472636,-0.090523,1
-bone[201] name=mixamorig1:RightFoot_$AssimpFbx$_Translation parentIndex=200
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,1.75005e-09,0.39912,1.65155e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[202] name=mixamorig1:RightFoot_$AssimpFbx$_PreRotation parentIndex=201
-  localBind=0.937753,0,0.347302,0,0.291367,0.544215,-0.786724,0,-0.189007,0.838946,0.510339,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[203] name=mixamorig1:RightFoot_$AssimpFbx$_Rotation parentIndex=202
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[204] name=mixamorig1:RightFoot parentIndex=203
+bone[62] name=mixamorig1:RightFoot parentIndex=61
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.93338,-0.345424,0.0973905,0,0.127312,-0.572397,-0.810033,0,0.335551,-0.74367,0.57824,0,-0.218267,0.0531759,0.0531337,1
-bone[205] name=mixamorig1:RightToeBase_$AssimpFbx$_Translation parentIndex=204
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,9.73535e-10,0.166091,-1.6202e-09,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[206] name=mixamorig1:RightToeBase_$AssimpFbx$_PreRotation parentIndex=205
-  localBind=0.994322,-1.86265e-09,0.10641,0,0.0622581,0.810976,-0.581758,0,-0.0862956,0.58508,0.806371,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[207] name=mixamorig1:RightToeBase_$AssimpFbx$_Rotation parentIndex=206
-  localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-  inverseBindPose=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
-bone[208] name=mixamorig1:RightToeBase parentIndex=207
+bone[63] name=mixamorig1:RightToeBase parentIndex=62
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1
   inverseBindPose=-0.917717,-0.394899,-0.0430211,0,0.0403934,0.0149696,-0.999072,0,0.395176,-0.918603,0.00221342,0,-0.211374,-0.136071,-0.0043832,1
-bone[209] name=mixamorig1:RightToe_End parentIndex=208
+bone[64] name=mixamorig1:RightToe_End parentIndex=63
   localBind=1,0,0,0,0,1,0,0,0,0,1,0,1.26299e-09,0.0629976,2.27496e-11,1
   inverseBindPose=-0.917717,-0.394899,-0.0430211,0,0.0403934,0.0149696,-0.999072,0,0.395176,-0.918603,0.00221342,0,-0.211374,-0.199069,-0.0043832,1

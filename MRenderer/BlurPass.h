@@ -8,7 +8,7 @@ class BlurPass : public RenderPass
 {
 public:
     BlurPass(RenderContext& context, AssetLoader& assetloader) : RenderPass(context, assetloader) {}
-    std::string_view GetName() const override { return "Blur"; }
+    std::string_view GetName() const override { return "Opaque"; }
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:
