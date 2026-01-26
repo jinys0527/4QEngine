@@ -346,10 +346,6 @@ void EditorApplication::Render() {
 
 void EditorApplication::RenderImGUI() {
 	//★★
-	//텍스트 그리기전 리소스 해제
-	ID3D11ShaderResourceView* nullSRV[128] = {};
-	m_Engine.GetD3DDXDC()->PSSetShaderResources(0, 128, nullSRV);
-
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -386,6 +382,7 @@ void EditorApplication::RenderImGUI() {
 		SetupEditorDockLayout();
 		dockBuilt = false;
 	}
+
 
 	ImGui::Render();  // Gui들그리기
 
@@ -533,7 +530,6 @@ void EditorApplication::DrawMainMenuBar()
 	}
 }
 
-
 void EditorApplication::DrawHierarchy() {
 	ImGui::Begin("Hierarchy");
 
@@ -619,9 +615,6 @@ void EditorApplication::DrawHierarchy() {
 		auto createdObject = scene->CreateGameObject(name); // GameObject 생성 후 바꾸는 걸로 변경했음
 		m_SelectedObjectName = name;
 
-		m_SelectedObjectNames.clear();
-		m_SelectedObjectNames.insert(name);
-
 		if (createdObject)
 		{
 			ObjectSnapshot snapshot;
@@ -670,44 +663,6 @@ void EditorApplication::DrawHierarchy() {
 			}
 			return nullptr;
 		};
-	// 그룹 Select
-	auto setPrimarySelection = [&](const std::string& name)
-		{
-			m_SelectedObjectName = name;
-			m_SelectedObjectNames.clear();
-			if (!name.empty())
-			{
-				m_SelectedObjectNames.insert(name);
-			}
-		};
-
-	auto toggleSelection = [&](const std::string& name)
-		{
-			if (name.empty())
-			{
-				return;
-			}
-
-			const auto erased = m_SelectedObjectNames.erase(name);
-			if (erased > 0)
-			{
-				if (m_SelectedObjectName == name)
-				{
-					if (!m_SelectedObjectNames.empty())
-					{
-						m_SelectedObjectName = *m_SelectedObjectNames.begin();
-					}
-					else
-					{
-						m_SelectedObjectName.clear();
-					}
-				}
-				return;
-			}
-
-			m_SelectedObjectNames.insert(name);
-			m_SelectedObjectName = name;
-		};
 
 	// copy
 	const std::shared_ptr<GameObject>* selectedObject = nullptr;
@@ -716,110 +671,84 @@ void EditorApplication::DrawHierarchy() {
 		selectedObject = &it->second;
 	}
 
-	if (!m_SelectedObjectName.empty() && m_SelectedObjectNames.empty())
-	{
-		if (objectLookup.find(m_SelectedObjectName) != objectLookup.end())
+	auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object)
 		{
-			m_SelectedObjectNames.insert(m_SelectedObjectName);
-		}
-	}
-	for (auto it = m_SelectedObjectNames.begin(); it != m_SelectedObjectNames.end();)
-	{
-		if (objectLookup.find(*it) == objectLookup.end())
-		{
-			it = m_SelectedObjectNames.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
-	if (!m_SelectedObjectNames.empty() && m_SelectedObjectName.empty())
-	{
-		m_SelectedObjectName = *m_SelectedObjectNames.begin();
-	}
-
-	auto copySelectedObjects = [&](const std::vector<std::shared_ptr<GameObject>>& objects)
-		{
+			if (!object)
+			{
+				return;
+			}
 
 			nlohmann::json clipboard = nlohmann::json::object();
 			clipboard["objects"] = nlohmann::json::array();
 
-
 			std::unordered_map<GameObject*, int> objectIds;
 			int nextId = 0;
-			for (const auto& root : objects)
+			std::string rootParentName;
+			if (auto* rootTransform = object->GetComponent<TransformComponent>())
 			{
-				if (!root)
+				if (auto* rootParent = rootTransform->GetParent())
+				{
+					if (auto* rootParentOwner = dynamic_cast<GameObject*>(rootParent->GetOwner()))
+					{
+						rootParentName = rootParentOwner->GetName();
+					}
+				}
+			}
+			std::vector<GameObject*> stack;
+			stack.push_back(object.get());
+			while (!stack.empty())
+			{
+				GameObject* current = stack.back();
+				stack.pop_back();
+
+				if (!current)
 				{
 					continue;
 				}
-				std::string rootParentName;
-				if (auto* rootTransform = root->GetComponent<TransformComponent>())
+
+				const bool isRoot = (current == object.get());
+				auto* currentTransform = current->GetComponent<TransformComponent>();
+				GameObject* parentObject = (!isRoot && currentTransform && currentTransform->GetParent())
+					? dynamic_cast<GameObject*>(currentTransform->GetParent()->GetOwner())
+					: nullptr;
+
+				if (objectIds.find(current) == objectIds.end())
 				{
-					if (auto* rootParent = rootTransform->GetParent())
-					{
-						if (auto* rootParentOwner = dynamic_cast<GameObject*>(rootParent->GetOwner()))
-						{
-							if (m_SelectedObjectNames.find(rootParentOwner->GetName()) == m_SelectedObjectNames.end())
-							{
-								rootParentName = rootParentOwner->GetName();
-							}
-						}
-					}
+					objectIds[current] = nextId++;
 				}
-					std::vector<GameObject*> stack;
-					stack.push_back(root.get());
-					while (!stack.empty())
-					{
-						GameObject* current = stack.back();
-						stack.pop_back();
 
-						if (!current)
-						{
-							continue;
-						}
-						const bool isRoot = (current == root.get());
-						auto* currentTransform = current->GetComponent<TransformComponent>();
-						GameObject* parentObject = (!isRoot && currentTransform && currentTransform->GetParent())
-							? dynamic_cast<GameObject*>(currentTransform->GetParent()->GetOwner())
-							: nullptr;
-
-					if (objectIds.find(current) == objectIds.end())
+				const int currentId = objectIds[current];
+				int parentId = -1;
+				if (parentObject)
+				{
+					if (objectIds.find(parentObject) == objectIds.end())
 					{
-						objectIds[current] = nextId++;
+						objectIds[parentObject] = nextId++;
 					}
+					parentId = objectIds[parentObject];
+				}
 
+				nlohmann::json objectJson;
+				current->Serialize(objectJson);
+				objectJson["clipboardId"] = currentId;
+				objectJson["parentId"] = parentId;
+        
+				if (isRoot && !rootParentName.empty())
+				{
+					objectJson["externalParentName"] = rootParentName;
+				}
+				/*const auto opacityIt = objectOpacity.find(current);
+				objectJson["isOpaque"] = (opacityIt != objectOpacity.end()) ? opacityIt->second : true;*/
 
-					const int currentId = objectIds[current];
-					int parentId = -1;
-					if (parentObject)
-					{
-						if (objectIds.find(parentObject) == objectIds.end())
-						{
-							objectIds[parentObject] = nextId++;
-						}
-						parentId = objectIds[parentObject];
-					}
+				clipboard["objects"].push_back(std::move(objectJson));
 
-					nlohmann::json objectJson;
-					current->Serialize(objectJson);
-					objectJson["clipboardId"] = currentId;
-					objectJson["parentId"] = parentId;
+				if (!currentTransform)
+				{
+					continue;
+				}
 
-					if (isRoot && !rootParentName.empty())
-					{
-						objectJson["externalParentName"] = rootParentName;
-					}
-					clipboard["objects"].push_back(std::move(objectJson));
-
-					if (!currentTransform)
-					{
-						continue;
-					}
-
-					for (auto* childTransform : currentTransform->GetChildrens())
-					{
+				for (auto* childTransform : currentTransform->GetChildrens())
+				{
 					if (!childTransform)
 					{
 						continue;
@@ -831,7 +760,7 @@ void EditorApplication::DrawHierarchy() {
 					}
 				}
 			}
-		}
+
 			m_ObjectClipboard = std::move(clipboard);
 			m_ObjectClipboardHasData = true;
 		};
@@ -848,54 +777,7 @@ void EditorApplication::DrawHierarchy() {
 		{
 			pendingAdds.push_back(PendingAdd{ std::move(objectJson), std::move(label) });
 		};
-	auto copySelectedObject = [&](const std::shared_ptr<GameObject>& object)
-		{
-			if (!object)
-			{
-				return;
-			}
-			copySelectedObjects({ object });
-		};
 
-	auto hasSelectedAncestor = [&](const std::shared_ptr<GameObject>& object) -> bool
-		{
-			if (!object)
-			{
-				return false;
-			}
-			auto* transform = object->GetComponent<TransformComponent>();
-			auto* parent = transform ? transform->GetParent() : nullptr;
-			while (parent)
-			{
-				auto* parentOwner = dynamic_cast<GameObject*>(parent->GetOwner());
-				if (parentOwner && m_SelectedObjectNames.find(parentOwner->GetName()) != m_SelectedObjectNames.end())
-				{
-					return true;
-				}
-				parent = parent->GetParent();
-			}
-			return false;
-		};
-
-	auto gatherSelectedRoots = [&]() -> std::vector<std::shared_ptr<GameObject>>
-		{
-			std::vector<std::shared_ptr<GameObject>> roots;
-			roots.reserve(m_SelectedObjectNames.size());
-			for (const auto& name : m_SelectedObjectNames)
-			{
-				auto object = findObjectByName(name);
-				if (!object)
-				{
-					continue;
-				}
-				if (hasSelectedAncestor(object))
-				{
-					continue;
-				}
-				roots.push_back(std::move(object));
-			}
-			return roots;
-		};
 	auto pasteClipboardObject = [&]()
 		{
 			if (!m_ObjectClipboardHasData)
@@ -918,32 +800,17 @@ void EditorApplication::DrawHierarchy() {
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C))
+		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) && selectedObject && *selectedObject)
 		{
-			auto roots = gatherSelectedRoots();
-			if (!roots.empty())
-			{
-				copySelectedObjects(roots);
-			}
-			else if (selectedObject && *selectedObject)
-			{
-				copySelectedObject(*selectedObject);
-			}
+			copySelectedObject(*selectedObject);
 		}
 		if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V))
 		{
 			pasteClipboardObject();
 		}
-		if (ImGui::IsKeyPressed(ImGuiKey_Delete))
+		if (ImGui::IsKeyPressed(ImGuiKey_Delete) && selectedObject && *selectedObject)
 		{
-			if (!m_SelectedObjectNames.empty())
-			{
-				pendingDeletes.insert(pendingDeletes.end(), m_SelectedObjectNames.begin(), m_SelectedObjectNames.end());
-			}
-			else if (selectedObject && *selectedObject)
-			{
-				pendingDeletes.push_back((*selectedObject)->GetName());
-			}
+			pendingDeletes.push_back((*selectedObject)->GetName());
 		}
 	}
 
@@ -1079,118 +946,6 @@ void EditorApplication::DrawHierarchy() {
 			}
 			return a->GetName() < b->GetName();
 		});
-
-	std::vector<std::string> hierarchyOrder;
-	hierarchyOrder.reserve(objectLookup.size());
-	auto collectHierarchyOrder = [&](auto&& self, GameObject* object) -> void
-		{
-			if (!object)
-			{
-				return;
-			}
-			hierarchyOrder.push_back(object->GetName());
-			auto* transform = object->GetComponent<TransformComponent>();
-			if (!transform)
-			{
-				return;
-			}
-			for (auto* childTransform : transform->GetChildrens())
-			{
-				if (!childTransform)
-				{
-					continue;
-				}
-				auto* childOwner = dynamic_cast<GameObject*>(childTransform->GetOwner());
-				if (!childOwner)
-				{
-					continue;
-				}
-				self(self, childOwner);
-			}
-		};
-
-	for (auto* root : rootObjects)
-	{
-		collectHierarchyOrder(collectHierarchyOrder, root);
-	}
-
-	std::unordered_map<std::string, size_t> hierarchyIndex;
-	hierarchyIndex.reserve(hierarchyOrder.size());
-	for (size_t i = 0; i < hierarchyOrder.size(); ++i)
-	{
-		hierarchyIndex[hierarchyOrder[i]] = i;
-	}
-
-	auto selectRange = [&](const std::string& startName, const std::string& endName)
-		{
-			const auto startIt = hierarchyIndex.find(startName);
-			const auto endIt = hierarchyIndex.find(endName);
-			if (startIt == hierarchyIndex.end() || endIt == hierarchyIndex.end())
-			{
-				setPrimarySelection(endName);
-				return;
-			}
-
-			const size_t startIndex = startIt->second;
-			const size_t endIndex = endIt->second;
-			const size_t rangeStart = std::min(startIndex, endIndex);
-			const size_t rangeEnd = (std::max)(startIndex, endIndex);
-
-			m_SelectedObjectNames.clear();
-			for (size_t i = rangeStart; i <= rangeEnd && i < hierarchyOrder.size(); ++i)
-			{
-				m_SelectedObjectNames.insert(hierarchyOrder[i]);
-			}
-			m_SelectedObjectName = endName;
-		};
-
-	auto handleSelectionClick = [&](const std::string& name, ImGuiIO& io)
-		{
-			if (io.KeyShift && !m_SelectedObjectName.empty())
-			{
-				selectRange(m_SelectedObjectName, name);
-			}
-			else if (io.KeyCtrl)
-			{
-				toggleSelection(name);
-			}
-			else if (m_SelectedObjectNames.size() > 1
-				&& m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end())
-			{
-				m_SelectedObjectName = name;
-			}
-			else
-			{
-				setPrimarySelection(name);
-			}
-		};
-
-	auto splitDragPayloadNames = [&](const char* payloadData) -> std::vector<std::string>
-		{
-			std::vector<std::string> names;
-			if (!payloadData)
-			{
-				return names;
-			}
-			std::string data(payloadData);
-			size_t start = 0;
-			while (start <= data.size())
-			{
-				const size_t end = data.find('\n', start);
-				const size_t length = (end == std::string::npos) ? data.size() - start : end - start;
-				if (length > 0)
-				{
-					names.emplace_back(data.substr(start, length));
-				}
-				if (end == std::string::npos)
-				{
-					break;
-				}
-				start = end + 1;
-			}
-			return names;
-		};
-
 	auto drawHierarchyNode = [&](auto&& self, GameObject* object) -> void
 		{
 			if (!object) { return; }
@@ -1198,10 +953,9 @@ void EditorApplication::DrawHierarchy() {
 			auto* transform = object->GetComponent<TransformComponent>();
 			auto* children = transform ? &transform->GetChildrens() : nullptr;
 			const bool hasChildren = children && !children->empty();
-			ImGuiIO& io = ImGui::GetIO();
 
 			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
-			if (m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end())
+			if (m_SelectedObjectName == name)
 			{
 				flags |= ImGuiTreeNodeFlags_Selected;
 			}
@@ -1214,23 +968,15 @@ void EditorApplication::DrawHierarchy() {
 				ImGui::TreeNodeEx(name.c_str(), flags);
 				if (ImGui::IsItemClicked())
 				{
-					handleSelectionClick(name, io);
+					m_SelectedObjectName = name;
 				}
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
-					setPrimarySelection(name);
+					m_SelectedObjectName = name;
 					auto selected = findObjectByName(name);
 					if (selected)
 					{
 						FocusEditorCameraOnObject(selected);
-					}
-				}
-
-				if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-				{
-					if (m_SelectedObjectNames.find(name) == m_SelectedObjectNames.end() && !io.KeyCtrl)
-					{
-						setPrimarySelection(name);
 					}
 				}
 
@@ -1239,28 +985,11 @@ void EditorApplication::DrawHierarchy() {
 					auto selected = findObjectByName(name);
 					if (ImGui::MenuItem("Copy") && selected)
 					{
-						auto roots = gatherSelectedRoots();
-						if (!roots.empty())
-						{
-							copySelectedObjects(roots);
-						}
-						else
-						{
-							copySelectedObject(selected);
-						}
+						copySelectedObject(selected);
 					}
 					if (ImGui::MenuItem("Duplicate") && selected)
 					{
-						auto roots = gatherSelectedRoots();
-						if (!roots.empty())
-						{
-							copySelectedObjects(roots);
-						}
-						else
-						{
-							copySelectedObject(selected);
-						}
-
+						copySelectedObject(selected);
 						if (m_ObjectClipboardHasData)
 						{
 							queuePasteObject(m_ObjectClipboard, "Duplicate GameObject");
@@ -1268,59 +997,20 @@ void EditorApplication::DrawHierarchy() {
 					}
 					if (ImGui::MenuItem("Delete"))
 					{
-						if (m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end() && m_SelectedObjectNames.size() > 1)
-						{
-							pendingDeletes.insert(pendingDeletes.end(), m_SelectedObjectNames.begin(), m_SelectedObjectNames.end());
-						}
-						else
-						{
-							pendingDeletes.push_back(name);
-						}
+						pendingDeletes.push_back(name);
 					}
 					ImGui::EndPopup();
 				}
 
 				if (ImGui::BeginDragDropSource())
 				{
-					std::string payloadNames;
-					const bool isMulti = m_SelectedObjectNames.size() > 1
-						&& m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end();
-					if (isMulti)
-					{
-						auto roots = gatherSelectedRoots();
-						for (size_t i = 0; i < roots.size(); ++i)
-						{
-							if (!roots[i])
-							{
-								continue;
-							}
-							if (!payloadNames.empty())
-							{
-								payloadNames.push_back('\n');
-							}
-							payloadNames += roots[i]->GetName();
-						}
-						ImGui::SetDragDropPayload("HIERARCHY_OBJECTS", payloadNames.c_str(), payloadNames.size() + 1);
-					}
-					else
-					{
-						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
-					}
+					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
 					ImGui::TextUnformatted(name.c_str());
 					ImGui::EndDragDropSource();
 				}
 
 				if (ImGui::BeginDragDropTarget())
 				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECTS"))
-					{
-						const char* payloadData = static_cast<const char*>(payload->Data);
-						auto names = splitDragPayloadNames(payloadData);
-						for (const auto& childName : names)
-						{
-							reparentObject(childName, name);
-						}
-					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
 					{
 						const char* payloadName = static_cast<const char*>(payload->Data);
@@ -1336,22 +1026,15 @@ void EditorApplication::DrawHierarchy() {
 				const bool nodeOpen = ImGui::TreeNodeEx(name.c_str(), flags);
 				if (ImGui::IsItemClicked())
 				{
-					handleSelectionClick(name, io);
+					m_SelectedObjectName = name;
 				}
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
-					setPrimarySelection(name);
+					m_SelectedObjectName = name;
 					auto selected = findObjectByName(name);
 					if (selected)
 					{
 						FocusEditorCameraOnObject(selected);
-					}
-				}
-				if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-				{
-					if (m_SelectedObjectNames.find(name) == m_SelectedObjectNames.end() && !io.KeyCtrl)
-					{
-						setPrimarySelection(name);
 					}
 				}
 				if (ImGui::BeginPopupContextItem("ObjectContext"))
@@ -1359,27 +1042,11 @@ void EditorApplication::DrawHierarchy() {
 					auto selected = findObjectByName(name);
 					if (ImGui::MenuItem("Copy") && selected)
 					{
-						auto roots = gatherSelectedRoots();
-						if (!roots.empty())
-						{
-							copySelectedObjects(roots);
-						}
-						else
-						{
-							copySelectedObject(selected);
-						}
+						copySelectedObject(selected);
 					}
 					if (ImGui::MenuItem("Duplicate") && selected)
 					{
-						auto roots = gatherSelectedRoots();
-						if (!roots.empty())
-						{
-							copySelectedObjects(roots);
-						}
-						else
-						{
-							copySelectedObject(selected);
-						}
+						copySelectedObject(selected);
 						if (m_ObjectClipboardHasData)
 						{
 							queuePasteObject(m_ObjectClipboard, "Duplicate GameObject");
@@ -1387,59 +1054,20 @@ void EditorApplication::DrawHierarchy() {
 					}
 					if (ImGui::MenuItem("Delete"))
 					{
-						if (m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end() && m_SelectedObjectNames.size() > 1)
-						{
-							pendingDeletes.insert(pendingDeletes.end(), m_SelectedObjectNames.begin(), m_SelectedObjectNames.end());
-						}
-						else
-						{
-							pendingDeletes.push_back(name);
-						}
+						pendingDeletes.push_back(name);
 					}
 					ImGui::EndPopup();
 				}
 
 				if (ImGui::BeginDragDropSource())
 				{
-					std::string payloadNames;
-					const bool isMulti = m_SelectedObjectNames.size() > 1
-						&& m_SelectedObjectNames.find(name) != m_SelectedObjectNames.end();
-					if (isMulti)
-					{
-						auto roots = gatherSelectedRoots();
-						for (size_t i = 0; i < roots.size(); ++i)
-						{
-							if (!roots[i])
-							{
-								continue;
-							}
-							if (!payloadNames.empty())
-							{
-								payloadNames.push_back('\n');
-							}
-							payloadNames += roots[i]->GetName();
-						}
-						ImGui::SetDragDropPayload("HIERARCHY_OBJECTS", payloadNames.c_str(), payloadNames.size() + 1);
-					}
-					else
-					{
-						ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
-					}
+					ImGui::SetDragDropPayload("HIERARCHY_OBJECT", name.c_str(), name.size() + 1);
 					ImGui::TextUnformatted(name.c_str());
 					ImGui::EndDragDropSource();
 				}
 
 				if (ImGui::BeginDragDropTarget())
 				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECTS"))
-					{
-						const char* payloadData = static_cast<const char*>(payload->Data);
-						auto names = splitDragPayloadNames(payloadData);
-						for (const auto& childName : names)
-						{
-							reparentObject(childName, name);
-						}
-					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
 					{
 						const char* payloadName = static_cast<const char*>(payload->Data);
@@ -1484,15 +1112,6 @@ void EditorApplication::DrawHierarchy() {
 		ImGui::InvisibleButton("##HierarchyDropTarget", dropRegion);
 		if (ImGui::BeginDragDropTarget())
 		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECTS"))
-			{
-				const char* payloadData = static_cast<const char*>(payload->Data);
-				auto names = splitDragPayloadNames(payloadData);
-				for (const auto& childName : names)
-				{
-					detachObject(childName);
-				}
-			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_OBJECT"))
 			{
 				const char* payloadName = static_cast<const char*>(payload->Data);
@@ -1526,8 +1145,6 @@ void EditorApplication::DrawHierarchy() {
 				scene->AddGameObject(newObject);
 				createdObjects[clipboardId] = newObject;
 				m_SelectedObjectName = uniqueName;
-				m_SelectedObjectNames.clear();
-				m_SelectedObjectNames.insert(uniqueName);
 				didAdd = true;
 			}
 			for (const auto& objectJson : pendingAdd.data["objects"])
@@ -1595,8 +1212,6 @@ void EditorApplication::DrawHierarchy() {
 			newObject->Deserialize(pendingAdd.data);
 			scene->AddGameObject(newObject);
 			m_SelectedObjectName = uniqueName;
-			m_SelectedObjectNames.clear();
-			m_SelectedObjectNames.insert(uniqueName);
 			didAdd = true;
 		}
 
@@ -1625,7 +1240,6 @@ void EditorApplication::DrawHierarchy() {
 		{
 			m_SelectedObjectName.clear();
 		}
-		m_SelectedObjectNames.erase(name);
 		SceneStateSnapshot afterState = CaptureSceneState(scene);
 
 		m_UndoManager.Push(UndoManager::Command{
@@ -1639,11 +1253,6 @@ void EditorApplication::DrawHierarchy() {
 				RestoreSceneState(afterState);
 			}
 			});
-	}
-
-	if (m_SelectedObjectName.empty() && !m_SelectedObjectNames.empty())
-	{
-		m_SelectedObjectName = *m_SelectedObjectNames.begin();
 	}
 
 	ImGui::End();
@@ -1667,12 +1276,6 @@ void EditorApplication::DrawInspector() {
 	const auto& gameObjects = scene->GetGameObjects();
 	const auto  it = gameObjects.find(m_SelectedObjectName);
 
-	if (m_SelectedObjectNames.size() > 1)
-	{
-		ImGui::Text("Multiple objects selected");
-		ImGui::End();
-		return;
-	}
 
 	// 선택된 오브젝트가 없거나, 실체가 없는 경우
 	//second == Object 포인터
@@ -1711,8 +1314,6 @@ void EditorApplication::DrawInspector() {
 			if (scene->RenameGameObject(oldName, newName))
 			{
 				m_SelectedObjectName = newName;
-				m_SelectedObjectNames.erase(oldName);
-				m_SelectedObjectNames.insert(newName);
 				m_LastSelectedObjectName = newName;
 
 				Scene* scenePtr = scene.get();
@@ -1724,8 +1325,6 @@ void EditorApplication::DrawInspector() {
 							return;
 						scenePtr->RenameGameObject(newName, oldName);
 						m_SelectedObjectName = oldName;
-						m_SelectedObjectNames.erase(newName);
-						m_SelectedObjectNames.insert(oldName);
 						m_LastSelectedObjectName = oldName;
 						CopyStringToBuffer(oldName, m_ObjectNameBuffer);
 					},
@@ -1735,8 +1334,6 @@ void EditorApplication::DrawInspector() {
 							return;
 						scenePtr->RenameGameObject(oldName, newName);
 						m_SelectedObjectName = newName;
-						m_SelectedObjectNames.erase(oldName);
-						m_SelectedObjectNames.insert(newName);
 						m_LastSelectedObjectName = newName;
 						CopyStringToBuffer(newName, m_ObjectNameBuffer);
 					}
@@ -2007,7 +1604,6 @@ void EditorApplication::DrawFolderView()
 				m_CurrentScenePath = newPath;
 				m_SelectedResourcePath = newPath;
 				m_SelectedObjectName.clear();
-				m_SelectedObjectNames.clear();
 				m_LastSelectedObjectName.clear();
 				m_ObjectNameBuffer.fill('\0');
 
@@ -2299,7 +1895,6 @@ void EditorApplication::DrawFolderView()
 							{
 								m_CurrentScenePath = entry.path();
 								m_SelectedObjectName.clear();
-								m_SelectedObjectNames.clear();
 								m_LastSelectedObjectName.clear();
 								m_ObjectNameBuffer.fill('\0');
 
@@ -2317,11 +1912,6 @@ void EditorApplication::DrawFolderView()
 										m_SelectedResourcePath = beforeState.selectedPath;
 										m_SelectedObjectName = beforeState.selectedObjectName;
 										m_LastSelectedObjectName = beforeState.lastSelectedObjectName;
-										m_SelectedObjectNames.clear();
-										if (!m_SelectedObjectName.empty())
-										{
-											m_SelectedObjectNames.insert(m_SelectedObjectName);
-										}
 										m_ObjectNameBuffer = beforeState.objectNameBuffer;
 										m_LastSceneName = beforeState.lastSceneName;
 										m_SceneNameBuffer = beforeState.sceneNameBuffer;
@@ -2336,11 +1926,6 @@ void EditorApplication::DrawFolderView()
 										m_SelectedResourcePath = afterState.selectedPath;
 										m_SelectedObjectName = afterState.selectedObjectName;
 										m_LastSelectedObjectName = afterState.lastSelectedObjectName;
-										m_SelectedObjectNames.clear();
-										if (!m_SelectedObjectName.empty())
-										{
-											m_SelectedObjectNames.insert(m_SelectedObjectName);
-										}
 										m_ObjectNameBuffer = afterState.objectNameBuffer;
 										m_LastSceneName = afterState.lastSceneName;
 										m_SceneNameBuffer = afterState.sceneNameBuffer;
@@ -3033,11 +2618,6 @@ void EditorApplication::RestoreSceneState(const SceneStateSnapshot& snapshot)
 	m_SelectedResourcePath = snapshot.selectedPath;
 	m_SelectedObjectName = snapshot.selectedObjectName;
 	m_LastSelectedObjectName = snapshot.lastSelectedObjectName;
-	m_SelectedObjectNames.clear();
-	if (!m_SelectedObjectName.empty())
-	{
-		m_SelectedObjectNames.insert(m_SelectedObjectName);
-	}
 	m_ObjectNameBuffer = snapshot.objectNameBuffer;
 	m_LastSceneName = snapshot.lastSceneName;
 	m_SceneNameBuffer = snapshot.sceneNameBuffer;

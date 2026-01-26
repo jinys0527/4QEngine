@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Scene.h"
-//Default Scene은 에디터에서 생성할 Empty Scene
+
 class DefaultScene : public Scene {
 
 public:

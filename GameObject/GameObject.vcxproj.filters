@@ -97,9 +97,6 @@
     <ClCompile Include="UITextComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SceneChangeTestComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -209,9 +206,6 @@
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UITextComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneChangeTestComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

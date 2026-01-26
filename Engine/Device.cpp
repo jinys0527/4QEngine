@@ -13,7 +13,7 @@ void Device::Create(HWND hwnd)
 	hr = D3D11CreateDevice(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		creationFlags,
+		0,
 		&m_FeatureLevels,
 		1,
 		D3D11_SDK_VERSION,

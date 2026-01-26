@@ -1,5 +1,4 @@
-﻿
-#include "pch.h"
+﻿#include "pch.h"
 #include "GameApplication.h"
 #include "GameObject.h"
 //#include "Reflection.h"
@@ -9,33 +8,25 @@
 #include "ServiceRegistry.h"
 #include "SoundManager.h"
 #include "InputManager.h"
-#include "CameraComponent.h"
-#include "CameraObject.h"
 
 
 bool GameApplication::Initialize()
 {
-	const wchar_t* className = L"APT";
-	const wchar_t* windowName = L"APT";
+	const wchar_t* className = L"PDA";
+	const wchar_t* windowName = L"PDA";
 
-	if (false == Create(className, windowName, 1920, 1080)) // 해상도 변경
+	if (false == Create(className, windowName, 1920, 1080))
 	{
 		return false;
 	}
-	m_Engine.CreateDevice(m_hwnd);
 
-	m_AssetLoader = &m_Services.Get<AssetLoader>();
-	m_AssetLoader->LoadAll();
-	m_SoundManager = &m_Services.Get<SoundManager>();
-	m_SoundManager->Init();
+	//m_Renderer.Initialize(m_hwnd);
 
+	//m_Engine.GetAssetManager().Init(L"../Resource");
+	//m_Engine.GetSoundAssetManager().Init(L"../Sound");
 	m_Services.Get<SoundManager>().Init();
-	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
-	// GameManager에 SceneManager 등록
-
-	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
-
+	m_InputManager = &m_Services.Get<InputManager>();
 	return true;
 }
 
@@ -47,9 +38,9 @@ void GameApplication::Run()
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			if (false == m_InputManager.OnHandleMessage(msg)) {
+			if (false == m_InputManager->OnHandleMessage(msg))
 				TranslateMessage(&msg);
-			}
+
 			DispatchMessage(&msg);
 		}
 		else
@@ -75,7 +66,6 @@ bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void GameApplication::UpdateLogic()
 {
-	m_SceneManager.ChangeScene();
 }
 
 void GameApplication::Update()
@@ -96,39 +86,25 @@ void GameApplication::Update()
 		}
 
 	}
+
+
 }
 
 void GameApplication::Render()
 {
-	if (!m_Engine.GetD3DDXDC()) return;
+	//m_Engine.GetRenderer().SetTransform(D2D1::Matrix3x2F::Identity());
+
 	//m_Engine.GetRenderer().RenderBegin();
 
-	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
-	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
-	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
+	m_SceneManager.Render();
 
-	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
+	//m_Engine.GetRenderer().RenderEnd(false);
 
-	auto scene = m_SceneManager.GetCurrentScene();
-	if (!scene)
-	{
-		return;
-	}
-	// 현재 Scene의 Camera 받기
-	if (auto gameCamera = scene->GetGameCamera())
-	{
-		if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
-		{
-			cameraComponent->SetViewport({ static_cast<float>(m_width), static_cast<float>(m_height) });
-		}
-	}
+#ifdef _EDITOR
+	RenderImGUI();
+#endif
 
-	scene->Render(m_FrameData);
-	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
-	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
-	m_Renderer.RenderFrame(m_FrameData);
-	m_Renderer.RenderToBackBuffer();
-	Flip(m_Renderer.GetSwapChain().Get());
+	//m_Engine.GetRenderer().Present();
 }
 
 
