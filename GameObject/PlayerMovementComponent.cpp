@@ -82,27 +82,6 @@ void PlayerMovementComponent::Start()
 
 void PlayerMovementComponent::Update(float deltaTime)
 {
-	// 키 입력 처리
-//  	if (!GetOwner()->GetScene())
-// 		return;
-// 
-// 	auto* transComp = GetOwner()->GetComponent<TransformComponent>();
-// 	if (transComp == nullptr)
-// 		return;
-// 
-// 	float x = 0.f, z = 0.f;
-// 	if (m_IsLeft)  x -= 1.f;
-// 	if (m_IsRight) x += 1.f;
-// 	if (m_IsUp)    z += 1.f;
-// 	if (m_IsDown)  z -= 1.f;
-// 
-// 	if (x == 0.f && z == 0.f) return;
-
-	// 대각선 정규화(속도 동일)
-// 	const float len = std::sqrt(x * x + z * z);
-// 	x /= len; z /= len;
-// 
-// 	transComp->Translate({ x * m_Speed * deltaTime, 0.f, z * m_Speed * deltaTime });
 
 	if (!m_IsDragging || !m_HasDragRay)
 		return;
@@ -190,8 +169,13 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			return;
 
 		auto* collider = owner->GetComponent<BoxColliderComponent>();
-		if (!collider || !collider->HasBounds())
-			return;
+		float ownerHitT = 0.0f;
+		const bool hitOwner = collider && collider->HasBounds()
+			&& collider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, ownerHitT);
+
+		const auto pos = transComp->GetPosition();
+		float nodeHitT = 0.0f;
+		NodeComponent* clickedNode = FindClosestNodeHit(scene, pickRay.m_Pos, pickRay.m_Dir, nodeHitT);
 
 		auto& gameObjects = scene->GetGameObjects();
 		float closestT = FLT_MAX;
@@ -218,13 +202,11 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			}
 		}
 
-		if (closestObject != owner)
+		if (!hitOwner && !clickedNode && closestObject != owner)
 			return;
 
 		// 2) 드래그 기준 표면 hit (바닥/발판). 자기 자신은 제외.
-		const auto pos = transComp->GetPosition();
-		float nodeHitT = 0.0f;
-		NodeComponent* clickedNode = FindClosestNodeHit(scene, pickRay.m_Pos, pickRay.m_Dir, nodeHitT);
+
 		if (clickedNode)
 		{
 			auto* nodeOwner = clickedNode->GetOwner();

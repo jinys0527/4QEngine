@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -6.090000152587891,
-                "y": 15.878570556640625,
-                "z": -13.485281944274902
+                "x": -5.426947116851807,
+                "y": 10.260138511657715,
+                "z": -4.054040431976318
             },
             "look": {
-                "x": -6.090000152587891,
-                "y": 15.171463966369629,
-                "z": -12.778175354003906
+                "x": -5.336148738861084,
+                "y": 9.344842910766602,
+                "z": -3.6616246700286865
             },
             "up": {
-                "x": 0.0,
-                "y": 0.7071067094802856,
-                "z": 0.7071068286895752
+                "x": 0.20633265376091003,
+                "y": 0.4027833342552185,
+                "z": 0.8917356729507446
             }
         }
     },
@@ -107,6 +107,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -121,20 +135,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Cycle"
@@ -192,15 +192,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -6.090000152587891,
-                            "y": 15.878570556640625,
-                            "z": -13.485281944274902
+                            "x": -5.426947116851807,
+                            "y": 10.260138511657715,
+                            "z": -4.054040431976318
                         },
                         "Rotation": {
-                            "w": 0.9238795042037964,
-                            "x": 0.3826834559440613,
-                            "y": 0.0,
-                            "z": -0.0
+                            "w": 0.832084596157074,
+                            "x": 0.542922854423523,
+                            "y": 0.09501009434461594,
+                            "z": -0.06199270859360695
                         },
                         "Scale": {
                             "x": 1.0,
@@ -213,15 +213,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -6.090000152587891,
-                            "y": 15.878570556640625,
-                            "z": -13.485281944274902
+                            "x": -5.426947116851807,
+                            "y": 10.260138511657715,
+                            "z": -4.054040431976318
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -6.090000152587891,
-                            "y": 15.171463966369629,
-                            "z": -12.778175354003906
+                            "x": -5.336148738861084,
+                            "y": 9.344842910766602,
+                            "z": -3.6616246700286865
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -239,9 +239,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.0,
-                            "y": 0.7071067094802856,
-                            "z": 0.7071068286895752
+                            "x": 0.20633265376091003,
+                            "y": 0.4027833342552185,
+                            "z": 0.8917356729507446
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -345,20 +345,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -373,6 +359,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 }
             ],
             "name": "Enemy",
@@ -470,6 +470,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -484,20 +498,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Enemy1",
@@ -595,6 +595,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -609,20 +623,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Enemy2",
@@ -663,20 +663,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -9.782766342163086,
-                            "y": 9.695951461791992,
-                            "z": -8.47044563293457
+                            "x": -7.972898483276367,
+                            "y": 8.578352928161621,
+                            "z": -7.773991107940674
                         },
                         "Rotation": {
-                            "w": 0.8876972198486328,
-                            "x": 0.26815301179885864,
-                            "y": 0.35841524600982666,
-                            "z": -0.10782415419816971
+                            "w": 0.907559335231781,
+                            "x": 0.24155962467193604,
+                            "y": 0.33204102516174316,
+                            "z": -0.0879424586892128
                         },
                         "Scale": {
-                            "x": 0.9200302958488464,
-                            "y": 0.9341316819190979,
-                            "z": 0.9201557636260986
+                            "x": 0.9200308918952942,
+                            "y": 0.9341318607330322,
+                            "z": 0.9201549887657166
                         }
                     },
                     "type": "TransformComponent"
@@ -684,15 +684,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -9.782766342163086,
-                            "y": 9.695951461791992,
-                            "z": -8.47044563293457
+                            "x": -7.972898483276367,
+                            "y": 8.578352928161621,
+                            "z": -7.773991107940674
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": -9.204264640808105,
-                            "y": 9.142581939697266,
-                            "z": -7.871180534362793
+                            "x": -7.412691593170166,
+                            "y": 8.08149242401123,
+                            "z": -7.1111955642700195
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -706,17 +706,17 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7846534252166748,
+                            "aspect": 1.7586634159088135,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.38365066051483154,
-                            "y": 0.8329359292984009,
-                            "z": 0.3987857699394226
+                            "x": 0.3200414180755615,
+                            "y": 0.8678301572799683,
+                            "z": 0.3800583481788635
                         },
                         "Viewport": {
                             "height": 808.0,
-                            "width": 1442.0
+                            "width": 1421.0
                         }
                     },
                     "type": "CameraComponent"
@@ -812,20 +812,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -840,6 +826,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -943,6 +943,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -957,20 +971,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1074,6 +1074,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1091,21 +1105,7 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "IsMoveable": true
+                        "IsMoveable": false
                     },
                     "type": "NodeComponent"
                 },
@@ -1205,6 +1205,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1219,20 +1233,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1336,6 +1336,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1350,20 +1364,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1467,6 +1467,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1481,20 +1495,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1598,6 +1598,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1612,20 +1626,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1729,6 +1729,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1743,20 +1757,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1860,6 +1860,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1874,20 +1888,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1991,6 +1991,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2005,20 +2019,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2122,6 +2122,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2136,20 +2150,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2253,6 +2253,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2267,20 +2281,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2384,6 +2384,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2398,20 +2412,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2515,6 +2515,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2529,20 +2543,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2646,6 +2646,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2660,20 +2674,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2777,6 +2777,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2791,20 +2805,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -2908,6 +2908,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2922,20 +2936,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3039,6 +3039,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3053,20 +3067,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3170,6 +3170,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3184,20 +3198,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3301,6 +3301,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3315,20 +3329,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3432,6 +3432,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3446,20 +3460,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3563,6 +3563,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3577,20 +3591,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3694,6 +3694,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3708,20 +3722,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3825,6 +3825,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3839,20 +3853,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -3956,6 +3956,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -3970,20 +3984,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -4087,6 +4087,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -4101,20 +4115,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -4136,7 +4136,7 @@
                     "data": {
                         "Position": {
                             "x": 0.0,
-                            "y": 2.4325804710388184,
+                            "y": 2.359999895095825,
                             "z": 0.0
                         },
                         "Rotation": {
@@ -4152,10 +4152,6 @@
                         }
                     },
                     "type": "TransformComponent"
-                },
-                {
-                    "data": null,
-                    "type": "PlayerComponent"
                 },
                 {
                     "data": {
@@ -4221,6 +4217,24 @@
                     "type": "MaterialComponent"
                 },
                 {
+                    "data": null,
+                    "type": "PlayerComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
                     "data": {
                         "CastShadow": true,
                         "Material": {
@@ -4236,20 +4250,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
