@@ -1,5 +1,4 @@
-﻿// Game / Client
-#include "pch.h"
+﻿#include "pch.h"
 #include "EditorApplication.h"
 #include "CameraObject.h"
 #include "CameraComponent.h"
@@ -1045,24 +1044,6 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
-	if (typeInfo == typeid(ProjectionMode))
-	{
-		ProjectionMode value{};
-		property.GetValue(component, &value);
-		static constexpr const char* kModes[] = { "Perspective", "Orthographic", "Ortho OffCenter" };
-		int current = static_cast<int>(value);
-		if (ImGui::Combo(property.GetName().c_str(), &current, kModes, IM_ARRAYSIZE(kModes)))
-		{
-			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kModes) - 1));
-			const ProjectionMode updated = static_cast<ProjectionMode>(clamped);
-			property.SetValue(component, &updated);
-			result.updated = true;
-		}
-		result.activated = result.activated || ImGui::IsItemActivated();
-		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
-		return result;
-	}
-
 	if (typeInfo == typeid(PerspectiveParams))
 	{
 		PerspectiveParams value{};
@@ -1425,14 +1406,6 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 
 		updated |= ImGui::DragFloat("Roughness", &value.roughness, 0.01f, 0.0f, 1.0f);
 		result.activated   = result.activated   || ImGui::IsItemActivated();
-		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
-
-		updated |= ImGui::DragFloat("Saturation", &value.saturation, 0.01f, 0.0f, 10.0f);
-		result.activated = result.activated || ImGui::IsItemActivated();
-		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
-
-		updated |= ImGui::DragFloat("Lightness", &value.lightness, 0.01f, 0.0f, 10.0f);
-		result.activated = result.activated || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		// Texture slots

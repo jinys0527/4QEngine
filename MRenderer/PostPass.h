@@ -7,7 +7,7 @@ class PostPass : public RenderPass
 {
 public:
     PostPass(RenderContext& context, AssetLoader& assetloader) : RenderPass(context, assetloader) {}
-    std::string_view GetName() const override { return "Post"; }
+    std::string_view GetName() const override { return "Opaque"; }
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:

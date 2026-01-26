@@ -28,6 +28,7 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
     {
         const auto& item = *queueItem.item;
         SetBaseCB(item);
+        SetMaskingTM(item, frame.context.gameCamera.cameraPos);
 
         const auto* vertexBuffers = m_RenderContext.vertexBuffers;
         const auto* indexBuffers = m_RenderContext.indexBuffers;
@@ -77,14 +78,6 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
 							}
 						}
 					}
-            if (vertexShaders && mat->vertexShader.IsValid())
-            {
-                const auto shaderIt = vertexShaders->find(mat->vertexShader);
-                if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
-                {
-                    vertexShader = shaderIt->second.vertexShader.Get();
-                }
-            }
 
             if (pixelShaders && mat->pixelShader.IsValid())
             {

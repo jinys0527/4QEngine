@@ -90,8 +90,7 @@ public:
 	const float& GetFarZ() const { return m_FarZ; }
 
 
-	const ProjectionMode& GetProjectionMode() const { return m_Mode; }
-	void SetProjectionMode(const ProjectionMode& mode);
+	ProjectionMode GetProjectionMode() const { return m_Mode; }
 
 	// Get할때만 계산해서 받아옴
 	XMFLOAT4X4 GetViewMatrix  ();

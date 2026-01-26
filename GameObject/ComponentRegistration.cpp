@@ -16,7 +16,7 @@
 #include "CollisionFSMComponent.h"
 #include "AnimFSMComponent.h"
 #include "UIFSMComponent.h"
-#include "SceneChangeTestComponent.h"
+
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -41,7 +41,6 @@ extern "C" {
 	void Link_CollisionFSMComponent();
 	void Link_AnimFSMComponent();
 	void Link_UIFSMComponent();
-	void Link_SceneChangeTestComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -69,7 +68,6 @@ void LinkEngineComponents() {
 	Link_CollisionFSMComponent();
 	Link_AnimFSMComponent();
 	Link_UIFSMComponent();
-	Link_SceneChangeTestComponent();
 
 	RegisterFSMBaseDefinitions();
 	RegisterUIFSMDefinitions();
