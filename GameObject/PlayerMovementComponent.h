@@ -29,13 +29,18 @@ private:
 	bool  m_IsLeft     = false;
 	bool  m_IsDown     = false;
 	bool  m_IsRight    = false;
-	bool  m_IsDragging = false;
-	POINT m_LastMousePos{ 0, 0 };
+
 	float m_Speed      = 5.0f;
+
+	bool  m_IsDragging = false;
+
 	float m_DragSpeed  = 0.01f;
-	DirectX::XMFLOAT3 m_DragOffset{ 0.0f, 0.0f, 0.0f };
+
 	bool m_HasDragRay = false;
 	DirectX::XMFLOAT3 m_DragRayOrigin{ 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_DragRayDir{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_DragRayDir   { 0.0f, 0.0f, 0.0f };
+
+	// 바닥 평면 기반 오프셋/고정 Y
+	DirectX::XMFLOAT3 m_DragOffset	 { 0.0f, 0.0f, 0.0f };
 };
 

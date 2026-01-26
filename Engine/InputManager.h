@@ -2,7 +2,7 @@
 #include <unordered_set>
 #include <windows.h>
 #include "Event.h"
-#include "MathHelper.h"
+#include "RayHelper.h"
 
 inline int GetXFromLParam(LPARAM lp) { return (int)(short)(LOWORD(lp)); }
 inline int GetYFromLParam(LPARAM lp) { return (int)(short)(HIWORD(lp)); }
@@ -36,6 +36,16 @@ public:
 						    const Events::MouseState& mouseState,
 						    DirectX::XMFLOAT3& outOrigin,
 						    DirectX::XMFLOAT3& outDirection) const;
+	
+	// 추가: Ray 자체를 반환하는 오버로드
+	bool BuildPickRay		(const DirectX::XMFLOAT4X4& view,
+							 const DirectX::XMFLOAT4X4& proj,
+							 Ray& outRay) const;
+
+	bool BuildPickRay		(const DirectX::XMFLOAT4X4& view,
+							 const DirectX::XMFLOAT4X4& proj,
+							 const Events::MouseState& mouseState,
+							 Ray& outRay) const;
 
 	bool IsPointInViewport(const POINT& point) const;
 

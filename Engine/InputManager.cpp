@@ -270,11 +270,36 @@ bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view,
 	return BuildPickRay(view, proj, m_Mouse, outOrigin, outDirection);
 }
 
-bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& proj, const Events::MouseState& mouseState, DirectX::XMFLOAT3& outOrigin, DirectX::XMFLOAT3& outDirection) const
+bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, 
+						        const DirectX::XMFLOAT4X4& proj,
+						        const Events::MouseState& mouseState, 
+						        DirectX::XMFLOAT3& outOrigin,
+						        DirectX::XMFLOAT3& outDirection) const
 {
-		if (!m_HasViewportRect)
+	Ray ray{};
+	if (!BuildPickRay(view, proj, mouseState, ray))
 		return false;
 
+	outOrigin = ray.m_Pos;
+	outDirection = ray.m_Dir;
+	return true;
+}
+
+bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, 
+								const DirectX::XMFLOAT4X4& 
+								proj, Ray& outRay) const
+{
+	return BuildPickRay(view, proj, m_Mouse, outRay);
+}
+
+bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, 
+								const DirectX::XMFLOAT4X4& proj, 
+								const Events::MouseState& mouseState, 
+								Ray& outRay) const
+{
+	if (!m_HasViewportRect)
+		return false;
+	
 	const float width  = static_cast<float>(m_ViewportRect.right - m_ViewportRect.left);
 	const float height = static_cast<float>(m_ViewportRect.bottom - m_ViewportRect.top);
 	if (width <= 0.0f || height <= 0.0f)
@@ -289,18 +314,7 @@ bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, const DirectX::
 	const auto viewMat = DirectX::XMLoadFloat4x4(&view);
 	const auto projMat = DirectX::XMLoadFloat4x4(&proj);
 
-	const Ray ray = MakePickRayLH(
-		                           x,
-		                           y,
-		                           vpX,
-		                           vpY,
-		                           width,
-		                           height,
-		                           viewMat,
-		                           projMat);
-
-	outOrigin    = ray.m_Pos;
-	outDirection = ray.m_Dir;
+	outRay = MakePickRayLH(x, y, vpX, vpY, width, height, viewMat, projMat);
 	return true;
 }
 

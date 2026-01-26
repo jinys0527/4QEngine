@@ -6,6 +6,7 @@
 #include "ServiceRegistry.h"
 #include "InputManager.h"
 #include "Scene.h"
+#include "RayHelper.h"
 #include "CameraObject.h"
 #include "BoxColliderComponent.h"
 #include <cfloat>
@@ -13,6 +14,50 @@
 REGISTER_COMPONENT(PlayerMovementComponent)
 REGISTER_PROPERTY(PlayerMovementComponent, Speed)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)
+
+static bool FindClosestSurfaceHit(
+								  Scene* scene,
+								  GameObject* ignoreObject,
+								  const DirectX::XMFLOAT3& rayOrigin,
+								  const DirectX::XMFLOAT3& rayDir,
+								  DirectX::XMFLOAT3& outHitPos)
+{
+	if (!scene) return false;
+
+	auto& gameObjects = scene->GetGameObjects();
+
+	float closestT = FLT_MAX;
+	GameObject* closestObj = nullptr;
+
+	for (const auto& [name, object] : gameObjects)
+	{
+		if (!object) continue;
+
+		GameObject* gameObect = object.get();
+		if (gameObect == ignoreObject) continue; // 자기 자신 제외
+
+		auto* col = gameObect->GetComponent<BoxColliderComponent>();
+		if (!col || !col->HasBounds()) continue;
+
+		float t = 0.0f;
+		if (!col->IntersectsRay(rayOrigin, rayDir, t)) continue;
+
+		if (t >= 0.0f && t < closestT)
+		{
+			closestT = t;
+			closestObj = gameObect;
+		}
+	}
+
+	if (!closestObj) return false;
+
+	outHitPos = {
+		rayOrigin.x + rayDir.x * closestT,
+		rayOrigin.y + rayDir.y * closestT,
+		rayOrigin.z + rayDir.z * closestT
+	};
+	return true;
+}
 
 PlayerMovementComponent::PlayerMovementComponent()
 {
@@ -69,28 +114,21 @@ void PlayerMovementComponent::Update(float deltaTime)
 	if (!owner)
 		return;
 
+	auto* scene = owner->GetScene();
+	if (!scene) return;
+
 	auto* transComp = owner->GetComponent<TransformComponent>();
 	if (!transComp)
 		return;
 
-	auto* collider = owner->GetComponent<BoxColliderComponent>();
-	if (!collider || !collider->HasBounds())
+	DirectX::XMFLOAT3 surfaceHit{};
+	if (!FindClosestSurfaceHit(scene, dynamic_cast<GameObject*>(owner), m_DragRayOrigin, m_DragRayDir, surfaceHit))
 		return;
 
-	float hitT = 0.0f;
-	if (!collider->IntersectsRay(m_DragRayOrigin, m_DragRayDir, hitT))
-		return;
-
-	const DirectX::XMFLOAT3 hit{
-		m_DragRayOrigin.x + m_DragRayDir.x * hitT,
-		m_DragRayOrigin.y + m_DragRayDir.y * hitT,
-		m_DragRayOrigin.z + m_DragRayDir.z * hitT
-	};
-
-	const DirectX::XMFLOAT3 newPos{
-		hit.x + m_DragOffset.x,
-		hit.y + m_DragOffset.y,
-		hit.z + m_DragOffset.z
+	DirectX::XMFLOAT3 newPos{
+		surfaceHit.x + m_DragOffset.x,
+		surfaceHit.y + m_DragOffset.y,
+		surfaceHit.z + m_DragOffset.z
 	};
 
 	transComp->SetPosition(newPos);
@@ -155,10 +193,6 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (!transComp)
 		return;
 
-	DirectX::XMFLOAT3 rayOrigin{};
-	DirectX::XMFLOAT3 rayDir{};
-
-
 	if (type == EventType::MouseLeftClickUp)
 	{
 		m_IsDragging = false;
@@ -171,7 +205,8 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::MouseLeftClick)
 	{
-		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, rayOrigin, rayDir))
+		Ray pickRay{};
+		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
 			return;
 
 		auto* collider = owner->GetComponent<BoxColliderComponent>();
@@ -181,6 +216,8 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		auto& gameObjects = scene->GetGameObjects();
 		float closestT = FLT_MAX;
 		GameObject* closestObject = nullptr;
+
+		// 가장 가까운 collider hit 찾기 (선택 판정)
 		for (const auto& [name, object] : gameObjects)
 		{
 			if (!object)
@@ -191,7 +228,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 				continue;
 
 			float hitT = 0.0f;
-			if (!otherCollider->IntersectsRay(rayOrigin, rayDir, hitT))
+			if (!otherCollider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, hitT))
 				continue;
 
 			if (hitT >= 0.0f && hitT < closestT)
@@ -204,33 +241,36 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (closestObject != owner)
 			return;
 
-		m_DragRayOrigin = rayOrigin;
-		m_DragRayDir = rayDir;
-
-		float hitT = 0.0f;
-		if (!collider->IntersectsRay(rayOrigin, rayDir, hitT))
-			return;
-
-		const DirectX::XMFLOAT3 hit{
-			rayOrigin.x + rayDir.x * hitT,
-			rayOrigin.y + rayDir.y * hitT,
-			rayOrigin.z + rayDir.z * hitT
-		};
+		// 2) 드래그 기준 표면 hit (바닥/발판). 자기 자신은 제외.
+		DirectX::XMFLOAT3 surfaceHit{};
+		GameObject* ownerGameObject = dynamic_cast<GameObject*>(owner);
+		if (!FindClosestSurfaceHit(scene, ownerGameObject, pickRay.m_Pos, pickRay.m_Dir, surfaceHit))
+		{
+			// fallback: 아무 표면도 없으면 y=0 평면으로라도 이동시키고 싶을 때만 사용
+			float t = 0.0f;
+			if (!IntersectRayPlaneY(pickRay, 0.0f, t, surfaceHit)) return;
+		}
 
 		const auto pos = transComp->GetPosition();
-		m_DragOffset = { pos.x - hit.x, pos.y - hit.y, pos.z - hit.z };
-		m_IsDragging = true;
-		m_HasDragRay = true;
+
+		m_DragOffset = { pos.x - surfaceHit.x, pos.y - surfaceHit.y, pos.z - surfaceHit.z };
+
+		m_DragRayOrigin = pickRay.m_Pos;
+		m_DragRayDir    = pickRay.m_Dir;
+		m_IsDragging    = true;
+		m_HasDragRay    = true;
 		return;
 	}
 
+	// 드래그 중: 레이만 갱신
 	if (type != EventType::Dragged || !m_IsDragging)
 		return;
 
-	if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, rayOrigin, rayDir))
+	Ray dragRay{};
+	if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, dragRay))
 		return;
 
-	m_DragRayOrigin = rayOrigin;
-	m_DragRayDir = rayDir;
-	m_HasDragRay = true;
+	m_DragRayOrigin = dragRay.m_Pos;
+	m_DragRayDir    = dragRay.m_Dir;
+	m_HasDragRay    = true;
 }
