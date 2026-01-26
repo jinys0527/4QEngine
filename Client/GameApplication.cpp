@@ -28,7 +28,6 @@ bool GameApplication::Initialize()
 	m_AssetLoader->LoadAll();
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
-	m_Services.Get<SoundManager>().Init();
 
 
 

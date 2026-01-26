@@ -204,6 +204,31 @@ void UIManager::RefreshUIListForCurrentScene()
 	}
 }
 
+bool UIManager::IsPointerOverUI(const POINT& pos) const
+{
+	auto it = m_UIObjects.find(m_CurrentSceneName);
+	if (it == m_UIObjects.end())
+		return false;
+
+	const auto& uiMap = it->second;
+	for (const auto& pair : uiMap)
+	{
+		const auto& uiObject = pair.second;
+		if (!uiObject->IsVisible())
+			continue;
+		if (m_FullScreenUIActive && uiObject->GetZOrder() < m_FullScreenZ)
+			continue;
+		if (!(uiObject->hasButton || uiObject->hasSlider))
+			continue;
+		if (!uiObject->HitCheck(pos))
+			continue;
+
+		return true;
+	}
+
+	return false;
+}
+
 
 //void UIManager::Render(std::vector<UIRenderInfo>& uiRenderInfo, std::vector<UITextInfo>& uiTextInfo)
 //{

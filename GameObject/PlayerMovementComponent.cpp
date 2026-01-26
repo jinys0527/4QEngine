@@ -7,6 +7,8 @@
 #include "InputManager.h"
 #include "Scene.h"
 #include "CameraObject.h"
+#include "BoxColliderComponent.h"
+#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
 REGISTER_PROPERTY(PlayerMovementComponent, Speed)
@@ -59,6 +61,39 @@ void PlayerMovementComponent::Update(float deltaTime)
 // 	x /= len; z /= len;
 // 
 // 	transComp->Translate({ x * m_Speed * deltaTime, 0.f, z * m_Speed * deltaTime });
+
+	if (!m_IsDragging || !m_HasDragRay)
+		return;
+
+	auto* owner = GetOwner();
+	if (!owner)
+		return;
+
+	auto* transComp = owner->GetComponent<TransformComponent>();
+	if (!transComp)
+		return;
+
+	auto* collider = owner->GetComponent<BoxColliderComponent>();
+	if (!collider || !collider->HasBounds())
+		return;
+
+	float hitT = 0.0f;
+	if (!collider->IntersectsRay(m_DragRayOrigin, m_DragRayDir, hitT))
+		return;
+
+	const DirectX::XMFLOAT3 hit{
+		m_DragRayOrigin.x + m_DragRayDir.x * hitT,
+		m_DragRayOrigin.y + m_DragRayDir.y * hitT,
+		m_DragRayOrigin.z + m_DragRayDir.z * hitT
+	};
+
+	const DirectX::XMFLOAT3 newPos{
+		hit.x + m_DragOffset.x,
+		hit.y + m_DragOffset.y,
+		hit.z + m_DragOffset.z
+	};
+
+	transComp->SetPosition(newPos);
 }
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)
@@ -123,43 +158,69 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	DirectX::XMFLOAT3 rayOrigin{};
 	DirectX::XMFLOAT3 rayDir{};
 
-	auto tryHitPlane = [&](float planeY, DirectX::XMFLOAT3& outHit) -> bool
-		{
-			const float denom = rayDir.y;
-			if (std::abs(denom) < 1e-5f)
-				return false;
 
-			const float t = (planeY - rayOrigin.y) / denom;
-			if (t < 0.0f)
-				return false;
+	if (type == EventType::MouseLeftClickUp)
+	{
+		m_IsDragging = false;
+		m_HasDragRay = false;
+		return;
+	}
 
-			outHit = {
-				rayOrigin.x + rayDir.x * t,
-				planeY,
-				rayOrigin.z + rayDir.z * t
-			};
-			return true;
-		};
+	if (!input.IsPointInViewport(mouseData->pos))
+		return;
 
 	if (type == EventType::MouseLeftClick)
 	{
 		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, rayOrigin, rayDir))
 			return;
 
-		m_DragPlaneY = transComp->GetPosition().y;
-		DirectX::XMFLOAT3 hit{};
-		if (!tryHitPlane(m_DragPlaneY, hit))
+		auto* collider = owner->GetComponent<BoxColliderComponent>();
+		if (!collider || !collider->HasBounds())
 			return;
+
+		auto& gameObjects = scene->GetGameObjects();
+		float closestT = FLT_MAX;
+		GameObject* closestObject = nullptr;
+		for (const auto& [name, object] : gameObjects)
+		{
+			if (!object)
+				continue;
+
+			auto* otherCollider = object->GetComponent<BoxColliderComponent>();
+			if (!otherCollider || !otherCollider->HasBounds())
+				continue;
+
+			float hitT = 0.0f;
+			if (!otherCollider->IntersectsRay(rayOrigin, rayDir, hitT))
+				continue;
+
+			if (hitT >= 0.0f && hitT < closestT)
+			{
+				closestT = hitT;
+				closestObject = object.get();
+			}
+		}
+
+		if (closestObject != owner)
+			return;
+
+		m_DragRayOrigin = rayOrigin;
+		m_DragRayDir = rayDir;
+
+		float hitT = 0.0f;
+		if (!collider->IntersectsRay(rayOrigin, rayDir, hitT))
+			return;
+
+		const DirectX::XMFLOAT3 hit{
+			rayOrigin.x + rayDir.x * hitT,
+			rayOrigin.y + rayDir.y * hitT,
+			rayOrigin.z + rayDir.z * hitT
+		};
 
 		const auto pos = transComp->GetPosition();
 		m_DragOffset = { pos.x - hit.x, pos.y - hit.y, pos.z - hit.z };
 		m_IsDragging = true;
-		return;
-	}
-
-	if (type == EventType::MouseLeftClickUp)
-	{
-		m_IsDragging = false;
+		m_HasDragRay = true;
 		return;
 	}
 
@@ -169,15 +230,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, rayOrigin, rayDir))
 		return;
 
-	DirectX::XMFLOAT3 hit{};
-	if (!tryHitPlane(m_DragPlaneY, hit))
-		return;
-
-	const DirectX::XMFLOAT3 newPos{
-		hit.x + m_DragOffset.x,
-		hit.y + m_DragOffset.y,
-		hit.z + m_DragOffset.z
-	};
-
-	transComp->SetPosition(newPos);
+	m_DragRayOrigin = rayOrigin;
+	m_DragRayDir = rayDir;
+	m_HasDragRay = true;
 }

@@ -251,6 +251,17 @@ bool InputManager::TryGetMouseNDC(DirectX::XMFLOAT2& outNdc) const
 
 }
 
+bool InputManager::IsPointInViewport(const POINT& point) const
+{
+	if (!m_HasViewportRect)
+		return false;
+
+	return point.x >= m_ViewportRect.left
+		&& point.x <= m_ViewportRect.right
+		&& point.y >= m_ViewportRect.top
+		&& point.y <= m_ViewportRect.bottom;
+}
+
 bool InputManager::BuildPickRay(const DirectX::XMFLOAT4X4& view, 
 								const DirectX::XMFLOAT4X4& proj, 
 								DirectX::XMFLOAT3& outOrigin, 

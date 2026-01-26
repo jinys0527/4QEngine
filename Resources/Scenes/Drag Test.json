@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -2.177690267562866,
-                "y": 5.780914306640625,
-                "z": -13.75943660736084
+                "x": -2.1198487281799316,
+                "y": 3.1220202445983887,
+                "z": -10.522721290588379
             },
             "look": {
-                "x": -2.270761251449585,
-                "y": 5.280727863311768,
-                "z": -12.898534774780273
+                "x": -2.0808379650115967,
+                "y": 2.7720813751220703,
+                "z": -9.586761474609375
             },
             "up": {
-                "x": -0.0537613146007061,
-                "y": 0.8659178614616394,
-                "z": 0.49728864431381226
+                "x": 0.014572791755199432,
+                "y": 0.9367726445198059,
+                "z": 0.3496353328227997
             }
         }
     },
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -2.177690267562866,
-                            "y": 5.780914306640625,
-                            "z": -13.75943660736084
+                            "x": -2.1198487281799316,
+                            "y": 3.1220202445983887,
+                            "z": -10.522721290588379
                         },
                         "Rotation": {
-                            "w": 0.9644981026649475,
-                            "x": 0.25854766368865967,
-                            "y": -0.05198388546705246,
-                            "z": 0.013935066759586334
+                            "w": 0.9838528037071228,
+                            "x": 0.1777639538049698,
+                            "y": 0.020494574680924416,
+                            "z": -0.0037029918748885393
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -2.177690267562866,
-                            "y": 5.780914306640625,
-                            "z": -13.75943660736084
+                            "x": -2.1198487281799316,
+                            "y": 3.1220202445983887,
+                            "z": -10.522721290588379
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -2.270761251449585,
-                            "y": 5.280727863311768,
-                            "z": -12.898534774780273
+                            "x": -2.0808379650115967,
+                            "y": 2.7720813751220703,
+                            "z": -9.586761474609375
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -115,16 +115,16 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.818411111831665,
+                            "aspect": 1.7846534252166748,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": -0.0537613146007061,
-                            "y": 0.8659178614616394,
-                            "z": 0.49728864431381226
+                            "x": 0.014572791755199432,
+                            "y": 0.9367726445198059,
+                            "z": 0.3496353328227997
                         },
                         "Viewport": {
-                            "height": 793.0,
+                            "height": 808.0,
                             "width": 1442.0
                         }
                     },
@@ -139,6 +139,171 @@
                     "data": {
                         "Position": {
                             "x": -0.43150195479393005,
+                            "y": -4.76837158203125e-07,
+                            "z": -4.376351356506348
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Visible": true
+                    },
+                    "type": "SkeletalMeshRenderer"
+                },
+                {
+                    "data": {
+                        "BlendConfig": {
+                            "blendTime": 0.20000000298023224,
+                            "blendType": 0,
+                            "curveName": "Linear",
+                            "fromClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            },
+                            "toClip": {
+                                "assetIndex": 0,
+                                "assetPath": ""
+                            }
+                        },
+                        "ClipHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        }
+                    },
+                    "type": "AnimationComponent"
+                },
+                {
+                    "data": {
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5527864098548889,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\Ani.shader.json"
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "Skeleton": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "SkeletonHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Dying\\Meta\\Dying.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "SkeletalMeshComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "GameObject"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 1.3233006000518799,
                             "y": -4.76837158203125e-07,
                             "z": -4.376351356506348
                         },
@@ -290,9 +455,13 @@
                         "SubMeshMaterialOverrides": []
                     },
                     "type": "SkeletalMeshComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
-            "name": "GameObject"
+            "name": "GameObject1"
         },
         {
             "components": [
@@ -342,7 +511,7 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.7777777910232544,
+                            "aspect": 1.7846534252166748,
                             "fov": 0.7853981852531433
                         },
                         "Up": {
@@ -351,8 +520,8 @@
                             "z": 0.2588190734386444
                         },
                         "Viewport": {
-                            "height": 720.0,
-                            "width": 1280.0
+                            "height": 808.0,
+                            "width": 1442.0
                         }
                     },
                     "type": "CameraComponent"

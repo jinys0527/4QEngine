@@ -34,6 +34,8 @@ private:
 	float m_Speed      = 5.0f;
 	float m_DragSpeed  = 0.01f;
 	DirectX::XMFLOAT3 m_DragOffset{ 0.0f, 0.0f, 0.0f };
-	float m_DragPlaneY = 0.0f;
+	bool m_HasDragRay = false;
+	DirectX::XMFLOAT3 m_DragRayOrigin{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_DragRayDir{ 0.0f, 0.0f, 0.0f };
 };
 

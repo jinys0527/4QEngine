@@ -37,6 +37,8 @@ public:
 						    DirectX::XMFLOAT3& outOrigin,
 						    DirectX::XMFLOAT3& outDirection) const;
 
+	bool IsPointInViewport(const POINT& point) const;
+
 	void SetEnabled(bool enabled);
 	bool IsEnabled () const       { return m_Enabled;    }
 
