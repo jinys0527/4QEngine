@@ -27,6 +27,9 @@ enum class EventType
 
 	//Scene
 	SceneChangeRequested,
+
+	//Player
+	PlayerMove,
 };
 
 class IEventListener

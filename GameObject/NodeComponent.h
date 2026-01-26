@@ -54,6 +54,6 @@ private:
 	int m_Q; 
 	int m_R;
 	int m_StateInt = 0; // Debug
-	// Property 노출 X
+	// Property X
 	vector<NodeComponent*> m_Neighbors;
 };

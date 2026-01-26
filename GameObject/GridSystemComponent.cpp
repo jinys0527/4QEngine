@@ -14,6 +14,7 @@ REGISTER_PROPERTY_READONLY(GridSystemComponent, NodesCount)
 
 using namespace std;
 
+// 면 갯수 / Index
 constexpr int kNeighborCount = 6;
 constexpr int kNeighborOffsets[kNeighborCount][2] = {
 	{ 1, 0 },

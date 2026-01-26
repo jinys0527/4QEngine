@@ -46,6 +46,8 @@ extern "C" {
 	void Link_PlayerMovementComponent();
 	void Link_GridSystemComponent();
 	void Link_NodeComponent();
+	void Link_PlayerComponent();
+	void Link_EnemyComponent();
 	
 }
 
@@ -86,4 +88,6 @@ void LinkEngineComponents() {
 	Link_PlayerMovementComponent();
 	Link_GridSystemComponent();
 	Link_NodeComponent();
+	Link_PlayerComponent();
+	Link_EnemyComponent();
 }

@@ -30,7 +30,6 @@ void NodeComponent::Start()
 
 void NodeComponent::Update(float deltaTime) {
 
-	(void)deltaTime;
 	switch (m_State)
 	{
 	case NodeState::Empty : m_StateInt = 0; break;
