@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -2.794288158416748,
-                "y": 5.486995697021484,
-                "z": -4.898189544677734
+                "x": -10.82728099822998,
+                "y": 12.120500564575195,
+                "z": -9.361568450927734
             },
             "look": {
-                "x": -2.471348762512207,
-                "y": 4.8809685707092285,
-                "z": -4.1712493896484375
+                "x": -10.286036491394043,
+                "y": 11.506608009338379,
+                "z": -8.786947250366211
             },
             "up": {
-                "x": 0.246038556098938,
-                "y": 0.7954442501068115,
-                "z": 0.5538354516029358
+                "x": 0.42091551423072815,
+                "y": 0.7893893718719482,
+                "z": 0.44687193632125854
             }
         }
     },
@@ -192,15 +192,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -2.794288158416748,
-                            "y": 5.486995697021484,
-                            "z": -4.898189544677734
+                            "x": -10.82728099822998,
+                            "y": 12.120500564575195,
+                            "z": -9.361568450927734
                         },
                         "Rotation": {
-                            "w": 0.9268580675125122,
-                            "x": 0.31284788250923157,
-                            "y": 0.1966119408607483,
-                            "z": -0.06636358797550201
+                            "w": 0.8791959881782532,
+                            "x": 0.3016292154788971,
+                            "y": 0.34886834025382996,
+                            "z": -0.11968761682510376
                         },
                         "Scale": {
                             "x": 1.0,
@@ -213,15 +213,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -2.794288158416748,
-                            "y": 5.486995697021484,
-                            "z": -4.898189544677734
+                            "x": -10.82728099822998,
+                            "y": 12.120500564575195,
+                            "z": -9.361568450927734
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -2.471348762512207,
-                            "y": 4.8809685707092285,
-                            "z": -4.1712493896484375
+                            "x": -10.286036491394043,
+                            "y": 11.506608009338379,
+                            "z": -8.786947250366211
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -239,9 +239,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.246038556098938,
-                            "y": 0.7954442501068115,
-                            "z": 0.5538354516029358
+                            "x": 0.42091551423072815,
+                            "y": 0.7893893718719482,
+                            "z": 0.44687193632125854
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -663,20 +663,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -7.417642593383789,
-                            "y": 4.229094982147217,
-                            "z": -5.0322160720825195
+                            "x": -9.782766342163086,
+                            "y": 9.695951461791992,
+                            "z": -8.47044563293457
                         },
                         "Rotation": {
-                            "w": 0.8738324046134949,
-                            "x": 0.04142044857144356,
-                            "y": 0.4839376211166382,
-                            "z": -0.022487148642539978
+                            "w": 0.8876972198486328,
+                            "x": 0.26815301179885864,
+                            "y": 0.35841524600982666,
+                            "z": -0.10782415419816971
                         },
                         "Scale": {
-                            "x": 0.9200299978256226,
-                            "y": 0.9341315627098083,
-                            "z": 0.9201561808586121
+                            "x": 0.9200302958488464,
+                            "y": 0.9341316819190979,
+                            "z": 0.9201557636260986
                         }
                     },
                     "type": "TransformComponent"
@@ -684,15 +684,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -7.417642593383789,
-                            "y": 4.229094982147217,
-                            "z": -5.0322160720825195
+                            "x": -9.782766342163086,
+                            "y": 9.695951461791992,
+                            "z": -8.47044563293457
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": -6.573744773864746,
-                            "y": 4.134941101074219,
-                            "z": -4.5040388107299805
+                            "x": -9.204264640808105,
+                            "y": 9.142581939697266,
+                            "z": -7.871180534362793
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -710,9 +710,9 @@
                             "fov": 0.7853981852531433
                         },
                         "Up": {
-                            "x": 0.07938982546329498,
-                            "y": 0.9955573678016663,
-                            "z": 0.0506243035197258
+                            "x": 0.38365066051483154,
+                            "y": 0.8329359292984009,
+                            "z": 0.3987857699394226
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -846,6 +846,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node",
@@ -973,6 +977,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node1",
@@ -1100,6 +1108,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node2",
@@ -1227,6 +1239,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node3",
@@ -1354,6 +1370,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node4",
@@ -1481,6 +1501,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node5",
@@ -1608,6 +1632,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node6",
@@ -1735,6 +1763,10 @@
                         "IsMoveable": false
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node7",
@@ -1862,6 +1894,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node8",
@@ -1989,6 +2025,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node9",
@@ -2116,6 +2156,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node10",
@@ -2243,6 +2287,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node11",
@@ -2370,6 +2418,10 @@
                         "IsMoveable": false
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node12",
@@ -2497,6 +2549,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node13",
@@ -2624,6 +2680,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node14",
@@ -2751,6 +2811,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node15",
@@ -2878,6 +2942,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node16",
@@ -3005,6 +3073,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node17",
@@ -3132,6 +3204,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node18",
@@ -3259,6 +3335,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node19",
@@ -3386,6 +3466,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node20",
@@ -3513,6 +3597,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node21",
@@ -3640,6 +3728,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node22",
@@ -3767,6 +3859,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node23",
@@ -3894,6 +3990,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node24",
@@ -4021,6 +4121,10 @@
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Node25",
@@ -4031,9 +4135,9 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -0.0,
+                            "x": 0.005565643310546875,
                             "y": 2.564528465270996,
-                            "z": -3.0
+                            "z": -0.36239898204803467
                         },
                         "Rotation": {
                             "w": -0.5174123048782349,
@@ -4146,6 +4250,17 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "DragSpeed": 1.0,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
+                },
+                {
+                    "data": null,
+                    "type": "BoxColliderComponent"
                 }
             ],
             "name": "Player",

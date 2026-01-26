@@ -9,34 +9,34 @@
 #include "RayHelper.h"
 #include "CameraObject.h"
 #include "BoxColliderComponent.h"
+#include "NodeComponent.h"
 #include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
 REGISTER_PROPERTY(PlayerMovementComponent, Speed)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)
 
-static bool FindClosestSurfaceHit(
-								  Scene* scene,
-								  GameObject* ignoreObject,
-								  const DirectX::XMFLOAT3& rayOrigin,
-								  const DirectX::XMFLOAT3& rayDir,
-								  DirectX::XMFLOAT3& outHitPos)
+static NodeComponent* FindClosestNodeHit(
+	Scene* scene,
+	const DirectX::XMFLOAT3& rayOrigin,
+	const DirectX::XMFLOAT3& rayDir,
+	float& outT)
 {
-	if (!scene) return false;
+	if (!scene) return nullptr;
 
 	auto& gameObjects = scene->GetGameObjects();
 
 	float closestT = FLT_MAX;
-	GameObject* closestObj = nullptr;
+	NodeComponent* closestNode = nullptr;
 
 	for (const auto& [name, object] : gameObjects)
 	{
 		if (!object) continue;
 
-		GameObject* gameObect = object.get();
-		if (gameObect == ignoreObject) continue; // 자기 자신 제외
+		auto* node = object->GetComponent<NodeComponent>();
+		if (!node) continue;
 
-		auto* col = gameObect->GetComponent<BoxColliderComponent>();
+		auto* col = object->GetComponent<BoxColliderComponent>();
 		if (!col || !col->HasBounds()) continue;
 
 		float t = 0.0f;
@@ -45,18 +45,15 @@ static bool FindClosestSurfaceHit(
 		if (t >= 0.0f && t < closestT)
 		{
 			closestT = t;
-			closestObj = gameObect;
+			closestNode = node;
 		}
 	}
 
-	if (!closestObj) return false;
+	if (!closestNode)
+		return nullptr;
 
-	outHitPos = {
-		rayOrigin.x + rayDir.x * closestT,
-		rayOrigin.y + rayDir.y * closestT,
-		rayOrigin.z + rayDir.z * closestT
-	};
-	return true;
+	outT = closestT;
+	return closestNode;
 }
 
 PlayerMovementComponent::PlayerMovementComponent()
@@ -121,14 +118,30 @@ void PlayerMovementComponent::Update(float deltaTime)
 	if (!transComp)
 		return;
 
-	DirectX::XMFLOAT3 surfaceHit{};
-	if (!FindClosestSurfaceHit(scene, dynamic_cast<GameObject*>(owner), m_DragRayOrigin, m_DragRayDir, surfaceHit))
+	float nodeHitT = 0.0f;
+	NodeComponent* targetNode = FindClosestNodeHit(scene, m_DragRayOrigin, m_DragRayDir, nodeHitT);
+	if (!targetNode)
 		return;
 
+	if (!targetNode->GetIsMoveable())
+		return;
+
+	if (!targetNode->IsInMoveRange())
+		return;
+	const auto state = targetNode->GetState();
+	if (state != NodeState::Empty && state != NodeState::HasPlayer)
+		return;
+
+	auto* targetOwner = targetNode->GetOwner();
+	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
+	if (!targetTransform)
+		return;
+
+	const auto nodePos = targetTransform->GetPosition();
 	DirectX::XMFLOAT3 newPos{
-		surfaceHit.x + m_DragOffset.x,
-		surfaceHit.y + m_DragOffset.y,
-		surfaceHit.z + m_DragOffset.z
+		nodePos.x + m_DragOffset.x,
+		nodePos.y + m_DragOffset.y,
+		nodePos.z + m_DragOffset.z
 	};
 
 	transComp->SetPosition(newPos);
@@ -136,39 +149,6 @@ void PlayerMovementComponent::Update(float deltaTime)
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 {
-// 	if (type == EventType::KeyDown)
-// 	{
-// 		auto keyData = static_cast<const Events::KeyEvent*>(data);
-// 		if (!keyData) return;
-// 
-// 		bool isDown = (type == EventType::KeyDown);
-// 
-// 		switch (keyData->key)
-// 		{
-// 		case VK_UP    : m_IsUp	  = isDown; break;
-// 		case VK_LEFT  : m_IsLeft  = isDown; break;
-// 		case VK_DOWN  : m_IsDown  = isDown; break;
-// 		case VK_RIGHT : m_IsRight = isDown; break;
-// 		default: break;
-// 		}
-// 	}
-// 	else if (type == EventType::KeyUp)
-// 	{
-// 		auto keyData = static_cast<const Events::KeyEvent*>(data);
-// 		if (!keyData) return;
-// 
-// 		bool isDown = (type == EventType::KeyDown);
-// 
-// 		switch (keyData->key)
-// 		{
-// 		case VK_UP    : m_IsUp	  = isDown; break;
-// 		case VK_LEFT  : m_IsLeft  = isDown; break;
-// 		case VK_DOWN  : m_IsDown  = isDown; break;
-// 		case VK_RIGHT : m_IsRight = isDown; break;
-// 		default: break;
-// 		}
-// 	}
-
 	const auto* mouseData = static_cast<const Events::MouseState*>(data);
 	if (!mouseData)
 		return;
@@ -242,18 +222,27 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			return;
 
 		// 2) 드래그 기준 표면 hit (바닥/발판). 자기 자신은 제외.
-		DirectX::XMFLOAT3 surfaceHit{};
-		GameObject* ownerGameObject = dynamic_cast<GameObject*>(owner);
-		if (!FindClosestSurfaceHit(scene, ownerGameObject, pickRay.m_Pos, pickRay.m_Dir, surfaceHit))
-		{
-			// fallback: 아무 표면도 없으면 y=0 평면으로라도 이동시키고 싶을 때만 사용
-			float t = 0.0f;
-			if (!IntersectRayPlaneY(pickRay, 0.0f, t, surfaceHit)) return;
-		}
-
 		const auto pos = transComp->GetPosition();
-
-		m_DragOffset = { pos.x - surfaceHit.x, pos.y - surfaceHit.y, pos.z - surfaceHit.z };
+		float nodeHitT = 0.0f;
+		NodeComponent* clickedNode = FindClosestNodeHit(scene, pickRay.m_Pos, pickRay.m_Dir, nodeHitT);
+		if (clickedNode)
+		{
+			auto* nodeOwner = clickedNode->GetOwner();
+			auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+			if (nodeTransform)
+			{
+				const auto nodePos = nodeTransform->GetPosition();
+				m_DragOffset = { 0.0f, pos.y - nodePos.y, 0.0f };
+			}
+			else
+			{
+				m_DragOffset = { 0.0f, 0.0f, 0.0f };
+			}
+		}
+		else
+		{
+			m_DragOffset = { 0.0f, 0.0f, 0.0f };
+		}
 
 		m_DragRayOrigin = pickRay.m_Pos;
 		m_DragRayDir    = pickRay.m_Dir;
