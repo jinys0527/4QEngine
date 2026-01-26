@@ -349,5 +349,77 @@ float4 UE_PointLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
     return color;
 }
 
+//spotlight
+float4 UE_SpotLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
+                                 float4 base, float4 ao, float4 metallic, float4 roughness,
+                                 float specularParam)
+{
+    float4 P = viewPos; // view space
+    float4 N = normalize(viewNrm);
+
+// light position: world -> view
+    float3 litPosV = mul(float4(lit.Pos, 1.0f), mView).xyz;
+
+
+    float3 toL = litPosV - P.xyz;
+    float dist2 = dot(toL, toL);
+    float dist = sqrt(max(dist2, 1e-8));
+    float3 L = toL / dist; // view space (P -> Light)
+
+
+// ----------------------------
+// 거리 감쇠 (attenuation radius 기반)
+    float r = max(lit.Range, 1e-4);
+    float invR2 = 1.0f / (r * r);
+
+
+// dist2가 r^2에 가까워질수록 0으로 감쇠
+    float att = saturate(1.0f - dist2 * invR2);
+    att *= att; // 부드럽게
+
+
+    //float fadeWidth = max(lit.AttenuationRadius * 0.1f, 0.01f); // 10% 정도 페이드
+    //float cutoff = smoothstep(lit.AttenuationRadius, lit.AttenuationRadius - fadeWidth, dist);
+    //att *= cutoff;
+    
+    float cutoff = step(dist, lit.AttenuationRadius);
+    att *= cutoff;
+    
+// ----------------------------
+// 각도 감쇠 (Spot)
+// lit.Dir : world space spotlight direction (Light가 바라보는 방향)
+    float3 litDirV = normalize(lit.viewDir);
+
+
+// spotlight axis는 Light -> Pixel 방향이어야 함
+// 현재 L은 Pixel -> Light 이므로 반대로 뒤집어야 함
+    float3 lightToP = -L;
+
+
+    float spotCos = dot(lightToP, litDirV);
+
+// lit.InnerAngle / lit.OuterAngle 가 "라디안"이라고 가정
+    float innerCos = cos(lit.SpotInnerAngle);
+    float outerCos = cos(lit.SpotOutterAngle);
+
+
+    float spot = smoothstep(outerCos, innerCos, spotCos);
+
+
+// ----------------------------
+    BRDFResult brdf = BRDF_UE_Direct(float4(N.xyz, 0), float4(P.xyz, 1), float4(L, 0),
+base, metallic, roughness, ao, specularParam);
+
+
+    float4 radiance = lit.Color * max(lit.Intensity, 0);
+
+
+    float ndotl = saturate(dot(N.xyz, L));
+
+
+    float4 color = (brdf.diffuse + brdf.specular) * radiance * ndotl * att * spot;
+    color.a = 1;
+    return color;
+}
 
 #endif

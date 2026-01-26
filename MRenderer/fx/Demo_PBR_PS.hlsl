@@ -45,17 +45,35 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //dirLit.rgb *= lerp(0.05f, 1.0f, shadowFactor);
 
     float4 ptLit = 0;
+    float4 spotLit = 0;
+
     for (uint i = 1; i < lightcount; i++)
     {
-        ptLit += UE_PointLighting_FromLight(
-        input.vPos,
-        float4(nV, 0),
-        lights[i],
-        texAlbedo_Diff, texAO, texMetal, texRough,
-        specParam
-        );
+        if(lights[i].type == 2)
+        {
+            ptLit += UE_PointLighting_FromLight(
+                input.vPos,
+                float4(nV, 0),
+                lights[i],
+                texAlbedo_Diff, texAO, texMetal, texRough,
+                specParam
+            );
+
+        }
+        if (lights[i].type == 3)
+        {
+            spotLit += UE_SpotLighting_FromLight(
+                input.vPos,
+                float4(nV, 0),
+                lights[i],
+                texAlbedo_Diff, texAO, texMetal, texRough,
+                specParam
+            );
+        }
     }
-    float4 lit = dirLit + ptLit;
+    
+
+    float4 lit = dirLit + ptLit + spotLit;
     
     //env
     float4 F0 = ComputeF0(float4(baseColor, 1.0f), texMetal, specParam);

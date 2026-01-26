@@ -164,37 +164,42 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 {
 	if (!frame.lights.empty())
 	{
-		const auto& light = frame.lights[0];
-		m_RenderContext.LightCBuffer.lightCount = 1;
-		XMFLOAT4X4 view; 
-		if (m_RenderContext.isEditCam)
+		for (const auto& light : frame.lights)
 		{
-			view = frame.context.editorCamera.view;
+			if (light.type != RenderData::LightType::Directional)
+				continue;
+			m_RenderContext.LightCBuffer.lightCount = 1;
+			XMFLOAT4X4 view;
+			if (m_RenderContext.isEditCam)
+			{
+				view = frame.context.editorCamera.view;
+			}
+			else if (!m_RenderContext.isEditCam)
+			{
+				view = frame.context.gameCamera.view;
+			}
+			XMMATRIX mView = XMLoadFloat4x4(&view);
+
+			Light dirlight{};
+			dirlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
+
+			XMVECTOR dirW = XMLoadFloat3(&dirlight.worldDir);
+			XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
+			XMStoreFloat3(&dirlight.viewDir, dirV);
+
+			dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+			dirlight.Intensity = light.intensity;
+			dirlight.mLightViewProj = light.lightViewProj;
+			dirlight.CastShadow = light.castShadow;
+			dirlight.Range = light.range;
+			dirlight.SpotInnerAngle = light.spotInnerAngle;
+			dirlight.SpotOutterAngle = light.spotOutterAngle;
+			dirlight.AttenuationRadius = light.attenuationRadius;
+			dirlight.type = static_cast<UINT>(light.type);
+
+			m_RenderContext.LightCBuffer.lights[0] = dirlight;
+			break;
 		}
-		else if (!m_RenderContext.isEditCam)
-		{
-			view = frame.context.gameCamera.view;
-		}
-		XMMATRIX mView = XMLoadFloat4x4(&view);
-
-		Light dirlight{};
-		dirlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
-
-		XMVECTOR dirW = XMLoadFloat3(&dirlight.worldDir); 
-		XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
-		XMStoreFloat3(&dirlight.viewDir, dirV);
-
-		dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
-		dirlight.Intensity = light.intensity;
-		dirlight.mLightViewProj = light.lightViewProj;
-		dirlight.CastShadow = light.castShadow;
-		dirlight.Range = light.range;
-		dirlight.SpotInnerAngle = light.spotInnerAngle;
-		dirlight.SpotOutterAngle = light.spotOutterAngle;
-		dirlight.AttenuationRadius = light.attenuationRadius;
-		dirlight.type = static_cast<UINT>(light.type);
-
-		m_RenderContext.LightCBuffer.lights[0] = dirlight;
 
 		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
 
@@ -216,22 +221,60 @@ void RenderPass::SetOtherLights(const RenderData::FrameData& frame)
 			//포인트 라이트
 			if (light.type == RenderData::LightType::Point)
 			{
-				Light dirlight{};
+				Light pointlight{};
 
-				dirlight.Pos = light.posiiton;
-				dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
-				dirlight.Intensity = light.intensity;
-				dirlight.Range = light.range;
-				dirlight.type = static_cast<UINT>(light.type);
+				pointlight.Pos = light.posiiton;
+				pointlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+				pointlight.Intensity = light.intensity;
+				pointlight.Range = light.range;
+				pointlight.type = static_cast<UINT>(light.type);
 
-				m_RenderContext.LightCBuffer.lights[index] = dirlight;
+				m_RenderContext.LightCBuffer.lights[index] = pointlight;
 
-				UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
+			}
+
+			//SpotLight
+			if (light.type == RenderData::LightType::Spot)
+			{
+				XMFLOAT4X4 view;
+				if (m_RenderContext.isEditCam)
+				{
+					view = frame.context.editorCamera.view;
+				}
+				else if (!m_RenderContext.isEditCam)
+				{
+					view = frame.context.gameCamera.view;
+				}
+				XMMATRIX mView = XMLoadFloat4x4(&view);
+
+				Light spotlight{};
+
+				spotlight.Pos = light.posiiton;
+				spotlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+				spotlight.Intensity = light.intensity;
+				spotlight.worldDir = light.direction;
+				//spotlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
+
+				XMVECTOR dirW = XMLoadFloat3(&spotlight.worldDir);
+				XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
+				XMStoreFloat3(&spotlight.viewDir, dirV);
+
+				spotlight.Range = light.range;
+				spotlight.SpotInnerAngle = DirectX::XMConvertToRadians(light.spotInnerAngle);
+				spotlight.SpotOutterAngle = DirectX::XMConvertToRadians(light.spotOutterAngle);	
+				spotlight.AttenuationRadius = light.attenuationRadius;
+				spotlight.type = static_cast<UINT>(light.type);
+
+				m_RenderContext.LightCBuffer.lights[index] = spotlight;
+
 			}
 
 
 			index++;
 		}
+
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
+
 	}
 }
 
