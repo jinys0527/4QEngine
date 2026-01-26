@@ -2,13 +2,16 @@
 
 void RefractionPass::Execute(const RenderData::FrameData& frame)
 {
+    if (m_RenderContext.isEditCam)
+        return;
+
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
     SetRenderTarget(m_RenderContext.pRTView_Refraction.Get(), nullptr);
     //SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());        Opaque단계에서 처리
-    SetBlendState(BS::ALPHABLEND);
+    SetBlendState(BS::ALPHABLEND_WALL);
     SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_ON);
+    SetDepthStencilState(DS::DEPTH_OFF);
     SetSamplerState();
 
 #pragma endregion
@@ -20,6 +23,9 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
 
     //렌더타겟 리소스 연결
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
+
+    //물 노이즈 연결
+    dxdc->PSSetShaderResources(6, 1, m_RenderContext.WaterNoise.GetAddressOf());
 
     //전체 화면 그리기
     XMMATRIX tm = XMMatrixIdentity();
@@ -41,6 +47,9 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
 
     SetDirLight(frame);
 
+
+    dxdc->OMSetRenderTargets(1, m_RenderContext.pRTView_Refraction.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+    SetDepthStencilState(DS::DEPTH_ON);
 
     for (const auto& queueItem : GetQueue())
     {

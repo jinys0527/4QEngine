@@ -150,7 +150,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	
 	//블러 테스트
 	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
-	 hr = S_OK;
+	hr = S_OK;
 	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
@@ -173,6 +173,15 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
+	filename = L"../MRenderer/fx/WaterNoise.jpg";
+	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+		nullptr, m_WaterNoise.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+	}
 
 	
 
@@ -203,6 +212,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
+	dTime += 0.00025f;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
@@ -618,6 +628,9 @@ void Renderer::CreateContext()
 
 	m_RenderContext.VS_Shadow				= m_pVS_Shadow;
 	m_RenderContext.PS_Shadow				= m_pPS_Shadow;
+
+	m_RenderContext.WaterNoise				= m_WaterNoise;
+	m_RenderContext.dTime = &dTime;
 
 	//FullScreenTriangle
 	m_RenderContext.VS_FSTriangle			= m_pVS_FSTriangle;
