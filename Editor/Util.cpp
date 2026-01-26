@@ -1045,6 +1045,24 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+	if (typeInfo == typeid(ProjectionMode))
+	{
+		ProjectionMode value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kModes[] = { "Perspective", "Orthographic", "Ortho OffCenter" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kModes, IM_ARRAYSIZE(kModes)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kModes) - 1));
+			const ProjectionMode updated = static_cast<ProjectionMode>(clamped);
+			property.SetValue(component, &updated);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
 	if (typeInfo == typeid(PerspectiveParams))
 	{
 		PerspectiveParams value{};
