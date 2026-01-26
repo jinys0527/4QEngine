@@ -307,6 +307,7 @@
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimBlendCurveFunction.h" />
     <ClInclude Include="AnimFSMComponent.h" />
+    <ClInclude Include="BoxColliderComponent.h" />
     <ClInclude Include="ComponentTemplate.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -353,6 +354,7 @@
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
     <ClCompile Include="AnimFSMComponent.cpp" />
+    <ClCompile Include="BoxColliderComponent.cpp" />
     <ClCompile Include="ComponentTemplate.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

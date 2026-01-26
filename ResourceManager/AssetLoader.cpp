@@ -1123,6 +1123,8 @@ void AssetLoader::LoadMeshes(
 
 			RenderData::MeshData meshData{};
 			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
+			meshData.boundsMin = { header.bounds.min[0], header.bounds.min[1], header.bounds.min[2] };
+			meshData.boundsMax = { header.bounds.max[0], header.bounds.max[1], header.bounds.max[2] };
 
 			meshData.vertices.reserve(header.vertexCount);
 			if (meshData.hasSkinning)
@@ -1193,7 +1195,7 @@ void AssetLoader::LoadMeshes(
 			}
 
 #ifdef _DEBUG
-			WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
+			//WriteMeshBinLoadDebugJson(meshPath, header, subMeshes, meshData);
 #endif
 
 			meshData.subMeshes.reserve(subMeshes.size());
@@ -1223,6 +1225,8 @@ void AssetLoader::LoadMeshes(
 					out.indexCount = subMesh.indexCount;
 					out.material = mat;
 					out.name = subName;
+					out.boundsMin = { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] };
+					out.boundsMax = { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] };
 
 					DirectX::XMFLOAT4X4 id{};
 					id._11 = id._22 = id._33 = id._44 = 1.0f;
@@ -1246,6 +1250,8 @@ void AssetLoader::LoadMeshes(
 					out.indexCount = subMesh.indexCount;
 					out.material = mat;
 					out.name = subName;
+					out.boundsMin = { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] };
+					out.boundsMax = { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] };
 					out.localToWorld._11 = instanceTransforms[idx].m[0];
 					out.localToWorld._12 = instanceTransforms[idx].m[1];
 					out.localToWorld._13 = instanceTransforms[idx].m[2];
