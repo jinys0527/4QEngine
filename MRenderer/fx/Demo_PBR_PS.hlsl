@@ -72,6 +72,9 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
         }
     }
     
+    float shadow = CastShadow(input.uvshadow);
+
+    dirLit.rgb *= shadow;
 
     float4 lit = dirLit + ptLit + spotLit;
     
@@ -100,8 +103,8 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     
     
     //그림자
-    float shadow = CastShadow(input.uvshadow);
-    col.rgb *= shadow;
+    //float shadow = CastShadow(input.uvshadow);
+    //col.rgb *= shadow;
     
     col.rgb = LinearToSRGB(col.rgb);
 
