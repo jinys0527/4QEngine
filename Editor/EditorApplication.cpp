@@ -21,6 +21,8 @@
 #include "DX11.h"
 #include "Importer.h"
 #include "Util.h"
+#include "BoxColliderComponent.h"
+#include "RayHelper.h"
 #include "json.hpp"
 #include "ImGuizmo.h"
 #include "MathHelper.h"
@@ -338,6 +340,123 @@ void EditorApplication::UpdateEditorCamera()
 	}
 }
 
+void EditorApplication::HandleEditorViewportSelection()
+{
+	if (m_EditorState != EditorPlayState::Stop)
+	{
+		return;
+	}
+
+	if (!m_EditorViewport.HasViewportRect() || !m_EditorViewport.IsHovered())
+	{
+		return;
+	}
+
+	ImGuiIO& io = ImGui::GetIO();
+	if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+	{
+		return;
+	}
+
+	if (ImGuizmo::IsOver() || ImGuizmo::IsUsing())
+	{
+		return;
+	}
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	auto editorCamera = scene->GetEditorCamera().get();
+	if (!editorCamera)
+	{
+		return;
+	}
+
+	const ImVec2 rectMin = m_EditorViewport.GetViewportRectMin();
+	const ImVec2 rectMax = m_EditorViewport.GetViewportRectMax();
+	const float width = rectMax.x - rectMin.x;
+	const float height = rectMax.y - rectMin.y;
+	if (width <= 0.0f || height <= 0.0f)
+	{
+		return;
+	}
+
+	const XMFLOAT4X4 viewMatrix = editorCamera->GetViewMatrix();
+	const XMFLOAT4X4 projMatrix = editorCamera->GetProjMatrix();
+	const auto viewMat = DirectX::XMLoadFloat4x4(&viewMatrix);
+	const auto projMat = DirectX::XMLoadFloat4x4(&projMatrix);
+	const Ray pickRay = MakePickRayLH(io.MousePos.x, io.MousePos.y, rectMin.x, rectMin.y, width, height, viewMat, projMat);
+
+	const auto& gameObjects = scene->GetGameObjects();
+	float closestT = FLT_MAX;
+	GameObject* closestObject = nullptr;
+
+	for (const auto& [name, object] : gameObjects)
+	{
+		if (!object)
+		{
+			continue;
+		}
+
+		auto* collider = object->GetComponent<BoxColliderComponent>();
+		if (!collider || !collider->HasBounds())
+		{
+			continue;
+		}
+
+		float hitT = 0.0f;
+		if (!collider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, hitT))
+		{
+			continue;
+		}
+
+		if (hitT >= 0.0f && hitT < closestT)
+		{
+			closestT = hitT;
+			closestObject = object.get();
+		}
+	}
+
+	if (!closestObject)
+	{
+		return;
+	}
+
+	const std::string& targetName = closestObject->GetName();
+	if (targetName.empty())
+	{
+		return;
+	}
+
+	if (io.KeyCtrl)
+	{
+		if (m_SelectedObjectNames.erase(targetName) == 0)
+		{
+			m_SelectedObjectNames.insert(targetName);
+			m_SelectedObjectName = targetName;
+		}
+		else if (m_SelectedObjectName == targetName)
+		{
+			if (!m_SelectedObjectNames.empty())
+			{
+				m_SelectedObjectName = *m_SelectedObjectNames.begin();
+			}
+			else
+			{
+				m_SelectedObjectName.clear();
+			}
+		}
+		return;
+	}
+
+	m_SelectedObjectName = targetName;
+	m_SelectedObjectNames.clear();
+	m_SelectedObjectNames.insert(targetName);
+}
+
 void EditorApplication::Render() {
 	if (!m_Engine.GetD3DDXDC()) return; //★
 
@@ -399,6 +518,7 @@ void EditorApplication::RenderImGUI() {
 		m_InputManager->SetViewportRect({ clientMin.x, clientMin.y, clientMax.x, clientMax.y });
 	}
 
+	HandleEditorViewportSelection();
 	UpdateEditorCamera();
 	DrawGizmo();
 
