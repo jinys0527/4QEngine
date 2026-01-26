@@ -42,6 +42,7 @@ namespace RenderData
 		std::vector<UINT32>   indices;
 		std::vector<SubMesh>  subMeshes;
 		BOOL hasSkinning = false;
+		UINT32 maxBoneIndex = 0;
 	};
 
 	enum class MaterialTextureSlot : uint8_t
@@ -61,7 +62,8 @@ namespace RenderData
 		XMFLOAT4 baseColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 		FLOAT    metallic = 0.0f;
 		FLOAT    roughness = 1.0f;
-		FLOAT    padding[2]{ 0.0f, 0.0f };
+		FLOAT	 saturation = 1.0f;
+		FLOAT	 lightness = 1.0f;
 		std::array<TextureHandle, static_cast<size_t>(MaterialTextureSlot::TEX_MAX)> textures{};
 		ShaderAssetHandle  shaderAsset  = ShaderAssetHandle::Invalid();
 		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
@@ -130,6 +132,7 @@ namespace RenderData
 		std::vector<Bone>			bones;
 		std::vector<int>			upperBodyBones;
 		std::vector<int>			lowerBodyBones;
+		XMFLOAT4X4                  globalInverseTransform{};
 	};
 
 	struct AnimationKeyFrame
@@ -190,6 +193,26 @@ namespace RenderData
 		UINT32		   indexCount = 0;
 		bool		   useSubMesh = false;
 		XMFLOAT4X4     localToWorld{};
+		UINT32		   globalPoseOffset = 0;
+		UINT32		   globalPoseCount = 0;
+	};
+
+	struct UIElement
+	{
+		XMFLOAT2 position{ 0.0f, 0.0f };
+		XMFLOAT2 size{ 0.0f, 0.0f };
+		XMFLOAT4 color{ 1.0f,1.0f, 1.0f,1.0f };
+		FLOAT    opacity = 1.0f;
+		FLOAT    rotation = 0.0f;
+		INT32    zOrder = 0;
+	};
+
+	struct UITextElement
+	{
+		XMFLOAT2    position{ 0.0f, 0.0f };
+		XMFLOAT4    color{ 1.0f,1.0f, 1.0f,1.0f };
+		FLOAT       fontSize = 16.0f;
+		std::string text;
 	};
 
 	enum RenderLayer
@@ -198,6 +221,7 @@ namespace RenderData
 		OpaqueItems,
 		TransparentItems,
 		WallItems,
+		RefractionItems,
 		UIItems,
 		Layer_MAX_
 	};
@@ -208,5 +232,8 @@ namespace RenderData
 		std::unordered_map<RenderLayer, std::vector<RenderItem>> renderItems;
 		std::vector<LightData>  lights;
 		std::vector<XMFLOAT4X4> skinningPalettes;
+		std::vector<XMFLOAT4X4> globalPoses;
+		std::vector<UIElement>	uiElements;
+		std::vector<UITextElement> uiTexts;
 	};
 }

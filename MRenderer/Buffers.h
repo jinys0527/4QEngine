@@ -11,6 +11,8 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorld = XMFLOAT4X4{};
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
+	XMFLOAT2		ScreenSize{ 1920,1080 };
+	float			padding[2]{ 0,0 };
 };
 
 struct CameraConstBuffer
@@ -22,14 +24,15 @@ struct CameraConstBuffer
 	XMFLOAT4X4  mShadow = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
-	float		padding = 0.0f;
+	//float		padding = 0.0f;
+	float dTime = 0.0f;
 };
 
 struct Light
 {
 	XMFLOAT4X4 mLightViewProj{};
 
-	XMFLOAT4   Color{ 1,1,1,0 };
+	XMFLOAT4   Color{ 1,1,1,1 };
 
 	XMFLOAT3   Pos{ 0,0,0 };
 	float      Range = 0;
@@ -46,7 +49,8 @@ struct Light
 	float		padding1 = 0.0f;
 
 	UINT       CastShadow = TRUE;
-	float      padding[3]{ 0,0,0 };
+	UINT	   type = static_cast<UINT>(RenderData::LightType::None);
+	float      padding[2]{ 0,0 };
 };
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
@@ -56,13 +60,31 @@ struct LightConstBuffer
 	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
-constexpr size_t kMaxSkinningBones = 128;
+constexpr size_t kMaxSkinningBones = 256;
 
 struct SkinningConstBuffer
 {
 	XMFLOAT4X4 bones[kMaxSkinningBones]{};
 	UINT boneCount = 0;
 	float padding[3]{ 0.0f, 0.0f, 0.0f };
+};
+
+struct UIBuffer
+{
+	XMFLOAT4X4  TextPosition{};
+	XMFLOAT4	TextColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	XMFLOAT4	Color{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	FLOAT		Opacity;
+	float		padding[3] = { 0, 0 };
+};
+
+struct MaterialBuffer
+{
+	FLOAT		saturation = 1.0f;
+	FLOAT		lightness = 1.0f;
+	float		padding[2] = { 0,0 };
 };
 
 struct VertexShaderResources
@@ -99,6 +121,10 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pSkinCB;
 	LightConstBuffer			LightCBuffer;
 	ComPtr<ID3D11Buffer>		pLightCB;
+	UIBuffer					UIBuffer;
+	ComPtr<ID3D11Buffer>		pUIB;
+	MaterialBuffer				MatBuffer;
+	ComPtr<ID3D11Buffer>		pMatB;
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
@@ -108,6 +134,7 @@ struct RenderContext
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
 	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
+	ComPtr<ID3D11InputLayout> InputLayout_P = nullptr;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
@@ -168,6 +195,10 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
 
+	//Refraction용
+	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
 
 
 	std::function<void()> DrawFullscreenQuad;
@@ -190,4 +221,10 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
 
+	//물 노이즈
+	ComPtr<ID3D11ShaderResourceView>	WaterNoise;
+	float* dTime = nullptr;
+
+	//텍스트 그리기
+	std::function<void(float width, float height)> MyDrawText;
 };

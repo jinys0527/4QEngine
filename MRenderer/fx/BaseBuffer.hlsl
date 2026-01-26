@@ -1,11 +1,14 @@
 #ifndef BASEBUFFER_HLSL
 #define BASEBUFFER_HLSL
 
+// https://www.notion.so/GPU-2ea21c4cb4638021a66bf959e6db1ee4
 cbuffer BaseBuffer : register(b0)
 {
     matrix mWorld;
     matrix mWorldInvTranspose;
     matrix mTextureMask;
+    float2 screenSize;
+    float2 padding;
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -16,7 +19,8 @@ cbuffer CameraBuffer : register(b1)
     matrix mSkyBox;
     matrix mShadow;
     float3 cameraPos;
-    float padding;
+    //float campadding;
+    float dTime;
 };
 
 struct Light
@@ -40,7 +44,8 @@ struct Light
     float padding1;
 
     uint CastShadow;
-    float3 padding; 
+    uint type;
+    float2 padding; 
 };
 
 cbuffer LightBuffer : register(b2)
@@ -52,12 +57,17 @@ cbuffer LightBuffer : register(b2)
 
 cbuffer SkinningBuffer : register(b3)
 {
-    matrix bones[128];
+    matrix bones[256];
     uint count;
     float3 skinningpadding;
 };
 
-
+cbuffer MaterialBuffer : register(b5)
+{
+    float saturation;
+    float lightness;
+    float2 matpadding;
+};
 
 
 
@@ -71,6 +81,12 @@ struct VSInput_PNUT
     float4 T : TANGENT;
     uint4 boneIndices : BONEINDICES;
     float4 boneWeights : BONEWEIGHTS;
+};
+
+//(디버그용)
+struct VSInput_P
+{
+    float3 pos : POSITION;
 };
 
 //아웃풋
@@ -129,6 +145,20 @@ struct VSOutput_PBR
     float4 vPos : TEXCOORD2;
     float3 envUVW : TEXCOORD3;
     float4 T : TEXCOORD4;
+    float4 uvshadow : TEXCOORD5;
+};
+
+//굴절 레진
+struct VSOutput_Refraction
+{
+    float4 pos : SV_POSITION;
+    float4 nrm : NORMAL;
+};
+
+//임시 반드시 지울것
+struct VSOutputLine
+{
+    float4 pos : SV_POSITION;
 };
 
 //ShaderResourceView
@@ -138,6 +168,7 @@ Texture2D g_ShadowMap : register(t2);
 TextureCube g_SkyBox : register(t3);
 Texture2D g_DepthMap : register(t4);
 Texture2D g_Mask_Wall : register(t5);
+Texture2D g_WaterNoise : register(t6);
 
 
 Texture2D g_Albedo : register(t11);
@@ -147,11 +178,17 @@ Texture2D g_Roughness : register(t14);
 Texture2D g_AO : register(t15);
 Texture2D g_Env : register(t16);
 
+texture2D g_UI_01 : register(t21);
+texture2D g_UI_02 : register(t22);
+texture2D g_UI_03 : register(t23);
+texture2D g_UI_04 : register(t24);
+texture2D g_UI_05 : register(t25);
+
 //Sampler State
 SamplerState smpWrap : register(s0);
 SamplerState smpMirror : register(s1);
 SamplerState smpClamp : register(s2);
-SamplerState smpBoreder : register(s3);
+SamplerState smpBorder : register(s3);
 SamplerState smpBorderShadow : register(s4);
 
 

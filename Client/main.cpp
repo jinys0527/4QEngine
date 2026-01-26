@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿//Client
+#include "pch.h"
 #include "Engine.h"
 #include "GameApplication.h"
 #include "SceneManager.h"
@@ -39,8 +40,9 @@ int main()
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);
 	SceneManager sceneManager(services);
+  
 
-    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager);
+    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager, inputManager);
  
  	if (!g_pMainApp->Initialize())
  	{

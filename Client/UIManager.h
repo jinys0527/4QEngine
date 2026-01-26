@@ -1,4 +1,5 @@
 ﻿#pragma once
+//Client Game
 #include "IEventListener.h"
 #include <vector>
 #include <memory>
@@ -10,8 +11,10 @@
 class UIManager : public IEventListener
 {
 public:
-	UIManager(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher) {}
+	UIManager() = default;
 	virtual ~UIManager();
+
+	void SetEventDispatcher(EventDispatcher* eventDispatcher);
 
 	void AddUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
 	{
@@ -77,7 +80,7 @@ private:
 	UIObject* m_LastHoveredUI = nullptr;
 	bool m_FullScreenUIActive = false;
 	int m_FullScreenZ = -1;
-	EventDispatcher& m_EventDispatcher; 
+	EventDispatcher* m_EventDispatcher; 
 	std::string m_CurrentSceneName;
 	void DispatchToTopUI(EventType type, const void* data);
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>> m_UIObjects;

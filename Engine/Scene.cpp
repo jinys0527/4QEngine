@@ -18,6 +18,7 @@
 #include "SpotLightComponent.h"
 #include "TransformComponent.h"
 #include "SkeletalMeshComponent.h"
+#include "AnimationComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
 #include <fstream>
@@ -80,9 +81,9 @@ void Scene::Render(RenderData::FrameData& frameData) const
 
 void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
-	if (!gameObject)
+	if (!gameObject) {
 		return;
-
+	}
 	gameObject->SetScene(this);
 
 	if (gameObject->m_Name == "Main Camera")
@@ -92,6 +93,8 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 
 	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
+
+
 
 void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
@@ -340,6 +343,8 @@ void Scene::Deserialize(const nlohmann::json& j)
 	}
 
 	const nlohmann::json* editorRoot = nullptr;
+
+
 	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
 	if (j.contains("editor"))
 	{
@@ -692,6 +697,33 @@ static void AppendSkinningPaletteIfAny(
 	frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
 }
 
+static void AppendGlobalPoseIfAny(
+	const AnimationComponent* animComp,
+	RenderData::FrameData& frameData,
+	UINT32& outOffset,
+	UINT32& outCount
+)
+{
+	outOffset = 0;
+	outCount = 0;
+
+	if (!animComp)
+	{
+		return;
+	}
+
+	const auto& globalPose = animComp->GetGlobalPose();
+	if (globalPose.empty())
+	{
+		return;
+	}
+
+	outOffset = static_cast<UINT32>(frameData.globalPoses.size());
+	outCount = static_cast<UINT32>(globalPose.size());
+	frameData.globalPoses.insert(frameData.globalPoses.end(), globalPose.begin(), globalPose.end());
+}
+
+
 static bool BuildSkeletalBaseItem(
 	const Object& obj,
 	SkeletalMeshRenderer& renderer,
@@ -734,6 +766,13 @@ static bool BuildSkeletalBaseItem(
 
 	item.skinningPaletteOffset = paletteOffset;
 	item.skinningPaletteCount = paletteCount;
+
+	UINT32 globalPoseOffset = 0, globalPoseCount = 0;
+	const auto* animComp = obj.GetComponent<AnimationComponent>();
+	AppendGlobalPoseIfAny(animComp, frameData, globalPoseOffset, globalPoseCount);
+
+	item.globalPoseOffset = globalPoseOffset;
+	item.globalPoseCount = globalPoseCount;
 
 	outItem = std::move(item);
 	outMeshComponent = skelComp;
@@ -866,6 +905,8 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	frameData.renderItems.clear();
 	frameData.lights.clear();
 	frameData.skinningPalettes.clear();
+	frameData.globalPoses.clear();
+
 
 	RenderData::FrameContext& context = frameData.context;
 	context = RenderData::FrameContext{};

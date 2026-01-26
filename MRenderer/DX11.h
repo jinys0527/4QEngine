@@ -5,15 +5,21 @@
 #pragma comment(lib, "D3D11")		
 
 #include <Windows.h>
+
 #include <d3d11.h>
-#include <tchar.h>
+#include <d3dcompiler.h>
+
 #include <wrl/client.h>
 #include <memory>
-#include <d3dcompiler.h>
-//#include "DXMath.h"
-#include "DirectXMath.h"
+#include <tchar.h>
+
+#include <DirectXMath.h>
+
 #include <WICTextureLoader.h>
 #include <DDSTextureLoader.h>
+
+#include "SpriteBatch.h"
+#include "SpriteFont.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -56,6 +62,7 @@ inline void ERROR_MSG(HRESULT hr, const wchar_t* file, int line)
 enum class DS 
 {
     DEPTH_ON,
+    DEPTH_ON_WRITE_OFF,
     DEPTH_OFF,
 
 
@@ -204,3 +211,7 @@ HRESULT RTTexCreate(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT f
 HRESULT RTViewCreate(ID3D11Device* device, DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
 HRESULT RTSRViewCreate(ID3D11Device* device, DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
 HRESULT DSCreate(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);
+
+
+//임시 지울 것
+

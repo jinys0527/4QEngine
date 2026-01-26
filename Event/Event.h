@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Windows.h"
+#include <string>
 
 namespace Events
 {
@@ -14,5 +15,10 @@ namespace Events
 
 		bool   leftPressed{ false };
 		bool   rightPressed{ false };
+	};
+
+	struct SceneChangeRequest
+	{
+		std::string name;
 	};
 }
