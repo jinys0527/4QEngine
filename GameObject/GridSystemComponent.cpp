@@ -83,16 +83,10 @@ AxialKey AxialRound(const AxialCoord& axial)
 GridSystemComponent::GridSystemComponent() = default;
 
 GridSystemComponent::~GridSystemComponent() {
-	// Event Listener 쓰는 경우만
-	/*GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
-	GetEventDispatcher().RemoveListener(EventType::KeyUp, this);*/
 }
 
 void GridSystemComponent::Start()
 {
-	// 이벤트 추가
-	/*GetEventDispatcher().AddListener(EventType::KeyDown, this);
-	GetEventDispatcher().AddListener(EventType::KeyUp, this);*/
 
 	ScanNodes();
 	MakeGraph();
