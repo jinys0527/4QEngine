@@ -74,6 +74,9 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 
 	m_RenderContext.BCBuffer.mWorld = tm;
 
+	m_RenderContext.BCBuffer.ScreenSize.x = m_RenderContext.WindowSize.width;
+	m_RenderContext.BCBuffer.ScreenSize.y = m_RenderContext.WindowSize.height;
+
 	XMMATRIX world = XMLoadFloat4x4(&tm);
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
@@ -93,7 +96,7 @@ void RenderPass::SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3
 		XMVECTOR look = targetpos;
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-		//if (XMVector4Equal(maincampos, look)) return;
+		if (XMVector3Equal(maincampos, look)) return;
 		mView = XMMatrixLookAtLH(maincampos, look, up);
 		mProj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
 
@@ -152,6 +155,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 	//스카이박스 행렬 끝
 
 #pragma endregion
+	m_RenderContext.CameraCBuffer.dTime = *m_RenderContext.dTime;
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }
@@ -160,41 +164,118 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 {
 	if (!frame.lights.empty())
 	{
-		const auto& light = frame.lights[0];
-
-		XMFLOAT4X4 view; 
-		if (m_RenderContext.isEditCam)
+		for (const auto& light : frame.lights)
 		{
-			view = frame.context.editorCamera.view;
+			if (light.type != RenderData::LightType::Directional)
+				continue;
+			m_RenderContext.LightCBuffer.lightCount = 1;
+			XMFLOAT4X4 view;
+			if (m_RenderContext.isEditCam)
+			{
+				view = frame.context.editorCamera.view;
+			}
+			else if (!m_RenderContext.isEditCam)
+			{
+				view = frame.context.gameCamera.view;
+			}
+			XMMATRIX mView = XMLoadFloat4x4(&view);
+
+			Light dirlight{};
+			dirlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
+
+			XMVECTOR dirW = XMLoadFloat3(&dirlight.worldDir);
+			XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
+			XMStoreFloat3(&dirlight.viewDir, dirV);
+
+			dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+			dirlight.Intensity = light.intensity;
+			dirlight.mLightViewProj = light.lightViewProj;
+			dirlight.CastShadow = light.castShadow;
+			dirlight.Range = light.range;
+			dirlight.SpotInnerAngle = light.spotInnerAngle;
+			dirlight.SpotOutterAngle = light.spotOutterAngle;
+			dirlight.AttenuationRadius = light.attenuationRadius;
+			dirlight.type = static_cast<UINT>(light.type);
+
+			m_RenderContext.LightCBuffer.lights[0] = dirlight;
+			break;
 		}
-		else if (!m_RenderContext.isEditCam)
-		{
-			view = frame.context.gameCamera.view;
-		}
-		XMMATRIX mView = XMLoadFloat4x4(&view);
-
-		Light dirlight{};
-		dirlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
-
-		XMVECTOR dirW = XMLoadFloat3(&dirlight.worldDir); 
-		XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
-		XMStoreFloat3(&dirlight.viewDir, dirV);
-
-		dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
-		dirlight.Intensity = light.intensity;
-		dirlight.mLightViewProj = light.lightViewProj;
-		dirlight.CastShadow = light.castShadow;
-		dirlight.Range = light.range;
-		dirlight.SpotInnerAngle = light.spotInnerAngle;
-		dirlight.SpotOutterAngle = light.spotOutterAngle;
-		dirlight.AttenuationRadius = light.attenuationRadius;
-
-		m_RenderContext.LightCBuffer.lights[0] = dirlight;
 
 		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
 
 	}
 
+}
+
+void RenderPass::SetOtherLights(const RenderData::FrameData& frame)
+{
+	if (!frame.lights.empty())
+	{
+		int index = 1;
+		for (const auto& light : frame.lights)
+		{
+			if (light.type == RenderData::LightType::Directional)
+				continue;
+			m_RenderContext.LightCBuffer.lightCount++;
+			
+			//포인트 라이트
+			if (light.type == RenderData::LightType::Point)
+			{
+				Light pointlight{};
+
+				pointlight.Pos = light.posiiton;
+				pointlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+				pointlight.Intensity = light.intensity;
+				pointlight.Range = light.range;
+				pointlight.type = static_cast<UINT>(light.type);
+
+				m_RenderContext.LightCBuffer.lights[index] = pointlight;
+
+			}
+
+			//SpotLight
+			if (light.type == RenderData::LightType::Spot)
+			{
+				XMFLOAT4X4 view;
+				if (m_RenderContext.isEditCam)
+				{
+					view = frame.context.editorCamera.view;
+				}
+				else if (!m_RenderContext.isEditCam)
+				{
+					view = frame.context.gameCamera.view;
+				}
+				XMMATRIX mView = XMLoadFloat4x4(&view);
+
+				Light spotlight{};
+
+				spotlight.Pos = light.posiiton;
+				spotlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
+				spotlight.Intensity = light.intensity;
+				spotlight.worldDir = light.direction;
+				//spotlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
+
+				XMVECTOR dirW = XMLoadFloat3(&spotlight.worldDir);
+				XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
+				XMStoreFloat3(&spotlight.viewDir, dirV);
+
+				spotlight.Range = light.range;
+				spotlight.SpotInnerAngle = DirectX::XMConvertToRadians(light.spotInnerAngle);
+				spotlight.SpotOutterAngle = DirectX::XMConvertToRadians(light.spotOutterAngle);	
+				spotlight.AttenuationRadius = light.attenuationRadius;
+				spotlight.type = static_cast<UINT>(light.type);
+
+				m_RenderContext.LightCBuffer.lights[index] = spotlight;
+
+			}
+
+
+			index++;
+		}
+
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
+
+	}
 }
 
 void RenderPass::SetVertex(const RenderData::RenderItem& item)

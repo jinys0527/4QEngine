@@ -62,6 +62,7 @@ inline void ERROR_MSG(HRESULT hr, const wchar_t* file, int line)
 enum class DS 
 {
     DEPTH_ON,
+    DEPTH_ON_WRITE_OFF,
     DEPTH_OFF,
 
 

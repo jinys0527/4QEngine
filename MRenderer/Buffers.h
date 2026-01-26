@@ -11,6 +11,8 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorld = XMFLOAT4X4{};
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
+	XMFLOAT2		ScreenSize{ 1920,1080 };
+	float			padding[2]{ 0,0 };
 };
 
 struct CameraConstBuffer
@@ -22,7 +24,8 @@ struct CameraConstBuffer
 	XMFLOAT4X4  mShadow = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
-	float		padding = 0.0f;
+	//float		padding = 0.0f;
+	float dTime = 0.0f;
 };
 
 struct Light
@@ -46,7 +49,8 @@ struct Light
 	float		padding1 = 0.0f;
 
 	UINT       CastShadow = TRUE;
-	float      padding[3]{ 0,0,0 };
+	UINT	   type = static_cast<UINT>(RenderData::LightType::None);
+	float      padding[2]{ 0,0 };
 };
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
@@ -74,6 +78,13 @@ struct UIBuffer
 
 	FLOAT		Opacity;
 	float		padding[3] = { 0, 0 };
+};
+
+struct MaterialBuffer
+{
+	FLOAT		saturation = 1.0f;
+	FLOAT		lightness = 1.0f;
+	float		padding[2] = { 0,0 };
 };
 
 struct VertexShaderResources
@@ -112,6 +123,8 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pLightCB;
 	UIBuffer					UIBuffer;
 	ComPtr<ID3D11Buffer>		pUIB;
+	MaterialBuffer				MatBuffer;
+	ComPtr<ID3D11Buffer>		pMatB;
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
@@ -182,6 +195,10 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
 
+	//Refraction용
+	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
 
 
 	std::function<void()> DrawFullscreenQuad;
@@ -203,6 +220,10 @@ struct RenderContext
 	//FullScreenTriangle
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
+
+	//물 노이즈
+	ComPtr<ID3D11ShaderResourceView>	WaterNoise;
+	float* dTime = nullptr;
 
 	//텍스트 그리기
 	std::function<void(float width, float height)> MyDrawText;

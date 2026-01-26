@@ -15,7 +15,6 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
 
 #pragma endregion
 
-	const auto& context = frame.context;
 
     XMMATRIX tm = XMMatrixIdentity();
     XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, tm);
@@ -27,7 +26,7 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
-    dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
+    dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
 
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Quad.Get(), nullptr, 0);

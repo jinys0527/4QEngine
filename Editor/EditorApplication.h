@@ -56,7 +56,7 @@ private:
 	void Update();
 	void UpdateSceneViewport();
 	void UpdateEditorCamera();
-	
+	void HandleEditorViewportSelection();
 
 	//Render 관련
 	void Render();

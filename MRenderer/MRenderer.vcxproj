@@ -205,6 +205,7 @@
     <ClCompile Include="FrustumPass.cpp" />
     <ClCompile Include="OpaquePass.cpp" />
     <ClCompile Include="PostPass.cpp" />
+    <ClCompile Include="RefractionPass.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RenderPass.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
@@ -212,6 +213,7 @@
     <ClCompile Include="ShadowPass.cpp" />
     <ClCompile Include="TransparentPass.cpp" />
     <ClCompile Include="UIPass.cpp" />
+    <ClCompile Include="WallPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BlurPass.h" />
@@ -223,6 +225,7 @@
     <ClInclude Include="FrustumPass.h" />
     <ClInclude Include="OpaquePass.h" />
     <ClInclude Include="PostPass.h" />
+    <ClInclude Include="RefractionPass.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderPass.h" />
     <ClInclude Include="RenderPipeline.h" />
@@ -230,6 +233,7 @@
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="TransparentPass.h" />
     <ClInclude Include="UIPass.h" />
+    <ClInclude Include="WallPass.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\Animation.hlsl">
@@ -281,6 +285,16 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_NoneBlur|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Refraction_PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_NoneBlur|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Refraction_VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_NoneBlur|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="fx\Demo_Shadow_PS.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
