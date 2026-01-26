@@ -245,6 +245,11 @@ protected:
 	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
 	ComPtr<ID3DBlob> m_pVSCode_Shadow;
 
+	//물 노이즈 
+	ComPtr<ID3D11ShaderResourceView> m_WaterNoise;
+	//임시
+	float dTime = 0.0f;
+
 	//FullScreenTriangle
 protected:
 	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;

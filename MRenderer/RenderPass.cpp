@@ -155,6 +155,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 	//스카이박스 행렬 끝
 
 #pragma endregion
+	m_RenderContext.CameraCBuffer.dTime = *m_RenderContext.dTime;
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }
