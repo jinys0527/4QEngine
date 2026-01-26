@@ -173,6 +173,9 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (!mouseData)
 		return;
 
+	if (mouseData->handled)
+		return;
+
 	auto* owner = GetOwner();
 	if (!owner)
 		return;

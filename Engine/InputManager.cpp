@@ -28,6 +28,9 @@ void InputManager::Update()
 	if (!m_Enabled)
 		return;
 
+	m_Mouse.handled = false;
+	m_PendingLeftClickMouse.handled = false;
+
 	for (const auto& key : m_KeysDown)
 	{
 		if (!m_KeysDownPrev.contains(key))
@@ -57,8 +60,10 @@ void InputManager::Update()
 		if (elapsed > static_cast<ULONGLONG>(m_DoubleClickThereshlodsMs))
 		{
 			// 더블클릭 윈도우 지나면 싱글 확정 발사
-			m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
+			m_PendingLeftClickMouse.handled = false;
 			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse);
+			if (!m_PendingLeftClickMouse.handled)
+				m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
 			m_PendingLeftClick = false;
 		}
 	}
@@ -83,6 +88,7 @@ void InputManager::Update()
 		{
 			// 더블클릭이면 pending 싱글 취소 + 더블만 발사
 			m_PendingLeftClick = false;
+			m_Mouse.handled = false;
 			m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
 		}
 
@@ -103,34 +109,48 @@ void InputManager::Update()
 	// 좌클릭 홀드
 	else if (m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
-		m_EventDispatcher->Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
+		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::Dragged, &m_Mouse);
+		if (!m_Mouse.handled)
+		{
+			m_Mouse.handled = false;
+			m_EventDispatcher->Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
+		}
 	}
 	// 좌클릭 업
 	else if (m_MousePrev.leftPressed && !m_Mouse.leftPressed)
 	{
-		m_EventDispatcher->Dispatch(EventType::MouseLeftClickUp, &m_Mouse);
+		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse);
+		if (!m_Mouse.handled)
+		{
+			m_Mouse.handled = false;
+			m_EventDispatcher->Dispatch(EventType::MouseLeftClickUp, &m_Mouse);
+		}
 	}
 	
 
 	// 우클릭
 	if (m_MousePrev.rightPressed == false && m_Mouse.rightPressed)
 	{
+		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::MouseRightClick, &m_Mouse);
 	}
 	else if (m_MousePrev.rightPressed == true && m_Mouse.rightPressed)
 	{
+		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::MouseRightClickHold, &m_Mouse);
 	}
 	else if(m_MousePrev.rightPressed == true && !m_Mouse.rightPressed)
 	{
+		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::MouseRightClickUp, &m_Mouse);
 	}
 	
 
 
-	// Hovered : 매 프레임
+	// Hovered : 매 프레임	
+	m_Mouse.handled = false;
 	m_EventDispatcher->Dispatch(EventType::Hovered, &m_Mouse);
 
 	m_MousePrev = m_Mouse;

@@ -98,6 +98,8 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 
 			m_ActiveUI = ui.get();
+			if (mouseData)
+				mouseData->handled = true;
 			SendEventToUI(m_ActiveUI, type, data);
 			break;
 		}
@@ -106,6 +108,8 @@ void UIManager::OnEvent(EventType type, const void* data)
 	{
 		if (m_ActiveUI)
 		{
+			if (mouseData)
+				mouseData->handled = true;
 			if (type == EventType::Dragged)
 			{
 				m_EventDispatcher->Dispatch(EventType::UIDragged, data);
@@ -133,6 +137,8 @@ void UIManager::OnEvent(EventType type, const void* data)
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
 
+			if (mouseData)
+				mouseData->handled = true;
 			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, data);
 			SendEventToUI(ui.get(), EventType::UIDoubleClicked, data);
 			break;

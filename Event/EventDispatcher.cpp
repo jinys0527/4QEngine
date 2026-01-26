@@ -1,4 +1,29 @@
 ﻿#include "EventDispatcher.h"
+#include <algorithm>
+
+bool IsMouseEvent(EventType type)
+{
+	switch (type)
+	{
+	case EventType::MouseLeftClick:
+	case EventType::MouseLeftClickHold:
+	case EventType::MouseLeftClickUp:
+	case EventType::MouseLeftDoubleClick:
+	case EventType::MouseRightClick:
+	case EventType::MouseRightClickHold:
+	case EventType::MouseRightClickUp:
+	case EventType::Dragged:
+	case EventType::Hovered:
+	case EventType::Pressed:
+	case EventType::Released:
+	case EventType::Moved:
+	case EventType::UIDragged:
+	case EventType::UIDoubleClicked:
+		return true;
+	default:
+		return false;
+	}
+}
 
 void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 {
@@ -9,6 +34,9 @@ void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 		return;
 
 	vec.push_back(listener);
+	std::sort(vec.begin(), vec.end(), [](const IEventListener* a, const IEventListener* b) {
+		return a->GetEventPriority() > b->GetEventPriority();
+		});
 }
 
 void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
@@ -39,5 +67,12 @@ void EventDispatcher::Dispatch(EventType type, const void* data)
 	{
 		if (listener)
 			listener->OnEvent(type, data);
+
+		if (data && IsMouseEvent(type))
+		{
+			auto mouseData = static_cast<const Events::MouseState*>(data);
+			if (mouseData && mouseData->handled)
+				break;
+		}
 	}
 }

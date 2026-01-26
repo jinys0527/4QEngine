@@ -40,4 +40,5 @@ class IEventListener
 public:
 	virtual ~IEventListener() = default;
 	virtual void OnEvent(EventType type, const void* data) = 0;
+	virtual int GetEventPriority() const { return 0; }
 };
