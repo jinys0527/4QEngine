@@ -15,44 +15,52 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     if (frame.lights.empty())
         return;
 
-    const auto& mainlight = frame.lights[0];
+    for (const auto& light : frame.lights)
+    {
+        if (light.type != RenderData::LightType::Directional)
+            continue;
+        const auto& mainlight = light;
 
-    //0번이 전역광이라고 가정...
-    XMMATRIX lightview, lightproj;
-    XMVECTOR maincampos = XMLoadFloat3(&context.gameCamera.cameraPos); //원래는 주인공 위치가 더 좋은데, 일단 카메라 위치로 해도 크게 상관 없을 듯
-    XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&mainlight.direction));
-    XMVECTOR pos = maincampos - (dir * 10.f);
-    XMVECTOR look = maincampos;
-    XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+        //0번이 전역광이라고 가정...
+        XMMATRIX lightview, lightproj;
+        XMVECTOR maincampos = XMLoadFloat3(&context.gameCamera.cameraPos); //원래는 주인공 위치가 더 좋은데, 일단 카메라 위치로 해도 크게 상관 없을 듯
+        XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&mainlight.direction));
+        XMVECTOR pos = maincampos - (dir * 10.f);
+        XMVECTOR look = maincampos;
+        XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-    if (XMVector4Equal(pos, look)) return;
+        if (XMVector4Equal(pos, look)) return;
 
-    lightview = XMMatrixLookAtLH(pos, look, up);
-    //원근 투영
-    //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
-    //직교 투영
-    lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
+        lightview = XMMatrixLookAtLH(pos, look, up);
+        //원근 투영
+        //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
+        //직교 투영
+        lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
 
-    //텍스처 좌표 변환
-    XMFLOAT4X4 m = {
-        0.5f,  0.0f, 0.0f, 0.0f,
-         0.0f, -0.5f, 0.0f, 0.0f,
-         0.0f,  0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f, 0.0f, 1.0f
-    };
+        //텍스처 좌표 변환
+        XMFLOAT4X4 m = {
+            0.5f,  0.0f, 0.0f, 0.0f,
+             0.0f, -0.5f, 0.0f, 0.0f,
+             0.0f,  0.0f, 1.0f, 0.0f,
+             0.5f,  0.5f, 0.0f, 1.0f
+        };
 
-    XMMATRIX mscale = XMLoadFloat4x4(&m);
-    XMMATRIX mLightTM;
-    mLightTM = lightview * lightproj * mscale;
+        XMMATRIX mscale = XMLoadFloat4x4(&m);
+        XMMATRIX mLightTM;
+        mLightTM = lightview * lightproj * mscale;
 
-    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, lightview);
-    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, lightproj);
-    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, lightview* lightproj);
+        XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mView, lightview);
+        XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mProj, lightproj);
+        XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, lightview * lightproj);
 
-    //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
-    XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mShadow, mLightTM);
+        //★ 나중에 그림자 매핑용 행렬 위치 정해지면 상수 버퍼 set
+        XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mShadow, mLightTM);
 
-    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
+        UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
+
+        break;
+    }
+    
 
 
     for (const auto& queueItem : GetQueue())

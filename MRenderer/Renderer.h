@@ -95,6 +95,10 @@ private:
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Blur;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur;
 
+	//Refraction용
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Refraction;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Refraction;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Refraction;
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	m_DSState;		//깊이 스텐실 상태
@@ -157,6 +161,8 @@ private:
 	LightConstBuffer			m_LightCBuffer;
 	ComPtr<ID3D11Buffer>		m_pUIB;
 	UIBuffer					m_UIBuffer;
+	ComPtr<ID3D11Buffer>		m_pMatB;
+	MaterialBuffer				m_MatBuffer;
 
 
 	//임시
@@ -239,6 +245,11 @@ protected:
 	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
 	ComPtr<ID3DBlob> m_pVSCode_Shadow;
 
+	//물 노이즈 
+	ComPtr<ID3D11ShaderResourceView> m_WaterNoise;
+	//임시
+	float dTime = 0.0f;
+
 	//FullScreenTriangle
 protected:
 	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
@@ -251,7 +262,7 @@ private:
 	void SetupText();
 	void RenderTextCenter(int screenW, int screenH)
 	{
-		const wchar_t* msg = L"HELLO";
+		const wchar_t* msg = L"황재하\n진영상\n홍한울\n정성우\n권윤정\n박지훈\n이지원";
 
 		// 1. 측정 및 계산
 		DirectX::XMVECTOR size = m_SpriteFont->MeasureString(msg);

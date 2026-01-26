@@ -1,10 +1,12 @@
 ﻿#include "OpaquePass.h"
 #include "ShadowPass.h"
 #include "DepthPass.h"
+#include "WallPass.h"
 #include "TransparentPass.h"
 #include "BlurPass.h"
 #include "PostPass.h"
 #include "FrustumPass.h"
+#include "RefractionPass.h"
 #include "RenderTargetContext.h"
 #include "DebugLinePass.h"
 #include "Renderer.h"
@@ -133,9 +135,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
 	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<WallPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
@@ -146,7 +150,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	
 	//블러 테스트
 	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
-	 hr = S_OK;
+	hr = S_OK;
 	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
@@ -169,6 +173,15 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
+	filename = L"../MRenderer/fx/WaterNoise.jpg";
+	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+		nullptr, m_WaterNoise.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+	}
 
 	
 
@@ -199,6 +212,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
+	dTime += 0.00025f;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
@@ -536,6 +550,8 @@ void Renderer::CreateContext()
 	m_RenderContext.LightCBuffer			= m_LightCBuffer;
 	m_RenderContext.pUIB					= m_pUIB;
 	m_RenderContext.UIBuffer				= m_UIBuffer;
+	m_RenderContext.pMatB					= m_pMatB;
+	m_RenderContext.MatBuffer				= m_MatBuffer;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
@@ -598,6 +614,12 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Blur		= m_pTexRvScene_Blur;
 	m_RenderContext.pRTView_Blur			= m_pRTView_Blur;
 
+	m_RenderContext.pRTScene_Refraction		= m_pRTScene_Refraction;
+	m_RenderContext.pTexRvScene_Refraction	= m_pTexRvScene_Refraction;
+	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
+
+
+
 	m_RenderContext.Vignetting				= m_Vignetting;
 
 	m_RenderContext.SkyBox					= m_SkyBox;
@@ -606,6 +628,9 @@ void Renderer::CreateContext()
 
 	m_RenderContext.VS_Shadow				= m_pVS_Shadow;
 	m_RenderContext.PS_Shadow				= m_pPS_Shadow;
+
+	m_RenderContext.WaterNoise				= m_WaterNoise;
+	m_RenderContext.dTime = &dTime;
 
 	//FullScreenTriangle
 	m_RenderContext.VS_FSTriangle			= m_pVS_FSTriangle;
@@ -917,6 +942,12 @@ HRESULT Renderer::CreateConstBuffer()
 		return hr;
 	}
 
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(MaterialBuffer), m_pMatB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 
 
@@ -1538,14 +1569,17 @@ HRESULT Renderer::ReCreateRenderTarget()
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
 	RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
 	RTSRViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pTexRvScene_Imgui_edit.GetAddressOf());
+	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
 
 	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
 	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
@@ -1676,6 +1710,13 @@ HRESULT Renderer::CreateDepthStencilState()
 		return hr;
 	}
 
+	ds.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	hr = m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_ON_WRITE_OFF].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 	ds.DepthEnable = FALSE;
 	hr = m_pDevice->CreateDepthStencilState(&ds, m_DSState[DS::DEPTH_OFF].GetAddressOf());
@@ -2079,7 +2120,7 @@ void Renderer::SetupText()
 	m_pDXDC.As(&dc1);
 
 	m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(dc1.Get());
-	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/myfont.spritefont");
+	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/hangulfont.spritefont");
 }
 
 //핸들 개수 최대값 가져오는 함수
