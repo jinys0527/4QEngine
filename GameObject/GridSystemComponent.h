@@ -48,6 +48,7 @@ public:
 	void OnEvent(EventType type, const void* data) override; // IEventListener 필요
 	const vector<NodeComponent*>& GetNodes() const { return m_Nodes; }
 	const int& GetNodesCount() const { return m_NodesCount; }
+	int GetShortestPathLength(const AxialKey& start,const AxialKey& target);
 	NodeComponent* GetNodeByKey(const AxialKey& key) const;
 
 private:

@@ -107,7 +107,7 @@ void GridSystemComponent::OnEvent(EventType type, const void* data)
 	(void)data;
 }
 
-//Node object 찾아서 배정
+//Node object, player, Enemy 찾아서 배정
 void GridSystemComponent::ScanNodes()
 {
 	m_NodesCount = 0;
@@ -183,6 +183,64 @@ void GridSystemComponent::ScanNodes()
 
 }
 
+int GridSystemComponent::GetShortestPathLength(const AxialKey& start,const AxialKey& target)
+{
+	auto* startNode = GetNodeByKey(start);
+	auto* targetNode = GetNodeByKey(target);
+
+	if (!startNode || !targetNode)
+	{
+		return -1;
+	}
+	if (startNode == targetNode)
+	{
+		return 0;
+	}
+	std::unordered_map<NodeComponent*, int> distances;
+	std::queue<NodeComponent*> frontier;
+
+	distances[startNode] = 0;
+	frontier.push(startNode);
+
+	while (!frontier.empty())
+	{
+		auto* current = frontier.front();
+		frontier.pop();
+
+		const int currentDistance = distances[current];
+		for (auto* neighbor : current->GetNeighbors())
+		{
+			if (!neighbor)
+			{
+				continue;
+			}
+			if (!neighbor->GetIsMoveable())
+			{
+				continue;
+			}
+			if (neighbor->GetState() != NodeState::Empty && neighbor != targetNode)
+			{
+				continue;
+			}
+			if (distances.find(neighbor) != distances.end())
+			{
+				continue;
+			}
+
+			const int nextDistance = currentDistance + 1;
+			if (neighbor == targetNode)
+			{
+				return nextDistance;
+			}
+			distances[neighbor] = nextDistance;
+			frontier.push(neighbor);
+		}
+	}
+
+	return -1;
+
+}
+
 // Axial 좌표로 Node 찾기
 NodeComponent* GridSystemComponent::GetNodeByKey(const AxialKey& key) const
 {
@@ -194,6 +252,7 @@ NodeComponent* GridSystemComponent::GetNodeByKey(const AxialKey& key) const
 	return it->second;
 }
 
+// 최초 위치에서 이동가능한 범위 표시
 void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 {
 	for (auto* node : m_Nodes)
