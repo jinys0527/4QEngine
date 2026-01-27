@@ -33,6 +33,10 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Quad.Get(), nullptr, 0);
 
+    D3D11_VIEWPORT vp;
+    UINT count = 1;
+    dxdc->RSGetViewports(&count, &vp);
+
     m_RenderContext.DrawFSTriangle();
 
     dxdc->GenerateMips(m_RenderContext.pTexRvScene_Blur.Get());
