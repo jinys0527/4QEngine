@@ -17,6 +17,12 @@ public:
 	bool BuildWorldBounds(DirectX::XMFLOAT3& outMin, DirectX::XMFLOAT3& outMax) const;
 	bool IntersectsRay(const DirectX::XMFLOAT3& rayOrigin, const DirectX::XMFLOAT3& rayDir, float& outT) const;
 
+
+	void SetLocalMin(const DirectX::XMFLOAT3& localMin) { m_LocalMin = localMin; }
+	void SetLocalMax(const DirectX::XMFLOAT3& localMax) { m_LocalMax = localMax; }
+	const DirectX::XMFLOAT3& GetLocalMin() const { return m_LocalMin; }
+	const DirectX::XMFLOAT3& GetLocalMax() const { return m_LocalMax; }
+
 private:
 	void TryInitializeFromMesh();
 

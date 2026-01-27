@@ -1,0 +1,27 @@
+{
+  "animations": [
+    {
+      "file": "Anims/animationTest_doorTestArm_Armature.001Action_0.anim.json",
+      "name": "doorTestArm_Armature.001Action_0"
+    }
+  ],
+  "files": {
+    "materials": "Mats/animationTest.matbin",
+    "skeleton": "Skels/animationTest.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/animationTest.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "animationTest",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  },
+  "skeletonMeta": {
+    "lowerBodyBones": [],
+    "upperBodyBones": []
+  }
+}

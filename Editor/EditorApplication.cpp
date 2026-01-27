@@ -2063,7 +2063,7 @@ void EditorApplication::DrawInspector() {
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
 		for (const auto& typeName : typeNames)
 		{
-			if (typeName == "LightComponent")
+			if (typeName == "LightComponent" || typeName == "AnimationComponent")
 			{
 				continue;
 			}

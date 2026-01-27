@@ -318,6 +318,7 @@
     </ClInclude>
     <ClInclude Include="EnemyComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
+    <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="NodeComponent.h" />
     <ClInclude Include="PlayerComponent.h" />
     <ClInclude Include="RectLightComponent.h" />
@@ -345,6 +346,7 @@
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="SkeletalMeshRenderer.h" />
+    <ClInclude Include="SkinningAnimationComponent.h" />
     <ClInclude Include="SpotLightComponent.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIButtonComponent.h" />
@@ -369,6 +371,7 @@
     </ClCompile>
     <ClCompile Include="EnemyComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
+    <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="NodeComponent.cpp" />
     <ClCompile Include="PlayerComponent.cpp" />
     <ClCompile Include="RectLightComponent.cpp" />
@@ -393,6 +396,7 @@
     <ClCompile Include="SceneChangeTestComponent.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
+    <ClCompile Include="SkinningAnimationComponent.cpp" />
     <ClCompile Include="SpotLightComponent.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIButtonComponent.cpp" />

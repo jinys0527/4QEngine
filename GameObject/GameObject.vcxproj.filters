@@ -103,21 +103,25 @@
     <ClCompile Include="ComponentTemplate.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GridSystemComponent.cpp">
+    <ClCompile Include="BoxColliderComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinningAnimationComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NodeComponent.cpp">
+    <ClCompile Include="GridSystemComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PlayerComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EnemyComponent.cpp">
+    <ClCompile Include="NodeComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoxColliderComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="InputEventTestComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -235,21 +239,25 @@
     <ClInclude Include="ComponentTemplate.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GridSystemComponent.h">
+    <ClInclude Include="BoxColliderComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinningAnimationComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NodeComponent.h">
+    <ClInclude Include="GridSystemComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlayerComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnemyComponent.h">
+    <ClInclude Include="NodeComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoxColliderComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="InputEventTestComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">

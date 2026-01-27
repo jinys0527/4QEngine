@@ -729,6 +729,11 @@ static void AppendGlobalPoseIfAny(
 	frameData.globalPoses.insert(frameData.globalPoses.end(), globalPose.begin(), globalPose.end());
 }
 
+static const AnimationComponent* FindAnimationComponent(const Object& obj)
+{
+	const auto anims = obj.GetComponentsDerived<AnimationComponent>();
+	return anims.empty() ? nullptr : anims.front();
+}
 
 static bool BuildSkeletalBaseItem(
 	const Object& obj,
@@ -774,7 +779,7 @@ static bool BuildSkeletalBaseItem(
 	item.skinningPaletteCount = paletteCount;
 
 	UINT32 globalPoseOffset = 0, globalPoseCount = 0;
-	const auto* animComp = obj.GetComponent<AnimationComponent>();
+	const auto* animComp = FindAnimationComponent(obj);
 	AppendGlobalPoseIfAny(animComp, frameData, globalPoseOffset, globalPoseCount);
 
 	item.globalPoseOffset = globalPoseOffset;
