@@ -4,12 +4,7 @@
     "materials": "Mats/kitchen.matbin",
     "skeleton": "Skels/kitchen.skelbin"
   },
-  "meshes": [
-    {
-      "file": "Meshes/kitchen.meshbin",
-      "isSkinned": false
-    }
-  ],
+  "meshes": [],
   "name": "kitchen",
   "path": {
     "baseDir": "..",

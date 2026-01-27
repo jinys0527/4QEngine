@@ -10,10 +10,10 @@
 #include "CameraObject.h"
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
+#include "PlayerComponent.h"
 #include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
-REGISTER_PROPERTY(PlayerMovementComponent, Speed)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)
 
 static NodeComponent* FindClosestNodeHit(
@@ -86,7 +86,7 @@ void PlayerMovementComponent::Update(float deltaTime)
 	if (!m_IsDragging || !m_HasDragRay)
 		return;
 
-	auto* owner = GetOwner();
+	auto* owner = GetOwner(); //
 	if (!owner)
 		return;
 
@@ -100,21 +100,37 @@ void PlayerMovementComponent::Update(float deltaTime)
 	float nodeHitT = 0.0f;
 	NodeComponent* targetNode = FindClosestNodeHit(scene, m_DragRayOrigin, m_DragRayDir, nodeHitT);
 	if (!targetNode)
+	{
+		m_CurrentTargetNode = nullptr;
 		return;
+	}
 
 	if (!targetNode->GetIsMoveable())
+	{
+		m_CurrentTargetNode = nullptr;
 		return;
+	}
 
 	if (!targetNode->IsInMoveRange())
+	{
+		m_CurrentTargetNode = nullptr;
 		return;
+	}
+
 	const auto state = targetNode->GetState();
 	if (state != NodeState::Empty && state != NodeState::HasPlayer)
+	{
+		m_CurrentTargetNode = nullptr;
 		return;
+	}
 
 	auto* targetOwner = targetNode->GetOwner();
 	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
 	if (!targetTransform)
+	{
+		m_CurrentTargetNode = nullptr;
 		return;
+	}
 
 	const auto nodePos = targetTransform->GetPosition();
 	DirectX::XMFLOAT3 newPos{
@@ -124,6 +140,7 @@ void PlayerMovementComponent::Update(float deltaTime)
 	};
 
 	transComp->SetPosition(newPos);
+	m_CurrentTargetNode = targetNode;
 }
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)
@@ -157,14 +174,26 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::MouseLeftClickUp)
 	{
+		auto* player = owner->GetComponent<PlayerComponent>();
+		if (m_CurrentTargetNode && player)
+		{
+			const bool consumed = player->CommitMove(m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR());
+			if (!consumed)
+			{
+				transComp->SetPosition(m_DragStartPos);
+			}
+		}
+
 		m_IsDragging = false;
 		m_HasDragRay = false;
+		m_CurrentTargetNode = nullptr;
 		return;
 	}
 
 	if (!input.IsPointInViewport(mouseData->pos))
 		return;
 
+	// Logic
 	if (type == EventType::MouseLeftClick)
 	{
 		Ray pickRay{};
@@ -233,6 +262,14 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		m_DragRayDir    = pickRay.m_Dir;
 		m_IsDragging    = true;
 		m_HasDragRay    = true;
+
+		m_DragStartPos = transComp->GetPosition();
+		m_CurrentTargetNode = nullptr;
+		if (auto* player = owner->GetComponent<PlayerComponent>())
+		{
+			player->BeginMove();
+		}
+
 		return;
 	}
 

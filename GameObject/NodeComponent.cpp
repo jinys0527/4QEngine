@@ -34,7 +34,7 @@ void NodeComponent::Update(float deltaTime) {
 	{
 	case NodeState::Empty : m_StateInt = 0; break;
 	case NodeState::HasPlayer: m_StateInt = 1; break;
-	case NodeState::HasMonster: m_StateInt = 2; break;
+	case NodeState::HasEnemy: m_StateInt = 2; break;
 	}
 }
 

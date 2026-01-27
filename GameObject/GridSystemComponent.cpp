@@ -15,6 +15,7 @@
 REGISTER_COMPONENT(GridSystemComponent)
 REGISTER_PROPERTY_READONLY(GridSystemComponent, NodesCount)
 
+
 using namespace std;
 
 // 면 갯수 / Index
@@ -96,7 +97,8 @@ void GridSystemComponent::Update(float deltaTime) {
 	(void)deltaTime;
 
 	UpdateActorPositions();
-	UpdateMoveRange(m_PlayerNode, 6);
+	const int moveRange = m_Player ? m_Player->GetRemainMoveResource() : 0; // 남은 이동 자원 Get
+	UpdateMoveRange(m_PlayerNode, moveRange);
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)
@@ -176,7 +178,7 @@ void GridSystemComponent::ScanNodes()
 			continue;
 		}
 		const AxialKey current{ enemy->GetQ(), enemy->GetR() };
-		UpdateActorNodeState(current, current, NodeState::HasMonster);
+		UpdateActorNodeState(current, current, NodeState::HasEnemy);
 	}
 
 }
@@ -284,7 +286,7 @@ void GridSystemComponent::UpdateActorPositions()
 		const AxialKey previous{ enemy->GetQ(), enemy->GetR() };
 		const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 		if (!(previous == current)) {
-			UpdateActorNodeState(previous, current, NodeState::HasMonster);
+			UpdateActorNodeState(previous, current, NodeState::HasEnemy);
 			enemy->SetQR(current.q, current.r);
 		}
 	}
