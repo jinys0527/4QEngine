@@ -365,6 +365,9 @@ FodyWeavers.xsd
 Sound/
 Engine/TestScene.cpp
 
+Resources/
+ResourceOutput/
+
 # 3D / textures
 # *.fbx
 # *.png
