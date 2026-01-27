@@ -15,6 +15,7 @@
 REGISTER_COMPONENT(GridSystemComponent)
 REGISTER_PROPERTY_READONLY(GridSystemComponent, NodesCount)
 
+
 using namespace std;
 
 // 면 갯수 / Index
@@ -96,7 +97,8 @@ void GridSystemComponent::Update(float deltaTime) {
 	(void)deltaTime;
 
 	UpdateActorPositions();
-	UpdateMoveRange(m_PlayerNode, 6);
+	const int moveRange = m_Player ? m_Player->GetRemainMoveResource() : 0; // 남은 이동 자원 Get
+	UpdateMoveRange(m_PlayerNode, moveRange);
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)

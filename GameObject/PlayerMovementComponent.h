@@ -33,6 +33,8 @@ private:
 	DirectX::XMFLOAT3 m_DragRayDir   { 0.0f, 0.0f, 0.0f };
 	// 바닥 평면 기반 오프셋/고정 Y
 	DirectX::XMFLOAT3 m_DragOffset	 { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_DragStartPos{ 0.0f, 0.0f, 0.0f };
 	NodeComponent* m_PendingNode = nullptr;
+	NodeComponent* m_CurrentTargetNode = nullptr;
 };
 

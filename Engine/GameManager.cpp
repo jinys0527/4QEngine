@@ -1,34 +1,12 @@
 ﻿#include "pch.h"
 #include <iostream>
 #include "GameManager.h"
-
-
-// Timer
-// 1. 첫번째
-enum class Turn {
-	PlayerTurn,
-	EnemyTurn,
-};
-
-//2. Battle Check
-enum class BattleCheck {
-	NonBattle, // 비전투
-	InBattle,  // 전투 중(진입포함)
-};
-
-// 비전투 상태 단위
-enum class Phase {
-	PlayerMove,
-	//---------------------
-	ItemPick,
-	DoorOpen,
-	Attack,
-	
-};
  
-GameManager::GameManager()
+GameManager::GameManager() :
+	m_Turn(Turn::PlayerTurn)
+	, m_BattleCheck(BattleCheck::NonBattle)
+	, m_Phase(Phase::PlayerMove)
 {
-
 }
 
 GameManager::~GameManager()
