@@ -389,6 +389,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DiceSystem.cpp" />
     <ClCompile Include="GameApplication.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
@@ -408,6 +409,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     <ClCompile Include="UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DiceSystem.h" />
     <ClInclude Include="GameApplication.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SceneManager.h" />

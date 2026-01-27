@@ -13,6 +13,7 @@
 #include "InputManager.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
+#include "RandomMachine.h"
 
 namespace
 {
@@ -36,6 +37,7 @@ int main()
 	auto& soundManager = services.Register<SoundManager>();
 	auto& uiManager = services.Register<UIManager>();
     auto& gameManager = services.Register<GameManager>();
+    auto& randomMachine = services.Register<RandomMachine>();
 
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);
