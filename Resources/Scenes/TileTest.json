@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -8.744163513183594,
-                "y": 10.72665786743164,
-                "z": -6.900880336761475
+                "x": -8.696145057678223,
+                "y": 7.690936088562012,
+                "z": -8.267721176147461
             },
             "look": {
-                "x": -8.256080627441406,
-                "y": 9.988574981689453,
-                "z": -6.4350385665893555
+                "x": -8.240518569946289,
+                "y": 6.989686965942383,
+                "z": -7.719401836395264
             },
             "up": {
-                "x": 0.5339266657829285,
-                "y": 0.6747099161148071,
-                "z": 0.5095966458320618
+                "x": 0.4481700658798218,
+                "y": 0.7129160165786743,
+                "z": 0.5393460988998413
             }
         }
     },
@@ -24,20 +24,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -1.3638068437576294,
+                            "x": -2.110708475112915,
                             "y": 2.5334391593933105,
-                            "z": -2.547227144241333
+                            "z": -5.365503311157227
                         },
                         "Rotation": {
-                            "w": 0.8758814930915833,
+                            "w": 1.0,
                             "x": -0.0,
-                            "y": 0.4825263023376465,
+                            "y": 0.0,
                             "z": -0.0
                         },
                         "Scale": {
-                            "x": 32.800010681152344,
-                            "y": 32.79999923706055,
-                            "z": 32.800010681152344
+                            "x": 1.7664811611175537,
+                            "y": 1.7664804458618164,
+                            "z": 1.7664811611175537
                         }
                     },
                     "type": "TransformComponent"
@@ -46,19 +46,19 @@
                     "data": {
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": ""
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                         },
                         "Overrides": {
                             "overrides": {
                                 "baseColor": {
                                     "a": 1.0,
-                                    "b": 0.5,
-                                    "g": 0.5,
-                                    "r": 0.5
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
                                 },
                                 "lightness": 1.0,
                                 "metallic": 0.0,
@@ -66,7 +66,7 @@
                                     "assetIndex": 0,
                                     "assetPath": ""
                                 },
-                                "roughness": 1.0,
+                                "roughness": 0.5,
                                 "saturation": 1.0,
                                 "shaderAsset": {
                                     "assetIndex": 0,
@@ -75,23 +75,23 @@
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                                     },
                                     {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                                     },
                                     {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                                     },
                                     {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                                     },
                                     {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                                     },
                                     {
                                         "assetIndex": 0,
@@ -111,11 +111,11 @@
                     "data": {
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\cycle\\Meta\\cycle.asset.json"
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                         },
                         "MeshHandle": {
                             "assetIndex": 0,
-                            "assetPath": ""
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                         },
                         "SubMeshMaterialOverrides": []
                     },
@@ -126,11 +126,11 @@
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": ""
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                         },
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": ""
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 1,
@@ -194,15 +194,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -8.744163513183594,
-                            "y": 10.72665786743164,
-                            "z": -6.900880336761475
+                            "x": -8.696145057678223,
+                            "y": 7.690936088562012,
+                            "z": -8.267721176147461
                         },
                         "Rotation": {
-                            "w": 0.8412764668464661,
-                            "x": 0.37076979875564575,
-                            "y": 0.3600122928619385,
-                            "z": -0.15866562724113464
+                            "w": 0.8703960180282593,
+                            "x": 0.3563307821750641,
+                            "y": 0.3144340515136719,
+                            "z": -0.12872588634490967
                         },
                         "Scale": {
                             "x": 1.0,
@@ -215,15 +215,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -8.744163513183594,
-                            "y": 10.72665786743164,
-                            "z": -6.900880336761475
+                            "x": -8.696145057678223,
+                            "y": 7.690936088562012,
+                            "z": -8.267721176147461
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -8.256080627441406,
-                            "y": 9.988574981689453,
-                            "z": -6.4350385665893555
+                            "x": -8.240518569946289,
+                            "y": 6.989686965942383,
+                            "z": -7.719401836395264
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -242,9 +242,9 @@
                         },
                         "ProjectionMode": 0,
                         "Up": {
-                            "x": 0.5339266657829285,
-                            "y": 0.6747099161148071,
-                            "z": 0.5095966458320618
+                            "x": 0.4481700658798218,
+                            "y": 0.7129160165786743,
+                            "z": 0.5393460988998413
                         },
                         "Viewport": {
                             "height": 808.0,

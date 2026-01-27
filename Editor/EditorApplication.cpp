@@ -340,6 +340,136 @@ void EditorApplication::UpdateEditorCamera()
 	}
 }
 
+namespace
+{
+	bool BuildMeshWorldBounds(const GameObject& object, AssetLoader* assetLoader, XMFLOAT3& outMin, XMFLOAT3& outMax)
+	{
+		if (!assetLoader)
+		{
+			return false;
+		}
+
+		auto* transform = object.GetComponent<TransformComponent>();
+		if (!transform)
+		{
+			return false;
+		}
+
+		const auto meshComponents = object.GetComponentsDerived<MeshComponent>();
+		if (meshComponents.empty())
+		{
+			return false;
+		}
+
+		const auto world = DirectX::XMLoadFloat4x4(&transform->GetWorldMatrix());
+		const MeshComponent* meshComponent = nullptr;
+
+		for (const auto* component : meshComponents)
+		{
+			if (!component)
+			{
+				continue;
+			}
+
+			if (!component->GetMeshHandle().IsValid())
+			{
+				continue;
+			}
+
+			meshComponent = component;
+			break;
+		}
+
+		if (!meshComponent)
+		{
+			return false;
+		}
+
+		const auto* meshData = assetLoader->GetMeshes().Get(meshComponent->GetMeshHandle());
+		if (!meshData)
+		{
+			return false;
+		}
+
+		const XMFLOAT3 localMin = meshData->boundsMin;
+		const XMFLOAT3 localMax = meshData->boundsMax;
+		const XMFLOAT3 corners[8] = {
+			{ localMin.x, localMin.y, localMin.z },
+			{ localMax.x, localMin.y, localMin.z },
+			{ localMax.x, localMax.y, localMin.z },
+			{ localMin.x, localMax.y, localMin.z },
+			{ localMin.x, localMin.y, localMax.z },
+			{ localMax.x, localMin.y, localMax.z },
+			{ localMax.x, localMax.y, localMax.z },
+			{ localMin.x, localMax.y, localMax.z }
+		};
+
+		XMFLOAT3 minOut{ FLT_MAX, FLT_MAX, FLT_MAX };
+		XMFLOAT3 maxOut{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+		for (const auto& corner : corners)
+		{
+			const auto v = DirectX::XMLoadFloat3(&corner);
+			const auto transformed = DirectX::XMVector3TransformCoord(v, world);
+			XMFLOAT3 worldCorner{};
+			DirectX::XMStoreFloat3(&worldCorner, transformed);
+
+			minOut.x = std::min(minOut.x, worldCorner.x);
+			minOut.y = std::min(minOut.y, worldCorner.y);
+			minOut.z = std::min(minOut.z, worldCorner.z);
+
+			maxOut.x = (std::max)(maxOut.x, worldCorner.x);
+			maxOut.y = (std::max)(maxOut.y, worldCorner.y);
+			maxOut.z = (std::max)(maxOut.z, worldCorner.z);
+		}
+
+		outMin = minOut;
+		outMax = maxOut;
+		return true;
+	}
+
+	bool IntersectsRayBounds(const XMFLOAT3& rayOrigin, const XMFLOAT3& rayDir, const XMFLOAT3& boundsMin, const XMFLOAT3& boundsMax, float& outT)
+	{
+		float tMin = 0.0f;
+		float tMax = FLT_MAX;
+
+		const float origin[3] = { rayOrigin.x, rayOrigin.y, rayOrigin.z };
+		const float dir[3] = { rayDir.x, rayDir.y, rayDir.z };
+		const float minB[3] = { boundsMin.x, boundsMin.y, boundsMin.z };
+		const float maxB[3] = { boundsMax.x, boundsMax.y, boundsMax.z };
+
+		for (int axis = 0; axis < 3; ++axis)
+		{
+			if (std::abs(dir[axis]) < 1e-6f)
+			{
+				if (origin[axis] < minB[axis] || origin[axis] > maxB[axis])
+				{
+					return false;
+				}
+				continue;
+			}
+
+			const float invD = 1.0f / dir[axis];
+			float t0 = (minB[axis] - origin[axis]) * invD;
+			float t1 = (maxB[axis] - origin[axis]) * invD;
+			if (t0 > t1)
+			{
+				std::swap(t0, t1);
+			}
+
+			tMin = (std::max)(tMin, t0);
+			tMax = (std::min)(tMax, t1);
+			if (tMax < tMin)
+			{
+				return false;
+			}
+		}
+
+		outT = tMin;
+		return true;
+	}
+}
+
 void EditorApplication::HandleEditorViewportSelection()
 {
 	if (m_EditorState != EditorPlayState::Stop)
@@ -353,7 +483,7 @@ void EditorApplication::HandleEditorViewportSelection()
 	}
 
 	ImGuiIO& io = ImGui::GetIO();
-	if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+	if (!ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 	{
 		return;
 	}
@@ -401,14 +531,30 @@ void EditorApplication::HandleEditorViewportSelection()
 			continue;
 		}
 
-		auto* collider = object->GetComponent<BoxColliderComponent>();
-		if (!collider || !collider->HasBounds())
+		XMFLOAT3 boundsMin{};
+		XMFLOAT3 boundsMax{};
+		bool hasBounds = false;
+
+		if (auto* collider = object->GetComponent<BoxColliderComponent>())
+		{
+			if (collider->HasBounds())
+			{
+				hasBounds = collider->BuildWorldBounds(boundsMin, boundsMax);
+			}
+		}
+
+		if (!hasBounds)
+		{
+			hasBounds = BuildMeshWorldBounds(*object, m_AssetLoader, boundsMin, boundsMax);
+		}
+
+		if (!hasBounds)
 		{
 			continue;
 		}
 
 		float hitT = 0.0f;
-		if (!collider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, hitT))
+		if (!IntersectsRayBounds(pickRay.m_Pos, pickRay.m_Dir, boundsMin, boundsMax, hitT))
 		{
 			continue;
 		}
