@@ -1,8 +1,10 @@
 ﻿#include "PlayerComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
+#include "GameObject.h"
 #include "Scene.h"
 #include "ServiceRegistry.h"
+#include "GridSystemComponent.h"
 #include <cmath>
 
 REGISTER_COMPONENT(PlayerComponent)
@@ -42,6 +44,16 @@ void PlayerComponent::Start()
 	if (service.Has<GameManager>()) {
 		m_GameManager = &service.Get<GameManager>();
 		m_LastTurn = m_GameManager->GetTurn();
+	}
+	const auto& objects = scene->GetGameObjects();
+
+	for (const auto& [name,object] : objects) {
+		if (!object) { continue; }
+		
+		if (auto* grid = object->GetComponent<GridSystemComponent>()) {
+			m_GridSystem = grid;
+			break;
+		}
 	}
 }
 
@@ -107,19 +119,25 @@ bool PlayerComponent::CommitMove(int targetQ, int targetR)
 {
 	const int startQ = m_HasMoveStart ? m_StartQ : m_Q;
 	const int startR = m_HasMoveStart ? m_StartR : m_R;
-	const int cost = AxialDistance(startQ, startR, targetQ, targetR); // start와 Target 간의 소모 cost return
+	//
+	int cost = -1;
+	if (m_GridSystem) {
+		cost = m_GridSystem->GetShortestPathLength({ startQ,startR }, { targetQ,targetR });
+	}
+	if (cost < 0) {
+		const int cost = AxialDistance(startQ, startR, targetQ, targetR); // start와 Target 간의 소모 cost return
+	}
 	m_HasMoveStart = false;
-
 	if (cost <= 0)
 	{
 		return true;
 	}
-	if (cost > m_RemainMoveResource)
+	if (cost > m_RemainMoveResource) //남은 MoveResource 보다 크면 Commit X 
 	{
 		return false;
 	}
 
-	m_RemainMoveResource -= cost;
+	m_RemainMoveResource -= cost; //반영
 	return true;
 
 }

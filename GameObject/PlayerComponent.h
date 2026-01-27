@@ -2,6 +2,8 @@
 #include "Component.h"
 #include "GameManager.h"
 
+class GridSystemComponent;
+
 // PlayerComponent 는 Player와 관련된 Data와 중요 로직
 // Player의 다른 Component의 중추적인 역할
 class PlayerComponent : public Component, public IEventListener {
@@ -60,5 +62,6 @@ private:
 
 	Turn m_LastTurn = Turn::PlayerTurn;
 	GameManager* m_GameManager = nullptr;
+	GridSystemComponent* m_GridSystem;
 
 };
