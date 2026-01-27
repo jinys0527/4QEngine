@@ -105,6 +105,7 @@ void GridSystemComponent::OnEvent(EventType type, const void* data)
 	(void)data;
 }
 
+//Node object 찾아서 배정
 void GridSystemComponent::ScanNodes()
 {
 	m_NodesCount = 0;
