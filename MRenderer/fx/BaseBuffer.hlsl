@@ -163,7 +163,7 @@ struct VSOutputLine
 
 //ShaderResourceView
 Texture2D g_RTView              : register(t0);
-Texture2D g_Blur                : register(t1);
+//Texture2D g_Blur                : register(t1);
 Texture2D g_ShadowMap           : register(t2);
 TextureCube g_SkyBox            : register(t3);
 Texture2D g_DepthMap            : register(t4);
@@ -183,11 +183,19 @@ Texture2D g_AO                  : register(t15);
 Texture2D g_Env                 : register(t16);
 Texture2D g_Emissive            : register(t17);
 
-texture2D g_UI_01               : register(t21);
-texture2D g_UI_02               : register(t22);
-texture2D g_UI_03               : register(t23);
-texture2D g_UI_04               : register(t24);
-texture2D g_UI_05               : register(t25);
+Texture2D g_UI_01               : register(t21);
+Texture2D g_UI_02               : register(t22);
+Texture2D g_UI_03               : register(t23);
+Texture2D g_UI_04               : register(t24);
+Texture2D g_UI_05               : register(t25);
+
+Texture2D g_Blur                : register(t31);
+Texture2D g_BlurHalf            : register(t32);
+Texture2D g_BlurHalf2           : register(t33);
+Texture2D g_BlurHalf3           : register(t34);
+
+
+
 
 //Sampler State
 SamplerState smpWrap            : register(s0);

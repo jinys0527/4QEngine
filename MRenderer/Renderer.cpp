@@ -611,6 +611,10 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Post		= m_pTexRvScene_Post;
 	m_RenderContext.pRTView_Post			= m_pRTView_Post;
 
+	m_RenderContext.pRTScene_BlurOrigin			= m_pRTScene_BlurOrigin;
+	m_RenderContext.pTexRvScene_BlurOrigin		= m_pTexRvScene_BlurOrigin;
+	m_RenderContext.pRTView_BlurOrigin			= m_pRTView_BlurOrigin;
+
 	m_RenderContext.pRTScene_Blur			= m_pRTScene_Blur;
 	m_RenderContext.pTexRvScene_Blur		= m_pTexRvScene_Blur;
 	m_RenderContext.pRTView_Blur			= m_pRTView_Blur;
@@ -1619,13 +1623,35 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 #pragma region Blur
 	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
-	RTTexCreateMipMap(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Blur.GetAddressOf());
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_BlurOrigin.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_Blur.Get(), m_pRTView_Blur.GetAddressOf());
+	RTViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pRTView_BlurOrigin.GetAddressOf());
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
-	RTSRViewCreate(fmt, m_pRTScene_Blur.Get(), m_pTexRvScene_Blur.GetAddressOf());
+	RTSRViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pTexRvScene_BlurOrigin.GetAddressOf());
+
+	UINT width = m_WindowSize.width / 2;
+	UINT height = m_WindowSize.height / 2;
+
+	for (int i = 0; i < static_cast<int>(BlurLevel::COUNT); i++)
+	{
+		RTTexCreate(width, height, fmt, m_pRTScene_Blur[i].GetAddressOf());
+
+
+		RTViewCreate(fmt,
+			m_pRTScene_Blur[i].Get(),
+			m_pRTView_Blur[i].GetAddressOf());
+
+
+		RTSRViewCreate(fmt,
+			m_pRTScene_Blur[i].Get(),
+			m_pTexRvScene_Blur[i].GetAddressOf());
+
+
+		width /= 2;
+		height /= 2;
+	}
 
 #pragma endregion
 
@@ -1648,10 +1674,9 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 	RTSRViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pTexRvScene_EmissiveOrigin.GetAddressOf());
 
-	UINT width = m_WindowSize.width / 2;
-	UINT height = m_WindowSize.height/ 2;
 
-
+	width = m_WindowSize.width / 2;
+	height = m_WindowSize.height / 2;
 	for (int i = 0; i < static_cast<int>(EmissiveLevel::COUNT); i++)
 	{
 		RTTexCreate(width, height, fmt, m_pRTScene_Emissive[i].GetAddressOf());

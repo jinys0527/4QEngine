@@ -13,6 +13,14 @@ enum class EmissiveLevel
 	COUNT
 };
 
+enum class BlurLevel
+{
+	HALF = 0,
+	HALF2,
+	HALF3,
+	COUNT
+};
+
 //기본 상수 버퍼
 struct BaseConstBuffer
 {
@@ -141,8 +149,8 @@ struct RenderContext
 	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
-	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
-	ComPtr<ID3D11InputLayout> InputLayout_P = nullptr;
+	ComPtr<ID3D11InputLayout> InputLayout;
+	ComPtr<ID3D11InputLayout> InputLayout_P;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
@@ -199,9 +207,14 @@ struct RenderContext
 	ComPtr<ID3D11RenderTargetView>		pRTView_Post;
 
 	//BlurPass용
-	ComPtr<ID3D11Texture2D>				pRTScene_Blur;
-	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
-	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
+	ComPtr<ID3D11Texture2D>				pRTScene_BlurOrigin;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_BlurOrigin;
+	ComPtr<ID3D11RenderTargetView>		pRTView_BlurOrigin;
+
+	ComPtr<ID3D11Texture2D>*				pRTScene_Blur;
+	ComPtr<ID3D11ShaderResourceView>*		pTexRvScene_Blur;
+	ComPtr<ID3D11RenderTargetView>*			pRTView_Blur;
+
 
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;

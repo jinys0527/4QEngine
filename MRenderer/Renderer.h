@@ -91,9 +91,14 @@ private:
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Post;
 
 	//BlurPass용
-	ComPtr<ID3D11Texture2D>				m_pRTScene_Blur;
-	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Blur;
-	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_BlurOrigin;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_BlurOrigin;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_BlurOrigin;
+
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Blur[static_cast<UINT>(BlurLevel::COUNT)];
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Blur[static_cast<UINT>(BlurLevel::COUNT)];
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur[static_cast<UINT>(BlurLevel::COUNT)];
+
 
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Refraction;

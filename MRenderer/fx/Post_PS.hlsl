@@ -40,9 +40,9 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 RTView = g_RTView.Sample(smpClamp, uvW);
 
 
-    float4 Blur1 = g_Blur.SampleLevel(smpClamp, uvW, 1);
-    float4 Blur2 = g_Blur.SampleLevel(smpClamp, uvW, 2);
-    float4 Blur3 = g_Blur.SampleLevel(smpClamp, uvW, 3);
+    float4 Blur1 = g_BlurHalf.Sample(smpClamp, uvW);
+    float4 Blur2 = g_BlurHalf2.Sample(smpClamp, uvW);
+    float4 Blur3 = g_BlurHalf3.Sample(smpClamp, uvW);
 
 
     float DepthMap = g_DepthMap.Sample(smpClamp, uvW).r;
@@ -96,7 +96,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
     
     
-    return RTView + emissive;
+    //return RTView + emissive;
 
     return dofColor + emissive;
 }
