@@ -33,6 +33,8 @@ void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 	auto& vec = m_Listeners[type]; // 여기선 생성 OK(등록이니까)
 	if (std::find(vec.begin(), vec.end(), listener) != vec.end())
 		return;
+
+	vec.push_back(listener);
 }
 
 void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
@@ -52,7 +54,7 @@ void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
 		m_Listeners.erase(it);
 }
 
-void EventDispatcher::Dispatch(EventType type, const void* data, int eventPriority)
+void EventDispatcher::Dispatch(EventType type, const void* data)
 {
 	auto it = m_Listeners.find(type);
 	if (it == m_Listeners.end())

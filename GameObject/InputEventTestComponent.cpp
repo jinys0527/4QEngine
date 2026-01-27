@@ -58,21 +58,31 @@ void InputEventTestComponent::OnEvent(EventType type, const void* data)
 	{
 	case EventType::Pressed:
 		LogEvent("UI Pressed", mouseData);
+		if (mouseData)
+			mouseData->handled = true;
 		break;
 	case EventType::Released:
 		LogEvent("UI Released", mouseData);
+		if (mouseData)
+			mouseData->handled = true;
 		break;
 	case EventType::UIDragged:
 		LogEvent("UI Dragged", mouseData);
+		if (mouseData)
+			mouseData->handled = true;
 		break;
 	case EventType::UIDoubleClicked:
 		LogEvent("UI DoubleClicked", mouseData);
+		if (mouseData)
+			mouseData->handled = true;
 		break;
 	case EventType::Hovered:
 		LogEvent("Game Hovered", mouseData);
 		break;
 	case EventType::UIHovered:
 		LogEvent("UI Hovered", mouseData);
+		if (mouseData)
+			mouseData->handled = true;
 		break;
 	case EventType::Dragged:
 		LogEvent("Game Dragged", mouseData);

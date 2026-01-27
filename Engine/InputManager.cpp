@@ -28,8 +28,6 @@ void InputManager::Update()
 	if (!m_Enabled)
 		return;
 
-	constexpr int kUiEventPriority = 100;
-
 	m_Mouse.handled = false;
 	m_PendingLeftClickMouse.handled = false;
 
@@ -63,7 +61,7 @@ void InputManager::Update()
 		{
 			// 더블클릭 윈도우 지나면 싱글 확정 발사
 			m_PendingLeftClickMouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse, kUiEventPriority);
+			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse);
 			if (!m_PendingLeftClickMouse.handled)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
 			m_PendingLeftClick = false;
@@ -92,7 +90,7 @@ void InputManager::Update()
 			m_PendingLeftClick = false;
 			m_SuppressDragAfterDoubleClick = true;
 			m_Mouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, &m_Mouse, kUiEventPriority);
+			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, &m_Mouse);
 			if(!m_Mouse.handled)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
 		}
@@ -117,7 +115,7 @@ void InputManager::Update()
 		if (!m_SuppressDragAfterDoubleClick)
 		{
 			m_Mouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::UIDragged, &m_Mouse, kUiEventPriority);
+			m_EventDispatcher->Dispatch(EventType::UIDragged, &m_Mouse);
 			if (!m_Mouse.handled)
 			{
 				m_Mouse.handled = false;
@@ -135,7 +133,7 @@ void InputManager::Update()
 	{
 		m_SuppressDragAfterDoubleClick = false;
 		m_Mouse.handled = false;
-		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse, kUiEventPriority);
+		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse);
 		if (!m_Mouse.handled)
 		{
 			m_Mouse.handled = false;
@@ -164,7 +162,7 @@ void InputManager::Update()
 
 
 	// Hovered : 매 프레임	
-	m_EventDispatcher->Dispatch(EventType::UIHovered, &m_Mouse, kUiEventPriority);
+	m_EventDispatcher->Dispatch(EventType::UIHovered, &m_Mouse);
 	if (!m_Mouse.handled)
 	{
 		m_Mouse.handled = false;

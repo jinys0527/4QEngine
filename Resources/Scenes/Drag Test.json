@@ -179,6 +179,13 @@
                 },
                 {
                     "data": {
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -197,13 +204,6 @@
                         "Visible": true
                     },
                     "type": "SkeletalMeshRenderer"
-                },
-                {
-                    "data": {
-                        "DragSpeed": 0.009999999776482582,
-                        "Speed": 5.0
-                    },
-                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {
@@ -344,9 +344,10 @@
                 },
                 {
                     "data": {
-                        "IsMoveable": true
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
                     },
-                    "type": "NodeComponent"
+                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {
@@ -371,10 +372,9 @@
                 },
                 {
                     "data": {
-                        "DragSpeed": 0.009999999776482582,
-                        "Speed": 5.0
+                        "IsMoveable": true
                     },
-                    "type": "PlayerMovementComponent"
+                    "type": "NodeComponent"
                 },
                 {
                     "data": {
@@ -535,13 +535,6 @@
                 },
                 {
                     "data": {
-                        "DragSpeed": 0.009999999776482582,
-                        "Speed": 5.0
-                    },
-                    "type": "PlayerMovementComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -560,6 +553,13 @@
                         "Visible": true
                     },
                     "type": "SkeletalMeshRenderer"
+                },
+                {
+                    "data": {
+                        "DragSpeed": 0.009999999776482582,
+                        "Speed": 5.0
+                    },
+                    "type": "PlayerMovementComponent"
                 },
                 {
                     "data": {
@@ -720,20 +720,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -748,6 +734,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -861,20 +861,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -889,6 +875,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\corridorWallCracked_01\\Meta\\corridorWallCracked_01.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -998,6 +998,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1012,20 +1026,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1135,6 +1135,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1149,20 +1163,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1272,6 +1272,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1286,20 +1300,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -1409,6 +1409,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -1423,24 +1437,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\hexHerringboneTile\\Meta\\hexHerringboneTile.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": null,
-                    "type": "GridSystemComponent"
                 },
                 {
                     "data": {
@@ -1506,6 +1502,10 @@
                         }
                     },
                     "type": "MaterialComponent"
+                },
+                {
+                    "data": null,
+                    "type": "GridSystemComponent"
                 },
                 {
                     "data": {
