@@ -231,6 +231,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -245,20 +259,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 }
             ],
             "name": "Cycle1"
@@ -353,20 +353,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -381,6 +367,20 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
                 }
             ],
             "name": "Cycle2"
@@ -1948,6 +1948,22 @@
                     "data": {
                         "CastShadow": true,
                         "Material": {
+
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
                         },
@@ -1963,6 +1979,7 @@
                 },
                 {
                     "data": {
+
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
@@ -2666,6 +2683,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2683,6 +2714,7 @@
                 },
                 {
                     "data": {
+
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
@@ -5822,6 +5854,7 @@
                     "data": {
                         "ActResource": 6,
                         "MoveResource": 3
+
                     },
                     "type": "PlayerComponent"
                 },

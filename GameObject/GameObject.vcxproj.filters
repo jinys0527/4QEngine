@@ -121,7 +121,18 @@
     <ClCompile Include="NodeComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputEventTestComponent.cpp" />
+    <ClCompile Include="StatComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerStatComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyStatComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputEventTestComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -257,7 +268,18 @@
     <ClInclude Include="NodeComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputEventTestComponent.h" />
+    <ClInclude Include="EnemyStatComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputEventTestComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerStatComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StatComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">
