@@ -1153,7 +1153,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		property.GetValue(component, &value);
 		if (property.GetName() == "RenderLayer")
 		{
-			static constexpr const char* kLayers[] = { "None", "Opaque", "Transparent", "Wall", "UI" };
+			static constexpr const char* kLayers[] = { "None", "Opaque", "Transparent", "Wall", "Refraction", "UI", "Emissive" };
 			int current = static_cast<int>(value);
 			if (ImGui::Combo(property.GetName().c_str(), &current, kLayers, IM_ARRAYSIZE(kLayers)))
 			{

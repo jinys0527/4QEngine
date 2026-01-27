@@ -7,7 +7,7 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
     FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
-    SetRenderTarget(, m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
+    SetRenderTarget(m_RenderContext.pRTView_Emissive.Get(), m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ADD);
     SetRasterizerState(RS::CULLBACK);
