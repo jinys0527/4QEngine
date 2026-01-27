@@ -5,6 +5,8 @@
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
 REGISTER_PROPERTY_READONLY(PlayerComponent, R)
+REGISTER_PROPERTY(PlayerComponent, MoveResource)
+REGISTER_PROPERTY(PlayerComponent, ActResource)
 
 PlayerComponent::PlayerComponent() {
 

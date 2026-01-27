@@ -13,7 +13,6 @@
 #include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
-REGISTER_PROPERTY(PlayerMovementComponent, Speed)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)
 
 static NodeComponent* FindClosestNodeHit(

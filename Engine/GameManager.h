@@ -23,5 +23,8 @@ public:
 private:
 
 	EventDispatcher* m_EventDispatcher = nullptr;
+	Turn m_Turn;
+	BattleCheck m_BattleCheck;
+	Phase m_Phase; 
 
 };
