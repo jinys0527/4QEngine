@@ -100,6 +100,11 @@ private:
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Refraction;
 
+	//Emissive용
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Emissive;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Emissive;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Emissive;
+
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	m_DSState;		//깊이 스텐실 상태
 	EnumArray<ComPtr<ID3D11RasterizerState>, static_cast<size_t>(RS::MAX_)>		m_RState;		//래스터라이저 상태

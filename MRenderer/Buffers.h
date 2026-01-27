@@ -200,6 +200,11 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
 
+	//Emissive용
+	ComPtr<ID3D11Texture2D>				pRTScene_Emissive;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Emissive;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Emissive;
+
 
 	std::function<void()> DrawFullscreenQuad;
 	std::function<void()> DrawGrid;

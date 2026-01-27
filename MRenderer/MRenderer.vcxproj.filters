@@ -84,6 +84,9 @@
     <ClCompile Include="RefractionPass.cpp">
       <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EmissivePass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -138,6 +141,9 @@
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RefractionPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EmissivePass.h">
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

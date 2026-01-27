@@ -202,6 +202,7 @@
     <ClCompile Include="DepthPass.cpp" />
     <ClCompile Include="DX11.cpp" />
     <ClCompile Include="DXMath.cpp" />
+    <ClCompile Include="EmissivePass.cpp" />
     <ClCompile Include="FrustumPass.cpp" />
     <ClCompile Include="OpaquePass.cpp" />
     <ClCompile Include="PostPass.cpp" />
@@ -222,6 +223,7 @@
     <ClInclude Include="DepthPass.h" />
     <ClInclude Include="DX11.h" />
     <ClInclude Include="DXMath.h" />
+    <ClInclude Include="EmissivePass.h" />
     <ClInclude Include="FrustumPass.h" />
     <ClInclude Include="OpaquePass.h" />
     <ClInclude Include="PostPass.h" />

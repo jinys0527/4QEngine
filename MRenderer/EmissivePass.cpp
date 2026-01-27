@@ -1,101 +1,31 @@
-﻿#include "OpaquePass.h"
+﻿#include "EmissivePass.h"
 
-#include <algorithm>
-#include <iostream>
-#include <unordered_set>
-
-void OpaquePass::Execute(const RenderData::FrameData& frame)
+void EmissivePass::Execute(const RenderData::FrameData& frame)
 {
-	ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+    if (m_RenderContext.isEditCam)
+        return;
+    ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
-	//SetRenderTarget()		아래에서 카메라에 따라 처리
-	SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
-	SetBlendState(BS::DEFAULT);
-	SetRasterizerState(RS::CULLBACK);
-	SetDepthStencilState(DS::DEPTH_ON);
-	SetSamplerState();
+    FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
+    SetRenderTarget(, m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+    SetBlendState(BS::ADD);
+    SetRasterizerState(RS::CULLBACK);
+    SetDepthStencilState(DS::DEPTH_OFF);
+    SetSamplerState();
 
 #pragma endregion
-	FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+
 	SetCameraCB(frame);
-	if (m_RenderContext.isEditCam)
-	{
-		SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
-	}
-	else if (!m_RenderContext.isEditCam)
-	{
-		SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get(),backcolor);
-
-	}
-
-	//임시 스카이박스 테스트
-	m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
-	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
-	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
-	SetDepthStencilState(DS::DEPTH_OFF);
-	m_RenderContext.DrawFullscreenQuad();
-	SetDepthStencilState(DS::DEPTH_ON);
-
-
-	//빛 상수 버퍼 set
 	SetDirLight(frame);
 	SetOtherLights(frame);
-
-	//★이부분 에디터랑 게임 씬 크기가 다르면 이것도 if문안에 넣어야할듯
-
-
-	//터레인 그리기
-	XMMATRIX mTM, mScale, mRotate, mTrans;
-	mScale = XMMatrixScaling(50, 50, 1);
-	mRotate = XMMatrixRotationX(XM_PI / 2);
-	mTrans = XMMatrixIdentity();
-	mTM = mScale * mRotate, mTrans;
-	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
-	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
-	dxdc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-	dxdc->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
-	dxdc->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
-	dxdc->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
-	m_RenderContext.DrawFullscreenQuad();
-	//터레인 끝
-
-	m_RenderContext.UpdateGrid(frame);
-	m_RenderContext.DrawGrid();
-
-	//임시 벽뚫 이미지 바인딩
-	m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());
-
-
-
-	//현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
-	//ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
 	for (const auto& queueItem : GetQueue())
 	{
 		const auto& item = *queueItem.item;
 		SetBaseCB(item);
 		SetMaskingTM(item, frame.context.gameCamera.cameraPos);
-#ifdef _DEBUG
-// 		if (const auto* mesh = m_AssetLoader.GetMeshes().Get(item.mesh))
-// 		{
-// 			if (mesh->hasSkinning)
-// 			{
-// 				const UINT32 paletteCount = item.skinningPaletteCount;
-// 				if (paletteCount == 0 || mesh->maxBoneIndex >= paletteCount)
-// 				{
-// 					static std::unordered_set<UINT32> warnedMeshes;
-// 					if (warnedMeshes.insert(item.mesh.id).second)
-// 					{
-// 						std::cout << "[Skinning] meshId=" << item.mesh.id
-// 							<< " maxBoneIndex=" << mesh->maxBoneIndex
-// 							<< " paletteCount=" << paletteCount
-// 							<< " skeletonId=" << item.skeleton.id
-// 							<< "\n";
-// 					}
-// 				}
-// 			}
-// 		}
-#endif
+
 		if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 		{
 			const size_t paletteStart = item.skinningPaletteOffset;
@@ -243,4 +173,5 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 			}
 		}
 	}
+
 }

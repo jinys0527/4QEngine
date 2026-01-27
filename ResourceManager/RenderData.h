@@ -229,6 +229,7 @@ namespace RenderData
 		TransparentItems,
 		WallItems,
 		RefractionItems,
+		EmissiveItems,
 		UIItems,
 		Layer_MAX_
 	};

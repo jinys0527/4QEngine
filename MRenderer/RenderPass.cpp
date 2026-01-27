@@ -37,9 +37,9 @@ void RenderPass::SetSamplerState()
 }
 
 //클리어까지 동시 실행
-void RenderPass::SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview)
+void RenderPass::SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview, const FLOAT* clearColor)
 {
-	float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
+	//float clearColor[4] = { 0.21f, 0.21f, 0.21f, 1.f };
 
 	if (rtview)
 	{

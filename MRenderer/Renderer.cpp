@@ -618,6 +618,9 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Refraction	= m_pTexRvScene_Refraction;
 	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
 
+	m_RenderContext.pRTScene_Emissive		= m_pRTScene_Emissive;;
+	m_RenderContext.pTexRvScene_Emissive	= m_pTexRvScene_Emissive;;
+	m_RenderContext.pRTView_Emissive		= m_pRTView_Emissive;;
 
 
 	m_RenderContext.Vignetting				= m_Vignetting;
