@@ -318,6 +318,7 @@
     </ClInclude>
     <ClInclude Include="EnemyComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
+    <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="NodeComponent.h" />
     <ClInclude Include="PlayerComponent.h" />
     <ClInclude Include="RectLightComponent.h" />
@@ -370,6 +371,7 @@
     </ClCompile>
     <ClCompile Include="EnemyComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
+    <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="NodeComponent.cpp" />
     <ClCompile Include="PlayerComponent.cpp" />
     <ClCompile Include="RectLightComponent.cpp" />

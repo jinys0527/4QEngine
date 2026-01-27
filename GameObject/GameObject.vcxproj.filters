@@ -121,6 +121,7 @@
     <ClCompile Include="NodeComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="InputEventTestComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -256,6 +257,7 @@
     <ClInclude Include="NodeComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="InputEventTestComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">

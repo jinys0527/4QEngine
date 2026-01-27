@@ -20,9 +20,9 @@ void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 	{
 		m_EventDispatcher->RemoveListener(EventType::Pressed, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Hovered))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIHovered))
 	{
-		m_EventDispatcher->RemoveListener(EventType::Hovered, this);
+		m_EventDispatcher->RemoveListener(EventType::UIHovered, this);
 	}
 	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDragged))
 	{
@@ -39,7 +39,7 @@ void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 
 	m_EventDispatcher = eventDispatcher;
 	m_EventDispatcher->AddListener(EventType::Pressed, this);
-	m_EventDispatcher->AddListener(EventType::Hovered, this);
+	m_EventDispatcher->AddListener(EventType::UIHovered, this);
 	m_EventDispatcher->AddListener(EventType::UIDragged, this);
 	m_EventDispatcher->AddListener(EventType::UIDoubleClicked, this);
 	m_EventDispatcher->AddListener(EventType::Released, this);
@@ -122,6 +122,25 @@ void UIManager::OnEvent(EventType type, const void* data)
 				m_ActiveUI = nullptr;
 		}
 	}
+	else if (type == EventType::Released)
+	{
+		for (auto& pair : uiMap)
+		{
+			auto& ui = pair.second;
+			if (!ui->IsVisible())
+				continue;
+			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
+				continue;
+			if (!(ui->hasButton || ui->hasSlider))
+				continue;
+			if (!ui->HitCheck(mouseData->pos))
+				continue;
+
+			if (mouseData)
+				mouseData->handled = true;
+			break;
+		}
+	}
 	else if (type == EventType::UIDoubleClicked)
 	{
 		for (auto& pair : uiMap)
@@ -142,9 +161,10 @@ void UIManager::OnEvent(EventType type, const void* data)
 			break;
 		}
 	}
-	else if (type == EventType::Hovered)
+	else if (type == EventType::UIHovered)
 	{
 		// Hover는 모든 UI에 전달, 내부에서 입장/이탈 상태 관리
+		bool hitAny = false;
 		for (auto& pair : uiMap)
 		{
 			auto& ui = pair.second;
@@ -154,9 +174,13 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (!ui->hasButton)
 				continue;
+			if (!hitAny && ui->HitCheck(mouseData->pos))
+				hitAny = true;
 
 			SendEventToUI(ui.get(), type, data);
 		}
+		if (hitAny && mouseData)
+			mouseData->handled = true;
 	}
 }
 

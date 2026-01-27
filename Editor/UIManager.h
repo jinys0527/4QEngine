@@ -42,8 +42,6 @@ public:
 
 	void OnEvent(EventType type, const void* data) override;
 
-	int GetEventPriority() const override { return 100; }
-
 	bool IsFullScreenUIActive() const;
 
 	void Update(float deltaTime);

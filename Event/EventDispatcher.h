@@ -9,7 +9,7 @@ class EventDispatcher
 public:
 	void AddListener(EventType type, IEventListener* listener);
 	void RemoveListener(EventType type, IEventListener* listener);
-	void Dispatch(EventType type, const void* data);
+	void Dispatch(EventType type, const void* data, int eventPriority = 0);
 	std::vector<IEventListener*>* FindListeners(EventType type)
 	{
 		if (m_Listeners.empty())

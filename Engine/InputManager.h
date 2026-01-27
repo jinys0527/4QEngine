@@ -70,10 +70,12 @@ private:
 	ULONGLONG        m_PendingLeftClickTime = 0;
 	POINT            m_PendingLeftClickPos{ 0, 0 };
 	Events::MouseState m_PendingLeftClickMouse; // 싱글 확정 시 보낼 상태 스냅샷
+	bool             m_SuppressDragAfterDoubleClick = false;
 
 	RECT      m_ViewportRect{ 0, 0, 0, 0 };
 	bool      m_HasViewportRect = false;
 	bool      m_Enabled = true;
+
 
 	EventDispatcher*       m_EventDispatcher;				// 참조 보관
 };

@@ -12,13 +12,14 @@ enum class EventType
 	MouseRightClick,
 	MouseRightClickHold,
 	MouseRightClickUp,
-	Dragged,
+	Dragged, 
+	Hovered,
 
 	//UI
-	Hovered,
 	Pressed,
 	Released,
 	Moved,
+	UIHovered,
 	UIDragged,
 	UIDoubleClicked,
 
@@ -40,5 +41,11 @@ class IEventListener
 public:
 	virtual ~IEventListener() = default;
 	virtual void OnEvent(EventType type, const void* data) = 0;
+	virtual bool ShouldHandleEvent(EventType type, const void* data)
+	{
+		(void)type;
+		(void)data;
+		return true;
+	}
 	virtual int GetEventPriority() const { return 0; }
 };

@@ -604,7 +604,7 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	}
 	if (!scene) return ;
 #ifdef _DEBUG
-	DebugDumpAssimpScene(scene);   // ← 여기
+	//DebugDumpAssimpScene(scene);   // ← 여기
 #endif
 	
 	// ----- 3) Import pipeline -----

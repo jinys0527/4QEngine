@@ -18,6 +18,7 @@ bool IsMouseEvent(EventType type)
 	case EventType::Released:
 	case EventType::Moved:
 	case EventType::UIDragged:
+	case EventType::UIHovered:
 	case EventType::UIDoubleClicked:
 		return true;
 	default:
@@ -32,11 +33,6 @@ void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 	auto& vec = m_Listeners[type]; // 여기선 생성 OK(등록이니까)
 	if (std::find(vec.begin(), vec.end(), listener) != vec.end())
 		return;
-
-	vec.push_back(listener);
-	std::sort(vec.begin(), vec.end(), [](const IEventListener* a, const IEventListener* b) {
-		return a->GetEventPriority() > b->GetEventPriority();
-		});
 }
 
 void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
@@ -56,7 +52,7 @@ void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
 		m_Listeners.erase(it);
 }
 
-void EventDispatcher::Dispatch(EventType type, const void* data)
+void EventDispatcher::Dispatch(EventType type, const void* data, int eventPriority)
 {
 	auto it = m_Listeners.find(type);
 	if (it == m_Listeners.end())
@@ -66,7 +62,11 @@ void EventDispatcher::Dispatch(EventType type, const void* data)
 	for (auto* listener : listeners)
 	{
 		if (listener)
+		{
+			if (!listener->ShouldHandleEvent(type, data))
+				continue;
 			listener->OnEvent(type, data);
+		}
 
 		if (data && IsMouseEvent(type))
 		{
