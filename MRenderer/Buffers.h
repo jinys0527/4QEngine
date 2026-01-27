@@ -5,6 +5,14 @@
 #include <unordered_map>
 #include <functional>
 
+enum class EmissiveLevel
+{
+	HALF = 0,
+	HALF2,
+	HALF3,
+	COUNT
+};
+
 //기본 상수 버퍼
 struct BaseConstBuffer
 {
@@ -201,9 +209,14 @@ struct RenderContext
 	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
 
 	//Emissive용
-	ComPtr<ID3D11Texture2D>				pRTScene_Emissive;
-	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Emissive;
-	ComPtr<ID3D11RenderTargetView>		pRTView_Emissive;
+	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_EmissiveOrigin;
+	ComPtr<ID3D11RenderTargetView>		pRTView_EmissiveOrigin;
+
+	ComPtr<ID3D11Texture2D>*              pRTScene_Emissive;
+	ComPtr<ID3D11ShaderResourceView>*     pTexRvScene_Emissive;
+	ComPtr<ID3D11RenderTargetView>*       pRTView_Emissive;
+
 
 
 	std::function<void()> DrawFullscreenQuad;

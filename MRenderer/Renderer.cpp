@@ -9,10 +9,10 @@
 #include "RefractionPass.h"
 #include "RenderTargetContext.h"
 #include "DebugLinePass.h"
+#include "EmissivePass.h"
 #include "Renderer.h"
 
 #include <algorithm>
-
 //맵 순회하면서 지우거나 찾는 헬퍼 함수
 namespace
 {
@@ -137,6 +137,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<WallPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<EmissivePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<DebugLinePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
@@ -618,9 +619,16 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Refraction	= m_pTexRvScene_Refraction;
 	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
 
-	m_RenderContext.pRTScene_Emissive		= m_pRTScene_Emissive;;
-	m_RenderContext.pTexRvScene_Emissive	= m_pTexRvScene_Emissive;;
-	m_RenderContext.pRTView_Emissive		= m_pRTView_Emissive;;
+	m_RenderContext.pRTScene_EmissiveOrigin		= m_pRTScene_EmissiveOrigin;
+	m_RenderContext.pTexRvScene_EmissiveOrigin	= m_pTexRvScene_EmissiveOrigin;
+	m_RenderContext.pRTView_EmissiveOrigin		= m_pRTView_EmissiveOrigin;
+
+	m_RenderContext.pRTScene_Emissive			= m_pRTScene_Emissive;
+	m_RenderContext.pTexRvScene_Emissive		= m_pTexRvScene_Emissive;
+	m_RenderContext.pRTView_Emissive			= m_pRTView_Emissive;
+
+
+
 
 
 	m_RenderContext.Vignetting				= m_Vignetting;
@@ -654,6 +662,10 @@ void Renderer::CreateContext()
 
 			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
 			OutputDebugStringA("Drawing 3D Object Start\n");
+			D3D11_VIEWPORT cur;
+			UINT n = 1;
+			m_pDXDC->RSGetViewports(&n, &cur);
+
 			m_pDXDC->Draw(3, 0);
 			OutputDebugStringA("Drawing 3D Object End\n");
 		};
@@ -1572,17 +1584,14 @@ HRESULT Renderer::ReCreateRenderTarget()
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
-	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
 	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
 	RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
-	RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
 	RTSRViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pTexRvScene_Imgui_edit.GetAddressOf());
-	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
 
 	DXGI_FORMAT dsFmt = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;		//원본 DS 포멧 유지.
 	DSCreate(m_WindowSize.width, m_WindowSize.height, dsFmt, m_pDSTex_Imgui.GetAddressOf(), m_pDSViewScene_Imgui.GetAddressOf());
@@ -1618,6 +1627,49 @@ HRESULT Renderer::ReCreateRenderTarget()
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Blur.Get(), m_pTexRvScene_Blur.GetAddressOf());
 
+#pragma endregion
+
+#pragma region Refraction
+	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
+
+	RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
+
+	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
+#pragma endregion
+
+#pragma region Emissive
+	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_EmissiveOrigin.GetAddressOf());
+
+	RTViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
+
+	RTSRViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pTexRvScene_EmissiveOrigin.GetAddressOf());
+
+	UINT width = m_WindowSize.width / 2;
+	UINT height = m_WindowSize.height/ 2;
+
+
+	for (int i = 0; i < static_cast<int>(EmissiveLevel::COUNT); i++)
+	{
+		RTTexCreate(width, height, fmt, m_pRTScene_Emissive[i].GetAddressOf());
+
+
+		RTViewCreate(fmt,
+			m_pRTScene_Emissive[i].Get(),
+			m_pRTView_Emissive[i].GetAddressOf());
+
+
+		RTSRViewCreate(fmt,
+			m_pRTScene_Emissive[i].Get(),
+			m_pTexRvScene_Emissive[i].GetAddressOf());
+
+
+		width /= 2;
+		height /= 2;
+	}
 #pragma endregion
 
 	return hr;

@@ -9,6 +9,21 @@ float2 WarpTopExpand(float2 uv, float amount, float power)
     return uv;
 }
 
+float4 SampleEmissiveRadial(Texture2D tex, float2 uv, float2 r)
+{
+    float2 o = float2(r.x, r.y);
+    float4 c = 0;
+    c += tex.Sample(smpClamp, uv);
+    c += tex.Sample(smpClamp, uv + float2(r.x, 0));
+    c += tex.Sample(smpClamp, uv + float2(-r.x, 0));
+    c += tex.Sample(smpClamp, uv + float2(0, r.y));
+    c += tex.Sample(smpClamp, uv + float2(0, -r.y));
+    c += tex.Sample(smpClamp, uv + o);
+    c += tex.Sample(smpClamp, uv - o);
+    c += tex.Sample(smpClamp, uv + float2(r.x, -r.y));
+    c += tex.Sample(smpClamp, uv + float2(-r.x, r.y));
+    return c / 9.0;
+}
 
 float4 PS_Main(VSOutput_PU i) : SV_TARGET
 {
@@ -31,7 +46,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
 
     float DepthMap = g_DepthMap.Sample(smpClamp, uvW).r;
-
 
 //Circle of Confusion
     float focusDist = 0.996f;
@@ -60,8 +74,29 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
         float t = (coc - 0.66f) / 0.34f;
         dofColor = lerp(Blur2, Blur3, t);
     }
-
-
     dofColor.a = 1;
-    return dofColor;
+
+    //float4 emissive = emissive1 * 0.6
+    //                + emissive2 * 0.3
+    //                + emissive3 * 0.1;
+
+    float2 texelFull = 1.0 / screenSize;
+    float2 texelHalf = texelFull * 6.0;
+    float2 texelQuarter = texelFull * 12.0;
+    float2 texel8 = texelFull * 20.0;
+
+    float4 e1 = SampleEmissiveRadial(g_RTEmissiveHalf, uvW, texelHalf);
+    float4 e2 = SampleEmissiveRadial(g_RTEmissiveHalf2, uvW, texelQuarter);
+    float4 e3 = SampleEmissiveRadial(g_RTEmissiveHalf3, uvW, texel8);
+
+    float4 emissive =
+      e1 * 0.6
+    + e2 * 0.3
+    + e3 * 0.1;
+
+    
+    
+    return RTView + emissive;
+
+    return dofColor + emissive;
 }

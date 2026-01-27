@@ -7,11 +7,13 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
     FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
-    SetRenderTarget(m_RenderContext.pRTView_Emissive.Get(), m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
+	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_EmissiveOrigin.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+	m_RenderContext.pDXDC->ClearRenderTargetView(m_RenderContext.pRTView_EmissiveOrigin.Get(), backcolor);
+
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ADD);
     SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_OFF);
+    SetDepthStencilState(DS::DEPTH_ON);
     SetSamplerState();
 
 #pragma endregion
@@ -173,5 +175,40 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 			}
 		}
 	}
+
+	//사진으로 축소(?)해서 그리기
+	SetRenderTarget(nullptr, nullptr, backcolor);
+
+	SetBlendState(BS::DEFAULT);
+	SetRasterizerState(RS::SOLID);
+	SetDepthStencilState(DS::DEPTH_OFF);
+	SetSamplerState();
+
+	dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_EmissiveOrigin.GetAddressOf());
+	dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
+	dxdc->PSSetShader(m_RenderContext.PS_Quad.Get(), nullptr, 0);
+
+
+	SetRenderTarget(m_RenderContext.pRTView_Emissive[static_cast<UINT>(EmissiveLevel::HALF)].Get(), nullptr, backcolor);
+	SetViewPort(m_RenderContext.WindowSize.width / 2, m_RenderContext.WindowSize.height / 2, dxdc);
+	dxdc->PSSetShaderResources(0, 1,
+		m_RenderContext.pTexRvScene_EmissiveOrigin.GetAddressOf());
+	m_RenderContext.DrawFSTriangle();
+
+
+	SetRenderTarget(m_RenderContext.pRTView_Emissive[static_cast<UINT>(EmissiveLevel::HALF2)].Get(), nullptr, backcolor);
+	SetViewPort(m_RenderContext.WindowSize.width / 4, m_RenderContext.WindowSize.height / 4, dxdc);
+	dxdc->PSSetShaderResources(0, 1,
+		m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF)].GetAddressOf());
+	m_RenderContext.DrawFSTriangle();
+
+
+	SetRenderTarget(m_RenderContext.pRTView_Emissive[static_cast<UINT>(EmissiveLevel::HALF3)].Get(), nullptr, backcolor);
+	SetViewPort(m_RenderContext.WindowSize.width / 8, m_RenderContext.WindowSize.height / 8, dxdc);
+	dxdc->PSSetShaderResources(0, 1,
+		m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF2)].GetAddressOf());
+	m_RenderContext.DrawFSTriangle();
+
+	SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
 
 }

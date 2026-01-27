@@ -162,34 +162,39 @@ struct VSOutputLine
 };
 
 //ShaderResourceView
-Texture2D g_RTView : register(t0);
-Texture2D g_Blur : register(t1);
-Texture2D g_ShadowMap : register(t2);
-TextureCube g_SkyBox : register(t3);
-Texture2D g_DepthMap : register(t4);
-Texture2D g_Mask_Wall : register(t5);
-Texture2D g_WaterNoise : register(t6);
+Texture2D g_RTView              : register(t0);
+Texture2D g_Blur                : register(t1);
+Texture2D g_ShadowMap           : register(t2);
+TextureCube g_SkyBox            : register(t3);
+Texture2D g_DepthMap            : register(t4);
+Texture2D g_Mask_Wall           : register(t5);
+Texture2D g_WaterNoise          : register(t6);
+Texture2D g_RTEmissive          : register(t7);
+Texture2D g_RTEmissiveHalf      : register(t8);
+Texture2D g_RTEmissiveHalf2     : register(t9);
+Texture2D g_RTEmissiveHalf3     : register(t10);
 
 
-Texture2D g_Albedo : register(t11);
-Texture2D g_Normal : register(t12);
-Texture2D g_Metalic : register(t13);
-Texture2D g_Roughness : register(t14);
-Texture2D g_AO : register(t15);
-Texture2D g_Env : register(t16);
+Texture2D g_Albedo              : register(t11);
+Texture2D g_Normal              : register(t12);
+Texture2D g_Metalic             : register(t13);
+Texture2D g_Roughness           : register(t14);
+Texture2D g_AO                  : register(t15);
+Texture2D g_Env                 : register(t16);
+Texture2D g_Emissive            : register(t17);
 
-texture2D g_UI_01 : register(t21);
-texture2D g_UI_02 : register(t22);
-texture2D g_UI_03 : register(t23);
-texture2D g_UI_04 : register(t24);
-texture2D g_UI_05 : register(t25);
+texture2D g_UI_01               : register(t21);
+texture2D g_UI_02               : register(t22);
+texture2D g_UI_03               : register(t23);
+texture2D g_UI_04               : register(t24);
+texture2D g_UI_05               : register(t25);
 
 //Sampler State
-SamplerState smpWrap : register(s0);
-SamplerState smpMirror : register(s1);
-SamplerState smpClamp : register(s2);
-SamplerState smpBorder : register(s3);
-SamplerState smpBorderShadow : register(s4);
+SamplerState smpWrap            : register(s0);
+SamplerState smpMirror          : register(s1);
+SamplerState smpClamp           : register(s2);
+SamplerState smpBorder          : register(s3);
+SamplerState smpBorderShadow    : register(s4);
 
 
 #endif

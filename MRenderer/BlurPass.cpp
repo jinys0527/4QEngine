@@ -5,10 +5,11 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
     if (m_RenderContext.isEditCam)
         return;
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
+
 #pragma region Init
     FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
     SetRenderTarget(m_RenderContext.pRTView_Blur.Get(), nullptr, backcolor);
-    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, dxdc);
     SetBlendState(BS::DEFAULT);
     SetRasterizerState(RS::SOLID);
     SetDepthStencilState(DS::DEPTH_OFF);

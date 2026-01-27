@@ -101,9 +101,14 @@ private:
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Refraction;
 
 	//Emissive용
-	ComPtr<ID3D11Texture2D>				m_pRTScene_Emissive;
-	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Emissive;
-	ComPtr<ID3D11RenderTargetView>		m_pRTView_Emissive;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_EmissiveOrigin;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_EmissiveOrigin;
+
+	ComPtr<ID3D11Texture2D>              m_pRTScene_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
+	ComPtr<ID3D11ShaderResourceView>     m_pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
+	ComPtr<ID3D11RenderTargetView>       m_pRTView_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
+
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	m_DSState;		//깊이 스텐실 상태

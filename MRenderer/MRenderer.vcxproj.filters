@@ -241,6 +241,12 @@
     <FxCompile Include="fx\Demo_Refraction_PS.hlsl">
       <Filter>HLSL\1_PS</Filter>
     </FxCompile>
+    <FxCompile Include="fx\Demo_Emissive_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Emissive_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

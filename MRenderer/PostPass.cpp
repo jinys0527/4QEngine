@@ -42,6 +42,10 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
     dxdc->PSSetShaderResources(1, 1, m_RenderContext.pTexRvScene_Blur.GetAddressOf());
     dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthRV.GetAddressOf());
+    dxdc->PSSetShaderResources(7, 1, m_RenderContext.pTexRvScene_EmissiveOrigin.GetAddressOf());
+    dxdc->PSSetShaderResources(8, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF)].GetAddressOf());
+    dxdc->PSSetShaderResources(9, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF2)].GetAddressOf());
+    dxdc->PSSetShaderResources(10, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF3)].GetAddressOf());
 
     m_RenderContext.DrawFSTriangle();
 
