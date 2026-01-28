@@ -8,7 +8,7 @@ cbuffer BaseBuffer : register(b0)
     matrix mWorldInvTranspose;
     matrix mTextureMask;
     float2 screenSize;
-    float2 padding;
+    float2 playerPos;           //x,y값은 uv좌표
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -21,6 +21,7 @@ cbuffer CameraBuffer : register(b1)
     float3 cameraPos;
     //float campadding;
     float dTime;
+    float4 camParams; //x: near, y: far, z: focusZ(초점거리), w: focalRange(초점오차?범위)
 };
 
 struct Light

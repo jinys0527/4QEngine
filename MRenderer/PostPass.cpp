@@ -33,6 +33,11 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
+    //임의로 플레이어 위치 정해두고 넘기기
+    m_RenderContext.BCBuffer.PlayerPos = m_RenderContext.playerPos;
+    UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+
+
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);

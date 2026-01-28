@@ -3,7 +3,8 @@
 
 float4 PS_Main(VSOutput_Shadow i) : SV_TARGET
 {
-    float4 final = float4(0.21f, 0.21f, 0.21f, 1);
+    //float4 final = float4(0.21f, 0.21f, 0.21f, 1);
+    float4 final = 1;
     
     float shadow = CastShadow(i.uvshadow);
     

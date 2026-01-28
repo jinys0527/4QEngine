@@ -28,7 +28,9 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
 	XMFLOAT2		ScreenSize{ 1920,1080 };
-	float			padding[2]{ 0,0 };
+	//플레이어 위치를 넘겨주는(투영공간)
+	XMFLOAT2		PlayerPos{ 0,0 };
+	
 };
 
 struct CameraConstBuffer
@@ -42,6 +44,7 @@ struct CameraConstBuffer
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
 	//float		padding = 0.0f;
 	float dTime = 0.0f;
+	XMFLOAT4	camParams = { 0,0,0,0 };
 };
 
 struct Light
@@ -102,6 +105,7 @@ struct MaterialBuffer
 	FLOAT		lightness = 1.0f;
 	float		padding[2] = { 0,0 };
 };
+
 
 struct VertexShaderResources
 {
@@ -258,4 +262,8 @@ struct RenderContext
 
 	//텍스트 그리기
 	std::function<void(float width, float height)> MyDrawText;
+
+	//플레이어 위치 테스트
+	XMFLOAT2 playerPos{ 0,0 };
+	XMFLOAT4 camParams{ 0,0,0,0 };
 };

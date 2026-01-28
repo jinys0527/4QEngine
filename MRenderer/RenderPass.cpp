@@ -82,6 +82,41 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+
+	//테스트
+	XMMATRIX mWorld = XMLoadFloat4x4(&item.world);
+	XMMATRIX mVP = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mVP);
+	XMMATRIX WVP = mWorld * mVP;
+
+	XMVECTOR localPos = XMVectorSet(0.f, 0.f, 0.f, 1.f);
+	XMVECTOR clipPos = XMVector4Transform(localPos, WVP);
+
+	XMFLOAT4 clip;
+	XMStoreFloat4(&clip, clipPos);
+	//if (clip.w <= 0.0f)							//방어 코드를 추가하자. // 카메라 뒤 → DoF 비활성화 or 무시
+	//{
+	//	m_RenderContext.enableDoF = false;
+	//	return;
+	//}
+	//else
+	//{
+	//	m_RenderContext.enableDoF = true;
+	//}
+	float ndcX = clip.x / clip.w;
+	float ndcY = clip.y / clip.w;
+
+	float playerU = ndcX * 0.5f + 0.5f;
+	float playerV = -ndcY * 0.5f + 0.5f;
+
+	m_RenderContext.playerPos.x = playerU;
+	m_RenderContext.playerPos.y = playerV;
+
+
+	XMMATRIX mView = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mView);
+	XMMATRIX mWV = mWorld * mView;
+	XMVECTOR viewPos = XMVector3TransformCoord(localPos, mWV);
+	float focusZ = XMVectorGetZ(viewPos);
+	m_RenderContext.camParams.z = focusZ;
 }
 
 //벽뚫 마스킹맵용 행렬
@@ -129,6 +164,8 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 		m_RenderContext.CameraCBuffer.mProj = context.gameCamera.proj;
 		m_RenderContext.CameraCBuffer.mVP = context.gameCamera.viewProj;
 		m_RenderContext.CameraCBuffer.camPos = context.gameCamera.cameraPos;
+
+
 	}
 	else if (m_RenderContext.isEditCam)
 	{
@@ -156,6 +193,12 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 #pragma endregion
 	m_RenderContext.CameraCBuffer.dTime = *m_RenderContext.dTime;
+
+	m_RenderContext.camParams.x = 1.0f;
+	m_RenderContext.camParams.y = 100.0f;
+	m_RenderContext.camParams.w = 1.5f;
+
+	m_RenderContext.CameraCBuffer.camParams = m_RenderContext.camParams;
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }

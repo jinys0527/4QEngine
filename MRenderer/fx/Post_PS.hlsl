@@ -1,6 +1,6 @@
 #include "BaseBuffer.hlsl"
 
-
+//tilt shift를 위한 화면 위 아래를 늘이는 함수
 float2 WarpTopExpand(float2 uv, float amount, float power)
 {
     float t = pow(saturate(uv.y), power);
@@ -9,6 +9,7 @@ float2 WarpTopExpand(float2 uv, float amount, float power)
     return uv;
 }
 
+// Emissive를 퍼지도록 픽셀을 미는 함수
 float4 SampleEmissiveRadial(Texture2D tex, float2 uv, float2 r)
 {
     float2 o = float2(r.x, r.y);
@@ -34,8 +35,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
     float2 uvW = WarpTopExpand(i.uv, warpAmount, warpPower);
     uvW = saturate(uvW); // 범위 밖 방지
-
-
+    uvW = i.uv;
 // ====== 워프된 UV로 샘플링 ======
     float4 RTView = g_RTView.Sample(smpClamp, uvW);
 
@@ -46,40 +46,45 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
 
     float DepthMap = g_DepthMap.Sample(smpClamp, uvW).r;
-
-//Circle of Confusion
-    float focusDist = 0.996f;
-    float focusRange = 0.003f;
-
-
-    float coc = abs(DepthMap - focusDist) / focusRange;
+    float viewZ = camParams.x * camParams.y / (camParams.y - DepthMap * (camParams.y - camParams.x));
+    
+    float coc = abs(viewZ - camParams.z) / camParams.w;
     coc = saturate(coc);
+    
+    //float diff = (viewZ - camParams.z) / camParams.w;
+    //if (diff > 0)
+    //    return float4(1, 0, 0, 1); // 타겟보다 뒤에 있으면 빨간색
+    //else
+    //    return float4(0, 1, 0, 1);
+    
+    float4 color2 = lerp(RTView, Blur3, coc);
+    
+    
+     
+    float2 d = i.uv - playerPos.xy;
+    
+// 타원 반경 (UV 기준)
+    float2 radius = float2(1.15f, 0.35f);
+
+    float v =
+        (d.x * d.x) / (radius.x * radius.x) +
+        (d.y * d.y) / (radius.y * radius.y);
 
 
-    float4 dofColor;
-
-
-    if (coc < 0.33f)
-    {
-        float t = coc / 0.33f;
-        dofColor = lerp(RTView, Blur1, t);
-    }
-    else if (coc < 0.66f)
-    {
-        float t = (coc - 0.33f) / 0.33f;
-        dofColor = lerp(Blur1, Blur2, t);
-    }
-    else
-    {
-        float t = (coc - 0.66f) / 0.34f;
-        dofColor = lerp(Blur2, Blur3, t);
-    }
-    dofColor.a = 1;
-
-    //float4 emissive = emissive1 * 0.6
-    //                + emissive2 * 0.3
-    //                + emissive3 * 0.1;
-
+// v == 1 → 타원 경계
+    float w = smoothstep(0.8f, 1.2f, v);
+    float color;
+// w = 0 → 선명
+// w = 1 → 완전 블러
+    color = lerp(RTView, Blur3, w);
+    
+    float4 final = lerp(color, color2, 0.8f);
+    
+    
+    
+    return final;
+    
+    
     float2 texelFull = 1.0 / screenSize;
     float2 texelHalf = texelFull * 6.0;
     float2 texelQuarter = texelFull * 12.0;
@@ -94,9 +99,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     + e2 * 0.3
     + e3 * 0.1;
 
+    return RTView + emissive;
     
-    
-    //return RTView + emissive;
-
-    return dofColor + emissive;
+    //return tilt + emissive;
 }
