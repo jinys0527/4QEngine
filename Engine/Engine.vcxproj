@@ -313,6 +313,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ClientScene.h" />
+    <ClInclude Include="CombatManager.h" />
     <ClInclude Include="CombatResolver.h" />
     <ClInclude Include="CsvParser.h" />
     <ClInclude Include="Device.h" />
@@ -338,6 +339,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClientScene.cpp" />
+    <ClCompile Include="CombatManager.cpp" />
     <ClCompile Include="CombatResolver.cpp" />
     <ClCompile Include="CsvParser.cpp" />
     <ClCompile Include="Device.cpp" />

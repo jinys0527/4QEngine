@@ -51,6 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AIController.h" />
     <ClInclude Include="Blackboard.h" />
     <ClInclude Include="BTExecutor.h" />
     <ClInclude Include="BTInstance.h" />
@@ -66,6 +67,7 @@
     <ClInclude Include="Task.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AIController.cpp" />
     <ClCompile Include="Blackboard.cpp" />
     <ClCompile Include="BTExecutor.cpp" />
     <ClCompile Include="Composite.cpp" />
