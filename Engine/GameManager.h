@@ -12,12 +12,13 @@ enum class Turn {
 };
 
 //2. Battle Check
-enum class BattleCheck {
+enum class Battle {
 	NonBattle, // 비전투
 	InBattle,  // 전투 중(진입포함)
 };
 
-// 비전투 상태 단위
+
+// 상태 단위
 // 추후 수정
 enum class Phase {
 	PlayerMove,
@@ -27,11 +28,6 @@ enum class Phase {
 	Attack,
 
 };
-
-
-
-
-
 
 class GameManager : public IEventListener
 {
@@ -44,6 +40,7 @@ public:
 	void Reset();
 
 	void OnEvent(EventType type, const void* data);
+	void TurnReset();
 
 	void Initial();
 
@@ -56,7 +53,7 @@ private:
 
 	EventDispatcher* m_EventDispatcher = nullptr;
 	Turn m_Turn;
-	BattleCheck m_BattleCheck;
+	Battle m_BattleCheck;
 	Phase m_Phase; 
 
 };

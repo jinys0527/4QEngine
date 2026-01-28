@@ -4,7 +4,7 @@
  
 GameManager::GameManager() :
 	m_Turn(Turn::PlayerTurn)
-	, m_BattleCheck(BattleCheck::NonBattle)
+	, m_BattleCheck(Battle::NonBattle)
 	, m_Phase(Phase::PlayerMove)
 {
 }
@@ -15,7 +15,7 @@ GameManager::~GameManager()
 
 void GameManager::Reset()
 {
-
+	TurnReset();
 }
 
 void GameManager::OnEvent(EventType type, const void* data)
@@ -23,9 +23,16 @@ void GameManager::OnEvent(EventType type, const void* data)
 
 }
 
+void GameManager::TurnReset()
+{
+	m_Turn = Turn::PlayerTurn;
+	m_BattleCheck = Battle::NonBattle;
+	m_Phase = Phase::PlayerMove;
+}
+
 void GameManager::Initial()
 {
-
+	TurnReset();
 }
 
 //Scene 변경 요청
