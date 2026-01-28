@@ -12,7 +12,7 @@
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
 #include "GameManager.h"
-#include <cfloat>
+//#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)

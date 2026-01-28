@@ -5,6 +5,7 @@
 REGISTER_COMPONENT(EnemyComponent)
 REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
+REGISTER_PROPERTY(EnemyComponent, MoveDistance)
 
 EnemyComponent::EnemyComponent() {
 

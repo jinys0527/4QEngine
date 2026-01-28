@@ -317,6 +317,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="EnemyComponent.h" />
+    <ClInclude Include="EnemyControllerComponent.h" />
+    <ClInclude Include="EnemyMovementComponent.h" />
     <ClInclude Include="EnemyStatComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
     <ClInclude Include="InputEventTestComponent.h" />
@@ -373,6 +375,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EnemyComponent.cpp" />
+    <ClCompile Include="EnemyControllerComponent.cpp" />
+    <ClCompile Include="EnemyMovementComponent.cpp" />
     <ClCompile Include="EnemyStatComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
     <ClCompile Include="InputEventTestComponent.cpp" />

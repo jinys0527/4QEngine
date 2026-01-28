@@ -38,6 +38,7 @@ public:
 	const int& GetRemainMoveResource() const { return m_RemainMoveResource; }
 	const int& GetRemainActResource()  const { return m_RemainActResource; }
 
+
 	void ResetTurnResources();
 	void BeginMove();
 	bool CommitMove(int targetQ, int targetR);
@@ -62,8 +63,8 @@ private:
 	int m_StartQ = 0; 
 	int m_StartR = 0; 
 	bool m_HasMoveStart = false;
-	float m_PlayerTurnTime = 2.0f; // 외부 조정
-	float m_TurnElapsed = 0.0f;
+	float m_PlayerTurnTime = 30.0f; // 외부 조정
+	float m_TurnElapsed = 0.0f; // 진행시간
 	Turn m_LastTurn = Turn::PlayerTurn;
 	GameManager* m_GameManager = nullptr;
 	GridSystemComponent* m_GridSystem;
