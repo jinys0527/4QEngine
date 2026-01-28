@@ -65,7 +65,7 @@ void PlayerComponent::Update(float deltaTime) {
 	//defense
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene)
+	if (!scene ||scene->GetIsPause())
 	{
 		return;
 	}
@@ -85,6 +85,7 @@ void PlayerComponent::Update(float deltaTime) {
 	//
 
 	const auto currentTurn = m_GameManager->GetTurn();
+
 	if (currentTurn != m_LastTurn)
 	{
 		m_LastTurn = currentTurn;
@@ -105,6 +106,7 @@ void PlayerComponent::Update(float deltaTime) {
 		if (m_RemainMoveResource <= 0 || m_TurnElapsed >= m_PlayerTurnTime) {
 			//종료(턴 전환)
 			m_GameManager->SetTurn(Turn::EnemyTurn);
+			m_LastTurn = Turn::EnemyTurn;
 		}
 	}
 }

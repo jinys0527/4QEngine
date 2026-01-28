@@ -13,7 +13,7 @@ EnemyComponent::EnemyComponent() {
 
 EnemyComponent::~EnemyComponent() {
 	// Event Listener 쓰는 경우만
-
+	
 }
 
 void EnemyComponent::Start()

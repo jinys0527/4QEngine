@@ -23,7 +23,7 @@ void EnemyControllerComponent::Update(float deltaTime)
 	}
 
 	// 모든 Enemies 행동 종료 시.
-	if (!CheckActiveEnemies())
+	if (CheckActiveEnemies())
 	{
 		m_GameManager->SetTurn(Turn::PlayerTurn);
 	}
@@ -65,5 +65,5 @@ bool EnemyControllerComponent::CheckActiveEnemies()
 			return false;
 		}
 	}
-	return false;
+	return true;
 }

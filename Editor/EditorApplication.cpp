@@ -819,6 +819,10 @@ void EditorApplication::DrawMainMenuBar()
 		if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
 		{
 			m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
+			if (m_GameManager)
+			{
+				m_GameManager->TurnReset();
+			}
 			m_EditorState = EditorPlayState::Stop;
 		}
 		ImGui::EndDisabled();

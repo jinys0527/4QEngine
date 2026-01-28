@@ -95,17 +95,18 @@ void EnemyMovementComponent::Move()
 	{
 		return;
 	}
+
+
 	auto* targetOwner = bestNode->GetOwner();
 	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
 	auto* enemyTransform = GetOwner()->GetComponent<TransformComponent>();
+
 	if (!targetTransform || !enemyTransform)
 	{
 		return;
 	}
 
 	enemyTransform->SetPosition(targetTransform->GetPosition());
-	enemy->SetQR(bestNode->GetQ(), bestNode->GetR());
-
 }
 
 
