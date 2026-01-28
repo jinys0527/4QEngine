@@ -139,6 +139,12 @@
     <ClCompile Include="EnemyMovementComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FloodUIComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FloodSystemComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -290,6 +296,12 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EnemyMovementComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FloodUIComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FloodSystemComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

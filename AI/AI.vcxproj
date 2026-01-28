@@ -53,9 +53,14 @@
   <ItemGroup>
     <ClInclude Include="AIController.h" />
     <ClInclude Include="Blackboard.h" />
+    <ClInclude Include="BlackboardConditionTask.h" />
+    <ClInclude Include="BlackboardKeys.h" />
     <ClInclude Include="BTExecutor.h" />
     <ClInclude Include="BTInstance.h" />
     <ClInclude Include="BTStatus.h" />
+    <ClInclude Include="CombatBehaviorServices.h" />
+    <ClInclude Include="CombatBehaviorTasks.h" />
+    <ClInclude Include="CombatBehaviorTreeFactory.h" />
     <ClInclude Include="Composite.h" />
     <ClInclude Include="Decorator.h" />
     <ClInclude Include="FSM.h" />
@@ -69,7 +74,11 @@
   <ItemGroup>
     <ClCompile Include="AIController.cpp" />
     <ClCompile Include="Blackboard.cpp" />
+    <ClCompile Include="BlackboardConditionTask.cpp" />
     <ClCompile Include="BTExecutor.cpp" />
+    <ClCompile Include="CombatBehaviorServices.cpp" />
+    <ClCompile Include="CombatBehaviorTasks.cpp" />
+    <ClCompile Include="CombatBehaviorTreeFactory.cpp" />
     <ClCompile Include="Composite.cpp" />
     <ClCompile Include="Decorator.cpp" />
     <ClCompile Include="FSM.cpp" />

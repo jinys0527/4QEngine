@@ -320,6 +320,8 @@
     <ClInclude Include="EnemyControllerComponent.h" />
     <ClInclude Include="EnemyMovementComponent.h" />
     <ClInclude Include="EnemyStatComponent.h" />
+    <ClInclude Include="FloodSystemComponent.h" />
+    <ClInclude Include="FloodUIComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
     <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="NodeComponent.h" />
@@ -378,6 +380,8 @@
     <ClCompile Include="EnemyControllerComponent.cpp" />
     <ClCompile Include="EnemyMovementComponent.cpp" />
     <ClCompile Include="EnemyStatComponent.cpp" />
+    <ClCompile Include="FloodSystemComponent.cpp" />
+    <ClCompile Include="FloodUIComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
     <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="NodeComponent.cpp" />

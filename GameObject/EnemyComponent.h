@@ -1,6 +1,11 @@
 ﻿#pragma once
 #include "Component.h"
 
+#include <memory>
+
+class AIController;
+class BTExecutor;
+
 class EnemyComponent : public Component, public IEventListener {
 	friend class Editor;
 public:
@@ -27,4 +32,6 @@ private:
 	int m_R;
 	int m_MoveDistance = 1;
 
+	std::unique_ptr<BTExecutor>   m_BTExecutor;
+	std::unique_ptr<AIController> m_AIController;
 };
