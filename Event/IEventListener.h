@@ -34,6 +34,16 @@ enum class EventType
 	CollisionExit,
 	CollisionTrigger,
 
+	//AI
+	AITurnEndRequested,
+	AIMeleeAttackRequested,
+	AIRangedAttackRequested,
+
+	//Turn
+	PlayerTurnEndRequested,
+	EnemyTurnEndRequested,
+	TurnChanged,
+
 	//Scene
 	SceneChangeRequested,
 

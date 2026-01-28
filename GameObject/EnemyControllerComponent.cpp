@@ -1,14 +1,15 @@
 ﻿#include "EnemyControllerComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
-#include "Scene.h"
-#include "GameManager.h"
-#include "ServiceRegistry.h"
 #include "GridSystemComponent.h"
 #include "EnemyMovementComponent.h"
 #include "EnemyComponent.h"
 
 REGISTER_COMPONENT(EnemyControllerComponent)
+
+EnemyControllerComponent::~EnemyControllerComponent()
+{
+}
 
 void EnemyControllerComponent::Start()
 {
@@ -17,23 +18,38 @@ void EnemyControllerComponent::Start()
 
 void EnemyControllerComponent::Update(float deltaTime)
 {
-	if (m_GameManager->GetTurn() != Turn::EnemyTurn)
+	Turn currentTurn = Turn::PlayerTurn;
+	if (m_GridSystem)
 	{
+		const auto& enemies = m_GridSystem->GetEnemies();
+		for (const auto* enemy : enemies)
+		{
+			if (enemy)
+			{
+				currentTurn = enemy->GetCurrentTurn();
+				break;
+			}
+		}
+	}
+
+	if (currentTurn != Turn::EnemyTurn)
+	{
+		m_TurnEndRequested = false;
 		return;
 	}
 
 	// 모든 Enemies 행동 종료 시.
-	if (CheckActiveEnemies())
+	if (!m_TurnEndRequested && CheckActiveEnemies())
 	{
-		m_GameManager->SetTurn(Turn::PlayerTurn);
+		GetEventDispatcher().Dispatch(EventType::EnemyTurnEndRequested, nullptr);
+		m_TurnEndRequested = true;
 	}
 }
 
 void EnemyControllerComponent::OnEvent(EventType type, const void* data)
 {
-
-
-
+	(void)type;
+	(void)data;
 }
 
 void EnemyControllerComponent::GetSystem()
@@ -43,10 +59,6 @@ void EnemyControllerComponent::GetSystem()
 	auto* grid = object->GetComponent<GridSystemComponent>();
 	if (!grid) { return;  }
 
-	auto* scene = object->GetScene();
-	auto& service = scene->GetServices();
-
-	m_GameManager = &service.Get<GameManager>();
 	m_GridSystem = grid;
 }
 

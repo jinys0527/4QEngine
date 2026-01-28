@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Component.h"
+#include "GameState.h"
 
 #include <memory>
 
@@ -26,11 +27,13 @@ public:
 
 	void SetMoveDistance(const int& value) { m_MoveDistance = value; }
 	const int& GetMoveDistance() const { return m_MoveDistance; }
+	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 
 private:
 	int m_Q;
 	int m_R;
 	int m_MoveDistance = 1;
+	Turn m_CurrentTurn = Turn::PlayerTurn;
 
 	std::unique_ptr<BTExecutor>   m_BTExecutor;
 	std::unique_ptr<AIController> m_AIController;

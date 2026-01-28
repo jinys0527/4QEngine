@@ -11,7 +11,8 @@ class Service;
 class Node
 {
 public:
-	virtual ~Node() = default;
+	Node();
+	virtual ~Node();
 
 	void     SetId(uint32_t id) { m_Id = id;   }
 	uint32_t GetId() const  { return m_Id; }

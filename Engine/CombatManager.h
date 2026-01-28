@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstddef>
 
-#include "GameManager.h"
+#include "GameState.h"
 
 class EventDispatcher;
 class DiceSystem;
@@ -62,14 +62,14 @@ public:
 	void UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining);
 	void SetEventDispatcher(EventDispatcher* dispatcher) { m_EventDispatcher = dispatcher; }
 
-	BattleCheck GetState() const { return m_State; }
+	Battle GetState() const { return m_State; }
 
 private:
 	void BuildInitiativeOrder();
 	bool CanAct(int actorId) const;
 	void AdvanceTurn();
 
-	BattleCheck		 m_State = BattleCheck::NonBattle;
+	Battle		 m_State = Battle::NonBattle;
 	std::vector<CombatantSnapshot> m_Combatants;
 	std::vector<int> m_InitiativeOrder;
 	std::size_t		 m_CurrentTurnIndex = 0;

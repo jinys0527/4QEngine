@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Component.h"
-#include "GameManager.h"
+#include "GameState.h"
 
 class GridSystemComponent;
 
@@ -37,7 +37,7 @@ public:
 	const int& GetActResource()		   const { return m_ActResource; }
 	const int& GetRemainMoveResource() const { return m_RemainMoveResource; }
 	const int& GetRemainActResource()  const { return m_RemainActResource; }
-
+	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 
 	void ResetTurnResources();
 	void BeginMove();
@@ -65,8 +65,8 @@ private:
 	bool m_HasMoveStart = false;
 	float m_PlayerTurnTime = 30.0f; // 외부 조정
 	float m_TurnElapsed = 0.0f; // 진행시간
-	Turn m_LastTurn = Turn::PlayerTurn;
-	GameManager* m_GameManager = nullptr;
+	Turn m_CurrentTurn = Turn::PlayerTurn;
+	bool m_TurnEndRequested = false;
 	GridSystemComponent* m_GridSystem;
 
 };

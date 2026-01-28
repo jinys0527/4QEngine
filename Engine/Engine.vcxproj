@@ -328,6 +328,7 @@
     <ClInclude Include="Engine.h" />
     <ClInclude Include="GameDataRepository.h" />
     <ClInclude Include="GameManager.h" />
+    <ClInclude Include="GameState.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="LogLocalization.h" />
     <ClInclude Include="LogSystem.h" />

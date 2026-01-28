@@ -63,7 +63,14 @@ void SceneManager::StateUpdate(float deltaTime)
 	m_CurrentScene->StateUpdate(deltaTime);
 }
 
-
+void SceneManager::Reset()
+{
+	if (m_GameManager)
+		m_GameManager->ClearEventDispatcher();
+	SetEventDispatcher(nullptr);
+	m_Scenes.clear();
+	m_CurrentScene.reset();
+}
 
 void SceneManager::Render()
 {

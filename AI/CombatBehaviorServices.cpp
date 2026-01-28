@@ -2,6 +2,8 @@
 #include "Blackboard.h"
 #include "BlackboardKeys.h"
 #include <cmath>
+#include "EventDispatcher.h"
+#include "IEventListener.h"
 
 bool TryGetFloat(Blackboard& bb, const char* key, float& out)
 {
@@ -127,4 +129,40 @@ void RepathService::TickService(BTInstance& inst, Blackboard& bb, float deltaTim
 	bool hasTarget = false;
 	bb.TryGet(BlackboardKeys::HasTarget, hasTarget);
 	bb.Set(BlackboardKeys::PathNeedsUpdate, hasTarget);
+}
+
+AIRequestDispatchService::AIRequestDispatchService(EventDispatcher* dispatcher)
+	: m_Dispatcher(dispatcher)
+{
+}
+
+void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, float deltaTime)
+{
+	(void)inst;
+	(void)deltaTime;
+
+	if (!m_Dispatcher)
+		return;
+
+	bool endTurnRequested = false;
+	if (bb.TryGet(BlackboardKeys::EndTurnRequested, endTurnRequested) && endTurnRequested)
+	{
+		m_Dispatcher->Dispatch(EventType::AITurnEndRequested, nullptr);
+		bb.Set(BlackboardKeys::EndTurnRequested, false);
+	}
+
+
+	bool meleeRequested = false;
+	if (bb.TryGet(BlackboardKeys::RequestMeleeAttack, meleeRequested) && meleeRequested)
+	{
+		m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, nullptr);
+		bb.Set(BlackboardKeys::RequestMeleeAttack, false);
+	}
+
+	bool rangedRequested = false;
+	if (bb.TryGet(BlackboardKeys::RequestRangedAttack, rangedRequested) && rangedRequested)
+	{
+		m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, nullptr);
+		bb.Set(BlackboardKeys::RequestRangedAttack, false);
+	}
 }

@@ -2,12 +2,9 @@
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "GameObject.h"
-#include "ServiceRegistry.h"
-#include "Event.h"
 #include "Scene.h"
 #include "TransformComponent.h"
 #include "NodeComponent.h"
-#include "GameManager.h"
 #include "GridSystemComponent.h"
 #include "EnemyComponent.h"
 
@@ -20,21 +17,13 @@ void EnemyMovementComponent::Start()
 
 void EnemyMovementComponent::Update(float deltaTime)
 {
-	auto* scene = GetOwner()->GetScene();
-	auto& services = scene->GetServices();
-	auto& gameManager = services.Get<GameManager>();
-
-	const auto currentTurn = gameManager.GetTurn();
-
-	if (m_LastTurn != currentTurn) {
-		
-		m_LastTurn = currentTurn;
-		if (currentTurn == Turn::EnemyTurn)
-		{
-			// 안움직 상태 (안움직여도 되는 경우도 고려해야 함)
-			m_IsMoveComplete = false;
-		}
+	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
+	if (!enemy)
+	{
+		return;
 	}
+
+	const auto currentTurn = enemy->GetCurrentTurn();
 
 	// Move
 	if (currentTurn != Turn::EnemyTurn) {
@@ -128,6 +117,4 @@ void EnemyMovementComponent::GetSystem()
 			m_GridSystem = grid;
 		}
 	}
-
-
 }

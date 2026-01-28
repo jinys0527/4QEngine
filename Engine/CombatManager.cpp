@@ -21,7 +21,7 @@ void CombatManager::HandlePlayerAttack(const AttackRequest& request)
     if (request.targetIds.empty())
         return;
 
-    if (m_State == BattleCheck::NonBattle)
+    if (m_State == Battle::NonBattle)
     {
         EnterBattle(request.actorId, request.targetIds.front());
     }
@@ -31,7 +31,7 @@ void CombatManager::HandlePlayerAttack(const AttackRequest& request)
 
 void CombatManager::TickAI(AIController& controller, float deltaTime)
 {
-    if (m_State != BattleCheck::InBattle)
+    if (m_State != Battle::InBattle)
     {
         return;
     }
@@ -44,7 +44,7 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
     (void)initiatorId;
     (void)targetId;
 
-    m_State = BattleCheck::InBattle;
+    m_State = Battle::InBattle;
 	if (m_EventDispatcher)
 	{
 		const CombatEnterEvent eventData{ initiatorId, targetId };
@@ -57,7 +57,7 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 
 void CombatManager::ExitBattle()
 {
-    m_State = BattleCheck::NonBattle;
+    m_State = Battle::NonBattle;
     m_InitiativeOrder.clear();
     m_CurrentTurnIndex = 0;
 
@@ -75,7 +75,7 @@ void CombatManager::SetCombatants(const std::vector<CombatantSnapshot>& combatan
 
 void CombatManager::UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining)
 {
-    if (m_State != BattleCheck::InBattle)
+    if (m_State != Battle::InBattle)
         return;
 
     if (!playerAlive || !enemiesRemaining)

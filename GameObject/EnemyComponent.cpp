@@ -20,14 +20,15 @@ EnemyComponent::EnemyComponent() {
 
 EnemyComponent::~EnemyComponent() {
 	// Event Listener 쓰는 경우만
-	
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
 }
 
 void EnemyComponent::Start()
 {
 	m_BTExecutor = std::make_unique<BTExecutor>();
-	m_BTExecutor->SetRoot(CombatBehaviorTreeFactory::BuildDefaultTree());
+	m_BTExecutor->SetRoot(CombatBehaviorTreeFactory::BuildDefaultTree(&GetEventDispatcher()));
 	m_AIController = std::make_unique<AIController>(*m_BTExecutor);
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 }
 
 void EnemyComponent::Update(float deltaTime) {
@@ -65,6 +66,16 @@ void EnemyComponent::Update(float deltaTime) {
 
 void EnemyComponent::OnEvent(EventType type, const void* data)
 {
-	(void)type;
-	(void)data;
+	if (type != EventType::TurnChanged || !data)
+	{
+		return;
+	}
+
+	const auto* payload = static_cast<const Events::TurnChanged*>(data);
+	if (!payload)
+	{
+		return;
+	}
+
+	m_CurrentTurn = static_cast<Turn>(payload->turn);
 }
