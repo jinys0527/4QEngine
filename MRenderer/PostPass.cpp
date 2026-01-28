@@ -46,6 +46,7 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
     dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthRV.GetAddressOf());
+    dxdc->PSSetShaderResources(6, 1, m_RenderContext.WaterNoise.GetAddressOf());
     dxdc->PSSetShaderResources(7, 1, m_RenderContext.pTexRvScene_EmissiveOrigin.GetAddressOf());
     dxdc->PSSetShaderResources(8, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF)].GetAddressOf());
     dxdc->PSSetShaderResources(9, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF2)].GetAddressOf());
@@ -54,6 +55,11 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShaderResources(32, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF)].GetAddressOf());
     dxdc->PSSetShaderResources(33, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF2)].GetAddressOf());
     dxdc->PSSetShaderResources(34, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF3)].GetAddressOf());
+    dxdc->PSSetShaderResources(35, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF4)].GetAddressOf());
+    dxdc->PSSetShaderResources(36, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF5)].GetAddressOf());
+    dxdc->PSSetShaderResources(37, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF6)].GetAddressOf());
+    dxdc->PSSetShaderResources(38, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF7)].GetAddressOf());
+    dxdc->PSSetShaderResources(39, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF8)].GetAddressOf());
 
     m_RenderContext.DrawFSTriangle();
 

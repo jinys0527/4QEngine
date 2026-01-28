@@ -1,0 +1,615 @@
+{
+    "editor": {
+        "EditorCamera": {
+            "eye": {
+                "x": -6.421277046203613,
+                "y": 4.337850093841553,
+                "z": -10.232451438903809
+            },
+            "look": {
+                "x": -5.786176681518555,
+                "y": 4.186165809631348,
+                "z": -9.475061416625977
+            },
+            "up": {
+                "x": 0.09746256470680237,
+                "y": 0.9884290099143982,
+                "z": 0.11622893065214157
+            }
+        }
+    },
+    "gameObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Color": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "Direction": {
+                            "x": 0.0,
+                            "y": -1.0,
+                            "z": 0.0
+                        },
+                        "Intensity": 3.140000104904175,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "type": "DirectionalLightComponent"
+                }
+            ],
+            "name": "DirectionalLight"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -6.421277046203613,
+                            "y": 4.337850093841553,
+                            "z": -10.232451438903809
+                        },
+                        "Rotation": {
+                            "w": 0.9370265603065491,
+                            "x": 0.07147961854934692,
+                            "y": 0.34087491035461426,
+                            "z": -0.026003187522292137
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": -6.421277046203613,
+                            "y": 4.337850093841553,
+                            "z": -10.232451438903809
+                        },
+                        "FarZ": 1000.0,
+                        "Look": {
+                            "x": -5.786176681518555,
+                            "y": 4.186165809631348,
+                            "z": -9.475061416625977
+                        },
+                        "NearZ": 0.10000000149011612,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7846534252166748,
+                            "fov": 0.7853981852531433
+                        },
+                        "ProjectionMode": 0,
+                        "Up": {
+                            "x": 0.09746256470680237,
+                            "y": 0.9884290099143982,
+                            "z": 0.11622893065214157
+                        },
+                        "Viewport": {
+                            "height": 808.0,
+                            "width": 1442.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Editor Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "AttenuationRadius": 6.039999961853027,
+                        "CastShadow": true,
+                        "Color": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "Intensity": 6.320000171661377,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 2.264695644378662,
+                            "z": -0.7853611707687378
+                        }
+                    },
+                    "type": "PointLightComponent"
+                },
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": 2.264695644378662,
+                            "z": -0.7853611707687378
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                }
+            ],
+            "name": "GameObject"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -13.1899995803833,
+                            "y": 19.200000762939453,
+                            "z": -13.890000343322754
+                        },
+                        "Rotation": {
+                            "w": 0.8224493265151978,
+                            "x": 0.42086857557296753,
+                            "y": 0.3406696915626526,
+                            "z": -0.1743294894695282
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Eye": {
+                            "x": -13.1899995803833,
+                            "y": 19.200000762939453,
+                            "z": -13.890000343322754
+                        },
+                        "FarZ": 100.0,
+                        "Look": {
+                            "x": -12.776371955871582,
+                            "y": 18.38893699645996,
+                            "z": -13.476372718811035
+                        },
+                        "NearZ": 1.0,
+                        "Ortho": {
+                            "height": 10.0,
+                            "width": 10.0
+                        },
+                        "OrthoOffCenter": {
+                            "bottom": -1.0,
+                            "left": -1.0,
+                            "right": 1.0,
+                            "top": 1.0
+                        },
+                        "Perspective": {
+                            "aspect": 1.7846534252166748,
+                            "fov": 0.7853981852531433
+                        },
+                        "ProjectionMode": 0,
+                        "Up": {
+                            "x": 0.5735086798667908,
+                            "y": 0.5849577784538269,
+                            "z": 0.5735087394714355
+                        },
+                        "Viewport": {
+                            "height": 808.0,
+                            "width": 1442.0
+                        }
+                    },
+                    "type": "CameraComponent"
+                }
+            ],
+            "name": "Main Camera"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 0.0,
+                            "y": -0.10999999940395355,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.3999999761581421,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\PBR.shader.json"
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "Player"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -5.110000133514404,
+                            "y": 6.21999979019165,
+                            "z": -4.291999816894531
+                        },
+                        "Rotation": {
+                            "w": 0.756316065788269,
+                            "x": 0.0,
+                            "y": 0.654206395149231,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 0.9999933242797852,
+                            "y": 1.0,
+                            "z": 0.9999933242797852
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.3999999761581421,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "ZEnemy"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -12.649999618530273,
+                            "y": 15.079999923706055,
+                            "z": -11.95199966430664
+                        },
+                        "Rotation": {
+                            "w": 0.756316065788269,
+                            "x": 0.0,
+                            "y": 0.654206395149231,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 0.9999933242797852,
+                            "y": 1.0,
+                            "z": 0.9999933242797852
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.3999999761581421,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "ZEnemy1"
+        }
+    ]
+}

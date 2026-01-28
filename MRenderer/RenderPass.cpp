@@ -88,7 +88,7 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 	XMMATRIX mVP = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mVP);
 	XMMATRIX WVP = mWorld * mVP;
 
-	XMVECTOR localPos = XMVectorSet(0.f, 0.f, 0.f, 1.f);
+	XMVECTOR localPos = XMVectorSet(0.f, 1.8f, 0.f, 1.f);
 	XMVECTOR clipPos = XMVector4Transform(localPos, WVP);
 
 	XMFLOAT4 clip;
@@ -196,7 +196,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 	m_RenderContext.camParams.x = 1.0f;
 	m_RenderContext.camParams.y = 100.0f;
-	m_RenderContext.camParams.w = 1.5f;
+	m_RenderContext.camParams.w = 3.f;
 
 	m_RenderContext.CameraCBuffer.camParams = m_RenderContext.camParams;
 
