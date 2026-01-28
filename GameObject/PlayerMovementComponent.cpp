@@ -11,7 +11,8 @@
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
-#include <cfloat>
+#include "GameManager.h"
+//#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)
@@ -175,6 +176,22 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (type == EventType::MouseLeftClickUp)
 	{
 		auto* player = owner->GetComponent<PlayerComponent>();
+		// Turn Check.
+		auto& service = scene->GetServices();
+		auto& gameManager = service.Get<GameManager>();
+
+		if (gameManager.GetTurn() != Turn::PlayerTurn) {
+
+			if (m_IsDragging)
+			{
+				transComp->SetPosition(m_DragStartPos);
+				m_IsDragging = false;
+				m_HasDragRay = false;
+				m_CurrentTargetNode = nullptr;
+			}
+			return;
+		}
+
 		if (m_CurrentTargetNode && player)
 		{
 			const bool consumed = player->CommitMove(m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR());
@@ -196,6 +213,14 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	// Logic
 	if (type == EventType::MouseLeftClick)
 	{
+		auto& services = scene->GetServices();
+
+		auto& gameManager = services.Get<GameManager>();
+		if (gameManager.GetTurn() != Turn::PlayerTurn)
+		{
+			return;
+		}
+
 		Ray pickRay{};
 		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
 			return;

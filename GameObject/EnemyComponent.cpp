@@ -5,6 +5,7 @@
 REGISTER_COMPONENT(EnemyComponent)
 REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
+REGISTER_PROPERTY(EnemyComponent, MoveDistance)
 
 EnemyComponent::EnemyComponent() {
 
@@ -12,7 +13,7 @@ EnemyComponent::EnemyComponent() {
 
 EnemyComponent::~EnemyComponent() {
 	// Event Listener 쓰는 경우만
-
+	
 }
 
 void EnemyComponent::Start()

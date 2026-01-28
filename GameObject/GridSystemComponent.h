@@ -47,6 +47,7 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override; // IEventListener 필요
 	const vector<NodeComponent*>& GetNodes() const { return m_Nodes; }
+	const vector<EnemyComponent*>& GetEnemies() const { return m_Enemies; }
 	const int& GetNodesCount() const { return m_NodesCount; }
 	int GetShortestPathLength(const AxialKey& start,const AxialKey& target);
 	NodeComponent* GetNodeByKey(const AxialKey& key) const;

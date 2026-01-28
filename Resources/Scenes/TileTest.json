@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -10.104660034179688,
-                "y": 9.775886535644531,
-                "z": -8.3203763961792
+                "x": -10.693123817443848,
+                "y": 11.822931289672852,
+                "z": -8.046836853027344
             },
             "look": {
-                "x": -9.61929988861084,
-                "y": 9.165721893310547,
-                "z": -7.694178104400635
+                "x": -10.219451904296875,
+                "y": 11.181571960449219,
+                "z": -7.443269729614258
             },
             "up": {
-                "x": 0.3737970292568207,
-                "y": 0.792274534702301,
-                "z": 0.4822622239589691
+                "x": 0.39595580101013184,
+                "y": 0.7672407031059265,
+                "z": 0.5045401453971863
             }
         }
     },
@@ -29,15 +29,15 @@
                             "z": -2.8575263023376465
                         },
                         "Rotation": {
-                            "w": 1.0,
+                            "w": 0.9930861592292786,
                             "x": -0.0,
-                            "y": 0.0,
+                            "y": 0.1173877865076065,
                             "z": -0.0
                         },
                         "Scale": {
-                            "x": 1.4485145807266235,
+                            "x": 1.4485162496566772,
                             "y": 1.4485139846801758,
-                            "z": 1.4485145807266235
+                            "z": 1.4485162496566772
                         }
                     },
                     "type": "TransformComponent"
@@ -268,20 +268,20 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -3.0727455615997314,
-                            "y": 2.533438205718994,
-                            "z": -0.06449240446090698
+                            "x": 6.114842891693115,
+                            "y": 2.5334372520446777,
+                            "z": 0.7826709747314453
                         },
                         "Rotation": {
-                            "w": 1.0,
+                            "w": 0.9555829167366028,
                             "x": -0.0,
-                            "y": 0.0,
+                            "y": -0.2947225272655487,
                             "z": -0.0
                         },
                         "Scale": {
-                            "x": 1.4485145807266235,
+                            "x": 1.4485100507736206,
                             "y": 1.4485139846801758,
-                            "z": 1.4485145807266235
+                            "z": 1.4485100507736206
                         }
                     },
                     "type": "TransformComponent"
@@ -290,19 +290,19 @@
                     "data": {
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                            "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                            "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                         },
                         "Overrides": {
                             "overrides": {
                                 "baseColor": {
                                     "a": 1.0,
-                                    "b": 0.800000011920929,
-                                    "g": 0.800000011920929,
-                                    "r": 0.800000011920929
+                                    "b": 0.6595970988273621,
+                                    "g": 0.6595970988273621,
+                                    "r": 0.6595970988273621
                                 },
                                 "lightness": 1.0,
                                 "metallic": 0.0,
@@ -319,23 +319,23 @@
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                                        "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                                     },
                                     {
                                         "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                                        "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                                     },
                                     {
                                         "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                                        "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                                     },
                                     {
                                         "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                                        "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                                     },
                                     {
                                         "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                                        "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                                     },
                                     {
                                         "assetIndex": 0,
@@ -356,11 +356,11 @@
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                            "assetPath": "../ResourceOutput\\test2\\Meta\\test.asset.json"
                         },
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                            "assetPath": "../ResourceOutput\\kitchen_old\\Meta\\kitchen_old.asset.json"
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 1,
@@ -372,11 +372,11 @@
                     "data": {
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                            "assetPath": "../ResourceOutput\\kitchen_old\\Meta\\kitchen_old.asset.json"
                         },
                         "MeshHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\refrigerator\\Meta\\refrigerator.asset.json"
+                            "assetPath": "../ResourceOutput\\kitchen_old\\Meta\\kitchen_old.asset.json"
                         },
                         "SubMeshMaterialOverrides": []
                     },
@@ -419,7 +419,7 @@
                         "Direction": {
                             "x": 1.6399999856948853,
                             "y": -1.0,
-                            "z": -0.8600000143051147
+                            "z": -0.36000001430511475
                         },
                         "Intensity": 1.0,
                         "Position": {
@@ -438,15 +438,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -10.104660034179688,
-                            "y": 9.775886535644531,
-                            "z": -8.3203763961792
+                            "x": -10.693123817443848,
+                            "y": 11.822931289672852,
+                            "z": -8.046836853027344
                         },
                         "Rotation": {
-                            "w": 0.8956636190414429,
-                            "x": 0.30492112040519714,
-                            "y": 0.30647012591362,
-                            "z": -0.10433526337146759
+                            "w": 0.8884651064872742,
+                            "x": 0.32243794202804565,
+                            "y": 0.3070020079612732,
+                            "z": -0.11141552776098251
                         },
                         "Scale": {
                             "x": 1.0,
@@ -459,15 +459,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -10.104660034179688,
-                            "y": 9.775886535644531,
-                            "z": -8.3203763961792
+                            "x": -10.693123817443848,
+                            "y": 11.822931289672852,
+                            "z": -8.046836853027344
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -9.61929988861084,
-                            "y": 9.165721893310547,
-                            "z": -7.694178104400635
+                            "x": -10.219451904296875,
+                            "y": 11.181571960449219,
+                            "z": -7.443269729614258
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -486,9 +486,9 @@
                         },
                         "ProjectionMode": 0,
                         "Up": {
-                            "x": 0.3737970292568207,
-                            "y": 0.792274534702301,
-                            "z": 0.4822622239589691
+                            "x": 0.39595580101013184,
+                            "y": 0.7672407031059265,
+                            "z": 0.5045401453971863
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -503,26 +503,28 @@
         {
             "components": [
                 {
-                    "data": null,
+                    "data": {
+                        "MoveDistance": 1
+                    },
                     "type": "EnemyComponent"
                 },
                 {
                     "data": {
                         "Position": {
-                            "x": 7.8554840087890625,
-                            "y": 2.354969024658203,
-                            "z": 1.4607162475585938
+                            "x": 9.569999694824219,
+                            "y": 2.3932888507843018,
+                            "z": 1.5
                         },
                         "Rotation": {
-                            "w": 0.8329445123672485,
+                            "w": 0.8329444527626038,
                             "x": -0.0,
                             "y": 0.5533565282821655,
                             "z": -0.0
                         },
                         "Scale": {
-                            "x": 0.9999986886978149,
+                            "x": 0.9999987483024597,
                             "y": 0.9100000262260437,
-                            "z": 0.9999986886978149
+                            "z": 0.9999987483024597
                         }
                     },
                     "type": "TransformComponent"
@@ -622,6 +624,10 @@
                         "SubMeshMaterialOverrides": []
                     },
                     "type": "MeshComponent"
+                },
+                {
+                    "data": null,
+                    "type": "EnemyMovementComponent"
                 }
             ],
             "name": "Enemy",
@@ -630,15 +636,17 @@
         {
             "components": [
                 {
-                    "data": null,
+                    "data": {
+                        "MoveDistance": 1
+                    },
                     "type": "EnemyComponent"
                 },
                 {
                     "data": {
                         "Position": {
-                            "x": 8.624932289123535,
-                            "y": 2.3578574657440186,
-                            "z": -3.02453351020813
+                            "x": 6.960000038146973,
+                            "y": 2.3932888507843018,
+                            "z": -3.0
                         },
                         "Rotation": {
                             "w": 0.8300290703773499,
@@ -749,6 +757,10 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": null,
+                    "type": "EnemyMovementComponent"
                 }
             ],
             "name": "Enemy1",
@@ -757,15 +769,17 @@
         {
             "components": [
                 {
-                    "data": null,
+                    "data": {
+                        "MoveDistance": 1
+                    },
                     "type": "EnemyComponent"
                 },
                 {
                     "data": {
                         "Position": {
-                            "x": 1.6204500198364258,
-                            "y": 2.3578572273254395,
-                            "z": -2.97308349609375
+                            "x": 2.5868279933929443,
+                            "y": 2.3932888507843018,
+                            "z": 1.4942004680633545
                         },
                         "Rotation": {
                             "w": 0.8329444527626038,
@@ -876,6 +890,10 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
+                },
+                {
+                    "data": null,
+                    "type": "EnemyMovementComponent"
                 }
             ],
             "name": "Enemy2",
@@ -907,6 +925,10 @@
                 {
                     "data": null,
                     "type": "GridSystemComponent"
+                },
+                {
+                    "data": null,
+                    "type": "EnemyControllerComponent"
                 }
             ],
             "name": "Grid"
@@ -959,7 +981,7 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 3.7552082538604736,
+                            "aspect": 1.7846534252166748,
                             "fov": 0.7853981852531433
                         },
                         "ProjectionMode": 0,
@@ -969,7 +991,7 @@
                             "z": 0.38005855679512024
                         },
                         "Viewport": {
-                            "height": 384.0,
+                            "height": 808.0,
                             "width": 1442.0
                         }
                     },
@@ -1948,22 +1970,6 @@
                     "data": {
                         "CastShadow": true,
                         "Material": {
-
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
                             "assetIndex": 0,
                             "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
                         },
@@ -1979,7 +1985,6 @@
                 },
                 {
                     "data": {
-
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
@@ -2683,20 +2688,6 @@
                 },
                 {
                     "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -2714,7 +2705,6 @@
                 },
                 {
                     "data": {
-
                         "IsMoveable": true
                     },
                     "type": "NodeComponent"
@@ -3723,7 +3713,7 @@
                 },
                 {
                     "data": {
-                        "IsMoveable": true
+                        "IsMoveable": false
                     },
                     "type": "NodeComponent"
                 },
@@ -4731,7 +4721,7 @@
                 },
                 {
                     "data": {
-                        "IsMoveable": true
+                        "IsMoveable": false
                     },
                     "type": "NodeComponent"
                 },
@@ -5767,6 +5757,1158 @@
                 {
                     "data": {
                         "Position": {
+                            "x": 13.93956470489502,
+                            "y": 2.3932888507843018,
+                            "z": 0.0
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "IsMoveable": false
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node33",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 9.57823371887207,
+                            "y": 2.3932888507843018,
+                            "z": -1.5
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "IsMoveable": true
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node161",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 10.423665046691895,
+                            "y": 2.3932883739471436,
+                            "z": 3.0055503845214844
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "IsMoveable": false
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node181",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 13.046290397644043,
+                            "y": 2.3932883739471436,
+                            "z": 1.4966801404953003
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "IsMoveable": false
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node182",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 7.857593536376953,
+                            "y": 2.3932888507843018,
+                            "z": 4.498868465423584
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "IsMoveable": true
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node201",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 9.590743064880371,
+                            "y": 2.39328932762146,
+                            "z": 4.490084648132324
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "IsMoveable": true
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node202",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 11.322778701782227,
+                            "y": 2.3932888507843018,
+                            "z": -1.508679986000061
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "IsMoveable": true
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node1611",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": 13.065370559692383,
+                            "y": 2.3932888507843018,
+                            "z": -1.4958562850952148
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.06847821176052094,
+                                    "g": 0.06847824156284332,
+                                    "r": 0.06847773492336273
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\toilet_tile_blue\\Meta\\toilet_tile_blue.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "IsMoveable": false
+                    },
+                    "type": "NodeComponent"
+                },
+                {
+                    "data": {
+                        "LocalMax": {
+                            "x": 0.8660253882408142,
+                            "y": 0.14346446096897125,
+                            "z": 0.9999998807907104
+                        },
+                        "LocalMin": {
+                            "x": -0.8660253882408142,
+                            "y": -0.12500010430812836,
+                            "z": -0.9999998807907104
+                        }
+                    },
+                    "type": "BoxColliderComponent"
+                }
+            ],
+            "name": "Node16111",
+            "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
                             "x": 0.028244972229003906,
                             "y": 2.359999895095825,
                             "z": -0.14658278226852417
@@ -5853,8 +6995,8 @@
                 {
                     "data": {
                         "ActResource": 6,
-                        "MoveResource": 3
-
+                        "MoveResource": 3,
+                        "PlayerTurnTime": 3.0
                     },
                     "type": "PlayerComponent"
                 },
@@ -5906,6 +7048,19 @@
                 },
                 {
                     "data": {
+                        "Agility": 12,
+                        "CurrentHP": 100,
+                        "Health": 12,
+                        "MoveDistance": 0.0,
+                        "Range": 0.0,
+                        "Sense": 12,
+                        "Skill": 12,
+                        "Strength": 12
+                    },
+                    "type": "PlayerStatComponent"
+                },
+                {
+                    "data": {
                         "DragSpeed": 0.009999999776482582
                     },
                     "type": "PlayerMovementComponent"
@@ -5913,6 +7068,128 @@
             ],
             "name": "Player",
             "parent": "Grid"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "Position": {
+                            "x": -3.314436435699463,
+                            "y": 3.4381046295166016,
+                            "z": -5.140237808227539
+                        },
+                        "Rotation": {
+                            "w": 1.0,
+                            "x": -0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 0,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": ""
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.5,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\kitchen\\Meta\\kitchen.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "kitchen"
         }
     ]
 }

@@ -27,6 +27,7 @@
 #include "ImGuizmo.h"
 #include "MathHelper.h"
 #include "Snapshot.h"
+#include "GameManager.h"
 
 #define DRAG_SPEED 0.01f
 namespace fs = std::filesystem;
@@ -53,7 +54,7 @@ bool EditorApplication::Initialize()
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
 	m_InputManager = &m_Services.Get<InputManager>();
-
+	m_GameManager = &m_Services.Get<GameManager>();
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
 	m_SceneManager.Initialize();
 
@@ -796,6 +797,7 @@ void EditorApplication::DrawMainMenuBar()
 			{
 				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
 			}
+			m_GameManager->TurnReset();
 			m_SceneManager.GetCurrentScene()->SetIsPause(false);
 			m_EditorState = EditorPlayState::Play;
 		}
@@ -817,6 +819,10 @@ void EditorApplication::DrawMainMenuBar()
 		if (ImGui::Button("Stop", ImVec2(buttonWidth, 0)))
 		{
 			m_SceneManager.LoadSceneFromJson(m_CurrentScenePath);
+			if (m_GameManager)
+			{
+				m_GameManager->TurnReset();
+			}
 			m_EditorState = EditorPlayState::Stop;
 		}
 		ImGui::EndDisabled();

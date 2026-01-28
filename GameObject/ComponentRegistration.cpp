@@ -56,6 +56,7 @@ extern "C" {
 	//User Defined
 	void Link_SceneChangeTestComponent();
 	void Link_PlayerMovementComponent();
+	void Link_EnemyMovementComponent();
 	void Link_GridSystemComponent();
 	void Link_NodeComponent();
 	void Link_PlayerComponent();
@@ -64,6 +65,7 @@ extern "C" {
 	void Link_StatComponent();
 	void Link_PlayerStatComponent();
 	void Link_EnemyStatComponent();
+	void Link_EnemyControllerComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -104,6 +106,7 @@ void LinkEngineComponents() {
 	//User Defined
 	Link_SceneChangeTestComponent();
 	Link_PlayerMovementComponent();
+	Link_EnemyMovementComponent();
 	Link_GridSystemComponent();
 	Link_NodeComponent();
 	Link_PlayerComponent();
@@ -112,4 +115,5 @@ void LinkEngineComponents() {
 	Link_StatComponent();
 	Link_PlayerStatComponent();
 	Link_EnemyStatComponent();
+	Link_EnemyControllerComponent();
 }

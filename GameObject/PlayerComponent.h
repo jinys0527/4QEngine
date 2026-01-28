@@ -26,14 +26,18 @@ public:
 	void SetQR(int q, int r) { m_Q = q, m_R = r; }
 	const int& GetQ() const { return m_Q; }
 	const int& GetR() const { return m_R; }
-
+	
+	void SetPlayerTurnTime(const float& time) { m_PlayerTurnTime = time; }
+	const float& GetPlayerTurnTime() const { return m_PlayerTurnTime; }
+	const float& GetTurnElapsed() const { return m_TurnElapsed; }
 	void SetMoveResource(const int& move)  { m_MoveResource  = move; }
 	void SetActResource(const int& act)	   { m_ActResource = act; }
 
-	const int& GetMoveResource()	 const { return m_MoveResource; }
-	const int& GetActResource()		 const { return m_ActResource; }
+	const int& GetMoveResource()	   const { return m_MoveResource; }
+	const int& GetActResource()		   const { return m_ActResource; }
 	const int& GetRemainMoveResource() const { return m_RemainMoveResource; }
 	const int& GetRemainActResource()  const { return m_RemainActResource; }
+
 
 	void ResetTurnResources();
 	void BeginMove();
@@ -59,7 +63,8 @@ private:
 	int m_StartQ = 0; 
 	int m_StartR = 0; 
 	bool m_HasMoveStart = false;
-
+	float m_PlayerTurnTime = 30.0f; // 외부 조정
+	float m_TurnElapsed = 0.0f; // 진행시간
 	Turn m_LastTurn = Turn::PlayerTurn;
 	GameManager* m_GameManager = nullptr;
 	GridSystemComponent* m_GridSystem;

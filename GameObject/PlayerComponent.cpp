@@ -12,6 +12,8 @@ REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
 REGISTER_PROPERTY_READONLY(PlayerComponent, R)
 REGISTER_PROPERTY(PlayerComponent, MoveResource)
 REGISTER_PROPERTY(PlayerComponent, ActResource)
+REGISTER_PROPERTY(PlayerComponent, PlayerTurnTime)
+REGISTER_PROPERTY_READONLY(PlayerComponent, TurnElapsed)
 REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
 
 
@@ -63,7 +65,7 @@ void PlayerComponent::Update(float deltaTime) {
 	//defense
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene)
+	if (!scene ||scene->GetIsPause())
 	{
 		return;
 	}
@@ -83,12 +85,28 @@ void PlayerComponent::Update(float deltaTime) {
 	//
 
 	const auto currentTurn = m_GameManager->GetTurn();
+
 	if (currentTurn != m_LastTurn)
 	{
 		m_LastTurn = currentTurn;
 		if (currentTurn == Turn::PlayerTurn)
 		{
 			ResetTurnResources();
+		}
+		// turn 종류에 따른 행동정의
+	}
+
+
+	//Player Turn 종료 조건
+
+	if (currentTurn == Turn::PlayerTurn) {
+		m_TurnElapsed += deltaTime;
+
+		// 조건 추가(행동력)
+		if (m_RemainMoveResource <= 0 || m_TurnElapsed >= m_PlayerTurnTime) {
+			//종료(턴 전환)
+			m_GameManager->SetTurn(Turn::EnemyTurn);
+			m_LastTurn = Turn::EnemyTurn;
 		}
 	}
 }
@@ -104,6 +122,7 @@ void PlayerComponent::ResetTurnResources()
 {
 	m_RemainMoveResource = m_MoveResource;
 	m_RemainActResource = m_ActResource;
+	m_TurnElapsed = 0.0f;
 	m_HasMoveStart = false;
 }
 
