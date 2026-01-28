@@ -19,6 +19,8 @@ void EnemyControllerComponent::Start()
 void EnemyControllerComponent::Update(float deltaTime)
 {
 	Turn currentTurn = Turn::PlayerTurn;
+
+	bool hasEnemies = false;
 	if (m_GridSystem)
 	{
 		const auto& enemies = m_GridSystem->GetEnemies();
@@ -26,6 +28,7 @@ void EnemyControllerComponent::Update(float deltaTime)
 		{
 			if (enemy)
 			{
+				hasEnemies = true;
 				currentTurn = enemy->GetCurrentTurn();
 				break;
 			}
@@ -35,6 +38,16 @@ void EnemyControllerComponent::Update(float deltaTime)
 	if (currentTurn != Turn::EnemyTurn)
 	{
 		m_TurnEndRequested = false;
+		return;
+	}
+
+	if (!hasEnemies)
+	{
+		if (!m_TurnEndRequested)
+		{
+			GetEventDispatcher().Dispatch(EventType::EnemyTurnEndRequested, nullptr);
+			m_TurnEndRequested = true;
+		}
 		return;
 	}
 

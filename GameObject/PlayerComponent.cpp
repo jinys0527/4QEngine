@@ -93,6 +93,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	}
 
 	m_CurrentTurn = static_cast<Turn>(payload->turn);
+	m_TurnElapsed = 0.0f;
 	m_TurnEndRequested = false;
 	if (m_CurrentTurn == Turn::PlayerTurn)
 	{

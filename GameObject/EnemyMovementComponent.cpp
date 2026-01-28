@@ -10,9 +10,15 @@
 
 REGISTER_COMPONENT(EnemyMovementComponent)
 
+EnemyMovementComponent::~EnemyMovementComponent()
+{
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+}
+
 void EnemyMovementComponent::Start()
 {
 	GetSystem();
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 }
 
 void EnemyMovementComponent::Update(float deltaTime)
@@ -30,15 +36,31 @@ void EnemyMovementComponent::Update(float deltaTime)
 		return;
 	}
 
-	if (!m_IsMoveComplete) {
+	if (!m_IsMoveComplete && enemy->ConsumeMoveRequest()) {
 		Move();
+		m_IsMoveComplete = true;
 	}
-	m_IsMoveComplete = true;
+
 }
 
 void EnemyMovementComponent::OnEvent(EventType type, const void* data)
 {
+	if (type != EventType::TurnChanged || !data)
+	{
+		return;
+	}
 
+	const auto* payload = static_cast<const Events::TurnChanged*>(data);
+	if (!payload)
+	{
+		return;
+	}
+
+	const auto turn = static_cast<Turn>(payload->turn);
+	if (turn == Turn::EnemyTurn)
+	{
+		m_IsMoveComplete = false;
+	}
 }
 
 // 움직임

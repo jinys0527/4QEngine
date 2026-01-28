@@ -13,7 +13,7 @@ public:
 	const char* GetTypeName() const override;
 
 	EnemyMovementComponent()=default;
-	virtual ~EnemyMovementComponent() =default;
+	virtual ~EnemyMovementComponent();
 
 	void Start() override;
 
