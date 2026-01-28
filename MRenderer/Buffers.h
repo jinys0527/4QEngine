@@ -19,10 +19,7 @@ enum class BlurLevel
 	HALF2,
 	HALF3,
 	HALF4,
-	HALF5,
-	HALF6,
-	HALF7,
-	HALF8,
+
 	COUNT
 };
 

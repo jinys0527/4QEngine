@@ -195,10 +195,6 @@ Texture2D g_BlurHalf            : register(t32);
 Texture2D g_BlurHalf2           : register(t33);
 Texture2D g_BlurHalf3           : register(t34);
 Texture2D g_BlurHalf4           : register(t35);
-Texture2D g_BlurHalf5           : register(t36);
-Texture2D g_BlurHalf6           : register(t37);
-Texture2D g_BlurHalf7           : register(t38);
-Texture2D g_BlurHalf8           : register(t39);
 
 
 

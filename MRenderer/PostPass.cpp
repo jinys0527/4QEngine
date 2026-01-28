@@ -56,10 +56,6 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShaderResources(33, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF2)].GetAddressOf());
     dxdc->PSSetShaderResources(34, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF3)].GetAddressOf());
     dxdc->PSSetShaderResources(35, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF4)].GetAddressOf());
-    dxdc->PSSetShaderResources(36, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF5)].GetAddressOf());
-    dxdc->PSSetShaderResources(37, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF6)].GetAddressOf());
-    dxdc->PSSetShaderResources(38, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF7)].GetAddressOf());
-    dxdc->PSSetShaderResources(39, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF8)].GetAddressOf());
 
     m_RenderContext.DrawFSTriangle();
 

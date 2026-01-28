@@ -79,29 +79,4 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
         m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF3)].GetAddressOf());
     m_RenderContext.DrawFSTriangle();
 
-    SetRenderTarget(m_RenderContext.pRTView_Blur[static_cast<UINT>(BlurLevel::HALF5)].Get(), nullptr, backcolor);
-    SetViewPort(m_RenderContext.WindowSize.width / 32, m_RenderContext.WindowSize.height / 32, dxdc);
-    dxdc->PSSetShaderResources(0, 1,
-        m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF4)].GetAddressOf());
-    m_RenderContext.DrawFSTriangle();
-
-    SetRenderTarget(m_RenderContext.pRTView_Blur[static_cast<UINT>(BlurLevel::HALF6)].Get(), nullptr, backcolor);
-    SetViewPort(m_RenderContext.WindowSize.width / 64, m_RenderContext.WindowSize.height / 64, dxdc);
-    dxdc->PSSetShaderResources(0, 1,
-        m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF5)].GetAddressOf());
-    m_RenderContext.DrawFSTriangle();
-
-    SetRenderTarget(m_RenderContext.pRTView_Blur[static_cast<UINT>(BlurLevel::HALF7)].Get(), nullptr, backcolor);
-    SetViewPort(m_RenderContext.WindowSize.width / 128, m_RenderContext.WindowSize.height / 128, dxdc);
-    dxdc->PSSetShaderResources(0, 1,
-        m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF6)].GetAddressOf());
-    m_RenderContext.DrawFSTriangle();
-
-    SetRenderTarget(m_RenderContext.pRTView_Blur[static_cast<UINT>(BlurLevel::HALF8)].Get(), nullptr, backcolor);
-    SetViewPort(m_RenderContext.WindowSize.width / 256, m_RenderContext.WindowSize.height / 256, dxdc);
-    dxdc->PSSetShaderResources(0, 1,
-        m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF7)].GetAddressOf());
-    m_RenderContext.DrawFSTriangle();
-
-
 }

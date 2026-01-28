@@ -92,7 +92,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // CoC → 픽셀 밀림 크기
     float radialStrength = coc * 6.0; // ★ 핵심 조절값 (3~10 추천)
 
-
     float2 radialOffset = pixelSize * radialStrength;
     
     
@@ -115,10 +114,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 Blur2 = g_BlurHalf2.Sample(smpClamp, uvW);
     float4 Blur3 = g_BlurHalf3.Sample(smpClamp, uvW);
     float4 Blur4 = g_BlurHalf4.Sample(smpClamp, uvW);
-    float4 Blur5 = g_BlurHalf5.Sample(smpClamp, uvW);
-    float4 Blur6 = g_BlurHalf6.Sample(smpClamp, uvW);
-    float4 Blur7 = g_BlurHalf7.Sample(smpClamp, uvW);
-    float4 Blur8 = g_BlurHalf8.Sample(smpClamp, uvW);
 
     
     //float diff = (viewZ - camParams.z) / camParams.w;
@@ -135,7 +130,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     
 
     float4 dofColor = lerp(RTView, blurCombined, coc);
-
 
 // CoC가 클수록 radial 영향 증가
     float radialWeight = saturate(coc * 1.2);
@@ -179,7 +173,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 전체 emissive 세기
     emissive.rgb *= 1.5;
 
-    return finalBlur + emissive;
+    return RTView + emissive;
     
     //return tilt + emissive;
 }
