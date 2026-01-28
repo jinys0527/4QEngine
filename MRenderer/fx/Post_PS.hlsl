@@ -141,7 +141,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float radialWeight = saturate(coc * 1.2);
 
 
-    float4 finalColor = lerp(dofColor, radialBlur, radialWeight);
+    float4 finalBlur = lerp(dofColor, radialBlur, radialWeight);
      
     
     
@@ -179,7 +179,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 전체 emissive 세기
     emissive.rgb *= 1.5;
 
-    return RTView + emissive;
+    return finalBlur + emissive;
     
     //return tilt + emissive;
 }
