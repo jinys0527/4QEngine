@@ -26,6 +26,7 @@ float4 SampleEmissiveRadial(Texture2D tex, float2 uv, float2 r)
     return c / 9.0;
 }
 
+
 float2 Rotate2D(float2 v, float a)
 {
     float s = sin(a);
@@ -35,10 +36,32 @@ float2 Rotate2D(float2 v, float a)
 
 float Hash12(float2 p)
 {
-float3 p3 = frac(float3(p.xyx) * 0.1031);
-p3 += dot(p3, p3.yzx + 33.33);
-return frac((p3.x + p3.y) * p3.z);
+    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.x + p3.y) * p3.z);
 }
+
+//Emissive 원형 방향 밀기
+float4 SampleEmissiveDisk(Texture2D tex, float2 uv, float2 r)
+{
+    float angle = Hash12(uv * screenSize) * 6.28318;
+    float4 c = tex.Sample(smpClamp, uv) * 0.4;
+
+
+[unroll]
+    for (int i = 0; i < 6; i++)
+    {
+        float t = (i + 0.5) / 6.0;
+        float a = angle + t * 6.28318;
+        float spread = pow(t, 0.3); // 0.3 ~ 0.7 추천
+        float2 o = float2(cos(a), sin(a)) * r * spread;
+        c += tex.Sample(smpClamp, uv + o);
+    }
+
+
+    return c / 7.0;
+}
+
 
 float4 PS_Main(VSOutput_PU i) : SV_TARGET
 {
@@ -119,49 +142,42 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
 
     float4 finalColor = lerp(dofColor, radialBlur, radialWeight);
-    return finalColor;
      
-    float2 d = i.uv - playerPos.xy;
     
-// 타원 반경 (UV 기준)
-    float2 radius = float2(1.15f, 0.35f);
-
-    float v =
-        (d.x * d.x) / (radius.x * radius.x) +
-        (d.y * d.y) / (radius.y * radius.y);
-
-
-// v == 1 → 타원 경계
-    float w = smoothstep(0.8f, 1.2f, v);
-    float4 color;
-// w = 0 → 선명
-// w = 1 → 완전 블러
-    color = lerp(RTView, Blur3, w);
     
-    // 타원 안에서만 거리 블러 추가
-    float depthBlurInEllipse = (1.0f - w) * coc;
-
-    // 최종 블러 강도
-    float finalBlur = saturate(w + depthBlurInEllipse);
-
-    // 최종 색
-    //float4 finalColor = lerp(RTView, Blur3, finalBlur);
-    //return finalColor;
-
+    // ================= Emissive Core Mask =================
+  
     
+    //Emissive 추가
     float2 texelFull = 1.0 / screenSize;
     float2 texelHalf = texelFull * 6.0;
     float2 texelQuarter = texelFull * 12.0;
     float2 texel8 = texelFull * 20.0;
 
-    float4 e1 = SampleEmissiveRadial(g_RTEmissiveHalf, uvW, texelHalf);
-    float4 e2 = SampleEmissiveRadial(g_RTEmissiveHalf2, uvW, texelQuarter);
-    float4 e3 = SampleEmissiveRadial(g_RTEmissiveHalf3, uvW, texel8);
+// 원본 emissive 추가 (중심부)
+    float4 e0 = g_RTEmissive.Sample(smpClamp, uvW);
 
+    float l = max(e0.r, max(e0.g, e0.b));
+    e0.rgb = lerp(e0.rgb, 1.0.xxx, saturate(l * 1.2));
+    e0.rgb *= 2.0;
+    
+// 블러 emissive
+    float4 e1 = SampleEmissiveDisk(g_RTEmissiveHalf, uvW, texelHalf);
+    float4 e2 = SampleEmissiveDisk(g_RTEmissiveHalf2, uvW, texelQuarter);
+    float4 e3 = SampleEmissiveDisk(g_RTEmissiveHalf3, uvW, texel8);
+
+// 중심부 에너지 강화
+    e0.rgb *= 2.0;
+
+// 최종 합성
     float4 emissive =
-      e1 * 0.6
+      e0 * 1.0
+    + e1 * 0.6
     + e2 * 0.3
     + e3 * 0.1;
+
+// 전체 emissive 세기
+    emissive.rgb *= 1.5;
 
     return RTView + emissive;
     

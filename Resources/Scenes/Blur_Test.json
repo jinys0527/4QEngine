@@ -138,6 +138,128 @@
             "components": [
                 {
                     "data": {
+                        "Position": {
+                            "x": -5.110000133514404,
+                            "y": 7.300000190734863,
+                            "z": -4.291999816894531
+                        },
+                        "Rotation": {
+                            "w": 0.756316065788269,
+                            "x": 0.0,
+                            "y": 0.654206395149231,
+                            "z": 0.0
+                        },
+                        "Scale": {
+                            "x": 0.9999933242797852,
+                            "y": 1.0,
+                            "z": 0.9999933242797852
+                        }
+                    },
+                    "type": "TransformComponent"
+                },
+                {
+                    "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
+                        "CastShadow": true,
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "ReceiveShadow": true,
+                        "RenderLayer": 1,
+                        "Visible": true
+                    },
+                    "type": "MeshRenderer"
+                },
+                {
+                    "data": {
+                        "Material": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "MaterialHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                        },
+                        "Overrides": {
+                            "overrides": {
+                                "baseColor": {
+                                    "a": 1.0,
+                                    "b": 0.800000011920929,
+                                    "g": 0.800000011920929,
+                                    "r": 0.800000011920929
+                                },
+                                "lightness": 1.0,
+                                "metallic": 0.0,
+                                "pixelShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "roughness": 0.3999999761581421,
+                                "saturation": 1.0,
+                                "shaderAsset": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                },
+                                "textures": [
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 1,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 2,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 3,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 4,
+                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
+                                    },
+                                    {
+                                        "assetIndex": 0,
+                                        "assetPath": ""
+                                    }
+                                ],
+                                "vertexShader": {
+                                    "assetIndex": 0,
+                                    "assetPath": ""
+                                }
+                            }
+                        }
+                    },
+                    "type": "MaterialComponent"
+                }
+            ],
+            "name": "Enemy"
+        },
+        {
+            "components": [
+                {
+                    "data": {
                         "AttenuationRadius": 6.039999961853027,
                         "CastShadow": true,
                         "Color": {
@@ -183,15 +305,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -13.1899995803833,
-                            "y": 19.200000762939453,
-                            "z": -13.890000343322754
+                            "x": -6.25,
+                            "y": 11.40999984741211,
+                            "z": -6.170000076293945
                         },
                         "Rotation": {
-                            "w": 0.8224493265151978,
-                            "x": 0.42086857557296753,
-                            "y": 0.3406696915626526,
-                            "z": -0.1743294894695282
+                            "w": 0.8235483765602112,
+                            "x": 0.4187139868736267,
+                            "y": 0.341124951839447,
+                            "z": -0.17343702912330627
                         },
                         "Scale": {
                             "x": 1.0,
@@ -204,15 +326,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -13.1899995803833,
-                            "y": 19.200000762939453,
-                            "z": -13.890000343322754
+                            "x": -6.25,
+                            "y": 11.40999984741211,
+                            "z": -6.170000076293945
                         },
                         "FarZ": 100.0,
                         "Look": {
-                            "x": -12.776371955871582,
-                            "y": 18.38893699645996,
-                            "z": -13.476372718811035
+                            "x": -5.833374977111816,
+                            "y": 10.602009773254395,
+                            "z": -5.753375053405762
                         },
                         "NearZ": 1.0,
                         "Ortho": {
@@ -231,9 +353,9 @@
                         },
                         "ProjectionMode": 0,
                         "Up": {
-                            "x": 0.5735086798667908,
-                            "y": 0.5849577784538269,
-                            "z": 0.5735087394714355
+                            "x": 0.5713351964950562,
+                            "y": 0.5891964435577393,
+                            "z": 0.5713351368904114
                         },
                         "Viewport": {
                             "height": 808.0,
@@ -270,6 +392,20 @@
                 },
                 {
                     "data": {
+                        "Mesh": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "MeshHandle": {
+                            "assetIndex": 0,
+                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
+                        },
+                        "SubMeshMaterialOverrides": []
+                    },
+                    "type": "MeshComponent"
+                },
+                {
+                    "data": {
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
@@ -284,20 +420,6 @@
                         "Visible": true
                     },
                     "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\Main_Char_Low\\Meta\\Main_Char_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
                 },
                 {
                     "data": {
@@ -366,250 +488,6 @@
                 }
             ],
             "name": "Player"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -5.110000133514404,
-                            "y": 6.21999979019165,
-                            "z": -4.291999816894531
-                        },
-                        "Rotation": {
-                            "w": 0.756316065788269,
-                            "x": 0.0,
-                            "y": 0.654206395149231,
-                            "z": 0.0
-                        },
-                        "Scale": {
-                            "x": 0.9999933242797852,
-                            "y": 1.0,
-                            "z": 0.9999933242797852
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.800000011920929,
-                                    "g": 0.800000011920929,
-                                    "r": 0.800000011920929
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.3999999761581421,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "ZEnemy"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "Position": {
-                            "x": -12.649999618530273,
-                            "y": 15.079999923706055,
-                            "z": -11.95199966430664
-                        },
-                        "Rotation": {
-                            "w": 0.756316065788269,
-                            "x": 0.0,
-                            "y": 0.654206395149231,
-                            "z": 0.0
-                        },
-                        "Scale": {
-                            "x": 0.9999933242797852,
-                            "y": 1.0,
-                            "z": 0.9999933242797852
-                        }
-                    },
-                    "type": "TransformComponent"
-                },
-                {
-                    "data": {
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MeshHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "SubMeshMaterialOverrides": []
-                    },
-                    "type": "MeshComponent"
-                },
-                {
-                    "data": {
-                        "CastShadow": true,
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "Mesh": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "ReceiveShadow": true,
-                        "RenderLayer": 1,
-                        "Visible": true
-                    },
-                    "type": "MeshRenderer"
-                },
-                {
-                    "data": {
-                        "Material": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "MaterialHandle": {
-                            "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                        },
-                        "Overrides": {
-                            "overrides": {
-                                "baseColor": {
-                                    "a": 1.0,
-                                    "b": 0.800000011920929,
-                                    "g": 0.800000011920929,
-                                    "r": 0.800000011920929
-                                },
-                                "lightness": 1.0,
-                                "metallic": 0.0,
-                                "pixelShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "roughness": 0.3999999761581421,
-                                "saturation": 1.0,
-                                "shaderAsset": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                },
-                                "textures": [
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\enemy_01_Low\\Meta\\enemy_01_Low.asset.json"
-                                    },
-                                    {
-                                        "assetIndex": 0,
-                                        "assetPath": ""
-                                    }
-                                ],
-                                "vertexShader": {
-                                    "assetIndex": 0,
-                                    "assetPath": ""
-                                }
-                            }
-                        }
-                    },
-                    "type": "MaterialComponent"
-                }
-            ],
-            "name": "ZEnemy1"
         }
     ]
 }
