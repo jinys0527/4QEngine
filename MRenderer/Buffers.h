@@ -103,6 +103,7 @@ struct UIBuffer
 
 struct MaterialBuffer
 {
+	XMFLOAT4	Color{ 1.0f, 1.0f, 1.0f, 1.0f };
 	FLOAT		saturation = 1.0f;
 	FLOAT		lightness = 1.0f;
 	float		padding[2] = { 0,0 };

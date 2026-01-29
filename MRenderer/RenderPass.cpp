@@ -321,6 +321,18 @@ void RenderPass::SetOtherLights(const RenderData::FrameData& frame)
 	}
 }
 
+void RenderPass::SetMaterialCB(const RenderData::MaterialData& mat)
+{
+	//머티리얼 버퍼 업데이트
+	m_RenderContext.MatBuffer.Color = mat.baseColor;
+	m_RenderContext.MatBuffer.saturation = mat.saturation;
+	m_RenderContext.MatBuffer.lightness = mat.lightness;
+	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pMatB.Get(), &m_RenderContext.MatBuffer, sizeof(MaterialBuffer));
+	m_RenderContext.pDXDC.Get()->VSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
+	m_RenderContext.pDXDC.Get()->PSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
+
+}
+
 void RenderPass::SetVertex(const RenderData::RenderItem& item)
 {
 	const auto* vertexBuffers = m_RenderContext.vertexBuffers;

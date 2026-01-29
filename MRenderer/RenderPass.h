@@ -34,6 +34,7 @@ public:
 	virtual void SetCameraCB(const RenderData::FrameData& frame);
 	virtual void SetDirLight(const RenderData::FrameData& frame);
 	virtual void SetOtherLights(const RenderData::FrameData& frame);
+	virtual void SetMaterialCB(const RenderData::MaterialData& mat);
 
 	virtual void SetVertex(const RenderData::RenderItem& item);
 	virtual void DrawMesh(

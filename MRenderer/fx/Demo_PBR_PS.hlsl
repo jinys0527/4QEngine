@@ -9,10 +9,12 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float texRoughr = g_Roughness.Sample(smpWrap, input.uv).r;
     float texAOr = g_AO.Sample(smpWrap, input.uv).r;
     
+    
+    
     //감마
-    float alpha = texAlbedo.a;
+    float alpha = texAlbedo.a * matColor.a;
         
-    float3 baseColor = texAlbedo.rgb;
+    float3 baseColor = texAlbedo.rgb * matColor.rgb;
     float3 baseColorDiffuse = saturate(baseColor * lightness);
     baseColorDiffuse = AdjustSaturation(baseColorDiffuse, saturation);
 
@@ -20,7 +22,9 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float4 texMetal = texMetalr.xxxx;
     float4 texRough = texRoughr.xxxx;
     float4 texAO = texAOr.xxxx;
-        
+    
+
+    
     texRough = max(texRough, 0.04f); //GGX 안정을 위한 최소값 
     
     float3 T, B, N;
@@ -87,6 +91,9 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float4 envStrength = pow(saturate(1.0 - texRough), 2.0f);
     float mipLevel = texRough.r * 6.0f;
     float3 envColor = g_SkyBox.SampleLevel(smpClamp, eR, mipLevel).rgb;
+    
+    envColor = float3(0.125f, 0.125f, 0.125f);
+    envColor = float3(1, 1, 1);
     
     float3 envSpec = envColor * F.rgb;
     envSpec *= texMetal.r;
