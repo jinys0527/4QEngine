@@ -13,6 +13,6 @@ public:
 protected:
     bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
-        return layer == RenderData::RefractionItems;
+        return layer == RenderData::TransparentItems;
     }
 };

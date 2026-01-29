@@ -157,7 +157,7 @@ void BuildTBN(
 
     float3 n = texN.xyz * 2 - 1;
     //n.y = -n.y; // GL → DX
-    
+        
     float3x3 mTBN = float3x3(T, B, N);
     n = normalize(mul(n, mTBN));
 

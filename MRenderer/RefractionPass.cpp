@@ -7,8 +7,9 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
-    SetRenderTarget(m_RenderContext.pRTView_Refraction.Get(), nullptr);
-    //SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());        Opaque단계에서 처리
+    FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+    SetRenderTarget(m_RenderContext.pRTView_Refraction.Get(), nullptr, backcolor);
+    SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());        
     SetBlendState(BS::ALPHABLEND_WALL);
     SetRasterizerState(RS::CULLBACK);
     SetDepthStencilState(DS::DEPTH_OFF);

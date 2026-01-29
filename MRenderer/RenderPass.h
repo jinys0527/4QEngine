@@ -27,13 +27,14 @@ public:
 	void SetDepthStencilState(DS state);
 	void SetRasterizerState(RS state);
 	void SetSamplerState();
-	void SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview);
+	void SetRenderTarget(ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview, const FLOAT* clearColor);
 
 	virtual void SetBaseCB(const RenderData::RenderItem& item);
 	virtual void SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3& campos);
 	virtual void SetCameraCB(const RenderData::FrameData& frame);
 	virtual void SetDirLight(const RenderData::FrameData& frame);
 	virtual void SetOtherLights(const RenderData::FrameData& frame);
+	virtual void SetMaterialCB(const RenderData::MaterialData& mat);
 
 	virtual void SetVertex(const RenderData::RenderItem& item);
 	virtual void DrawMesh(

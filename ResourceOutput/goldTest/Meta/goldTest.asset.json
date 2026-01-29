@@ -1,0 +1,18 @@
+{
+  "animations": [],
+  "files": {
+    "materials": "Mats/goldTest.matbin",
+    "skeleton": "Skels/goldTest.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/goldTest.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "goldTest",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  }
+}
