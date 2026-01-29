@@ -22,6 +22,24 @@
 #include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
 #include <fstream>
+#include "EnemyComponent.h"
+#include "EnemyMovementComponent.h"
+#include "EnemyStatComponent.h"
+#include "EnemyControllerComponent.h"
+#include "MeshComponent.h"
+#include "PlayerCombatFSMComponent.h"
+#include "PlayerComponent.h"
+#include "PlayerDoorFSMComponent.h"
+#include "PlayerInventoryFSMComponent.h"
+#include "PlayerMoveFSMComponent.h"
+#include "PlayerMovementComponent.h"
+#include "PlayerPushFSMComponent.h"
+#include "PlayerShopFSMComponent.h"
+#include "PlayerFSMComponent.h"
+#include "PlayerStatComponent.h"
+#include "SkinningAnimationComponent.h"
+#include "AnimFSMComponent.h"
+#include <type_traits>
 
 #ifdef _DEBUG
 namespace
@@ -939,6 +957,62 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	//UIManager에서 UI Data 가공예정
 }
 
+void Scene::EnsureAutoComponentsForSave()
+{
+	auto addIfMissing = [](GameObject& object, auto* tag) {
+		using ComponentType = std::remove_pointer_t<decltype(tag)>;
+		if (!object.HasComponent<ComponentType>())
+		{
+			object.AddComponent<ComponentType>();
+		}
+		};
+
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		if (gameObject->GetComponent<MeshRenderer>())
+		{
+			addIfMissing(*gameObject, static_cast<MeshComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<MaterialComponent*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<SkeletalMeshRenderer>())
+		{
+			addIfMissing(*gameObject, static_cast<SkeletalMeshComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<MaterialComponent*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<SkinningAnimationComponent>())
+		{
+			addIfMissing(*gameObject, static_cast<SkeletalMeshComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<MaterialComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<AnimFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<SkeletalMeshRenderer*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<PlayerComponent>())
+		{
+			addIfMissing(*gameObject, static_cast<PlayerStatComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerMovementComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerMoveFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerPushFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerCombatFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerInventoryFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerShopFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerDoorFSMComponent*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<EnemyComponent>())
+		{
+			addIfMissing(*gameObject, static_cast<EnemyStatComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<EnemyMovementComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<EnemyControllerComponent*>(nullptr));
+		}
+	}
+}
 void Scene::SetGameManager(GameManager* gameManager)
 {
 	m_GameManager = gameManager;

@@ -31,7 +31,9 @@ private:
 	float m_DragSpeed = 0.01f;
 
 	bool  m_IsDragging = false;
-	bool m_HasDragRay = false;
+	bool  m_HasDragRay = false;
+	bool  m_MoveTargetValid = false;
+	bool  m_MoveSelecting = false;
 	DirectX::XMFLOAT3 m_DragRayOrigin{ 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_DragRayDir   { 0.0f, 0.0f, 0.0f };
 	// 바닥 평면 기반 오프셋/고정 Y

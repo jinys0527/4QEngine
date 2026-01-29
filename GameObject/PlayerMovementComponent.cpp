@@ -12,6 +12,8 @@
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
 #include "GridSystemComponent.h"
+#include "PlayerMoveFSMComponent.h"
+#include "PlayerFSMComponent.h"
 #include "GameState.h"
 //#include <cfloat>
 
@@ -99,6 +101,40 @@ void PlayerMovementComponent::Start()
 	}
 }
 
+namespace
+{
+	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName)
+			return;
+
+		if (auto* fsm = owner->GetComponent<PlayerFSMComponent>())
+		{
+			fsm->DispatchEvent(eventName);
+		}
+	}
+
+	void DispatchMoveEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName)
+			return;
+
+		if (auto* fsm = owner->GetComponent<PlayerMoveFSMComponent>())
+		{
+			fsm->DispatchEvent(eventName);
+		}
+	}
+
+	void DispatchMoveTargetEvent(Object* owner, bool isValid, bool& wasValid)
+	{
+		if (isValid == wasValid)
+			return;
+
+		wasValid = isValid;
+		DispatchMoveEvent(owner, isValid ? "Move_PointValid" : "Move_PointInvalid");
+	}
+}
+
 void PlayerMovementComponent::Update(float deltaTime)
 {
 
@@ -118,48 +154,37 @@ void PlayerMovementComponent::Update(float deltaTime)
 
 	float nodeHitT = 0.0f;
 	NodeComponent* targetNode = FindClosestNodeHit(scene, m_DragRayOrigin, m_DragRayDir, nodeHitT);
-	if (!targetNode)
+
+	bool isValidTarget = false;
+	if (targetNode && targetNode->GetIsMoveable() && targetNode->IsInMoveRange())
 	{
-		m_CurrentTargetNode = nullptr;
-		return;
+		const auto state = targetNode->GetState();
+		if (state == NodeState::Empty || state == NodeState::HasPlayer)
+		{
+			auto* targetOwner = targetNode->GetOwner();
+			auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
+			if (targetTransform)
+			{
+				const auto nodePos = targetTransform->GetPosition();
+				DirectX::XMFLOAT3 newPos{
+					nodePos.x + m_DragOffset.x,
+					nodePos.y + m_DragOffset.y,
+					nodePos.z + m_DragOffset.z
+				};
+
+				transComp->SetPosition(newPos);
+				m_CurrentTargetNode = targetNode;
+				isValidTarget = true;
+			}
+		}
 	}
 
-	if (!targetNode->GetIsMoveable())
+	if (!isValidTarget)
 	{
 		m_CurrentTargetNode = nullptr;
-		return;
 	}
 
-	if (!targetNode->IsInMoveRange())
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	const auto state = targetNode->GetState();
-	if (state != NodeState::Empty && state != NodeState::HasPlayer)
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	auto* targetOwner = targetNode->GetOwner();
-	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
-	if (!targetTransform)
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	const auto nodePos = targetTransform->GetPosition();
-	DirectX::XMFLOAT3 newPos{
-		nodePos.x + m_DragOffset.x,
-		nodePos.y + m_DragOffset.y,
-		nodePos.z + m_DragOffset.z
-	};
-
-	transComp->SetPosition(newPos);
-	m_CurrentTargetNode = targetNode;
+	DispatchMoveTargetEvent(owner, isValidTarget, m_MoveTargetValid);
 }
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)
@@ -203,6 +228,10 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 				m_IsDragging = false;
 				m_HasDragRay = false;
 				m_CurrentTargetNode = nullptr;
+				m_MoveSelecting = false;
+				m_MoveTargetValid = false;
+				DispatchPlayerStateEvent(owner, "Move_Cancel");
+				DispatchMoveEvent(owner, "Move_Cancel");
 			}
 			return;
 		}
@@ -213,13 +242,28 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			if (!consumed)
 			{
 				transComp->SetPosition(m_DragStartPos);
+				DispatchPlayerStateEvent(owner, "Move_Cancel");
+				DispatchMoveEvent(owner, "Move_Cancel");
+			}
+			else
+			{
+				DispatchMoveEvent(owner, "Move_Confirm");
+				DispatchMoveEvent(owner, "Move_Complete");
+				DispatchPlayerStateEvent(owner, "Move_Complete");
 			}
 		}
+		else if (m_MoveSelecting)
+		{
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+		}
 
-		m_IsDragging = false;
-		m_HasDragRay = false;
+		m_IsDragging		= false;
+		m_HasDragRay		= false;
 		m_CurrentTargetNode = nullptr;
-		m_DragStartNode = nullptr;
+		m_DragStartNode	    = nullptr;
+		m_MoveSelecting     = false;
+		m_MoveTargetValid   = false;
 		return;
 	}
 
@@ -310,6 +354,11 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 				m_DragStartNode = m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() });
 			}
 		}
+
+		m_MoveSelecting = true;
+		m_MoveTargetValid = false;
+		DispatchPlayerStateEvent(owner, "Move_Start");
+		DispatchMoveEvent(owner, "Move_Select");
 
 		return;
 	}

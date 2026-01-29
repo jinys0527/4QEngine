@@ -27,6 +27,13 @@
 #include "StatComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyStatComponent.h"
+#include "PlayerFSMComponent.h"
+#include "PlayerMoveFSMComponent.h"
+#include "PlayerShopFSMComponent.h"
+#include "PlayerPushFSMComponent.h"
+#include "PlayerCombatFSMComponent.h"
+#include "PlayerInventoryFSMComponent.h"
+#include "PlayerDoorFSMComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -66,12 +73,20 @@ extern "C" {
 	void Link_PlayerStatComponent();
 	void Link_EnemyStatComponent();
 	void Link_EnemyControllerComponent();
+	void Link_PlayerFSMComponent();
+	void Link_PlayerMoveFSMComponent();
+	void Link_PlayerShopFSMComponent();
+	void Link_PlayerPushFSMComponent();
+	void Link_PlayerCombatFSMComponent();
+	void Link_PlayerInventoryFSMComponent();
+	void Link_PlayerDoorFSMComponent();
 }
 
 void RegisterUIFSMDefinitions();
 void RegisterCollisionFSMDefinitions();
 void RegisterAnimFSMDefinitions();
 void RegisterFSMBaseDefinitions();
+void RegisterPlayerFSMDefinitions();
 
 //해당 함수는 client.exe에서 한번 호출로 component들의 obj 를 가져올 명분제공
 void LinkEngineComponents() {
@@ -101,7 +116,7 @@ void LinkEngineComponents() {
 	RegisterUIFSMDefinitions();
 	RegisterCollisionFSMDefinitions();
 	RegisterAnimFSMDefinitions();
-
+	RegisterPlayerFSMDefinitions();
 
 	//User Defined
 	Link_SceneChangeTestComponent();
@@ -116,4 +131,11 @@ void LinkEngineComponents() {
 	Link_PlayerStatComponent();
 	Link_EnemyStatComponent();
 	Link_EnemyControllerComponent();
+	Link_PlayerFSMComponent();
+	Link_PlayerMoveFSMComponent();
+	Link_PlayerShopFSMComponent();
+	Link_PlayerPushFSMComponent();
+	Link_PlayerCombatFSMComponent();
+	Link_PlayerInventoryFSMComponent();
+	Link_PlayerDoorFSMComponent();
 }
