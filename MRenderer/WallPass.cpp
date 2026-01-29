@@ -35,8 +35,8 @@ void WallPass::Execute(const RenderData::FrameData & frame)
         const auto* vertexShaders = m_RenderContext.vertexShaders;
         const auto* pixelShaders = m_RenderContext.pixelShaders;
 
-        ID3D11VertexShader* vertexShader = m_RenderContext.VS.Get();
-        ID3D11PixelShader* pixelShader = m_RenderContext.PS.Get();
+        ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
+        ID3D11PixelShader* pixelShader = m_RenderContext.PS_PBR.Get();
 
         const RenderData::MaterialData* mat = nullptr;
         if (item.useMaterialOverrides)
@@ -47,6 +47,13 @@ void WallPass::Execute(const RenderData::FrameData & frame)
         {
             mat = m_AssetLoader.GetMaterials().Get(item.material);
         }
+
+        if (mat)
+        {
+            SetMaterialCB(*mat);
+
+        }
+
 
         if (textures && mat)
         {

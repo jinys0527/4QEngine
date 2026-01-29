@@ -6,7 +6,8 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 #pragma region Init
     ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
     dxdc->PSSetShaderResources(0, 128, nullSRVs);
-    SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
+	FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+    SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr, backcolor);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ALPHABLEND);
     SetRasterizerState(RS::SOLID);

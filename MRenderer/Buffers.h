@@ -5,6 +5,24 @@
 #include <unordered_map>
 #include <functional>
 
+enum class EmissiveLevel
+{
+	HALF = 0,
+	HALF2,
+	HALF3,
+	COUNT
+};
+
+enum class BlurLevel
+{
+	HALF = 0,
+	HALF2,
+	HALF3,
+	HALF4,
+
+	COUNT
+};
+
 //기본 상수 버퍼
 struct BaseConstBuffer
 {
@@ -12,7 +30,9 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
 	XMFLOAT2		ScreenSize{ 1920,1080 };
-	float			padding[2]{ 0,0 };
+	//플레이어 위치를 넘겨주는(투영공간)
+	XMFLOAT2		PlayerPos{ 0,0 };
+	
 };
 
 struct CameraConstBuffer
@@ -26,6 +46,7 @@ struct CameraConstBuffer
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
 	//float		padding = 0.0f;
 	float dTime = 0.0f;
+	XMFLOAT4	camParams = { 0,0,0,0 };
 };
 
 struct Light
@@ -82,10 +103,12 @@ struct UIBuffer
 
 struct MaterialBuffer
 {
+	XMFLOAT4	Color{ 1.0f, 1.0f, 1.0f, 1.0f };
 	FLOAT		saturation = 1.0f;
 	FLOAT		lightness = 1.0f;
 	float		padding[2] = { 0,0 };
 };
+
 
 struct VertexShaderResources
 {
@@ -133,8 +156,8 @@ struct RenderContext
 	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
-	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
-	ComPtr<ID3D11InputLayout> InputLayout_P = nullptr;
+	ComPtr<ID3D11InputLayout> InputLayout;
+	ComPtr<ID3D11InputLayout> InputLayout_P;
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
@@ -191,14 +214,29 @@ struct RenderContext
 	ComPtr<ID3D11RenderTargetView>		pRTView_Post;
 
 	//BlurPass용
-	ComPtr<ID3D11Texture2D>				pRTScene_Blur;
-	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
-	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
+	ComPtr<ID3D11Texture2D>				pRTScene_BlurOrigin;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_BlurOrigin;
+	ComPtr<ID3D11RenderTargetView>		pRTView_BlurOrigin;
+
+	ComPtr<ID3D11Texture2D>*				pRTScene_Blur;
+	ComPtr<ID3D11ShaderResourceView>*		pTexRvScene_Blur;
+	ComPtr<ID3D11RenderTargetView>*			pRTView_Blur;
+
 
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
+
+	//Emissive용
+	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_EmissiveOrigin;
+	ComPtr<ID3D11RenderTargetView>		pRTView_EmissiveOrigin;
+
+	ComPtr<ID3D11Texture2D>*              pRTScene_Emissive;
+	ComPtr<ID3D11ShaderResourceView>*     pTexRvScene_Emissive;
+	ComPtr<ID3D11RenderTargetView>*       pRTView_Emissive;
+
 
 
 	std::function<void()> DrawFullscreenQuad;
@@ -227,4 +265,8 @@ struct RenderContext
 
 	//텍스트 그리기
 	std::function<void(float width, float height)> MyDrawText;
+
+	//플레이어 위치 테스트
+	XMFLOAT2 playerPos{ 0,0 };
+	XMFLOAT4 camParams{ 0,0,0,0 };
 };

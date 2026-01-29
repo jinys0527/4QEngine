@@ -6,7 +6,8 @@ void DepthPass::Execute(const RenderData::FrameData& frame)
 {
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
-    SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Depth.Get());
+    FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+    SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::DEFAULT);
     SetRasterizerState(RS::CULLBACK);

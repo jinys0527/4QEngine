@@ -1,0 +1,18 @@
+{
+  "animations": [],
+  "files": {
+    "materials": "Mats/fireDoor.matbin",
+    "skeleton": "Skels/fireDoor.skelbin"
+  },
+  "meshes": [
+    {
+      "file": "Meshes/fireDoor.meshbin",
+      "isSkinned": false
+    }
+  ],
+  "name": "fireDoor",
+  "path": {
+    "baseDir": "..",
+    "textureDir": "Textures"
+  }
+}

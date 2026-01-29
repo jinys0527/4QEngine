@@ -2668,6 +2668,25 @@ void EditorApplication::DrawResourceBrowser()
 	ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_Once);
 	ImGui::Begin("Resource Browser");
 
+	auto buildSortedEntries = [](const auto& store)
+		{
+			using HandleType = std::decay_t<decltype(store.GetKeyToHandle().begin()->second)>;
+			std::vector<std::pair<std::string, HandleType>> entries;
+			const auto& keyToHandle = store.GetKeyToHandle();
+			entries.reserve(keyToHandle.size());
+			for (const auto& [key, handle] : keyToHandle)
+			{
+				const std::string* displayName = store.GetDisplayName(handle);
+				std::string name = (displayName && !displayName->empty()) ? *displayName : key;
+				entries.emplace_back(std::move(name), handle);
+			}
+			std::sort(entries.begin(), entries.end(), [](const auto& left, const auto& right)
+				{
+					return left.first < right.first;
+				});
+			return entries;
+		};
+
 	if (ImGui::BeginTabBar("ResourceTabs"))
 	{
 		ImVec2 avail = ImGui::GetContentRegionAvail();
@@ -2676,18 +2695,16 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("MeshesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& meshes = m_AssetLoader->GetMeshes().GetKeyToHandle();
-			for (const auto& [key, handle] : meshes)
+			const auto meshes = buildSortedEntries(m_AssetLoader->GetMeshes());
+			for (const auto& [name, handle] : meshes)
 			{
-				const std::string* displayName = m_AssetLoader->GetMeshes().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_MESH", &handle, sizeof(MeshHandle));
-					ImGui::Text("Mesh : %s", name);
+					ImGui::Text("Mesh : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();
@@ -2704,13 +2721,11 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("MaterialsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& materials = m_AssetLoader->GetMaterials().GetKeyToHandle();
-			for (const auto& [key, handle] : materials)
+			const auto materials = buildSortedEntries(m_AssetLoader->GetMaterials());
+			for (const auto& [name, handle] : materials)
 			{
-				const std::string* displayName = m_AssetLoader->GetMaterials().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
@@ -2732,18 +2747,16 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("TexturesScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& textures = m_AssetLoader->GetTextures().GetKeyToHandle();
-			for (const auto& [key, handle] : textures)
+			const auto textures = buildSortedEntries(m_AssetLoader->GetTextures());
+			for (const auto& [name, handle] : textures) 
 			{
-				const std::string* displayName = m_AssetLoader->GetTextures().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_TEXTURE", &handle, sizeof(TextureHandle));
-					ImGui::Text("Texture : %s", name);
+					ImGui::Text("Texture : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();
@@ -2760,18 +2773,16 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("SkeletonsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& skeletons = m_AssetLoader->GetSkeletons().GetKeyToHandle();
-			for (const auto& [key, handle] : skeletons)
+			const auto skeletons = buildSortedEntries(m_AssetLoader->GetSkeletons());
+			for (const auto& [name, handle] : skeletons)
 			{
-				const std::string* displayName = m_AssetLoader->GetSkeletons().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_SKELETON", &handle, sizeof(SkeletonHandle));
-					ImGui::Text("Skeleton : %s", name);
+					ImGui::Text("Skeleton : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();
@@ -2788,18 +2799,16 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("AnimationsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& animations = m_AssetLoader->GetAnimations().GetKeyToHandle();
-			for (const auto& [key, handle] : animations)
+			const auto animations = buildSortedEntries(m_AssetLoader->GetAnimations());
+			for (const auto& [name, handle] : animations) 
 			{
-				const std::string* displayName = m_AssetLoader->GetAnimations().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_ANIMATION", &handle, sizeof(AnimationHandle));
-					ImGui::Text("Animation : %s", name);
+					ImGui::Text("Animation : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();
@@ -2817,18 +2826,16 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("VertexShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& shaders = m_AssetLoader->GetVertexShaders().GetKeyToHandle();
-			for (const auto& [key, handle] : shaders)
+			const auto shaders = buildSortedEntries(m_AssetLoader->GetVertexShaders());
+			for (const auto& [name, handle] : shaders) 
 			{
-				const std::string* displayName = m_AssetLoader->GetVertexShaders().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_VERTEX_SHADER", &handle, sizeof(VertexShaderHandle));
-					ImGui::Text("Vertex Shader : %s", name);
+					ImGui::Text("Vertex Shader : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();
@@ -2845,18 +2852,16 @@ void EditorApplication::DrawResourceBrowser()
 		{
 			ImGui::BeginChild("PixelShadersScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& shaders = m_AssetLoader->GetPixelShaders().GetKeyToHandle();
-			for (const auto& [key, handle] : shaders)
+			const auto shaders = buildSortedEntries(m_AssetLoader->GetPixelShaders());
+			for (const auto& [name, handle] : shaders) 
 			{
-				const std::string* displayName = m_AssetLoader->GetPixelShaders().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_PIXEL_SHADER", &handle, sizeof(PixelShaderHandle));
-					ImGui::Text("Pixel Shader : %s", name);
+					ImGui::Text("Pixel Shader : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();
@@ -2959,18 +2964,16 @@ void EditorApplication::DrawResourceBrowser()
 
 			ImGui::BeginChild("ShaderAssetsScroll", ImVec2(avail.x, avail.y), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-			const auto& shaderAssets = m_AssetLoader->GetShaderAssets().GetKeyToHandle();
-			for (const auto& [key, handle] : shaderAssets)
+			const auto shaderAssets = buildSortedEntries(m_AssetLoader->GetShaderAssets());
+			for (const auto& [name, handle] : shaderAssets) 
 			{
-				const std::string* displayName = m_AssetLoader->GetShaderAssets().GetDisplayName(handle);
-				const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : key.c_str();
 				ImGui::PushID((int)handle.id); // 충돌 방지
-				ImGui::Selectable(name);
+				ImGui::Selectable(name.c_str());
 
 				if (ImGui::BeginDragDropSource())
 				{
 					ImGui::SetDragDropPayload("RESOURCE_SHADER_ASSET", &handle, sizeof(ShaderAssetHandle));
-					ImGui::Text("Shader Asset : %s", name);
+					ImGui::Text("Shader Asset : %s", name.c_str());
 					ImGui::EndDragDropSource();
 				}
 				ImGui::Separator();

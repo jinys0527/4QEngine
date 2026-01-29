@@ -8,7 +8,7 @@ cbuffer BaseBuffer : register(b0)
     matrix mWorldInvTranspose;
     matrix mTextureMask;
     float2 screenSize;
-    float2 padding;
+    float2 playerPos;           //x,y값은 uv좌표
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -21,6 +21,7 @@ cbuffer CameraBuffer : register(b1)
     float3 cameraPos;
     //float campadding;
     float dTime;
+    float4 camParams; //x: near, y: far, z: focusZ(초점거리), w: focalRange(초점오차?범위)
 };
 
 struct Light
@@ -64,6 +65,7 @@ cbuffer SkinningBuffer : register(b3)
 
 cbuffer MaterialBuffer : register(b5)
 {
+    float4 matColor;
     float saturation;
     float lightness;
     float2 matpadding;
@@ -162,34 +164,48 @@ struct VSOutputLine
 };
 
 //ShaderResourceView
-Texture2D g_RTView : register(t0);
-Texture2D g_Blur : register(t1);
-Texture2D g_ShadowMap : register(t2);
-TextureCube g_SkyBox : register(t3);
-Texture2D g_DepthMap : register(t4);
-Texture2D g_Mask_Wall : register(t5);
-Texture2D g_WaterNoise : register(t6);
+Texture2D g_RTView              : register(t0);
+//Texture2D g_Blur                : register(t1);
+Texture2D g_ShadowMap           : register(t2);
+TextureCube g_SkyBox            : register(t3);
+Texture2D g_DepthMap            : register(t4);
+Texture2D g_Mask_Wall           : register(t5);
+Texture2D g_WaterNoise          : register(t6);
+Texture2D g_RTEmissive          : register(t7);
+Texture2D g_RTEmissiveHalf      : register(t8);
+Texture2D g_RTEmissiveHalf2     : register(t9);
+Texture2D g_RTEmissiveHalf3     : register(t10);
 
 
-Texture2D g_Albedo : register(t11);
-Texture2D g_Normal : register(t12);
-Texture2D g_Metalic : register(t13);
-Texture2D g_Roughness : register(t14);
-Texture2D g_AO : register(t15);
-Texture2D g_Env : register(t16);
+Texture2D g_Albedo              : register(t11);
+Texture2D g_Normal              : register(t12);
+Texture2D g_Metalic             : register(t13);
+Texture2D g_Roughness           : register(t14);
+Texture2D g_AO                  : register(t15);
+Texture2D g_Env                 : register(t16);
+Texture2D g_Emissive            : register(t17);
 
-texture2D g_UI_01 : register(t21);
-texture2D g_UI_02 : register(t22);
-texture2D g_UI_03 : register(t23);
-texture2D g_UI_04 : register(t24);
-texture2D g_UI_05 : register(t25);
+Texture2D g_UI_01               : register(t21);
+Texture2D g_UI_02               : register(t22);
+Texture2D g_UI_03               : register(t23);
+Texture2D g_UI_04               : register(t24);
+Texture2D g_UI_05               : register(t25);
+
+Texture2D g_Blur                : register(t31);
+Texture2D g_BlurHalf            : register(t32);
+Texture2D g_BlurHalf2           : register(t33);
+Texture2D g_BlurHalf3           : register(t34);
+Texture2D g_BlurHalf4           : register(t35);
+
+
+
 
 //Sampler State
-SamplerState smpWrap : register(s0);
-SamplerState smpMirror : register(s1);
-SamplerState smpClamp : register(s2);
-SamplerState smpBorder : register(s3);
-SamplerState smpBorderShadow : register(s4);
+SamplerState smpWrap            : register(s0);
+SamplerState smpMirror          : register(s1);
+SamplerState smpClamp           : register(s2);
+SamplerState smpBorder          : register(s3);
+SamplerState smpBorderShadow    : register(s4);
 
 
 #endif
