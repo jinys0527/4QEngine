@@ -83,7 +83,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float4 lit = dirLit + ptLit + spotLit;
     
     //env
-    float4 F0 = ComputeF0(float4(albedoColor, 1.0f), texMetal, specParam);
+    float4 F0 = ComputeF0(float4(baseColorDiffuse, 1.0f), texMetal, specParam);
     float ndotv = saturate(dot(eN, eL));
     float4 F = UE_Fresnel_Schlick(F0, ndotv);
     

@@ -79,12 +79,7 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
         }
 		if (mat)
 		{
-			m_RenderContext.MatBuffer.baseColor = mat->baseColor;
-			m_RenderContext.MatBuffer.saturation = mat->saturation;
-			m_RenderContext.MatBuffer.lightness = mat->lightness;
-			UpdateDynamicBuffer(dxdc, m_RenderContext.pMatB.Get(), &m_RenderContext.MatBuffer, sizeof(MaterialBuffer));
-			dxdc->VSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
-			dxdc->PSSetConstantBuffers(5, 1, m_RenderContext.pMatB.GetAddressOf());
+            SetMaterialCB(*mat);
 		}
 
         if (textures && mat)
