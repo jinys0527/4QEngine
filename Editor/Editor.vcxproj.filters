@@ -35,17 +35,11 @@
     <ClInclude Include="Snapshot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ManualTestRunner.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DiceSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,10 +64,10 @@
     <ClCompile Include="UndoManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ManualTestRunner.cpp">
+    <ClCompile Include="DiceSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DiceSystem.cpp">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

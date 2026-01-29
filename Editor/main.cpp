@@ -12,7 +12,6 @@
 #include "UIManager.h"
 #include "ServiceRegistry.h"
 #include "RandomMachine.h"
-#include "ManualTestRunner.h"
 #include "DiceSystem.h"
 #include "LogSystem.h"
 #include "LootRoller.h"
