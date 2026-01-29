@@ -72,6 +72,6 @@ private:
 	std::unordered_map<AxialKey, NodeComponent*, AxialKeyHash> m_NodesByAxial;
 	int m_NodesCount = 0; //for Debug
 
-	float m_InnerRadius = 0.866f; // 리소스 바뀌면 1로 변경 (현재는 외접기준 1)
+	float m_InnerRadius = 1.0f; // 리소스 바뀌면 1로 변경 (현재는 외접기준 1)
 	float m_MoveRangePulseTime = 0.0f;
 };
