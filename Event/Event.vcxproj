@@ -308,6 +308,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CombatEvents.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="EventDispatcher.h" />
     <ClInclude Include="IEventListener.h" />

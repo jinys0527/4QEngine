@@ -51,10 +51,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AIController.h" />
     <ClInclude Include="Blackboard.h" />
+    <ClInclude Include="BlackboardConditionTask.h" />
+    <ClInclude Include="BlackboardKeys.h" />
     <ClInclude Include="BTExecutor.h" />
     <ClInclude Include="BTInstance.h" />
     <ClInclude Include="BTStatus.h" />
+    <ClInclude Include="CombatBehaviorServices.h" />
+    <ClInclude Include="CombatBehaviorTasks.h" />
+    <ClInclude Include="CombatBehaviorTreeFactory.h" />
     <ClInclude Include="Composite.h" />
     <ClInclude Include="Decorator.h" />
     <ClInclude Include="FSM.h" />
@@ -66,8 +72,13 @@
     <ClInclude Include="Task.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AIController.cpp" />
     <ClCompile Include="Blackboard.cpp" />
+    <ClCompile Include="BlackboardConditionTask.cpp" />
     <ClCompile Include="BTExecutor.cpp" />
+    <ClCompile Include="CombatBehaviorServices.cpp" />
+    <ClCompile Include="CombatBehaviorTasks.cpp" />
+    <ClCompile Include="CombatBehaviorTreeFactory.cpp" />
     <ClCompile Include="Composite.cpp" />
     <ClCompile Include="Decorator.cpp" />
     <ClCompile Include="FSM.cpp" />
@@ -77,6 +88,11 @@
     <ClCompile Include="Sequance.cpp" />
     <ClCompile Include="Service.cpp" />
     <ClCompile Include="Task.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Event\Event.vcxproj">
+      <Project>{f19d0681-a873-4297-bb00-e750294995e9}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -263,8 +279,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Event;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -278,8 +293,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Event;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -293,8 +307,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Event;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -310,8 +323,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Event;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -327,8 +339,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Event;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -338,6 +349,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Event;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

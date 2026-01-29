@@ -2,54 +2,65 @@
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "GameObject.h"
-#include "ServiceRegistry.h"
-#include "Event.h"
 #include "Scene.h"
 #include "TransformComponent.h"
 #include "NodeComponent.h"
-#include "GameManager.h"
 #include "GridSystemComponent.h"
 #include "EnemyComponent.h"
 
 REGISTER_COMPONENT(EnemyMovementComponent)
 
+EnemyMovementComponent::~EnemyMovementComponent()
+{
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+}
+
 void EnemyMovementComponent::Start()
 {
 	GetSystem();
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 }
 
 void EnemyMovementComponent::Update(float deltaTime)
 {
-	auto* scene = GetOwner()->GetScene();
-	auto& services = scene->GetServices();
-	auto& gameManager = services.Get<GameManager>();
-
-	const auto currentTurn = gameManager.GetTurn();
-
-	if (m_LastTurn != currentTurn) {
-		
-		m_LastTurn = currentTurn;
-		if (currentTurn == Turn::EnemyTurn)
-		{
-			// 안움직 상태 (안움직여도 되는 경우도 고려해야 함)
-			m_IsMoveComplete = false;
-		}
+	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
+	if (!enemy)
+	{
+		return;
 	}
+
+	const auto currentTurn = enemy->GetCurrentTurn();
 
 	// Move
 	if (currentTurn != Turn::EnemyTurn) {
 		return;
 	}
 
-	if (!m_IsMoveComplete) {
+	if (!m_IsMoveComplete && enemy->ConsumeMoveRequest()) {
 		Move();
+		m_IsMoveComplete = true;
 	}
-	m_IsMoveComplete = true;
+
 }
 
 void EnemyMovementComponent::OnEvent(EventType type, const void* data)
 {
+	if (type != EventType::TurnChanged || !data)
+	{
+		return;
+	}
 
+	const auto* payload = static_cast<const Events::TurnChanged*>(data);
+	if (!payload)
+	{
+		return;
+	}
+
+	const auto turn = static_cast<Turn>(payload->turn);
+	if (turn == Turn::EnemyTurn)
+	{
+		m_IsMoveComplete = false;
+	}
 }
 
 // 움직임
@@ -128,6 +139,4 @@ void EnemyMovementComponent::GetSystem()
 			m_GridSystem = grid;
 		}
 	}
-
-
 }

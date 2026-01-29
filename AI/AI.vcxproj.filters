@@ -63,6 +63,24 @@
     <ClInclude Include="Composite.h">
       <Filter>Behavior Tree\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AIController.h">
+      <Filter>Behavior Tree\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BlackboardConditionTask.h">
+      <Filter>Behavior Tree\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BlackboardKeys.h">
+      <Filter>Behavior Tree\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatBehaviorServices.h">
+      <Filter>Behavior Tree\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatBehaviorTasks.h">
+      <Filter>Behavior Tree\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatBehaviorTreeFactory.h">
+      <Filter>Behavior Tree\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FSM.cpp">
@@ -96,6 +114,21 @@
       <Filter>Behavior Tree\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Composite.cpp">
+      <Filter>Behavior Tree\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AIController.cpp">
+      <Filter>Behavior Tree\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BlackboardConditionTask.cpp">
+      <Filter>Behavior Tree\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatBehaviorServices.cpp">
+      <Filter>Behavior Tree\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatBehaviorTasks.cpp">
+      <Filter>Behavior Tree\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatBehaviorTreeFactory.cpp">
       <Filter>Behavior Tree\Source Files</Filter>
     </ClCompile>
   </ItemGroup>

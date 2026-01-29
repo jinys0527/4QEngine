@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "Component.h"
+#include "GameState.h"
 
-class GameManager;
 class GridSystemComponent;
 class EnemyComponent;
 
@@ -13,7 +13,7 @@ public:
 	const char* GetTypeName() const override;
 
 	EnemyControllerComponent() = default;
-	virtual ~EnemyControllerComponent() = default;
+	virtual ~EnemyControllerComponent();
 
 	void Start() override;
 	void Update(float deltaTime) override;
@@ -25,6 +25,5 @@ private:
 	bool CheckActiveEnemies();
 
 	GridSystemComponent* m_GridSystem = nullptr;
-	GameManager* m_GameManager = nullptr;
-
+	bool m_TurnEndRequested = false;
 };

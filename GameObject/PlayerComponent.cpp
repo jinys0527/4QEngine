@@ -3,7 +3,6 @@
 #include "Object.h"
 #include "GameObject.h"
 #include "Scene.h"
-#include "ServiceRegistry.h"
 #include "GridSystemComponent.h"
 #include <cmath>
 
@@ -31,7 +30,8 @@ PlayerComponent::PlayerComponent() {
 }
 
 PlayerComponent::~PlayerComponent() {
-	// Event Listener 쓰는 경우만
+	// Event Listener 쓰는 경우만	
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
 }
 
 void PlayerComponent::Start()
@@ -42,11 +42,7 @@ void PlayerComponent::Start()
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	if (!scene) { return; }
 
-	auto& service = scene->GetServices();
-	if (service.Has<GameManager>()) {
-		m_GameManager = &service.Get<GameManager>();
-		m_LastTurn = m_GameManager->GetTurn();
-	}
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 	const auto& objects = scene->GetGameObjects();
 
 	for (const auto& [name,object] : objects) {
@@ -70,51 +66,39 @@ void PlayerComponent::Update(float deltaTime) {
 		return;
 	}
 
-	if (!m_GameManager)
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<GameManager>())
-		{
-			m_GameManager = &services.Get<GameManager>();
-		}
-	}
-	if (!m_GameManager)
-	{
-		return;
-	}
-	//
-
-	const auto currentTurn = m_GameManager->GetTurn();
-
-	if (currentTurn != m_LastTurn)
-	{
-		m_LastTurn = currentTurn;
-		if (currentTurn == Turn::PlayerTurn)
-		{
-			ResetTurnResources();
-		}
-		// turn 종류에 따른 행동정의
-	}
-
-
 	//Player Turn 종료 조건
 
-	if (currentTurn == Turn::PlayerTurn) {
+	if (m_CurrentTurn == Turn::PlayerTurn) {
 		m_TurnElapsed += deltaTime;
 
-		// 조건 추가(행동력)
-		if (m_RemainMoveResource <= 0 || m_TurnElapsed >= m_PlayerTurnTime) {
+		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
 			//종료(턴 전환)
-			m_GameManager->SetTurn(Turn::EnemyTurn);
-			m_LastTurn = Turn::EnemyTurn;
+			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+			m_TurnEndRequested = true;
 		}
 	}
 }
 
 void PlayerComponent::OnEvent(EventType type, const void* data)
 {
+	if (type != EventType::TurnChanged || !data)
+	{
+		return;
+	}
 
+	const auto* payload = static_cast<const Events::TurnChanged*>(data);
+	if (!payload)
+	{
+		return;
+	}
 
+	m_CurrentTurn = static_cast<Turn>(payload->turn);
+	m_TurnElapsed = 0.0f;
+	m_TurnEndRequested = false;
+	if (m_CurrentTurn == Turn::PlayerTurn)
+	{
+		ResetTurnResources();
+	}
 }
 
 // 행동,이동력 초기화 // turn 초기화

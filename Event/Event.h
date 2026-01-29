@@ -22,4 +22,9 @@ namespace Events
 	{
 		std::string name;
 	};
+
+	struct TurnChanged
+	{
+		int turn = 0;
+	};
 }

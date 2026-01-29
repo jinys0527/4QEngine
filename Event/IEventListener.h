@@ -23,11 +23,26 @@ enum class EventType
 	UIDragged,
 	UIDoubleClicked,
 
+	//Combat
+	CombatEnter,
+	CombatExit,
+	CombatInitiativeBuilt,
+
 	//Collision
 	CollisionEnter,
 	CollisionStay,
 	CollisionExit,
 	CollisionTrigger,
+
+	//AI
+	AITurnEndRequested,
+	AIMeleeAttackRequested,
+	AIRangedAttackRequested,
+
+	//Turn
+	PlayerTurnEndRequested,
+	EnemyTurnEndRequested,
+	TurnChanged,
 
 	//Scene
 	SceneChangeRequested,

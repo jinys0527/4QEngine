@@ -85,7 +85,8 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 			return candidate;
 		}
 	}
-	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
+
+	return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠  <- 기본 리턴값 없어서 다시 주석 해제함
 }
 
 float NormalizeDegrees(float degrees)

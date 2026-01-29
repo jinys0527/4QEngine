@@ -11,7 +11,7 @@
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
-#include "GameManager.h"
+#include "GameState.h"
 //#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
@@ -177,11 +177,8 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	{
 		auto* player = owner->GetComponent<PlayerComponent>();
 		// Turn Check.
-		auto& service = scene->GetServices();
-		auto& gameManager = service.Get<GameManager>();
-
-		if (gameManager.GetTurn() != Turn::PlayerTurn) {
-
+		if(!player || player->GetCurrentTurn() != Turn::PlayerTurn)
+		{
 			if (m_IsDragging)
 			{
 				transComp->SetPosition(m_DragStartPos);
@@ -213,14 +210,10 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	// Logic
 	if (type == EventType::MouseLeftClick)
 	{
-		auto& services = scene->GetServices();
-
-		auto& gameManager = services.Get<GameManager>();
-		if (gameManager.GetTurn() != Turn::PlayerTurn)
-		{
+		auto* player = owner->GetComponent<PlayerComponent>();
+		if (!player || player->GetCurrentTurn() != Turn::PlayerTurn) 
 			return;
-		}
-
+	
 		Ray pickRay{};
 		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
 			return;

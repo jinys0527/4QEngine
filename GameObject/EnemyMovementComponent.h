@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "Component.h"
-#include "GameManager.h"
 #include <DirectXMath.h>
 
 class GridSystemComponent;
@@ -14,7 +13,7 @@ public:
 	const char* GetTypeName() const override;
 
 	EnemyMovementComponent()=default;
-	virtual ~EnemyMovementComponent() =default;
+	virtual ~EnemyMovementComponent();
 
 	void Start() override;
 
@@ -29,6 +28,4 @@ private:
 	void GetSystem();
 	bool m_IsMoveComplete = false;
 	GridSystemComponent* m_GridSystem = nullptr;
-	Turn m_LastTurn = Turn::PlayerTurn;
-
 };

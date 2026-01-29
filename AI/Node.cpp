@@ -105,6 +105,9 @@ void Node::TickServices(BTInstance& inst, Blackboard& bb)
 	}
 }
 
+Node::Node() = default;
+Node::~Node() = default;
+
 void Node::OnAbort(BTInstance& inst, Blackboard& bb)
 {
 	// 기본은 attachment만 리셋할 게 없음. 파생(composite/task)이 실제 abort 처리
