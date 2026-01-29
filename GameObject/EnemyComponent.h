@@ -7,6 +7,7 @@
 class AIController;
 class BTExecutor;
 class TransformComponent;
+class MaterialComponent;
 
 class EnemyComponent : public Component, public IEventListener {
 	friend class Editor;

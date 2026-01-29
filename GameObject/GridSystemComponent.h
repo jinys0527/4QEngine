@@ -57,6 +57,7 @@ private:
 	void ScanNodes(); // Scene 순회 후 Nodes 등록
 	void MakeGraph();// 위치기반 노드 연결
 	void UpdateMoveRange(NodeComponent* startNode, int range);
+	void UpdateMoveRangeMaterials(float pulse, bool enabled);
 	void UpdateActorPositions();
 	void UpdateActorNodeState(const AxialKey& previous, const AxialKey& current, NodeState state);
 	
@@ -72,4 +73,5 @@ private:
 	int m_NodesCount = 0; //for Debug
 
 	float m_InnerRadius = 0.866f; // 리소스 바뀌면 1로 변경 (현재는 외접기준 1)
+	float m_MoveRangePulseTime = 0.0f;
 };

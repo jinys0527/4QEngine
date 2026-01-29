@@ -11,10 +11,10 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //float4 texEnv;
     
     //감마
-    float alpha = texAlbedo.a;
-        
-    float3 baseColor = texAlbedo.rgb;
-    float3 baseColorDiffuse = saturate(baseColor * lightness);
+    float alpha = texAlbedo.a * baseColor.a;
+
+    float3 albedoColor = texAlbedo.rgb * baseColor.rgb;
+    float3 baseColorDiffuse = saturate(albedoColor * lightness);
     baseColorDiffuse = AdjustSaturation(baseColorDiffuse, saturation);
 
     float4 texAlbedo_Diff = float4(baseColorDiffuse, alpha);
@@ -79,7 +79,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float4 lit = dirLit + ptLit + spotLit;
     
     //env
-    float4 F0 = ComputeF0(float4(baseColor, 1.0f), texMetal, specParam);
+    float4 F0 = ComputeF0(float4(albedoColor, 1.0f), texMetal, specParam);
     float ndotv = saturate(dot(eN, eL));
     float4 F = UE_Fresnel_Schlick(F0, ndotv);
     

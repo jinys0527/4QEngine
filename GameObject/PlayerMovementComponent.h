@@ -2,7 +2,7 @@
 #include "Component.h"
 #include <DirectXMath.h>
 class NodeComponent;
-
+class GridSystemComponent;
 
 class PlayerMovementComponent : public Component, public IEventListener
 {
@@ -22,6 +22,9 @@ public:
 
 	void SetDragSpeed(const float& dragSpeed) { m_DragSpeed = dragSpeed; }
 	const float& GetDragSpeed() const { return m_DragSpeed; }
+	bool IsDragging() const { return m_IsDragging; }
+
+	NodeComponent* GetDragStartNode() const { return m_DragStartNode; }
 
 private:
 	// ProPerty
@@ -36,5 +39,7 @@ private:
 	DirectX::XMFLOAT3 m_DragStartPos{ 0.0f, 0.0f, 0.0f };
 	NodeComponent* m_PendingNode = nullptr;
 	NodeComponent* m_CurrentTargetNode = nullptr;
+	NodeComponent* m_DragStartNode = nullptr;
+	GridSystemComponent* m_GridSystem = nullptr;
 };
 

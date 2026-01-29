@@ -473,10 +473,10 @@ namespace
 
 void EditorApplication::HandleEditorViewportSelection()
 {
-	if (m_EditorState != EditorPlayState::Stop)
+	/*if (m_EditorState != EditorPlayState::Stop)
 	{
 		return;
-	}
+	}*/
 
 	if (!m_EditorViewport.HasViewportRect() || !m_EditorViewport.IsHovered())
 	{

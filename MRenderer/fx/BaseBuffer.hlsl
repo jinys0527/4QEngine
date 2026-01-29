@@ -64,6 +64,7 @@ cbuffer SkinningBuffer : register(b3)
 
 cbuffer MaterialBuffer : register(b5)
 {
+    float4 baseColor;
     float saturation;
     float lightness;
     float2 matpadding;

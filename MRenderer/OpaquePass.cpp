@@ -143,6 +143,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		if (mat)
 		{
 			//머티리얼 버퍼 업데이트
+			m_RenderContext.MatBuffer.baseColor = mat->baseColor;
 			m_RenderContext.MatBuffer.saturation = mat->saturation;
 			m_RenderContext.MatBuffer.lightness = mat->lightness;
 			UpdateDynamicBuffer(dxdc, m_RenderContext.pMatB.Get(), &m_RenderContext.MatBuffer, sizeof(MaterialBuffer));
