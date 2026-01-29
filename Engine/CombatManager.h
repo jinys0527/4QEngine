@@ -63,6 +63,9 @@ public:
 	void SetEventDispatcher(EventDispatcher* dispatcher) { m_EventDispatcher = dispatcher; }
 
 	Battle GetState() const { return m_State; }
+	const std::vector<int>& GetInitiativeOrder() const { return m_InitiativeOrder; }
+	int GetCurrentActorId() const;
+	std::size_t GetCurrentTurnIndex() const { return m_CurrentTurnIndex; }
 
 private:
 	void BuildInitiativeOrder();

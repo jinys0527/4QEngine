@@ -117,7 +117,7 @@ bool Load(const std::string& path,
           std::string* errorOut)
 {
     std::ifstream stream(path);
-    if (stream.is_open())
+    if (!stream.is_open())
     {
         if (errorOut)
         {

@@ -82,6 +82,15 @@ void CombatManager::UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining)
         ExitBattle();
 }
 
+int CombatManager::GetCurrentActorId() const
+{
+	if (m_InitiativeOrder.empty())
+	{
+		return 0;
+	}
+	return m_InitiativeOrder[m_CurrentTurnIndex];
+}
+
 void CombatManager::BuildInitiativeOrder()
 {
     m_InitiativeOrder.clear();

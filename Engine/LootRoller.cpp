@@ -56,10 +56,10 @@ std::optional<LootRollResult> LootRoller::RollDrop(const EnemyDefinition& enemy,
 
     DiceConfig rollConfig{ 1, totalWeightScaled, 0 };
     const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::Loot);
-    float cursor = 0.0f;
+    int cursor = 0;
     for (const auto& entry : table->entries)
     {
-        cursor += entry.weight;
+        cursor += ScaleWeight(entry.weight, weightScale);
         if (roll <= cursor)
         {
             if (enemy.id == 0)
