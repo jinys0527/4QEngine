@@ -54,7 +54,6 @@ void WallPass::Execute(const RenderData::FrameData & frame)
 
         }
 
-
         if (textures && mat)
         {
             if (mat->shaderAsset.IsValid())

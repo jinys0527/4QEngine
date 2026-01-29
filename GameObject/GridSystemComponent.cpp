@@ -10,6 +10,7 @@
 #include "NodeComponent.h"
 #include "GameObject.h"
 #include "PlayerComponent.h"
+#include "PlayerMovementComponent.h"
 #include "EnemyComponent.h"
 
 REGISTER_COMPONENT(GridSystemComponent)
@@ -94,11 +95,42 @@ void GridSystemComponent::Start()
 }
 
 void GridSystemComponent::Update(float deltaTime) {
-	(void)deltaTime;
 
 	UpdateActorPositions();
 	const int moveRange = m_Player ? m_Player->GetRemainMoveResource() : 0; // 남은 이동 자원 Get
-	UpdateMoveRange(m_PlayerNode, moveRange);
+
+	bool isDragging = false;
+	NodeComponent* rangeStartNode = m_PlayerNode;
+	if (m_Player)
+	{
+		auto* playerOwner = m_Player->GetOwner();
+		if (playerOwner)
+		{
+			if (auto* movement = playerOwner->GetComponent<PlayerMovementComponent>())
+			{
+				isDragging = movement->IsDragging();
+				if (isDragging && movement->GetDragStartNode())
+				{
+					rangeStartNode = movement->GetDragStartNode();
+				}
+			}
+		}
+	}
+
+	UpdateMoveRange(rangeStartNode, moveRange);
+
+	if (isDragging && moveRange > 0)
+	{
+		m_MoveRangePulseTime += deltaTime;
+		const float pulseSpeed = 2.0f + static_cast<float>(moveRange) * 0.5f;
+		const float pulse = 0.5f + 0.5f * std::sin(m_MoveRangePulseTime * pulseSpeed);
+		UpdateMoveRangeMaterials(pulse, true);
+	}
+	else
+	{
+		m_MoveRangePulseTime = 0.0f;
+		UpdateMoveRangeMaterials(0.0f, false);
+	}
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)
@@ -317,18 +349,49 @@ void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 	}
 }
 
+void GridSystemComponent::UpdateMoveRangeMaterials(float pulse, bool enabled)
+{
+	for (auto* node : m_Nodes)
+	{
+		if (!node)
+		{
+			continue;
+		}
+
+		if (enabled && node->IsInMoveRange())
+		{
+			node->SetMoveRangeHighlight(pulse, true);
+		}
+		else
+		{
+			node->SetMoveRangeHighlight(0.0f, false);
+		}
+	}
+}
+
 //Player/ Enemy 변경에 따른 Node state Update
 void GridSystemComponent::UpdateActorPositions() 
 {
 	if (m_Player) {
+		bool skipPlayerUpdate = false;
 		auto* playerOwner = m_Player->GetOwner();
-		auto* trans = playerOwner ? playerOwner->GetComponent<TransformComponent>() : nullptr;
-		if (trans) {
-			const AxialKey previous{ m_Player->GetQ(), m_Player->GetR() };
-			const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
-			if (!(previous == current)) {
-				UpdateActorNodeState(previous, current, NodeState::HasPlayer);
-				m_Player->SetQR(current.q, current.r);
+		if (playerOwner)
+		{
+			if (auto* movement = playerOwner->GetComponent<PlayerMovementComponent>())
+			{
+				skipPlayerUpdate = movement->IsDragging();
+			}
+		}
+		if (!skipPlayerUpdate)
+		{
+			auto* trans = playerOwner ? playerOwner->GetComponent<TransformComponent>() : nullptr;
+			if (trans) {
+				const AxialKey previous{ m_Player->GetQ(), m_Player->GetR() };
+				const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
+				if (!(previous == current)) {
+					UpdateActorNodeState(previous, current, NodeState::HasPlayer);
+					m_Player->SetQR(current.q, current.r);
+				}
 			}
 		}
 	}

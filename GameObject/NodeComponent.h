@@ -2,6 +2,9 @@
 #include <vector>
 #include "Component.h"
 #include "MathHelper.h"
+#include "RenderData.h"
+
+class MaterialComponent;
 
 using namespace MathUtils;
 using namespace std; 
@@ -49,12 +52,17 @@ public:
 
 	void SetInMoveRange(bool isInMoveRange) { m_IsInMoveRange = isInMoveRange; }
 	bool IsInMoveRange() const { return m_IsInMoveRange; }
+	void SetMoveRangeHighlight(float intensity, bool enabled);
 private:
 
 	bool m_IsMoveable = true;	  //장애물 있으면 Editor에서 배치할때 false로 설정하기
 	bool m_IsInMoveRange = false; // 이동가능 범위에 있는지
 	//Read Only Property
 	NodeState m_State = NodeState::Empty;
+	bool m_UsingMoveRangeHighlight = false;
+	bool m_HasBaseMaterial = false;
+	RenderData::MaterialData m_BaseMaterialOverrides{};
+	MaterialComponent* m_Material = nullptr; 
 	int m_Q; 
 	int m_R;
 	int m_StateInt = 0; // Debug

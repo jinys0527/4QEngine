@@ -11,6 +11,7 @@
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
+#include "GridSystemComponent.h"
 #include "GameState.h"
 //#include <cfloat>
 
@@ -79,6 +80,23 @@ void PlayerMovementComponent::Start()
 	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().AddListener(EventType::Dragged, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftClickUp, this);
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+		return;
+
+	const auto& objects = scene->GetGameObjects();
+	for (const auto& [name, object] : objects)
+	{
+		if (!object)
+			continue;
+
+		if (auto* grid = object->GetComponent<GridSystemComponent>())
+		{
+			m_GridSystem = grid;
+			break;
+		}
+	}
 }
 
 void PlayerMovementComponent::Update(float deltaTime)
@@ -201,6 +219,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		m_IsDragging = false;
 		m_HasDragRay = false;
 		m_CurrentTargetNode = nullptr;
+		m_DragStartNode = nullptr;
 		return;
 	}
 
@@ -286,6 +305,10 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (auto* player = owner->GetComponent<PlayerComponent>())
 		{
 			player->BeginMove();
+			if (m_GridSystem)
+			{
+				m_DragStartNode = m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() });
+			}
 		}
 
 		return;

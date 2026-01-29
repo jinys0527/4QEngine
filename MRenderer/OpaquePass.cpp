@@ -143,7 +143,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		if (mat)
 		{
 			SetMaterialCB(*mat);
-
 		}
 
 		if (textures && mat)
