@@ -9,7 +9,7 @@ using namespace std;
 enum class NodeState {
 	Empty,
 	HasPlayer,
-	HasMonster,
+	HasEnemy,
 	//HasObstacle, -> m_IsMoveable = false 로 고정 설정 할것이기 때문에 제외 
 };
 

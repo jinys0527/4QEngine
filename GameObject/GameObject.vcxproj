@@ -317,9 +317,16 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="EnemyComponent.h" />
+    <ClInclude Include="EnemyControllerComponent.h" />
+    <ClInclude Include="EnemyMovementComponent.h" />
+    <ClInclude Include="EnemyStatComponent.h" />
+    <ClInclude Include="FloodSystemComponent.h" />
+    <ClInclude Include="FloodUIComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
+    <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="NodeComponent.h" />
     <ClInclude Include="PlayerComponent.h" />
+    <ClInclude Include="PlayerStatComponent.h" />
     <ClInclude Include="RectLightComponent.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraObject.h" />
@@ -345,7 +352,9 @@
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="SkeletalMeshRenderer.h" />
+    <ClInclude Include="SkinningAnimationComponent.h" />
     <ClInclude Include="SpotLightComponent.h" />
+    <ClInclude Include="StatComponent.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIButtonComponent.h" />
     <ClInclude Include="UIComponent.h" />
@@ -368,9 +377,16 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EnemyComponent.cpp" />
+    <ClCompile Include="EnemyControllerComponent.cpp" />
+    <ClCompile Include="EnemyMovementComponent.cpp" />
+    <ClCompile Include="EnemyStatComponent.cpp" />
+    <ClCompile Include="FloodSystemComponent.cpp" />
+    <ClCompile Include="FloodUIComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
+    <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="NodeComponent.cpp" />
     <ClCompile Include="PlayerComponent.cpp" />
+    <ClCompile Include="PlayerStatComponent.cpp" />
     <ClCompile Include="RectLightComponent.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CameraObject.cpp" />
@@ -393,7 +409,9 @@
     <ClCompile Include="SceneChangeTestComponent.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
+    <ClCompile Include="SkinningAnimationComponent.cpp" />
     <ClCompile Include="SpotLightComponent.cpp" />
+    <ClCompile Include="StatComponent.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIButtonComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />

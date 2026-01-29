@@ -2,6 +2,7 @@
 #include "Importer.h"
 #include "iostream"
 #include <filesystem>
+#include <assimp/config.h>
 namespace fs = std::filesystem;
 
 static std::string ToGenericString(const fs::path& p)
@@ -513,22 +514,46 @@ static void DebugDumpAssimpScene(const aiScene* scene)
 	}
 
 	// node name dump (limited)
-	struct StackItem { const aiNode* n; int depth; };
+	struct StackItem
+	{
+		const aiNode* n;
+		int depth;
+		aiMatrix4x4 parent;
+	};
+
 	std::vector<StackItem> st;
-	st.push_back({ scene->mRootNode, 0 });
+	aiMatrix4x4 identity;
+	st.push_back({ scene->mRootNode, 0, identity });
 
 	unsigned printed = 0;
 	while (!st.empty() && printed < 200)
 	{
-		auto [n, d] = st.back();
+		auto [n, d, parent] = st.back();
 		st.pop_back();
 		if (!n) continue;
 
-		printf("  node d=%d name=%s children=%u\n", d, n->mName.C_Str(), n->mNumChildren);
-		++printed;
+		aiVector3D localScale{};
+		aiQuaternion localRot{};
+		aiVector3D localTranslate{};
+		n->mTransformation.Decompose(localScale, localRot, localTranslate);
+
+		const aiMatrix4x4 global = parent * n->mTransformation;
+		aiVector3D globalScale{};
+		aiQuaternion globalRot{};
+		aiVector3D globalTranslate{};
+		global.Decompose(globalScale, globalRot, globalTranslate);
+
+		printf("  node d=%d name=%s children=%u localScale=(%.3f, %.3f, %.3f) globalScale=(%.3f, %.3f, %.3f) localPos=(%.3f, %.3f, %.3f) globalPos=(%.3f, %.3f, %.3f)\n",
+			d,
+			n->mName.C_Str(),
+			n->mNumChildren,
+			localScale.x, localScale.y, localScale.z,
+			globalScale.x, globalScale.y, globalScale.z,
+			localTranslate.x, localTranslate.y, localTranslate.z,
+			globalTranslate.x, globalTranslate.y, globalTranslate.z);
 
 		for (int i = (int)n->mNumChildren - 1; i >= 0; --i)
-			st.push_back({ n->mChildren[i], d + 1 });
+			st.push_back({ n->mChildren[i], d + 1, global });
 	}
 }
 
@@ -574,7 +599,9 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 		aiProcess_JoinIdenticalVertices		|       // 중복 정점 제거
 		aiProcess_ConvertToLeftHanded				// LH 변환
 	);
-
+	if (!scene) {
+		printf("Assimp error: %s\n", importer.GetErrorString());
+	}
 	if (!scene) return ;
 #ifdef _DEBUG
 	//DebugDumpAssimpScene(scene);   // ← 여기

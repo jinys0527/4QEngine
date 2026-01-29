@@ -15,6 +15,7 @@
 REGISTER_COMPONENT(GridSystemComponent)
 REGISTER_PROPERTY_READONLY(GridSystemComponent, NodesCount)
 
+
 using namespace std;
 
 // 면 갯수 / Index
@@ -96,7 +97,8 @@ void GridSystemComponent::Update(float deltaTime) {
 	(void)deltaTime;
 
 	UpdateActorPositions();
-	UpdateMoveRange(m_PlayerNode, 6);
+	const int moveRange = m_Player ? m_Player->GetRemainMoveResource() : 0; // 남은 이동 자원 Get
+	UpdateMoveRange(m_PlayerNode, moveRange);
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)
@@ -105,6 +107,7 @@ void GridSystemComponent::OnEvent(EventType type, const void* data)
 	(void)data;
 }
 
+//Node object, player, Enemy 찾아서 배정
 void GridSystemComponent::ScanNodes()
 {
 	m_NodesCount = 0;
@@ -175,8 +178,66 @@ void GridSystemComponent::ScanNodes()
 			continue;
 		}
 		const AxialKey current{ enemy->GetQ(), enemy->GetR() };
-		UpdateActorNodeState(current, current, NodeState::HasMonster);
+		UpdateActorNodeState(current, current, NodeState::HasEnemy);
 	}
+
+}
+
+int GridSystemComponent::GetShortestPathLength(const AxialKey& start,const AxialKey& target)
+{
+	auto* startNode = GetNodeByKey(start);
+	auto* targetNode = GetNodeByKey(target);
+
+	if (!startNode || !targetNode)
+	{
+		return -1;
+	}
+	if (startNode == targetNode)
+	{
+		return 0;
+	}
+	std::unordered_map<NodeComponent*, int> distances;
+	std::queue<NodeComponent*> frontier;
+
+	distances[startNode] = 0;
+	frontier.push(startNode);
+
+	while (!frontier.empty())
+	{
+		auto* current = frontier.front();
+		frontier.pop();
+
+		const int currentDistance = distances[current];
+		for (auto* neighbor : current->GetNeighbors())
+		{
+			if (!neighbor)
+			{
+				continue;
+			}
+			if (!neighbor->GetIsMoveable())
+			{
+				continue;
+			}
+			if (neighbor->GetState() != NodeState::Empty && neighbor != targetNode)
+			{
+				continue;
+			}
+			if (distances.find(neighbor) != distances.end())
+			{
+				continue;
+			}
+
+			const int nextDistance = currentDistance + 1;
+			if (neighbor == targetNode)
+			{
+				return nextDistance;
+			}
+			distances[neighbor] = nextDistance;
+			frontier.push(neighbor);
+		}
+	}
+
+	return -1;
 
 }
 
@@ -191,6 +252,7 @@ NodeComponent* GridSystemComponent::GetNodeByKey(const AxialKey& key) const
 	return it->second;
 }
 
+// 최초 위치에서 이동가능한 범위 표시
 void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 {
 	for (auto* node : m_Nodes)
@@ -283,7 +345,7 @@ void GridSystemComponent::UpdateActorPositions()
 		const AxialKey previous{ enemy->GetQ(), enemy->GetR() };
 		const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 		if (!(previous == current)) {
-			UpdateActorNodeState(previous, current, NodeState::HasMonster);
+			UpdateActorNodeState(previous, current, NodeState::HasEnemy);
 			enemy->SetQR(current.q, current.r);
 		}
 	}

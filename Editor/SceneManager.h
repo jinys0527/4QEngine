@@ -44,11 +44,7 @@ public:
 	bool SaveSceneToJson(const std::filesystem::path& filePath) const;
 	bool RegisterSceneFromJson(const std::filesystem::path& filePath);
 	
-	void Reset()
-	{
-		m_Scenes.clear();
-		m_CurrentScene.reset();
-	}
+	void Reset();
 
 	void RequestQuit() { m_ShouldQuit = true; }
 	bool ShouldQuit() const { return m_ShouldQuit; }

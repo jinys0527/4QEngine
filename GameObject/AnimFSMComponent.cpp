@@ -86,7 +86,9 @@ AnimFSMComponent::AnimFSMComponent()
 {
 	BindActionHandler("Anim_Play", [this](const FSMAction&)
 		{
-			auto* anim = GetOwner() ? GetOwner()->GetComponent<AnimationComponent>() : nullptr;
+			auto* owner = GetOwner();
+			auto anims = owner ? owner->GetComponentsDerived<AnimationComponent>() : std::vector<AnimationComponent*>{};
+			auto* anim = anims.empty() ? nullptr : anims.front();
 			if (anim)
 			{
 				anim->Play();
@@ -95,7 +97,9 @@ AnimFSMComponent::AnimFSMComponent()
 
 	BindActionHandler("Anim_Stop", [this](const FSMAction&)
 		{
-			auto* anim = GetOwner() ? GetOwner()->GetComponent<AnimationComponent>() : nullptr;
+			auto* owner = GetOwner();
+			auto anims = owner ? owner->GetComponentsDerived<AnimationComponent>() : std::vector<AnimationComponent*>{};
+			auto* anim = anims.empty() ? nullptr : anims.front();
 			if (anim)
 			{
 				anim->Stop();
@@ -104,18 +108,22 @@ AnimFSMComponent::AnimFSMComponent()
 
 	BindActionHandler("Anim_SetSpeed", [this](const FSMAction& action)
 		{
-			auto* anim = GetOwner() ? GetOwner()->GetComponent<AnimationComponent>() : nullptr;
+			auto* owner = GetOwner();
+			auto anims = owner ? owner->GetComponentsDerived<AnimationComponent>() : std::vector<AnimationComponent*>{};
+			auto* anim = anims.empty() ? nullptr : anims.front();
 			if (!anim)
 				return;
 
 			auto playback = anim->GetPlayback();
 			playback.speed = action.params.value("value", playback.speed);
-			anim->LoadSetPlayback(playback);
+			anim->SetPlayback(playback);
 		});
 
 	BindActionHandler("Anim_BlendTo", [this](const FSMAction& action)
 		{
-			auto* anim = GetOwner() ? GetOwner()->GetComponent<AnimationComponent>() : nullptr;
+			auto* owner = GetOwner();
+			auto anims = owner ? owner->GetComponentsDerived<AnimationComponent>() : std::vector<AnimationComponent*>{};
+			auto* anim = anims.empty() ? nullptr : anims.front();
 			if (!anim)
 				return;
 

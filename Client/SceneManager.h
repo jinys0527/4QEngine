@@ -39,12 +39,7 @@ public:
 
 	void ChangeScene();
 
-	void Reset()
-	{
-		SetEventDispatcher(nullptr);
-		m_Scenes.clear();
-		m_CurrentScene.reset();
-	}
+	void Reset();
 
 	void RequestQuit() { m_ShouldQuit = true; }
 	bool ShouldQuit() const { return m_ShouldQuit; }

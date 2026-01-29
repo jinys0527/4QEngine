@@ -9,6 +9,8 @@
 #include <cmath>
 
 REGISTER_COMPONENT(BoxColliderComponent)
+REGISTER_PROPERTY(BoxColliderComponent, LocalMin)
+REGISTER_PROPERTY(BoxColliderComponent, LocalMax)
 
 void BoxColliderComponent::Start()
 {

@@ -243,6 +243,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DiceSystem.h" />
     <ClInclude Include="EditorApplication.h" />
     <ClInclude Include="EditorViewPort.h" />
     <ClInclude Include="pch.h" />
@@ -253,6 +254,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DiceSystem.cpp" />
     <ClCompile Include="EditorApplication.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_NoneBlur|x64'">Use</PrecompiledHeader>

@@ -111,6 +111,7 @@ bool ImportFBXToAnimJson(const aiScene* scene, const std::string& outDir, const 
 	outAnimFiles.clear();
 	if (!scene || scene->mNumAnimations == 0) return true;
 
+
 	for (uint32_t a = 0; a < scene->mNumAnimations; ++a)
 	{
 		const aiAnimation* anim = scene->mAnimations[a];

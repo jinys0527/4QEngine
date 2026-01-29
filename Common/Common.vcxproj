@@ -197,12 +197,14 @@
     <ClInclude Include="NzWndBase.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RayHelper.h" />
+    <ClInclude Include="RandomMachine.h" />
     <ClInclude Include="SingletonBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="NzWndBase.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="RandomMachine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

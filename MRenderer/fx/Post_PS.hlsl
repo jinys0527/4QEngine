@@ -84,6 +84,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     
     float coc = abs(viewZ - camParams.z) / camParams.w;
     coc = saturate(coc);
+
     
     // 화면 해상도 기준 픽셀 스케일
     float2 pixelSize = 1.0 / screenSize.xy; // 또는 View.ViewSizeAndInvSize.zw
@@ -176,4 +177,5 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     return RTView + emissive;
     
     //return tilt + emissive;
+
 }

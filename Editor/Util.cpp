@@ -85,7 +85,8 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 			return candidate;
 		}
 	}
-	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
+
+	return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠  <- 기본 리턴값 없어서 다시 주석 해제함
 }
 
 float NormalizeDegrees(float degrees)
@@ -1685,12 +1686,23 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 	{
 		PlaybackStateType value{};
 		property.GetValue(component, &value);
-		ImGui::Text("%s: time %.3f, speed %.2f, looping %s, playing %s",
-			property.GetName().c_str(),
-			value.time,
-			value.speed,
-			value.looping ? "true" : "false",
-			value.playing ? "true" : "false");
+		ImGui::Text("%s", property.GetName().c_str());
+
+		bool changed = false;
+
+		changed |= ImGui::InputFloat("Time", &value.time, 0.01f, 0.1f, "%.3f");
+		changed |= ImGui::InputFloat("Speed", &value.speed, 0.01f, 0.1f, "%.2f");
+
+		changed |= ImGui::Checkbox("Looping", &value.looping);
+		changed |= ImGui::Checkbox("Playing", &value.playing);
+		changed |= ImGui::Checkbox("Reverse", &value.reverse);
+
+		if (changed)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+
 		return result;
 	}
 

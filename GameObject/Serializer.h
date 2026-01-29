@@ -736,6 +736,25 @@ struct Serializer<FSMGraph> {
 };
 
 template<>
+struct Serializer<AnimationComponent::PlaybackState> {
+	static void ToJson(nlohmann::json& j, const AnimationComponent::PlaybackState& v) {
+		j["time"]    = v.time;
+		j["speed"]   = v.speed;
+		j["looping"] = v.looping;
+		j["playing"] = v.playing;
+		j["reverse"] = v.reverse;
+	}
+
+	static void FromJson(const nlohmann::json& j, AnimationComponent::PlaybackState& v) {
+		v.time = j.value("time", 0.2f);
+		v.speed = j.value("speed", 0.2f);
+		v.looping = j.value("looping", true);
+		v.playing = j.value("playing", true);
+		v.reverse = j.value("reverse", false);
+	}
+};
+
+template<>
 struct Serializer<AnimationComponent::BlendConfig> {
 	static void ToJson(nlohmann::json& j, const AnimationComponent::BlendConfig& v) {
 		Serializer<AnimationHandle>::ToJson(j["fromClip"], v.fromClip);
@@ -768,7 +787,6 @@ struct Serializer<UINT8> {
 		v = static_cast<UINT8>(j.get<int>());
 	}
 };
-
 
 template<>
 struct Serializer<XMFLOAT3> {

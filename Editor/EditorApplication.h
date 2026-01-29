@@ -22,7 +22,7 @@ class Scene;
 class GameObject;
 class AssetLoader;
 class SoundManager;
-
+class GameManager;
 
 enum class EditorPlayState
 {
@@ -94,6 +94,7 @@ private:
 	AssetLoader*		  m_AssetLoader;
 	SoundManager*		  m_SoundManager;
 	InputManager*	      m_InputManager;
+	GameManager*		  m_GameManager;
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext   m_SceneRenderTarget;
 	RenderTargetContext   m_SceneRenderTarget_edit;
