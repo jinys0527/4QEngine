@@ -16,9 +16,30 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 			{
 				return;
 			}
-
+			// 플레이어 무기 행동 포인트로 변경 예정
 			const int amount = action.params.value("amount", 0);
 			player->ConsumeActResource(amount);
+		});
+
+	BindActionHandler("Combat_RangeCheck", [this](const FSMAction& action)
+		{
+			// 범위 체크
+		});
+
+	BindActionHandler("Combat_Confirm", [this](const FSMAction& action)
+		{
+			
+		});
+
+	BindActionHandler("Combat_Attack", [this](const FSMAction& action)
+		{
+			// 공격 처리
+			// 데미지 계산
+		});
+
+	BindActionHandler("Combat_Result", [this](const FSMAction& action)
+		{
+			// 드롭 / 사망 처리 후 결과
 		});
 
 	BindActionHandler("Combat_Enter", [this](const FSMAction& action)
@@ -26,6 +47,7 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 			const int initiatorId = action.params.value("initiatorId", 0);
 			const int targetId = action.params.value("targetId", 0);
 			const CombatEnterEvent eventData{ initiatorId, targetId };
+			// 스탯 결정
 			GetEventDispatcher().Dispatch(EventType::CombatEnter, &eventData);
 		});
 

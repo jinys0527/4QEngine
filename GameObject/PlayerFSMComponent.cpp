@@ -175,6 +175,7 @@ void RegisterPlayerFSMDefinitions()
 		{}
 		});
 
+	// Push 행동력
 	actionRegistry.RegisterAction({
 		"Push_ConsumeActResource",
 		"Push",
@@ -183,6 +184,7 @@ void RegisterPlayerFSMDefinitions()
 		}
 		});
 
+	// Combat 행동력
 	actionRegistry.RegisterAction({
 		"Combat_ConsumeActResource",
 		"Combat",
@@ -190,6 +192,36 @@ void RegisterPlayerFSMDefinitions()
 			{ "amount", "int", 0, false }
 		}
 		});
+
+	// Combat RangeCheck
+	actionRegistry.RegisterAction({
+		"Combat_RangeCheck",
+		"Combat",
+		{}
+		});
+
+	// Combat Confirm
+	actionRegistry.RegisterAction({
+		"Combat_Confirm",
+		"Combat",
+		{}
+		});
+
+	// Combat Attack
+	actionRegistry.RegisterAction({
+		"Combat_Attack",
+		"Combat",
+		{}
+		});
+
+	// Combat Result
+	actionRegistry.RegisterAction({
+		"Combat_Result",
+		"Combat",
+		{}
+		});
+
+	// Combat 전투 진입
 	actionRegistry.RegisterAction({
 		"Combat_Enter",
 		"Combat",
@@ -198,6 +230,8 @@ void RegisterPlayerFSMDefinitions()
 			{ "targetId", "int", 0, false }
 		}
 		});
+
+	// Combat 전투 종료
 	actionRegistry.RegisterAction({
 		"Combat_Exit",
 		"Combat",
@@ -328,11 +362,15 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Move_PointInvalid", "Move" });
 	eventRegistry.RegisterEvent({ "Move_Confirm",      "Move" });
 	eventRegistry.RegisterEvent({ "Move_Revoke",       "Move" });
-															          
+	
+	eventRegistry.RegisterEvent({ "Push_Start",			 "Push" });
 	eventRegistry.RegisterEvent({ "Push_Possible",       "Push"	});
 	eventRegistry.RegisterEvent({ "Push_TargetFound",    "Push" });
 	eventRegistry.RegisterEvent({ "Push_TargetNone",     "Push" });
 	eventRegistry.RegisterEvent({ "Push_TargetSelected", "Push" });
+	eventRegistry.RegisterEvent({ "Push_Success",		 "Push" });
+	eventRegistry.RegisterEvent({ "Push_Fail",			 "Push" });
+	eventRegistry.RegisterEvent({ "Push_Revoke",		 "Push" });
 																      
 	eventRegistry.RegisterEvent({ "Combat_CheckRange",   "Combat" });
 	eventRegistry.RegisterEvent({ "Combat_RangeOk",      "Combat" });
