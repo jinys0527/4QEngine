@@ -115,7 +115,6 @@ void PlayerComponent::Update(float deltaTime) {
 		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
 
 		//itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
-		int a = 0;
 	}
 }
 

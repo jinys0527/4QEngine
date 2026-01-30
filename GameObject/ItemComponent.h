@@ -75,6 +75,9 @@ public:
 	const int& GetDifficultyGroup() const { return m_DifficultyGroup; }
 	void SetDifficultyGroup(const int& value) { m_DifficultyGroup = value; }
 
+	const DirectX::XMFLOAT4X4& GetEquipmentBindPose() const { return m_EquipmentBindPose; }
+	void SetEquipmentBindPose(const DirectX::XMFLOAT4X4& value) { m_EquipmentBindPose = value; }
+
 private:
 	int m_ItemIndex				= -1;
 
@@ -97,4 +100,6 @@ private:
 	int m_DEF					= 0;
 	int m_ThrowRange			= -1;
 	int m_DifficultyGroup		= -1;
+
+	DirectX::XMFLOAT4X4 m_EquipmentBindPose{};
 };

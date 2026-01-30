@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Component.h"
 #include "GameState.h"
+#include "GameObject.h"
 
 class GridSystemComponent;
 
@@ -37,6 +38,10 @@ public:
 	const int& GetActResource()		   const { return m_ActResource; }
 	const int& GetRemainMoveResource() const { return m_RemainMoveResource; }
 	const int& GetRemainActResource()  const { return m_RemainActResource; }
+
+	//const GameObject* GetItem() { return m_Item; }
+	//void SetItem() {};
+
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 
 	void ResetTurnResources();
@@ -69,4 +74,5 @@ private:
 	bool m_TurnEndRequested = false;
 	GridSystemComponent* m_GridSystem;
 
+	GameObject* m_Item = nullptr;
 };
