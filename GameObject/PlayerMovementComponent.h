@@ -40,6 +40,7 @@ public:
 	const DirectX::XMFLOAT3& GetDragOffset() const { return m_DragOffset; }
 	const DirectX::XMFLOAT3& GetDragStartPos() const { return m_DragStartPos; }
 	NodeComponent* GetDragStartNode() const { return m_DragStartNode; }
+	void ApplyRotationForMove(int targetQ, int targetR);
 
 	bool IsDragging() const;
 
