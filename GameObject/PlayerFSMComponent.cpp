@@ -4,8 +4,90 @@
 #include "FSMActionRegistry.h"
 #include "GameState.h"
 #include "PlayerComponent.h"
+#include "PlayerCombatFSMComponent.h"
+#include "PlayerDoorFSMComponent.h"
 #include "Object.h"
+#include "PlayerInventoryFSMComponent.h"
+#include "PlayerMoveFSMComponent.h"
+#include "PlayerPushFSMComponent.h"
+#include "PlayerShopFSMComponent.h"
 #include "ReflectionMacro.h"
+#include <algorithm>
+#include <cctype>
+
+namespace
+{
+	std::string ToLower(std::string value)
+	{
+		std::transform(value.begin(), value.end(), value.begin(),
+			[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+		return value;
+	}
+
+	void DispatchSubFSMEvent(Object* owner, const std::string& target, const std::string& eventName)
+	{
+		if (!owner || eventName.empty())
+		{
+			return;
+		}
+
+		const auto normalized = ToLower(target);
+
+		if (normalized == "move")
+		{
+			if (auto* fsm = owner->GetComponent<PlayerMoveFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+
+		if (normalized == "door")
+		{
+			if (auto* fsm = owner->GetComponent<PlayerDoorFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+
+		if (normalized == "combat")
+		{
+			if (auto* fsm = owner->GetComponent<PlayerCombatFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+
+		if (normalized == "inventory")
+		{
+			if (auto* fsm = owner->GetComponent<PlayerInventoryFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+
+		if (normalized == "shop")
+		{
+			if (auto* fsm = owner->GetComponent<PlayerShopFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+
+		if (normalized == "push")
+		{
+			if (auto* fsm = owner->GetComponent<PlayerPushFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+	}
+}
 
 void RegisterPlayerFSMDefinitions()
 {
@@ -25,6 +107,22 @@ void RegisterPlayerFSMDefinitions()
 		"Player",
 		{
 			{ "amount", "int", 0, false }
+		}
+		});
+
+	actionRegistry.RegisterAction({
+	"Player_DispatchSubFSMEvent",
+	"Player",
+	{
+		{ "target", "string", "", true },
+		{ "event", "string", "", true }
+	}
+		});
+	actionRegistry.RegisterAction({
+		"Player_DispatchEvent",
+		"Player",
+		{
+			{ "event", "string", "", true }
 		}
 		});
 
@@ -221,6 +319,19 @@ PlayerFSMComponent::PlayerFSMComponent()
 
 			const int amount = action.params.value("amount", 0);
 			player->ConsumeActResource(amount);
+		});
+
+	BindActionHandler("Player_DispatchSubFSMEvent", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			if (!owner)
+			{
+				return;
+			}
+
+			const std::string target = action.params.value("target", "");
+			const std::string eventName = action.params.value("event", "");
+			DispatchSubFSMEvent(owner, target, eventName);
 		});
 }
 

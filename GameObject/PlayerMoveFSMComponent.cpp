@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "TransformComponent.h"
 #include "PlayerMovementComponent.h"
+#include "PlayerFSMComponent.h"
 #include "NodeComponent.h"
 #include "BoxColliderComponent.h"
 
@@ -121,6 +122,26 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			m_DraggingActive = false;
 			m_LastValid = false;
 			ClearPendingTarget();
+		});
+
+	BindActionHandler("Player_DispatchEvent", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			if (!owner)
+			{
+				return;
+			}
+
+			const std::string eventName = action.params.value("event", "");
+			if (eventName.empty())
+			{
+				return;
+			}
+
+			if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+			{
+				playerFsm->DispatchEvent(eventName);
+			}
 		});
 }
 
