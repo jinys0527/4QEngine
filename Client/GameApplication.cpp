@@ -30,7 +30,6 @@ bool GameApplication::Initialize()
 	m_SoundManager->Init();
 
 	OnResize(m_width, m_height);
-
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
@@ -84,6 +83,7 @@ void GameApplication::Update()
 
 	float dTime = m_Engine.GetTime();
 	dTime *= m_GameSpeed;
+	//m_Engine.UpdateInput();
 	m_SceneManager.StateUpdate(dTime);
 	m_SceneManager.Update(dTime);
 	

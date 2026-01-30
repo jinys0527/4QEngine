@@ -15,6 +15,7 @@
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "GameState.h"
+#include <array>
 //#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
@@ -60,6 +61,30 @@ static NodeComponent* FindClosestNodeHit(
 	return closestNode;
 }
 
+static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& current, RotationOffset& outDir)
+{
+	const AxialKey delta{ current.q - previous.q, current.r - previous.r };
+	constexpr std::array<std::pair<AxialKey, RotationOffset>, 6> kDirections{ {
+		{ { 1, 0 }, RotationOffset::clock_3 },
+		{ { 1, -1 }, RotationOffset::clock_5 },
+		{ { 0, -1 }, RotationOffset::clock_7 },
+		{ { -1, 0 }, RotationOffset::clock_9 },
+		{ { -1, 1 }, RotationOffset::clock_11 },
+		{ { 0, 1 }, RotationOffset::clock_1 }
+	} };
+
+
+	for (const auto& [dir, rotation] : kDirections)
+	{
+		if (dir.q == delta.q && dir.r == delta.r)
+		{
+			outDir = rotation;
+			return true;
+		}
+	}
+
+	return false;
+}
 namespace
 {
 	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
@@ -175,8 +200,11 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::KeyDown)
 	{
-		// 턴 아니면 cancel
-		if (player->GetCurrentTurn() != Turn::PlayerTurn)
+		auto* player = owner->GetComponent<PlayerComponent>();
+
+
+		// Turn Check.
+		if(!player || player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Cancel");
@@ -196,6 +224,32 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		// 턴 아니면 cancel
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
+			const bool consumed = player->CommitMove(m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR());
+			if (!consumed)
+			{
+				transComp->SetPosition(m_DragStartPos);
+			}
+			else if (m_GridSystem)
+			{
+				// 커밋 직전: 실제 최단 경로를 구해 마지막 두 노드로 회전 방향을 결정한다.
+				const AxialKey startKey = m_DragStartNode
+					? AxialKey{ m_DragStartNode->GetQ(), m_DragStartNode->GetR() }
+				: AxialKey{ player->GetQ(), player->GetR() };
+				const AxialKey targetKey{ m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR() };
+				const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
+
+				// 경로가 2개 이상일 때 마지막 스텝 방향을 사용한다. (직전 노드 -> 목적지)
+				if (path.size() >= 2)
+				{
+					const AxialKey& previousKey = path[path.size() - 2];
+					const AxialKey& currentKey = path.back();
+					RotationOffset rotation{};
+					if (TryGetRotationFromStep(previousKey, currentKey, rotation))
+					{
+						SetPlayerRotation(transComp, rotation);
+					}
+				}
+			}
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Cancel");
 			m_HasDragRay = false;
@@ -277,7 +331,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			}
 		}
 
-		if (!hitOwner && !clickedNode && closestObject != owner)
+		if (!hitOwner && closestObject != owner)
 			return;
 
 		// 드래그 오프셋 계산(입력 기반 데이터)
@@ -339,4 +393,35 @@ bool PlayerMovementComponent::IsDragging() const
 	auto* owner = GetOwner();
 	auto* moveFSM = owner ? owner->GetComponent<PlayerMoveFSMComponent>() : nullptr;
 	return moveFSM && moveFSM->IsDraggingActive();
+}
+
+
+
+void PlayerMovementComponent::SetPlayerRotation(TransformComponent* transComp, RotationOffset dir)
+{
+	if (!transComp){return;}
+
+	switch (dir)
+	{
+	case RotationOffset::clock_1:
+		transComp->SetRotationEuler({ 0.0f,-150.0f ,0.0f });
+		break;
+	case RotationOffset::clock_3:
+		transComp->SetRotationEuler({ 0.0f,-90.0f ,0.0f });
+		break;
+	case RotationOffset::clock_5:
+		transComp->SetRotationEuler({ 0.0f,-30.0f ,0.0f });
+		break;
+	case RotationOffset::clock_7:
+		transComp->SetRotationEuler({ 0.0f,30.0f ,0.0f });
+		break;
+	case RotationOffset::clock_9:
+		transComp->SetRotationEuler({ 0.0f,90.0f ,0.0f });
+		break;
+	case RotationOffset::clock_11:
+		transComp->SetRotationEuler({ 0.0f,150.0f ,0.0f });
+		break;
+	default:
+		break;
+	}
 }

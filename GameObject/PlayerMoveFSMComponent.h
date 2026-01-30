@@ -21,7 +21,7 @@ public:
 	bool HasPendingTarget() const { return m_HasPendingTarget; }
 	int  GetPeningQ() const { return m_PendingQ; }
 	int  GetPeningR() const { return m_PendingR; }
-
+	 
 	// Update에서 프리뷰 처리
 	void Update(float deltaTime) override;
 

@@ -122,6 +122,12 @@ void EnemyMovementComponent::Move()
 
 
 
+void EnemyMovementComponent::SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir)
+{
+
+}
+
+
 void EnemyMovementComponent::GetSystem()
 {
 	auto* scene = GetOwner() -> GetScene();
