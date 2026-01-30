@@ -275,12 +275,45 @@ private:
 	std::unique_ptr<DirectX::SpriteFont>  m_SpriteFont;
 
 	void SetupText();
+	//문자열 줄바꿈 처리
+	std::wstring WrapText(const std::wstring& text, float maxWidth)
+	{
+		std::wstring result;
+		std::wstring line;
+
+		for (wchar_t c : text)
+		{
+			if (c == L'\n')
+			{
+				result += line + L'\n';
+				line.clear();
+				continue;
+			}
+
+			line += c;
+
+			if (DirectX::XMVectorGetX(
+				m_SpriteFont->MeasureString(line.c_str())
+			) > maxWidth)
+			{
+				result += line.substr(0, line.size() - 1) + L'\n';
+				line = c;
+			}
+		}
+
+		result += line;
+		return result;
+	}
 	void RenderTextCenter(int screenW, int screenH)
 	{
-		const wchar_t* msg = L"황재하\n진영상\n홍한울\n정성우\n권윤정\n박지훈\n이지원";
+		/*const wchar_t* msg = L"황재하\n진영상\n홍한울\n정성우\n권윤정\n박지훈\n이지원";*/
+		const wchar_t* msg = L"나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나";
+		float maxWidth = 300.f;
+
+		std::wstring wrapped = WrapText(msg, maxWidth);
 
 		// 1. 측정 및 계산
-		DirectX::XMVECTOR size = m_SpriteFont->MeasureString(msg);
+		XMVECTOR size = m_SpriteFont->MeasureString(wrapped.c_str());
 		float x = (screenW - DirectX::XMVectorGetX(size)) * 0.5f;
 		float y = (screenH - DirectX::XMVectorGetY(size)) * 0.5f;
 
@@ -301,9 +334,11 @@ private:
 		OutputDebugStringA("Before SpriteBatch Begin\n");
 		m_SpriteBatch->Begin();
 
+
+
 		m_SpriteFont->DrawString(
 			m_SpriteBatch.get(),
-			msg,
+			wrapped.c_str(),
 			DirectX::XMFLOAT2(x, y),
 			DirectX::Colors::Black
 		);

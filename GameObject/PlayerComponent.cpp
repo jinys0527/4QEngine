@@ -6,6 +6,7 @@
 #include "GridSystemComponent.h"
 #include "ItemComponent.h"
 #include "SkeletalMeshComponent.h"
+#include "TransformComponent.h"
 #include <cmath>
 
 REGISTER_COMPONENT(PlayerComponent)
@@ -81,12 +82,20 @@ void PlayerComponent::Update(float deltaTime) {
 		}
 	}
 
+	auto* transformcomponent = owner->GetComponent<TransformComponent>();
+	{
+		if (!transformcomponent->GetChildrens().empty())
+		{
+			m_Item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+		}
+
+	}
 
 	//아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
 	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
-	//if (m_Item != nullptr)
+	if (m_Item != nullptr)
 	{
-		//auto* itemcomponent = m_Item->GetComponent<ItemComponent>();
+		auto* itemcomponent = m_Item->GetComponent<ItemComponent>();
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
 		if (!skeletal)
@@ -114,7 +123,7 @@ void PlayerComponent::Update(float deltaTime) {
 
 		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
 
-		//itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
+		itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
 		int a = 0;
 	}
 }

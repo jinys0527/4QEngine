@@ -74,5 +74,5 @@ private:
 	bool m_TurnEndRequested = false;
 	GridSystemComponent* m_GridSystem;
 
-	GameObject* m_Item = nullptr;
+	GameObject* m_Item = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 };
