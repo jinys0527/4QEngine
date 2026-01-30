@@ -136,6 +136,8 @@ namespace RenderData
 		std::vector<Bone>			bones;
 		std::vector<int>			upperBodyBones;
 		std::vector<int>			lowerBodyBones;
+		int                         equipmentBoneIndex = -1;
+		XMFLOAT4X4                  equipmentBindPose{};
 		XMFLOAT4X4                  globalInverseTransform{};
 	};
 
@@ -243,5 +245,7 @@ namespace RenderData
 		std::vector<XMFLOAT4X4> globalPoses;
 		std::vector<UIElement>	uiElements;
 		std::vector<UITextElement> uiTexts;
+		std::vector<XMFLOAT4X4> textureProjTM;
+
 	};
 }

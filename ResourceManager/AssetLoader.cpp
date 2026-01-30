@@ -103,6 +103,12 @@ namespace
 		uint32_t lowerCount		  = 0;
 	};
 
+	struct SkelBinEquipmentData
+	{
+		int32_t equipmentBoneIndex = -1;
+		float   equipmentBindPose[16] = {};
+	};
+
 	struct BoneBin
 	{
 		uint32_t nameOffset = 0;
@@ -1452,6 +1458,19 @@ void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadRe
 			if (header.magic == kSkelMagic && header.boneCount > 0)
 			{
 				RenderData::Skeleton skeleton{};
+				if (header.version >= 4)
+				{
+					SkelBinEquipmentData equipmentData{};
+					skelStream.read(reinterpret_cast<char*>(&equipmentData), sizeof(equipmentData));
+					skeleton.equipmentBoneIndex = equipmentData.equipmentBoneIndex;
+					std::memcpy(&skeleton.equipmentBindPose, equipmentData.equipmentBindPose, sizeof(float) * 16);
+				}
+				else
+				{
+					skeleton.equipmentBoneIndex = -1;
+					DirectX::XMStoreFloat4x4(&skeleton.equipmentBindPose, DirectX::XMMatrixIdentity());
+				}
+
 				if (header.version >= 3)
 				{
 					float globalInverse[16]{};

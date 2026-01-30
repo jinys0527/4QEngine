@@ -134,6 +134,24 @@ static void CollectRequiredBoneNames(
 	ancestors.pop_back();
 }
 
+static void CollectRequiredBoneNamesFromList(
+	const aiNode* root,
+	const std::unordered_set<std::string>& extraBoneNames,
+	std::unordered_set<std::string>& outRequired)
+{
+	if (!root || extraBoneNames.empty())
+		return;
+
+	for (const auto& name : extraBoneNames)
+	{
+		const aiNode* node = FindNodeByName(root, name);
+		for (const aiNode* current = node; current; current = current->mParent)
+		{
+			outRequired.insert(current->mName.C_Str());
+		}
+	}
+}
+
 static bool IsUsedBoneNode(const aiNode* node, const std::unordered_set<std::string>& usedBoneName)
 {
 	if (!node) return false;
@@ -232,7 +250,9 @@ static void FillInverseBindPosesFromMeshes(const aiScene* scene, SkeletonBuildRe
 }
 
 
-SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene)
+SkeletonBuildResult BuildSkeletonFromScene(
+	const aiScene* scene,
+	const std::unordered_set<std::string>& extraBoneNames) 
 {
 	SkeletonBuildResult out;
 	if (!scene || !scene->mRootNode) return out;
@@ -241,13 +261,14 @@ SkeletonBuildResult BuildSkeletonFromScene(const aiScene* scene)
 	CollectUsedBoneNames(scene, usedBoneNames);
 
 	// bone이 하나도 없으면 빈 Skeleton 반환(정적 에셋)
-	if (usedBoneNames.empty())
+	if (usedBoneNames.empty() && extraBoneNames.empty())
 		return out;
 
 	std::unordered_set<std::string> requiredBoneNames;
 	std::vector<std::string> ancestors;
 	ancestors.reserve(64);
 	CollectRequiredBoneNames(scene->mRootNode, usedBoneNames, requiredBoneNames, ancestors);
+	CollectRequiredBoneNamesFromList(scene->mRootNode, extraBoneNames, requiredBoneNames);
 
 	if (requiredBoneNames.empty())
 		return out;
@@ -272,7 +293,26 @@ bool ImportFBXToSkelBin(
 {
 	if (!scene || !scene->mRootNode) return false;
 
-	SkeletonBuildResult skel = BuildSkeletonFromScene(scene);
+	std::unordered_set<std::string> extraBoneNames;
+	const auto extraBonesJson = skeletonMeta.value("extraBones", nlohmann::json::array());
+	if (extraBonesJson.is_array())
+	{
+		for (const auto& entry : extraBonesJson)
+		{
+			if (entry.is_string())
+			{
+				extraBoneNames.insert(entry.get<std::string>());
+			}
+		}
+	}
+
+	const std::string equipmentBoneName = skeletonMeta.value("equipmentBone", std::string("equipment"));
+	if (!equipmentBoneName.empty())
+	{
+		extraBoneNames.insert(equipmentBoneName);
+	}
+
+	SkeletonBuildResult skel = BuildSkeletonFromScene(scene, extraBoneNames);
 
 	// bone이 없는 정적 FBX면 skelbin을 안 만들지/빈 파일을 만들지 정책 필요
 	// 여기서는 "bone 없으면 false" 대신 "빈 스켈레톤 파일 생성"으로 처리 가능
@@ -287,7 +327,7 @@ bool ImportFBXToSkelBin(
 		return true;
 
 	SkelBinHeader header{};
-	header.version = 3;
+	header.version = 4;
 	header.boneCount = (uint16_t)skel.bones.size();
 	header.stringTableBytes = (uint32_t)skel.stringTable.size();
 	std::vector<int32_t>		   upperBodyIndices;
@@ -391,6 +431,30 @@ bool ImportFBXToSkelBin(
 	header.upperCount = static_cast<uint32_t>(upperBodyIndices.size());
 	header.lowerCount = static_cast<uint32_t>(lowerBodyIndices.size());
 
+	const auto setIdentity = [](float out[16])
+		{
+			for (int i = 0; i < 16; ++i)
+			{
+				out[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+			}
+		};
+
+	header.equipmentBoneIndex = -1;
+	setIdentity(header.equipmentBindPose);
+
+	if (!equipmentBoneName.empty())
+	{
+		auto it = skel.boneNameToIndex.find(equipmentBoneName);
+		if (it != skel.boneNameToIndex.end())
+		{
+			const uint32_t index = it->second;
+			if (index < skel.bones.size())
+			{
+				header.equipmentBoneIndex = static_cast<int32_t>(index);
+				std::memcpy(header.equipmentBindPose, skel.bones[index].localBind, sizeof(float) * 16);
+			}
+		}
+	}
 
 	std::ofstream ofs(outSkelBin, std::ios::binary);
 	if (!ofs) return false;
