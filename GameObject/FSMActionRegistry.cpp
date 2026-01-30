@@ -9,29 +9,46 @@ FSMActionRegistry& FSMActionRegistry::Instance()
 
 void FSMActionRegistry::RegisterAction(const FSMActionDef& def)
 {
-	auto it = m_ActionIndex.find(def.id);
-	if (it != m_ActionIndex.end())
+	auto& actions = m_ActionsByCategory[def.category];
+	auto& indexMap = m_ActionIndexByCategory[def.category];
+	auto categoryIt = indexMap.find(def.id);
+	if (categoryIt != indexMap.end())
 	{
-		m_Actions[it->second] = def;
+		actions[categoryIt->second] = def;
 		return;
 	}
 
-	m_ActionIndex.emplace(def.id, m_Actions.size());
-	m_Actions.push_back(def);
+	indexMap.emplace(def.id, actions.size());
+	actions.push_back(def);
 }
 
-const FSMActionDef* FSMActionRegistry::FindAction(const std::string& id) const
+const FSMActionDef* FSMActionRegistry::FindAction(const std::string& category, const std::string& id) const
 {
-	auto it = m_ActionIndex.find(id);
-	if (it == m_ActionIndex.end())
+	auto categoryIt = m_ActionIndexByCategory.find(category);
+	if (categoryIt == m_ActionIndexByCategory.end())
 	{
 		return nullptr;
 	}
 
-	return &m_Actions[it->second];
+	const auto& indexMap = categoryIt->second;
+	auto it = indexMap.find(id);
+	if (it == indexMap.end())
+	{
+		return nullptr;
+	}
+
+	const auto& actions = m_ActionsByCategory.at(category);
+	return &actions[it->second];
 }
 
-const std::vector<FSMActionDef>& FSMActionRegistry::GetActions() const
+const std::vector<FSMActionDef>& FSMActionRegistry::GetActions(const std::string& category) const
 {
-	return m_Actions;
+	static const std::vector<FSMActionDef> empty;
+	auto it = m_ActionsByCategory.find(category);
+	if (it == m_ActionsByCategory.end())
+	{
+		return empty;
+	}
+
+	return it->second;
 }

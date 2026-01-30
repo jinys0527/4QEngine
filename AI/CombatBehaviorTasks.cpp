@@ -109,6 +109,14 @@ BTStatus MaintainRangeTask::OnTick(BTInstance& inst, Blackboard& bb)
 	return BTStatus::Success;
 }
 
+BTStatus PatrolMoveTask::OnTick(BTInstance& inst, Blackboard& bb)
+{
+	(void)inst;
+	bb.Set(BlackboardKeys::MoveRequested, true);
+	return BTStatus::Success;
+}
+
+
 BTStatus EndTurnTask::OnTick(BTInstance& inst, Blackboard& bb)
 {
 	(void)inst;

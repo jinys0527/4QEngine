@@ -57,6 +57,8 @@ public:
 	void Deserialize        (const nlohmann::json& j);
 	void BuildFrameData(RenderData::FrameData& frameData) const;
 
+	void EnsureAutoComponentsForSave();
+
 	EventDispatcher& GetEventDispatcher() { return m_EventDispatcher; }
 
 	void SetName            (std::string name) { m_Name = name; }

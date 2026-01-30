@@ -12,6 +12,8 @@
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
 #include "GridSystemComponent.h"
+#include "PlayerMoveFSMComponent.h"
+#include "PlayerFSMComponent.h"
 #include "GameState.h"
 #include <array>
 //#include <cfloat>
@@ -81,6 +83,23 @@ static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& cur
 	}
 
 	return false;
+namespace
+{
+	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+
+	void DispatchMoveEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerMoveFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
 }
 
 PlayerMovementComponent::PlayerMovementComponent()
@@ -90,21 +109,23 @@ PlayerMovementComponent::PlayerMovementComponent()
 PlayerMovementComponent::~PlayerMovementComponent()
 {
 	GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
-	GetEventDispatcher().RemoveListener(EventType::KeyUp, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().RemoveListener(EventType::Dragged, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftClickUp, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseRightClick, this);
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
 }
 
 void PlayerMovementComponent::Start()
 {
-	GetEventDispatcher().AddListener(EventType::KeyDown, this); // 이벤트 추가
-	GetEventDispatcher().AddListener(EventType::KeyUp, this);
+	GetEventDispatcher().AddListener(EventType::KeyDown, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().AddListener(EventType::Dragged, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftClickUp, this);
+	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	if (!scene)
@@ -126,97 +147,56 @@ void PlayerMovementComponent::Start()
 
 void PlayerMovementComponent::Update(float deltaTime)
 {
-
-	if (!m_IsDragging || !m_HasDragRay)
-		return;
-
-	auto* owner = GetOwner(); //
-	if (!owner)
-		return;
-
-	auto* scene = owner->GetScene();
-	if (!scene) return;
-
-	auto* transComp = owner->GetComponent<TransformComponent>();
-	if (!transComp)
-		return;
-
-	float nodeHitT = 0.0f;
-	NodeComponent* targetNode = FindClosestNodeHit(scene, m_DragRayOrigin, m_DragRayDir, nodeHitT);
-	if (!targetNode)
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	if (!targetNode->GetIsMoveable())
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	if (!targetNode->IsInMoveRange())
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	const auto state = targetNode->GetState();
-	if (state != NodeState::Empty && state != NodeState::HasPlayer)
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	auto* targetOwner = targetNode->GetOwner();
-	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
-	if (!targetTransform)
-	{
-		m_CurrentTargetNode = nullptr;
-		return;
-	}
-
-	const auto nodePos = targetTransform->GetPosition();
-	DirectX::XMFLOAT3 newPos{
-		nodePos.x + m_DragOffset.x,
-		nodePos.y + m_DragOffset.y,
-		nodePos.z + m_DragOffset.z
-	};
-
-	transComp->SetPosition(newPos);
-	m_CurrentTargetNode = targetNode;
 }
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 {
-	const auto* mouseData = static_cast<const Events::MouseState*>(data);
-	if (!mouseData)
-		return;
+	// 턴 변경: 플레이어 턴 아닐 때는 Cancel 이벤트만 발행
+	if (type == EventType::TurnChanged)
+	{
+		const auto* payload = static_cast<const Events::TurnChanged*>(data);
+		if (!payload) return;
 
-	if (mouseData->handled)
+		if (static_cast<Turn>(payload->turn) != Turn::PlayerTurn)
+		{
+			auto* owner = GetOwner();
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+
+			// 입력 상태 정리(프리뷰/원복은 FSM 액션에서 처리)
+			m_HasDragRay = false;
+			m_DragStartNode = nullptr;
+		}
 		return;
+	}
+
+	const auto* mouseData = static_cast<const Events::MouseState*>(data);
+	if (!mouseData) return;
+	if (mouseData->handled) return;
 
 	auto* owner = GetOwner();
-	if (!owner)
-		return;
+	if (!owner) return;
 
 	auto* scene = owner->GetScene();
-	if (!scene)
-		return;
+	if (!scene) return;
 
 	if (!scene->GetServices().Has<InputManager>())
 		return;
 
 	auto& input = scene->GetServices().Get<InputManager>();
 	auto camera = scene->GetGameCamera();
-	if (!camera)
-		return;
+	if (!camera) return;
 
 	auto* transComp = owner->GetComponent<TransformComponent>();
-	if (!transComp)
-		return;
+	if (!transComp) return;
 
-	if (type == EventType::MouseLeftClickUp)
+	auto* player = owner->GetComponent<PlayerComponent>();
+	if (!player) return;
+
+	auto* moveFsm = owner->GetComponent<PlayerMoveFSMComponent>();
+	if (!moveFsm) return;
+
+	if (type == EventType::KeyDown)
 	{
 		auto* player = owner->GetComponent<PlayerComponent>();
 
@@ -224,17 +204,23 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		// Turn Check.
 		if(!player || player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
-			if (m_IsDragging)
-			{
-				transComp->SetPosition(m_DragStartPos);
-				m_IsDragging = false;
-				m_HasDragRay = false;
-				m_CurrentTargetNode = nullptr;
-			}
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+			m_HasDragRay = false;
 			return;
 		}
 
-		if (m_CurrentTargetNode && player)
+		auto keyData = static_cast<const Events::KeyEvent*>(data);
+		if (!keyData) return;
+
+		if(keyData->key == VK_ESCAPE)
+			DispatchMoveEvent(owner, "Move_Revoke");
+	}
+
+	if (type == EventType::MouseRightClick)
+	{
+		// 턴 아니면 cancel
+		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
 			const bool consumed = player->CommitMove(m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR());
 			if (!consumed)
@@ -262,29 +248,55 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 					}
 				}
 			}
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+			m_HasDragRay = false;
+			return;
 		}
 
-		m_IsDragging = false;
+		DispatchMoveEvent(owner, "Move_Revoke");
+	}
+
+	// MouseUp: Commit/Cancel 의사만 FSM에 전달
+	if (type == EventType::MouseLeftClickUp)
+	{
+		// 턴 아니면 cancel
+		if (player->GetCurrentTurn() != Turn::PlayerTurn)
+		{
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+			m_HasDragRay = false;
+			return;
+		}
+
+		// 드래그(Selecting) 중일 때만 Confirm 올리는게 정상
+		if (moveFsm->HasPendingTarget())
+		{
+			DispatchMoveEvent(owner, "Move_Confirm");
+		}
+		else
+		{
+			DispatchMoveEvent(owner, "Move_Revoke");
+		}
+
 		m_HasDragRay = false;
-		m_CurrentTargetNode = nullptr;
-		m_DragStartNode = nullptr;
 		return;
 	}
 
 	if (!input.IsPointInViewport(mouseData->pos))
 		return;
 
-	// Logic
+	// MouseDown: Select 의사만 FSM에 전달
 	if (type == EventType::MouseLeftClick)
 	{
-		auto* player = owner->GetComponent<PlayerComponent>();
-		if (!player || player->GetCurrentTurn() != Turn::PlayerTurn) 
+		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 			return;
-	
+
 		Ray pickRay{};
 		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
 			return;
 
+		// 선택 판정(본인 or 노드 or 가장 가까운 collider)
 		auto* collider = owner->GetComponent<BoxColliderComponent>();
 		float ownerHitT = 0.0f;
 		const bool hitOwner = collider && collider->HasBounds()
@@ -298,11 +310,9 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		float closestT = FLT_MAX;
 		GameObject* closestObject = nullptr;
 
-		// 가장 가까운 collider hit 찾기 (선택 판정)
 		for (const auto& [name, object] : gameObjects)
 		{
-			if (!object)
-				continue;
+			if (!object) continue;
 
 			auto* otherCollider = object->GetComponent<BoxColliderComponent>();
 			if (!otherCollider || !otherCollider->HasBounds())
@@ -322,8 +332,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (!hitOwner && closestObject != owner)
 			return;
 
-		// 2) 드래그 기준 표면 hit (바닥/발판). 자기 자신은 제외.
-
+		// 드래그 오프셋 계산(입력 기반 데이터)
 		if (clickedNode)
 		{
 			auto* nodeOwner = clickedNode->GetOwner();
@@ -343,27 +352,29 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			m_DragOffset = { 0.0f, 0.0f, 0.0f };
 		}
 
+		// 레이/시작 위치 저장
 		m_DragRayOrigin = pickRay.m_Pos;
-		m_DragRayDir    = pickRay.m_Dir;
-		m_IsDragging    = true;
-		m_HasDragRay    = true;
+		m_DragRayDir = pickRay.m_Dir;
+		m_HasDragRay = true;
 
 		m_DragStartPos = transComp->GetPosition();
-		m_CurrentTargetNode = nullptr;
-		if (auto* player = owner->GetComponent<PlayerComponent>())
-		{
-			player->BeginMove();
-			if (m_GridSystem)
-			{
-				m_DragStartNode = m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() });
-			}
-		}
+		m_DragStartNode = nullptr;
 
+		if (m_GridSystem)
+			m_DragStartNode = m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() });
+
+		// FSM에 상태 시작 의사 전달 (BeginMove/드래그 활성화는 FSM 액션에서)
+		DispatchPlayerStateEvent(owner, "Move_Start");
+		DispatchMoveEvent(owner, "Move_Select");
 		return;
 	}
 
-	// 드래그 중: 레이만 갱신
-	if (type != EventType::Dragged || !m_IsDragging)
+	// Dragged: 레이만 갱신
+	if (type != EventType::Dragged)
+		return;
+
+	// 드래그 활성은 FSM이 관리하지만, 레이는 계속 갱신해줘야 프리뷰가 움직임
+	if (!moveFsm->IsDraggingActive())
 		return;
 
 	Ray dragRay{};
@@ -371,8 +382,15 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		return;
 
 	m_DragRayOrigin = dragRay.m_Pos;
-	m_DragRayDir    = dragRay.m_Dir;
-	m_HasDragRay    = true;
+	m_DragRayDir = dragRay.m_Dir;
+	m_HasDragRay = true;
+}
+
+bool PlayerMovementComponent::IsDragging() const
+{
+	auto* owner = GetOwner();
+	auto* moveFSM = owner ? owner->GetComponent<PlayerMoveFSMComponent>() : nullptr;
+	return moveFSM && moveFSM->IsDraggingActive();
 }
 
 

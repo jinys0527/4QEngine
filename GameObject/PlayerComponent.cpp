@@ -120,6 +120,11 @@ void PlayerComponent::BeginMove()
 
 bool PlayerComponent::CommitMove(int targetQ, int targetR)
 {
+	if (m_CurrentTurn != Turn::PlayerTurn)
+	{
+		return false;
+	}
+
 	const int startQ = m_HasMoveStart ? m_StartQ : m_Q;
 	const int startR = m_HasMoveStart ? m_StartR : m_R;
 	//
@@ -128,7 +133,7 @@ bool PlayerComponent::CommitMove(int targetQ, int targetR)
 		cost = m_GridSystem->GetShortestPathLength({ startQ,startR }, { targetQ,targetR });
 	}
 	if (cost < 0) {
-		const int cost = AxialDistance(startQ, startR, targetQ, targetR); // start와 Target 간의 소모 cost return
+		cost = AxialDistance(startQ, startR, targetQ, targetR); // start와 Target 간의 소모 cost return
 	}
 	m_HasMoveStart = false;
 	if (cost <= 0)
@@ -147,6 +152,10 @@ bool PlayerComponent::CommitMove(int targetQ, int targetR)
 
 bool PlayerComponent::ConsumeActResource(int amount)
 {
+	if (m_CurrentTurn != Turn::PlayerTurn)
+	{
+		return false;
+	}
 	if (amount <= 0)
 	{
 		return true;
