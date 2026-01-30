@@ -92,6 +92,11 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			if (!player)
 				return;
 
+			if (auto* moveComp = owner->GetComponent<PlayerMovementComponent>())
+			{
+				moveComp->ApplyRotationForMove(m_PendingQ, m_PendingR);
+			}
+
 			const bool committed = player->CommitMove(m_PendingQ, m_PendingR);
 
 			if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())

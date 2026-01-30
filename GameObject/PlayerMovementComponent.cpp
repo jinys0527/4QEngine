@@ -224,31 +224,25 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		// 턴 아니면 cancel
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
-			const bool consumed = player->CommitMove(m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR());
+			if (!moveFsm->HasPendingTarget())
+			{
+				DispatchPlayerStateEvent(owner, "Move_Cancel");
+				DispatchMoveEvent(owner, "Move_Cancel");
+				m_HasDragRay = false;
+				return;
+			}
+
+			const int targetQ = moveFsm->GetPeningQ();
+			const int targetR = moveFsm->GetPeningR();
+			const bool consumed = player->CommitMove(targetQ, targetR);
 			if (!consumed)
 			{
 				transComp->SetPosition(m_DragStartPos);
 			}
-			else if (m_GridSystem)
+			else
 			{
-				// 커밋 직전: 실제 최단 경로를 구해 마지막 두 노드로 회전 방향을 결정한다.
-				const AxialKey startKey = m_DragStartNode
-					? AxialKey{ m_DragStartNode->GetQ(), m_DragStartNode->GetR() }
-				: AxialKey{ player->GetQ(), player->GetR() };
-				const AxialKey targetKey{ m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR() };
-				const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
-
-				// 경로가 2개 이상일 때 마지막 스텝 방향을 사용한다. (직전 노드 -> 목적지)
-				if (path.size() >= 2)
-				{
-					const AxialKey& previousKey = path[path.size() - 2];
-					const AxialKey& currentKey = path.back();
-					RotationOffset rotation{};
-					if (TryGetRotationFromStep(previousKey, currentKey, rotation))
-					{
-						SetPlayerRotation(transComp, rotation);
-					}
-				}
+				
+				ApplyRotationForMove(targetQ, targetR);
 			}
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Cancel");
@@ -386,6 +380,39 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	m_DragRayOrigin = dragRay.m_Pos;
 	m_DragRayDir = dragRay.m_Dir;
 	m_HasDragRay = true;
+}
+
+void PlayerMovementComponent::ApplyRotationForMove(int targetQ, int targetR)
+{
+	auto* owner = GetOwner();
+	if (!owner)
+		return;
+
+	auto* transComp = owner->GetComponent<TransformComponent>();
+	if (!transComp || !m_GridSystem)
+		return;
+
+	auto* player = owner->GetComponent<PlayerComponent>();
+	if (!player)
+		return;
+
+	const AxialKey startKey = m_DragStartNode
+		? AxialKey{ m_DragStartNode->GetQ(), m_DragStartNode->GetR() }
+	: AxialKey{ player->GetQ(), player->GetR() };
+	const AxialKey targetKey{ targetQ, targetR };
+	const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
+
+	// 경로가 2개 이상일 때 마지막 스텝 방향을 사용한다. (직전 노드 -> 목적지)
+	if (path.size() < 2)
+		return;
+
+	const AxialKey& previousKey = path[path.size() - 2];
+	const AxialKey& currentKey = path.back();
+	RotationOffset rotation{};
+	if (TryGetRotationFromStep(previousKey, currentKey, rotation))
+	{
+		SetPlayerRotation(transComp, rotation);
+	}
 }
 
 bool PlayerMovementComponent::IsDragging() const
