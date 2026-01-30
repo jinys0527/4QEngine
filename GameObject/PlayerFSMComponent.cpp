@@ -89,6 +89,20 @@ namespace
 	}
 }
 
+// Editor 설정 시 Player FSM 진입/종료 이벤트 정리:
+	// - Player_Move       : onEnter -> Player_DispatchSubFSMEvent(target="Move", event="Move_Select")
+	//                       onExit  -> Player_DispatchEvent(event="Move_Complete")
+	// - Player_Shop       : onEnter -> Player_DispatchSubFSMEvent(target="Shop", event="Shop_ItemSelect")
+	//                       onExit  -> Player_DispatchEvent(event="Shop_Close")
+	// - Player_Inventory  : onEnter -> Player_DispatchSubFSMEvent(target="Inventory", event="Inventory_Drop")
+	//                       onExit  -> Player_DispatchEvent(event="Inventory_Close")
+	// - Player_Combat     : onEnter -> Player_DispatchSubFSMEvent(target="Combat", event="Combat_CheckRange")
+	//                       onExit  -> Player_DispatchEvent(event="Combat_End")
+	// - Player_Push       : onEnter -> Player_DispatchSubFSMEvent(target="Push", event="Push_Start")
+	//                       onExit  -> Player_DispatchEvent(event="Push_Complete")
+	// - Player_Door       : onEnter -> Player_DispatchSubFSMEvent(target="Door", event="Door Select")
+	//                       onExit  -> Player_DispatchEvent(event="Door_Complete")
+
 void RegisterPlayerFSMDefinitions()
 {
 	auto& actionRegistry = FSMActionRegistry::Instance();
