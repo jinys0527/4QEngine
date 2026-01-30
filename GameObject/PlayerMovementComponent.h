@@ -1,8 +1,19 @@
 ﻿#pragma once
 #include "Component.h"
 #include <DirectXMath.h>
+
 class NodeComponent;
 class GridSystemComponent;
+class TransformComponent;
+
+enum class RotationOffset {
+	clock_1,
+	clock_3,
+	clock_5,
+	clock_7,
+	clock_9,
+	clock_11,
+};
 
 class PlayerMovementComponent : public Component, public IEventListener
 {
@@ -27,6 +38,8 @@ public:
 	NodeComponent* GetDragStartNode() const { return m_DragStartNode; }
 
 private:
+	void SetPlayerRotation(TransformComponent* transComp, RotationOffset dir);
+
 	// ProPerty
 	float m_DragSpeed = 0.01f;
 

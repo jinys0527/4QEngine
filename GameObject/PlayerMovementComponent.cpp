@@ -13,6 +13,7 @@
 #include "PlayerComponent.h"
 #include "GridSystemComponent.h"
 #include "GameState.h"
+#include <array>
 //#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
@@ -56,6 +57,30 @@ static NodeComponent* FindClosestNodeHit(
 
 	outT = closestT;
 	return closestNode;
+}
+
+static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& current, RotationOffset& outDir)
+{
+	const AxialKey delta{ current.q - previous.q, current.r - previous.r };
+	constexpr std::array<std::pair<AxialKey, RotationOffset>, 6> kDirections{ {
+		{ { 1, 0 }, RotationOffset::clock_3 },
+		{ { 1, -1 }, RotationOffset::clock_5 },
+		{ { 0, -1 }, RotationOffset::clock_7 },
+		{ { -1, 0 }, RotationOffset::clock_9 },
+		{ { -1, 1 }, RotationOffset::clock_11 },
+		{ { 0, 1 }, RotationOffset::clock_1 }
+	} };
+
+	for (const auto& [dir, rotation] : kDirections)
+	{
+		if (dir.q == delta.q && dir.r == delta.r)
+		{
+			outDir = rotation;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 PlayerMovementComponent::PlayerMovementComponent()
@@ -194,6 +219,8 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (type == EventType::MouseLeftClickUp)
 	{
 		auto* player = owner->GetComponent<PlayerComponent>();
+
+
 		// Turn Check.
 		if(!player || player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
@@ -213,6 +240,27 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			if (!consumed)
 			{
 				transComp->SetPosition(m_DragStartPos);
+			}
+			else if (m_GridSystem)
+			{
+				// 커밋 직전: 실제 최단 경로를 구해 마지막 두 노드로 회전 방향을 결정한다.
+				const AxialKey startKey = m_DragStartNode
+					? AxialKey{ m_DragStartNode->GetQ(), m_DragStartNode->GetR() }
+				: AxialKey{ player->GetQ(), player->GetR() };
+				const AxialKey targetKey{ m_CurrentTargetNode->GetQ(), m_CurrentTargetNode->GetR() };
+				const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
+
+				// 경로가 2개 이상일 때 마지막 스텝 방향을 사용한다. (직전 노드 -> 목적지)
+				if (path.size() >= 2)
+				{
+					const AxialKey& previousKey = path[path.size() - 2];
+					const AxialKey& currentKey = path.back();
+					RotationOffset rotation{};
+					if (TryGetRotationFromStep(previousKey, currentKey, rotation))
+					{
+						SetPlayerRotation(transComp, rotation);
+					}
+				}
 			}
 		}
 
@@ -271,7 +319,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			}
 		}
 
-		if (!hitOwner && !clickedNode && closestObject != owner)
+		if (!hitOwner && closestObject != owner)
 			return;
 
 		// 2) 드래그 기준 표면 hit (바닥/발판). 자기 자신은 제외.
@@ -325,4 +373,35 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	m_DragRayOrigin = dragRay.m_Pos;
 	m_DragRayDir    = dragRay.m_Dir;
 	m_HasDragRay    = true;
+}
+
+
+
+void PlayerMovementComponent::SetPlayerRotation(TransformComponent* transComp, RotationOffset dir)
+{
+	if (!transComp){return;}
+
+	switch (dir)
+	{
+	case RotationOffset::clock_1:
+		transComp->SetRotationEuler({ 0.0f,-150.0f ,0.0f });
+		break;
+	case RotationOffset::clock_3:
+		transComp->SetRotationEuler({ 0.0f,-90.0f ,0.0f });
+		break;
+	case RotationOffset::clock_5:
+		transComp->SetRotationEuler({ 0.0f,-30.0f ,0.0f });
+		break;
+	case RotationOffset::clock_7:
+		transComp->SetRotationEuler({ 0.0f,30.0f ,0.0f });
+		break;
+	case RotationOffset::clock_9:
+		transComp->SetRotationEuler({ 0.0f,90.0f ,0.0f });
+		break;
+	case RotationOffset::clock_11:
+		transComp->SetRotationEuler({ 0.0f,150.0f ,0.0f });
+		break;
+	default:
+		break;
+	}
 }

@@ -3,6 +3,7 @@
 #include "GameManager.h"
  
 GameManager::GameManager() :
+
 	m_Turn(Turn::PlayerTurn)
 	, m_BattleCheck(Battle::NonBattle)
 	, m_Phase(Phase::PlayerMove)
@@ -20,7 +21,6 @@ void GameManager::SetEventDispatcher(EventDispatcher& eventDispatcher)
 	{
 		return;
 	}
-
 	UnregisterEventListeners();
 	m_EventDispatcher = &eventDispatcher;
 	RegisterEventListeners();
