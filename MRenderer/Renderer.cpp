@@ -10,6 +10,7 @@
 #include "RenderTargetContext.h"
 #include "DebugLinePass.h"
 #include "EmissivePass.h"
+#include "UIPass.h"
 #include "Renderer.h"
 
 #include <algorithm>
@@ -127,6 +128,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_MakeShadow_VS.hlsl"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadow_PS.hlsl"), m_pPS_MakeShadow.GetAddressOf());
+
+
 	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
 
@@ -143,6 +148,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<UIPass>(m_RenderContext, m_AssetLoader));
 	CreateConstBuffer();
 
 
@@ -577,6 +583,10 @@ void Renderer::CreateContext()
 	m_RenderContext.VS_Post					= m_pVS_Post;
 	m_RenderContext.PS_Post					= m_pPS_Post;
 	m_RenderContext.VSCode_Post				= m_pVSCode_Post;
+
+	m_RenderContext.VS_MakeShadow			= m_pVS_MakeShadow;
+	m_RenderContext.PS_MakeShadow			= m_pPS_MakeShadow;
+	m_RenderContext.VSCode_MakeShadow		= m_pVSCode_MakeShadow;
 
 
 	m_RenderContext.RState					= m_RState;

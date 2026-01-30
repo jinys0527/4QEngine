@@ -205,6 +205,11 @@ private:
 	ComPtr<ID3D11PixelShader> m_pPS_Post;
 	ComPtr<ID3DBlob> m_pVSCode_Post;
 
+	//그림자 만들기
+	ComPtr<ID3D11VertexShader>	m_pVS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	m_pPS_MakeShadow;
+	ComPtr<ID3DBlob>			m_pVSCode_MakeShadow;
+
 //그리드
 private:
 	ComPtr<ID3D11Buffer> m_GridVB;

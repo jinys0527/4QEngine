@@ -157,11 +157,6 @@ struct VSOutput_Refraction
     float4 nrm : NORMAL;
 };
 
-//임시 반드시 지울것
-struct VSOutputLine
-{
-    float4 pos : SV_POSITION;
-};
 
 //ShaderResourceView
 Texture2D g_RTView              : register(t0);

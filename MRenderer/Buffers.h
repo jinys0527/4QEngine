@@ -180,6 +180,12 @@ struct RenderContext
 	ComPtr<ID3D11PixelShader> PS_Post;
 	ComPtr<ID3DBlob> VSCode_Post;
 
+	//그림자 만들기
+	ComPtr<ID3D11VertexShader>	VS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	PS_MakeShadow;
+	ComPtr<ID3DBlob>			VSCode_MakeShadow;
+
+
 
 	//imgui용 == Scene Draw용
 	bool isEditCam = false;

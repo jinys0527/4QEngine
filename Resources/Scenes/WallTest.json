@@ -2,19 +2,19 @@
     "editor": {
         "EditorCamera": {
             "eye": {
-                "x": -14.259665489196777,
-                "y": 4.59295129776001,
-                "z": -6.4997429847717285
+                "x": -20.230106353759766,
+                "y": 5.579235076904297,
+                "z": 3.1737442016601563
             },
             "look": {
-                "x": -14.276594161987305,
-                "y": 4.111401081085205,
-                "z": -5.623487949371338
+                "x": -19.298297882080078,
+                "y": 5.21920108795166,
+                "z": 3.219663381576538
             },
             "up": {
-                "x": -0.00930145476013422,
-                "y": 0.8764185309410095,
-                "z": 0.4814603328704834
+                "x": 0.3595976233482361,
+                "y": 0.9329391717910767,
+                "z": 0.017720893025398254
             }
         }
     },
@@ -51,9 +51,9 @@
                             "z": 1.0
                         },
                         "Direction": {
-                            "x": 0.0,
+                            "x": 2.4000000953674316,
                             "y": -1.0,
-                            "z": 0.0
+                            "z": 1.5299999713897705
                         },
                         "Intensity": 1.0,
                         "Position": {
@@ -72,15 +72,15 @@
                 {
                     "data": {
                         "Position": {
-                            "x": -14.259665489196777,
-                            "y": 4.59295129776001,
-                            "z": -6.4997429847717285
+                            "x": -20.230106353759766,
+                            "y": 5.579235076904297,
+                            "z": 3.1737442016601563
                         },
                         "Rotation": {
-                            "w": 0.9685668349266052,
-                            "x": 0.24856583774089813,
-                            "y": -0.009355159476399422,
-                            "z": 0.0024008196778595448
+                            "w": 0.7120530605316162,
+                            "x": 0.13262876868247986,
+                            "y": 0.6778274178504944,
+                            "z": -0.12625378370285034
                         },
                         "Scale": {
                             "x": 1.0,
@@ -93,15 +93,15 @@
                 {
                     "data": {
                         "Eye": {
-                            "x": -14.259665489196777,
-                            "y": 4.59295129776001,
-                            "z": -6.4997429847717285
+                            "x": -20.230106353759766,
+                            "y": 5.579235076904297,
+                            "z": 3.1737442016601563
                         },
                         "FarZ": 1000.0,
                         "Look": {
-                            "x": -14.276594161987305,
-                            "y": 4.111401081085205,
-                            "z": -5.623487949371338
+                            "x": -19.298297882080078,
+                            "y": 5.21920108795166,
+                            "z": 3.219663381576538
                         },
                         "NearZ": 0.10000000149011612,
                         "Ortho": {
@@ -115,16 +115,17 @@
                             "top": 1.0
                         },
                         "Perspective": {
-                            "aspect": 1.818411111831665,
+                            "aspect": 1.7846534252166748,
                             "fov": 0.7853981852531433
                         },
+                        "ProjectionMode": 0,
                         "Up": {
-                            "x": -0.00930145476013422,
-                            "y": 0.8764185309410095,
-                            "z": 0.4814603328704834
+                            "x": 0.3595976233482361,
+                            "y": 0.9329391717910767,
+                            "z": 0.017720893025398254
                         },
                         "Viewport": {
-                            "height": 793.0,
+                            "height": 808.0,
                             "width": 1442.0
                         }
                     },
@@ -139,7 +140,7 @@
                     "data": {
                         "Position": {
                             "x": -16.48271942138672,
-                            "y": 0.0,
+                            "y": 2.571542263031006,
                             "z": 2.905390501022339
                         },
                         "Rotation": {
@@ -161,11 +162,11 @@
                         "CastShadow": true,
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                         },
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                         },
                         "ReceiveShadow": true,
                         "RenderLayer": 3,
@@ -177,11 +178,11 @@
                     "data": {
                         "Mesh": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                         },
                         "MeshHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                         },
                         "SubMeshMaterialOverrides": []
                     },
@@ -191,11 +192,11 @@
                     "data": {
                         "Material": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                         },
                         "MaterialHandle": {
                             "assetIndex": 0,
-                            "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                            "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                         },
                         "Overrides": {
                             "overrides": {
@@ -215,28 +216,28 @@
                                 "saturation": 1.0,
                                 "shaderAsset": {
                                     "assetIndex": 0,
-                                    "assetPath": "../ResourceOutput\\ShaderAsset\\Meta\\Wall.shader.json"
+                                    "assetPath": ""
                                 },
                                 "textures": [
                                     {
                                         "assetIndex": 0,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                                     },
                                     {
                                         "assetIndex": 1,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                                     },
                                     {
                                         "assetIndex": 2,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                                     },
                                     {
                                         "assetIndex": 3,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                                     },
                                     {
                                         "assetIndex": 4,
-                                        "assetPath": "../ResourceOutput\\corridorWall\\Meta\\corridorWall.asset.json"
+                                        "assetPath": "../ResourceOutput\\frontWall\\Meta\\frontWall.asset.json"
                                     },
                                     {
                                         "assetIndex": 0,
@@ -306,6 +307,7 @@
                             "aspect": 1.7777777910232544,
                             "fov": 0.7853981852531433
                         },
+                        "ProjectionMode": 0,
                         "Up": {
                             "x": 0.0,
                             "y": 0.9659257531166077,
