@@ -25,8 +25,7 @@ void SceneManager::Initialize()
 
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
-		"TileTest", // 제일 처음 실행될 Scene
-		"Game Test2",
+		"Stage1" // 제일 처음 실행될 Scene
 		//"BossStage"
 		});
 
@@ -104,8 +103,8 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
-		m_Camera = m_CurrentScene->GetGameCamera().get(); 
-		m_InputManager->SetViewportRect({ 0, 0, static_cast<LONG>(m_Camera->GetViewportSize().Width), static_cast<LONG>(m_Camera->GetViewportSize().Height) });
+		/*m_Camera = m_CurrentScene->GetGameCamera().get();
+		m_InputManager->SetViewportRect({ 0, 0, static_cast<LONG>(m_Camera->GetViewportSize().Width), static_cast<LONG>(m_Camera->GetViewportSize().Height) });*/
 		m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());

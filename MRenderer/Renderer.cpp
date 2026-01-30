@@ -665,13 +665,13 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
-			OutputDebugStringA("Drawing 3D Object Start\n");
+			//OutputDebugStringA("Drawing 3D Object Start\n");
 			D3D11_VIEWPORT cur;
 			UINT n = 1;
 			m_pDXDC->RSGetViewports(&n, &cur);
 
 			m_pDXDC->Draw(3, 0);
-			OutputDebugStringA("Drawing 3D Object End\n");
+			//OutputDebugStringA("Drawing 3D Object End\n");
 		};
 
 
@@ -692,9 +692,9 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			//m_pDXDC->OMSetDepthStencilState(m_RenderContext.DSState[DS::DEPTH_OFF].Get(), 0);
 
-			OutputDebugStringA("Drawing 3D Object Start\n");
+			//OutputDebugStringA("Drawing 3D Object Start\n");
 			m_pDXDC->DrawIndexed(m_QuadIndexCounts, 0, 0);
-			OutputDebugStringA("Drawing 3D Object End\n");
+			//OutputDebugStringA("Drawing 3D Object End\n");
 		};
 
 	m_RenderContext.DrawGrid =
