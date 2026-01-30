@@ -889,6 +889,8 @@ void BuildCameraData(const std::shared_ptr<CameraObject>& camera, RenderData::Fr
 		context.gameCamera.width	 = static_cast<UINT32>(viewport.Width);
 		context.gameCamera.height	 = static_cast<UINT32>(viewport.Height);
 		context.gameCamera.cameraPos = camera->GetEye();
+		context.gameCamera.camNear = camera->GetNearZ();
+		context.gameCamera.camFar = camera->GetFarZ();
 	
 		const auto view = XMLoadFloat4x4(&context.gameCamera.view);
 		const auto proj = XMLoadFloat4x4(&context.gameCamera.proj);

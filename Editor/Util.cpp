@@ -1437,7 +1437,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		// Texture slots
-		static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
+		static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emissive"};
 		static_assert(std::size(kTextureLabels) == static_cast<size_t>(RenderData::MaterialTextureSlot::TEX_MAX));
 
 		for (size_t i = 0; i < value.textures.size(); ++i)

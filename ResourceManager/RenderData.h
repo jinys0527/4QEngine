@@ -56,7 +56,7 @@ namespace RenderData
 		Metallic,
 		Roughness,
 		AO,
-		Env,
+		Emissive,
 		TEX_MAX
 	};
 
@@ -173,6 +173,8 @@ namespace RenderData
 		XMFLOAT3      cameraPos{ 0.0f, 0.0f,0.0f };
 		FLOAT         exposure = 1.0f;
 		XMFLOAT3      ambientColor{ 0.0f,0.0f,0.0f };
+		FLOAT		  camNear = 1.0f;
+		FLOAT		  camFar = 1000.f;
 	};
 
 	struct FrameContext

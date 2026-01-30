@@ -185,6 +185,10 @@ struct RenderContext
 	ComPtr<ID3D11PixelShader>	PS_MakeShadow;
 	ComPtr<ID3DBlob>			VSCode_MakeShadow;
 
+	//Emissive용
+	ComPtr<ID3D11VertexShader>	VS_Emissive;
+	ComPtr<ID3D11PixelShader>	PS_Emissive;
+	ComPtr<ID3DBlob>			VSCode_Emissive;
 
 
 	//imgui용 == Scene Draw용
@@ -224,9 +228,9 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_BlurOrigin;
 	ComPtr<ID3D11RenderTargetView>		pRTView_BlurOrigin;
 
-	ComPtr<ID3D11Texture2D>*				pRTScene_Blur;
-	ComPtr<ID3D11ShaderResourceView>*		pTexRvScene_Blur;
-	ComPtr<ID3D11RenderTargetView>*			pRTView_Blur;
+	ComPtr<ID3D11Texture2D>*				pRTScene_Blur = nullptr;
+	ComPtr<ID3D11ShaderResourceView>*		pTexRvScene_Blur = nullptr;
+	ComPtr<ID3D11RenderTargetView>*			pRTView_Blur = nullptr;
 
 
 	//Refraction용
@@ -239,9 +243,9 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_EmissiveOrigin;
 	ComPtr<ID3D11RenderTargetView>		pRTView_EmissiveOrigin;
 
-	ComPtr<ID3D11Texture2D>*              pRTScene_Emissive;
-	ComPtr<ID3D11ShaderResourceView>*     pTexRvScene_Emissive;
-	ComPtr<ID3D11RenderTargetView>*       pRTView_Emissive;
+	ComPtr<ID3D11Texture2D>*              pRTScene_Emissive = nullptr;
+	ComPtr<ID3D11ShaderResourceView>*     pTexRvScene_Emissive = nullptr;
+	ComPtr<ID3D11RenderTargetView>*       pRTView_Emissive = nullptr;
 
 
 

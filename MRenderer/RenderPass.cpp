@@ -194,8 +194,8 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 #pragma endregion
 	m_RenderContext.CameraCBuffer.dTime = *m_RenderContext.dTime;
 
-	m_RenderContext.camParams.x = 1.0f;
-	m_RenderContext.camParams.y = 100.0f;
+	m_RenderContext.camParams.x = context.gameCamera.camNear;
+	m_RenderContext.camParams.y = context.gameCamera.camFar;
 	m_RenderContext.camParams.w = 3.f;
 
 	m_RenderContext.CameraCBuffer.camParams = m_RenderContext.camParams;

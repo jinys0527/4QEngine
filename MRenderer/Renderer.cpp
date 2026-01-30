@@ -131,6 +131,8 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_MakeShadow_VS.hlsl"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadow_PS.hlsl"), m_pPS_MakeShadow.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
@@ -588,6 +590,9 @@ void Renderer::CreateContext()
 	m_RenderContext.PS_MakeShadow			= m_pPS_MakeShadow;
 	m_RenderContext.VSCode_MakeShadow		= m_pVSCode_MakeShadow;
 
+	m_RenderContext.VS_Emissive				= m_pVS_Emissive;
+	m_RenderContext.PS_Emissive				= m_pPS_Emissive;
+	m_RenderContext.VSCode_Emissive			= m_pVSCode_Emissive;
 
 	m_RenderContext.RState					= m_RState;
 	m_RenderContext.DSState					= m_DSState;
@@ -1877,6 +1882,18 @@ HRESULT Renderer::CreateRasterState()
 		return hr;
 	}
 
+	rd.FillMode = D3D11_FILL_SOLID;
+	rd.CullMode = D3D11_CULL_BACK;
+	rd.DepthBias = -1;                 // 앞쪽으로
+	rd.SlopeScaledDepthBias = -1.0f;   // 기울기 보정
+	rd.DepthBiasClamp = 0.0f;
+
+	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::EMISSIVE].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 	
 	return hr;
 }

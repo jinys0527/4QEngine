@@ -210,6 +210,11 @@ private:
 	ComPtr<ID3D11PixelShader>	m_pPS_MakeShadow;
 	ComPtr<ID3DBlob>			m_pVSCode_MakeShadow;
 
+	//Emissive용
+	ComPtr<ID3D11VertexShader>	m_pVS_Emissive;
+	ComPtr<ID3D11PixelShader>	m_pPS_Emissive;
+	ComPtr<ID3DBlob>			m_pVSCode_Emissive;
+
 //그리드
 private:
 	ComPtr<ID3D11Buffer> m_GridVB;

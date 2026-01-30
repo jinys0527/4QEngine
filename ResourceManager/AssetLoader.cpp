@@ -267,8 +267,7 @@ namespace
 		case ETextureType::AO:
 			return RenderData::MaterialTextureSlot::AO;
 		case ETextureType::EMISSIVE:
-			outValid = false;
-			return RenderData::MaterialTextureSlot::Albedo;
+			return RenderData::MaterialTextureSlot::Emissive;
 		default:
 			outValid = false;
 			return RenderData::MaterialTextureSlot::Albedo;
@@ -1380,7 +1379,7 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 				{
 					const MatData& mat = mats[i];
 					RenderData::MaterialData material{};
-					material.baseColor = { mat.baseColor[0], mat.baseColor[1], mat.baseColor[2], mat.baseColor[3] };
+					material.baseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 					material.metallic = mat.metallic;
 					material.roughness = mat.roughness;
 
@@ -1406,7 +1405,8 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 						}
 
 						const fs::path texPath = ResolvePath(textureDir, texPathRaw);
-						const bool isSRGB = (slot == RenderData::MaterialTextureSlot::Albedo);
+						const bool isSRGB = (slot == RenderData::MaterialTextureSlot::Albedo)
+							|| (slot == RenderData::MaterialTextureSlot::Emissive);
 
 						TextureHandle textureHandle = m_Textures.Load(
 							texPath.generic_string(),
@@ -1430,6 +1430,7 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 						{
 							return std::make_unique<RenderData::MaterialData>(material);
 						});
+
 
 					materialHandles.push_back(handle);
 					materialByName.emplace(materialName, handle);

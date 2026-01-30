@@ -79,6 +79,7 @@ enum class RS
     WIREFRM,			//Wireframe, 컬링 없음
     CULLBACK,			//뒷면 컬링 
     WIRECULLBACK,		//Wireframe, 뒷면 컬링 
+    EMISSIVE,
 
     MAX_
 };

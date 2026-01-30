@@ -12,8 +12,8 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ADD);
-    SetRasterizerState(RS::CULLBACK);
-    SetDepthStencilState(DS::DEPTH_ON);
+    SetRasterizerState(RS::EMISSIVE);
+    SetDepthStencilState(DS::DEPTH_ON_WRITE_OFF);
     SetSamplerState();
 
 #pragma endregion
@@ -60,8 +60,8 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 		const auto* vertexShaders = m_RenderContext.vertexShaders;
 		const auto* pixelShaders = m_RenderContext.pixelShaders;
 
-		ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
-		ID3D11PixelShader* pixelShader = m_RenderContext.PS_PBR.Get();
+		ID3D11VertexShader* vertexShader = m_RenderContext.VS_Emissive.Get();
+		ID3D11PixelShader* pixelShader = m_RenderContext.PS_Emissive.Get();
 
 		const RenderData::MaterialData* mat = nullptr;
 		if (item.useMaterialOverrides)
@@ -82,48 +82,48 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 		if (textures && mat)
 		{
 
-			if (mat->shaderAsset.IsValid())
-			{
-				const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
-				if (shaderAsset)
-				{
-					if (vertexShaders && shaderAsset->vertexShader.IsValid())
-					{
-						const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
-						if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
-						{
-							vertexShader = shaderIt->second.vertexShader.Get();
-						}
-					}
+			//if (mat->shaderAsset.IsValid())
+			//{
+			//	const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
+			//	if (shaderAsset)
+			//	{
+			//		if (vertexShaders && shaderAsset->vertexShader.IsValid())
+			//		{
+			//			const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
+			//			if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+			//			{
+			//				vertexShader = shaderIt->second.vertexShader.Get();
+			//			}
+			//		}
 
-					if (pixelShaders && shaderAsset->pixelShader.IsValid())
-					{
-						const auto shaderIt = pixelShaders->find(shaderAsset->pixelShader);
-						if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
-						{
-							pixelShader = shaderIt->second.pixelShader.Get();
-						}
-					}
-				}
-			}
+			//		if (pixelShaders && shaderAsset->pixelShader.IsValid())
+			//		{
+			//			const auto shaderIt = pixelShaders->find(shaderAsset->pixelShader);
+			//			if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+			//			{
+			//				pixelShader = shaderIt->second.pixelShader.Get();
+			//			}
+			//		}
+			//	}
+			//}
 
-			if (vertexShaders && mat->vertexShader.IsValid())
-			{
-				const auto shaderIt = vertexShaders->find(mat->vertexShader);
-				if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
-				{
-					vertexShader = shaderIt->second.vertexShader.Get();
-				}
-			}
+			//if (vertexShaders && mat->vertexShader.IsValid())
+			//{
+			//	const auto shaderIt = vertexShaders->find(mat->vertexShader);
+			//	if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
+			//	{
+			//		vertexShader = shaderIt->second.vertexShader.Get();
+			//	}
+			//}
 
-			if (pixelShaders && mat->pixelShader.IsValid())
-			{
-				const auto shaderIt = pixelShaders->find(mat->pixelShader);
-				if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
-				{
-					pixelShader = shaderIt->second.pixelShader.Get();
-				}
-			}
+			//if (pixelShaders && mat->pixelShader.IsValid())
+			//{
+			//	const auto shaderIt = pixelShaders->find(mat->pixelShader);
+			//	if (shaderIt != pixelShaders->end() && shaderIt->second.pixelShader)
+			//	{
+			//		pixelShader = shaderIt->second.pixelShader.Get();
+			//	}
+			//}
 
 
 
