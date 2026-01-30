@@ -27,6 +27,7 @@
 #include "StatComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyStatComponent.h"
+#include "ItemComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -66,6 +67,7 @@ extern "C" {
 	void Link_PlayerStatComponent();
 	void Link_EnemyStatComponent();
 	void Link_EnemyControllerComponent();
+	void Link_ItemComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -116,4 +118,5 @@ void LinkEngineComponents() {
 	Link_PlayerStatComponent();
 	Link_EnemyStatComponent();
 	Link_EnemyControllerComponent();
+	Link_ItemComponent();
 }

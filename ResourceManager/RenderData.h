@@ -245,7 +245,6 @@ namespace RenderData
 		std::vector<XMFLOAT4X4> globalPoses;
 		std::vector<UIElement>	uiElements;
 		std::vector<UITextElement> uiTexts;
-		std::vector<XMFLOAT4X4> textureProjTM;
 
 	};
 }

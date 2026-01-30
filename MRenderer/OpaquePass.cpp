@@ -95,6 +95,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 // 				}
 // 			}
 // 		}
+
+		
 #endif
 		if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 		{
