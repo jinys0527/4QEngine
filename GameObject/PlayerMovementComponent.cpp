@@ -85,19 +85,23 @@ PlayerMovementComponent::PlayerMovementComponent()
 
 PlayerMovementComponent::~PlayerMovementComponent()
 {
+	GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().RemoveListener(EventType::Dragged, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftClickUp, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseRightClick, this);
 	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
 }
 
 void PlayerMovementComponent::Start()
 {
+	GetEventDispatcher().AddListener(EventType::KeyDown, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().AddListener(EventType::Dragged, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftClickUp, this);
+	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
@@ -169,6 +173,38 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	auto* moveFsm = owner->GetComponent<PlayerMoveFSMComponent>();
 	if (!moveFsm) return;
 
+	if (type == EventType::KeyDown)
+	{
+		// 턴 아니면 cancel
+		if (player->GetCurrentTurn() != Turn::PlayerTurn)
+		{
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+			m_HasDragRay = false;
+			return;
+		}
+
+		auto keyData = static_cast<const Events::KeyEvent*>(data);
+		if (!keyData) return;
+
+		if(keyData->key == VK_ESCAPE)
+			DispatchMoveEvent(owner, "Move_Revoke");
+	}
+
+	if (type == EventType::MouseRightClick)
+	{
+		// 턴 아니면 cancel
+		if (player->GetCurrentTurn() != Turn::PlayerTurn)
+		{
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+			m_HasDragRay = false;
+			return;
+		}
+
+		DispatchMoveEvent(owner, "Move_Revoke");
+	}
+
 	// MouseUp: Commit/Cancel 의사만 FSM에 전달
 	if (type == EventType::MouseLeftClickUp)
 	{
@@ -182,13 +218,13 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		}
 
 		// 드래그(Selecting) 중일 때만 Confirm 올리는게 정상
-		if (moveFsm->IsDraggingActive())
+		if (moveFsm->HasPendingTarget())
 		{
 			DispatchMoveEvent(owner, "Move_Confirm");
 		}
 		else
 		{
-			// Selecting이 아닌데 MouseUp 들어온 경우는 무시
+			DispatchMoveEvent(owner, "Move_Revoke");
 		}
 
 		m_HasDragRay = false;

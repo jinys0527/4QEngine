@@ -19,6 +19,15 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			const int amount = action.params.value("amount", 0);
 			player->ConsumeActResource(amount);
 		});
+	BindActionHandler("Door_Attempt", [this](const FSMAction& action)
+		{
+			// 난이도 표시 UI
+			// 
+		});
+	BindActionHandler("Door_Verdict", [this](const FSMAction& action)
+		{
+			// 문 여는 거 판단
+		});
 }
 
 

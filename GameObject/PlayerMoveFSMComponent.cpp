@@ -78,9 +78,7 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 	// 드래그 비활성화: Selecting 종료 시 걸어두는 액션으로 사용
 	BindActionHandler("Move_DragEnd", [this](const FSMAction&)
 		{
-			m_DraggingActive = false;
 			m_LastValid = false;
-			ClearPendingTarget();
 		});
 
 	// pending(q,r)로 Commit (Execute 진입 액션)
@@ -94,7 +92,17 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			if (!player)
 				return;
 
-			player->CommitMove(m_PendingQ, m_PendingR);
+			const bool committed = player->CommitMove(m_PendingQ, m_PendingR);
+
+			if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+			{
+				playerFsm->DispatchEvent("Move_Complete");
+			}
+
+			if (committed)
+			{
+				DispatchEvent("Move_Complete");
+			}
 		});
 
 	BindActionHandler("Move_ClearPending", [this](const FSMAction&)
