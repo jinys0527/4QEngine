@@ -8,7 +8,7 @@ public:
 	const char* GetTypeName() const override;
 
 	PlayerCombatFSMComponent();
-	~PlayerCombatFSMComponent() override = default;
+	virtual ~PlayerCombatFSMComponent() override = default;
 
 	void Start() override;
 };

@@ -8,8 +8,11 @@ public:
 	const char* GetTypeName() const override;
 
 	PlayerFSMComponent();
-	~PlayerFSMComponent() override = default;
+	virtual ~PlayerFSMComponent() override;
 
 	void Start() override;
+
+protected:
+	std::optional<std::string> TranslateEvent(EventType type, const void* data) override;
 };
 

@@ -8,7 +8,7 @@ public:
 	const char* GetTypeName() const override;
 
 	PlayerDoorFSMComponent();
-	~PlayerDoorFSMComponent() override = default;
+	virtual ~PlayerDoorFSMComponent() override = default;
 
 	void Start() override;
 };

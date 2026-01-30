@@ -166,7 +166,6 @@
     <ClCompile Include="PlayerShopFSMComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerFSMFlowComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -347,7 +346,6 @@
     <ClInclude Include="PlayerShopFSMComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerFSMFlowComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">

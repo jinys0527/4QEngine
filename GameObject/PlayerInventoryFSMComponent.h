@@ -8,7 +8,7 @@ public:
 	const char* GetTypeName() const override;
 
 	PlayerInventoryFSMComponent();
-	~PlayerInventoryFSMComponent() override = default;
+	virtual ~PlayerInventoryFSMComponent() override = default;
 
 	void Start() override;
 };

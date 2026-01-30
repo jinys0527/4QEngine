@@ -1,12 +1,61 @@
 ﻿#include "PlayerMoveFSMComponent.h"
 #include "PlayerComponent.h"
 #include "ReflectionMacro.h"
+#include "GameObject.h"
 #include "Object.h"
+#include "Scene.h"
+#include "TransformComponent.h"
+#include "PlayerMovementComponent.h"
+#include "NodeComponent.h"
+#include "BoxColliderComponent.h"
+
 
 REGISTER_COMPONENT_DERIVED(PlayerMoveFSMComponent, FSMComponent)
 
+static NodeComponent* FindClosestNodeHit(
+	Scene* scene,
+	const DirectX::XMFLOAT3& rayOrigin,
+	const DirectX::XMFLOAT3& rayDir,
+	float& outT)
+{
+	if (!scene) return nullptr;
+
+	auto& gameObjects = scene->GetGameObjects();
+
+	float closestT = FLT_MAX;
+	NodeComponent* closestNode = nullptr;
+
+	for (const auto& [name, object] : gameObjects)
+	{
+		if (!object) continue;
+
+		auto* node = object->GetComponent<NodeComponent>();
+		if (!node) continue;
+
+		auto* col = object->GetComponent<BoxColliderComponent>();
+		if (!col || !col->HasBounds()) continue;
+
+		float t = 0.0f;
+		if (!col->IntersectsRay(rayOrigin, rayDir, t)) continue;
+
+		if (t >= 0.0f && t < closestT)
+		{
+			closestT = t;
+			closestNode = node;
+		}
+	}
+
+	if (!closestNode)
+		return nullptr;
+
+	outT = closestT;
+	return closestNode;
+}
+
+
 PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 {
+	// 이동 시작
 	BindActionHandler("Move_Begin", [this](const FSMAction&)
 		{
 			auto* owner = GetOwner();
@@ -17,22 +66,133 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			}
 		});
 
-	BindActionHandler("Move_Commit", [this](const FSMAction& action)
+	// 드래그 활성화: Selecting 진입 시 걸어두는 액션으로 사용
+	BindActionHandler("Move_DragBegin", [this](const FSMAction&)
 		{
+			m_DraggingActive = true;
+			m_LastValid = false;
+			ClearPendingTarget();
+		});
+
+	// 드래그 비활성화: Selecting 종료 시 걸어두는 액션으로 사용
+	BindActionHandler("Move_DragEnd", [this](const FSMAction&)
+		{
+			m_DraggingActive = false;
+			m_LastValid = false;
+			ClearPendingTarget();
+		});
+
+	// pending(q,r)로 Commit (Execute 진입 액션)
+	BindActionHandler("Move_CommitPending", [this](const FSMAction&)
+		{
+			if (!m_HasPendingTarget)
+				return;
+
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			if (!player)
-			{
 				return;
-			}
 
-			const int q = action.params.value("q", player->GetQ());
-			const int r = action.params.value("r", player->GetR());
-			player->CommitMove(q, r);
+			player->CommitMove(m_PendingQ, m_PendingR);
+		});
+
+	BindActionHandler("Move_ClearPending", [this](const FSMAction&)
+		{
+			ClearPendingTarget();
+			m_LastValid = false;
+		});
+
+	// 취소 시 원복 (Cancel transition 또는 Idle enter에 연결)
+	BindActionHandler("Move_Revert", [this](const FSMAction&)
+		{
+			auto* owner = GetOwner();
+			if (!owner) return;
+
+			auto* trans = owner->GetComponent<TransformComponent>();
+			auto* moveComp = owner->GetComponent<PlayerMovementComponent>();
+			if (!trans || !moveComp) return;
+
+			trans->SetPosition(moveComp->GetDragStartPos());
+		});
+
+	BindActionHandler("Move_End", [this](const FSMAction&)
+		{
+			// 이동 시퀀스 종료 정리
+			m_DraggingActive = false;
+			m_LastValid = false;
+			ClearPendingTarget();
 		});
 }
 
 void PlayerMoveFSMComponent::Start()
 {
 	FSMComponent::Start();
+}
+
+void PlayerMoveFSMComponent::Update(float deltaTime)
+{
+	// base FSM 업데이트(상태/전이 처리 등)
+	FSMComponent::Update(deltaTime);
+
+	// Selecting 중일 때만 프리뷰/판정 수행
+	if (m_DraggingActive)
+		UpdateDragPreview();
+}
+
+void PlayerMoveFSMComponent::UpdateDragPreview()
+{
+	auto* owner = GetOwner();
+	if (!owner) return;
+
+	auto* scene = owner->GetScene();
+	if (!scene) return;
+
+	auto* player = owner->GetComponent<PlayerComponent>();
+	if (!player) return;
+
+	// 턴 아니면 프리뷰 안 함(취소는 외부 이벤트로 들어오는게 정상)
+	if (player->GetCurrentTurn() != Turn::PlayerTurn)
+		return;
+
+	auto* moveComp = owner->GetComponent<PlayerMovementComponent>();
+	auto* trans = owner->GetComponent<TransformComponent>();
+	if (!moveComp || !trans) return;
+
+	if (!moveComp->HasDragRay())
+		return;
+
+	float hitT = 0.0f;
+	NodeComponent* node = FindClosestNodeHit(scene, moveComp->GetDragRayOrigin(), moveComp->GetDragRayDir(), hitT);
+
+	bool valid = false;
+
+	if (node && node->GetIsMoveable() && node->IsInMoveRange())
+	{
+		const auto st = node->GetState();
+		if (st == NodeState::Empty || st == NodeState::HasPlayer)
+		{
+			auto* nodeOwner = node->GetOwner();
+			auto* nodeTr = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+			if (nodeTr)
+			{
+				auto p = nodeTr->GetPosition();
+				auto off = moveComp->GetDragOffset();
+
+				trans->SetPosition({ p.x + off.x, p.y + off.y, p.z + off.z });
+
+				SetPendingTarget(node->GetQ(), node->GetR());
+				valid = true;
+			}
+		}
+	}
+
+	if (!valid)
+		ClearPendingTarget();
+
+	// valid/invalid 변화가 있을 때만 이벤트 발행
+	if (valid != m_LastValid)
+	{
+		m_LastValid = valid;
+		DispatchEvent(valid ? "Move_PointValid" : "Move_PointInvalid");
+	}
 }

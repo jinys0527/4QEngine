@@ -29,7 +29,7 @@ bool GameApplication::Initialize()
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
 
-
+	OnResize(m_width, m_height);
 
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
@@ -57,6 +57,7 @@ void GameApplication::Run()
 		{
 			m_Engine.UpdateTime();
 			Update();
+			m_Engine.UpdateInput();
 			UpdateLogic();
 			Render();
 		}
@@ -135,6 +136,7 @@ void GameApplication::Render()
 void GameApplication::OnResize(int width, int height)
 {
 	__super::OnResize(width, height);
+	m_InputManager.SetViewportRect({ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) });
 }
 
 void GameApplication::OnClose()

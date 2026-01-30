@@ -8,7 +8,7 @@ public:
 	const char* GetTypeName() const override;
 
 	PlayerPushFSMComponent();
-	~PlayerPushFSMComponent() override = default;
+	virtual ~PlayerPushFSMComponent() override = default;
 
 	void Start() override;
 };

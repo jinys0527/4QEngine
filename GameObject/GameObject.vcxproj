@@ -329,7 +329,6 @@
     <ClInclude Include="PlayerComponent.h" />
     <ClInclude Include="PlayerDoorFSMComponent.h" />
     <ClInclude Include="PlayerFSMComponent.h" />
-    <ClInclude Include="PlayerFSMFlowComponent.h" />
     <ClInclude Include="PlayerInventoryFSMComponent.h" />
     <ClInclude Include="PlayerMoveFSMComponent.h" />
     <ClInclude Include="PlayerPushFSMComponent.h" />
@@ -397,7 +396,6 @@
     <ClCompile Include="PlayerComponent.cpp" />
     <ClCompile Include="PlayerDoorFSMComponent.cpp" />
     <ClCompile Include="PlayerFSMComponent.cpp" />
-    <ClCompile Include="PlayerFSMFlowComponent.cpp" />
     <ClCompile Include="PlayerInventoryFSMComponent.cpp" />
     <ClCompile Include="PlayerMoveFSMComponent.cpp" />
     <ClCompile Include="PlayerPushFSMComponent.cpp" />

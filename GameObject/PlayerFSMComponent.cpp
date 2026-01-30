@@ -1,6 +1,8 @@
 ﻿#include "PlayerFSMComponent.h"
+#include "Event.h"
 #include "FSMEventRegistry.h"
 #include "FSMActionRegistry.h"
+#include "GameState.h"
 #include "PlayerComponent.h"
 #include "Object.h"
 #include "ReflectionMacro.h"
@@ -25,19 +27,56 @@ void RegisterPlayerFSMDefinitions()
 			{ "amount", "int", 0, false }
 		}
 		});
+
+	// Move_Begin
 	actionRegistry.RegisterAction({
 		"Move_Begin",
 		"Move",
 		{}
 		});
+
+	// Move_DragBegin
 	actionRegistry.RegisterAction({
-		"Move_Commit",
+		"Move_DragBegin",
 		"Move",
-		{
-			{ "q", "int", 0, false },
-			{ "r", "int", 0, false }
-		}
+		{}
 		});
+
+	// Move_DragEnd
+	actionRegistry.RegisterAction({
+		"Move_DragEnd",
+		"Move",
+		{}
+		});
+
+	// Move_CommitPending  (pending(q,r) 사용, 파라미터 없음)
+	actionRegistry.RegisterAction({
+		"Move_CommitPending",
+		"Move",
+		{}
+		});
+
+	// Move_ClearPending
+	actionRegistry.RegisterAction({
+		"Move_ClearPending",
+		"Move",
+		{}
+		});
+
+	// Move_Revert (드래그 시작 위치로 원복, 파라미터 없음)
+	actionRegistry.RegisterAction({
+		"Move_Revert",
+		"Move",
+		{}
+		});
+
+	// Move_End
+	actionRegistry.RegisterAction({
+		"Move_End",
+		"Move",
+		{}
+		});
+
 	actionRegistry.RegisterAction({
 		"Push_ConsumeActResource",
 		"Push",
@@ -88,27 +127,30 @@ void RegisterPlayerFSMDefinitions()
 		});
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
-	eventRegistry.RegisterEvent({ "Move_Start",      "Player" });
-	eventRegistry.RegisterEvent({ "Move_Complete",   "Player" });
-	eventRegistry.RegisterEvent({ "Move_Cancel",	 "Player" });
-	eventRegistry.RegisterEvent({ "Push_Start",		 "Player" });
-	eventRegistry.RegisterEvent({ "Push_Complete",	 "Player" });
-	eventRegistry.RegisterEvent({ "Push_Cancel",	 "Player" });
-	eventRegistry.RegisterEvent({ "Combat_Start",	 "Player" });
-	eventRegistry.RegisterEvent({ "Combat_End",		 "Player" });
-	eventRegistry.RegisterEvent({ "Inventory_Open", " Player" });
-	eventRegistry.RegisterEvent({ "Inventory_Close", "Player" });
-	eventRegistry.RegisterEvent({ "Shop_Open",		 "Player" });
-	eventRegistry.RegisterEvent({ "Shop_Close",		 "Player" });
-	eventRegistry.RegisterEvent({ "Door_Interact",   "Player" });
-	eventRegistry.RegisterEvent({ "Door_Complete",   "Player" });
-	eventRegistry.RegisterEvent({ "Door_Cancel",     "Player" });
+	eventRegistry.RegisterEvent({ "Player_TurnStart", "Player" });
+	eventRegistry.RegisterEvent({ "Player_TurnEnd",   "Player" });
+
+	eventRegistry.RegisterEvent({ "Move_Start",       "Player" });
+	eventRegistry.RegisterEvent({ "Move_Complete",    "Player" });
+	eventRegistry.RegisterEvent({ "Move_Cancel",	  "Player" });
+	eventRegistry.RegisterEvent({ "Push_Start",		  "Player" });
+	eventRegistry.RegisterEvent({ "Push_Complete",	  "Player" });
+	eventRegistry.RegisterEvent({ "Push_Cancel",	  "Player" });
+	eventRegistry.RegisterEvent({ "Combat_Start",	  "Player" });
+	eventRegistry.RegisterEvent({ "Combat_End",		  "Player" });
+	eventRegistry.RegisterEvent({ "Inventory_Open",	  "Player" });
+	eventRegistry.RegisterEvent({ "Inventory_Close",  "Player" });
+	eventRegistry.RegisterEvent({ "Shop_Open",		  "Player" });
+	eventRegistry.RegisterEvent({ "Shop_Close",		  "Player" });
+	eventRegistry.RegisterEvent({ "Door_Interact",    "Player" });
+	eventRegistry.RegisterEvent({ "Door_Complete",    "Player" });
+	eventRegistry.RegisterEvent({ "Door_Cancel",      "Player" });
 															          
 	eventRegistry.RegisterEvent({ "Move_Select",       "Move" });
 	eventRegistry.RegisterEvent({ "Move_PointValid",   "Move" });
 	eventRegistry.RegisterEvent({ "Move_PointInvalid", "Move" });
 	eventRegistry.RegisterEvent({ "Move_Confirm",      "Move" });
-	eventRegistry.RegisterEvent({ "Move_PathClick",    "Move" });
+	eventRegistry.RegisterEvent({ "Move_Revoke",       "Move" });
 															          
 	eventRegistry.RegisterEvent({ "Push_Possible",       "Push"	});
 	eventRegistry.RegisterEvent({ "Push_TargetFound",    "Push" });
@@ -159,6 +201,12 @@ PlayerFSMComponent::PlayerFSMComponent()
 
 	BindActionHandler("Player_RequestTurnEnd", [this](const FSMAction&)
 		{
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			if (player && player->GetCurrentTurn() != Turn::PlayerTurn)
+			{
+				return;
+			}
 			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
 		});
 
@@ -176,8 +224,30 @@ PlayerFSMComponent::PlayerFSMComponent()
 		});
 }
 
+PlayerFSMComponent::~PlayerFSMComponent()
+{
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+}
 
 void PlayerFSMComponent::Start()
 {
 	FSMComponent::Start();
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
+}
+
+std::optional<std::string> PlayerFSMComponent::TranslateEvent(EventType type, const void* data)
+{
+	if (type != EventType::TurnChanged || !data)
+	{
+		return std::nullopt;
+	}
+
+	const auto* payload = static_cast<const Events::TurnChanged*>(data);
+	if (!payload)
+	{
+		return std::nullopt;
+	}
+
+	const auto turn = static_cast<Turn>(payload->turn);
+	return turn == Turn::PlayerTurn ? "Player_TurnStart" : "Player_TurnEnd";
 }
