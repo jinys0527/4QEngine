@@ -297,6 +297,8 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 		return false;
 	}
 
+	const_cast<Scene*>(m_CurrentScene.get())->EnsureAutoComponentsForSave();
+
 	std::ofstream ofs(filePath);
 	if (!ofs.is_open())
 	{

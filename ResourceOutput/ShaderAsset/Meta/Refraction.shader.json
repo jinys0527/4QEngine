@@ -1,5 +1,0 @@
-{
-    "name": "Refraction",
-    "ps": "../../../MRenderer/fx/Demo_Refraction_PS.hlsl",
-    "vs": "../../../MRenderer/fx/Demo_Refraction_VS.hlsl"
-}
