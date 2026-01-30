@@ -224,26 +224,6 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		// 턴 아니면 cancel
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
-			if (!moveFsm->HasPendingTarget())
-			{
-				DispatchPlayerStateEvent(owner, "Move_Cancel");
-				DispatchMoveEvent(owner, "Move_Cancel");
-				m_HasDragRay = false;
-				return;
-			}
-
-			const int targetQ = moveFsm->GetPeningQ();
-			const int targetR = moveFsm->GetPeningR();
-			const bool consumed = player->CommitMove(targetQ, targetR);
-			if (!consumed)
-			{
-				transComp->SetPosition(m_DragStartPos);
-			}
-			else
-			{
-				
-				ApplyRotationForMove(targetQ, targetR);
-			}
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Cancel");
 			m_HasDragRay = false;
@@ -265,10 +245,30 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
+		if (!moveFsm->HasPendingTarget())
+		{
+			DispatchPlayerStateEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Cancel");
+			m_HasDragRay = false;
+			return;
+		}
+
+
 		// 드래그(Selecting) 중일 때만 Confirm 올리는게 정상
 		if (moveFsm->HasPendingTarget())
 		{
 			DispatchMoveEvent(owner, "Move_Confirm");
+			const int targetQ = moveFsm->GetPeningQ();
+			const int targetR = moveFsm->GetPeningR();
+			const bool consumed = player->CommitMove(targetQ, targetR);
+			if (!consumed)
+			{
+				transComp->SetPosition(m_DragStartPos);
+			}
+			else
+			{
+				ApplyRotationForMove(targetQ, targetR);
+			}
 		}
 		else
 		{

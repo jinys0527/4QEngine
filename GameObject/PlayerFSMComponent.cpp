@@ -182,6 +182,7 @@ void RegisterPlayerFSMDefinitions()
 			{ "amount", "int", 0, false }
 		}
 		});
+
 	actionRegistry.RegisterAction({
 		"Combat_ConsumeActResource",
 		"Combat",
@@ -202,20 +203,57 @@ void RegisterPlayerFSMDefinitions()
 		"Combat",
 		{}
 		});
+
+	// Inventory DropAttempt
 	actionRegistry.RegisterAction({
-		"Inventory_ConsumeActResource",
+		"Inventory_DropAttempt",
 		"Inventory",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
+
+	// Inventory Drop
 	actionRegistry.RegisterAction({
-		"Shop_ConsumeActResource",
-		"Shop",
-		{
-			{ "amount", "int", 0, false }
-		}
+		"Inventory_Drop",
+		"Inventory",
+		{}
 		});
+
+	// Inventory Sell
+	actionRegistry.RegisterAction({
+		"Inventory_Sell",
+		"Inventory",
+		{}
+		});
+
+	// Shop ItemSelect
+	actionRegistry.RegisterAction({
+		"Shop_ItemSelect",
+		"Shop",
+		{}
+		});
+
+	// Shop SpaceCheck
+	actionRegistry.RegisterAction({
+		"Shop_SpaceCheck",
+		"Shop",
+		{}
+		});
+
+	// Shop MoneyCheck
+	actionRegistry.RegisterAction({
+		"Shop_MoneyCheck",
+		"Shop",
+		{}
+		});
+
+	// Shop Buy
+	actionRegistry.RegisterAction({
+		"Shop_Buy",
+		"Shop",
+		{}
+		});
+
+	// Door 행동력 차감
 	actionRegistry.RegisterAction({
 		"Door_ConsumeActResource",
 		"Door",
@@ -224,6 +262,42 @@ void RegisterPlayerFSMDefinitions()
 		}
 		});
 
+	// Door 열기 시도
+	actionRegistry.RegisterAction({
+		"Door_Attempt",
+		"Door",
+		{}
+		});
+
+	// Door 선택
+	actionRegistry.RegisterAction({
+		"Door_Select",
+		"Door",
+		{}
+		});
+
+	// Door 성공/실패 판정
+	actionRegistry.RegisterAction({
+		"Door_Verdict",
+		"Door",
+		{}
+		});
+
+	// Door 성공
+	actionRegistry.RegisterAction({
+		"Door_Open",
+		"Door",
+		{}
+		});
+
+	// Door 실패
+	actionRegistry.RegisterAction({
+		"Door_Fail",
+		"Door",
+		{}
+		});
+
+
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "Player" });
 	eventRegistry.RegisterEvent({ "Player_TurnEnd",   "Player" });
@@ -231,15 +305,20 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Move_Start",       "Player" });
 	eventRegistry.RegisterEvent({ "Move_Complete",    "Player" });
 	eventRegistry.RegisterEvent({ "Move_Cancel",	  "Player" });
+
 	eventRegistry.RegisterEvent({ "Push_Start",		  "Player" });
 	eventRegistry.RegisterEvent({ "Push_Complete",	  "Player" });
 	eventRegistry.RegisterEvent({ "Push_Cancel",	  "Player" });
+
 	eventRegistry.RegisterEvent({ "Combat_Start",	  "Player" });
 	eventRegistry.RegisterEvent({ "Combat_End",		  "Player" });
+
 	eventRegistry.RegisterEvent({ "Inventory_Open",	  "Player" });
 	eventRegistry.RegisterEvent({ "Inventory_Close",  "Player" });
+
 	eventRegistry.RegisterEvent({ "Shop_Open",		  "Player" });
 	eventRegistry.RegisterEvent({ "Shop_Close",		  "Player" });
+
 	eventRegistry.RegisterEvent({ "Door_Interact",    "Player" });
 	eventRegistry.RegisterEvent({ "Door_Complete",    "Player" });
 	eventRegistry.RegisterEvent({ "Door_Cancel",      "Player" });
@@ -267,20 +346,23 @@ void RegisterPlayerFSMDefinitions()
 																      
 	eventRegistry.RegisterEvent({ "Inventory_Drop",        "Inventory" });
 	eventRegistry.RegisterEvent({ "Inventory_DropNoShop",  "Inventory" });
-	eventRegistry.RegisterEvent({ "Inventory_DropHasShop", "Inventory" });
+	eventRegistry.RegisterEvent({ "Inventory_DropAtShop",  "Inventory" });
 	eventRegistry.RegisterEvent({ "Inventory_Complete",    "Inventory" });
 
-	eventRegistry.RegisterEvent({ "Shop_Buy",          "Shop" });
-	eventRegistry.RegisterEvent({ "Shop_InputConfirm", "Shop" });
+	eventRegistry.RegisterEvent({ "Shop_ItemSelect",   "Shop" });
+	eventRegistry.RegisterEvent({ "Shop_BuyAttempt",   "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_SpaceOk",      "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_SpaceFail",    "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_MoneyOk",      "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_MoneyFail",    "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_Complete",     "Shop" });
 
-	eventRegistry.RegisterEvent({ "Door_Open",     "Door" });
+	eventRegistry.RegisterEvent({ "Door Select",   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Confirm",  "Door" });
 	eventRegistry.RegisterEvent({ "Door_CostPaid", "Door" });
+	eventRegistry.RegisterEvent({ "Door_Open",	   "Door" });
+	eventRegistry.RegisterEvent({ "Door_Fail",	   "Door" });
+	eventRegistry.RegisterEvent({ "Door_Revoke",   "Door" });
 }
 
 REGISTER_COMPONENT_DERIVED(PlayerFSMComponent, FSMComponent)

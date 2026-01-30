@@ -22,11 +22,24 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 	BindActionHandler("Door_Attempt", [this](const FSMAction& action)
 		{
 			// 난이도 표시 UI
-			// 
+			// 주사위
+		});
+	BindActionHandler("Door_Select", [this](const FSMAction& action)
+		{
+			// 안내 UI
 		});
 	BindActionHandler("Door_Verdict", [this](const FSMAction& action)
 		{
 			// 문 여는 거 판단
+		});
+	BindActionHandler("Door_Open", [this](const FSMAction& action)
+		{
+			// 이동 가능하게 바꾸기
+			// 애니메이션
+		});
+	BindActionHandler("Door_Fail", [this](const FSMAction& action)
+		{
+			// 아무것도 안함
 		});
 }
 
@@ -34,4 +47,9 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 void PlayerDoorFSMComponent::Start()
 {
 	FSMComponent::Start();
+}
+
+void PlayerDoorFSMComponent::Update(float deltaTime)
+{
+	FSMComponent::Update(deltaTime);
 }
