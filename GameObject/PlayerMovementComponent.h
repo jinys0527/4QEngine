@@ -58,7 +58,7 @@ private:
 	DirectX::XMFLOAT3 m_DragOffset	 { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_DragStartPos{ 0.0f, 0.0f, 0.0f };
 	NodeComponent* m_DragStartNode = nullptr;
-
+	NodeComponent* m_CurrentTargetNode = nullptr;
 	GridSystemComponent* m_GridSystem = nullptr;
 };
 

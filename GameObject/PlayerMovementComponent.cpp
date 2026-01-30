@@ -73,6 +73,7 @@ static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& cur
 		{ { 0, 1 }, RotationOffset::clock_1 }
 	} };
 
+
 	for (const auto& [dir, rotation] : kDirections)
 	{
 		if (dir.q == delta.q && dir.r == delta.r)
@@ -83,6 +84,7 @@ static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& cur
 	}
 
 	return false;
+}
 namespace
 {
 	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
