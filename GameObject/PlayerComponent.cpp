@@ -82,6 +82,7 @@ void PlayerComponent::Update(float deltaTime) {
 		}
 	}
 
+	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
 	{
 		if (!transformcomponent->GetChildrens().empty())

@@ -72,7 +72,7 @@ void ItemComponent::Update(float deltaTime)
 		return;
 	}
 
-
+	//장착됨 상태라면 이 아이템을 가지는 PlayerComponent에서 행렬을 넘겨주고, 그 값을 Transform으로 적용
 	if (m_IsEquiped)
 	{
 		XMVECTOR scale;
