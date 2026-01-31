@@ -14,25 +14,34 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			if (!player)
 			{
+				DispatchEvent("Combat_CostFail");
 				return;
 			}
 			// 플레이어 무기 행동 포인트로 변경 예정
 			const int amount = action.params.value("amount", 0);
-			player->ConsumeActResource(amount);
+			const bool consumed = player->ConsumeActResource(amount);
+			DispatchEvent(consumed ? "Combat_CostOk" : "Combat_CostFail");
 		});
 
 	BindActionHandler("Combat_RangeCheck", [this](const FSMAction& action)
 		{
-			// 범위 체크
+			const bool inRange = action.params.value("inRange", true);
+			DispatchEvent(inRange ? "Combat_RangeOk" : "Combat_RangeFail");
 		});
 
 	BindActionHandler("Combat_Confirm", [this](const FSMAction& action)
 		{
-			
+			const bool confirmed = action.params.value("confirmed", true);
+			DispatchEvent(confirmed ? "Combat_Confirm" : "Combat_Cancel");
 		});
 
 	BindActionHandler("Combat_Attack", [this](const FSMAction& action)
 		{
+			const bool resolved = action.params.value("resolved", true);
+			if (resolved)
+			{
+				DispatchEvent("Combat_StartTurn");
+			}
 			// 공격 처리
 			// 데미지 계산
 		});
@@ -40,6 +49,11 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 	BindActionHandler("Combat_Result", [this](const FSMAction& action)
 		{
 			// 드롭 / 사망 처리 후 결과
+			const bool resolved = action.params.value("resolved", true);
+			if (resolved)
+			{
+				DispatchEvent("Combat_TurnResolved");
+			}
 		});
 
 	BindActionHandler("Combat_Enter", [this](const FSMAction& action)

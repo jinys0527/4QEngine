@@ -9,21 +9,24 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 {
 	BindActionHandler("Shop_ItemSelect", [this](const FSMAction&)
 		{
-			// SpaceCheck로 넘기기
+			DispatchEvent("Shop_BuyAttempt");
 		});
-	BindActionHandler("Shop_SpaceCheck", [this](const FSMAction&)
+	BindActionHandler("Shop_SpaceCheck", [this](const FSMAction& action)
 		{
-			// 빈칸 여부 확인
+			const bool hasSpace = action.params.value("hasSpace", true);
+			DispatchEvent(hasSpace ? "Shop_SpaceOk" : "Shop_SpaceFail");
 		});
-	BindActionHandler("Shop_MoneyCheck", [this](const FSMAction&)
+	BindActionHandler("Shop_MoneyCheck", [this](const FSMAction& action)
 		{
-			// 재화 확인
+			const bool hasMoney = action.params.value("hasMoney", true);
+			DispatchEvent(hasMoney ? "Shop_MoneyOk" : "Shop_MoneyFail");
 		});
 	BindActionHandler("Shop_Buy", [this](const FSMAction&)
 		{
 			// 할인율 계산
 			// 재화 반영
 			// 인벤토리 갱신
+			DispatchEvent("Shop_Complete");
 		});
 }
 
