@@ -14,6 +14,10 @@
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "RandomMachine.h"
+#include "DiceSystem.h"
+#include "CombatResolver.h"
+#include "CombatManager.h"
+#include "LogSystem.h"
 
 namespace
 {
@@ -38,6 +42,10 @@ int main()
 	auto& uiManager = services.Register<UIManager>();
     auto& gameManager = services.Register<GameManager>();
     auto& randomMachine = services.Register<RandomMachine>();
+    auto& diceSystem = services.Register<DiceSystem>(randomMachine);
+    auto& logSystem = services.Register<LogSystem>();
+    auto& combatResolver = services.Register<CombatResolver>();
+    services.Register<CombatManager>(combatResolver, diceSystem, &logSystem);
 
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);

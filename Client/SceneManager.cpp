@@ -104,7 +104,10 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
-		
+		if (m_GameManager && m_CurrentScene)
+		{
+			m_GameManager->CapturePlayerData(m_CurrentScene.get());
+		}
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
 		m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
@@ -114,6 +117,7 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		if (m_GameManager)
 		{
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 		}
 // 
 // 		if (m_UIManager) {
@@ -131,6 +135,10 @@ void SceneManager::ChangeScene(const std::string& name)
 {
 
 	if (m_CurrentScene) {
+		if (m_GameManager)
+		{
+			m_GameManager->CapturePlayerData(m_CurrentScene.get());
+		}
 		m_CurrentScene->Leave();
 	}
 
@@ -155,6 +163,7 @@ void SceneManager::ChangeScene(const std::string& name)
 		if (m_GameManager)
 		{
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 		}
 
 		if (m_UIManager)

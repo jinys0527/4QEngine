@@ -160,7 +160,7 @@ void GridSystemComponent::ScanNodes()
 	m_Nodes.reserve(objects.size()); 
 	m_NodesByAxial.reserve(objects.size());
 
-
+	int nextEnemyId = 2;
 	//등록 과정 ( Transform 기반 Axial 좌표변환 후 등록) ** Enemy, Player 도 추가
 	for (const auto& [name, object] : objects) {
 		if(!object){ continue;}
@@ -176,6 +176,7 @@ void GridSystemComponent::ScanNodes()
 				auto* trans = object->GetComponent<TransformComponent>();
 				const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 				player->SetQR(axial.q, axial.r);
+				player->SetActorId(1);
 				m_Player = player;
 				continue;
 			}
@@ -183,6 +184,7 @@ void GridSystemComponent::ScanNodes()
 			auto* trans = object->GetComponent<TransformComponent>();
 			const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 			enemy->SetQR(axial.q, axial.r);
+			enemy->SetActorId(nextEnemyId++);
 			m_Enemies.push_back(enemy);
 			continue;
 		}

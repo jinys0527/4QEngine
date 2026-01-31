@@ -324,9 +324,7 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Door_ConsumeActResource",
 		"Door",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	// Door 열기 시도

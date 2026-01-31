@@ -53,6 +53,11 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 
     BuildInitiativeOrder();
     m_CurrentTurnIndex = 0;
+    if (m_EventDispatcher && !m_InitiativeOrder.empty())
+    {
+        const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
+        m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
+    }
 }
 
 void CombatManager::ExitBattle()
@@ -140,4 +145,10 @@ void CombatManager::AdvanceTurn()
         return;
 
     m_CurrentTurnIndex = (m_CurrentTurnIndex + 1) % m_InitiativeOrder.size();
+
+    if (m_EventDispatcher)
+    {
+        const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
+        m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
+    }
 }

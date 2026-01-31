@@ -27,6 +27,7 @@ enum class EventType
 	CombatEnter,
 	CombatExit,
 	CombatInitiativeBuilt,
+	CombatTurnAdvanced,
 
 	//Collision
 	CollisionEnter,

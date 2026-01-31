@@ -9,12 +9,16 @@ PlayerInventoryFSMComponent::PlayerInventoryFSMComponent()
 {
 	BindActionHandler("Inventory_DropAttempt", [this](const FSMAction& action)
 		{
-			const bool isShop = true; // Gamemanager에서 상점 UI 활성화 여부 확인
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool isShop = player ? player->ConsumeInventoryAtShop() : false;
 			DispatchEvent(isShop ? "Inventory_DropAtShop" : "Inventory_DropNoShop");
 		});
 	BindActionHandler("Inventory_Drop", [this](const FSMAction& action)
 		{
-			const bool canDrop = true; // 버리기 가능한 곳 있는지 판단함수
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool canDrop = player ? player->ConsumeInventoryCanDrop() : false;
 			if (canDrop)
 			{
 				DispatchEvent("Inventory_Complete");

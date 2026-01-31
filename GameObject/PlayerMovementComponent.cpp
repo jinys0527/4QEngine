@@ -163,7 +163,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		{
 			auto* owner = GetOwner();
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
-			DispatchMoveEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Revoke");
 
 			// 입력 상태 정리(프리뷰/원복은 FSM 액션에서 처리)
 			m_HasDragRay = false;
@@ -207,7 +207,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if(!player || player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
-			DispatchMoveEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Revoke");
 			m_HasDragRay = false;
 			return;
 		}
@@ -225,7 +225,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
-			DispatchMoveEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Revoke");
 			m_HasDragRay = false;
 			return;
 		}
@@ -240,7 +240,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
-			DispatchMoveEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Revoke");
 			m_HasDragRay = false;
 			return;
 		}
@@ -248,7 +248,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (!moveFsm->HasPendingTarget())
 		{
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
-			DispatchMoveEvent(owner, "Move_Cancel");
+			DispatchMoveEvent(owner, "Move_Revoke");
 			m_HasDragRay = false;
 			return;
 		}
@@ -258,17 +258,6 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (moveFsm->HasPendingTarget())
 		{
 			DispatchMoveEvent(owner, "Move_Confirm");
-			const int targetQ = moveFsm->GetPeningQ();
-			const int targetR = moveFsm->GetPeningR();
-			const bool consumed = player->CommitMove(targetQ, targetR);
-			if (!consumed)
-			{
-				transComp->SetPosition(m_DragStartPos);
-			}
-			else
-			{
-				ApplyRotationForMove(targetQ, targetR);
-			}
 		}
 		else
 		{

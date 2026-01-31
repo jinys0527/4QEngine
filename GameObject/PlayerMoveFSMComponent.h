@@ -29,8 +29,9 @@ private:
 	void UpdateDragPreview();
 
 private:
-	bool m_DraggingActive = false;
-	
+	bool m_DraggingActive  = false;
+	bool m_CommitSucceeded = false;
+
 	//valid/invalid 변화 감지용
 	bool m_LastValid = false;
 

@@ -16,3 +16,8 @@ struct CombatInitiativeBuiltEvent
 {
 	const std::vector<int>* initiativeOrder = nullptr;
 };
+
+struct CombatTurnAdvancedEvent
+{
+	int actorId = 0;
+};

@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Component.h"
 #include "GameState.h"
+#include <string>
+#include <vector>
 
 class GridSystemComponent;
 
@@ -35,21 +37,57 @@ public:
 
 	const int& GetMoveResource()	   const { return m_MoveResource; }
 	const int& GetActResource()		   const { return m_ActResource; }
+	const int& GetCurrentWeaponCost() const { return m_CurrentWeaponCost; }
+	const int& GetAttackRange() const { return m_AttackRange; }
 	const int& GetRemainMoveResource() const { return m_RemainMoveResource; }
 	const int& GetRemainActResource()  const { return m_RemainActResource; }
+	int GetActorId() const { return m_ActorId; }
+	const int& GetMoney() const { return m_Money; }
+	const std::vector<std::string>& GetInventoryItemIds() const { return m_InventoryItemIds; }
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
+	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 
 	void ResetTurnResources();
 	void BeginMove();
 	bool CommitMove(int targetQ, int targetR);
 	bool ConsumeActResource(int amount);
 
+	bool ConsumeCombatConfirmRequest();
+	bool ConsumePushPossible();
+	bool ConsumePushTargetFound();
+	bool ConsumePushSuccess();
+	bool ConsumeDoorConfirmed();
+	bool ConsumeDoorSuccess();
+	bool ConsumeInventoryAtShop();
+	bool ConsumeInventoryCanDrop();
+	bool ConsumeShopHasSpace();
+	bool ConsumeShopHasMoney();
+
+	void SetCurrentWeaponCost(const int& value) { m_CurrentWeaponCost = value; }
+	void SetAttackRange(const int& value) { m_AttackRange = value; }
+	void SetPushPossible(bool value) { m_PushPossible = value; }
+	void SetPushTargetFound(bool value) { m_PushTargetFound = value; }
+	void SetPushSuccess(bool value) { m_PushSuccess = value; }
+	void SetDoorConfirmed(bool value) { m_DoorConfirmed = value; }
+	void SetDoorSuccess(bool value) { m_DoorSuccess = value; }
+	void SetInventoryAtShop(bool value) { m_InventoryAtShop = value; }
+	void SetInventoryCanDrop(bool value) { m_InventoryCanDrop = value; }
+	void SetShopHasSpace(bool value) { m_ShopHasSpace = value; }
+	void SetShopHasMoney(bool value) { m_ShopHasMoney = value; }
+	void SetActorId(int value) { m_ActorId = value; }
+	void SetMoney(const int& value) { m_Money = value; }
+	void SetInventoryItemIds(const std::vector<std::string>& value) { m_InventoryItemIds = value; }
+
 private:
+	void ResetSubFSMFlags();
+	bool ConsumeFlag(bool& flag);
 
 	// 외부지정 가능
 	// 이동력, 행동력
 	int m_MoveResource = 3; // 초기설정
 	int m_ActResource = 6;  // 초기설정
+	int m_CurrentWeaponCost = 1;
+	int m_AttackRange = 1;
 
 	//ReadOnly
 	// Grid 기반 좌표 // 현재위치
@@ -60,6 +98,9 @@ private:
 	// 남은 값 (턴 변경 시 초기화)
 	int m_RemainMoveResource = 0;
 	int m_RemainActResource = 0;
+	int m_ActorId = 1;
+	int m_Money = 0;		
+	std::vector<std::string> m_InventoryItemIds;
 	int m_StartQ = 0; 
 	int m_StartR = 0; 
 	bool m_HasMoveStart = false;
@@ -67,6 +108,16 @@ private:
 	float m_TurnElapsed = 0.0f; // 진행시간
 	Turn m_CurrentTurn = Turn::PlayerTurn;
 	bool m_TurnEndRequested = false;
+	bool m_CombatConfirmRequested = false;
+	bool m_PushPossible = true;
+	bool m_PushTargetFound = true;
+	bool m_PushSuccess = true;
+	bool m_DoorConfirmed = true;
+	bool m_DoorSuccess = true;
+	bool m_InventoryAtShop = true;
+	bool m_InventoryCanDrop = true;
+	bool m_ShopHasSpace = true;
+	bool m_ShopHasMoney = true;
 	GridSystemComponent* m_GridSystem;
 
 };

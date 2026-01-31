@@ -6,7 +6,10 @@
 
 REGISTER_COMPONENT_DERIVED(PlayerDoorFSMComponent, FSMComponent)
 
-#define DoorCost 1
+namespace
+{
+	constexpr int DoorCost = 1;
+}
 
 PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 {
@@ -28,19 +31,25 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 		{
 			// 난이도 표시 UI
 			// 주사위
-			const bool confirmed = true; // UI에서 확인인지 우클릭인지 이벤트 결과 받아오는 함수?
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
 			DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
 		});
 	BindActionHandler("Door_Select", [this](const FSMAction& action)
 		{
 			// 안내 UI
-			const bool confirmed = true; // UI에서 확인인지 우클릭인지 이벤트 결과 받아오는 함수?
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
 			DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
 		});
 	BindActionHandler("Door_Verdict", [this](const FSMAction& action)
 		{
 			// 문 여는 거 판단
-			const bool success = true; // 문에서 결과 받아오는 함수
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool success = player ? player->ConsumeDoorSuccess() : false;
 			DispatchEvent(success ? "Door_Open" : "Door_Fail");
 		});
 	BindActionHandler("Door_Open", [this](const FSMAction& action)

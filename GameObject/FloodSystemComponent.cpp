@@ -40,7 +40,7 @@ void FloodSystemComponent::OnEvent(EventType type, const void* data)
 	(void)data;
 }
 
-const float& FloodSystemComponent::GetTurnRemaining() const
+const float FloodSystemComponent::GetTurnRemaining() const
 {
 	const float remaining = m_TurnTimeLimitSeconds - m_TurnElapsed;
 	return remaining > 0.0f ? remaining : 0.0f;
