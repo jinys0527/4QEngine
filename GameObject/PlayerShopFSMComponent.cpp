@@ -13,12 +13,12 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 		});
 	BindActionHandler("Shop_SpaceCheck", [this](const FSMAction& action)
 		{
-			const bool hasSpace = action.params.value("hasSpace", true);
+			const bool hasSpace = true; // 인벤토리 빈 공간 확인 함수
 			DispatchEvent(hasSpace ? "Shop_SpaceOk" : "Shop_SpaceFail");
 		});
 	BindActionHandler("Shop_MoneyCheck", [this](const FSMAction& action)
 		{
-			const bool hasMoney = action.params.value("hasMoney", true);
+			const bool hasMoney = true; // 재화와 아이템 가격 비교 함수
 			DispatchEvent(hasMoney ? "Shop_MoneyOk" : "Shop_MoneyFail");
 		});
 	BindActionHandler("Shop_Buy", [this](const FSMAction&)

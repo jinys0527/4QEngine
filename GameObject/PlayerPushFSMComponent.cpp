@@ -5,6 +5,8 @@
 
 REGISTER_COMPONENT_DERIVED(PlayerPushFSMComponent, FSMComponent)
 
+#define PushCost 1
+
 PlayerPushFSMComponent::PlayerPushFSMComponent()
 {
 	BindActionHandler("Push_ConsumeActResource", [this](const FSMAction& action)
@@ -16,8 +18,7 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 				return;
 			}
 
-			const int amount = action.params.value("amount", 0);
-			const bool consumed = player->ConsumeActResource(amount);
+			const bool consumed = player->ConsumeActResource(PushCost);
 			if (!consumed)
 			{
 				DispatchEvent("Push_Revoke");
@@ -26,13 +27,13 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 
 	BindActionHandler("Push_CheckPossible", [this](const FSMAction& action)
 		{
-			const bool canPush = action.params.value("canPush", true);
+			const bool canPush = true; // player 기준 사정거리면서 밀 수 있는지(벽이나 난간) 판단하는 함수 연결
 			DispatchEvent(canPush ? "Push_Possible" : "Push_Revoke");
 		});
 
 	BindActionHandler("Push_SearchTarget", [this](const FSMAction& action)
 		{
-			const bool hasTarget = action.params.value("hasTarget", false);
+			const bool hasTarget = true; // 밀 수 있는 장소에 적이 있는 지 판단하는 함수
 			DispatchEvent(hasTarget ? "Push_TargetFound" : "Push_TargetNone");
 		});
 
@@ -43,7 +44,7 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 
 	BindActionHandler("Push_Resolve", [this](const FSMAction& action)
 		{
-			const bool success = action.params.value("success", false);
+			const bool success = true; // 성공 여부 주사위 판정 함수
 			DispatchEvent(success ? "Push_Success" : "Push_Fail");
 		});
 }

@@ -119,9 +119,7 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Player_ConsumeActResource",
 		"Player",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	actionRegistry.RegisterAction({
@@ -193,27 +191,21 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Push_ConsumeActResource",
 		"Push",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	// Push 가능 여부 체크
 	actionRegistry.RegisterAction({
 		"Push_CheckPossible",
 		"Push",
-		{
-			{ "canPush", "bool", true, false }
-		}
+		{}
 		});
 
 	// Push 대상 탐색
 	actionRegistry.RegisterAction({
 		"Push_SearchTarget",
 		"Push",
-		{
-			{ "hasTarget", "bool", false, false }
-		}
+		{}
 		});
 
 	// Push 대상 선택
@@ -227,64 +219,49 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Push_Resolve",
 		"Push",
-		{
-			{ "success", "bool", false, false }
-		}
+		{}
 		});
 
 	// Combat 행동력
 	actionRegistry.RegisterAction({
 		"Combat_ConsumeActResource",
 		"Combat",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	// Combat RangeCheck
 	actionRegistry.RegisterAction({
 		"Combat_RangeCheck",
 		"Combat",
-		{
-			{ "inRange", "bool", true, false }
-		}
+		{}
 		});
 
 	// Combat Confirm
 	actionRegistry.RegisterAction({
 		"Combat_Confirm",
 		"Combat",
-		{
-			{ "confirmed", "bool", true, false }
-		}
+		{}
 		});
 
 	// Combat Attack
 	actionRegistry.RegisterAction({
 		"Combat_Attack",
 		"Combat",
-		{
-			{ "resolved", "bool", true, false }
-		}
+		{}
 		});
 
 	// Combat Result
 	actionRegistry.RegisterAction({
 		"Combat_Result",
 		"Combat",
-		{
-			{ "resolved", "bool", true, false }
-		}
+		{}
 		});
 
 	// Combat 전투 진입
 	actionRegistry.RegisterAction({
 		"Combat_Enter",
 		"Combat",
-		{
-			{ "initiatorId", "int", 0, false },
-			{ "targetId", "int", 0, false }
-		}
+		{}
 		});
 
 	// Combat 전투 종료
@@ -298,27 +275,21 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Inventory_DropAttempt",
 		"Inventory",
-		{
-			{ "isShop", "bool", false, false }
-		}
+		{}
 		});
 
 	// Inventory Drop
 	actionRegistry.RegisterAction({
 		"Inventory_Drop",
 		"Inventory",
-		{
-			{ "canDrop", "bool", true, false }
-		}
+		{}
 		});
 
 	// Inventory Sell
 	actionRegistry.RegisterAction({
 		"Inventory_Sell",
 		"Inventory",
-		{
-			{ "sold", "bool", true, false }
-		}
+		{}
 		});
 
 	// Shop ItemSelect
@@ -332,18 +303,14 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Shop_SpaceCheck",
 		"Shop",
-		{
-			{ "hasSpace", "bool", true, false }
-		}
+		{}
 		});
 
 	// Shop MoneyCheck
 	actionRegistry.RegisterAction({
 		"Shop_MoneyCheck",
 		"Shop",
-		{
-			{ "hasMoney", "bool", true, false }
-		}
+		{}
 		});
 
 	// Shop Buy
@@ -366,45 +333,35 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Door_Attempt",
 		"Door",
-		{
-			{ "confirmed", "bool", true, false }
-		}
+		{}
 		});
 
 	// Door 선택
 	actionRegistry.RegisterAction({
 		"Door_Select",
 		"Door",
-		{
-			{ "confirmed", "bool", true, false }
-		}
+		{}
 		});
 
 	// Door 성공/실패 판정
 	actionRegistry.RegisterAction({
 		"Door_Verdict",
 		"Door",
-		{
-			{ "success", "bool", false, false }
-		}
+		{}
 		});
 
 	// Door 성공
 	actionRegistry.RegisterAction({
 		"Door_Open",
 		"Door",
-		{
-			{ "notifyPlayer", "bool", true, false }
-		}
+		{}
 		});
 
 	// Door 실패
 	actionRegistry.RegisterAction({
 		"Door_Fail",
 		"Door",
-		{
-			{ "notifyPlayer", "bool", true, false }
-		}
+		{}
 		});
 
 

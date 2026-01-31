@@ -9,12 +9,12 @@ PlayerInventoryFSMComponent::PlayerInventoryFSMComponent()
 {
 	BindActionHandler("Inventory_DropAttempt", [this](const FSMAction& action)
 		{
-			const bool isShop = action.params.value("isShop", false);
+			const bool isShop = true; // Gamemanager에서 상점 UI 활성화 여부 확인
 			DispatchEvent(isShop ? "Inventory_DropAtShop" : "Inventory_DropNoShop");
 		});
 	BindActionHandler("Inventory_Drop", [this](const FSMAction& action)
 		{
-			const bool canDrop = action.params.value("canDrop", true);
+			const bool canDrop = true; // 버리기 가능한 곳 있는지 판단함수
 			if (canDrop)
 			{
 				DispatchEvent("Inventory_Complete");
@@ -26,11 +26,7 @@ PlayerInventoryFSMComponent::PlayerInventoryFSMComponent()
 		{
 			// 환금율 계산
 			// 재화 반영, 아이템 소멸
-			const bool sold = action.params.value("sold", true);
-			if (sold)
-			{
-				DispatchEvent("Inventory_Complete");
-			}
+			DispatchEvent("Inventory_Complete");
 		});
 }
 
