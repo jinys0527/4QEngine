@@ -91,11 +91,16 @@ void SceneManager::Render()
 void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
 	auto oldScene = m_CurrentScene;
+	if (m_GameManager && m_CurrentScene)
+	{
+		m_GameManager->CapturePlayerData(m_CurrentScene.get());
+	}
 
 	m_CurrentScene = scene;
 	m_CurrentScene->Enter();
 	m_Camera = m_CurrentScene->GetGameCamera();
 	m_InputManager->SetViewportRect({ 0, 0, static_cast<LONG>(m_Camera->GetViewportSize().Width), static_cast<LONG>(m_Camera->GetViewportSize().Height) });
+
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
@@ -104,6 +109,7 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 	if (m_GameManager)
 	{
 		m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+		m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 	}
 
 }
@@ -136,6 +142,10 @@ void SceneManager::ChangeScene(const std::string& name)
 		return;
 	}
 	const bool wasPaused = m_CurrentScene->GetIsPause();
+	if(m_GameManager)
+	{
+		m_GameManager->CapturePlayerData(m_CurrentScene.get());
+	}
 	m_CurrentScene->Leave();
 	if (LoadSceneFromJson(*scenePath))
 	{

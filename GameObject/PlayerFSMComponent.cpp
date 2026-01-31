@@ -119,9 +119,7 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Player_ConsumeActResource",
 		"Player",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	actionRegistry.RegisterAction({
@@ -193,18 +191,42 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Push_ConsumeActResource",
 		"Push",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
+		});
+
+	// Push 가능 여부 체크
+	actionRegistry.RegisterAction({
+		"Push_CheckPossible",
+		"Push",
+		{}
+		});
+
+	// Push 대상 탐색
+	actionRegistry.RegisterAction({
+		"Push_SearchTarget",
+		"Push",
+		{}
+		});
+
+	// Push 대상 선택
+	actionRegistry.RegisterAction({
+		"Push_SelectTarget",
+		"Push",
+		{}
+		});
+
+	// Push 판정
+	actionRegistry.RegisterAction({
+		"Push_Resolve",
+		"Push",
+		{}
 		});
 
 	// Combat 행동력
 	actionRegistry.RegisterAction({
 		"Combat_ConsumeActResource",
 		"Combat",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	// Combat RangeCheck
@@ -239,10 +261,7 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Combat_Enter",
 		"Combat",
-		{
-			{ "initiatorId", "int", 0, false },
-			{ "targetId", "int", 0, false }
-		}
+		{}
 		});
 
 	// Combat 전투 종료
@@ -305,9 +324,7 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Door_ConsumeActResource",
 		"Door",
-		{
-			{ "amount", "int", 0, false }
-		}
+		{}
 		});
 
 	// Door 열기 시도

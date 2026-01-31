@@ -9,11 +9,20 @@ PlayerInventoryFSMComponent::PlayerInventoryFSMComponent()
 {
 	BindActionHandler("Inventory_DropAttempt", [this](const FSMAction& action)
 		{
-			// 상점 여부 확인
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool isShop = player ? player->ConsumeInventoryAtShop() : false;
+			DispatchEvent(isShop ? "Inventory_DropAtShop" : "Inventory_DropNoShop");
 		});
 	BindActionHandler("Inventory_Drop", [this](const FSMAction& action)
 		{
-			// 버릴 수 있는지 확인
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool canDrop = player ? player->ConsumeInventoryCanDrop() : false;
+			if (canDrop)
+			{
+				DispatchEvent("Inventory_Complete");
+			}
 			// 버리기 가능한 곳 찾기 6개 모서리 랜덤 -> 시계방향 탐색
 			// 빈 자리 메시 배치
 		});
@@ -21,6 +30,7 @@ PlayerInventoryFSMComponent::PlayerInventoryFSMComponent()
 		{
 			// 환금율 계산
 			// 재화 반영, 아이템 소멸
+			DispatchEvent("Inventory_Complete");
 		});
 }
 

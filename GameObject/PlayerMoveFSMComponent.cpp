@@ -71,6 +71,7 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 	BindActionHandler("Move_DragBegin", [this](const FSMAction&)
 		{
 			m_DraggingActive = true;
+			m_CommitSucceeded = false;
 			m_LastValid = false;
 			ClearPendingTarget();
 		});
@@ -99,14 +100,26 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 
 			const bool committed = player->CommitMove(m_PendingQ, m_PendingR);
 
-			if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+			if (!committed)
 			{
-				playerFsm->DispatchEvent("Move_Complete");
+				auto* trans = owner->GetComponent<TransformComponent>();
+				auto* moveComp = owner->GetComponent<PlayerMovementComponent>();
+				if (trans && moveComp)
+				{
+					trans->SetPosition(moveComp->GetDragStartPos());
+				}
+				return;
 			}
 
 			if (committed)
 			{
+				m_CommitSucceeded = true;
+				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+				{
+					playerFsm->DispatchEvent("Move_Complete");
+				}
 				DispatchEvent("Move_Complete");
+				DispatchEvent("None");
 			}
 		});
 
@@ -132,6 +145,16 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 	BindActionHandler("Move_End", [this](const FSMAction&)
 		{
 			// 이동 시퀀스 종료 정리
+			if (m_DraggingActive && !m_CommitSucceeded)
+			{
+				auto* owner = GetOwner();
+				auto* trans = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+				auto* moveComp = owner ? owner->GetComponent<PlayerMovementComponent>() : nullptr;
+				if (trans && moveComp)
+				{
+					trans->SetPosition(moveComp->GetDragStartPos());
+				}
+			}
 			m_DraggingActive = false;
 			m_LastValid = false;
 			ClearPendingTarget();
