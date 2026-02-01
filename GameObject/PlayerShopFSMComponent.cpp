@@ -2,6 +2,7 @@
 #include "PlayerComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
+#include "Event.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerShopFSMComponent, FSMComponent)
 
@@ -31,6 +32,7 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 			// 재화 반영
 			// 인벤토리 갱신
 			DispatchEvent("Shop_Complete");
+			GetEventDispatcher().Dispatch(EventType::ShopDone, nullptr);
 		});
 }
 

@@ -5,6 +5,7 @@
 #include "Scene.h"
 #include "GridSystemComponent.h"
 #include <cmath>
+#include "GameManager.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -71,9 +72,12 @@ void PlayerComponent::Update(float deltaTime) {
 		return;
 	}
 
-	//Player Turn 종료 조건
+	auto* gameManager = scene->GetGameManager();
+	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 
-	if (m_CurrentTurn == Turn::PlayerTurn) {
+
+	//Player Turn 종료 조건
+	if (allowExplorationTurn) {
 		m_TurnElapsed += deltaTime;
 
 		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
@@ -88,7 +92,13 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 {
 	if (type == EventType::MouseLeftDoubleClick)
 	{
-		m_CombatConfirmRequested = true;
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+		if (!gameManager || gameManager->IsCombatInputAllowed())
+		{
+			m_CombatConfirmRequested = true;
+		}
 		return;
 	}
 

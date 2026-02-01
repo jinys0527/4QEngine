@@ -13,14 +13,31 @@ enum class Battle {
 	InBattle,  // 전투 중(진입포함)
 };
 
+enum class ExplorationTurnState {
+	PlayerTurn,
+	EnemyStep,
+};
+
+enum class CombatTurnState {
+	SelectActor,
+	PlayerTurn,
+	EnemyTurn,
+	Resolve,
+	CheckEnd,
+};
 
 // 상태 단위
 // 추후 수정
 enum class Phase {
-	PlayerMove,
-	//---------------------
-	ItemPick,
-	DoorOpen,
-	Attack,
-
+	None,
+	GameStart,
+	InitCharacter,
+	ExplorationLoop,
+	CombatTrigger,
+	CombatInit,
+	TurnBasedCombat,
+	CombatEnd,
+	Shop,
+	NextFloor,
+	GameOver,
 };

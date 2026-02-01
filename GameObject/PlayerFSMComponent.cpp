@@ -12,6 +12,8 @@
 #include "PlayerPushFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
 #include "ReflectionMacro.h"
+#include "Scene.h"
+#include "GameManager.h"
 #include <algorithm>
 #include <cctype>
 
@@ -456,7 +458,17 @@ PlayerFSMComponent::PlayerFSMComponent()
 			{
 				return;
 			}
-			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+			if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop)
+			{
+				GetEventDispatcher().Dispatch(EventType::ExploreTurnEnded, nullptr);
+			}
+			else
+			{
+				GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+			}
 		});
 
 	BindActionHandler("Player_ConsumeActResource", [this](const FSMAction& action)

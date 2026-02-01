@@ -107,6 +107,7 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 
 			if (!request.targetIds.empty())
 			{
+				GetEventDispatcher().Dispatch(EventType::PhaseRequestEnterCombat, nullptr);
 				m_CombatManager->HandlePlayerAttack(request);
 			}
 		});
@@ -126,6 +127,7 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 			}
 
 			m_CombatManager->SetCombatants(combatants);
+			GetEventDispatcher().Dispatch(EventType::CombatContextReady, nullptr);
 
 			const int playerId = GetPlayerActorId();
 			int targetId = 0;

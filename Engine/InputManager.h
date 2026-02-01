@@ -8,6 +8,7 @@ inline int GetXFromLParam(LPARAM lp) { return (int)(short)(LOWORD(lp)); }
 inline int GetYFromLParam(LPARAM lp) { return (int)(short)(HIWORD(lp)); }
 
 class EventDispatcher;
+class GameManager;
 
 class InputManager
 {
@@ -16,6 +17,7 @@ public:
 	~InputManager() = default;
 
 	void SetEventDispatcher(EventDispatcher* eventDispatcher);
+	void SetGameManager(class GameManager* gameManager);
 	void Update            ();
 	void OnKeyDown         (char key);
 	void OnKeyUp           (char key);
@@ -78,5 +80,6 @@ private:
 
 
 	EventDispatcher*       m_EventDispatcher;				// 참조 보관
+	GameManager*		   m_GameManager = nullptr;
 };
 

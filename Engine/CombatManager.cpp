@@ -52,6 +52,10 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 	}
 
     BuildInitiativeOrder();
+    if (m_EventDispatcher)
+    {
+        m_EventDispatcher->Dispatch(EventType::CombatInitComplete, nullptr);
+    }
     m_CurrentTurnIndex = 0;
     if (m_EventDispatcher && !m_InitiativeOrder.empty())
     {
@@ -70,6 +74,7 @@ void CombatManager::ExitBattle()
 	{
 		const CombatExitEvent eventData;
 		m_EventDispatcher->Dispatch(EventType::CombatExit, &eventData);
+        m_EventDispatcher->Dispatch(EventType::CombatEnded, nullptr);
 	}
 }
 
