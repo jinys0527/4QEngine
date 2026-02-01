@@ -24,32 +24,72 @@ void EnemyMovementComponent::Start()
 
 void EnemyMovementComponent::Update(float deltaTime)
 {
-	auto* scene = GetOwner() ? GetOwner()->GetScene() : nullptr;
+	(void)deltaTime;
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-	if (gameManager && (gameManager->GetPhase() != Phase::ExplorationLoop
-		|| gameManager->GetExplorationTurnState() != ExplorationTurnState::EnemyStep))
-	{
+	if (!gameManager)
 		return;
-	}
+
+	// 탐색 EnemyStep 또는 전투 EnemyTurn에서만 움직임 허용
+	const bool explorationEnemyStep =
+		(gameManager->GetPhase() == Phase::ExplorationLoop &&
+			gameManager->GetExplorationTurnState() == ExplorationTurnState::EnemyStep);
+
+	const bool combatEnemyTurn =
+		(gameManager->GetPhase() == Phase::TurnBasedCombat &&
+			gameManager->GetTurn() == Turn::EnemyTurn);
+
+	if (!explorationEnemyStep && !combatEnemyTurn)
+		return;
 
 
 	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
 	if (!enemy)
+		return;
+
+	if (enemy->GetCurrentTurn() != Turn::EnemyTurn)
+		return;
+
+	bool hasRequest = false;
+
+	// 1) 기존 탐색 이동 요청도 계속 지원
+	if (enemy->ConsumeMoveRequest())
 	{
+		m_PendingOrder = EMoveOrder::Patrol;
+		hasRequest = true;
+	}
+
+	// 2) 전투/BT 쪽에서 직접 요청한 이동도 지원
+	if (m_PendingOrder != EMoveOrder::None)
+	{
+		hasRequest = true;
+	}
+
+	if (!hasRequest)
 		return;
+
+	// 요청 실행 (실패하더라도 턴은 진행되게 "완료 처리"는 한다)
+	switch (m_PendingOrder)
+	{
+	case EMoveOrder::RunOff:
+		MovePatrol(); // TODO: 실제 도주 알고리즘으로 교체
+		break;
+	case EMoveOrder::MaintainRange:
+		MovePatrol(); // TODO: 실제 거리유지 알고리즘으로 교체
+		break;
+	case EMoveOrder::Approach:
+		MovePatrol(); // TODO: 실제 접근 알고리즘으로 교체
+		break;
+	case EMoveOrder::Patrol:
+	default:
+		MovePatrol();
+		break;
 	}
 
-	const auto currentTurn = enemy->GetCurrentTurn();
-
-	// Move
-	if (currentTurn != Turn::EnemyTurn) {
-		return;
-	}
-
-	if (!m_IsMoveComplete && enemy->ConsumeMoveRequest()) {
-		Move();
-		m_IsMoveComplete = true;
-	}
+	m_PendingOrder = EMoveOrder::None;
+	m_IsMoveComplete = true;
 
 }
 
@@ -70,45 +110,71 @@ void EnemyMovementComponent::OnEvent(EventType type, const void* data)
 
 	auto* scene = GetOwner() ? GetOwner()->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-	if (turn == Turn::EnemyTurn && (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
 
+	// EnemyTurn 시작이면 매번 이동 완료 플래그 리셋
+	if (turn == Turn::EnemyTurn && gameManager)
 	{
+		// 탐색/전투 둘 다 EnemyTurn이면 리셋
 		m_IsMoveComplete = false;
 	}
 }
 
-// 움직임
-void EnemyMovementComponent::Move()
+void EnemyMovementComponent::MoveRunOff()
 {
-	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
-	const int moveRange = enemy->GetMoveDistance();
+}
 
-	if (moveRange <= 0) {
-		return; 
-	}
+void EnemyMovementComponent::MoveApproach()
+{
+}
+
+void EnemyMovementComponent::MoveMaintainRange()
+{
+}
+
+void EnemyMovementComponent::RequestMoveToTarget()
+{
+	m_PendingOrder = EMoveOrder::Approach;
+	m_IsMoveComplete = false;
+}
+
+void EnemyMovementComponent::RequestRunOff()
+{
+	m_PendingOrder = EMoveOrder::RunOff;
+	m_IsMoveComplete = false;
+}
+
+void EnemyMovementComponent::RequestMaintainRange()
+{
+	m_PendingOrder = EMoveOrder::MaintainRange;
+	m_IsMoveComplete = false;
+}
+
+void EnemyMovementComponent::MovePatrol()
+{
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	if (!enemy || !m_GridSystem)
+		return;
+
+	const int moveRange = enemy->GetMoveDistance();
+	if (moveRange <= 0)
+		return;
 
 	const AxialKey start{ enemy->GetQ(), enemy->GetR() };
-	NodeComponent* bestNode = nullptr;
-	int bestDistance = 100; 
 
+	NodeComponent* bestNode = nullptr;
+	int bestDistance = 100;
 
 	for (auto* node : m_GridSystem->GetNodes())
 	{
-		if (!node)
-		{
-			continue;
-		}
+		if (!node) continue;
 		if (!node->GetIsMoveable() || node->GetState() != NodeState::Empty)
-		{
 			continue;
-		}
 
 		const AxialKey target{ node->GetQ(), node->GetR() };
 		const int distance = m_GridSystem->GetShortestPathLength(start, target);
 		if (distance <= 0 || distance > moveRange)
-		{
 			continue;
-		}
 
 		if (distance < bestDistance)
 		{
@@ -116,24 +182,18 @@ void EnemyMovementComponent::Move()
 			bestNode = node;
 		}
 	}
-	if (!bestNode)
-	{
-		return;
-	}
 
+	if (!bestNode)
+		return;
 
 	auto* targetOwner = bestNode->GetOwner();
 	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
-	auto* enemyTransform = GetOwner()->GetComponent<TransformComponent>();
-
+	auto* enemyTransform = owner->GetComponent<TransformComponent>();
 	if (!targetTransform || !enemyTransform)
-	{
 		return;
-	}
 
 	enemyTransform->SetPosition(targetTransform->GetPosition());
 }
-
 
 
 void EnemyMovementComponent::SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir)

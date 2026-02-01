@@ -80,7 +80,11 @@ void CombatStateSyncService::TickService(BTInstance& inst, Blackboard& bb, float
 	(void)deltaTime;
 	bool hasTarget = false;
 	bb.TryGet(BlackboardKeys::HasTarget, hasTarget);
-	bb.Set(BlackboardKeys::IsInCombat, hasTarget);
+
+	if (hasTarget)
+	{
+		bb.Set(BlackboardKeys::IsInCombat, true);
+	}
 }
 
 void RangeUpdateService::TickService(BTInstance& inst, Blackboard& bb, float deltaTime)
@@ -98,6 +102,11 @@ void RangeUpdateService::TickService(BTInstance& inst, Blackboard& bb, float del
 
 	bb.Set(BlackboardKeys::InMeleeRange, distance <= meleeRange);
 	bb.Set(BlackboardKeys::InThrowRange, distance <= throwRange);
+
+	// 추가: 원거리 선호면 MaintainRange 켜기
+	bool preferRanged = false;
+	bb.TryGet(BlackboardKeys::PreferRanged, preferRanged);
+	bb.Set(BlackboardKeys::MaintainRange, preferRanged);
 }
 
 void EstimatePlayerDamageService::TickService(BTInstance& inst, Blackboard& bb, float deltaTime)
@@ -144,6 +153,31 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	if (!m_Dispatcher)
 		return;
 
+	// 1) Move
+	bool moveRequested = false;
+	if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
+	{
+		m_Dispatcher->Dispatch(EventType::AIMoveRequested, nullptr);
+		bb.Set(BlackboardKeys::MoveRequested, false);
+	}
+
+	// 2) RunOff Move
+	bool runOffMoveRequested = false;
+	if (bb.TryGet(BlackboardKeys::RequestRunOffMove, runOffMoveRequested) && runOffMoveRequested)
+	{
+		m_Dispatcher->Dispatch(EventType::AIRunOffMoveRequested, nullptr);
+		bb.Set(BlackboardKeys::RequestRunOffMove, false);
+	}
+
+	// 3) Maintain Range
+	bool maintainRangeRequested = false;
+	if (bb.TryGet(BlackboardKeys::RequestMaintainRange, maintainRangeRequested) && maintainRangeRequested)
+	{
+		m_Dispatcher->Dispatch(EventType::AIMaintainRangeRequested, nullptr);
+		bb.Set(BlackboardKeys::RequestMaintainRange, false);
+	}
+
+	// 4) End Turn
 	bool endTurnRequested = false;
 	if (bb.TryGet(BlackboardKeys::EndTurnRequested, endTurnRequested) && endTurnRequested)
 	{
