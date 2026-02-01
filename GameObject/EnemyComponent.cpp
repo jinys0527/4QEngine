@@ -16,11 +16,13 @@
 #include "NodeComponent.h"
 #include <array>
 #include <cmath>
-
+#include <algorithm>
+#include < utility >
 REGISTER_COMPONENT(EnemyComponent)
 REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
 REGISTER_PROPERTY(EnemyComponent, MoveDistance)
+REGISTER_PROPERTY(EnemyComponent, DebugSightLines)
 
 EnemyComponent::EnemyComponent() {
 	m_Facing = ERotationOffset::clock_9;
@@ -90,6 +92,18 @@ constexpr std::array<AxialDirection, 6> kFacingDirections{ {
 	{ -1, 0 },  // clock_9
 	{ -1, 1 }   // clock_11
 } };
+std::pair<AxialDirection, AxialDirection> GetLateralDirections(const AxialDirection& forwardDir)
+{
+	if (forwardDir.q == 0)
+	{
+		return { { 1, 0 }, { -1, 0 } };
+	}
+	if (forwardDir.r == 0)
+	{
+		return { { 0, 1 }, { 0, -1 } };
+	}
+	return { { 0, 1 }, { 0, -1 } };
+}
 
 bool IsTargetVisibleOnHexLine(
 	GridSystemComponent* grid,
@@ -109,28 +123,40 @@ bool IsTargetVisibleOnHexLine(
 		return false;
 	}
 
-	const int leftIndex = (facingIndex + dirCount - 1) % dirCount;
-	const int rightIndex = (facingIndex + 1) % dirCount;
-	const AxialDirection candidates[] = {
-		kFacingDirections[facingIndex],
-		kFacingDirections[leftIndex],
-		kFacingDirections[rightIndex]
-	};
+	const AxialDirection forwardDir = kFacingDirections[facingIndex];
+	const auto lateralDirs = GetLateralDirections(forwardDir);
+	const AxialDirection leftLateralDir = lateralDirs.first;
+	const AxialDirection rightLateralDir = lateralDirs.second;
+	std::array<bool, 3> blocked{ false, false, false };
 
-	for (const auto& dir : candidates)
+	for (int step = 1; step <= sightRange; ++step)
 	{
-		for (int step = 1; step <= sightRange; ++step)
+		const int baseQ = selfQ + forwardDir.q * step;
+		const int baseR = selfR + forwardDir.r * step;
+		for (int offset = -1; offset <= 1; ++offset)
 		{
-			const int q = selfQ + dir.q * step;
-			const int r = selfR + dir.r * step;
-			NodeComponent* node = grid->GetNodeByKey({ q, r });
-			if (!node)
+			const int lane = offset + 1;
+			if (blocked[lane])
 			{
-				break;
+				continue;
 			}
-			if (!node->GetIsSight())
+			int q = baseQ;
+			int r = baseR;
+			if (offset < 0)
 			{
-				break;
+				q += leftLateralDir.q;
+				r += leftLateralDir.r;
+			}
+			else if (offset > 0)
+			{
+				q += rightLateralDir.q;
+				r += rightLateralDir.r;
+			}
+			NodeComponent* node = grid->GetNodeByKey({ q, r });
+			if (!node || !node->GetIsSight())
+			{
+				blocked[lane] = true;
+				continue;
 			}
 			if (node->GetState() == NodeState::HasPlayer)
 			{
@@ -143,6 +169,79 @@ bool IsTargetVisibleOnHexLine(
 }
 //-----------------------------------
 
+void EnemyComponent::ClearSightDebug()
+{
+	for (auto* node : m_SightDebugNodes)
+	{
+		if (node)
+		{
+			node->SetSightHighlight(0.0f, false);
+		}
+	}
+	m_SightDebugNodes.clear();
+}
+
+void EnemyComponent::UpdateSightDebugLines(int sightRange)
+{
+	if (!m_GridSystem || sightRange <= 0)
+	{
+		ClearSightDebug();
+		return;
+	}
+
+	const int facingIndex = static_cast<int>(m_Facing);
+	const int dirCount = static_cast<int>(kFacingDirections.size());
+	if (facingIndex < 0 || facingIndex >= dirCount)
+	{
+		ClearSightDebug();
+		return;
+	}
+
+	ClearSightDebug();
+
+	const AxialDirection forwardDir = kFacingDirections[facingIndex];
+	const auto lateralDirs = GetLateralDirections(forwardDir);
+	const AxialDirection leftLateralDir = lateralDirs.first;
+	const AxialDirection rightLateralDir = lateralDirs.second;
+	std::array<bool, 3> blocked{ false, false, false };
+
+	for (int step = 1; step <= sightRange; ++step)
+	{
+		const int baseQ = m_Q + forwardDir.q * step;
+		const int baseR = m_R + forwardDir.r * step;
+		for (int offset = -1; offset <= 1; ++offset)
+		{
+			const int lane = offset + 1;
+			if (blocked[lane])
+			{
+				continue;
+			}
+			int q = baseQ;
+			int r = baseR;
+			if (offset < 0)
+			{
+				q += leftLateralDir.q;
+				r += leftLateralDir.r;
+			}
+			else if (offset > 0)
+			{
+				q += rightLateralDir.q;
+				r += rightLateralDir.r;
+			}
+			NodeComponent* node = m_GridSystem->GetNodeByKey({ q, r });
+			if (!node || !node->GetIsSight())
+			{
+				blocked[lane] = true;
+				continue;
+			}
+			if (std::find(m_SightDebugNodes.begin(), m_SightDebugNodes.end(), node) == m_SightDebugNodes.end())
+			{
+				node->SetSightHighlight(0.6f, true);
+				m_SightDebugNodes.push_back(node);
+			}
+		}
+	}
+}
 
 void EnemyComponent::Update(float deltaTime) {
 	auto* owner = GetOwner();
@@ -201,6 +300,17 @@ void EnemyComponent::Update(float deltaTime) {
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
+		UpdateSightDebugLines(sightRange);
+
+		if (m_DebugSightLines)
+		{
+			UpdateSightDebugLines(sightRange);
+		}
+		else
+		{
+			ClearSightDebug();
+		}
+
 		const bool targetVisible = IsTargetVisibleOnHexLine(
 			m_GridSystem,
 			m_Q,
@@ -208,6 +318,10 @@ void EnemyComponent::Update(float deltaTime) {
 			static_cast<int>(m_Facing),
 			sightRange);
 		bb.Set(BlackboardKeys::HasTargetHexLine, targetVisible);
+	}
+	else if (m_DebugSightLines)
+	{
+		ClearSightDebug();
 	}
 
 	bb.Set(BlackboardKeys::PreferRanged, false);

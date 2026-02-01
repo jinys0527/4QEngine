@@ -56,7 +56,9 @@ public:
 	void SetInMoveRange(bool isInMoveRange) { m_IsInMoveRange = isInMoveRange; }
 	bool IsInMoveRange() const { return m_IsInMoveRange; }
 	void SetMoveRangeHighlight(float intensity, bool enabled);
+	void SetSightHighlight(float intensity, bool enabled);
 private:
+	void ApplyHighlight();
 
 	bool m_IsMoveable = true;	  //장애물 있으면 Editor에서 배치할때 false로 설정하기
 	bool m_IsSight = true; // 적 시야 판별 / false = 적 시야가 넘어가서 볼 수 없음 (벽 타일)
@@ -64,6 +66,11 @@ private:
 	//Read Only Property
 	NodeState m_State = NodeState::Empty;
 	bool m_UsingMoveRangeHighlight = false;
+
+	bool m_UsingSightHighlight = false;
+	float m_MoveHighlightIntensity = 0.0f;
+	float m_SightHighlightIntensity = 0.0f;
+
 	bool m_HasBaseMaterial = false;
 	RenderData::MaterialData m_BaseMaterialOverrides{};
 	MaterialComponent* m_Material = nullptr; 
