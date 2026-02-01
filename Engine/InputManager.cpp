@@ -5,10 +5,16 @@
 #include "RayHelper.h"
 #include <iostream>
 #include <cstdlib>
+#include "GameManager.h"
 
 void InputManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
 	m_EventDispatcher = eventDispatcher;
+}
+
+void InputManager::SetGameManager(GameManager* gameManager)
+{
+	m_GameManager = gameManager;
 }
 
 void InputManager::SetEnabled(bool enabled)
@@ -28,6 +34,11 @@ void InputManager::Update()
 	if (!m_Enabled)
 		return;
 
+	const bool allowGameplayInput = !m_GameManager
+		|| m_GameManager->IsExplorationInputAllowed()
+		|| m_GameManager->IsCombatInputAllowed();
+
+
 	m_Mouse.handled = false;
 	m_PendingLeftClickMouse.handled = false;
 
@@ -35,8 +46,11 @@ void InputManager::Update()
 	{
 		if (!m_KeysDownPrev.contains(key))
 		{
-			Events::KeyEvent e{ key };
-			m_EventDispatcher->Dispatch(EventType::KeyDown, &e);
+			if (allowGameplayInput)
+			{
+				Events::KeyEvent e{ key };
+				m_EventDispatcher->Dispatch(EventType::KeyDown, &e);
+			}
 		}
 	}
 
@@ -44,8 +58,11 @@ void InputManager::Update()
 	{
 		if (!m_KeysDown.contains(key))
 		{
-			Events::KeyEvent e{ key };
-			m_EventDispatcher->Dispatch(EventType::KeyUp, &e);
+			if (allowGameplayInput)
+			{
+				Events::KeyEvent e{ key };
+				m_EventDispatcher->Dispatch(EventType::KeyUp, &e);
+			}
 		}
 	}
 
@@ -62,7 +79,7 @@ void InputManager::Update()
 			// 더블클릭 윈도우 지나면 싱글 확정 발사
 			m_PendingLeftClickMouse.handled = false;
 			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse);
-			if (!m_PendingLeftClickMouse.handled)
+			if (!m_PendingLeftClickMouse.handled && allowGameplayInput)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
 			m_PendingLeftClick = false;
 		}
@@ -91,7 +108,7 @@ void InputManager::Update()
 			m_SuppressDragAfterDoubleClick = true;
 			m_Mouse.handled = false;
 			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, &m_Mouse);
-			if(!m_Mouse.handled)
+			if (!m_Mouse.handled && allowGameplayInput)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
 		}
 
@@ -116,12 +133,12 @@ void InputManager::Update()
 		{
 			m_Mouse.handled = false;
 			m_EventDispatcher->Dispatch(EventType::UIDragged, &m_Mouse);
-			if (!m_Mouse.handled)
+			if (!m_Mouse.handled && allowGameplayInput)
 			{
 				m_Mouse.handled = false;
 				m_EventDispatcher->Dispatch(EventType::Dragged, &m_Mouse);
 			}
-			if (!m_Mouse.handled)
+			if (!m_Mouse.handled && allowGameplayInput)
 			{
 				m_Mouse.handled = false;
 				m_EventDispatcher->Dispatch(EventType::MouseLeftClickHold, &m_Mouse);
@@ -134,7 +151,7 @@ void InputManager::Update()
 		m_SuppressDragAfterDoubleClick = false;
 		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse);
-		if (!m_Mouse.handled)
+		if (!m_Mouse.handled && allowGameplayInput)
 		{
 			m_Mouse.handled = false;
 			m_EventDispatcher->Dispatch(EventType::MouseLeftClickUp, &m_Mouse);
@@ -143,17 +160,17 @@ void InputManager::Update()
 	
 
 	// 우클릭
-	if (m_MousePrev.rightPressed == false && m_Mouse.rightPressed)
+	if (m_MousePrev.rightPressed == false && m_Mouse.rightPressed && allowGameplayInput)
 	{
 		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::MouseRightClick, &m_Mouse);
 	}
-	else if (m_MousePrev.rightPressed == true && m_Mouse.rightPressed)
+	else if (m_MousePrev.rightPressed == true && m_Mouse.rightPressed && allowGameplayInput)
 	{
 		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::MouseRightClickHold, &m_Mouse);
 	}
-	else if(m_MousePrev.rightPressed == true && !m_Mouse.rightPressed)
+	else if(m_MousePrev.rightPressed == true && !m_Mouse.rightPressed && allowGameplayInput)
 	{
 		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::MouseRightClickUp, &m_Mouse);
@@ -163,7 +180,7 @@ void InputManager::Update()
 
 	// Hovered : 매 프레임	
 	m_EventDispatcher->Dispatch(EventType::UIHovered, &m_Mouse);
-	if (!m_Mouse.handled)
+	if (!m_Mouse.handled && allowGameplayInput)
 	{
 		m_Mouse.handled = false;
 		m_EventDispatcher->Dispatch(EventType::Hovered, &m_Mouse);

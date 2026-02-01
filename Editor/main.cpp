@@ -15,6 +15,8 @@
 #include "DiceSystem.h"
 #include "LogSystem.h"
 #include "LootRoller.h"
+#include "GameDataRepository.h"
+#include "ShopRoller.h"
 
 namespace
 {
@@ -52,6 +54,8 @@ int main()
 	auto& diceSystem = services.Register<DiceSystem>(randomMachine);
 	auto& logSystem = services.Register<LogSystem>();
 	auto& lootRoller = services.Register<LootRoller>();
+	services.Register<GameDataRepository>();
+	services.Register<ShopRoller>();
 
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);

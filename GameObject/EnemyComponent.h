@@ -7,6 +7,7 @@
 class AIController;
 class BTExecutor;
 class TransformComponent;
+class MaterialComponent;
 
 class EnemyComponent : public Component, public IEventListener {
 	friend class Editor;
@@ -30,11 +31,14 @@ public:
 	const int& GetMoveDistance() const { return m_MoveDistance; }
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 	bool ConsumeMoveRequest();
+	int GetActorId() const { return m_ActorId; }
+	void SetActorId(int value) { m_ActorId = value; }
 
 private:
 	int m_Q;
 	int m_R;
 	int m_MoveDistance = 1;
+	int m_ActorId = 0;
 	Turn m_CurrentTurn = Turn::PlayerTurn;
 
 	std::unique_ptr<BTExecutor>   m_BTExecutor;

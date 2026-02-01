@@ -4,6 +4,8 @@
 #include "GridSystemComponent.h"
 #include "EnemyMovementComponent.h"
 #include "EnemyComponent.h"
+#include "Scene.h"
+#include "GameManager.h"
 
 REGISTER_COMPONENT(EnemyControllerComponent)
 
@@ -18,6 +20,17 @@ void EnemyControllerComponent::Start()
 
 void EnemyControllerComponent::Update(float deltaTime)
 {
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (gameManager && (gameManager->GetPhase() != Phase::ExplorationLoop
+		|| gameManager->GetExplorationTurnState() != ExplorationTurnState::EnemyStep))
+	{
+		m_TurnEndRequested = false;
+		return;
+	}
+
+
 	Turn currentTurn = Turn::PlayerTurn;
 
 	bool hasEnemies = false;
@@ -45,7 +58,14 @@ void EnemyControllerComponent::Update(float deltaTime)
 	{
 		if (!m_TurnEndRequested)
 		{
-			GetEventDispatcher().Dispatch(EventType::EnemyTurnEndRequested, nullptr);
+			if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop)
+			{
+				GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
+			}
+			else
+			{
+				GetEventDispatcher().Dispatch(EventType::EnemyTurnEndRequested, nullptr);
+			}
 			m_TurnEndRequested = true;
 		}
 		return;
@@ -54,6 +74,15 @@ void EnemyControllerComponent::Update(float deltaTime)
 	// 모든 Enemies 행동 종료 시.
 	if (!m_TurnEndRequested && CheckActiveEnemies())
 	{
+		if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop)
+		{
+			GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
+		}
+		else
+		{
+			GetEventDispatcher().Dispatch(EventType::EnemyTurnEndRequested, nullptr);
+		}
+
 		GetEventDispatcher().Dispatch(EventType::EnemyTurnEndRequested, nullptr);
 		m_TurnEndRequested = true;
 	}

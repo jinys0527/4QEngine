@@ -21,8 +21,8 @@ public:
 	const float& GetGameOverLevel() const					   { return m_GameOverLevel;		   }
 	void		 SetGameOverLevel(const float& value)		   { m_GameOverLevel = value;		   }
 
-	const float& GetTurnElapsed  () const					   { return m_TurnElapsed;			   }
-	const float& GetTurnRemaining() const;
+	const float  GetTurnElapsed  () const					   { return m_TurnElapsed;			   }
+	const float  GetTurnRemaining() const;
 
 	const bool&  GetGameOver() const						   { return m_IsGameOver;			   }
 

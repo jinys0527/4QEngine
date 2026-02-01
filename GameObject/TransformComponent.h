@@ -23,13 +23,7 @@ public:
 		m_LocalMatrix = Identity();
 		m_WorldMatrix = Identity();
 	}
-	virtual ~TransformComponent()
-	{
-		for (auto* child : m_Children)
-		{
-			child->m_Parent = nullptr;
-		}
-	}
+	virtual ~TransformComponent();
 
 	TransformComponent* GetParent() const { return m_Parent; }
 

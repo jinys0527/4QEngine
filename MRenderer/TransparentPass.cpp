@@ -48,13 +48,10 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
         {
             mat = m_AssetLoader.GetMaterials().Get(item.material);
         }
-
         if (mat)
         {
             SetMaterialCB(*mat);
-
         }
-
 
         if (textures && mat)
         {

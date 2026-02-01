@@ -7,6 +7,7 @@
 #include "NodeComponent.h"
 #include "GridSystemComponent.h"
 #include "EnemyComponent.h"
+#include "GameManager.h"
 
 REGISTER_COMPONENT(EnemyMovementComponent)
 
@@ -23,6 +24,15 @@ void EnemyMovementComponent::Start()
 
 void EnemyMovementComponent::Update(float deltaTime)
 {
+	auto* scene = GetOwner() ? GetOwner()->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (gameManager && (gameManager->GetPhase() != Phase::ExplorationLoop
+		|| gameManager->GetExplorationTurnState() != ExplorationTurnState::EnemyStep))
+	{
+		return;
+	}
+
+
 	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
 	if (!enemy)
 	{
@@ -57,7 +67,11 @@ void EnemyMovementComponent::OnEvent(EventType type, const void* data)
 	}
 
 	const auto turn = static_cast<Turn>(payload->turn);
-	if (turn == Turn::EnemyTurn)
+
+	auto* scene = GetOwner() ? GetOwner()->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (turn == Turn::EnemyTurn && (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
+
 	{
 		m_IsMoveComplete = false;
 	}
@@ -120,6 +134,12 @@ void EnemyMovementComponent::Move()
 	enemyTransform->SetPosition(targetTransform->GetPosition());
 }
 
+
+
+void EnemyMovementComponent::SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir)
+{
+
+}
 
 
 void EnemyMovementComponent::GetSystem()

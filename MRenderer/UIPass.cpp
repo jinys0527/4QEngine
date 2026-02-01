@@ -74,7 +74,7 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 		{
 			mat = m_AssetLoader.GetMaterials().Get(item.material);
 		}
-
+		
 		if (textures && mat)
 		{
 			if (mat->shaderAsset.IsValid())

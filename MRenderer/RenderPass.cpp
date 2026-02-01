@@ -390,7 +390,7 @@ void RenderPass::DrawMesh(
 	dc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
 
 
-	OutputDebugStringA("Drawing 3D Object Start\n");
+	//OutputDebugStringA("Drawing 3D Object Start\n");
 	if (useSubMesh)
 	{
 		dc->DrawIndexed(indexCount, indexStart, 0);

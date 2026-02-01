@@ -9,6 +9,7 @@
 ShopStock ShopRoller::RollStock(int floor, 
                                 const GameDataRepository& repository,
                                 DiceSystem& diceSystem,
+                                const std::vector<int>& excludedItems,
                                 LogSystem* logger) const
 {
 	ShopStock stock{};
@@ -20,7 +21,7 @@ ShopStock ShopRoller::RollStock(int floor,
     std::vector<int> used;
     for (int i = 0; i < 2; ++i)
     {
-        if (auto choice = PickRandomItem(equipment, diceSystem, used))
+        if (auto choice = PickRandomItem(equipment, diceSystem, used, excludedItems))
         {
             stock.equipmentItems.push_back(*choice);
         }
@@ -28,7 +29,7 @@ ShopStock ShopRoller::RollStock(int floor,
 
     std::vector<const ItemDefinition*> consumables = healing;
     consumables.insert(consumables.end(), throwable.begin(), throwable.end());
-    if (auto choice = PickRandomItem(consumables, diceSystem, used))
+    if (auto choice = PickRandomItem(equipment, diceSystem, used, excludedItems))
     {
         stock.consumableItems.push_back(*choice);
     }
@@ -46,7 +47,8 @@ ShopStock ShopRoller::RollStock(int floor,
 
 std::optional<int> ShopRoller::PickRandomItem(const std::vector<const ItemDefinition*>& items, 
                                               DiceSystem& diceSystem,
-                                              std::vector<int>& used) const
+                                              std::vector<int>& used,
+                                              const std::vector<int>& excludedItems) const
 {
     if (items.empty())
         return std::nullopt;
@@ -59,6 +61,9 @@ std::optional<int> ShopRoller::PickRandomItem(const std::vector<const ItemDefini
         return std::nullopt;
 
     if (std::find(used.begin(), used.end(), item->index) != used.end())
+        return std::nullopt;
+
+    if (std::find(excludedItems.begin(), excludedItems.end(), item->index) != excludedItems.end())
         return std::nullopt;
 
     used.push_back(item->index);

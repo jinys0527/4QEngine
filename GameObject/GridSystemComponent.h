@@ -35,6 +35,7 @@ struct AxialCoord {
 
 class GridSystemComponent : public Component, public IEventListener {
 	friend class Editor;
+	friend class GameManager;
 public:
 	static constexpr const char* StaticTypeName = "GridSystemComponent";
 	const char* GetTypeName() const override;
@@ -50,18 +51,25 @@ public:
 	const vector<EnemyComponent*>& GetEnemies() const { return m_Enemies; }
 	const int& GetNodesCount() const { return m_NodesCount; }
 	int GetShortestPathLength(const AxialKey& start,const AxialKey& target);
+	vector<AxialKey> GetShortestPath(const AxialKey& start, const AxialKey& target) const;
 	NodeComponent* GetNodeByKey(const AxialKey& key) const;
 
 private:
 
+	struct PathResult
+	{
+		std::unordered_map<NodeComponent*, NodeComponent*> cameFrom;
+		std::unordered_map<NodeComponent*, int> distances;
+	};
+
 	void ScanNodes(); // Scene 순회 후 Nodes 등록
 	void MakeGraph();// 위치기반 노드 연결
 	void UpdateMoveRange(NodeComponent* startNode, int range);
+	void UpdateMoveRangeMaterials(float pulse, bool enabled);
 	void UpdateActorPositions();
 	void UpdateActorNodeState(const AxialKey& previous, const AxialKey& current, NodeState state);
-	
+	PathResult PathBFS(const NodeComponent* startNode, const NodeComponent* targetNode) const; // 실제 경로 계산
 
-	void CalculatePath(); // 길찾기
 	// node 받기
 	vector<NodeComponent*> m_Nodes;
 	vector<EnemyComponent*> m_Enemies;
@@ -71,5 +79,6 @@ private:
 	std::unordered_map<AxialKey, NodeComponent*, AxialKeyHash> m_NodesByAxial;
 	int m_NodesCount = 0; //for Debug
 
-	float m_InnerRadius = 0.866f; // 리소스 바뀌면 1로 변경 (현재는 외접기준 1)
+	float m_InnerRadius = 1.0f; // 리소스 바뀌면 1로 변경 (현재는 외접기준 1)
+	float m_MoveRangePulseTime = 0.0f;
 };

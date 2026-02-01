@@ -57,12 +57,15 @@ public:
 	void Deserialize        (const nlohmann::json& j);
 	void BuildFrameData(RenderData::FrameData& frameData) const;
 
+	void EnsureAutoComponentsForSave();
+
 	EventDispatcher& GetEventDispatcher() { return m_EventDispatcher; }
 
 	void SetName            (std::string name) { m_Name = name; }
 	std::string GetName     () const     { return m_Name;   }
 
 	void SetGameManager     (GameManager* gameManager);
+	GameManager* GetGameManager() const { return m_GameManager; }
 	void SetSceneManager    (SceneManager* sceneManager);
 
 	ServiceRegistry& GetServices() const { return m_Services; }

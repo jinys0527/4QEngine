@@ -50,6 +50,12 @@ protected:
 	BTStatus OnTick(BTInstance& inst, Blackboard& bb) override;
 };
 
+class PatrolMoveTask : public Task 
+{
+protected:
+	BTStatus OnTick(BTInstance& inst, Blackboard& bb) override;
+};
+
 class EndTurnTask : public Task
 {
 protected:

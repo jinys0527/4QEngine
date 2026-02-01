@@ -1,5 +1,0 @@
-﻿{
-  "name": "Test",
-  "ps": "../../../MRenderer/fx/Test_PS.hlsl",
-  "vs": "../../../MRenderer/fx/Test_VS.hlsl"
-}

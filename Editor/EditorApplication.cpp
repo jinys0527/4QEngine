@@ -28,6 +28,7 @@
 #include "MathHelper.h"
 #include "Snapshot.h"
 #include "GameManager.h"
+#include <unordered_set>
 
 #define DRAG_SPEED 0.01f
 namespace fs = std::filesystem;
@@ -473,10 +474,10 @@ namespace
 
 void EditorApplication::HandleEditorViewportSelection()
 {
-	if (m_EditorState != EditorPlayState::Stop)
+	/*if (m_EditorState != EditorPlayState::Stop)
 	{
 		return;
-	}
+	}*/
 
 	if (!m_EditorViewport.HasViewportRect() || !m_EditorViewport.IsHovered())
 	{
@@ -2213,9 +2214,33 @@ void EditorApplication::DrawInspector() {
 		// Logic 
 		const auto existingTypes = selectedObject->GetComponentTypeNames(); //
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
+
+		static const std::unordered_set<std::string> kHiddenTypes = {
+			"TransformComponent",
+			"MeshComponent",
+			"MaterialComponent",
+			"SkeletalMeshComponent",
+			"PlayerStatComponent",
+			"PlayerMovementComponent",
+			"PlayerFSMComponent",
+			"PlayerMoveFSMComponent",
+			"PlayerPushFSMComponent",
+			"PlayerCombatFSMComponent",
+			"PlayerInventoryFSMComponent",
+			"PlayerShopFSMComponent",
+			"PlayerDoorFSMComponent",
+			"EnemyStatComponent",
+			"EnemyMovementComponent",
+			"EnemyControllerComponent",
+			"LightComponent",
+			"AnimationComponent",
+			"AnimFSMComponent",
+			"StatComponent",
+			"FSMComponent"
+		};
 		for (const auto& typeName : typeNames)
 		{
-			if (typeName == "LightComponent" || typeName == "AnimationComponent")
+			if (kHiddenTypes.contains(typeName))
 			{
 				continue;
 			}

@@ -16,6 +16,7 @@ struct State
 struct Transition
 {
 	std::string from, to, onEvent;
+	std::function<bool()> condition = []() { return true; };
 	int priority = 0;
 };
 
@@ -43,15 +44,17 @@ public:
 
 	State& GetState(const StateID& id) { return m_States.at(id); }
 
-	void AddTransition(const StateID& from, const StateID& to, const std::string& evt)
+	void AddTransition(const std::string& from, const std::string& to, const std::string& evt)
 	{
-		AddTransition(from, to, evt, 0);
+		AddTransition(from, to, evt, []() {return true; }, 0);
 	}
 	
-	void AddTransition(const StateID& from, const StateID& to, const std::string& evt, int priority)
+	void AddTransition(const std::string& from, const std::string& to, const std::string& evt, int priority)
 	{
-		m_Transitions[from][evt].push_back({ from, to, evt, priority });
+		AddTransition(from, to, evt, []() {return true; }, priority);
 	}
+
+	void AddTransition(const std::string& from, const std::string& to, const std::string& evt, std::function<bool()> condition, int priority = 0);
 
 	void Update(float deltaTime);
 

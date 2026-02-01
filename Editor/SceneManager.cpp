@@ -11,6 +11,7 @@
 #include "InputManager.h"
 #include "UIManager.h"
 #include "CameraObject.h"
+#include "GameDataRepository.h"
 
 //editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
@@ -27,6 +28,21 @@ void SceneManager::Initialize()
 	m_InputManager = &m_Services.Get<InputManager>();
 	m_UIManager = &m_Services.Get<UIManager>();
 	m_GameManager = &m_Services.Get<GameManager>();
+
+	if (m_GameManager)
+	{
+		m_GameManager->SetServices(&m_Services);
+		DataSheetPaths dataPaths{};
+		dataPaths.itemsPath = "Data/items.csv";
+		dataPaths.enemiesPath = "Data/enemies.csv";
+		dataPaths.dropTablesPath = "Data/drop_tables.csv";
+		m_GameManager->SetDataSheetPaths(dataPaths);
+		m_GameManager->SetFloorSceneNames({ "Stage1 ", "Stage2 ", "Stage3 ", "Ending " });
+	}
+	if (m_InputManager)
+	{
+		m_InputManager->SetGameManager(m_GameManager);
+	}
 
 	auto emptyScene = std::make_shared<DefaultScene>(m_Services);
 	emptyScene->SetSceneManager(this);
@@ -50,6 +66,11 @@ void SceneManager::Update(float deltaTime)
 
 	if (totalTime >= 0.016f)
 		m_CurrentScene->FixedUpdate();
+
+	if (m_GameManager)
+	{
+		m_GameManager->Update(deltaTime);
+	}
 
 	m_CurrentScene->Update(deltaTime);
 }
@@ -91,19 +112,27 @@ void SceneManager::Render()
 void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 {
 	auto oldScene = m_CurrentScene;
+	if (m_GameManager && m_CurrentScene)
+	{
+		m_GameManager->CapturePlayerData(m_CurrentScene.get());
+	}
 
 	m_CurrentScene = scene;
 	m_CurrentScene->Enter();
 	m_Camera = m_CurrentScene->GetGameCamera();
 	m_InputManager->SetViewportRect({ 0, 0, static_cast<LONG>(m_Camera->GetViewportSize().Width), static_cast<LONG>(m_Camera->GetViewportSize().Height) });
 
+
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+	m_InputManager->SetGameManager(m_GameManager);
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
 	if (m_GameManager)
 	{
 		m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+		m_GameManager->SetActiveScene(m_CurrentScene.get());
+		m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 	}
 
 }
@@ -136,6 +165,10 @@ void SceneManager::ChangeScene(const std::string& name)
 		return;
 	}
 	const bool wasPaused = m_CurrentScene->GetIsPause();
+	if(m_GameManager)
+	{
+		m_GameManager->CapturePlayerData(m_CurrentScene.get());
+	}
 	m_CurrentScene->Leave();
 	if (LoadSceneFromJson(*scenePath))
 	{
@@ -296,6 +329,8 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 	{
 		return false;
 	}
+
+	const_cast<Scene*>(m_CurrentScene.get())->EnsureAutoComponentsForSave();
 
 	std::ofstream ofs(filePath);
 	if (!ofs.is_open())

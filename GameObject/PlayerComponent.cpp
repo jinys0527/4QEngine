@@ -8,12 +8,16 @@
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
 #include <cmath>
+#include "GameManager.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
 REGISTER_PROPERTY_READONLY(PlayerComponent, R)
 REGISTER_PROPERTY(PlayerComponent, MoveResource)
 REGISTER_PROPERTY(PlayerComponent, ActResource)
+REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
+REGISTER_PROPERTY(PlayerComponent, AttackRange)
+REGISTER_PROPERTY(PlayerComponent, Money)
 REGISTER_PROPERTY(PlayerComponent, PlayerTurnTime)
 REGISTER_PROPERTY_READONLY(PlayerComponent, TurnElapsed)
 REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
@@ -36,6 +40,7 @@ PlayerComponent::PlayerComponent() {
 PlayerComponent::~PlayerComponent() {
 	// Event Listener 쓰는 경우만	
 	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseLeftDoubleClick, this);
 }
 
 void PlayerComponent::Start()
@@ -47,6 +52,7 @@ void PlayerComponent::Start()
 	if (!scene) { return; }
 
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
+	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
 	const auto& objects = scene->GetGameObjects();
 
 	for (const auto& [name,object] : objects) {
@@ -70,9 +76,12 @@ void PlayerComponent::Update(float deltaTime) {
 		return;
 	}
 
-	//Player Turn 종료 조건
+	auto* gameManager = scene->GetGameManager();
+	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 
-	if (m_CurrentTurn == Turn::PlayerTurn) {
+
+	//Player Turn 종료 조건
+	if (allowExplorationTurn) {
 		m_TurnElapsed += deltaTime;
 
 		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
@@ -131,6 +140,18 @@ void PlayerComponent::Update(float deltaTime) {
 
 void PlayerComponent::OnEvent(EventType type, const void* data)
 {
+	if (type == EventType::MouseLeftDoubleClick)
+	{
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+		if (!gameManager || gameManager->IsCombatInputAllowed())
+		{
+			m_CombatConfirmRequested = true;
+		}
+		return;
+	}
+
 	if (type != EventType::TurnChanged || !data)
 	{
 		return;
@@ -158,6 +179,8 @@ void PlayerComponent::ResetTurnResources()
 	m_RemainActResource = m_ActResource;
 	m_TurnElapsed = 0.0f;
 	m_HasMoveStart = false;
+	m_CombatConfirmRequested = false;
+	ResetSubFSMFlags();
 }
 
 // 움직임
@@ -170,6 +193,11 @@ void PlayerComponent::BeginMove()
 
 bool PlayerComponent::CommitMove(int targetQ, int targetR)
 {
+	if (m_CurrentTurn != Turn::PlayerTurn)
+	{
+		return false;
+	}
+
 	const int startQ = m_HasMoveStart ? m_StartQ : m_Q;
 	const int startR = m_HasMoveStart ? m_StartR : m_R;
 	//
@@ -178,7 +206,7 @@ bool PlayerComponent::CommitMove(int targetQ, int targetR)
 		cost = m_GridSystem->GetShortestPathLength({ startQ,startR }, { targetQ,targetR });
 	}
 	if (cost < 0) {
-		const int cost = AxialDistance(startQ, startR, targetQ, targetR); // start와 Target 간의 소모 cost return
+		cost = AxialDistance(startQ, startR, targetQ, targetR); // start와 Target 간의 소모 cost return
 	}
 	m_HasMoveStart = false;
 	if (cost <= 0)
@@ -197,6 +225,10 @@ bool PlayerComponent::CommitMove(int targetQ, int targetR)
 
 bool PlayerComponent::ConsumeActResource(int amount)
 {
+	if (m_CurrentTurn != Turn::PlayerTurn)
+	{
+		return false;
+	}
 	if (amount <= 0)
 	{
 		return true;
@@ -207,4 +239,80 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	}
 	m_RemainActResource -= amount;
 	return true;
+}
+
+bool PlayerComponent::ConsumeCombatConfirmRequest()
+{
+	if (!m_CombatConfirmRequested)
+	{
+		return false;
+	}
+
+	m_CombatConfirmRequested = false;
+	return true;
+}
+
+bool PlayerComponent::ConsumePushPossible()
+{
+	return ConsumeFlag(m_PushPossible);
+}
+
+bool PlayerComponent::ConsumePushTargetFound()
+{
+	return ConsumeFlag(m_PushTargetFound);
+}
+
+bool PlayerComponent::ConsumePushSuccess()
+{
+	return ConsumeFlag(m_PushSuccess);
+}
+
+bool PlayerComponent::ConsumeDoorConfirmed()
+{
+	return ConsumeFlag(m_DoorConfirmed);
+}
+
+bool PlayerComponent::ConsumeDoorSuccess()
+{
+	return ConsumeFlag(m_DoorSuccess);
+}
+
+bool PlayerComponent::ConsumeInventoryAtShop()
+{
+	return ConsumeFlag(m_InventoryAtShop);
+}
+
+bool PlayerComponent::ConsumeInventoryCanDrop()
+{
+	return ConsumeFlag(m_InventoryCanDrop);
+}
+
+bool PlayerComponent::ConsumeShopHasSpace()
+{
+	return ConsumeFlag(m_ShopHasSpace);
+}
+
+bool PlayerComponent::ConsumeShopHasMoney()
+{
+	return ConsumeFlag(m_ShopHasMoney);
+}
+
+void PlayerComponent::ResetSubFSMFlags()
+{
+	m_PushPossible = true;
+	m_PushTargetFound = true;
+	m_PushSuccess = true;
+	m_DoorConfirmed = true;
+	m_DoorSuccess = true;
+	m_InventoryAtShop = true;
+	m_InventoryCanDrop = true;
+	m_ShopHasSpace = true;
+	m_ShopHasMoney = true;
+}
+
+bool PlayerComponent::ConsumeFlag(bool& flag)
+{
+	const bool value = flag;
+	flag = true;
+	return value;
 }

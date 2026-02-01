@@ -27,6 +27,10 @@ enum class EventType
 	CombatEnter,
 	CombatExit,
 	CombatInitiativeBuilt,
+	CombatTurnAdvanced,
+	CombatContextReady,
+	CombatInitComplete,
+	CombatEnded,
 
 	//Collision
 	CollisionEnter,
@@ -43,6 +47,17 @@ enum class EventType
 	PlayerTurnEndRequested,
 	EnemyTurnEndRequested,
 	TurnChanged,
+	ExploreTurnEnded,
+	ExploreEnemyStepEnded,
+	PhaseRequestEnterCombat,
+	PostCombatToShop,
+	PostCombatToExploration,
+	ShopDone,
+	FloorReady,
+	GameStart,
+	InitComplete,
+	GameWin,
+	GameOver,
 
 	//Scene
 	SceneChangeRequested,

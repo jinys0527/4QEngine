@@ -2,6 +2,7 @@
 #include <cmath>
 #include <queue>
 #include <unordered_map>
+#include <algorithm>
 #include "GridSystemComponent.h"
 #include "TransformComponent.h"
 #include "ReflectionMacro.h"
@@ -10,6 +11,7 @@
 #include "NodeComponent.h"
 #include "GameObject.h"
 #include "PlayerComponent.h"
+#include "PlayerMovementComponent.h"
 #include "EnemyComponent.h"
 
 REGISTER_COMPONENT(GridSystemComponent)
@@ -94,11 +96,42 @@ void GridSystemComponent::Start()
 }
 
 void GridSystemComponent::Update(float deltaTime) {
-	(void)deltaTime;
 
 	UpdateActorPositions();
 	const int moveRange = m_Player ? m_Player->GetRemainMoveResource() : 0; // 남은 이동 자원 Get
-	UpdateMoveRange(m_PlayerNode, moveRange);
+
+	bool isDragging = false;
+	NodeComponent* rangeStartNode = m_PlayerNode;
+	if (m_Player)
+	{
+		auto* playerOwner = m_Player->GetOwner();
+		if (playerOwner)
+		{
+			if (auto* movement = playerOwner->GetComponent<PlayerMovementComponent>())
+			{
+				isDragging = movement->IsDragging();
+				if (isDragging && movement->GetDragStartNode())
+				{
+					rangeStartNode = movement->GetDragStartNode();
+				}
+			}
+		}
+	}
+
+	UpdateMoveRange(rangeStartNode, moveRange);
+
+	if (isDragging && moveRange > 0)
+	{
+		m_MoveRangePulseTime += deltaTime;
+		const float pulseSpeed = 2.0f + static_cast<float>(moveRange) * 0.5f;
+		const float pulse = 0.5f + 0.5f * std::sin(m_MoveRangePulseTime * pulseSpeed);
+		UpdateMoveRangeMaterials(pulse, true);
+	}
+	else
+	{
+		m_MoveRangePulseTime = 0.0f;
+		UpdateMoveRangeMaterials(0.0f, false);
+	}
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)
@@ -127,7 +160,7 @@ void GridSystemComponent::ScanNodes()
 	m_Nodes.reserve(objects.size()); 
 	m_NodesByAxial.reserve(objects.size());
 
-
+	int nextEnemyId = 2;
 	//등록 과정 ( Transform 기반 Axial 좌표변환 후 등록) ** Enemy, Player 도 추가
 	for (const auto& [name, object] : objects) {
 		if(!object){ continue;}
@@ -143,6 +176,7 @@ void GridSystemComponent::ScanNodes()
 				auto* trans = object->GetComponent<TransformComponent>();
 				const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 				player->SetQR(axial.q, axial.r);
+				player->SetActorId(1);
 				m_Player = player;
 				continue;
 			}
@@ -150,6 +184,7 @@ void GridSystemComponent::ScanNodes()
 			auto* trans = object->GetComponent<TransformComponent>();
 			const AxialKey axial = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 			enemy->SetQR(axial.q, axial.r);
+			enemy->SetActorId(nextEnemyId++);
 			m_Enemies.push_back(enemy);
 			continue;
 		}
@@ -183,7 +218,7 @@ void GridSystemComponent::ScanNodes()
 
 }
 
-int GridSystemComponent::GetShortestPathLength(const AxialKey& start,const AxialKey& target)
+int GridSystemComponent::GetShortestPathLength(const AxialKey& start, const AxialKey& target)
 {
 	auto* startNode = GetNodeByKey(start);
 	auto* targetNode = GetNodeByKey(target);
@@ -196,48 +231,35 @@ int GridSystemComponent::GetShortestPathLength(const AxialKey& start,const Axial
 	{
 		return 0;
 	}
-	std::unordered_map<NodeComponent*, int> distances;
-	std::queue<NodeComponent*> frontier;
-
-	distances[startNode] = 0;
-	frontier.push(startNode);
-
-	while (!frontier.empty())
+	const PathResult result = PathBFS(startNode, targetNode);
+	auto it = result.distances.find(targetNode);
+	if (it == result.distances.end())
 	{
-		auto* current = frontier.front();
-		frontier.pop();
-
-		const int currentDistance = distances[current];
-		for (auto* neighbor : current->GetNeighbors())
-		{
-			if (!neighbor)
-			{
-				continue;
-			}
-			if (!neighbor->GetIsMoveable())
-			{
-				continue;
-			}
-			if (neighbor->GetState() != NodeState::Empty && neighbor != targetNode)
-			{
-				continue;
-			}
-			if (distances.find(neighbor) != distances.end())
-			{
-				continue;
-			}
-
-			const int nextDistance = currentDistance + 1;
-			if (neighbor == targetNode)
-			{
-				return nextDistance;
-			}
-			distances[neighbor] = nextDistance;
-			frontier.push(neighbor);
-		}
+		return -1;
 	}
+	return it->second;
 
-	return -1;
+}
+
+std::vector<AxialKey> GridSystemComponent::GetShortestPath(const AxialKey& start, const AxialKey& target) const
+{
+
+	auto* startNode = GetNodeByKey(start);
+	auto* targetNode = GetNodeByKey(target);
+
+	if (!startNode || !targetNode) { return{}; }
+	if (startNode == targetNode) { return{ start }; }
+
+	const PathResult result = PathBFS(startNode, targetNode);
+	auto it = result.cameFrom.find(targetNode);
+	if (it == result.cameFrom.end()) { return{}; }
+
+	std::vector<AxialKey> path;
+	for (auto* current = targetNode; current; current = result.cameFrom.at(current)) {
+		path.push_back({ current->GetQ(),current->GetR() }); 
+	}
+	std::reverse(path.begin(), path.end());
+	return path;
 
 }
 
@@ -317,18 +339,49 @@ void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 	}
 }
 
+void GridSystemComponent::UpdateMoveRangeMaterials(float pulse, bool enabled)
+{
+	for (auto* node : m_Nodes)
+	{
+		if (!node)
+		{
+			continue;
+		}
+
+		if (enabled && node->IsInMoveRange())
+		{
+			node->SetMoveRangeHighlight(pulse, true);
+		}
+		else
+		{
+			node->SetMoveRangeHighlight(0.0f, false);
+		}
+	}
+}
+
 //Player/ Enemy 변경에 따른 Node state Update
 void GridSystemComponent::UpdateActorPositions() 
 {
 	if (m_Player) {
+		bool skipPlayerUpdate = false;
 		auto* playerOwner = m_Player->GetOwner();
-		auto* trans = playerOwner ? playerOwner->GetComponent<TransformComponent>() : nullptr;
-		if (trans) {
-			const AxialKey previous{ m_Player->GetQ(), m_Player->GetR() };
-			const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
-			if (!(previous == current)) {
-				UpdateActorNodeState(previous, current, NodeState::HasPlayer);
-				m_Player->SetQR(current.q, current.r);
+		if (playerOwner)
+		{
+			if (auto* movement = playerOwner->GetComponent<PlayerMovementComponent>())
+			{
+				skipPlayerUpdate = movement->IsDragging();
+			}
+		}
+		if (!skipPlayerUpdate)
+		{
+			auto* trans = playerOwner ? playerOwner->GetComponent<TransformComponent>() : nullptr;
+			if (trans) {
+				const AxialKey previous{ m_Player->GetQ(), m_Player->GetR() };
+				const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
+				if (!(previous == current)) {
+					UpdateActorNodeState(previous, current, NodeState::HasPlayer);
+					m_Player->SetQR(current.q, current.r);
+				}
 			}
 		}
 	}
@@ -374,6 +427,55 @@ void GridSystemComponent::UpdateActorNodeState(const AxialKey& previous, const A
 	}
 }
 
+
+GridSystemComponent::PathResult GridSystemComponent::PathBFS(const NodeComponent* startNode, const NodeComponent* targetNode) const
+{
+	PathResult result;
+	if (!startNode || !targetNode) { return result; }
+
+	std::queue<NodeComponent*> frontier;
+	frontier.push(const_cast<NodeComponent*>(startNode));
+	result.cameFrom[const_cast<NodeComponent*>(startNode)] = nullptr;
+	result.distances[const_cast<NodeComponent*>(startNode)] = 0;
+
+	while (!frontier.empty())
+	{
+		auto* current = frontier.front();
+		frontier.pop();
+
+		if (current == targetNode)
+		{
+			break;
+		}
+
+		const int currentDistance = result.distances[current];
+		for (auto* neighbor : current->GetNeighbors())
+		{
+			if (!neighbor)
+			{
+				continue;
+			}
+			if (!neighbor->GetIsMoveable())
+			{
+				continue;
+			}
+			if (neighbor->GetState() != NodeState::Empty && neighbor != targetNode)
+			{
+				continue;
+			}
+			if (result.distances.find(neighbor) != result.distances.end())
+			{
+				continue;
+			}
+
+			result.cameFrom[neighbor] = current;
+			result.distances[neighbor] = currentDistance + 1;
+			frontier.push(neighbor);
+		}
+	}
+
+	return result;
+}
 
 void GridSystemComponent::MakeGraph()
 {

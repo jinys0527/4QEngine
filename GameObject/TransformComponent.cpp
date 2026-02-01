@@ -9,6 +9,24 @@ REGISTER_PROPERTY(TransformComponent, Rotation)
 REGISTER_PROPERTY(TransformComponent, Scale)
 
 
+TransformComponent::~TransformComponent()
+{
+	if (m_Parent)
+	{
+		m_Parent->RemoveChild(this);
+		m_Parent = nullptr;
+	}
+
+	for (auto* child : m_Children)
+	{
+		if (child)
+		{
+			child->m_Parent = nullptr;
+		}
+	}
+	m_Children.clear();
+}
+
 void TransformComponent::SetParent(TransformComponent* newParent)
 {
 	assert(newParent != this);

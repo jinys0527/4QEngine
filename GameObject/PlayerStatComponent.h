@@ -38,6 +38,7 @@ public:
 
 	float        GetShopDiscountRate          () const;
 	const int&   GetEquipmentDefenseBonus     () const { return m_EquipmentDefenseBonus;			  }
+	void         SetEquipmentDefenseBonus	  (const int& value) { m_EquipmentDefenseBonus = value; }
 	const int    GetMaxHealthForFloor	 	  (int currentFloor) const;
 	const int    GetDefense				      () const { return GetCalculatedSenseModifier() + m_EquipmentDefenseBonus; }
 

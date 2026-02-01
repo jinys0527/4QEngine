@@ -1,5 +1,0 @@
-﻿{
-  "name": "Ani",
-  "ps": "../../../MRenderer/fx/Demo_Ani_PS.hlsl",
-  "vs": "../../../MRenderer/fx/Demo_Ani_VS.hlsl"
-}

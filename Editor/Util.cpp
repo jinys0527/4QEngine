@@ -420,10 +420,20 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 	return changed;
 }
 
-bool DrawFSMActionParams(FSMAction& action)
+bool DrawFSMActionParams(FSMAction& action, const std::vector<std::string>& categories)
 {
 	bool updated = false;
-	const auto* definition = FSMActionRegistry::Instance().FindAction(action.id);
+
+	const FSMActionDef* definition = nullptr;
+	for (const auto& category : categories)
+	{
+		definition = FSMActionRegistry::Instance().FindAction(category, action.id);
+		if (definition)
+		{
+			break;
+		}
+	}
+
 	if (!definition)
 	{
 		ImGui::TextDisabled("No Action Schema Available.");
@@ -541,7 +551,95 @@ bool DrawFSMActionParams(FSMAction& action)
 	return updated;
 }
 
-bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
+namespace
+{
+	std::string ResolveFSMCategory(const Component& component)
+	{
+		const std::string typeName = component.GetTypeName();
+		if (typeName == "PlayerFSMComponent")
+		{
+			return "Player";
+		}
+		if (typeName == "PlayerMoveFSMComponent")
+		{
+			return "Move";
+		}
+		if (typeName == "PlayerDoorFSMComponent")
+		{
+			return "Door";
+		}
+		if (typeName == "PlayerCombatFSMComponent")
+		{
+			return "Combat";
+		}
+		if (typeName == "PlayerInventoryFSMComponent")
+		{
+			return "Inventory";
+		}
+		if (typeName == "PlayerShopFSMComponent")
+		{
+			return "Shop";
+		}
+		if (typeName == "PlayerPushFSMComponent")
+		{
+			return "Push";
+		}
+		if (typeName == "AnimFSMComponent")
+		{
+			return "Animation";
+		}
+		if (typeName == "UIFSMComponent")
+		{
+			return "UI";
+		}
+		if (typeName == "CollisionFSMComponent")
+		{
+			return "Collision";
+		}
+
+		return "Common";
+	}
+
+	std::vector<FSMActionDef> CollectFSMActionDefs(const std::vector<std::string>& categories)
+	{
+		std::vector<FSMActionDef> results;
+		std::unordered_set<std::string> seen;
+		auto& registry = FSMActionRegistry::Instance();
+		for (const auto& category : categories)
+		{
+			const auto& actions = registry.GetActions(category);
+			for (const auto& action : actions)
+			{
+				if (seen.insert(action.id).second)
+				{
+					results.push_back(action);
+				}
+			}
+		}
+		return results;
+	}
+
+	std::vector<FSMEventDef> CollectFSMEventDefs(const std::vector<std::string>& categories)
+	{
+		std::vector<FSMEventDef> results;
+		std::unordered_set<std::string> seen;
+		auto& registry = FSMEventRegistry::Instance();
+		for (const auto& category : categories)
+		{
+			const auto& events = registry.GetEvents(category);
+			for (const auto& eventDef : events)
+			{
+				if (seen.insert(eventDef.name).second)
+				{
+					results.push_back(eventDef);
+				}
+			}
+		}
+		return results;
+	}
+}
+
+bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions, const std::vector<std::string>& categories)
 {
 	bool updated = false;
 	if (!ImGui::TreeNode(label))
@@ -549,7 +647,7 @@ bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
 		return false;
 	}
 
-	const auto& actionDefs = FSMActionRegistry::Instance().GetActions();
+	const auto& actionDefs = CollectFSMActionDefs(categories);
 
 	for (size_t i = 0; i < actions.size(); ++i)
 	{
@@ -584,7 +682,7 @@ bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
 			ImGui::TextDisabled("No Registered Actions");
 		}
 
-		updated |= DrawFSMActionParams(actions[i]);
+		updated |= DrawFSMActionParams(actions[i], categories);
 
 		if (ImGui::Button("Remove Action"))
 		{
@@ -613,7 +711,7 @@ bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
 	return updated;
 }
 
-bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vector<std::string>& stateNames)
+bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vector<std::string>& stateNames, const std::vector<std::string>& categories)
 {
 	bool updated = false;
 	if (!ImGui::TreeNode("Transitions"))
@@ -621,7 +719,7 @@ bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vect
 		return false;
 	}
 
-	const auto& eventDefs = FSMEventRegistry::Instance().GetEvents();
+	const auto& eventDefs = CollectFSMEventDefs(categories);
 	std::vector<const char*> eventLabels;
 	eventLabels.reserve(eventDefs.size());
 	for (const auto& evt : eventDefs)
@@ -724,7 +822,7 @@ ImGui::PopID();
 }
 
 
-bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames)
+bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames, const std::vector<std::string>& actionCategories, const std::vector<std::string>& eventCategories)
 {
 	bool updated = false;
 	ImGui::Separator();
@@ -739,18 +837,33 @@ bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames)
 		updated = true;
 	}
 
-	updated |= DrawFSMActionList("OnEnter", state.onEnter);
-	updated |= DrawFSMActionList("OnExit", state.onExit);
-	updated |= DrawFSMTransitions(state.transitions, stateNames);
+	updated |= DrawFSMActionList("OnEnter", state.onEnter, actionCategories);
+	updated |= DrawFSMActionList("OnExit", state.onExit, actionCategories);
+	updated |= DrawFSMTransitions(state.transitions, stateNames, eventCategories);
 
 	return updated;
 }
 
-bool DrawFSMGraphEditor(FSMGraph& graph)
+bool DrawFSMGraphEditor(FSMGraph& graph, const std::string& category)
 {
 	bool updated = false;
 	std::vector<std::string> stateNames;
 	stateNames.reserve(graph.states.size());
+
+	std::vector<std::string> actionCategories;
+	if (!category.empty())
+	{
+		actionCategories.push_back(category);
+	}
+	actionCategories.push_back("FSM");
+
+	std::vector<std::string> eventCategories;
+	if (!category.empty())
+	{
+		eventCategories.push_back(category);
+	}
+	eventCategories.push_back("Common");
+
 
 	for (const auto& state : graph.states)
 	{
@@ -793,7 +906,8 @@ bool DrawFSMGraphEditor(FSMGraph& graph)
 		ImGui::PushID(static_cast<int>(i));
 		if (ImGui::TreeNode("State Editor", "State %zu", i))
 		{
-			updated |= DrawFSMState(graph.states[i], stateNames);
+			updated |= DrawFSMState(graph.states[i], stateNames, actionCategories, eventCategories); 
+
 			if (ImGui::Button("Remove State"))
 			{
 				graph.states.erase(graph.states.begin() + static_cast<long>(i));
@@ -1667,7 +1781,8 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::Indent();
 		ImGui::PushID(property.GetName().c_str());
-		const bool updated = DrawFSMGraphEditor(graph);
+		const std::string category = component ? ResolveFSMCategory(*component) : std::string{};
+		const bool updated = DrawFSMGraphEditor(graph, category);
 
 		result.activated   = result.activated   || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
