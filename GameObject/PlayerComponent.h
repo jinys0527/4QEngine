@@ -3,6 +3,7 @@
 #include "GameState.h"
 #include <string>
 #include <vector>
+#include "GameObject.h"
 
 class GridSystemComponent;
 
@@ -120,4 +121,5 @@ private:
 	bool m_ShopHasMoney = true;
 	GridSystemComponent* m_GridSystem;
 
+	GameObject* m_Item = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 };

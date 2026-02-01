@@ -103,6 +103,12 @@ namespace
 		uint32_t lowerCount		  = 0;
 	};
 
+	struct SkelBinEquipmentData
+	{
+		int32_t equipmentBoneIndex = -1;
+		float   equipmentBindPose[16] = {};
+	};
+
 	struct BoneBin
 	{
 		uint32_t nameOffset = 0;
@@ -261,8 +267,7 @@ namespace
 		case ETextureType::AO:
 			return RenderData::MaterialTextureSlot::AO;
 		case ETextureType::EMISSIVE:
-			outValid = false;
-			return RenderData::MaterialTextureSlot::Albedo;
+			return RenderData::MaterialTextureSlot::Emissive;
 		default:
 			outValid = false;
 			return RenderData::MaterialTextureSlot::Albedo;
@@ -1374,7 +1379,7 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 				{
 					const MatData& mat = mats[i];
 					RenderData::MaterialData material{};
-					material.baseColor = { mat.baseColor[0], mat.baseColor[1], mat.baseColor[2], mat.baseColor[3] };
+					material.baseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 					material.metallic = mat.metallic;
 					material.roughness = mat.roughness;
 
@@ -1400,7 +1405,8 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 						}
 
 						const fs::path texPath = ResolvePath(textureDir, texPathRaw);
-						const bool isSRGB = (slot == RenderData::MaterialTextureSlot::Albedo);
+						const bool isSRGB = (slot == RenderData::MaterialTextureSlot::Albedo)
+							|| (slot == RenderData::MaterialTextureSlot::Emissive);
 
 						TextureHandle textureHandle = m_Textures.Load(
 							texPath.generic_string(),
@@ -1424,6 +1430,7 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 						{
 							return std::make_unique<RenderData::MaterialData>(material);
 						});
+
 
 					materialHandles.push_back(handle);
 					materialByName.emplace(materialName, handle);
@@ -1452,6 +1459,19 @@ void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadRe
 			if (header.magic == kSkelMagic && header.boneCount > 0)
 			{
 				RenderData::Skeleton skeleton{};
+				if (header.version >= 4)
+				{
+					SkelBinEquipmentData equipmentData{};
+					skelStream.read(reinterpret_cast<char*>(&equipmentData), sizeof(equipmentData));
+					skeleton.equipmentBoneIndex = equipmentData.equipmentBoneIndex;
+					std::memcpy(&skeleton.equipmentBindPose, equipmentData.equipmentBindPose, sizeof(float) * 16);
+				}
+				else
+				{
+					skeleton.equipmentBoneIndex = -1;
+					DirectX::XMStoreFloat4x4(&skeleton.equipmentBindPose, DirectX::XMMatrixIdentity());
+				}
+
 				if (header.version >= 3)
 				{
 					float globalInverse[16]{};

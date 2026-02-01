@@ -115,7 +115,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 Blur2 = g_BlurHalf2.Sample(smpClamp, uvW);
     float4 Blur3 = g_BlurHalf3.Sample(smpClamp, uvW);
     float4 Blur4 = g_BlurHalf4.Sample(smpClamp, uvW);
-
     
     //float diff = (viewZ - camParams.z) / camParams.w;
     //if (diff > 0)
@@ -174,6 +173,8 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 전체 emissive 세기
     emissive.rgb *= 1.5;
 
+    return finalBlur + emissive;
+    
     return RTView + emissive;
     
     //return tilt + emissive;

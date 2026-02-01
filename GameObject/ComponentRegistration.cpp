@@ -80,6 +80,7 @@ extern "C" {
 	void Link_PlayerCombatFSMComponent();
 	void Link_PlayerInventoryFSMComponent();
 	void Link_PlayerDoorFSMComponent();
+	void Link_ItemComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -138,4 +139,5 @@ void LinkEngineComponents() {
 	Link_PlayerCombatFSMComponent();
 	Link_PlayerInventoryFSMComponent();
 	Link_PlayerDoorFSMComponent();
+	Link_ItemComponent();
 }

@@ -56,7 +56,7 @@ namespace RenderData
 		Metallic,
 		Roughness,
 		AO,
-		Env,
+		Emissive,
 		TEX_MAX
 	};
 
@@ -136,6 +136,8 @@ namespace RenderData
 		std::vector<Bone>			bones;
 		std::vector<int>			upperBodyBones;
 		std::vector<int>			lowerBodyBones;
+		int                         equipmentBoneIndex = -1;
+		XMFLOAT4X4                  equipmentBindPose{};
 		XMFLOAT4X4                  globalInverseTransform{};
 	};
 
@@ -171,6 +173,8 @@ namespace RenderData
 		XMFLOAT3      cameraPos{ 0.0f, 0.0f,0.0f };
 		FLOAT         exposure = 1.0f;
 		XMFLOAT3      ambientColor{ 0.0f,0.0f,0.0f };
+		FLOAT		  camNear = 1.0f;
+		FLOAT		  camFar = 1000.f;
 	};
 
 	struct FrameContext
@@ -243,5 +247,6 @@ namespace RenderData
 		std::vector<XMFLOAT4X4> globalPoses;
 		std::vector<UIElement>	uiElements;
 		std::vector<UITextElement> uiTexts;
+
 	};
 }

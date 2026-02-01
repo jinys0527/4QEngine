@@ -4,6 +4,9 @@
 #include "GameObject.h"
 #include "Scene.h"
 #include "GridSystemComponent.h"
+#include "ItemComponent.h"
+#include "SkeletalMeshComponent.h"
+#include "TransformComponent.h"
 #include <cmath>
 #include "GameManager.h"
 
@@ -19,6 +22,7 @@ REGISTER_PROPERTY(PlayerComponent, PlayerTurnTime)
 REGISTER_PROPERTY_READONLY(PlayerComponent, TurnElapsed)
 REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
 
+//REGISTER_PROPERTY(PlayerComponent, Item)
 
 static int AxialDistance(int q1, int r1, int q2, int r2)
 {
@@ -85,6 +89,52 @@ void PlayerComponent::Update(float deltaTime) {
 			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
 			m_TurnEndRequested = true;
 		}
+	}
+
+	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
+	auto* transformcomponent = owner->GetComponent<TransformComponent>();
+	{
+		if (!transformcomponent->GetChildrens().empty())
+		{
+			m_Item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+		}
+
+	}
+
+	//아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
+	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
+	if (m_Item != nullptr)
+	{
+		auto* itemcomponent = m_Item->GetComponent<ItemComponent>();
+
+		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+		if (!skeletal)
+		{
+			return;
+		}
+
+		auto* loader = AssetLoader::GetActive();
+		if (!loader)
+		{
+			return;
+		}
+
+		const SkeletonHandle skeletonHandle = skeletal->GetSkeletonHandle();
+		if (!skeletonHandle.IsValid())
+		{
+			return;
+		}
+
+		RenderData::Skeleton* skeleton = loader->GetSkeletons().Get(skeletonHandle);
+		if (!skeleton)
+		{
+			return;
+		}
+
+		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
+
+		itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
+		int a = 0;
 	}
 }
 

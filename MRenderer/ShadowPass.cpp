@@ -36,7 +36,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
         //원근 투영
         //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
         //직교 투영
-        lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
+        lightproj = XMMatrixOrthographicLH(32, 32, 0.1f, 200.f);
 
         //텍스처 좌표 변환
         XMFLOAT4X4 m = {
@@ -92,10 +92,13 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
             m_RenderContext.pDXDC->VSSetConstantBuffers(3, 1, m_RenderContext.pSkinCB.GetAddressOf());
         }
 
-#pragma region ShaderSet
-        const auto* vertexShaders = m_RenderContext.vertexShaders;
 
-        ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
+        ID3D11VertexShader* vertexShader = m_RenderContext.VS_MakeShadow.Get();
+        ID3D11PixelShader* pixelShader = m_RenderContext.PS_MakeShadow_Transparent.Get();
+
+        if (queueItem.layer == RenderData::OpaqueItems)
+            pixelShader = m_RenderContext.PS_MakeShadow.Get();
+
 
         const RenderData::MaterialData* mat = nullptr;
         if (item.useMaterialOverrides)
@@ -107,34 +110,27 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
             mat = m_AssetLoader.GetMaterials().Get(item.material);
         }
 
-        if (mat)
+        const auto* textures = m_RenderContext.textures;
+        if (textures && mat)
         {
-            if (mat->shaderAsset.IsValid())
+            for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::Albedo) + 1; ++slot)
             {
-                const auto* shaderAsset = m_AssetLoader.GetShaderAssets().Get(mat->shaderAsset);
-                if (shaderAsset)
-                {
-                    if (vertexShaders && shaderAsset->vertexShader.IsValid())
-                    {
-                        const auto shaderIt = vertexShaders->find(shaderAsset->vertexShader);
-                        if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
-                        {
-                            vertexShader = shaderIt->second.vertexShader.Get();
-                        }
-                    }
-                }
+                const TextureHandle h = mat->textures[slot];
+                if (!h.IsValid())
+                    continue;
+
+                const auto tIt = textures->find(h);
+                if (tIt == textures->end())
+                    continue;
+
+                ID3D11ShaderResourceView* srv = tIt->second.Get();
+
+
+                m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
             }
 
-            if (vertexShaders && mat->vertexShader.IsValid())
-            {
-                const auto shaderIt = vertexShaders->find(mat->vertexShader);
-                if (shaderIt != vertexShaders->end() && shaderIt->second.vertexShader)
-                {
-                    vertexShader = shaderIt->second.vertexShader.Get();
-                }
-            }
+
         }
-#pragma endregion
 
 
         const auto* vertexBuffers = m_RenderContext.vertexBuffers;
@@ -156,7 +152,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
                 const UINT32 indexStart = useSubMesh ? item.indexStart : 0;
                 if (vb && ib)
                 {
-                    DrawMesh(vb, ib, vertexShader, nullptr, useSubMesh, indexCount, indexStart);
+                    DrawMesh(vb, ib, vertexShader, pixelShader, useSubMesh, indexCount, indexStart);
                 }
             }
         }

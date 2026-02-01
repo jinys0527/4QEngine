@@ -14,7 +14,7 @@ protected:
     bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const override
     {
         
-        return layer == RenderData::OpaqueItems;
+        return layer == RenderData::OpaqueItems || layer == RenderData::WallItems;
     }
 
 };
