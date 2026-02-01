@@ -7,7 +7,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
     SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Shadow.Get(), backcolor);
     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
-    SetBlendState(BS::DEFAULT);
+    SetBlendState(BS::DRAW_SHADOW);
     SetRasterizerState(RS::CULLBACK);
     SetDepthStencilState(DS::DEPTH_ON);
 
@@ -36,7 +36,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
         //원근 투영
         //lightProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(15), 1.0f, 0.1f, 1000.f);
         //직교 투영
-        lightproj = XMMatrixOrthographicLH(64, 64, 0.1f, 200.f);
+        lightproj = XMMatrixOrthographicLH(32, 32, 0.1f, 200.f);
 
         //텍스처 좌표 변환
         XMFLOAT4X4 m = {
@@ -94,7 +94,11 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
 
 
         ID3D11VertexShader* vertexShader = m_RenderContext.VS_MakeShadow.Get();
-        ID3D11PixelShader* pixelShader = m_RenderContext.PS_MakeShadow.Get();
+        ID3D11PixelShader* pixelShader = m_RenderContext.PS_MakeShadow_Transparent.Get();
+
+        if (queueItem.layer == RenderData::OpaqueItems)
+            pixelShader = m_RenderContext.PS_MakeShadow.Get();
+
 
         const RenderData::MaterialData* mat = nullptr;
         if (item.useMaterialOverrides)

@@ -216,6 +216,7 @@ private:
 	//그림자 만들기
 	ComPtr<ID3D11VertexShader>	m_pVS_MakeShadow;
 	ComPtr<ID3D11PixelShader>	m_pPS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	m_pPS_MakeShadow_Transparent;
 	ComPtr<ID3DBlob>			m_pVSCode_MakeShadow;
 
 	//Emissive용

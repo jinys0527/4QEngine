@@ -98,6 +98,7 @@ enum class SS
 enum class BS
 {
     DEFAULT,            //불투명
+    DRAW_SHADOW,        //그림자 그리기용
     ALPHABLEND,         //투명, 반투명
     ALPHABLEND_WALL,    //벽
     ADD,                // 빛, 불꽃, 이펙트 등, 색 밝아짐

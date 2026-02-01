@@ -130,6 +130,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_MakeShadow_VS.hlsl"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadow_PS.hlsl"), m_pPS_MakeShadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.hlsl"), m_pPS_MakeShadow_Transparent.GetAddressOf());
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
@@ -589,6 +590,7 @@ void Renderer::CreateContext()
 
 	m_RenderContext.VS_MakeShadow			= m_pVS_MakeShadow;
 	m_RenderContext.PS_MakeShadow			= m_pPS_MakeShadow;
+	m_RenderContext.PS_MakeShadow_Transparent = m_pPS_MakeShadow_Transparent;
 	m_RenderContext.VSCode_MakeShadow		= m_pVSCode_MakeShadow;
 
 	m_RenderContext.VS_Emissive				= m_pVS_Emissive;
@@ -643,11 +645,11 @@ void Renderer::CreateContext()
 	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
 
 	m_RenderContext.pRTScene_EmissiveOrigin		= m_pRTScene_EmissiveOrigin;
+	m_RenderContext.pRTScene_EmissiveOriginMSAA = m_pRTScene_EmissiveOriginMSAA;
 	m_RenderContext.pTexRvScene_EmissiveOrigin	= m_pTexRvScene_EmissiveOrigin;
 	m_RenderContext.pRTView_EmissiveOrigin		= m_pRTView_EmissiveOrigin;
 
 	m_RenderContext.pRTScene_Emissive			= m_pRTScene_Emissive;
-	m_RenderContext.pRTScene_EmissiveOriginMSAA = m_pRTScene_EmissiveOriginMSAA;
 	m_RenderContext.pTexRvScene_Emissive		= m_pTexRvScene_Emissive;
 	m_RenderContext.pRTView_Emissive			= m_pRTView_Emissive;
 
@@ -1690,8 +1692,10 @@ HRESULT Renderer::CreateRenderTarget_Other()
 	ReCreateRenderTarget();
 
 #pragma region ShadowMap
-	m_ShadowTextureSize = { 16384, 16384 };
+	m_ShadowTextureSize = { 4096, 4096 };
 	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf(), m_pShadowRV.GetAddressOf());
+
+	//DSCreateShadowMSAA(m_ShadowTextureSize.width, m_ShadowTextureSize.height, m_pDSTex_ShadowMSAA.GetAddressOf(), m_pDSViewScene_ShadowMSAA.GetAddressOf());
 #pragma endregion
 
 
@@ -1808,6 +1812,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 	if (m_dwAA > 1)
 	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_EmissiveOriginMSAA.GetAddressOf());
 		RTViewCreate(fmt, m_pRTScene_EmissiveOriginMSAA.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
 	}
 	else
@@ -2226,6 +2231,23 @@ HRESULT Renderer::CreateBlendState()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
+
+	rtb = {};
+	rtb.BlendEnable = FALSE; 
+	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bd = {};
+	bd.RenderTarget[0] = rtb;
+	bd.AlphaToCoverageEnable = TRUE;   
+	bd.IndependentBlendEnable = FALSE;
+
+	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::DRAW_SHADOW].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
 
 	return hr;
 }

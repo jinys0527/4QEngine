@@ -183,6 +183,7 @@ struct RenderContext
 	//그림자 만들기
 	ComPtr<ID3D11VertexShader>	VS_MakeShadow;
 	ComPtr<ID3D11PixelShader>	PS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	PS_MakeShadow_Transparent;
 	ComPtr<ID3DBlob>			VSCode_MakeShadow;
 
 	//Emissive용
