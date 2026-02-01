@@ -92,9 +92,9 @@ constexpr std::array<AxialDirection, 6> kFacingDirections{ {
 	{ -1, 0 },  // clock_9
 	{ -1, 1 }   // clock_11
 } };
-std::pair<AxialDirection, AxialDirection> GetLateralDirections(const AxialDirection& forwardDir)
+std::pair<AxialDirection, AxialDirection> GetLateralDirections(int facingIndex)
 {
-	if (forwardDir.q == 0)
+	/*if (forwardDir.q == 0)
 	{
 		return { { 1, 0 }, { -1, 0 } };
 	}
@@ -102,7 +102,11 @@ std::pair<AxialDirection, AxialDirection> GetLateralDirections(const AxialDirect
 	{
 		return { { 0, 1 }, { 0, -1 } };
 	}
-	return { { 0, 1 }, { 0, -1 } };
+	return { { 0, 1 }, { 0, -1 } };*/
+	const int dirCount = static_cast<int>(kFacingDirections.size());
+	const int leftIndex = (facingIndex + dirCount - 1) % dirCount;
+	const int rightIndex = (facingIndex + 1) % dirCount;
+	return { kFacingDirections[leftIndex], kFacingDirections[rightIndex] };
 }
 
 bool IsTargetVisibleOnHexLine(
@@ -124,7 +128,8 @@ bool IsTargetVisibleOnHexLine(
 	}
 
 	const AxialDirection forwardDir = kFacingDirections[facingIndex];
-	const auto lateralDirs = GetLateralDirections(forwardDir);
+	//const auto lateralDirs = GetLateralDirections(forwardDir);
+	const auto lateralDirs = GetLateralDirections(facingIndex);
 	const AxialDirection leftLateralDir = lateralDirs.first;
 	const AxialDirection rightLateralDir = lateralDirs.second;
 	std::array<bool, 3> blocked{ false, false, false };
@@ -200,7 +205,8 @@ void EnemyComponent::UpdateSightDebugLines(int sightRange)
 	ClearSightDebug();
 
 	const AxialDirection forwardDir = kFacingDirections[facingIndex];
-	const auto lateralDirs = GetLateralDirections(forwardDir);
+	//const auto lateralDirs = GetLateralDirections(forwardDir);
+	const auto lateralDirs = GetLateralDirections(facingIndex);
 	const AxialDirection leftLateralDir = lateralDirs.first;
 	const AxialDirection rightLateralDir = lateralDirs.second;
 	std::array<bool, 3> blocked{ false, false, false };
@@ -300,7 +306,6 @@ void EnemyComponent::Update(float deltaTime) {
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
-		UpdateSightDebugLines(sightRange);
 
 		if (m_DebugSightLines)
 		{

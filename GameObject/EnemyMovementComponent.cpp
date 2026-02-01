@@ -151,6 +151,7 @@ void EnemyMovementComponent::Move()
 		if (TryGetRotationFromStep(previousKey, currentKey, rotation))
 		{
 			SetEnemyRotation(enemyTransform, rotation);
+			enemy->SetFacing(rotation); // 시야 범위
 		}
 	}
 
