@@ -15,6 +15,7 @@
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "GameState.h"
+#include "GameManager.h"
 #include <array>
 //#include <cfloat>
 
@@ -181,6 +182,12 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 
 	auto* scene = owner->GetScene();
 	if (!scene) return;
+
+	auto* gameManager = scene->GetGameManager();
+	if (gameManager && !gameManager->IsExplorationInputAllowed())
+	{
+		return;
+	}
 
 	if (!scene->GetServices().Has<InputManager>())
 		return;

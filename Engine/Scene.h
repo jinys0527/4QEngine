@@ -65,6 +65,7 @@ public:
 	std::string GetName     () const     { return m_Name;   }
 
 	void SetGameManager     (GameManager* gameManager);
+	GameManager* GetGameManager() const { return m_GameManager; }
 	void SetSceneManager    (SceneManager* sceneManager);
 
 	ServiceRegistry& GetServices() const { return m_Services; }

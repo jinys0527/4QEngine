@@ -10,6 +10,7 @@
 #include "EnemyStatComponent.h"
 #include "GameObject.h"
 #include "PlayerComponent.h"
+#include "GameManager.h"
 #include "Scene.h"
 
 REGISTER_COMPONENT(EnemyComponent)
@@ -59,6 +60,14 @@ void EnemyComponent::Start()
 void EnemyComponent::Update(float deltaTime) {
 	auto* owner = GetOwner();
 	if (!owner || !m_AIController)
+	{
+		return;
+	}
+
+	auto* scene = owner->GetScene();
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (gameManager && (gameManager->GetPhase() != Phase::TurnBasedCombat
+		|| gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn))
 	{
 		return;
 	}
@@ -141,7 +150,12 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 	}
 
 	m_CurrentTurn = static_cast<Turn>(payload->turn);
-	if (m_CurrentTurn == Turn::EnemyTurn)
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (m_CurrentTurn == Turn::EnemyTurn
+		&& (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
 	{
 		m_MoveRequested = true;
 	}
