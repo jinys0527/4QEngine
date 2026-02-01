@@ -194,6 +194,7 @@ struct RenderContext
 	//imgui용 == Scene Draw용
 	bool isEditCam = false;
 	ComPtr<ID3D11Texture2D>				pRTScene_Imgui;
+	ComPtr<ID3D11Texture2D>				pRTScene_ImguiMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Imgui;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Imgui;
 
@@ -201,6 +202,7 @@ struct RenderContext
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Imgui;
 
 	ComPtr<ID3D11Texture2D>				pRTScene_Imgui_edit;
+	ComPtr<ID3D11Texture2D>				pRTScene_Imgui_editMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Imgui_edit;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Imgui_edit;
 
@@ -217,6 +219,7 @@ struct RenderContext
 	ComPtr<ID3D11Texture2D>				pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_DepthMSAA;
 
 	//PostPass용
 	ComPtr<ID3D11Texture2D>				pRTScene_Post;
@@ -240,6 +243,7 @@ struct RenderContext
 
 	//Emissive용
 	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOriginMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_EmissiveOrigin;
 	ComPtr<ID3D11RenderTargetView>		pRTView_EmissiveOrigin;
 

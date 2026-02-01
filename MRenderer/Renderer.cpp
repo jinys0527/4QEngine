@@ -228,6 +228,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_RenderContext.isEditCam = m_IsEditCam;
 	m_Pipeline.Execute(frame);
 
+	ResolveImguiEditTargetIfNeeded();
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
 
 
@@ -600,6 +601,7 @@ void Renderer::CreateContext()
 	m_RenderContext.BState					= m_BState;
 
 	m_RenderContext.pRTScene_Imgui			= m_pRTScene_Imgui;
+	m_RenderContext.pRTScene_ImguiMSAA		= m_pRTScene_ImguiMSAA;
 	m_RenderContext.pTexRvScene_Imgui		= m_pTexRvScene_Imgui;
 	m_RenderContext.pRTView_Imgui			= m_pRTView_Imgui;
 
@@ -607,6 +609,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSViewScene_Imgui		= m_pDSViewScene_Imgui;
 
 	m_RenderContext.pRTScene_Imgui_edit		= m_pRTScene_Imgui_edit;
+	m_RenderContext.pRTScene_Imgui_editMSAA = m_pRTScene_Imgui_editMSAA;
 	m_RenderContext.pTexRvScene_Imgui_edit	= m_pTexRvScene_Imgui_edit;
 	m_RenderContext.pRTView_Imgui_edit		= m_pRTView_Imgui_edit;
 
@@ -621,6 +624,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSTex_Depth			= m_pDSTex_Depth;
 	m_RenderContext.pDSViewScene_Depth		= m_pDSViewScene_Depth;
 	m_RenderContext.pDepthRV				= m_pDepthRV;
+	m_RenderContext.pDSViewScene_DepthMSAA	= m_pDSViewScene_DepthMSAA;
 
 	m_RenderContext.pRTScene_Post			= m_pRTScene_Post;
 	m_RenderContext.pTexRvScene_Post		= m_pTexRvScene_Post;
@@ -643,6 +647,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pRTView_EmissiveOrigin		= m_pRTView_EmissiveOrigin;
 
 	m_RenderContext.pRTScene_Emissive			= m_pRTScene_Emissive;
+	m_RenderContext.pRTScene_EmissiveOriginMSAA = m_pRTScene_EmissiveOriginMSAA;
 	m_RenderContext.pTexRvScene_Emissive		= m_pTexRvScene_Emissive;
 	m_RenderContext.pRTView_Emissive			= m_pRTView_Emissive;
 
@@ -730,6 +735,17 @@ void Renderer::CreateContext()
 			RenderTextCenter(width, height);
 		};
 }
+
+void Renderer::ResolveImguiEditTargetIfNeeded()
+{
+	if (m_dwAA <= 1 || !m_pRTScene_Imgui_editMSAA || !m_pRTScene_Imgui_edit || !m_pDXDC)
+	{
+		return;
+	}
+
+	m_pDXDC->ResolveSubresource(m_pRTScene_Imgui_edit.Get(), 0, m_pRTScene_Imgui_editMSAA.Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+}
+
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
 	HRESULT hr = S_OK;
@@ -1098,6 +1114,37 @@ HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Te
 	return hr;
 }
 
+HRESULT Renderer::RTTexCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** ppTex)
+{
+	D3D11_TEXTURE2D_DESC td = {};
+	td.Width = width;
+	td.Height = height;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+	td.Format = fmt;
+	td.SampleDesc.Count = sampleCount;
+	td.SampleDesc.Quality = sampleQuality;
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_RENDER_TARGET;
+	td.CPUAccessFlags = 0;
+	td.MiscFlags = 0;
+
+	ID3D11Texture2D* pTex = NULL;
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, &pTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	if (ppTex)
+	{
+		*ppTex = pTex;
+	}
+
+	return hr;
+}
+
 HRESULT Renderer::RTTexCreateMipMap(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)
 {
 	//텍스처 정보 구성.
@@ -1334,6 +1381,51 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID
 	return hr;
 }
 
+HRESULT Renderer::DSCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView)
+{
+	if (!pDSTex || !pDSView)
+	{
+		return E_INVALIDARG;
+	}
+
+	D3D11_TEXTURE2D_DESC td = {};
+	td.Width = width;
+	td.Height = height;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+	td.Format = fmt;
+	td.SampleDesc.Count = sampleCount;
+	td.SampleDesc.Quality = sampleQuality;
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	td.MiscFlags = 0;
+
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, pDSTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
+	dd.Format = td.Format;
+	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;
+	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
+	{
+		dd.Texture2D.MipSlice = 0;
+	}
+
+	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	return hr;
+}
+
+
 HRESULT Renderer::RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)
 {
 	//텍스처 정보 구성.
@@ -1475,6 +1567,18 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 
 void Renderer::DXSetup(HWND hWnd, int width, int height)
 {
+	if (m_dwAA > 1)
+	{
+		UINT colorQuality = 0;
+		UINT depthQuality = 0;
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, m_dwAA, &colorQuality);
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, m_dwAA, &depthQuality);
+		if (colorQuality == 0 || depthQuality == 0)
+		{
+			m_dwAA = 1;
+		}
+	}
+
 	CreateDeviceSwapChain(hWnd);
 	CreateRenderTarget();
 	CreateDepthStencil(width, height);
@@ -1601,12 +1705,25 @@ HRESULT Renderer::ReCreateRenderTarget()
 	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_ImguiMSAA.GetAddressOf());
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_Imgui_editMSAA.GetAddressOf());
+	}
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
-	RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTViewCreate(fmt, m_pRTScene_ImguiMSAA.Get(), m_pRTView_Imgui.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_Imgui_editMSAA.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	}
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
@@ -1621,6 +1738,10 @@ HRESULT Renderer::ReCreateRenderTarget()
 #pragma region Depth
 	DSCreate(m_WindowSize.width, m_WindowSize.height, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf(), m_pDepthRV.GetAddressOf());
 
+	if (m_dwAA > 1)
+	{
+		DSCreateMSAA(m_WindowSize.width, m_WindowSize.height, DXGI_FORMAT_D32_FLOAT_S8X24_UINT, m_dwAA, 0, m_pDSTex_DepthMSAA.GetAddressOf(), m_pDSViewScene_DepthMSAA.GetAddressOf());
+	}
 #pragma endregion
 
 
@@ -1685,7 +1806,14 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_EmissiveOrigin.GetAddressOf());
 
-	RTViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTViewCreate(fmt, m_pRTScene_EmissiveOriginMSAA.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
+	}
 
 	RTSRViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pTexRvScene_EmissiveOrigin.GetAddressOf());
 
@@ -1717,6 +1845,18 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 void Renderer::RecreateForAASampleChange(int width, int height, DWORD sampleCount)
 {
+	if (sampleCount > 1)
+	{
+		UINT colorQuality = 0;
+		UINT depthQuality = 0;
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sampleCount, &colorQuality);
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, sampleCount, &depthQuality);
+		if (colorQuality == 0 || depthQuality == 0)
+		{
+			sampleCount = 1;
+		}
+	}
+
 	m_dwAA = sampleCount;
 
 	// 1. GPU 파이프라인 타겟 해제
@@ -2098,15 +2238,28 @@ HRESULT Renderer::ReleaseScreenSizeResource()
 	m_pDS.Reset();
 	m_pDSView.Reset();
 	m_pRTScene_Imgui.Reset();
+	m_pRTScene_ImguiMSAA.Reset();
 	m_pTexRvScene_Imgui.Reset();
 	m_pRTView_Imgui.Reset();
 	m_pDSTex_Imgui.Reset();
 	m_pDSViewScene_Imgui.Reset();
+	m_pRTScene_Imgui_edit.Reset();
+	m_pRTScene_Imgui_editMSAA.Reset();
+	m_pTexRvScene_Imgui_edit.Reset();
+	m_pRTView_Imgui_edit.Reset();
+	m_pDSTex_Imgui_edit.Reset();
+	m_pDSViewScene_Imgui_edit.Reset();
 	m_pDSTex_Depth.Reset();
 	m_pDSViewScene_Depth.Reset();
+	m_pDSTex_DepthMSAA.Reset();
+	m_pDSViewScene_DepthMSAA.Reset();
 	m_pRTScene_Post.Reset();
 	m_pTexRvScene_Post.Reset();
 	m_pRTView_Post.Reset();
+	m_pRTScene_EmissiveOrigin.Reset();
+	m_pRTScene_EmissiveOriginMSAA.Reset();
+	m_pTexRvScene_EmissiveOrigin.Reset();
+	m_pRTView_EmissiveOrigin.Reset();
 
 	return hr;
 }

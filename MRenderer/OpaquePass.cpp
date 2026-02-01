@@ -17,15 +17,17 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 #pragma endregion
 	FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+	ID3D11DepthStencilView* depthView = m_RenderContext.pDSViewScene_DepthMSAA
+		? m_RenderContext.pDSViewScene_DepthMSAA.Get()
+		: m_RenderContext.pDSViewScene_Depth.Get();
 	SetCameraCB(frame);
 	if (m_RenderContext.isEditCam)
 	{
-		SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), m_RenderContext.pDSViewScene_Depth.Get(), backcolor);
+		SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), depthView, backcolor);
 	}
 	else if (!m_RenderContext.isEditCam)
 	{
-		SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), m_RenderContext.pDSViewScene_Depth.Get(),backcolor);
-
+		SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), depthView, backcolor);
 	}
 
 	//임시 스카이박스 테스트

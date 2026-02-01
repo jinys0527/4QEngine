@@ -7,8 +7,10 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
     FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
-	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_EmissiveOrigin.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
-	m_RenderContext.pDXDC->ClearRenderTargetView(m_RenderContext.pRTView_EmissiveOrigin.Get(), backcolor);
+	ID3D11DepthStencilView* depthView = m_RenderContext.pDSViewScene_DepthMSAA
+		? m_RenderContext.pDSViewScene_DepthMSAA.Get()
+		: m_RenderContext.pDSViewScene_Depth.Get();
+	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_EmissiveOrigin.GetAddressOf(), depthView);
 
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ADD);
@@ -179,6 +181,16 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 	SetRasterizerState(RS::SOLID);
 	SetDepthStencilState(DS::DEPTH_OFF);
 	SetSamplerState();
+
+	if (m_RenderContext.pRTScene_EmissiveOriginMSAA && m_RenderContext.pRTScene_EmissiveOrigin)
+	{
+		dxdc->ResolveSubresource(
+			m_RenderContext.pRTScene_EmissiveOrigin.Get(),
+			0,
+			m_RenderContext.pRTScene_EmissiveOriginMSAA.Get(),
+			0,
+			DXGI_FORMAT_R8G8B8A8_UNORM);
+	}
 
 	dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_EmissiveOrigin.GetAddressOf());
 	dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);

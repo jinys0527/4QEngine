@@ -47,7 +47,7 @@ private:
 	HRESULT CreateBlendState();
 	HRESULT ReleaseScreenSizeResource();						//화면 크기 영향 받는 리소스 해제
 
-	DWORD m_dwAA = 1;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
+	DWORD m_dwAA = 4;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
 
 	ComPtr<ID3D11Device>				m_pDevice;
 	ComPtr<ID3D11DeviceContext>			m_pDXDC;
@@ -61,6 +61,7 @@ private:
 	//imgui용 == Scene Draw용
 	bool m_IsEditCam = false;
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_ImguiMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Imgui;
 
@@ -68,6 +69,7 @@ private:
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Imgui;
 
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui_edit;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui_editMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui_edit;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Imgui_edit;
 
@@ -84,6 +86,8 @@ private:
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	m_pDepthRV;
+	ComPtr<ID3D11Texture2D>				m_pDSTex_DepthMSAA;
+	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_DepthMSAA;
 
 	//PostPass용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Post;
@@ -107,6 +111,7 @@ private:
 
 	//Emissive용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_EmissiveOriginMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_EmissiveOrigin;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_EmissiveOrigin;
 
@@ -123,6 +128,7 @@ private:
 
 private:
 	void CreateContext();
+	void ResolveImguiEditTargetIfNeeded();		//msaa로 그린 씬 결과를 외부에서 쓰도록 변환하는 함수
 
 	//DXHelper
 	HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode);
@@ -135,11 +141,13 @@ private:
 	HRESULT CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB);
 	HRESULT CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
 	HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
+	HRESULT RTTexCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** ppTex);
 	HRESULT RTTexCreateMipMap(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
 	HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
 	HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);				//일반 DS용
 	HRESULT DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pTexRV);		//쉐이더리소스뷰 생성 DS
+	HRESULT DSCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);
 	HRESULT RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT CubeRTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView, UINT faceIndex);
 	HRESULT RTCubeSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);

@@ -174,7 +174,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 전체 emissive 세기
     emissive.rgb *= 1.5;
 
-    return finalBlur + emissive;
+    //return finalBlur + emissive;
     
     return RTView + emissive;
     
