@@ -23,6 +23,9 @@ namespace BlackboardKeys
 	inline constexpr const char* SelfPosX              = "SelfPosX";
 	inline constexpr const char* SelfPosY              = "SelfPosY";
 	inline constexpr const char* SelfPosZ              = "SelfPosZ";
+	inline constexpr const char* SelfQ				   = "SelfQ";
+	inline constexpr const char* SelfR				   = "SelfR";
+	inline constexpr const char* FacingDirection	   = "FacingDirection";
 	inline constexpr const char* SelfForwardX          = "SelfForwardX";
 	inline constexpr const char* SelfForwardY          = "SelfForwardY";
 	inline constexpr const char* SelfForwardZ          = "SelfForwardZ";
@@ -31,6 +34,8 @@ namespace BlackboardKeys
 	inline constexpr const char* TargetPosZ            = "TargetPosZ";
 	inline constexpr const char* SightDistance         = "SightDistance";
 	inline constexpr const char* SightAngle		       = "SightAngle";
+	inline constexpr const char* HasHexSightData       = "HasHexSightData";
+	inline constexpr const char* HasTargetHexLine      = "HasTargetHexLine";
 	inline constexpr const char* MeleeRange		       = "MeleeRange";
 	inline constexpr const char* ThrowRange		       = "ThrowRange";
 	inline constexpr const char* PlayerMaxDamage       = "PlayerMaxDamage";

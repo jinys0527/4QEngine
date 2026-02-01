@@ -8,6 +8,9 @@ class AIController;
 class BTExecutor;
 class TransformComponent;
 class MaterialComponent;
+class PlayerComponent;
+enum class ERotationOffset : int;
+class GridSystemComponent;
 
 class EnemyComponent : public Component, public IEventListener {
 	friend class Editor;
@@ -33,6 +36,8 @@ public:
 	bool ConsumeMoveRequest();
 	int GetActorId() const { return m_ActorId; }
 	void SetActorId(int value) { m_ActorId = value; }
+	void SetFacing(ERotationOffset value) { m_Facing = value; }
+	ERotationOffset GetFacing() const { return m_Facing; }
 
 private:
 	int m_Q;
@@ -44,5 +49,8 @@ private:
 	std::unique_ptr<BTExecutor>   m_BTExecutor;
 	std::unique_ptr<AIController> m_AIController;
 	TransformComponent* m_TargetTransform = nullptr;
+	PlayerComponent* m_TargetPlayer = nullptr;
+	GridSystemComponent* m_GridSystem = nullptr;
 	bool m_MoveRequested = false;
+	ERotationOffset m_Facing;
 };

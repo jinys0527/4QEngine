@@ -34,6 +34,9 @@ public:
 	void SetIsMoveable(const bool& is) { m_IsMoveable = is; };
 	const bool& GetIsMoveable() const { return m_IsMoveable; }
 
+	void SetIsSight(const bool& is) { m_IsSight = is; }
+	const bool& GetIsSight() const { return m_IsSight; }
+
 	void SetQR(int q, int r) { m_Q = q; m_R = r; }
 
 
@@ -56,6 +59,7 @@ public:
 private:
 
 	bool m_IsMoveable = true;	  //장애물 있으면 Editor에서 배치할때 false로 설정하기
+	bool m_IsSight = true; // 적 시야 판별 / false = 적 시야가 넘어가서 볼 수 없음 (벽 타일)
 	bool m_IsInMoveRange = false; // 이동가능 범위에 있는지
 	//Read Only Property
 	NodeState m_State = NodeState::Empty;

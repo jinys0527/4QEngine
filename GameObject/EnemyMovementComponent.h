@@ -6,7 +6,7 @@ class GridSystemComponent;
 class EnemyComponent;
 class TransformComponent;
 
-enum class ERotationOffset {
+enum class ERotationOffset : int {
 	clock_1,
 	clock_3,
 	clock_5,
@@ -35,7 +35,6 @@ public:
 	bool IsMoveComplete() const { return m_IsMoveComplete;  }
 
 private:
-
 	void SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir);
 
 	void GetSystem();
