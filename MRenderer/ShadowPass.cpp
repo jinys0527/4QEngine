@@ -7,7 +7,7 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
     FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
     SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Shadow.Get(), backcolor);
     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
-    SetBlendState(BS::DRAW_SHADOW);
+    SetBlendState(BS::DEFAULT);
     SetRasterizerState(RS::CULLBACK);
     SetDepthStencilState(DS::DEPTH_ON);
 

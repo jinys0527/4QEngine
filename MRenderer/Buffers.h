@@ -221,6 +221,7 @@ struct RenderContext
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_DepthMSAA;
+	ComPtr<ID3D11ShaderResourceView>    pDepthMSAARV;
 
 	//PostPass용
 	ComPtr<ID3D11Texture2D>				pRTScene_Post;

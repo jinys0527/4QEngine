@@ -227,6 +227,9 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
+
+	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
 	m_Pipeline.Execute(frame);
 
 	ResolveImguiEditTargetIfNeeded();
@@ -236,6 +239,8 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	//edit카메라로 draw
 	m_IsEditCam = true;
 	m_RenderContext.isEditCam = m_IsEditCam;
+
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
 	m_Pipeline.Execute(frame);
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
@@ -627,6 +632,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSViewScene_Depth		= m_pDSViewScene_Depth;
 	m_RenderContext.pDepthRV				= m_pDepthRV;
 	m_RenderContext.pDSViewScene_DepthMSAA	= m_pDSViewScene_DepthMSAA;
+	m_RenderContext.pDepthMSAARV			= m_pDepthMSAARV;
 
 	m_RenderContext.pRTScene_Post			= m_pRTScene_Post;
 	m_RenderContext.pTexRvScene_Post		= m_pTexRvScene_Post;
@@ -1383,48 +1389,48 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID
 	return hr;
 }
 
-HRESULT Renderer::DSCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView)
+HRESULT Renderer::DSCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality,
+	ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pSRV)
 {
-	if (!pDSTex || !pDSView)
-	{
-		return E_INVALIDARG;
-	}
+	if (!pDSTex || !pDSView || !pSRV) return E_INVALIDARG;
 
+	// 1) MSAA Depth Texture: Typeless + SRV bind
 	D3D11_TEXTURE2D_DESC td = {};
 	td.Width = width;
 	td.Height = height;
 	td.MipLevels = 1;
 	td.ArraySize = 1;
-	td.Format = fmt;
+
+	// ★ fmt 인자는 무시하고, SRV 가능한 typeless로 강제 (Stencil 없이 depth만)
+	td.Format = DXGI_FORMAT_R32_TYPELESS;
+
 	td.SampleDesc.Count = sampleCount;
 	td.SampleDesc.Quality = sampleQuality;
 	td.Usage = D3D11_USAGE_DEFAULT;
-	td.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	td.MiscFlags = 0;
 
-	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, pDSTex);
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
+	// ★ SRV까지 필요
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, nullptr, pDSTex);
+	if (FAILED(hr)) { ERROR_MSG_HR(hr); return hr; }
+
+	// 2) DSV: D32_FLOAT (MSAA)
 	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
-	dd.Format = td.Format;
-	dd.ViewDimension = (td.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;
-	if (dd.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D)
-	{
-		dd.Texture2D.MipSlice = 0;
-	}
+	dd.Format = DXGI_FORMAT_D32_FLOAT;
+	dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 
 	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
+	if (FAILED(hr)) { ERROR_MSG_HR(hr); return hr; }
 
-	return hr;
+	// 3) SRV: R32_FLOAT (MSAA)
+	D3D11_SHADER_RESOURCE_VIEW_DESC sd = {};
+	sd.Format = DXGI_FORMAT_R32_FLOAT;
+	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+
+	hr = m_pDevice->CreateShaderResourceView(*pDSTex, &sd, pSRV);
+	if (FAILED(hr)) { ERROR_MSG_HR(hr); return hr; }
+
+	return S_OK;
 }
 
 
@@ -1744,7 +1750,12 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 	if (m_dwAA > 1)
 	{
-		DSCreateMSAA(m_WindowSize.width, m_WindowSize.height, DXGI_FORMAT_D32_FLOAT_S8X24_UINT, m_dwAA, 0, m_pDSTex_DepthMSAA.GetAddressOf(), m_pDSViewScene_DepthMSAA.GetAddressOf());
+		DSCreateMSAA(m_WindowSize.width, m_WindowSize.height,
+			DXGI_FORMAT_D32_FLOAT,   // 의미 없어도 맞춰두기
+			m_dwAA, 0,
+			m_pDSTex_DepthMSAA.GetAddressOf(),
+			m_pDSViewScene_DepthMSAA.GetAddressOf(),
+			m_pDepthMSAARV.GetAddressOf());
 	}
 #pragma endregion
 
@@ -2231,23 +2242,6 @@ HRESULT Renderer::CreateBlendState()
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
-
-	rtb = {};
-	rtb.BlendEnable = FALSE; 
-	rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	bd = {};
-	bd.RenderTarget[0] = rtb;
-	bd.AlphaToCoverageEnable = TRUE;   
-	bd.IndependentBlendEnable = FALSE;
-
-	hr = m_pDevice->CreateBlendState(&bd, m_BState[BS::DRAW_SHADOW].GetAddressOf());
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
-
 
 	return hr;
 }

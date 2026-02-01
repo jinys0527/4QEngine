@@ -11,6 +11,8 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 		? m_RenderContext.pDSViewScene_DepthMSAA.Get()
 		: m_RenderContext.pDSViewScene_Depth.Get();
 	m_RenderContext.pDXDC->OMSetRenderTargets(1, m_RenderContext.pRTView_EmissiveOrigin.GetAddressOf(), depthView);
+	m_RenderContext.pDXDC->ClearRenderTargetView(m_RenderContext.pRTView_EmissiveOrigin.Get(), backcolor);
+
 
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ADD);
