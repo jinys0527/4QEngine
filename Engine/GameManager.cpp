@@ -438,6 +438,7 @@ void GameManager::OnPhaseEnter(Phase phase)
 	case Phase::CombatInit:
 		SetFloodSystemActive(false);
 		SetCombatTurnState(CombatTurnState::SelectActor);
+		DispatchPlayerFSMEvent("CombatInitComplete");
 		break;
 	case Phase::TurnBasedCombat:
 		SetFloodSystemActive(false);

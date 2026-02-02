@@ -22,6 +22,8 @@ public:
 	void OnKeyDown         (char key);
 	void OnKeyUp           (char key);
 	bool IsKeyPressed      (char key) const;
+	bool IsLeftPressed() const { return m_Mouse.leftPressed; }
+	bool IsRightPressed() const { return m_Mouse.rightPressed; }
 	bool OnHandleMessage   (const MSG& msg);
 	void HandleMsgMouse    (const MSG& msg);
 						   

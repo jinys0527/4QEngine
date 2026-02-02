@@ -266,7 +266,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			m_CombatConfirmRequested = true;
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				combatFsm->DispatchEvent("Combat_Attack");
+				combatFsm->DispatchEvent("Combat_CheckRange");
 			}
 			return;
 		}
