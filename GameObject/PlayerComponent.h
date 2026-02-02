@@ -53,7 +53,6 @@ public:
 	void BeginMove();
 	bool CommitMove(int targetQ, int targetR);
 	bool ConsumeActResource(int amount);
-	int CalculateDamage();
 
 	bool ConsumeCombatConfirmRequest();
 	bool ConsumePushPossible();

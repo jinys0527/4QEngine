@@ -145,8 +145,6 @@ void PlayerComponent::Update(float deltaTime) {
 			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
 			playerstatcomponent->SetRange(irange);
 
-			int dmg = CalculateDamage();
-
 			m_IsApplyMeeleStat = true;
 		}
 
@@ -282,27 +280,6 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	}
 	m_RemainActResource -= amount;
 	return true;
-}
-
-int PlayerComponent::CalculateDamage()
-{
-	auto* item = m_MeeleItem->GetComponent<ItemComponent>();
-	if (!item) return 0;
-
-	srand(static_cast<unsigned>(time(nullptr)));
-
-	int roll = item->GetMaxDiceRoll();
-	int value = item->GetMaxDiceValue();
-	int bonus = item->GetBonusValue();
-
-	int dmg = 0;
-	for (int i = 0; i < roll; i++)
-	{
-		dmg += rand() % value + 1;
-	}
-	dmg += bonus;
-
-	return bonus;
 }
 
 bool PlayerComponent::ConsumeCombatConfirmRequest()

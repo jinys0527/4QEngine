@@ -169,6 +169,9 @@
     <ClCompile Include="ItemComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ItemSpawnerComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -352,6 +355,10 @@
     <ClInclude Include="ItemComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ItemSpawnerComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">
@@ -402,5 +409,8 @@
     <Filter Include="Components\Utils\Source Files">
       <UniqueIdentifier>{c7443698-6f50-4d0f-9468-826b8502fc60}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GameObject.rc" />
   </ItemGroup>
 </Project>

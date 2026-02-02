@@ -9,8 +9,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float texRoughr = g_Roughness.Sample(smpWrap, input.uv).r;
     float texAOr = g_AO.Sample(smpWrap, input.uv).r;
     
-    
-    
+   
     //감마
 
     float alpha = texAlbedo.a * matColor.a;

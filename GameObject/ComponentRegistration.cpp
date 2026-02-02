@@ -27,6 +27,8 @@
 #include "StatComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyStatComponent.h"
+#include "ItemComponent.h"
+#include "ItemSpawnerComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
@@ -81,6 +83,7 @@ extern "C" {
 	void Link_PlayerInventoryFSMComponent();
 	void Link_PlayerDoorFSMComponent();
 	void Link_ItemComponent();
+	void Link_ItemSpawnerComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -140,4 +143,6 @@ void LinkEngineComponents() {
 	Link_PlayerInventoryFSMComponent();
 	Link_PlayerDoorFSMComponent();
 	Link_ItemComponent();
+	Link_ItemSpawnerComponent();
+
 }
