@@ -4,9 +4,35 @@
 #include "MaterialComponent.h"
 #include "Object.h"
 #include "Event.h"
+#include <algorithm>
+
+namespace
+{
+	bool AreMaterialOverridesEqual(const RenderData::MaterialData& lhs, const RenderData::MaterialData& rhs)
+	{
+		if (lhs.baseColor.x != rhs.baseColor.x || lhs.baseColor.y != rhs.baseColor.y
+			|| lhs.baseColor.z != rhs.baseColor.z || lhs.baseColor.w != rhs.baseColor.w)
+		{
+			return false;
+		}
+		if (lhs.metallic != rhs.metallic || lhs.roughness != rhs.roughness
+			|| lhs.saturation != rhs.saturation || lhs.lightness != rhs.lightness)
+		{
+			return false;
+		}
+		if (lhs.shaderAsset != rhs.shaderAsset
+			|| lhs.vertexShader != rhs.vertexShader
+			|| lhs.pixelShader != rhs.pixelShader)
+		{
+			return false;
+		}
+		return lhs.textures == rhs.textures;
+	}
+}
 
 REGISTER_COMPONENT(NodeComponent)
 REGISTER_PROPERTY(NodeComponent, IsMoveable)
+REGISTER_PROPERTY(NodeComponent, IsSight)
 REGISTER_PROPERTY_READONLY(NodeComponent, StateInt)
 REGISTER_PROPERTY_READONLY(NodeComponent, Q)
 REGISTER_PROPERTY_READONLY(NodeComponent, R)
@@ -76,6 +102,29 @@ void NodeComponent::AddNeighbor(NodeComponent* node)
 // 강조 표시
 void NodeComponent::SetMoveRangeHighlight(float intensity, bool enabled)
 {
+	m_UsingMoveRangeHighlight = enabled;
+	m_MoveHighlightIntensity = intensity;
+	ApplyHighlight();
+}
+
+void NodeComponent::SetSightHighlight(float intensity, bool enabled)
+{
+	m_UsingSightHighlight = enabled;
+	m_SightHighlightIntensity = intensity;
+	ApplyHighlight();
+}
+
+void NodeComponent::ClearHighlights()
+{
+	m_UsingMoveRangeHighlight = false;
+	m_MoveHighlightIntensity = 0.0f;
+	m_UsingSightHighlight = false;
+	m_SightHighlightIntensity = 0.0f;
+	ApplyHighlight();
+}
+
+void NodeComponent::ApplyHighlight()
+{
 	if (!m_Material)
 	{
 		return;
@@ -87,26 +136,46 @@ void NodeComponent::SetMoveRangeHighlight(float intensity, bool enabled)
 		m_HasBaseMaterial = true;
 	}
 
-	if (!enabled)
+	if (!m_UsingMoveRangeHighlight && !m_UsingSightHighlight)
 	{
-		if (m_UsingMoveRangeHighlight)
-		{
-			m_Material->SetOverrides(m_BaseMaterialOverrides);
-			m_UsingMoveRangeHighlight = false;
-		}
+		m_Material->SetOverrides(m_BaseMaterialOverrides);
+	/*	m_LastAppliedOverrides = m_BaseMaterialOverrides;
+		m_HasLastAppliedOverrides = true;*/
 		return;
 	}
-
-	const float clampedIntensity = std::clamp(intensity, 0.0f, 1.0f);
+	/*const auto& currentOverrides = m_Material->GetOverrides();
+	if (m_HasLastAppliedOverrides && !AreMaterialOverridesEqual(currentOverrides, m_LastAppliedOverrides))
+	{
+		m_BaseMaterialOverrides = currentOverrides;
+		m_HasBaseMaterial = true;
+	}*/
+	const float moveIntensity = m_UsingMoveRangeHighlight ? std::clamp(m_MoveHighlightIntensity, 0.0f, 1.0f) : 0.0f;
+	const float sightIntensity = m_UsingSightHighlight ? std::clamp(m_SightHighlightIntensity, 0.0f, 1.0f) : 0.0f;
+	const float total = moveIntensity + sightIntensity;
+	const float combinedIntensity = std::clamp(total, 0.0f, 1.0f);
 	RenderData::MaterialData overrides = m_BaseMaterialOverrides;
 	const auto& baseColor = m_BaseMaterialOverrides.baseColor;
-	const DirectX::XMFLOAT4 highlightColor{ 0.2f, 1.0f, 0.2f, baseColor.w };
+	const DirectX::XMFLOAT4 moveColor{ 0.2f, 1.0f, 0.2f, baseColor.w };
+	const DirectX::XMFLOAT4 sightColor{ 1.0f, 0.2f, 0.2f, baseColor.w };
 
-	overrides.baseColor.x = baseColor.x + (highlightColor.x - baseColor.x) * clampedIntensity;
-	overrides.baseColor.y = baseColor.y + (highlightColor.y - baseColor.y) * clampedIntensity;
-	overrides.baseColor.z = baseColor.z + (highlightColor.z - baseColor.z) * clampedIntensity;
+	DirectX::XMFLOAT4 blendedColor = moveColor;
+	if (total > 0.0f)
+	{
+		const float moveWeight = moveIntensity / total;
+		const float sightWeight = sightIntensity / total;
+		blendedColor.x = moveColor.x * moveWeight + sightColor.x * sightWeight;
+		blendedColor.y = moveColor.y * moveWeight + sightColor.y * sightWeight;
+		blendedColor.z = moveColor.z * moveWeight + sightColor.z * sightWeight;
+		blendedColor.w = baseColor.w;
+	}
+
+	overrides.baseColor.x = baseColor.x + (blendedColor.x - baseColor.x) * combinedIntensity;
+	overrides.baseColor.y = baseColor.y + (blendedColor.y - baseColor.y) * combinedIntensity;
+	overrides.baseColor.z = baseColor.z + (blendedColor.z - baseColor.z) * combinedIntensity;
 	overrides.baseColor.w = baseColor.w;
 
 	m_Material->SetOverrides(overrides);
-	m_UsingMoveRangeHighlight = true;
+	/*m_LastAppliedOverrides = overrides;
+	m_HasLastAppliedOverrides = true;*/
+	//m_UsingMoveRangeHighlight = true;
 }

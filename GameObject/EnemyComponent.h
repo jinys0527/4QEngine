@@ -3,11 +3,16 @@
 #include "GameState.h"
 
 #include <memory>
+#include <vector>
 
 class AIController;
 class BTExecutor;
 class TransformComponent;
 class MaterialComponent;
+class PlayerComponent;
+enum class ERotationOffset : int;
+class GridSystemComponent;
+class NodeComponent;
 
 class EnemyComponent : public Component, public IEventListener {
 	friend class Editor;
@@ -33,8 +38,18 @@ public:
 	bool ConsumeMoveRequest();
 	int GetActorId() const { return m_ActorId; }
 	void SetActorId(int value) { m_ActorId = value; }
+	void SetFacing(ERotationOffset value) { m_Facing = value; }
+	ERotationOffset GetFacing() const { return m_Facing; }
+
+	void SetDebugSightLines(const bool& value) { m_DebugSightLines = value; }
+	const bool& GetDebugSightLines() const { return m_DebugSightLines; }
+
 
 private:
+
+	void ClearSightDebug();
+	void UpdateSightDebugLines(int sightRange);
+
 	int m_Q;
 	int m_R;
 	int m_MoveDistance = 1;
@@ -44,5 +59,10 @@ private:
 	std::unique_ptr<BTExecutor>   m_BTExecutor;
 	std::unique_ptr<AIController> m_AIController;
 	TransformComponent* m_TargetTransform = nullptr;
+	PlayerComponent* m_TargetPlayer = nullptr;
+	GridSystemComponent* m_GridSystem = nullptr;
 	bool m_MoveRequested = false;
+	ERotationOffset m_Facing;
+	bool m_DebugSightLines = false;
+	std::vector<NodeComponent*> m_SightDebugNodes;
 };
