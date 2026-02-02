@@ -81,6 +81,7 @@ extern "C" {
 	void Link_PlayerInventoryFSMComponent();
 	void Link_PlayerDoorFSMComponent();
 	void Link_ItemComponent();
+	void Link_CameraLogicComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -140,4 +141,5 @@ void LinkEngineComponents() {
 	Link_PlayerInventoryFSMComponent();
 	Link_PlayerDoorFSMComponent();
 	Link_ItemComponent();
+	Link_CameraLogicComponent();
 }

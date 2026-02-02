@@ -169,6 +169,9 @@
     <ClCompile Include="ItemComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CameraLogicComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -350,6 +353,9 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ItemComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraLogicComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

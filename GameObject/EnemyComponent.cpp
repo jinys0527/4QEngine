@@ -315,7 +315,7 @@ void EnemyComponent::Update(float deltaTime) {
 			m_R,
 			static_cast<int>(m_Facing),
 			sightRange);
-		bb.Set(BlackboardKeys::HasTargetHexLine, targetVisible);
+		bb.Set(BlackboardKeys::HasTargetHexLine, targetVisible); // player 발견 -> 전투 연결
 	}
 	else if (m_DebugSightLines)
 	{
