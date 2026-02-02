@@ -274,6 +274,16 @@ NodeComponent* GridSystemComponent::GetNodeByKey(const AxialKey& key) const
 	return it->second;
 }
 
+EnemyComponent* GridSystemComponent::GetEnemyAt(int q, int r) const
+{
+	for (auto* enemy : m_Enemies)
+	{
+		if (enemy && enemy->GetQ() == q && enemy->GetR() == r)
+			return enemy;
+	}
+	return nullptr;
+}
+
 // 최초 위치에서 이동가능한 범위 표시
 void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 {

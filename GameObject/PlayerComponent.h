@@ -6,6 +6,7 @@
 #include "GameObject.h"
 
 class GridSystemComponent;
+class EnemyComponent;
 
 // PlayerComponent 는 Player와 관련된 Data와 중요 로직
 // Player의 다른 Component의 중추적인 역할
@@ -50,6 +51,10 @@ public:
 	bool CommitMove(int targetQ, int targetR);
 	bool ConsumeActResource(int amount);
 
+	void RequestCombatConfirm();
+	bool HandleCombatClick(EnemyComponent* enemy);
+	void ClearCombatSelection();
+	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;
 	bool ConsumeCombatConfirmRequest();
 	bool ConsumePushPossible();
 	bool ConsumePushTargetFound();
@@ -105,6 +110,7 @@ private:
 	Turn m_CurrentTurn = Turn::PlayerTurn;
 	bool m_TurnEndRequested = false;
 	bool m_CombatConfirmRequested = false;
+	EnemyComponent* m_SelectedEnemy = nullptr;
 	bool m_PushPossible = true;
 	bool m_PushTargetFound = true;
 	bool m_PushSuccess = true;

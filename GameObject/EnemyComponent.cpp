@@ -10,12 +10,15 @@
 #include "EnemyStatComponent.h"
 #include "GameObject.h"
 #include "PlayerComponent.h"
+#include "PlayerStatComponent.h"
 #include "GameManager.h"
 #include "Scene.h"
 #include "EnemyMovementComponent.h"
 #include "GridSystemComponent.h"
 #include "NodeComponent.h"
 #include "PlayerCombatFSMComponent.h"
+#include "ServiceRegistry.h"
+#include "CombatManager.h"
 #include <array>
 #include <cmath>
 #include <algorithm>
@@ -254,6 +257,60 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto* scene = owner->GetScene();
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+	auto& bb = m_AIController->GetBlackboard();
+	bb.Set(BlackboardKeys::IsInCombat, gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat);
+
+	bool isAlive = true;
+	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
+	{
+		isAlive = !stat->IsDead();
+	}
+	bb.Set(BlackboardKeys::IsAlive, isAlive);
+	if (!isAlive)
+	{
+		if (!m_DeathReported && gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
+		{
+			m_DeathReported = true;
+			if (scene && scene->GetServices().Has<CombatManager>())
+			{
+				bool playerAlive = true;
+				if (m_TargetPlayer)
+				{
+					if (auto* playerOwner = m_TargetPlayer->GetOwner())
+					{
+						if (auto* playerStat = playerOwner->GetComponent<PlayerStatComponent>())
+						{
+							playerAlive = !playerStat->IsDead();
+						}
+					}
+				}
+
+				bool enemiesRemaining = false;
+				if (m_GridSystem)
+				{
+					for (auto* enemy : m_GridSystem->GetEnemies())
+					{
+						if (!enemy)
+						{
+							continue;
+						}
+						auto* enemyOwner = enemy->GetOwner();
+						auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+						if (enemyStat && !enemyStat->IsDead())
+						{
+							enemiesRemaining = true;
+							break;
+						}
+					}
+				}
+
+				scene->GetServices().Get<CombatManager>().UpdateBattleOutcome(playerAlive, enemiesRemaining);
+			}
+		}
+		return;
+	}
+
 	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat
 		&& gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 	{
@@ -282,8 +339,6 @@ void EnemyComponent::Update(float deltaTime) {
 			return;
 		}
 	}
-
-	auto& bb = m_AIController->GetBlackboard();
 	
 	bb.Set(BlackboardKeys::SelfQ, m_Q);
 	bb.Set(BlackboardKeys::SelfR, m_R);

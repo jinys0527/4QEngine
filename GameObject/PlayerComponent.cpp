@@ -20,6 +20,7 @@
 #include <cmath>
 #include "GameManager.h"
 #include "PlayerCombatFSMComponent.h"
+#include "PlayerFSMComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -39,6 +40,25 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 	const int dr = r1 - r2;
 	const int ds = dq + dr;
 	return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
+}
+
+namespace
+{
+	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+
+	void DispatchCombatEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerCombatFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
 }
 
 static NodeComponent* FindClosestNodeHit(Scene* scene, const Ray& ray, float& outT)
@@ -263,12 +283,13 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
-			m_CombatConfirmRequested = true;
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				combatFsm->DispatchEvent("Combat_CheckRange");
+				if (combatFsm->TryExecutePlayerAttackFromInput())
+				{
+					return;
+				}
 			}
-			return;
 		}
 
 		if (!gameManager || !gameManager->IsExplorationInputAllowed())
@@ -355,6 +376,7 @@ void PlayerComponent::ResetTurnResources()
 	m_RemainActResource = m_ActResource;
 	m_HasMoveStart = false;
 	m_CombatConfirmRequested = false;
+	m_SelectedEnemy = nullptr;
 	ResetSubFSMFlags();
 }
 
@@ -415,6 +437,67 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	m_RemainActResource -= amount;
 	return true;
 }
+
+void PlayerComponent::RequestCombatConfirm()
+{
+	m_CombatConfirmRequested = true;
+}
+
+bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
+{
+	if (!enemy)
+	{
+		ClearCombatSelection();
+		return false;
+	}
+
+	if (m_CurrentTurn != Turn::PlayerTurn)
+	{
+		return false;
+	}
+
+	const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+	if (distance > 1)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return false;
+	}
+
+	if (m_SelectedEnemy == enemy)
+	{
+		RequestCombatConfirm();
+		DispatchCombatEvent(owner, "Combat_Confirm");
+		m_SelectedEnemy = nullptr;
+		return true;
+	}
+
+	m_SelectedEnemy = enemy;
+	DispatchPlayerStateEvent(owner, "Combat_Start");
+	return true;
+}
+
+void PlayerComponent::ClearCombatSelection()
+{
+	m_SelectedEnemy = nullptr;
+}
+
+EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
+{
+	if (!obj) return nullptr;
+	if (auto* enemy = obj->GetComponent<EnemyComponent>()) return enemy;
+	if (auto* node = obj->GetComponent<NodeComponent>())
+	{
+		if (m_GridSystem)
+			return m_GridSystem->GetEnemyAt(node->GetQ(), node->GetR());
+	}
+	return nullptr;
+}
+
 
 bool PlayerComponent::ConsumeCombatConfirmRequest()
 {

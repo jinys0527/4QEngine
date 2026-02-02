@@ -64,5 +64,6 @@ private:
 	bool m_MoveRequested = false;
 	ERotationOffset m_Facing;
 	bool m_DebugSightLines = false;
+	bool m_DeathReported = false;
 	std::vector<NodeComponent*> m_SightDebugNodes;
 };

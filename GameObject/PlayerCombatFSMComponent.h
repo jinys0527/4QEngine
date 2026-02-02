@@ -18,12 +18,14 @@ public:
 
 	void SetCombatManager(CombatManager* manager) { m_CombatManager = manager; }
 	bool RequestCombatEnter(int initiatorId, int targetId);
+	bool TryExecutePlayerAttackFromInput();
 
 protected:
 	std::optional<std::string> TranslateEvent(EventType type, const void* data) override;
 
 private:
 	bool EnsureCombatManager();
+	bool ExecutePlayerAttack();
 	void BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants) const;
 	bool HasEnemyInAttackRange() const;
 	int  GetPlayerActorId() const;
