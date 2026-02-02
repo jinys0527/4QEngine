@@ -30,68 +30,33 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	(void)inst;
 	(void)deltaTime;
 
-	//Float3 기반 위치 안씀, 거리도 안씀, angle도 안씀 
-	// 오로지 QR 좌표 기준
-	float selfX			= 0.0f;
-	float selfY         = 0.0f;
-	float selfZ			= 0.0f;
-	float targetX		= 0.0f;
-	float targetY		= 0.0f;
-	float targetZ		= 0.0f;
-	float sightDistance = 0.0f;
-	float sightAngle    = 0.0f;
-	float forwardX		= 0.0f;
-	float forwardY		= 0.0f;
-	float forwardZ		= 1.0f;
-	
-	//////////////////////////////////////
-	int	  selfQ			   = 0;
-	int   selfR			   = 0;
-	int   facingDirection  = 0;
-	bool  hasHexSightData  = false;
-	bool  hasTargetHexLine = false;
+	int selfQ = 0;
+	int selfR = 0;
+	int targetQ = 0;
+	int targetR = 0;
+	bool hasHexSightData = false;
+	bool hasTargetHexLine = false;
 
+	const bool hasHexData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
+		&& TryGetInt(bb, BlackboardKeys::SelfR, selfR)
+		&& TryGetInt(bb, BlackboardKeys::TargetQ, targetQ)
+		&& TryGetInt(bb, BlackboardKeys::TargetR, targetR);
 
-	if (!TryGetFloat(bb, BlackboardKeys::SelfPosX, selfX)
-		|| !TryGetFloat(bb, BlackboardKeys::SelfPosY, selfY)
-		|| !TryGetFloat(bb, BlackboardKeys::SelfPosZ, selfZ)
-		|| !TryGetFloat(bb, BlackboardKeys::TargetPosX, targetX)
-		|| !TryGetFloat(bb, BlackboardKeys::TargetPosY, targetY)
-		|| !TryGetFloat(bb, BlackboardKeys::TargetPosZ, targetZ)
-		|| !TryGetFloat(bb, BlackboardKeys::SightDistance, sightDistance)
-		|| !TryGetFloat(bb, BlackboardKeys::SightAngle, sightAngle))
+	if (!hasHexData)
 	{
 		bb.Set(BlackboardKeys::HasTarget, false);
 		return;
 	}
 
-	bb.TryGet(BlackboardKeys::SelfForwardX, forwardX);
-	bb.TryGet(BlackboardKeys::SelfForwardY, forwardY);
-	bb.TryGet(BlackboardKeys::SelfForwardZ, forwardZ);
-
-	const float dx = targetX - selfX;
-	const float dy = targetY - selfY;
-	const float dz = targetZ - selfZ;
-	const float distanceSq = dx * dx + dy * dy + dz * dz;
-	const float distance = std::sqrt(distanceSq);
-
-	float dot = 0.0f;
-	const float forwardLen = std::sqrt(forwardX * forwardX + forwardY * forwardY + forwardZ * forwardZ);
-	if (forwardLen > 0.0f && distance > 0.0f)
-	{
-		dot = (dx * forwardX + dy * forwardY + dz * forwardZ) / (distance * forwardLen);
-	}
-	const float clamped = Clamp(dot, -1.0f, 1.0f);
-	const float angle = std::acos(clamped) * 180.0f / 3.1415926535f;
+	const int dq = selfQ - targetQ;
+	const int dr = selfR - targetR;
+	const int ds = dq + dr;
+	const float distance = 0.5f * static_cast<float>(std::abs(dq) + std::abs(dr) + std::abs(ds));
 
 	bb.Set(BlackboardKeys::TargetDistance, distance);
-	bb.Set(BlackboardKeys::TargetAngle, angle);
-	//bb.Set(BlackboardKeys::HasTarget, distance <= sightDistance && angle <= sightAngle * 0.5f);
-	const bool hasHexData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
-		&& TryGetInt(bb, BlackboardKeys::SelfR, selfR)
-		&& TryGetInt(bb, BlackboardKeys::FacingDirection, facingDirection);
-	const bool useHexSight = hasHexData
-		&& bb.TryGet(BlackboardKeys::HasHexSightData, hasHexSightData)
+	bb.Set(BlackboardKeys::TargetAngle, 0.0f);
+
+	const bool useHexSight = bb.TryGet(BlackboardKeys::HasHexSightData, hasHexSightData)
 		&& hasHexSightData
 		&& bb.TryGet(BlackboardKeys::HasTargetHexLine, hasTargetHexLine);
 	bb.Set(BlackboardKeys::HasTarget, useHexSight && hasTargetHexLine);

@@ -2,13 +2,24 @@
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "GameObject.h"
+#include "CameraObject.h"
 #include "Scene.h"
 #include "GridSystemComponent.h"
+#include "ServiceRegistry.h"
 #include "ItemComponent.h"
+#include "EnemyComponent.h"
+#include "Event.h"
+#include "InputManager.h"
+#include "RayHelper.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
+#include "BoxColliderComponent.h"
+#include "NodeComponent.h"
+#include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include "GameManager.h"
+#include "PlayerCombatFSMComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -29,6 +40,105 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 	const int ds = dq + dr;
 	return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
 }
+
+static NodeComponent* FindClosestNodeHit(Scene* scene, const Ray& ray, float& outT)
+{
+	if (!scene)
+	{
+		return nullptr;
+	}
+
+	float closestT = FLT_MAX;
+	NodeComponent* closestNode = nullptr;
+
+	for (const auto& [name, object] : scene->GetGameObjects())
+	{
+		if (!object)
+		{
+			continue;
+		}
+
+		auto* node = object->GetComponent<NodeComponent>();
+		if (!node)
+		{
+			continue;
+		}
+
+		auto* collider = object->GetComponent<BoxColliderComponent>();
+		if (!collider || !collider->HasBounds())
+		{
+			continue;
+		}
+
+		float hitT = 0.0f;
+		if (!collider->IntersectsRay(ray.m_Pos, ray.m_Dir, hitT))
+		{
+			continue;
+		}
+
+		if (hitT >= 0.0f && hitT < closestT)
+		{
+			closestT = hitT;
+			closestNode = node;
+		}
+	}
+
+	if (!closestNode)
+	{
+		return nullptr;
+	}
+
+	outT = closestT;
+	return closestNode;
+}
+
+static EnemyComponent* FindEnemyInRange(GridSystemComponent* grid, int playerQ, int playerR, int range)
+{
+	if (!grid || range < 0)
+	{
+		return nullptr;
+	}
+
+	for (auto* enemy : grid->GetEnemies())
+	{
+		if (!enemy || enemy->GetActorId() == 0)
+		{
+			continue;
+		}
+
+		const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
+		if (distance <= range)
+		{
+			return enemy;
+		}
+	}
+
+	return nullptr;
+}
+
+static EnemyComponent* FindEnemyAt(GridSystemComponent* grid, int q, int r)
+{
+	if (!grid)
+	{
+		return nullptr;
+	}
+
+	for (auto* enemy : grid->GetEnemies())
+	{
+		if (!enemy)
+		{
+			continue;
+		}
+
+		if (enemy->GetQ() == q && enemy->GetR() == r)
+		{
+			return enemy;
+		}
+	}
+
+	return nullptr;
+}
+
 
 
 PlayerComponent::PlayerComponent() {
@@ -141,13 +251,81 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 {
 	if (type == EventType::MouseLeftDoubleClick)
 	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-		if (!gameManager || gameManager->IsCombatInputAllowed())
+
+		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
 			m_CombatConfirmRequested = true;
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				combatFsm->DispatchEvent("Combat_Attack");
+			}
+			return;
 		}
+
+		if (!gameManager || !gameManager->IsExplorationInputAllowed())
+		{
+			return;
+		}
+
+		if (!scene || !scene->GetServices().Has<InputManager>())
+		{
+			return;
+		}
+
+		auto& input = scene->GetServices().Get<InputManager>();
+		if (!input.IsPointInViewport(mouseData->pos))
+		{
+			return;
+		}
+
+		auto camera = scene->GetGameCamera();
+		if (!camera)
+		{
+			return;
+		}
+
+		Ray pickRay{};
+		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+		{
+			return;
+		}
+
+		float hitT = 0.0f;
+		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+		if (!clickedNode)
+		{
+			return;
+		}
+
+		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+		if (!enemy)
+		{
+			return;
+		}
+
+		const int range = max(0, m_AttackRange);
+		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+		if (distance > range)
+		{
+			return;
+		}
+
+		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+		{
+			m_CombatConfirmRequested = true;
+			combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
+		}
+
+
 		return;
 	}
 

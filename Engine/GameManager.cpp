@@ -21,10 +21,13 @@
 #include "RandomMachine.h"
 #include "DiceSystem.h"
 #include "ShopRoller.h"
+#include "CombatResolver.h"
+#include "EnemyStatComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
 #include <chrono>
 #include <charconv>
+#include "EnemyComponent.h"
 #include <system_error>
 
 GameManager::GameManager() :
@@ -105,6 +108,20 @@ void GameManager::Update(float deltaTime)
 		}
 	}
 
+	if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::PlayerTurn)
+	{
+		m_CombatTurnElapsed += deltaTime;
+		if (m_CombatTurnElapsed >= m_CombatTurnLimit)
+		{
+			if (m_EventDispatcher)
+			{
+				m_EventDispatcher->Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+			}
+			m_CombatTurnElapsed = 0.0f;
+		}
+	}
+
+
 	if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::Resolve)
 	{
 		auto* combatManager = GetCombatManager();
@@ -142,18 +159,22 @@ void GameManager::OnEvent(EventType type, const void* data)
 	case EventType::AITurnEndRequested:
 		if (m_Phase == Phase::TurnBasedCombat && m_Turn == Turn::EnemyTurn)
 		{
+			std::cout << "AITurnEndRequested\n";
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
 	case EventType::CombatEnter:
+		std::cout << "CombatEnter\n";
 		m_BattleCheck = Battle::InBattle;
 		SetPhase(Phase::CombatTrigger);
 		break;
 	case EventType::CombatExit:
+		std::cout << "AITurnCombatExitEndRequested\n";
 		m_BattleCheck = Battle::NonBattle;
 		SetPhase(Phase::CombatEnd);
 		break;
 	case EventType::CombatTurnAdvanced:
+		std::cout << "CombatTurnAdvanced\n";
 		if (m_BattleCheck == Battle::InBattle)
 		{
 			const auto* payload = static_cast<const CombatTurnAdvancedEvent*>(data);
@@ -169,6 +190,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::PlayerTurnEndRequested:
+		std::cout << "PlayerTurnEndRequested\n";
 		if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
 		{
 			SetExplorationTurnState(ExplorationTurnState::EnemyStep);
@@ -180,6 +202,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::EnemyTurnEndRequested:
+		std::cout << "EnemyTurnEndRequested\n";
 		if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::EnemyStep)
 		{
 			SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
@@ -192,12 +215,15 @@ void GameManager::OnEvent(EventType type, const void* data)
 		break;
 	case EventType::AIMeleeAttackRequested:
 	case EventType::AIRangedAttackRequested:
+		std::cout << "AIAttackRequested\n";
 		if (m_Phase == Phase::TurnBasedCombat)
 		{
+			ResolveEnemyAttack();
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
 	case EventType::ExploreTurnEnded:
+		std::cout << "ExploreTurnEnded\n";
 		if (m_Phase == Phase::ExplorationLoop)
 		{
 			SetExplorationTurnState(ExplorationTurnState::EnemyStep);
@@ -205,6 +231,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::ExploreEnemyStepEnded:
+		std::cout << "ExploreEnemyStepEnded\n";
 		if (m_Phase == Phase::ExplorationLoop)
 		{
 			SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
@@ -212,44 +239,55 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::PhaseRequestEnterCombat:
+		std::cout << "PhaseRequestEnterCombat\n";
 		SetPhase(Phase::CombatTrigger);
 		break;
 	case EventType::CombatContextReady:
+		std::cout << "CombatContextReady\n";
 		SetPhase(Phase::CombatInit);
 		break;
 	case EventType::CombatInitComplete:
+		std::cout << "CombatInitComplete\n";
 		SetPhase(Phase::TurnBasedCombat);
 		SetCombatTurnState(CombatTurnState::SelectActor);
 		break;
 	case EventType::CombatEnded:
+		std::cout << "CombatEnded\n";
 		SetPhase(Phase::CombatEnd);
 		break;
 	case EventType::PostCombatToShop:
+		std::cout << "PostCombatToShop\n";
 		SetPhase(Phase::Shop);
 		break;
 	case EventType::PostCombatToExploration:
+		std::cout << "PostCombatToExploration\n";
 		SetPhase(Phase::ExplorationLoop);
 		SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
 		SetTurn(Turn::PlayerTurn);
 		break;
 	case EventType::ShopDone:
+		std::cout << "ShopDone\n";
 		SetPhase(Phase::NextFloor);
 		break;
 	case EventType::FloorReady:
+		std::cout << "FloorReady\n";
 		SetPhase(Phase::ExplorationLoop);
 		SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
 		SetTurn(Turn::PlayerTurn);
 		break;
 	case EventType::GameStart:
+		std::cout << "GameStart\n";
 		SetPhase(Phase::InitCharacter);
 		break;
 	case EventType::InitComplete:
+		std::cout << "InitComplete\n";
 		SetPhase(Phase::ExplorationLoop);
 		SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
 		SetTurn(Turn::PlayerTurn);
 		break;
 	case EventType::GameWin:
 	case EventType::GameOver:
+		std::cout << "GameWin or GameOver\n";
 		SetPhase(Phase::GameOver);
 		break;
 	default:
@@ -558,6 +596,10 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 			SetCombatTurnState(CombatTurnState::EnemyTurn);
 		}
 	}
+	else if (state == CombatTurnState::PlayerTurn)
+	{
+		m_CombatTurnElapsed = 0.0f;
+	}
 }
 
 void GameManager::OnCombatTurnStateExit(CombatTurnState state)
@@ -820,6 +862,110 @@ void GameManager::DispatchPlayerFSMEvent(const std::string& eventName)
 	if (auto* playerFsm = playerObject->GetComponent<PlayerFSMComponent>())
 	{
 		playerFsm->DispatchEvent(eventName);
+	}
+}
+
+void GameManager::ResolveEnemyAttack()
+{
+	if (!m_ActiveScene)
+	{
+		return;
+	}
+
+	auto* combatManager = GetCombatManager();
+	if (!combatManager)
+	{
+		return;
+	}
+
+	const int actorId = combatManager->GetCurrentActorId();
+	if (actorId == 0 || actorId == 1)
+	{
+		return;
+	}
+
+	auto* playerObject = FindPlayerObject(m_ActiveScene);
+	if (!playerObject)
+	{
+		return;
+	}
+
+	auto* playerStat = playerObject->GetComponent<PlayerStatComponent>();
+	if (!playerStat)
+	{
+		return;
+	}
+
+	GridSystemComponent* grid = nullptr;
+	for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+	{
+		(void)name;
+		if (!object)
+		{
+			continue;
+		}
+		if (auto* candidate = object->GetComponent<GridSystemComponent>())
+		{
+			grid = candidate;
+			break;
+		}
+	}
+	if (!grid)
+	{
+		return;
+	}
+
+	EnemyComponent* enemy = nullptr;
+	for (auto* candidate : grid->GetEnemies())
+	{
+		if (candidate && candidate->GetActorId() == actorId)
+		{
+			enemy = candidate;
+			break;
+		}
+	}
+
+	if (!enemy)
+	{
+		return;
+	}
+
+	auto* enemyOwner = enemy->GetOwner();
+	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+	if (!enemyStat)
+	{
+		return;
+	}
+
+	auto* diceSystem = GetDiceSystem();
+	auto* resolver = m_Services && m_Services->Has<CombatResolver>() ? &m_Services->Get<CombatResolver>() : nullptr;
+	if (!diceSystem || !resolver)
+	{
+		return;
+	}
+
+	AttackProfile attackProfile{};
+	attackProfile.attackModifier = enemyStat->GetAccuracyModifier();
+	attackProfile.allowCritical = true;
+	attackProfile.autoFailOnOne = true;
+	attackProfile.attackerName = "Enemy";
+	attackProfile.targetName = "Player";
+	attackProfile.minDamage = enemyStat->GetDiceRollCount();
+	attackProfile.maxDamage = enemyStat->GetDiceRollCount() * enemyStat->GetMaxDiceValue();
+
+	DefenseProfile defenseProfile{};
+	defenseProfile.defense = playerStat->GetDefense();
+
+	const int prevHp = playerStat->GetCurrentHP();
+	auto* logger = GetLogSystem();
+	std::cout << "[Combat] Enemy ACC mod=" << attackProfile.attackModifier
+		<< " Player DEF=" << defenseProfile.defense << std::endl;
+	CombatRollResult result = resolver->ResolveAttack(attackProfile, defenseProfile, *diceSystem, logger);
+	if (result.hit != HitResult::Miss && result.damage > 0)
+	{
+		const int nextHp = std::max(0, prevHp - result.damage);
+		playerStat->SetCurrentHP(nextHp);
+		std::cout << "[Combat] Player HP: " << prevHp << " -> " << nextHp << std::endl;
 	}
 }
 

@@ -17,6 +17,8 @@ public:
 	void Start() override;
 
 	void SetCombatManager(CombatManager* manager) { m_CombatManager = manager; }
+	bool RequestCombatEnter(int initiatorId, int targetId);
+
 protected:
 	std::optional<std::string> TranslateEvent(EventType type, const void* data) override;
 

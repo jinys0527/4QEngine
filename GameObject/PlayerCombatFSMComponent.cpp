@@ -13,6 +13,10 @@
 #include "CombatManager.h"
 #include <algorithm>
 #include <cmath>
+#include "CombatResolver.h"
+#include "DiceSystem.h"
+#include "LogSystem.h"
+#include <iostream>
 
 REGISTER_COMPONENT_DERIVED(PlayerCombatFSMComponent, FSMComponent)
 
@@ -107,6 +111,58 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 
 			if (!request.targetIds.empty())
 			{
+				auto* scene = owner ? owner->GetScene() : nullptr;
+				EnemyComponent* enemy = nullptr;
+				if (grid)
+				{
+					for (auto* candidate : grid->GetEnemies())
+					{
+						if (candidate && candidate->GetActorId() == request.targetIds.front())
+						{
+							enemy = candidate;
+							break;
+						}
+					}
+				}
+				if (scene && enemy)
+				{
+					auto& services = scene->GetServices();
+					if (services.Has<CombatResolver>() && services.Has<DiceSystem>())
+					{
+						auto* enemyOwner = enemy->GetOwner();
+						auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+						auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
+						if (enemyStat && playerStat)
+						{
+							AttackProfile attackProfile{};
+							attackProfile.attackModifier = playerStat->GetCalculatedStrengthModifier();
+							attackProfile.allowCritical = true;
+							attackProfile.autoFailOnOne = false;
+							attackProfile.attackerName = "Player";
+							attackProfile.targetName = "Enemy";
+
+							DefenseProfile defenseProfile{};
+							defenseProfile.defense = enemyStat->GetDefense();
+
+							auto& resolver = services.Get<CombatResolver>();
+							auto& diceSystem = services.Get<DiceSystem>();
+							auto* logger = services.Has<LogSystem>() ? &services.Get<LogSystem>() : nullptr;
+
+							std::cout << "[Combat] Player STR mod=" << attackProfile.attackModifier
+								<< " Enemy DEF=" << defenseProfile.defense << std::endl;
+
+							const int prevHp = enemyStat->GetCurrentHP();
+							CombatRollResult result = resolver.ResolveAttack(attackProfile, defenseProfile, diceSystem, logger);
+							if (result.hit != HitResult::Miss && result.damage > 0)
+							{
+								const int nextHp = max(0, prevHp - result.damage);
+								enemyStat->SetCurrentHP(nextHp);
+								std::cout << "[Combat] Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+							}
+						}
+					}
+				}
+
 				GetEventDispatcher().Dispatch(EventType::PhaseRequestEnterCombat, nullptr);
 				m_CombatManager->HandlePlayerAttack(request);
 			}
@@ -114,41 +170,8 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 
 	BindActionHandler("Combat_Enter", [this](const FSMAction& action)
 		{
-			if (!EnsureCombatManager())
-			{
-				return;
-			}
-
-			std::vector<CombatantSnapshot> combatants;
-			BuildCombatantSnapshots(combatants);
-			if (combatants.empty())
-			{
-				return;
-			}
-
-			m_CombatManager->SetCombatants(combatants);
-			GetEventDispatcher().Dispatch(EventType::CombatContextReady, nullptr);
-
 			const int playerId = GetPlayerActorId();
-			int targetId = 0;
-			for (const auto& combatant : combatants)
-			{
-				if (!combatant.isPlayer)
-				{
-					targetId = combatant.actorId;
-					break;
-				}
-			}
-
-			if (m_CombatManager->GetState() == Battle::NonBattle)
-			{
-				m_CombatManager->EnterBattle(playerId, targetId);
-			}
-
-			if (m_CombatManager->GetCurrentActorId() == playerId)
-			{
-				DispatchEvent("Combat_StartTurn");
-			}
+			RequestCombatEnter(playerId, 0);
 		});
 
 	BindActionHandler("Combat_Result", [this](const FSMAction& action)
@@ -192,6 +215,52 @@ void PlayerCombatFSMComponent::Start()
 	FSMComponent::Start();
 	GetEventDispatcher().AddListener(EventType::CombatInitiativeBuilt, this);
 	GetEventDispatcher().AddListener(EventType::CombatTurnAdvanced, this);
+}
+
+bool PlayerCombatFSMComponent::RequestCombatEnter(int initiatorId, int targetId)
+{
+	if (!EnsureCombatManager())
+	{
+		return false;
+	}
+
+	std::vector<CombatantSnapshot> combatants;
+	BuildCombatantSnapshots(combatants);
+	if (combatants.empty())
+	{
+		return false;
+	}
+
+	if (targetId == 0)
+	{
+		for (const auto& combatant : combatants)
+		{
+			if (!combatant.isPlayer)
+			{
+				targetId = combatant.actorId;
+				break;
+			}
+		}
+		if (targetId == 0)
+		{
+			return false;
+		}
+	}
+
+	m_CombatManager->SetCombatants(combatants);
+	GetEventDispatcher().Dispatch(EventType::CombatContextReady, nullptr);
+
+	if (m_CombatManager->GetState() == Battle::NonBattle)
+	{
+		m_CombatManager->EnterBattle(initiatorId, targetId);
+	}
+
+	if (m_CombatManager->GetCurrentActorId() == GetPlayerActorId())
+	{
+		DispatchEvent("Combat_StartTurn");
+	}
+
+	return true;
 }
 
 std::optional<std::string> PlayerCombatFSMComponent::TranslateEvent(EventType type, const void* data)

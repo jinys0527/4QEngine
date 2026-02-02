@@ -6,6 +6,8 @@
 #include "LogSystem.h"
 #include "EventDispatcher.h"
 #include "CombatEvents.h"
+#include <iostream>
+#include <sstream>
 
 
 CombatManager::CombatManager(CombatResolver& combatResolver, DiceSystem& diceSystem, LogSystem* logger)
@@ -20,6 +22,9 @@ void CombatManager::HandlePlayerAttack(const AttackRequest& request)
 
     if (request.targetIds.empty())
         return;
+
+	std::cout << "[Combat] Player attack requested by actor " << request.actorId
+		<< " targeting " << request.targetIds.front() << std::endl;
 
     if (m_State == Battle::NonBattle)
     {
@@ -45,6 +50,10 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
     (void)targetId;
 
     m_State = Battle::InBattle;
+
+	std::cout << "[Combat] Enter battle: initiator=" << initiatorId
+		<< " target=" << targetId << std::endl;
+
 	if (m_EventDispatcher)
 	{
 		const CombatEnterEvent eventData{ initiatorId, targetId };
@@ -62,6 +71,11 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
         const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
         m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
     }
+
+	if (!m_InitiativeOrder.empty())
+	{
+		std::cout << "[Combat] Turn start: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
+	}
 }
 
 void CombatManager::ExitBattle()
@@ -70,6 +84,7 @@ void CombatManager::ExitBattle()
     m_InitiativeOrder.clear();
     m_CurrentTurnIndex = 0;
 
+    std::cout << "[Combat] Exit battle" << std::endl;
 	if (m_EventDispatcher)
 	{
 		const CombatExitEvent eventData;
@@ -115,7 +130,12 @@ void CombatManager::BuildInitiativeOrder()
     {
         const DiceConfig rollConfig{ 1, 20, 0 };
         const int roll = m_DiceSystem.RollTotal(rollConfig, RandomDomain::Combat);
-        entries.push_back({combatant.actorId, roll + combatant.initiativeBonus});
+		const int initiative = roll + combatant.initiativeBonus;
+		std::cout << "[Combat] Initiative roll actor=" << combatant.actorId
+			<< " d20=" << roll
+			<< " bonus=" << combatant.initiativeBonus
+			<< " total=" << initiative << std::endl;
+		entries.push_back({ combatant.actorId, initiative });
     }
 
     std::sort(entries.begin(), entries.end(),
@@ -128,6 +148,17 @@ void CombatManager::BuildInitiativeOrder()
     {
         m_InitiativeOrder.push_back(entry.actorId);
     }
+
+	if (!m_InitiativeOrder.empty())
+	{
+		std::ostringstream order;
+		order << "[Combat] Initiative order:";
+		for (int actorId : m_InitiativeOrder)
+		{
+			order << " " << actorId;
+		}
+		std::cout << order.str() << std::endl;
+	}
 
 	if (m_EventDispatcher)
 	{
@@ -156,4 +187,6 @@ void CombatManager::AdvanceTurn()
         const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
         m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
     }
+
+    std::cout << "[Combat] Turn advanced: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
 }

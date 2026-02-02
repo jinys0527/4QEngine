@@ -12,19 +12,16 @@ bool GetBool(Blackboard& bb, const char* key, bool defaultValue = false)
 BTStatus UpdateTargetLocationTask::OnTick(BTInstance& inst, Blackboard& bb)
 {
     (void)inst;
-    float targetX = 0.0f;
-    float targetY = 0.0f;
-    float targetZ = 0.0f;
-    if (!bb.TryGet(BlackboardKeys::TargetPosX, targetX)
-        || !bb.TryGet(BlackboardKeys::TargetPosY, targetY)
-        || !bb.TryGet(BlackboardKeys::TargetPosZ, targetZ))
+	int targetQ = 0;
+	int targetR = 0;
+	if (!bb.TryGet(BlackboardKeys::TargetQ, targetQ)
+		|| !bb.TryGet(BlackboardKeys::TargetR, targetR))
     {
         return BTStatus::Failure;
     }
 
-    bb.Set(BlackboardKeys::LastKnownTargetX, targetX);
-    bb.Set(BlackboardKeys::LastKnownTargetY, targetY);
-    bb.Set(BlackboardKeys::LastKnownTargetZ, targetZ);
+	bb.Set(BlackboardKeys::LastKnownTargetQ, targetQ);
+	bb.Set(BlackboardKeys::LastKnownTargetR, targetR);
     return BTStatus::Success;
 }
 

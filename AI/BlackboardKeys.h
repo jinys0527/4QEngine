@@ -21,18 +21,11 @@ namespace BlackboardKeys
 	inline constexpr const char* RequestMaintainRange  = "RequestMaintainRange";
 	inline constexpr const char* EndTurnRequested      = "EndTurnRequested";
 	inline constexpr const char* RunOffTargetFound     = "RunOffTargetFound";
-	inline constexpr const char* SelfPosX              = "SelfPosX";
-	inline constexpr const char* SelfPosY              = "SelfPosY";
-	inline constexpr const char* SelfPosZ              = "SelfPosZ";
 	inline constexpr const char* SelfQ				   = "SelfQ";
 	inline constexpr const char* SelfR				   = "SelfR";
+	inline constexpr const char* TargetQ			   = "TargetQ";
+	inline constexpr const char* TargetR			   = "TargetR";
 	inline constexpr const char* FacingDirection	   = "FacingDirection";
-	inline constexpr const char* SelfForwardX          = "SelfForwardX";
-	inline constexpr const char* SelfForwardY          = "SelfForwardY";
-	inline constexpr const char* SelfForwardZ          = "SelfForwardZ";
-	inline constexpr const char* TargetPosX            = "TargetPosX";
-	inline constexpr const char* TargetPosY            = "TargetPosY";
-	inline constexpr const char* TargetPosZ            = "TargetPosZ";
 	inline constexpr const char* SightDistance         = "SightDistance";
 	inline constexpr const char* SightAngle		       = "SightAngle";
 	inline constexpr const char* HasHexSightData       = "HasHexSightData";
@@ -40,8 +33,7 @@ namespace BlackboardKeys
 	inline constexpr const char* MeleeRange		       = "MeleeRange";
 	inline constexpr const char* ThrowRange		       = "ThrowRange";
 	inline constexpr const char* PlayerMaxDamage       = "PlayerMaxDamage";
-	inline constexpr const char* LastKnownTargetX      = "LastKnownTargetX";
-	inline constexpr const char* LastKnownTargetY      = "LastKnownTargetY";
-	inline constexpr const char* LastKnownTargetZ      = "LastKnownTargetZ";
+	inline constexpr const char* LastKnownTargetQ	   = "LastKnownTargetQ";
+	inline constexpr const char* LastKnownTargetR	   = "LastKnownTargetR";
 	inline constexpr const char* HP					   = "HP";
 }

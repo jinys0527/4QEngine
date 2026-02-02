@@ -15,10 +15,12 @@
 #include "EnemyMovementComponent.h"
 #include "GridSystemComponent.h"
 #include "NodeComponent.h"
+#include "PlayerCombatFSMComponent.h"
 #include <array>
 #include <cmath>
 #include <algorithm>
 #include < utility >
+
 REGISTER_COMPONENT(EnemyComponent)
 REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
@@ -93,6 +95,15 @@ constexpr std::array<AxialDirection, 6> kFacingDirections{ {
 	{ -1, 0 },  // clock_9
 	{ -1, 1 }   // clock_11
 } };
+
+int AxialDistance(int q1, int r1, int q2, int r2)
+{
+	const int dq = q1 - q2;
+	const int dr = r1 - r2;
+	const int ds = dq + dr;
+	return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
+}
+
 std::pair<AxialDirection, AxialDirection> GetLateralDirections(int facingIndex)
 {
 	
@@ -249,27 +260,41 @@ void EnemyComponent::Update(float deltaTime) {
 		return;
 	}
 
-	auto& bb = m_AIController->GetBlackboard();
-	auto* transform = owner->GetComponent<TransformComponent>();
-	if (transform)
+
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop && m_TargetPlayer)
 	{
-		const auto pos = transform->GetPosition();
-		const auto forward = transform->GetForward();
-		bb.Set(BlackboardKeys::SelfPosX,         pos.x);
-		bb.Set(BlackboardKeys::SelfPosY,         pos.y);
-		bb.Set(BlackboardKeys::SelfPosZ,         pos.z);
-		bb.Set(BlackboardKeys::SelfForwardX, forward.x);
-		bb.Set(BlackboardKeys::SelfForwardY, forward.y);
-		bb.Set(BlackboardKeys::SelfForwardZ, forward.z);
+		int attackRange = 1;
+		if (auto* stat = owner->GetComponent<EnemyStatComponent>())
+		{
+			attackRange = max(1, stat->GetAttackRange());
+		}
+		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
+		if (distance <= attackRange)
+		{
+			auto* playerOwner = m_TargetPlayer->GetOwner();
+			if (playerOwner)
+			{
+				if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
+				{
+					combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
+				}
+			}
+			return;
+		}
 	}
+
+	auto& bb = m_AIController->GetBlackboard();
+	
 	bb.Set(BlackboardKeys::SelfQ, m_Q);
 	bb.Set(BlackboardKeys::SelfR, m_R);
 	bb.Set(BlackboardKeys::FacingDirection, static_cast<int>(m_Facing));
 	float sightDistance = 0.0f;
 
+	int attackRange = 1;
 	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
 	{
 		sightDistance = stat->GetSightDistance();
+		attackRange   = max(1, stat->GetAttackRange());
 		bb.Set(BlackboardKeys::SightDistance, sightDistance);
 		bb.Set(BlackboardKeys::SightAngle,    stat->GetSightAngle());
 		bb.Set(BlackboardKeys::ThrowRange,    static_cast<float>(stat->GetMaxDiceValue()));
@@ -286,16 +311,15 @@ void EnemyComponent::Update(float deltaTime) {
 		bb.Set(BlackboardKeys::HP, 30);
 	}
 
-	if (m_TargetTransform)
+	if (m_TargetPlayer)
 	{
-		const auto targetPos = m_TargetTransform->GetPosition();
-		bb.Set(BlackboardKeys::TargetPosX, targetPos.x);
-		bb.Set(BlackboardKeys::TargetPosY, targetPos.y);
-		bb.Set(BlackboardKeys::TargetPosZ, targetPos.z);
+		bb.Set(BlackboardKeys::TargetQ, m_TargetPlayer->GetQ());
+		bb.Set(BlackboardKeys::TargetR, m_TargetPlayer->GetR());
 	}
 
 	const bool hasHexData = m_GridSystem && m_TargetPlayer;
 	bb.Set(BlackboardKeys::HasHexSightData, hasHexData);
+	bool targetVisible = false;
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
@@ -309,7 +333,7 @@ void EnemyComponent::Update(float deltaTime) {
 			ClearSightDebug();
 		}
 
-		const bool targetVisible = IsTargetVisibleOnHexLine(
+		targetVisible = IsTargetVisibleOnHexLine(
 			m_GridSystem,
 			m_Q,
 			m_R,
@@ -320,6 +344,23 @@ void EnemyComponent::Update(float deltaTime) {
 	else if (m_DebugSightLines)
 	{
 		ClearSightDebug();
+	}
+
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop && m_TargetPlayer && hasHexData)
+	{
+		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
+		if (targetVisible && distance <= attackRange)
+		{
+			auto* playerOwner = m_TargetPlayer->GetOwner();
+			if (playerOwner)
+			{
+				if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
+				{
+					combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
+				}
+			}
+			return;
+		}
 	}
 
 	bb.Set(BlackboardKeys::PreferRanged, false);

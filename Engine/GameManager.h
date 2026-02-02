@@ -91,6 +91,7 @@ private:
 	void SetFloodSystemActive(bool active);
 	void RefreshGridSystem();
 	void DispatchPlayerFSMEvent(const std::string& eventName);
+	void ResolveEnemyAttack();
 	std::vector<int> CollectOwnedItemIndices() const;
 private:
 
@@ -104,6 +105,8 @@ private:
 	CombatTurnState m_CombatTurnState;
 	float m_ExplorationTurnElapsed = 0.0f;
 	float m_ExplorationTurnLimit = 5.0f;
+	float m_CombatTurnElapsed = 0.0f;
+	float m_CombatTurnLimit = 30.0f;
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
