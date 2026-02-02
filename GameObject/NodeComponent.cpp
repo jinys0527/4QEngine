@@ -4,6 +4,31 @@
 #include "MaterialComponent.h"
 #include "Object.h"
 #include "Event.h"
+#include <algorithm>
+
+namespace
+{
+	bool AreMaterialOverridesEqual(const RenderData::MaterialData& lhs, const RenderData::MaterialData& rhs)
+	{
+		if (lhs.baseColor.x != rhs.baseColor.x || lhs.baseColor.y != rhs.baseColor.y
+			|| lhs.baseColor.z != rhs.baseColor.z || lhs.baseColor.w != rhs.baseColor.w)
+		{
+			return false;
+		}
+		if (lhs.metallic != rhs.metallic || lhs.roughness != rhs.roughness
+			|| lhs.saturation != rhs.saturation || lhs.lightness != rhs.lightness)
+		{
+			return false;
+		}
+		if (lhs.shaderAsset != rhs.shaderAsset
+			|| lhs.vertexShader != rhs.vertexShader
+			|| lhs.pixelShader != rhs.pixelShader)
+		{
+			return false;
+		}
+		return lhs.textures == rhs.textures;
+	}
+}
 
 REGISTER_COMPONENT(NodeComponent)
 REGISTER_PROPERTY(NodeComponent, IsMoveable)
@@ -89,6 +114,15 @@ void NodeComponent::SetSightHighlight(float intensity, bool enabled)
 	ApplyHighlight();
 }
 
+void NodeComponent::ClearHighlights()
+{
+	m_UsingMoveRangeHighlight = false;
+	m_MoveHighlightIntensity = 0.0f;
+	m_UsingSightHighlight = false;
+	m_SightHighlightIntensity = 0.0f;
+	ApplyHighlight();
+}
+
 void NodeComponent::ApplyHighlight()
 {
 	if (!m_Material)
@@ -105,9 +139,16 @@ void NodeComponent::ApplyHighlight()
 	if (!m_UsingMoveRangeHighlight && !m_UsingSightHighlight)
 	{
 		m_Material->SetOverrides(m_BaseMaterialOverrides);
+	/*	m_LastAppliedOverrides = m_BaseMaterialOverrides;
+		m_HasLastAppliedOverrides = true;*/
 		return;
 	}
-
+	/*const auto& currentOverrides = m_Material->GetOverrides();
+	if (m_HasLastAppliedOverrides && !AreMaterialOverridesEqual(currentOverrides, m_LastAppliedOverrides))
+	{
+		m_BaseMaterialOverrides = currentOverrides;
+		m_HasBaseMaterial = true;
+	}*/
 	const float moveIntensity = m_UsingMoveRangeHighlight ? std::clamp(m_MoveHighlightIntensity, 0.0f, 1.0f) : 0.0f;
 	const float sightIntensity = m_UsingSightHighlight ? std::clamp(m_SightHighlightIntensity, 0.0f, 1.0f) : 0.0f;
 	const float total = moveIntensity + sightIntensity;
@@ -134,5 +175,7 @@ void NodeComponent::ApplyHighlight()
 	overrides.baseColor.w = baseColor.w;
 
 	m_Material->SetOverrides(overrides);
+	/*m_LastAppliedOverrides = overrides;
+	m_HasLastAppliedOverrides = true;*/
 	//m_UsingMoveRangeHighlight = true;
 }

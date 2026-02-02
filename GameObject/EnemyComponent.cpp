@@ -306,7 +306,7 @@ void EnemyComponent::Update(float deltaTime) {
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
-
+		UpdateSightDebugLines(sightRange);
 		if (m_DebugSightLines)
 		{
 			UpdateSightDebugLines(sightRange);

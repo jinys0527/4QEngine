@@ -37,6 +37,7 @@
 #include "PlayerShopFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerStatComponent.h"
+#include "NodeComponent.h"
 #include "SkinningAnimationComponent.h"
 #include "AnimFSMComponent.h"
 #include <type_traits>
@@ -1010,6 +1011,11 @@ void Scene::EnsureAutoComponentsForSave()
 			addIfMissing(*gameObject, static_cast<EnemyStatComponent*>(nullptr));
 			addIfMissing(*gameObject, static_cast<EnemyMovementComponent*>(nullptr));
 			addIfMissing(*gameObject, static_cast<EnemyControllerComponent*>(nullptr));
+		}
+
+		if (auto* node = gameObject->GetComponent<NodeComponent>())
+		{
+			node->ClearHighlights();
 		}
 	}
 }

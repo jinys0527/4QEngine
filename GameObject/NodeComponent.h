@@ -57,6 +57,7 @@ public:
 	bool IsInMoveRange() const { return m_IsInMoveRange; }
 	void SetMoveRangeHighlight(float intensity, bool enabled);
 	void SetSightHighlight(float intensity, bool enabled);
+	void ClearHighlights();
 private:
 	void ApplyHighlight();
 
@@ -74,6 +75,8 @@ private:
 	bool m_HasBaseMaterial = false;
 	RenderData::MaterialData m_BaseMaterialOverrides{};
 	MaterialComponent* m_Material = nullptr; 
+	/*bool m_HasLastAppliedOverrides = false;
+	RenderData::MaterialData m_LastAppliedOverrides{};*/
 	int m_Q; 
 	int m_R;
 	int m_StateInt = 0; // Debug
