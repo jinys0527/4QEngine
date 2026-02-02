@@ -95,15 +95,7 @@ constexpr std::array<AxialDirection, 6> kFacingDirections{ {
 } };
 std::pair<AxialDirection, AxialDirection> GetLateralDirections(int facingIndex)
 {
-	/*if (forwardDir.q == 0)
-	{
-		return { { 1, 0 }, { -1, 0 } };
-	}
-	if (forwardDir.r == 0)
-	{
-		return { { 0, 1 }, { 0, -1 } };
-	}
-	return { { 0, 1 }, { 0, -1 } };*/
+	
 	const int dirCount = static_cast<int>(kFacingDirections.size());
 	const int leftIndex = (facingIndex + dirCount - 1) % dirCount;
 	const int rightIndex = (facingIndex + 1) % dirCount;
@@ -118,61 +110,55 @@ bool IsTargetVisibleOnHexLine(
 	int sightRange)
 {
 	if (!grid || sightRange <= 0)
-	{
 		return false;
-	}
-
-	const int dirCount = static_cast<int>(kFacingDirections.size());
-	if (facingIndex < 0 || facingIndex >= dirCount)
-	{
-		return false;
-	}
 
 	const AxialDirection forwardDir = kFacingDirections[facingIndex];
-	//const auto lateralDirs = GetLateralDirections(forwardDir);
-	const auto lateralDirs = GetLateralDirections(facingIndex);
-	const AxialDirection leftLateralDir = lateralDirs.first;
-	const AxialDirection rightLateralDir = lateralDirs.second;
+
+	// 좌우 lateral 방향
+	auto lateralDirs = GetLateralDirections(facingIndex);
+	AxialDirection leftDir = lateralDirs.first;
+	AxialDirection rightDir = lateralDirs.second;
+
+	// 3개의 lane 시작점 origin
+	std::array<std::pair<int, int>, 3> laneOrigins =
+	{
+		std::make_pair(selfQ + leftDir.q,  selfR + leftDir.r),   // 위줄
+		std::make_pair(selfQ+ forwardDir.q,             selfR+ forwardDir.r),               // 가운데줄
+		std::make_pair(selfQ + rightDir.q, selfR + rightDir.r)  // 아래줄
+	};
+
+	// lane별 block 상태
 	std::array<bool, 3> blocked{ false, false, false };
 
+	// 각 lane을 forward로 쭉 검사
 	for (int step = 1; step <= sightRange; ++step)
 	{
-		const int baseQ = selfQ + forwardDir.q * step;
-		const int baseR = selfR + forwardDir.r * step;
-		for (int offset = -1; offset <= 1; ++offset)
+		for (int lane = 0; lane < 3; ++lane)
 		{
-			const int lane = offset + 1;
 			if (blocked[lane])
-			{
 				continue;
-			}
-			int q = baseQ;
-			int r = baseR;
-			if (offset < 0)
-			{
-				q += leftLateralDir.q;
-				r += leftLateralDir.r;
-			}
-			else if (offset > 0)
-			{
-				q += rightLateralDir.q;
-				r += rightLateralDir.r;
-			}
+
+			int q = laneOrigins[lane].first + forwardDir.q * step;
+			int r = laneOrigins[lane].second + forwardDir.r * step;
+
 			NodeComponent* node = grid->GetNodeByKey({ q, r });
+
+			// 막히면 그 lane은 끝
 			if (!node || !node->GetIsSight())
 			{
 				blocked[lane] = true;
 				continue;
 			}
+
+			// 플레이어 발견
 			if (node->GetState() == NodeState::HasPlayer)
-			{
 				return true;
-			}
 		}
 	}
 
 	return false;
 }
+
 //-----------------------------------
 
 void EnemyComponent::ClearSightDebug()
@@ -206,41 +192,38 @@ void EnemyComponent::UpdateSightDebugLines(int sightRange)
 	ClearSightDebug();
 
 	const AxialDirection forwardDir = kFacingDirections[facingIndex];
-	//const auto lateralDirs = GetLateralDirections(forwardDir);
-	const auto lateralDirs = GetLateralDirections(facingIndex);
-	const AxialDirection leftLateralDir = lateralDirs.first;
-	const AxialDirection rightLateralDir = lateralDirs.second;
+	auto lateralDirs = GetLateralDirections(facingIndex);
+	const AxialDirection leftDir = lateralDirs.first;
+	const AxialDirection rightDir = lateralDirs.second;
+
+	// 원하는 형태: 위/가운데/아래 3줄이 "캐릭터 인접칸"에서 출발
+	std::array<std::pair<int, int>, 3> laneOrigins =
+	{
+		std::make_pair(m_Q + leftDir.q,  m_R + leftDir.r),   // 위줄 시작: 인접칸
+		std::make_pair(m_Q + forwardDir.q,   m_R+ forwardDir.r),               // 가운데 시작: 본인
+		std::make_pair(m_Q + rightDir.q, m_R + rightDir.r)   // 아래줄 시작: 인접칸
+	};
+
 	std::array<bool, 3> blocked{ false, false, false };
 
-	for (int step = 1; step <= sightRange; ++step)
+	// step을 0부터: 위/아래가 "인접칸"부터 바로 찍힘
+	// 가운데는 self부터 찍히는 게 싫으면 lane==1만 step=1부터 시작하도록 분기하면 됨
+	for (int step = 0; step < sightRange; ++step)
 	{
-		const int baseQ = m_Q + forwardDir.q * step;
-		const int baseR = m_R + forwardDir.r * step;
-		for (int offset = -1; offset <= 1; ++offset)
+		for (int lane = 0; lane < 3; ++lane)
 		{
-			const int lane = offset + 1;
-			if (blocked[lane])
-			{
-				continue;
-			}
-			int q = baseQ;
-			int r = baseR;
-			if (offset < 0)
-			{
-				q += leftLateralDir.q;
-				r += leftLateralDir.r;
-			}
-			else if (offset > 0)
-			{
-				q += rightLateralDir.q;
-				r += rightLateralDir.r;
-			}
+			if (blocked[lane]) continue;
+			int startStep = (lane == 1) ? 1 : 0;
+			int q = laneOrigins[lane].first + forwardDir.q * step;
+			int r = laneOrigins[lane].second + forwardDir.r * step;
+
 			NodeComponent* node = m_GridSystem->GetNodeByKey({ q, r });
 			if (!node || !node->GetIsSight())
 			{
 				blocked[lane] = true;
 				continue;
 			}
+
 			if (std::find(m_SightDebugNodes.begin(), m_SightDebugNodes.end(), node) == m_SightDebugNodes.end())
 			{
 				node->SetSightHighlight(0.6f, true);
@@ -249,6 +232,7 @@ void EnemyComponent::UpdateSightDebugLines(int sightRange)
 		}
 	}
 }
+
 
 void EnemyComponent::Update(float deltaTime) {
 	auto* owner = GetOwner();

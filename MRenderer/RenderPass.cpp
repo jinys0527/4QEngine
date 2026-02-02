@@ -399,7 +399,7 @@ void RenderPass::DrawMesh(
 	{
 		dc->DrawIndexed(indexCount, 0, 0);
 	}
-	OutputDebugStringA("Drawing 3D Object End\n");
+	//OutputDebugStringA("Drawing 3D Object End\n");
 }
 
 void RenderPass::DrawBones(ID3D11VertexShader* vs, ID3D11PixelShader* ps, UINT boneCount)
