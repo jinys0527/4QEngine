@@ -10,6 +10,11 @@ bool TryGetFloat(Blackboard& bb, const char* key, float& out)
 	return bb.TryGet(key, out);
 }
 
+bool TryGetInt(Blackboard& bb, const char* key, int& out)
+{
+	return bb.TryGet(key, out);
+}
+
 float Clamp(float value, float minValue, float maxValue)
 {
 	if (value < minValue)
@@ -25,6 +30,8 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	(void)inst;
 	(void)deltaTime;
 
+	//Float3 기반 위치 안씀, 거리도 안씀, angle도 안씀 
+	// 오로지 QR 좌표 기준
 	float selfX			= 0.0f;
 	float selfY         = 0.0f;
 	float selfZ			= 0.0f;
@@ -36,6 +43,14 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	float forwardX		= 0.0f;
 	float forwardY		= 0.0f;
 	float forwardZ		= 1.0f;
+	
+	//////////////////////////////////////
+	int	  selfQ			   = 0;
+	int   selfR			   = 0;
+	int   facingDirection  = 0;
+	bool  hasHexSightData  = false;
+	bool  hasTargetHexLine = false;
+
 
 	if (!TryGetFloat(bb, BlackboardKeys::SelfPosX, selfX)
 		|| !TryGetFloat(bb, BlackboardKeys::SelfPosY, selfY)
@@ -71,7 +86,15 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 
 	bb.Set(BlackboardKeys::TargetDistance, distance);
 	bb.Set(BlackboardKeys::TargetAngle, angle);
-	bb.Set(BlackboardKeys::HasTarget, distance <= sightDistance && angle <= sightAngle * 0.5f);
+	//bb.Set(BlackboardKeys::HasTarget, distance <= sightDistance && angle <= sightAngle * 0.5f);
+	const bool hasHexData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
+		&& TryGetInt(bb, BlackboardKeys::SelfR, selfR)
+		&& TryGetInt(bb, BlackboardKeys::FacingDirection, facingDirection);
+	const bool useHexSight = hasHexData
+		&& bb.TryGet(BlackboardKeys::HasHexSightData, hasHexSightData)
+		&& hasHexSightData
+		&& bb.TryGet(BlackboardKeys::HasTargetHexLine, hasTargetHexLine);
+	bb.Set(BlackboardKeys::HasTarget, useHexSight && hasTargetHexLine);
 }
 
 void CombatStateSyncService::TickService(BTInstance& inst, Blackboard& bb, float deltaTime)

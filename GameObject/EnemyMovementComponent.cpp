@@ -11,6 +11,30 @@
 
 REGISTER_COMPONENT(EnemyMovementComponent)
 
+static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& current, ERotationOffset& outDir)
+{
+	const AxialKey delta{ current.q - previous.q, current.r - previous.r };
+	constexpr std::array<std::pair<AxialKey, ERotationOffset>, 6> kDirections{ {
+		{ { 1, 0 }, ERotationOffset::clock_3 },
+		{ { 1, -1 }, ERotationOffset::clock_5 },
+		{ { 0, -1 }, ERotationOffset::clock_7 },
+		{ { -1, 0 }, ERotationOffset::clock_9 },
+		{ { -1, 1 }, ERotationOffset::clock_11 },
+		{ { 0, 1 }, ERotationOffset::clock_1 }
+	} };
+
+	for (const auto& [dir, rotation] : kDirections)
+	{
+		if (dir.q == delta.q && dir.r == delta.r)
+		{
+			outDir = rotation;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 EnemyMovementComponent::~EnemyMovementComponent()
 {
 	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
@@ -83,7 +107,7 @@ void EnemyMovementComponent::Move()
 	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
 	const int moveRange = enemy->GetMoveDistance();
 
-	if (moveRange <= 0) {
+	if (moveRange <= 0 || !m_GridSystem) {
 		return; 
 	}
 
@@ -131,6 +155,20 @@ void EnemyMovementComponent::Move()
 		return;
 	}
 
+	const AxialKey target{ bestNode->GetQ(), bestNode->GetR() };
+	const auto path = m_GridSystem->GetShortestPath(start, target);
+	if (path.size() >= 2)
+	{
+		const AxialKey& previousKey = path[path.size() - 2];
+		const AxialKey& currentKey = path.back();
+		ERotationOffset rotation{};
+		if (TryGetRotationFromStep(previousKey, currentKey, rotation))
+		{
+			SetEnemyRotation(enemyTransform, rotation);
+			enemy->SetFacing(rotation); // 시야 범위
+		}
+	}
+
 	enemyTransform->SetPosition(targetTransform->GetPosition());
 }
 
@@ -138,7 +176,34 @@ void EnemyMovementComponent::Move()
 
 void EnemyMovementComponent::SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir)
 {
+	if (!transComp)
+	{
+		return;
+	}
 
+	switch (dir)
+	{
+	case ERotationOffset::clock_1:
+		transComp->SetRotationEuler({ 0.0f,-150.0f ,0.0f });
+		break;
+	case ERotationOffset::clock_3:
+		transComp->SetRotationEuler({ 0.0f,-90.0f ,0.0f });
+		break;
+	case ERotationOffset::clock_5:
+		transComp->SetRotationEuler({ 0.0f,-30.0f ,0.0f });
+		break;
+	case ERotationOffset::clock_7:
+		transComp->SetRotationEuler({ 0.0f,30.0f ,0.0f });
+		break;
+	case ERotationOffset::clock_9:
+		transComp->SetRotationEuler({ 0.0f,90.0f ,0.0f });
+		break;
+	case ERotationOffset::clock_11:
+		transComp->SetRotationEuler({ 0.0f,150.0f ,0.0f });
+		break;
+	default:
+		break;
+	}
 }
 
 
