@@ -8,6 +8,8 @@
 #include "PlayerStatComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
+#include "SkinningAnimationComponent.h"
+#include "MathHelper.h"
 #include <cmath>
 #include "GameManager.h"
 
@@ -173,9 +175,30 @@ void PlayerComponent::Update(float deltaTime) {
 			return;
 		}
 
-		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
+		XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
+		const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
+		if (equipmentBoneIndex >= 0)
+		{
+			const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
+			if (animComp)
+			{
+				const auto& globalPose = animComp->GetGlobalPose();
+				if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
+				{
+					equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
+				}
+			}
+		}
+		XMMATRIX pose = XMLoadFloat4x4(&equipmentPose);
+		XMVECTOR translation = pose.r[3];
+		XMMATRIX scale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-		itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
+		pose = XMMatrixMultiply(pose, scale);
+		pose.r[3] = translation;
+		XMStoreFloat4x4(&equipmentPose, pose);
+
+		itemcomponent->SetEquipmentBindPose(equipmentPose);
+
 	}
 }
 

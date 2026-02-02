@@ -34,7 +34,6 @@ REGISTER_PROPERTY(ItemComponent, EquipmentBindPose)
 
 ItemComponent::ItemComponent()
 {
-	XMStoreFloat4x4(&m_EquipmentBindPose, XMMatrixIdentity());
 }
 
 ItemComponent::~ItemComponent()
@@ -43,6 +42,8 @@ ItemComponent::~ItemComponent()
 
 void ItemComponent::Start()
 {
+	XMStoreFloat4x4(&m_EquipmentBindPose, XMMatrixIdentity());
+
 }
 
 void ItemComponent::Update(float deltaTime)
