@@ -5,6 +5,7 @@
 #include "Scene.h"
 #include "GridSystemComponent.h"
 #include "ItemComponent.h"
+#include "PlayerStatComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
 #include <cmath>
@@ -94,18 +95,61 @@ void PlayerComponent::Update(float deltaTime) {
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
 	{
-		if (!transformcomponent->GetChildrens().empty())
+		if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
 		{
-			m_Item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+			GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+			auto* itemcomp = item->GetComponent<ItemComponent>();
+			if (itemcomp && itemcomp->GetType() == 1)
+			{
+				m_MeeleItem = item;
+				itemcomp->SetIsEquiped(true);
+				m_InventoryItemIds.push_back(item->GetName());
+
+			}
 		}
 
 	}
 
-	//아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
+	//근접 아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
 	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
-	if (m_Item != nullptr)
+	if (m_MeeleItem != nullptr)
 	{
-		auto* itemcomponent = m_Item->GetComponent<ItemComponent>();
+		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
+
+		//근접 무기의 스탯 적용하기
+		if (!m_IsApplyMeeleStat)
+		{
+			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
+			if (!playerstatcomponent) return;
+
+			int health = playerstatcomponent->GetHealth();
+			int strength = playerstatcomponent->GetStrength();
+			int agility = playerstatcomponent->GetAgility();
+			int sense = playerstatcomponent->GetSense();
+			int skill = playerstatcomponent->GetSkill();
+
+			int ihealth = itemcomponent->GetHealth();
+			int istrength = itemcomponent->GetStrength();
+			int iagility = itemcomponent->GetAgility();
+			int isense = itemcomponent->GetSense();
+			int iskill = itemcomponent->GetSkill();
+			int idefense = itemcomponent->GetDEF();
+			int irange = itemcomponent->GetMeleeAttackRange();
+
+			playerstatcomponent->SetHealth(health + ihealth);
+			playerstatcomponent->SetStrength(strength + istrength);
+			playerstatcomponent->SetAgility(agility + iagility);
+			playerstatcomponent->SetSense(sense + isense);
+			playerstatcomponent->SetSkill(skill + iskill);
+			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
+			playerstatcomponent->SetRange(irange);
+
+			int dmg = CalculateDamage();
+
+			m_IsApplyMeeleStat = true;
+		}
+
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
 		if (!skeletal)
@@ -134,7 +178,6 @@ void PlayerComponent::Update(float deltaTime) {
 		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
 
 		itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
-		int a = 0;
 	}
 }
 
@@ -239,6 +282,27 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	}
 	m_RemainActResource -= amount;
 	return true;
+}
+
+int PlayerComponent::CalculateDamage()
+{
+	auto* item = m_MeeleItem->GetComponent<ItemComponent>();
+	if (!item) return 0;
+
+	srand(static_cast<unsigned>(time(nullptr)));
+
+	int roll = item->GetMaxDiceRoll();
+	int value = item->GetMaxDiceValue();
+	int bonus = item->GetBonusValue();
+
+	int dmg = 0;
+	for (int i = 0; i < roll; i++)
+	{
+		dmg += rand() % value + 1;
+	}
+	dmg += bonus;
+
+	return bonus;
 }
 
 bool PlayerComponent::ConsumeCombatConfirmRequest()

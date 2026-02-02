@@ -22,11 +22,11 @@ REGISTER_PROPERTY(ItemComponent, MeleeAttackRange)
 REGISTER_PROPERTY(ItemComponent, MaxDiceRoll)
 REGISTER_PROPERTY(ItemComponent, MaxDiceValue)
 REGISTER_PROPERTY(ItemComponent, BonusValue)
-REGISTER_PROPERTY(ItemComponent, CON)
-REGISTER_PROPERTY(ItemComponent, STR)
-REGISTER_PROPERTY(ItemComponent, DEX)
-REGISTER_PROPERTY(ItemComponent, SENSE)
-REGISTER_PROPERTY(ItemComponent, TEC)
+REGISTER_PROPERTY(ItemComponent, Health)
+REGISTER_PROPERTY(ItemComponent, Strength)
+REGISTER_PROPERTY(ItemComponent, Agility)
+REGISTER_PROPERTY(ItemComponent, Sense)
+REGISTER_PROPERTY(ItemComponent, Skill)
 REGISTER_PROPERTY(ItemComponent, DEF)
 REGISTER_PROPERTY(ItemComponent, ThrowRange)
 REGISTER_PROPERTY(ItemComponent, DifficultyGroup)
@@ -48,11 +48,6 @@ void ItemComponent::Start()
 
 void ItemComponent::Update(float deltaTime)
 {
-	if (!m_IsEquiped)
-	{
-		return;
-	}
-
 	Object* owner = GetOwner();
 	if (!owner)
 	{
@@ -61,13 +56,6 @@ void ItemComponent::Update(float deltaTime)
 
 	auto* transform = owner->GetComponent<TransformComponent>();
 	if (!transform)
-	{
-		return;
-	}
-
-
-	auto* loader = AssetLoader::GetActive();
-	if (!loader)
 	{
 		return;
 	}

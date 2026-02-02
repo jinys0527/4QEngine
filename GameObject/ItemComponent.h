@@ -2,6 +2,16 @@
 #include "Component.h"
 #include <string>
 
+enum class ItemType
+{
+	GOLD,
+	EQUIPMENT,
+	HEAL,
+	THROW,
+
+	TYPE_MAX
+};
+
 class ItemComponent : public Component
 {
 public:
@@ -51,20 +61,20 @@ public:
 	const int& GetBonusValue() const { return m_BonusValue; }
 	void SetBonusValue(const int& value) { m_BonusValue = value; }
 
-	const int& GetCON() const { return m_CON; }
-	void SetCON(const int& value) { m_CON = value; }
+	const int& GetHealth() const { return m_Health; }
+	void SetHealth(const int& value) { m_Health = value; }
 
-	const int& GetSTR() const { return m_STR; }
-	void SetSTR(const int& value) { m_STR = value; }
+	const int& GetStrength() const { return m_Strength; }
+	void SetStrength(const int& value) { m_Strength = value; }
 
-	const int& GetDEX() const { return m_DEX; }
-	void SetDEX(const int& value) { m_DEX = value; }
+	const int& GetAgility() const { return m_Agility; }
+	void SetAgility(const int& value) { m_Agility = value; }
 
-	const int& GetSENSE() const { return m_SENSE; }
-	void SetSENSE(const int& value) { m_SENSE = value; }
+	const int& GetSense() const { return m_Sense; }
+	void SetSense(const int& value) { m_Sense = value; }
 
-	const int& GetTEC() const { return m_TEC; }
-	void SetTEC(const int& value) { m_TEC = value; }
+	const int& GetSkill() const { return m_Skill; }
+	void SetSkill(const int& value) { m_Skill = value; }
 
 	const int& GetDEF() const { return m_DEF; }
 	void SetDEF(const int& value) { m_DEF = value; }
@@ -92,11 +102,11 @@ private:
 	int m_MaxDiceRoll			= -1;     // 주사위 굴림횟수 (DnD룰에서 1d4의 d)
 	int m_MaxDiceValue			= -1;    // 주사위 면체 수 (DnD룰에서 1d4의 4)
 	int m_BonusValue			= -1;      // 데미지 보정치 (고정 추가 데미지)
-	int m_CON					= 0;
-	int m_STR					= 0;
-	int m_DEX					= 0;
-	int m_SENSE					= 0;
-	int m_TEC					= 0;
+	int m_Health				= 0;
+	int m_Strength				= 0;
+	int m_Agility				= 0;
+	int m_Sense					= 0;
+	int m_Skill					= 0;
 	int m_DEF					= 0;
 	int m_ThrowRange			= -1;
 	int m_DifficultyGroup		= -1;

@@ -48,10 +48,12 @@ public:
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 
+
 	void ResetTurnResources();
 	void BeginMove();
 	bool CommitMove(int targetQ, int targetR);
 	bool ConsumeActResource(int amount);
+	int CalculateDamage();
 
 	bool ConsumeCombatConfirmRequest();
 	bool ConsumePushPossible();
@@ -121,5 +123,7 @@ private:
 	bool m_ShopHasMoney = true;
 	GridSystemComponent* m_GridSystem;
 
-	GameObject* m_Item = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
+	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
+	GameObject* m_ConsumableItem[3] = { nullptr, };
+	bool m_IsApplyMeeleStat = false;
 };
