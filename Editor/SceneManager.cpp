@@ -124,12 +124,14 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-	m_InputManager->SetGameManager(m_GameManager);
+
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
 	if (m_GameManager)
 	{
+		m_CurrentScene->SetGameManager(m_GameManager);
+		m_InputManager->SetGameManager(m_GameManager);
 		m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 		m_GameManager->SetActiveScene(m_CurrentScene.get());
 		m_GameManager->ApplyPlayerData(m_CurrentScene.get());

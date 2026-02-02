@@ -91,7 +91,7 @@ void EnemyControllerComponent::Update(float deltaTime)
 	}
 
 	// 2) 전투(턴 기반): 여기서는 “AI 행동 요청 후 이동 완료되면 AITurnEndRequested”만 책임지게 하는 게 안전함
-	if (phase == Phase::TurnBasedCombat && gameManager->GetTurn() == Turn::EnemyTurn)
+	if (phase == Phase::TurnBasedCombat && gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn)
 	{
 		// AI가 이동/도주/거리유지 같은 “이동계열 요청”을 내렸고,
         // 그 이동이 끝났으면 적 턴 종료를 GameManager에 알려줌.
@@ -117,7 +117,8 @@ void EnemyControllerComponent::OnEvent(EventType type, const void* data)
 		return;
 
 	// 전투 중 EnemyTurn일 때만 AI 이동계열 요청 처리
-	if (gameManager->GetPhase() != Phase::TurnBasedCombat || gameManager->GetTurn() != Turn::EnemyTurn)
+	if (gameManager->GetPhase() != Phase::TurnBasedCombat
+		|| gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 		return;
 
 	EnemyMovementComponent* move = GetCurrentEnemyMovement();

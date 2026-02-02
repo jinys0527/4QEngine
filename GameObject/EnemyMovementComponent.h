@@ -1,8 +1,9 @@
 ﻿#pragma once
 #include "Component.h"
 #include <DirectXMath.h>
+#include <array>
+#include "GridSystemComponent.h"
 
-class GridSystemComponent;
 class EnemyComponent;
 class TransformComponent;
 
@@ -56,6 +57,9 @@ public:
 		int r = 0;
 	};
 
+	const std::array<PatrolPoint, 3>& GetPatrolPoints() const { return m_PatrolPoints; }
+	void SetPatrolPoints(const std::array<PatrolPoint, 3>& points);
+
 private:
 	std::array<PatrolPoint, 3> m_PatrolPoints{};
 	int  m_PatrolIndex = 0;
@@ -65,6 +69,10 @@ private:
 	EMoveOrder m_PendingOrder = EMoveOrder::None;
 
 	void SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir);
+	bool SelectMoveKeyTowardTarget(const AxialKey& start, const AxialKey& target, int moveRange,
+		AxialKey& outPrevious, AxialKey& outNext, bool& outReachedTarget) const;
+	bool MoveToNode(const AxialKey& previous, const AxialKey& current);
+	bool HasValidPatrolPoints(const std::array<PatrolPoint, 3>& points) const;
 
 	void GetSystem();
 	bool m_IsMoveComplete = false;

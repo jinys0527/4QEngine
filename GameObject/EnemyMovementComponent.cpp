@@ -5,11 +5,17 @@
 #include "Scene.h"
 #include "TransformComponent.h"
 #include "NodeComponent.h"
-#include "GridSystemComponent.h"
+#include "EnemyStatComponent.h"
 #include "EnemyComponent.h"
 #include "GameManager.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
+#undef max
 
 REGISTER_COMPONENT(EnemyMovementComponent)
+REGISTER_PROPERTY(EnemyMovementComponent, PatrolPoints)
 
 static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& current, ERotationOffset& outDir)
 {
@@ -63,7 +69,7 @@ void EnemyMovementComponent::Update(float deltaTime)
 
 	const bool combatEnemyTurn =
 		(gameManager->GetPhase() == Phase::TurnBasedCombat &&
-			gameManager->GetTurn() == Turn::EnemyTurn);
+			gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn);
 
 	if (!explorationEnemyStep && !combatEnemyTurn)
 		return;
@@ -73,7 +79,7 @@ void EnemyMovementComponent::Update(float deltaTime)
 	if (!enemy)
 		return;
 
-	if (enemy->GetCurrentTurn() != Turn::EnemyTurn)
+	if (explorationEnemyStep && enemy->GetCurrentTurn() != Turn::EnemyTurn)
 		return;
 
 	bool hasRequest = false;
@@ -98,13 +104,13 @@ void EnemyMovementComponent::Update(float deltaTime)
 	switch (m_PendingOrder)
 	{
 	case EMoveOrder::RunOff:
-		MovePatrol(); // TODO: 실제 도주 알고리즘으로 교체
+		MoveRunOff();
 		break;
 	case EMoveOrder::MaintainRange:
-		MovePatrol(); // TODO: 실제 거리유지 알고리즘으로 교체
+		MoveMaintainRange();
 		break;
 	case EMoveOrder::Approach:
-		MovePatrol(); // TODO: 실제 접근 알고리즘으로 교체
+		MoveApproach();
 		break;
 	case EMoveOrder::Patrol:
 	default:
@@ -145,14 +151,211 @@ void EnemyMovementComponent::OnEvent(EventType type, const void* data)
 
 void EnemyMovementComponent::MoveRunOff()
 {
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	if (!enemy || !m_GridSystem)
+	{
+		return;
+	}	
+
+	const int moveRange = enemy->GetMoveDistance();
+	if (moveRange <= 0)
+	{
+		return;
+	}
+
+	AxialKey playerKey{};
+	bool hasPlayer = false;
+	for (auto* node : m_GridSystem->GetNodes())
+	{
+		if (node && node->GetState() == NodeState::HasPlayer)
+		{
+			playerKey = { node->GetQ(), node->GetR() };
+			hasPlayer = true;
+			break;
+		}
+	}
+
+	if (!hasPlayer)
+	{
+		return;
+	}
+
+	const AxialKey start = { enemy->GetQ(), enemy->GetR() };
+	NodeComponent* bestNode = nullptr;
+	int bestDistance = -1;
+
+	for (auto* node : m_GridSystem->GetNodes())
+	{
+		if (!node || !node->GetIsMoveable() || node->GetState() != NodeState::Empty)
+		{
+			continue;
+		}
+
+		const AxialKey candidate{ node->GetQ(), node->GetR() };
+		const int distanceFromStart = m_GridSystem->GetShortestPathLength(start, candidate);
+		if (distanceFromStart <= 0 || distanceFromStart > moveRange)
+		{
+			continue;
+		}
+
+		const int distanceFromPlayer = m_GridSystem->GetShortestPathLength(candidate, playerKey);
+		if (distanceFromPlayer < 0)
+		{
+			continue;
+		}
+
+		if (distanceFromPlayer > bestDistance)
+		{
+			bestDistance = distanceFromPlayer;
+			bestNode = node;
+		}
+	}
+
+	if (!bestNode)
+	{
+		return;
+	}
+
+	AxialKey previous{};
+	AxialKey next{};
+	bool reachedTarget = false;
+	if (SelectMoveKeyTowardTarget(start, { bestNode->GetQ(), bestNode->GetR() }, moveRange, previous, next, reachedTarget))
+	{
+		MoveToNode(previous, next);
+	}
 }
 
 void EnemyMovementComponent::MoveApproach()
 {
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	if (!enemy || !m_GridSystem)
+	{
+		return;
+	}
+
+	const int moveRange = enemy->GetMoveDistance();
+	if (moveRange <= 0)
+	{
+		return;
+	}
+
+	AxialKey playerKey{};
+	bool hasPlayer = false;
+	for (auto* node : m_GridSystem->GetNodes())
+	{
+		if (node && node->GetState() == NodeState::HasPlayer)
+		{
+			playerKey = { node->GetQ(), node->GetR() };
+			hasPlayer = true;
+			break;
+		}
+	}
+
+	if (!hasPlayer)
+	{
+		return;
+	}
+
+	const AxialKey start{ enemy->GetQ(), enemy->GetR() };
+	AxialKey previous{};
+	AxialKey next{};
+	bool reachedTarget = false;
+	if (SelectMoveKeyTowardTarget(start, playerKey, moveRange, previous, next, reachedTarget))
+	{
+		MoveToNode(previous, next);
+	}
 }
 
 void EnemyMovementComponent::MoveMaintainRange()
 {
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	if (!enemy || !m_GridSystem)
+	{
+		return;
+	}
+
+	const int moveRange = enemy->GetMoveDistance();
+	if (moveRange <= 0)
+	{
+		return;
+	}
+
+	AxialKey playerKey{};
+	bool hasPlayer = false;
+	for (auto* node : m_GridSystem->GetNodes())
+	{
+		if (node && node->GetState() == NodeState::HasPlayer)
+		{
+			playerKey = { node->GetQ(), node->GetR() };
+			hasPlayer = true;
+			break;
+		}
+	}
+
+	if (!hasPlayer)
+	{
+		return;
+	}
+
+	int desiredRange = 3;
+	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
+	{
+		desiredRange = max(1, stat->GetMaxDiceValue());
+	}
+
+	const AxialKey start{ enemy->GetQ(), enemy->GetR() };
+	const int currentDistance = m_GridSystem->GetShortestPathLength(start, playerKey);
+	if (currentDistance >= 0 && std::abs(currentDistance - desiredRange) <= 1)
+	{
+		return;
+	}
+
+	NodeComponent* bestNode = nullptr;
+	int bestDelta = std::numeric_limits<int>::max();
+
+	for (auto* node : m_GridSystem->GetNodes())
+	{
+		if (!node || !node->GetIsMoveable() || node->GetState() != NodeState::Empty)
+		{
+			continue;
+		}
+
+		const AxialKey candidate{ node->GetQ(), node->GetR() };
+		const int distanceFromStart = m_GridSystem->GetShortestPathLength(start, candidate);
+		if (distanceFromStart <= 0 || distanceFromStart > moveRange)
+		{
+			continue;
+		}
+
+		const int distanceFromPlayer = m_GridSystem->GetShortestPathLength(candidate, playerKey);
+		if (distanceFromPlayer < 0)
+		{
+			continue;
+		}
+
+		const int delta = std::abs(distanceFromPlayer - desiredRange);
+		if (delta < bestDelta)
+		{
+			bestDelta = delta;
+			bestNode = node;
+		}
+	}
+
+	if (!bestNode)
+	{
+		return;
+	}
+
+	AxialKey previous{};
+	AxialKey next{};
+	bool reachedTarget = false;
+	if (SelectMoveKeyTowardTarget(start, { bestNode->GetQ(), bestNode->GetR() }, moveRange, previous, next, reachedTarget))
+	{
+		MoveToNode(previous, next);
+	}
 }
 
 void EnemyMovementComponent::RequestMoveToTarget()
@@ -188,6 +391,35 @@ void EnemyMovementComponent::MovePatrol()
 
 	const AxialKey start{ enemy->GetQ(), enemy->GetR() };
 
+	if (m_HasPatrolPoints)
+	{
+		for (size_t attempt = 0; attempt < m_PatrolPoints.size(); ++attempt)
+		{
+			const PatrolPoint& patrolPoint = m_PatrolPoints[m_PatrolIndex];
+			const AxialKey target{ patrolPoint.q, patrolPoint.r };
+
+			if (start.q == target.q && start.r == target.r)
+			{
+				m_PatrolIndex = (m_PatrolIndex + 1) % m_PatrolPoints.size();
+				continue;
+			}
+
+			AxialKey previous{};
+			AxialKey next{};
+			bool reachedTarget = false;
+			if (SelectMoveKeyTowardTarget(start, target, moveRange, previous, next, reachedTarget))
+			{
+				if (MoveToNode(previous, next) && reachedTarget)
+				{
+					m_PatrolIndex = (m_PatrolIndex + 1) % m_PatrolPoints.size();
+				}
+				return;
+			}
+
+			break;
+		}
+	}
+
 	NodeComponent* bestNode = nullptr;
 	int bestDistance = 100;
 
@@ -212,29 +444,22 @@ void EnemyMovementComponent::MovePatrol()
 	if (!bestNode)
 		return;
 
-	auto* targetOwner = bestNode->GetOwner();
-	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
-	auto* enemyTransform = owner->GetComponent<TransformComponent>();
-	if (!targetTransform || !enemyTransform)
-		return;
-
 	const AxialKey target{ bestNode->GetQ(), bestNode->GetR() };
-	const auto path = m_GridSystem->GetShortestPath(start, target);
-	if (path.size() >= 2)
+	AxialKey previous{};
+	AxialKey next{};
+	bool reachedTarget = false;
+	if (SelectMoveKeyTowardTarget(start, target, moveRange, previous, next, reachedTarget))
 	{
-		const AxialKey& previousKey = path[path.size() - 2];
-		const AxialKey& currentKey = path.back();
-		ERotationOffset rotation{};
-		if (TryGetRotationFromStep(previousKey, currentKey, rotation))
-		{
-			SetEnemyRotation(enemyTransform, rotation);
-			enemy->SetFacing(rotation); // 시야 범위
-		}
+		MoveToNode(previous, next);
 	}
-
-	enemyTransform->SetPosition(targetTransform->GetPosition());
 }
 
+void EnemyMovementComponent::SetPatrolPoints(const std::array<PatrolPoint, 3>& points)
+{
+	m_PatrolPoints = points;
+	m_HasPatrolPoints = HasValidPatrolPoints(m_PatrolPoints);
+	m_PatrolIndex = 0;
+}
 
 void EnemyMovementComponent::SetEnemyRotation(TransformComponent* transComp, ERotationOffset dir)
 {
@@ -266,6 +491,94 @@ void EnemyMovementComponent::SetEnemyRotation(TransformComponent* transComp, ERo
 	default:
 		break;
 	}
+}
+
+bool EnemyMovementComponent::SelectMoveKeyTowardTarget(const AxialKey& start, const AxialKey& target, int moveRange, AxialKey& outPrevious, AxialKey& outNext, bool& outReachedTarget) const
+{
+	if (!m_GridSystem || moveRange <= 0)
+	{
+		return false;
+	}
+
+	const auto path = m_GridSystem->GetShortestPath(start, target);
+	if (path.size() <= 1)
+	{
+		return false;
+	}
+
+	const size_t maxIndex = min(path.size() - 1, static_cast<size_t>(moveRange));
+	size_t chosenIndex = 0;
+
+	for (size_t i = maxIndex; i > 0; --i)
+	{
+		NodeComponent* node = m_GridSystem->GetNodeByKey(path[i]);
+		if (!node || !node->GetIsMoveable() || node->GetState() != NodeState::Empty)
+		{
+			continue;
+		}
+
+		chosenIndex = i;
+		break;
+	}
+
+	if (chosenIndex == 0)
+	{
+		return false;
+	}
+
+	outPrevious = path[chosenIndex - 1];
+	outNext = path[chosenIndex];
+	outReachedTarget = chosenIndex == path.size() - 1;
+	return true;
+}
+
+
+bool EnemyMovementComponent::MoveToNode(const AxialKey& previous, const AxialKey& current)
+{
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	auto* enemyTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+	if (!enemy || !enemyTransform || !m_GridSystem)
+	{
+		return false;
+	}
+
+	auto* targetNode = m_GridSystem->GetNodeByKey(current);
+	if (!targetNode)
+	{
+		return false;
+	}
+
+	auto* targetOwner = targetNode->GetOwner();
+	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
+	if (!targetTransform)
+	{
+		return false;
+	}
+
+	ERotationOffset rotation{};
+	if (TryGetRotationFromStep(previous, current, rotation))
+	{
+		SetEnemyRotation(enemyTransform, rotation);
+		enemy->SetFacing(rotation);
+	}
+
+	enemyTransform->SetPosition(targetTransform->GetPosition());
+	return true;
+}
+
+
+bool EnemyMovementComponent::HasValidPatrolPoints(const std::array<PatrolPoint, 3>& points) const
+{
+	for (const auto& point : points)
+	{
+		if (point.q != 0 || point.r != 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 

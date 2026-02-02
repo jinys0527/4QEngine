@@ -15,6 +15,13 @@ namespace CombatBehaviorTreeFactory
 	{
 		auto root = std::make_shared<Selector>();
 
+		if (dispatcher)
+		{
+			auto dispatchService = std::make_unique<AIRequestDispatchService>(dispatcher);
+			dispatchService->interval = 0.0f;
+			root->AddService(std::move(dispatchService));
+		}
+
 		auto buildSenseUpdateTask = [dispatcher]()
 			{
 				auto updateTask = std::make_shared<UpdateTargetLocationTask>();
@@ -23,7 +30,7 @@ namespace CombatBehaviorTreeFactory
 				updateTask->AddService(std::make_unique<RangeUpdateService>());
 				updateTask->AddService(std::make_unique<EstimatePlayerDamageService>());
 				updateTask->AddService(std::make_unique<RepathService>());
-				updateTask->AddService(std::make_unique<AIRequestDispatchService>(dispatcher));
+			
 				return updateTask;
 			};
 
@@ -42,8 +49,8 @@ namespace CombatBehaviorTreeFactory
 			auto combatSequence = std::make_shared<Sequance>();
 			combatSequence->AddChild(std::make_shared<BlackboardConditionTask>(BlackboardKeys::IsAlive, true));
 			combatSequence->AddChild(std::make_shared<BlackboardConditionTask>(BlackboardKeys::IsInCombat, true));
-			combatSequence->AddChild(std::make_shared<BlackboardConditionTask>(BlackboardKeys::HasTarget, true));
 			combatSequence->AddChild(buildSenseUpdateTask());
+			
 
 			auto combatSelector = std::make_shared<Selector>();
 

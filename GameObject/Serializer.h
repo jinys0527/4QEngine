@@ -10,6 +10,7 @@
 #include "MeshComponent.h"
 #include "FSMComponent.h"
 #include "AnimationComponent.h"
+#include "EnemyMovementComponent.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -774,6 +775,45 @@ struct Serializer<AnimationComponent::BlendConfig> {
 		v.blendTime = j.value("blendTime", 0.2f);
 		v.blendType = static_cast<AnimationComponent::BlendType>(j.value("blendType", 0));
 		v.curveName = j.value("curveName", std::string("Linear"));
+	}
+};
+
+// EnemyMovementComponent
+template<>
+struct Serializer<EnemyMovementComponent::PatrolPoint> {
+	static void ToJson(nlohmann::json& j, const EnemyMovementComponent::PatrolPoint& v) {
+		j = { {"q", v.q}, {"r", v.r} };
+	}
+
+	static void FromJson(const nlohmann::json& j, EnemyMovementComponent::PatrolPoint& v) {
+		v.q = j.value("q", 0);
+		v.r = j.value("r", 0);
+	}
+};
+
+template<>
+struct Serializer<std::array<EnemyMovementComponent::PatrolPoint, 3>> {
+	static void ToJson(nlohmann::json& j, const std::array<EnemyMovementComponent::PatrolPoint, 3>& v) {
+		j = nlohmann::json::array();
+		for (const auto& point : v)
+		{
+			nlohmann::json entry;
+			Serializer<EnemyMovementComponent::PatrolPoint>::ToJson(entry, point);
+			j.push_back(entry);
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::array<EnemyMovementComponent::PatrolPoint, 3>& v) {
+		if (!j.is_array())
+		{
+			return;
+		}
+
+		const size_t limit = min(j.size(), v.size());
+		for (size_t i = 0; i < limit; ++i)
+		{
+			Serializer<EnemyMovementComponent::PatrolPoint>::FromJson(j[i], v[i]);
+		}
 	}
 };
 
