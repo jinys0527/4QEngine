@@ -645,6 +645,65 @@ void AssetLoader::LoadAll()
 
 	const fs::path shaderRoot = "../MRenderer/fx";
 	LoadShaderSources(shaderRoot);
+
+	const fs::path uiTextureRoot = "../Resources/UI";
+	LoadLooseTextures(uiTextureRoot, true, "UI");
+}
+
+void AssetLoader::LoadLooseTextures(const fs::path& rootDir, bool sRGB, const std::string& displayPrefix)
+{
+	if (!fs::exists(rootDir) || !fs::is_directory(rootDir))
+	{
+		return;
+	}
+
+	auto isTextureFile = [](const fs::path& path)
+		{
+			std::string ext = path.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+			return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".dds";
+		};
+
+	for (const auto& entry : fs::recursive_directory_iterator(rootDir))
+	{
+		if (!entry.is_regular_file())
+		{
+			continue;
+		}
+
+		const fs::path filePath = entry.path();
+		if (!isTextureFile(filePath))
+		{
+			continue;
+		}
+
+		const fs::path normalizedPath = filePath.lexically_normal();
+		const std::string textureKey = normalizedPath.generic_string();
+		TextureHandle textureHandle = m_Textures.Load(textureKey, [normalizedPath, sRGB]()
+			{
+				auto tex = std::make_unique<RenderData::TextureData>();
+				tex->path = normalizedPath.generic_string();
+				tex->sRGB = sRGB;
+				return tex;
+			});
+
+		AssetLoadResult result{};
+		result.textures.push_back(textureHandle);
+		m_AssetsByPath[textureKey] = result;
+		StoreReferenceIfMissing(m_TextureRefs, textureHandle, textureKey, 0u);
+
+		fs::path displayPath = fs::relative(normalizedPath, rootDir).lexically_normal();
+		displayPath.replace_extension();
+		std::string displayName = displayPath.generic_string();
+		if (!displayPrefix.empty())
+		{
+			displayName = displayPrefix + "/" + displayName;
+		}
+		m_Textures.SetDisplayName(textureHandle, displayName);
+	}
 }
 
 void AssetLoader::LoadShaderSources(const fs::path& shaderDir)

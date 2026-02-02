@@ -58,6 +58,16 @@ extern "C" {
 	void Link_CollisionFSMComponent();
 	void Link_AnimFSMComponent();
 	void Link_UIFSMComponent();
+	void Link_UIButtonComponent();
+	void Link_UITextComponent();
+	void Link_UIProgressBarComponent();
+	void Link_UISliderComponent();
+	void Link_SizeBox();
+	void Link_ScaleBox();
+	void Link_Border();
+	void Link_Canvas();
+	void Link_HorizontalBox();
+	void Link_UIImageComponent();
 	void Link_BoxColliderComponent();
 	
 	//User Defined
@@ -110,6 +120,16 @@ void LinkEngineComponents() {
 	Link_CollisionFSMComponent();
 	Link_AnimFSMComponent();
 	Link_UIFSMComponent();
+	Link_UIButtonComponent();
+	Link_UITextComponent();
+	Link_UIProgressBarComponent();
+	Link_UISliderComponent();
+	Link_SizeBox();
+	Link_ScaleBox();
+	Link_Border();
+	Link_Canvas();
+	Link_HorizontalBox();
+	Link_UIImageComponent();
 	Link_SceneChangeTestComponent();
 	Link_BoxColliderComponent();
 

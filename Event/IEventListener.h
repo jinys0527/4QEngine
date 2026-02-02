@@ -14,6 +14,8 @@ enum class EventType
 	MouseRightClickUp,
 	Dragged, 
 	Hovered,
+	MouseWheelUp,
+	MouseWheelDown,
 
 	//UI
 	Pressed,

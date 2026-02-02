@@ -15,7 +15,7 @@ public:
 	const char* GetTypeName() const override;
 
 	CameraLogicComponent() =default;
-	virtual ~CameraLogicComponent() = default;
+	virtual ~CameraLogicComponent();
 
 	void SetMaxZoom(const float& value) { m_MaxZoom = value; }
 	void SetMinZoom(const float& value) { m_MinZoom = value; }
@@ -26,7 +26,6 @@ public:
 	const float& GetMoveSpeed() const { return m_MoveSpeed; }
 
 	void Start() override;
-
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
@@ -37,4 +36,6 @@ private:
 	float m_MoveSpeed = 2.0f;
 	float m_ZoomSpeed = 2.0f;
 
+	TransformComponent* m_Transform;
+	CameraComponent*    m_Camera;
 };
