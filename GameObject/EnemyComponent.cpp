@@ -23,6 +23,7 @@
 #include <cmath>
 #include <algorithm>
 #include < utility >
+#include <iostream>
 
 REGISTER_COMPONENT(EnemyComponent)
 REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
@@ -257,6 +258,36 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto* scene = owner->GetScene();
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	
+	if (!m_TargetPlayer && scene)
+	{
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			if (!m_GridSystem)
+			{
+				if (auto* grid = object->GetComponent<GridSystemComponent>())
+				{
+					m_GridSystem = grid;
+				}
+			}
+
+			if (auto* player = object->GetComponent<PlayerComponent>())
+			{
+				m_TargetTransform = object->GetComponent<TransformComponent>();
+				m_TargetPlayer = player;
+				if (m_GridSystem)
+				{
+					break;
+				}
+			}
+		}
+	}
 
 	auto& bb = m_AIController->GetBlackboard();
 	bb.Set(BlackboardKeys::IsInCombat, gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat);
@@ -317,28 +348,6 @@ void EnemyComponent::Update(float deltaTime) {
 		return;
 	}
 
-
-	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop && m_TargetPlayer)
-	{
-		int attackRange = 1;
-		if (auto* stat = owner->GetComponent<EnemyStatComponent>())
-		{
-			attackRange = max(1, stat->GetAttackRange());
-		}
-		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
-		if (distance <= attackRange)
-		{
-			auto* playerOwner = m_TargetPlayer->GetOwner();
-			if (playerOwner)
-			{
-				if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
-				{
-					combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
-				}
-			}
-			return;
-		}
-	}
 	
 	bb.Set(BlackboardKeys::SelfQ, m_Q);
 	bb.Set(BlackboardKeys::SelfR, m_R);
@@ -346,10 +355,12 @@ void EnemyComponent::Update(float deltaTime) {
 	float sightDistance = 0.0f;
 
 	int attackRange = 1;
+	bool preferRanged = false;
 	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
 	{
 		sightDistance = stat->GetSightDistance();
 		attackRange   = max(1, stat->GetAttackRange());
+		preferRanged = attackRange > 1;
 		bb.Set(BlackboardKeys::SightDistance, sightDistance);
 		bb.Set(BlackboardKeys::SightAngle,    stat->GetSightAngle());
 		bb.Set(BlackboardKeys::ThrowRange,    static_cast<float>(stat->GetMaxDiceValue()));
@@ -359,6 +370,7 @@ void EnemyComponent::Update(float deltaTime) {
 	else
 	{
 		sightDistance = 100.0f;
+		preferRanged = false;
 		bb.Set(BlackboardKeys::SightDistance, sightDistance);
 		bb.Set(BlackboardKeys::SightAngle, 180.0f);
 		bb.Set(BlackboardKeys::ThrowRange, 3.0f);
@@ -368,8 +380,16 @@ void EnemyComponent::Update(float deltaTime) {
 
 	if (m_TargetPlayer)
 	{
+		std::cout << "[AI][Enemy] Target set: actor=" << GetActorId()
+			<< " q=" << m_TargetPlayer->GetQ()
+			<< " r=" << m_TargetPlayer->GetR() << "\n";
 		bb.Set(BlackboardKeys::TargetQ, m_TargetPlayer->GetQ());
 		bb.Set(BlackboardKeys::TargetR, m_TargetPlayer->GetR());
+	}
+	else
+	{
+		std::cout << "[AI][Enemy] Target missing: actor=" << GetActorId()
+			<< " m_TargetPlayer=null\n";
 	}
 
 	const bool hasHexData = m_GridSystem && m_TargetPlayer;
@@ -406,6 +426,8 @@ void EnemyComponent::Update(float deltaTime) {
 		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
 		if (targetVisible && distance <= attackRange)
 		{
+			std::cout << "[AI][Enemy] Combat enter: distance=" << distance
+				<< " attackRange=" << attackRange << " targetVisible=" << targetVisible << "\n";
 			auto* playerOwner = m_TargetPlayer->GetOwner();
 			if (playerOwner)
 			{
@@ -418,8 +440,12 @@ void EnemyComponent::Update(float deltaTime) {
 		}
 	}
 
-	bb.Set(BlackboardKeys::PreferRanged, false);
+	bb.Set(BlackboardKeys::PreferRanged, preferRanged);
 	bb.Set(BlackboardKeys::MaintainRange, false);
+
+	std::cout << "[AI][Enemy] Tick AI: actor=" << GetActorId()
+		<< " phase=" << (gameManager ? static_cast<int>(gameManager->GetPhase()) : -1)
+		<< " inCombat=" << (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat) << "\n";
 
 	m_AIController->Tick(deltaTime);
 

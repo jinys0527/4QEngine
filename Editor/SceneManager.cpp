@@ -59,7 +59,9 @@ void SceneManager::Update(float deltaTime)
 	if (!m_CurrentScene)
 		return;
 	if (m_CurrentScene->GetIsPause())
-		deltaTime = 0.0f;
+	{
+		return;
+	}
 
 	static float totalTime = 0;
 	totalTime += deltaTime;

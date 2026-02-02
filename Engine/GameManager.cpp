@@ -967,6 +967,17 @@ void GameManager::ResolveEnemyAttack()
 		const int nextHp = std::max(0, prevHp - result.damage);
 		playerStat->SetCurrentHP(nextHp);
 		std::cout << "[Combat] Player HP: " << prevHp << " -> " << nextHp << std::endl;
+		if (nextHp <= 0)
+		{
+			if (m_Services && m_Services->Has<CombatManager>())
+			{
+				m_Services->Get<CombatManager>().UpdateBattleOutcome(false, true);
+			}
+			if (m_EventDispatcher && m_Phase != Phase::GameOver)
+			{
+				m_EventDispatcher->Dispatch(EventType::GameOver, nullptr);
+			}
+		}
 	}
 }
 

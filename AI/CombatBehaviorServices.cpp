@@ -1,6 +1,7 @@
 ﻿#include "CombatBehaviorServices.h"
 #include "Blackboard.h"
 #include "BlackboardKeys.h"
+#include <iostream>
 #include <cmath>
 #include "EventDispatcher.h"
 #include "IEventListener.h"
@@ -37,6 +38,16 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	bool hasHexSightData = false;
 	bool hasTargetHexLine = false;
 
+	bool isInCombat = false;
+	bb.TryGet(BlackboardKeys::IsInCombat, isInCombat);
+	if (isInCombat)
+	{
+		std::cout << "[AI][Sense] InCombat=true -> HasTarget=true\n";
+		bb.Set(BlackboardKeys::HasTarget, true);
+		return;
+	}
+
+
 	const bool hasHexData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
 		&& TryGetInt(bb, BlackboardKeys::SelfR, selfR)
 		&& TryGetInt(bb, BlackboardKeys::TargetQ, targetQ)
@@ -44,6 +55,7 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 
 	if (!hasHexData)
 	{
+		std::cout << "[AI][Sense] Missing hex data -> HasTarget=false\n";
 		bb.Set(BlackboardKeys::HasTarget, false);
 		return;
 	}
@@ -59,6 +71,9 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	const bool useHexSight = bb.TryGet(BlackboardKeys::HasHexSightData, hasHexSightData)
 		&& hasHexSightData
 		&& bb.TryGet(BlackboardKeys::HasTargetHexLine, hasTargetHexLine);
+	std::cout << "[AI][Sense] useHexSight=" << useHexSight
+		<< " hasTargetHexLine=" << hasTargetHexLine << " -> HasTarget="
+		<< (useHexSight && hasTargetHexLine) << "\n";
 	bb.Set(BlackboardKeys::HasTarget, useHexSight && hasTargetHexLine);
 }
 
@@ -90,11 +105,17 @@ void RangeUpdateService::TickService(BTInstance& inst, Blackboard& bb, float del
 
 	bb.Set(BlackboardKeys::InMeleeRange, distance <= meleeRange);
 	bb.Set(BlackboardKeys::InThrowRange, distance <= throwRange);
+	std::cout << "[AI][Range] distance=" << distance
+		<< " meleeRange=" << meleeRange << " throwRange=" << throwRange
+		<< " inMelee=" << (distance <= meleeRange)
+		<< " inThrow=" << (distance <= throwRange) << "\n";
 
 	// 추가: 원거리 선호면 MaintainRange 켜기
 	bool preferRanged = false;
 	bb.TryGet(BlackboardKeys::PreferRanged, preferRanged);
 	bb.Set(BlackboardKeys::MaintainRange, preferRanged);
+	std::cout << "[AI][Range] preferRanged=" << preferRanged
+		<< " maintainRange=" << preferRanged << "\n";
 }
 
 void EstimatePlayerDamageService::TickService(BTInstance& inst, Blackboard& bb, float deltaTime)
@@ -145,6 +166,7 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	bool moveRequested = false;
 	if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
 	{
+		std::cout << "[AI][Dispatch] MoveRequested\n";
 		m_Dispatcher->Dispatch(EventType::AIMoveRequested, nullptr);
 		bb.Set(BlackboardKeys::MoveRequested, false);
 	}
@@ -153,6 +175,7 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	bool runOffMoveRequested = false;
 	if (bb.TryGet(BlackboardKeys::RequestRunOffMove, runOffMoveRequested) && runOffMoveRequested)
 	{
+		std::cout << "[AI][Dispatch] RunOffMoveRequested\n";
 		m_Dispatcher->Dispatch(EventType::AIRunOffMoveRequested, nullptr);
 		bb.Set(BlackboardKeys::RequestRunOffMove, false);
 	}
@@ -161,22 +184,15 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	bool maintainRangeRequested = false;
 	if (bb.TryGet(BlackboardKeys::RequestMaintainRange, maintainRangeRequested) && maintainRangeRequested)
 	{
+		std::cout << "[AI][Dispatch] MaintainRangeRequested\n";
 		m_Dispatcher->Dispatch(EventType::AIMaintainRangeRequested, nullptr);
 		bb.Set(BlackboardKeys::RequestMaintainRange, false);
 	}
 
-	// 4) End Turn
-	bool endTurnRequested = false;
-	if (bb.TryGet(BlackboardKeys::EndTurnRequested, endTurnRequested) && endTurnRequested)
-	{
-		m_Dispatcher->Dispatch(EventType::AITurnEndRequested, nullptr);
-		bb.Set(BlackboardKeys::EndTurnRequested, false);
-	}
-
-
 	bool meleeRequested = false;
 	if (bb.TryGet(BlackboardKeys::RequestMeleeAttack, meleeRequested) && meleeRequested)
 	{
+		std::cout << "[AI][Dispatch] MeleeAttackRequested\n";
 		m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, nullptr);
 		bb.Set(BlackboardKeys::RequestMeleeAttack, false);
 	}
@@ -184,7 +200,17 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	bool rangedRequested = false;
 	if (bb.TryGet(BlackboardKeys::RequestRangedAttack, rangedRequested) && rangedRequested)
 	{
+		std::cout << "[AI][Dispatch] RangedAttackRequested\n";
 		m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, nullptr);
 		bb.Set(BlackboardKeys::RequestRangedAttack, false);
+	}
+
+	// 4) End Turn
+	bool endTurnRequested = false;
+	if (bb.TryGet(BlackboardKeys::EndTurnRequested, endTurnRequested) && endTurnRequested)
+	{
+		std::cout << "[AI][Dispatch] TurnEndRequested\n";
+		m_Dispatcher->Dispatch(EventType::AITurnEndRequested, nullptr);
+		bb.Set(BlackboardKeys::EndTurnRequested, false);
 	}
 }
