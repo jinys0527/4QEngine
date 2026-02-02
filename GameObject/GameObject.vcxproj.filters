@@ -154,6 +154,9 @@
     <ClCompile Include="ItemComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CameraLogicComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="UITextComponent.cpp">
       <Filter>Components\UI\Source Files</Filter>
     </ClCompile>
@@ -355,6 +358,9 @@
     <ClInclude Include="ItemComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CameraLogicComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+     </ClInclude>
     <ClInclude Include="UIPrimitives.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>

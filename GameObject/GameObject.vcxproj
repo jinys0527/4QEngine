@@ -309,6 +309,7 @@
     <ClInclude Include="AnimFSMComponent.h" />
     <ClInclude Include="Border.h" />
     <ClInclude Include="BoxColliderComponent.h" />
+    <ClInclude Include="CameraLogicComponent.h" />
     <ClInclude Include="Canvas.h" />
     <ClInclude Include="ComponentTemplate.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">true</ExcludedFromBuild>
@@ -384,6 +385,7 @@
     <ClCompile Include="AnimFSMComponent.cpp" />
     <ClCompile Include="Border.cpp" />
     <ClCompile Include="BoxColliderComponent.cpp" />
+    <ClCompile Include="CameraLogicComponent.cpp" />
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="ComponentTemplate.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">true</ExcludedFromBuild>
