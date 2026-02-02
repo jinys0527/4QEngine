@@ -101,6 +101,10 @@ void SceneManager::Render()
 
 	RenderData::FrameData frameData{};
 	m_CurrentScene->Render(frameData);
+	if (m_UIManager)
+	{
+		m_UIManager->BuildUIFrameData(frameData);
+	}
 	/*std::vector<RenderInfo> renderInfo;
 	std::vector<UIRenderInfo> uiRenderInfo;
 	std::vector<UITextInfo> uiTextInfo;
@@ -126,6 +130,8 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+	m_UIManager->SetCurrentScene(m_CurrentScene->GetName());
+	m_UIManager->RefreshUIListForCurrentScene();
 	SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
 	if (m_GameManager)
@@ -296,6 +302,11 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 
+	if (m_UIManager && j.contains("ui"))
+	{
+		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
+	}
+
 	return true;
 }
 
@@ -321,6 +332,11 @@ bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::
 	SetCurrentScene(loadedScene);
 	m_CurrentScenePath = filePath;
 
+	if (m_UIManager && data.contains("ui"))
+	{
+		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), data.at("ui"));
+	}
+
 	return true;
 }
 
@@ -334,15 +350,89 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 
 	const_cast<Scene*>(m_CurrentScene.get())->EnsureAutoComponentsForSave();
 
+	nlohmann::json currentData;
+	m_CurrentScene->Serialize(currentData);
+
+	if (m_UIManager)
+	{
+		nlohmann::json uiData;
+		m_UIManager->SerializeSceneUI(m_CurrentScene->GetName(), uiData);
+		currentData["ui"] = uiData;
+	}
+
+	nlohmann::json mergedData = currentData;
+	if (std::filesystem::exists(filePath))
+	{
+		std::ifstream ifs(filePath);
+		if (ifs.is_open())
+		{
+			try
+			{
+				ifs >> mergedData;
+			}
+			catch (const nlohmann::json::exception&)
+			{
+				mergedData = nlohmann::json::object();
+			}
+		}
+	}
+
+	auto mergeNamedArray = [](const nlohmann::json& base, const nlohmann::json& incoming)
+		{
+			std::unordered_map<std::string, nlohmann::json> byName;
+			if (base.is_array())
+			{
+				for (const auto& entry : base)
+				{
+					if (entry.contains("name"))
+					{
+						byName[entry.at("name").get<std::string>()] = entry;
+					}
+				}
+			}
+			if (incoming.is_array())
+			{
+				for (const auto& entry : incoming)
+				{
+					if (entry.contains("name"))
+					{
+						byName[entry.at("name").get<std::string>()] = entry;
+					}
+				}
+			}
+			nlohmann::json result = nlohmann::json::array();
+			for (const auto& [name, entry] : byName)
+			{
+				result.push_back(entry);
+			}
+			return result;
+		};
+
+	if (!mergedData.is_object())
+	{
+		mergedData = nlohmann::json::object();
+	}
+
+	mergedData["editor"] = currentData.value("editor", nlohmann::json::object());
+	mergedData["gameObjects"] = mergeNamedArray(mergedData.value("gameObjects", nlohmann::json::array()),
+		currentData.value("gameObjects", nlohmann::json::array()));
+	const nlohmann::json currentUi = currentData.value("ui", nlohmann::json::array());
+	if (currentUi.is_object())
+	{
+		mergedData["ui"] = currentUi;
+	}
+	else
+	{
+		mergedData["ui"] = mergeNamedArray(mergedData.value("ui", nlohmann::json::array()), currentUi);
+	}
+
 	std::ofstream ofs(filePath);
 	if (!ofs.is_open())
 	{
 		return false;
 	}
 
-	nlohmann::json j;
-	m_CurrentScene->Serialize(j);
-	ofs << j.dump(4);
+	ofs << mergedData.dump(4);
 	return true;
 	
 }

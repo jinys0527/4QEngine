@@ -9,8 +9,13 @@
 #include "ResourceHandle.h"
 #include "MeshComponent.h"
 #include "FSMComponent.h"
+#include "Canvas.h"
+#include "HorizontalBox.h"
+#include "UIObject.h"
+#include "UIFSMComponent.h"
 #include "AnimationComponent.h"
 #include "EnemyMovementComponent.h"
+#include "UIPrimitives.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -81,6 +86,176 @@ struct Serializer<XMFLOAT2> {
 //	static void ToJson(nlohmann::json& j, const MyEnum& v) { j = static_cast<int>(v); }
 //	static void FromJson(const nlohmann::json& j, MyEnum& v) { v = static_cast<MyEnum>(j.get<int>()); }
 //};
+
+// UI
+
+template <>
+struct Serializer<CanvasSlot> {
+	static void ToJson(nlohmann::json& j, const CanvasSlot& v) {
+		const std::string childName = v.child ? v.child->GetName() : v.childName;
+		j["child"] = childName;
+		j["rect"] = { {"x", v.rect.x}, {"y", v.rect.y}, {"w", v.rect.width}, {"h", v.rect.height} };
+	}
+	static void FromJson(const nlohmann::json& j, CanvasSlot& v) {
+		v.child = nullptr;
+		v.childName = j.value("child", "");
+		if (j.contains("rect")) {
+			const auto& rect = j.at("rect");
+			v.rect.x = rect.value("x", v.rect.x);
+			v.rect.y = rect.value("y", v.rect.y);
+			v.rect.width = rect.value("w", v.rect.width);
+			v.rect.height = rect.value("h", v.rect.height);
+		}
+	}
+};
+
+template <>
+struct Serializer<std::vector<CanvasSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<CanvasSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& slot : v) {
+			nlohmann::json entry;
+			Serializer<CanvasSlot>::ToJson(entry, slot);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<CanvasSlot>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			CanvasSlot slot{};
+			Serializer<CanvasSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+template <>
+struct Serializer<HorizontalBoxSlot> {
+	static void ToJson(nlohmann::json& j, const HorizontalBoxSlot& v) {
+		const std::string childName = v.child ? v.child->GetName() : v.childName;
+		j["child"] = childName;
+		j["desiredSize"] = { {"w", v.desiredSize.width}, {"h", v.desiredSize.height} };
+		j["padding"] = v.padding;
+		j["fillWeight"] = v.fillWeight;
+		j["alignment"] = static_cast<int>(v.alignment);
+	}
+	static void FromJson(const nlohmann::json& j, HorizontalBoxSlot& v) {
+		v.child = nullptr;
+		v.childName = j.value("child", "");
+		if (j.contains("desiredSize")) {
+			const auto& size = j.at("desiredSize");
+			v.desiredSize.width = size.value("w", v.desiredSize.width);
+			v.desiredSize.height = size.value("h", v.desiredSize.height);
+		}
+		v.padding = j.value("padding", v.padding);
+		v.fillWeight = j.value("fillWeight", v.fillWeight);
+		const int alignmentValue = j.value("alignment", static_cast<int>(v.alignment));
+		if (alignmentValue >= static_cast<int>(UIHorizontalAlignment::Left)
+			&& alignmentValue <= static_cast<int>(UIHorizontalAlignment::Fill)) {
+			v.alignment = static_cast<UIHorizontalAlignment>(alignmentValue);
+		}
+	}
+};
+
+template <>
+struct Serializer<std::vector<HorizontalBoxSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<HorizontalBoxSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& slot : v) {
+			nlohmann::json entry;
+			Serializer<HorizontalBoxSlot>::ToJson(entry, slot);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<HorizontalBoxSlot>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			HorizontalBoxSlot slot{};
+			Serializer<HorizontalBoxSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+
+template<>
+struct Serializer<UISize> {
+	static void ToJson(nlohmann::json& j, const UISize& v) {
+		j = { {"width", v.width}, {"height", v.height} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UISize& v) {
+		v.width = j.value("width", 0.0f);
+		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIRect> {
+	static void ToJson(nlohmann::json& j, const UIRect& v) {
+		j = { {"x", v.x}, {"y", v.y}, {"width", v.width}, {"height", v.height} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UIRect& v) {
+		v.x = j.value("x", 0.0f);
+		v.y = j.value("y", 0.0f);
+		v.width = j.value("width", 0.0f);
+		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIPadding> {
+	static void ToJson(nlohmann::json& j, const UIPadding& v) {
+		j = { {"left", v.left}, {"top", v.top}, {"right", v.right}, {"bottom", v.bottom} };
+	}
+	static void FromJson(const nlohmann::json& j, UIPadding& v) {
+		v.left = j.value("left", 0.0f);
+		v.top = j.value("top", 0.0f);
+		v.right = j.value("right", 0.0f);
+		v.bottom = j.value("bottom", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIStretch> {
+	static void ToJson(nlohmann::json& j, const UIStretch& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIStretch& v) {
+		v = static_cast<UIStretch>(j.get<int>());
+	}
+};
+
+template<>
+struct Serializer<UIStretchDirection> {
+	static void ToJson(nlohmann::json& j, const UIStretchDirection& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIStretchDirection& v) {
+		v = static_cast<UIStretchDirection>(j.get<int>());
+	}
+};
+
+template<>
+struct Serializer<UIFillDirection> {
+	static void ToJson(nlohmann::json& j, const UIFillDirection& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIFillDirection& v) {
+		v = static_cast<UIFillDirection>(j.get<int>());
+	}
+};
 
 // Camera
 template<>
@@ -733,6 +908,76 @@ struct Serializer<FSMGraph> {
 	static void FromJson(const nlohmann::json& j, FSMGraph& v) {
 		v.initialState = j.value("initialState", std::string());
 		Serializer<std::vector<FSMState>>::FromJson(j.value("states", nlohmann::json::array()), v.states);;
+	}
+};
+
+template<>
+struct Serializer<UIFSMEventCallback> {
+	static void ToJson(nlohmann::json& j, const UIFSMEventCallback& v) {
+		j["eventName"] = v.eventName;
+		j["callbackId"] = v.callbackId;
+	}
+	static void FromJson(const nlohmann::json& j, UIFSMEventCallback& v) {
+		v.eventName = j.value("eventName", v.eventName);
+		v.callbackId = j.value("callbackId", v.callbackId);
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIFSMEventCallback>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIFSMEventCallback>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v) {
+			nlohmann::json item;
+			Serializer<UIFSMEventCallback>::ToJson(item, entry);
+			j.push_back(std::move(item));
+		}
+	}
+	static void FromJson(const nlohmann::json& j, std::vector<UIFSMEventCallback>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		for (const auto& entry : j) {
+			UIFSMEventCallback item{};
+			Serializer<UIFSMEventCallback>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<UIFSMCallbackAction> {
+	static void ToJson(nlohmann::json& j, const UIFSMCallbackAction& v) {
+		j["callbackId"] = v.callbackId;
+		Serializer<std::vector<FSMAction>>::ToJson(j["actions"], v.actions);
+	}
+	static void FromJson(const nlohmann::json& j, UIFSMCallbackAction& v) {
+		v.callbackId = j.value("callbackId", v.callbackId);
+		Serializer<std::vector<FSMAction>>::FromJson(j.value("actions", nlohmann::json::array()), v.actions);
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIFSMCallbackAction>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIFSMCallbackAction>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v) {
+			nlohmann::json item;
+			Serializer<UIFSMCallbackAction>::ToJson(item, entry);
+			j.push_back(std::move(item));
+		}
+	}
+	static void FromJson(const nlohmann::json& j, std::vector<UIFSMCallbackAction>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		for (const auto& entry : j) {
+			UIFSMCallbackAction item{};
+			Serializer<UIFSMCallbackAction>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
 	}
 };
 

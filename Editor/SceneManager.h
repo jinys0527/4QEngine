@@ -51,6 +51,8 @@ public:
 
 	void SetChangeScene(std::string name);
 
+	UIManager* GetUIManager() const { return m_UIManager; }
+
 private:
 
 	const std::filesystem::path* FindScenePathByName(const std::string& name) const;
