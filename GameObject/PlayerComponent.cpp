@@ -18,8 +18,6 @@ REGISTER_PROPERTY(PlayerComponent, ActResource)
 REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
 REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
-REGISTER_PROPERTY(PlayerComponent, PlayerTurnTime)
-REGISTER_PROPERTY_READONLY(PlayerComponent, TurnElapsed)
 REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
@@ -81,15 +79,16 @@ void PlayerComponent::Update(float deltaTime) {
 
 
 	//Player Turn 종료 조건
-	if (allowExplorationTurn) {
-		m_TurnElapsed += deltaTime;
-
-		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
-			//종료(턴 전환)
-			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
-			m_TurnEndRequested = true;
-		}
-	}
+// 	if (allowExplorationTurn) {
+// 		m_TurnElapsed += deltaTime;
+// 
+// 		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
+// 			//종료(턴 전환)
+// 			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+// 			m_TurnEndRequested = true;
+// 		}
+// 	}
+	// 이제 전체 턴 관리하는 GameManager에서 넘김 여기선 UI에서 턴 종료했을때만 처리하면 될듯
 
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
@@ -164,7 +163,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	}
 
 	m_CurrentTurn = static_cast<Turn>(payload->turn);
-	m_TurnElapsed = 0.0f;
 	m_TurnEndRequested = false;
 	if (m_CurrentTurn == Turn::PlayerTurn)
 	{
@@ -177,7 +175,6 @@ void PlayerComponent::ResetTurnResources()
 {
 	m_RemainMoveResource = m_MoveResource;
 	m_RemainActResource = m_ActResource;
-	m_TurnElapsed = 0.0f;
 	m_HasMoveStart = false;
 	m_CombatConfirmRequested = false;
 	ResetSubFSMFlags();

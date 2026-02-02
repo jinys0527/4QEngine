@@ -243,8 +243,8 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto* scene = owner->GetScene();
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-	if (gameManager && (gameManager->GetPhase() != Phase::TurnBasedCombat
-		|| gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn))
+	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat
+		&& gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 	{
 		return;
 	}
@@ -327,23 +327,26 @@ void EnemyComponent::Update(float deltaTime) {
 
 	m_AIController->Tick(deltaTime);
 
-	bool moveRequested = false;
-	bool runOffRequested = false;
-	bool maintainRangeRequested = false;
-	if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
+	if (!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat)
 	{
-		m_MoveRequested = true;
-		bb.Set(BlackboardKeys::MoveRequested, false);
-	}
-	if (bb.TryGet(BlackboardKeys::RequestRunOffMove, runOffRequested) && runOffRequested)
-	{
-		m_MoveRequested = true;
-		bb.Set(BlackboardKeys::RequestRunOffMove, false);
-	}
-	if (bb.TryGet(BlackboardKeys::RequestMaintainRange, maintainRangeRequested) && maintainRangeRequested)
-	{
-		m_MoveRequested = true;
-		bb.Set(BlackboardKeys::RequestMaintainRange, false);
+		bool moveRequested = false;
+		bool runOffRequested = false;
+		bool maintainRangeRequested = false;
+		if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
+		{
+			m_MoveRequested = true;
+			bb.Set(BlackboardKeys::MoveRequested, false);
+		}
+		if (bb.TryGet(BlackboardKeys::RequestRunOffMove, runOffRequested) && runOffRequested)
+		{
+			m_MoveRequested = true;
+			bb.Set(BlackboardKeys::RequestRunOffMove, false);
+		}
+		if (bb.TryGet(BlackboardKeys::RequestMaintainRange, maintainRangeRequested) && maintainRangeRequested)
+		{
+			m_MoveRequested = true;
+			bb.Set(BlackboardKeys::RequestMaintainRange, false);
+		}
 	}
 }
 

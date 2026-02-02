@@ -307,8 +307,10 @@
     <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimBlendCurveFunction.h" />
     <ClInclude Include="AnimFSMComponent.h" />
+    <ClInclude Include="Border.h" />
     <ClInclude Include="BoxColliderComponent.h" />
     <ClInclude Include="CameraLogicComponent.h" />
+    <ClInclude Include="Canvas.h" />
     <ClInclude Include="ComponentTemplate.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -324,6 +326,7 @@
     <ClInclude Include="FloodSystemComponent.h" />
     <ClInclude Include="FloodUIComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
+    <ClInclude Include="HorizontalBox.h" />
     <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="ItemComponent.h" />
     <ClInclude Include="NodeComponent.h" />
@@ -357,8 +360,10 @@
     <ClInclude Include="PointLightComponent.h" />
     <ClInclude Include="Reflection.h" />
     <ClInclude Include="ReflectionMacro.h" />
+    <ClInclude Include="ScaleBox.h" />
     <ClInclude Include="SceneChangeTestComponent.h" />
     <ClInclude Include="Serializer.h" />
+    <ClInclude Include="SizeBox.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="SkeletalMeshRenderer.h" />
     <ClInclude Include="SkinningAnimationComponent.h" />
@@ -368,7 +373,9 @@
     <ClInclude Include="UIButtonComponent.h" />
     <ClInclude Include="UIComponent.h" />
     <ClInclude Include="UIFSMComponent.h" />
+    <ClInclude Include="UIImageComponent.h" />
     <ClInclude Include="UIObject.h" />
+    <ClInclude Include="UIPrimitives.h" />
     <ClInclude Include="UIProgressBarComponent.h" />
     <ClInclude Include="UISliderComponent.h" />
     <ClInclude Include="UITextComponent.h" />
@@ -376,8 +383,10 @@
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
     <ClCompile Include="AnimFSMComponent.cpp" />
+    <ClCompile Include="Border.cpp" />
     <ClCompile Include="BoxColliderComponent.cpp" />
     <ClCompile Include="CameraLogicComponent.cpp" />
+    <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="ComponentTemplate.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_NoneBlur|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -393,6 +402,7 @@
     <ClCompile Include="FloodSystemComponent.cpp" />
     <ClCompile Include="FloodUIComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
+    <ClCompile Include="HorizontalBox.cpp" />
     <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="ItemComponent.cpp" />
     <ClCompile Include="NodeComponent.cpp" />
@@ -424,7 +434,9 @@
     <ClCompile Include="PlayerMovementComponent.cpp" />
     <ClCompile Include="PointLightComponent.cpp" />
     <ClCompile Include="Reflection.cpp" />
+    <ClCompile Include="ScaleBox.cpp" />
     <ClCompile Include="SceneChangeTestComponent.cpp" />
+    <ClCompile Include="SizeBox.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
     <ClCompile Include="SkinningAnimationComponent.cpp" />
@@ -434,6 +446,7 @@
     <ClCompile Include="UIButtonComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
     <ClCompile Include="UIFSMComponent.cpp" />
+    <ClCompile Include="UIImageComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
     <ClCompile Include="UIProgressBarComponent.cpp" />
     <ClCompile Include="UISliderComponent.cpp" />

@@ -3,6 +3,7 @@
 #include <variant>
 #include <string>
 #include <cstdint>
+#include <shared_mutex>
 
 using BBValue = std::variant<std::monostate, bool, int, float, std::string>;
 
@@ -20,6 +21,7 @@ public:
 	template<typename T>
 	bool TryGet(const std::string& key, T& out) const
 	{
+		std::shared_lock lock(m_Mutex);
 		auto it = m_Data.find(key);
 		if (it == m_Data.end())
 			return false;
@@ -32,6 +34,7 @@ public:
 	template<typename T>
 	bool Set(const std::string& key, const T& value)
 	{
+		std::unique_lock lock(m_Mutex);
 		auto& e = m_Data[key];
 
 		// 정책: 값 동일하면 version 증가 안 함
@@ -47,6 +50,7 @@ public:
 	uint32_t GetVersion(const std::string& key) const;
 
 private:
+	mutable std::shared_mutex m_Mutex;
 	std::unordered_map<std::string, BBEntry> m_Data;
 };
 
