@@ -30,9 +30,6 @@ public:
 	const int& GetQ() const { return m_Q; }
 	const int& GetR() const { return m_R; }
 	
-	void SetPlayerTurnTime(const float& time) { m_PlayerTurnTime = time; }
-	const float& GetPlayerTurnTime() const { return m_PlayerTurnTime; }
-	const float& GetTurnElapsed() const { return m_TurnElapsed; }
 	void SetMoveResource(const int& move)  { m_MoveResource  = move; }
 	void SetActResource(const int& act)	   { m_ActResource = act; }
 
@@ -105,8 +102,6 @@ private:
 	int m_StartQ = 0; 
 	int m_StartR = 0; 
 	bool m_HasMoveStart = false;
-	float m_PlayerTurnTime = 30.0f; // 외부 조정
-	float m_TurnElapsed = 0.0f; // 진행시간
 	Turn m_CurrentTurn = Turn::PlayerTurn;
 	bool m_TurnEndRequested = false;
 	bool m_CombatConfirmRequested = false;

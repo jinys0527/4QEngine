@@ -103,6 +103,10 @@ void SceneManager::Render()
 
 	RenderData::FrameData frameData{};
 	m_CurrentScene->Render(frameData);
+	if (m_UIManager)
+	{
+		m_UIManager->BuildUIFrameData(frameData);
+	}
 
 }
 
@@ -129,14 +133,16 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		}
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
+
 		m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-		m_InputManager->SetGameManager(m_GameManager);
 
 		m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 
 		if (m_GameManager)
 		{
+			m_CurrentScene->SetGameManager(m_GameManager);
+			m_InputManager->SetGameManager(m_GameManager);
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 			m_GameManager->SetActiveScene(m_CurrentScene.get());
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
@@ -184,6 +190,7 @@ void SceneManager::ChangeScene(const std::string& name)
 
 		if (m_GameManager)
 		{
+			m_CurrentScene->SetGameManager(m_GameManager);
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 		}

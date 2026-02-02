@@ -2,9 +2,9 @@
 #include "Blackboard.h"
 #include "BlackboardKeys.h"
 
-bool GetBool(Blackboard& bb, const char* key)
+bool GetBool(Blackboard& bb, const char* key, bool defaultValue = false)
 {
-    bool value = true;
+    bool value = defaultValue;
     bb.TryGet(key, value);
     return value;
 }

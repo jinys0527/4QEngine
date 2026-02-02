@@ -2,6 +2,7 @@
 
 namespace BlackboardKeys
 {
+	inline constexpr const char* IsAlive			   = "IsAlive";
 	inline constexpr const char* HasTarget             = "HasTarget";
 	inline constexpr const char* IsInCombat            = "IsInCombat";
 	inline constexpr const char* ShouldRunOff		   = "ShouldRunOff";

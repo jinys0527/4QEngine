@@ -39,6 +39,9 @@ enum class EventType
 	CollisionTrigger,
 
 	//AI
+	AIMoveRequested,
+	AIRunOffMoveRequested,
+	AIMaintainRangeRequested,
 	AITurnEndRequested,
 	AIMeleeAttackRequested,
 	AIRangedAttackRequested,

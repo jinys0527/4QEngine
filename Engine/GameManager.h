@@ -103,7 +103,7 @@ private:
 	ExplorationTurnState m_ExplorationTurnState;
 	CombatTurnState m_CombatTurnState;
 	float m_ExplorationTurnElapsed = 0.0f;
-	float m_ExplorationTurnLimit = 30.0f;
+	float m_ExplorationTurnLimit = 5.0f;
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
