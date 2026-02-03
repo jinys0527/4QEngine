@@ -2,6 +2,14 @@
 #include "pch.h"
 #include "UIManager.h"
 #include "Event.h"
+#include "UIButtonComponent.h"
+#include "UIImageComponent.h"
+#include "HorizontalBox.h"
+#include "MaterialComponent.h"
+#include "UIProgressBarComponent.h"
+#include "UITextComponent.h"
+#include "UIFSMComponent.h"
+#include "UISliderComponent.h"
 #include <algorithm>
 
 UIManager::~UIManager()
@@ -76,6 +84,24 @@ void UIManager::Update(float deltaTime)
 	}
 }
 
+std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, const std::string& objectName)
+{
+	auto it = m_UIObjects.find(sceneName);
+	if (it == m_UIObjects.end())
+	{
+		return nullptr;
+	}
+
+	auto itObj = it->second.find(objectName);
+	if (itObj == it->second.end())
+	{
+		return nullptr;
+	}
+
+	return itObj->second;
+}
+
+
 void UIManager::OnEvent(EventType type, const void* data)
 {
 	auto it = m_UIObjects.find(m_CurrentSceneName);
@@ -126,7 +152,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 		}
 	}
 	else if (type == EventType::Released)
-	{
+	{		
 		for (auto& pair : uiMap)
 		{
 			auto& ui = pair.second;
@@ -217,11 +243,67 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
 	if (ui->hasButton)
 	{
+		auto buttons = ui->GetComponents<UIButtonComponent>();
+		for (auto* button : buttons)
+		{
+			if (!button)
+				continue;
 
+			if (type == EventType::Pressed)
+			{
+				button->HandlePressed();
+			}
+			else if (type == EventType::Released)
+			{
+				button->HandleReleased();
+			}
+			else if (type == EventType::Hovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				const bool isHovered = ui->HitCheck(mouseData->pos);
+				button->HandleHover(isHovered);
+			}
 	}
 	if (ui->hasSlider)
 	{
+		auto sliders = ui->GetComponents<UISliderComponent>();
+		for (auto* slider : sliders)
+		{
+			if (!slider)
+				continue;
 
+			if (type == EventType::Dragged)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				const auto bounds = ui->GetBounds();
+				float normalizedValue = 0.0f;
+				if (bounds.width > 0.0f)
+				{
+					normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+				}
+				slider->HandleDrag(normalizedValue);
+			}
+			else if (type == EventType::Released)
+			{
+				slider->HandleReleased();
+			}
+		}
+	}
+	if (ui->hasUIFSM)
+	{
+		auto* fsm = ui->GetComponent<UIFSMComponent>();
+		if (fsm)
+		{
+			if (type == EventType::Hovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				if (!ui->HitCheck(mouseData->pos))
+				{
+					return;
+				}
+				fsm->OnEvent(type, data);
+			}
+		}
 	}
 }
 
@@ -232,32 +314,255 @@ void UIManager::RefreshUIListForCurrentScene()
 	if (it != uiObjects.end())
 	{
 		UpdateSortedUI(it->second);
+		return;
 	}
+
+	m_SortedUI.clear();
+	m_FullScreenUIActive = false;
+	m_FullScreenZ = -1;
+	m_ActiveUI = nullptr;
+	m_LastHoveredUI = nullptr;
 }
 
-bool UIManager::IsPointOverUI(const POINT& pos) const
+void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 {
+	frameData.uiElements.clear();
+	frameData.uiTexts.clear();
+
 	auto it = m_UIObjects.find(m_CurrentSceneName);
 	if (it == m_UIObjects.end())
-		return false;
+		return;
 
-	const auto& uiMap = it->second;
-	for (const auto& [name, uiObject] : uiMap)
+	for (const auto& [name, uiObject] : it->second)
 	{
-		if (!uiObject->IsVisible())
+		if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+		{
 			continue;
-		if (m_FullScreenUIActive && uiObject->GetZOrder() < m_FullScreenZ)
-			continue;
-		if (!(uiObject->hasButton || uiObject->hasSlider))
-			continue;
-		if (!uiObject->HitCheck(pos))
-			continue;
+		}
 
-		return true;
+		const auto& bounds = uiObject->GetBounds();
+		const int baseZOrder = uiObject->GetZOrder();
+		const auto* imageComponent = uiObject->GetComponent<UIImageComponent>();
+
+		auto uiComp = uiObject->GetComponent<UIComponent>();
+		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
+
+		auto applyOverrides = [&](RenderData::UIElement& element,
+			const TextureHandle& texture,
+			const ShaderAssetHandle& shaderAsset,
+			const VertexShaderHandle& vertexShader,
+			const PixelShaderHandle& pixelShader
+			)
+			{
+				const bool hasOverrides = texture.IsValid() || shaderAsset.IsValid()
+					|| vertexShader.IsValid() || pixelShader.IsValid();
+				if (!hasOverrides)
+				{
+					return;
+				}
+
+				element.useMaterialOverrides = true;
+				element.materialOverrides.textureHandle = texture;
+				element.materialOverrides.shaderAsset = shaderAsset;
+				element.materialOverrides.vertexShader = vertexShader;
+				element.materialOverrides.pixelShader = pixelShader;
+			};
+
+		auto applyImageOverrides = [&](RenderData::UIElement& element, const UIImageComponent* image)
+			{
+				if (!image)
+					return;
+
+				applyOverrides(element,
+					image->GetTextureHandle(),
+					image->GetShaderAssetHandle(),
+					image->GetVertexShaderHandle(),
+					image->GetPixelShaderHandle());
+			};
+
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image)
+			{
+				RenderData::UIElement element{};
+				element.position = { rect.x, rect.y };
+				element.size = { rect.width, rect.height };
+				element.rotation = uiObject->GetRotationDegrees();
+				element.zOrder = zOrder;
+				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+				element.opacity = opacity;
+				applyImageOverrides(element, image);
+				frameData.uiElements.push_back(element);
+			};
+
+		auto buildFillRect = [](const UIRect& rect, float ratio, UIFillDirection direction)
+			{
+				UIRect fill = rect;
+				switch (direction)
+				{
+				case UIFillDirection::LeftToRight:
+					fill.width = rect.width * ratio;
+					break;
+				case UIFillDirection::RightToLeft:
+					fill.width = rect.width * ratio;
+					fill.x = rect.x + rect.width - fill.width;
+					break;
+				case UIFillDirection::TopToBottom:
+					fill.height = rect.height * ratio;
+					break;
+				case UIFillDirection::BottomToTop:
+					fill.height = rect.height * ratio;
+					fill.y = rect.y + rect.height - fill.height;
+					break;
+				default:
+					break;
+				}
+				return fill;
+			};
+
+		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
+		{
+			appendElement(bounds, baseZOrder, nullptr);
+			auto& backgroundElement = frameData.uiElements.back();
+			applyOverrides(backgroundElement,
+				progress->GetBackgroundTextureHandle(),
+				progress->GetBackgroundShaderAssetHandle(),
+				progress->GetBackgroundVertexShaderHandle(),
+				progress->GetBackgroundPixelShaderHandle());
+
+			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
+			if (percent > 0.0f)
+			{
+				UIRect fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
+				appendElement(fillRect, baseZOrder + 1, nullptr);
+				auto& fillElement = frameData.uiElements.back();
+				applyOverrides(fillElement,
+					progress->GetFillTextureHandle(),
+					progress->GetFillShaderAssetHandle(),
+					progress->GetFillVertexShaderHandle(),
+					progress->GetFillPixelShaderHandle());
+			}
+		}
+		else if (auto* slider = uiObject->GetComponent<UISliderComponent>())
+		{
+			appendElement(bounds, baseZOrder, nullptr);
+			auto& backgroundElement = frameData.uiElements.back();
+			applyOverrides(backgroundElement,
+				slider->GetBackgroundTextureHandle(),
+				slider->GetBackgroundShaderAssetHandle(),
+				slider->GetBackgroundVertexShaderHandle(),
+				slider->GetBackgroundPixelShaderHandle());
+
+			const float normalized = std::clamp(slider->GetNormalizedValue(), 0.0f, 1.0f);
+			if (normalized > 0.0f)
+			{
+				UIRect fillRect = buildFillRect(bounds, normalized, slider->GetFillDirection());
+				appendElement(fillRect, baseZOrder + 1, nullptr);
+				auto& fillElement = frameData.uiElements.back();
+				applyOverrides(fillElement,
+					slider->GetFillTextureHandle(),
+					slider->GetFillShaderAssetHandle(),
+					slider->GetFillVertexShaderHandle(),
+					slider->GetFillPixelShaderHandle());
+			}
+
+			const UIFillDirection fillDirection = slider->GetFillDirection();
+			const bool isVertical = fillDirection == UIFillDirection::TopToBottom
+				|| fillDirection == UIFillDirection::BottomToTop;
+			const float handleSize = std::min(bounds.width, bounds.height);
+			if (handleSize > 0.0f)
+			{
+				UIRect handleRect = bounds;
+				handleRect.width = handleSize;
+				handleRect.height = handleSize;
+				if (isVertical)
+				{
+					const float ratio = fillDirection == UIFillDirection::BottomToTop ? 1.0f - normalized : normalized;
+					handleRect.x = bounds.x + (bounds.width - handleSize) * 0.5f;
+					handleRect.y = bounds.y + bounds.height * ratio - handleSize * 0.5f;
+					handleRect.y = std::clamp(handleRect.y, bounds.y, bounds.y + bounds.height - handleSize);
+				}
+				else
+				{
+					const float ratio = fillDirection == UIFillDirection::RightToLeft ? 1.0f - normalized : normalized;
+					handleRect.x = bounds.x + bounds.width * ratio - handleSize * 0.5f;
+					handleRect.x = std::clamp(handleRect.x, bounds.x, bounds.x + bounds.width - handleSize);
+					handleRect.y = bounds.y + (bounds.height - handleSize) * 0.5f;
+				}
+				appendElement(handleRect, baseZOrder + 2, nullptr);
+				auto& handleElement = frameData.uiElements.back();
+				applyOverrides(handleElement,
+					slider->GetHandleTextureHandle(),
+					slider->GetHandleShaderAssetHandle(),
+					slider->GetHandleVertexShaderHandle(),
+					slider->GetHandlePixelShaderHandle());
+			}
+		}
+		else
+		{
+			appendElement(bounds, baseZOrder, imageComponent);
+		}
+
+		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
+		{
+			RenderData::UITextElement text{};
+			text.position = { bounds.x, bounds.y };
+			text.fontSize = textComp->GetFontSize();
+			text.text = textComp->GetText();
+			frameData.uiTexts.push_back(std::move(text));
+		}
 	}
 
-	return false;
+	std::sort(frameData.uiElements.begin(), frameData.uiElements.end(), [](const RenderData::UIElement& a, const RenderData::UIElement& b)
+		{
+			return a.zOrder < b.zOrder;
+		});
 }
+
+void UIManager::SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const
+{
+	out = nlohmann::json::array();
+	auto it = m_UIObjects.find(sceneName);
+	if (it == m_UIObjects.end())
+	{
+		return;
+	}
+
+	for (const auto& [name, uiObject] : it->second)
+	{
+		if (!uiObject)
+		{
+			continue;
+		}
+		nlohmann::json entry;
+		uiObject->Serialize(entry);
+		out.push_back(entry);
+	}
+}
+
+void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data)
+{
+	if (!m_EventDispatcher)
+	{
+		return;
+	}
+
+	auto& uiMap = m_UIObjects[sceneName];
+	uiMap.clear();
+
+	if (!data.is_array())
+	{
+		return;
+	}
+
+	for (const auto& entry : data)
+	{
+		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
+		uiObject->Deserialize(entry);
+		uiObject->UpdateInteractableFlags();
+		uiMap[uiObject->GetName()] = uiObject;
+	}
+	UpdateSortedUI(uiMap);
+}
+
 
 
 //void UIManager::Render(std::vector<UIRenderInfo>& uiRenderInfo, std::vector<UITextInfo>& uiTextInfo)
@@ -276,3 +581,8 @@ bool UIManager::IsPointOverUI(const POINT& pos) const
 //	}
 //}
 
+void UIManager::Reset()
+{
+	m_UIObjects.clear();
+	m_ActiveUI = nullptr;
+}

@@ -2,16 +2,29 @@
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "GameObject.h"
+#include "CameraObject.h"
 #include "Scene.h"
 #include "GridSystemComponent.h"
+#include "ServiceRegistry.h"
 #include "ItemComponent.h"
+#include "EnemyComponent.h"
+#include "Event.h"
+#include "InputManager.h"
+#include "RayHelper.h"
 #include "PlayerStatComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
+#include "BoxColliderComponent.h"
+#include "NodeComponent.h"
+#include <algorithm>
+#include <cfloat>
 #include "SkinningAnimationComponent.h"
 #include "MathHelper.h"
 #include <cmath>
 #include "GameManager.h"
+#include "CombatManager.h"
+#include "PlayerCombatFSMComponent.h"
+#include "PlayerFSMComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -21,8 +34,6 @@ REGISTER_PROPERTY(PlayerComponent, ActResource)
 REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
 REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
-REGISTER_PROPERTY(PlayerComponent, PlayerTurnTime)
-REGISTER_PROPERTY_READONLY(PlayerComponent, TurnElapsed)
 REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
@@ -35,6 +46,124 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 	return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
 }
 
+namespace
+{
+	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+
+	void DispatchCombatEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerCombatFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+}
+
+static NodeComponent* FindClosestNodeHit(Scene* scene, const Ray& ray, float& outT)
+{
+	if (!scene)
+	{
+		return nullptr;
+	}
+
+	float closestT = FLT_MAX;
+	NodeComponent* closestNode = nullptr;
+
+	for (const auto& [name, object] : scene->GetGameObjects())
+	{
+		if (!object)
+		{
+			continue;
+		}
+
+		auto* node = object->GetComponent<NodeComponent>();
+		if (!node)
+		{
+			continue;
+		}
+
+		auto* collider = object->GetComponent<BoxColliderComponent>();
+		if (!collider || !collider->HasBounds())
+		{
+			continue;
+		}
+
+		float hitT = 0.0f;
+		if (!collider->IntersectsRay(ray.m_Pos, ray.m_Dir, hitT))
+		{
+			continue;
+		}
+
+		if (hitT >= 0.0f && hitT < closestT)
+		{
+			closestT = hitT;
+			closestNode = node;
+		}
+	}
+
+	if (!closestNode)
+	{
+		return nullptr;
+	}
+
+	outT = closestT;
+	return closestNode;
+}
+
+static EnemyComponent* FindEnemyInRange(GridSystemComponent* grid, int playerQ, int playerR, int range)
+{
+	if (!grid || range < 0)
+	{
+		return nullptr;
+	}
+
+	for (auto* enemy : grid->GetEnemies())
+	{
+		if (!enemy || enemy->GetActorId() == 0)
+		{
+			continue;
+		}
+
+		const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
+		if (distance <= range)
+		{
+			return enemy;
+		}
+	}
+
+	return nullptr;
+}
+
+static EnemyComponent* FindEnemyAt(GridSystemComponent* grid, int q, int r)
+{
+	if (!grid)
+	{
+		return nullptr;
+	}
+
+	for (auto* enemy : grid->GetEnemies())
+	{
+		if (!enemy)
+		{
+			continue;
+		}
+
+		if (enemy->GetQ() == q && enemy->GetR() == r)
+		{
+			return enemy;
+		}
+	}
+
+	return nullptr;
+}
+
+
 
 PlayerComponent::PlayerComponent() {
 
@@ -43,7 +172,9 @@ PlayerComponent::PlayerComponent() {
 PlayerComponent::~PlayerComponent() {
 	// Event Listener 쓰는 경우만	
 	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftDoubleClick, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseRightClick, this);
 }
 
 void PlayerComponent::Start()
@@ -55,7 +186,9 @@ void PlayerComponent::Start()
 	if (!scene) { return; }
 
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
+	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
+	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
 	const auto& objects = scene->GetGameObjects();
 
 	for (const auto& [name,object] : objects) {
@@ -84,15 +217,16 @@ void PlayerComponent::Update(float deltaTime) {
 
 
 	//Player Turn 종료 조건
-	if (allowExplorationTurn) {
-		m_TurnElapsed += deltaTime;
-
-		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
-			//종료(턴 전환)
-			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
-			m_TurnEndRequested = true;
-		}
-	}
+// 	if (allowExplorationTurn) {
+// 		m_TurnElapsed += deltaTime;
+// 
+// 		if (!m_TurnEndRequested && m_TurnElapsed >= m_PlayerTurnTime) {
+// 			//종료(턴 전환)
+// 			GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+// 			m_TurnEndRequested = true;
+// 		}
+// 	}
+	// 이제 전체 턴 관리하는 GameManager에서 넘김 여기선 UI에서 턴 종료했을때만 처리하면 될듯
 
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
@@ -204,16 +338,198 @@ void PlayerComponent::Update(float deltaTime) {
 
 void PlayerComponent::OnEvent(EventType type, const void* data)
 {
-	if (type == EventType::MouseLeftDoubleClick)
+	if (type == EventType::MouseLeftClick)
 	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-		if (!gameManager || gameManager->IsCombatInputAllowed())
+
+		if (gameManager && gameManager->IsCombatInputAllowed())
+		{
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				if (combatFsm->TryExecutePlayerAttackFromInput())
+				{
+					return;
+				}
+			}
+		}
+
+		if (!gameManager || !gameManager->IsExplorationInputAllowed())
+		{
+			return;
+		}
+
+		if (!scene || !scene->GetServices().Has<InputManager>())
+		{
+			return;
+		}
+
+		auto& input = scene->GetServices().Get<InputManager>();
+		if (!input.IsPointInViewport(mouseData->pos))
+		{
+			return;
+		}
+
+		auto camera = scene->GetGameCamera();
+		if (!camera)
+		{
+			return;
+		}
+
+		Ray pickRay{};
+		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+		{
+			return;
+		}
+
+		float hitT = 0.0f;
+		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+		if (!clickedNode)
+		{
+			return;
+		}
+
+		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+		if (!enemy)
+		{
+			return;
+		}
+
+		const int range = max(0, m_AttackRange);
+		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+		if (distance > range)
+		{
+			return;
+		}
+
+		if (!m_IsMeleeMode)
+		{
+			std::cout << "MeleeMode\n";
+			m_IsMeleeMode = true;
+		}
+		else
+		{
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				m_CombatConfirmRequested = true;
+				combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
+			}
+		}
+		
+		return;
+	}
+
+	if (type == EventType::MouseLeftDoubleClick)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+		if (gameManager && gameManager->IsCombatInputAllowed())
+		{
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				if (combatFsm->TryExecutePlayerAttackFromInput())
+				{
+					return;
+				}
+			}
+		}
+
+		if (!gameManager || !gameManager->IsExplorationInputAllowed())
+		{
+			return;
+		}
+
+		if (!scene || !scene->GetServices().Has<InputManager>())
+		{
+			return;
+		}
+
+		auto& input = scene->GetServices().Get<InputManager>();
+		if (!input.IsPointInViewport(mouseData->pos))
+		{
+			return;
+		}
+
+		auto camera = scene->GetGameCamera();
+		if (!camera)
+		{
+			return;
+		}
+
+		Ray pickRay{};
+		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+		{
+			return;
+		}
+
+		float hitT = 0.0f;
+		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+		if (!clickedNode)
+		{
+			return;
+		}
+
+		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+		if (!enemy)
+		{
+			return;
+		}
+
+		const int range = max(0, m_AttackRange);
+		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+		if (distance > range)
+		{
+			return;
+		}
+
+		if (!m_IsMeleeMode)
+		{
+			std::cout << "MeleeMode\n";
+			m_IsMeleeMode = true;
+		}
+
+		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 		{
 			m_CombatConfirmRequested = true;
+			combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 		}
+
 		return;
+	}
+
+	if (type == EventType::MouseRightClick)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+		if(gameManager->GetCombatManager()->GetState() != Battle::InBattle)
+		{
+			std::cout << "IdleMode\n";
+
+			m_IsMeleeMode = false;
+		}
 	}
 
 	if (type != EventType::TurnChanged || !data)
@@ -228,7 +544,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	}
 
 	m_CurrentTurn = static_cast<Turn>(payload->turn);
-	m_TurnElapsed = 0.0f;
 	m_TurnEndRequested = false;
 	if (m_CurrentTurn == Turn::PlayerTurn)
 	{
@@ -241,9 +556,9 @@ void PlayerComponent::ResetTurnResources()
 {
 	m_RemainMoveResource = m_MoveResource;
 	m_RemainActResource = m_ActResource;
-	m_TurnElapsed = 0.0f;
 	m_HasMoveStart = false;
 	m_CombatConfirmRequested = false;
+	m_SelectedEnemy = nullptr;
 	ResetSubFSMFlags();
 }
 
@@ -304,6 +619,67 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	m_RemainActResource -= amount;
 	return true;
 }
+
+void PlayerComponent::RequestCombatConfirm()
+{
+	m_CombatConfirmRequested = true;
+}
+
+bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
+{
+	if (!enemy)
+	{
+		ClearCombatSelection();
+		return false;
+	}
+
+	if (m_CurrentTurn != Turn::PlayerTurn)
+	{
+		return false;
+	}
+
+	const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+	if (distance > 1)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return false;
+	}
+
+	if (m_SelectedEnemy == enemy)
+	{
+		RequestCombatConfirm();
+		DispatchCombatEvent(owner, "Combat_Confirm");
+		m_SelectedEnemy = nullptr;
+		return true;
+	}
+
+	m_SelectedEnemy = enemy;
+	DispatchPlayerStateEvent(owner, "Combat_Start");
+	return true;
+}
+
+void PlayerComponent::ClearCombatSelection()
+{
+	m_SelectedEnemy = nullptr;
+}
+
+EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
+{
+	if (!obj) return nullptr;
+	if (auto* enemy = obj->GetComponent<EnemyComponent>()) return enemy;
+	if (auto* node = obj->GetComponent<NodeComponent>())
+	{
+		if (m_GridSystem)
+			return m_GridSystem->GetEnemyAt(node->GetQ(), node->GetR());
+	}
+	return nullptr;
+}
+
 
 bool PlayerComponent::ConsumeCombatConfirmRequest()
 {

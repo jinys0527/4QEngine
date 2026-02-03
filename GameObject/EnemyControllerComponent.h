@@ -3,6 +3,7 @@
 #include "GameState.h"
 
 class GridSystemComponent;
+class EnemyMovementComponent;
 class EnemyComponent;
 
 class EnemyControllerComponent : public Component, public IEventListener {
@@ -19,6 +20,8 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
+	EnemyMovementComponent* GetCurrentEnemyMovement();
+	bool IsCurrentEnemyMoveComplete();
 private:
 
 	void GetSystem();
@@ -26,4 +29,5 @@ private:
 
 	GridSystemComponent* m_GridSystem = nullptr;
 	bool m_TurnEndRequested = false;
+	bool m_CombatMoveInProgress = false;
 };

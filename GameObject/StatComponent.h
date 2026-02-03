@@ -12,7 +12,9 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 	const int&   GetCurrentHP() const				 { return m_CurrentHP;		 }
-	void	     SetCurrentHP(const int& value)		 { m_CurrentHP = value;		 }		 
+	void	     SetCurrentHP(const int& value)		 { m_CurrentHP = value;		 }	
+	void         ModifyHP    (int amount);
+	bool         IsDead      () const				 {  return m_CurrentHP <= 0; }
 																				 
 	const float& GetRange() const				     { return m_Range;		     }
 	void		 SetRange(const float& value)	     { m_Range = value;		     }

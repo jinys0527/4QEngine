@@ -14,6 +14,8 @@ enum class EventType
 	MouseRightClickUp,
 	Dragged, 
 	Hovered,
+	/*MouseWheelUp,
+	MouseWheelDown,*/
 
 	//UI
 	Pressed,
@@ -39,6 +41,9 @@ enum class EventType
 	CollisionTrigger,
 
 	//AI
+	AIMoveRequested,
+	AIRunOffMoveRequested,
+	AIMaintainRangeRequested,
 	AITurnEndRequested,
 	AIMeleeAttackRequested,
 	AIRangedAttackRequested,

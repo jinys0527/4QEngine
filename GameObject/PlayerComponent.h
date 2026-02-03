@@ -6,6 +6,7 @@
 #include "GameObject.h"
 
 class GridSystemComponent;
+class EnemyComponent;
 
 // PlayerComponent 는 Player와 관련된 Data와 중요 로직
 // Player의 다른 Component의 중추적인 역할
@@ -30,9 +31,6 @@ public:
 	const int& GetQ() const { return m_Q; }
 	const int& GetR() const { return m_R; }
 	
-	void SetPlayerTurnTime(const float& time) { m_PlayerTurnTime = time; }
-	const float& GetPlayerTurnTime() const { return m_PlayerTurnTime; }
-	const float& GetTurnElapsed() const { return m_TurnElapsed; }
 	void SetMoveResource(const int& move)  { m_MoveResource  = move; }
 	void SetActResource(const int& act)	   { m_ActResource = act; }
 
@@ -54,6 +52,10 @@ public:
 	bool CommitMove(int targetQ, int targetR);
 	bool ConsumeActResource(int amount);
 
+	void RequestCombatConfirm();
+	bool HandleCombatClick(EnemyComponent* enemy);
+	void ClearCombatSelection();
+	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;
 	bool ConsumeCombatConfirmRequest();
 	bool ConsumePushPossible();
 	bool ConsumePushTargetFound();
@@ -106,11 +108,10 @@ private:
 	int m_StartQ = 0; 
 	int m_StartR = 0; 
 	bool m_HasMoveStart = false;
-	float m_PlayerTurnTime = 30.0f; // 외부 조정
-	float m_TurnElapsed = 0.0f; // 진행시간
 	Turn m_CurrentTurn = Turn::PlayerTurn;
 	bool m_TurnEndRequested = false;
 	bool m_CombatConfirmRequested = false;
+	EnemyComponent* m_SelectedEnemy = nullptr;
 	bool m_PushPossible = true;
 	bool m_PushTargetFound = true;
 	bool m_PushSuccess = true;
@@ -120,6 +121,7 @@ private:
 	bool m_InventoryCanDrop = true;
 	bool m_ShopHasSpace = true;
 	bool m_ShopHasMoney = true;
+	bool m_IsMeleeMode = false;
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장

@@ -17,6 +17,8 @@
 #include "LootRoller.h"
 #include "GameDataRepository.h"
 #include "ShopRoller.h"
+#include "CombatResolver.h"
+#include "CombatManager.h"
 
 namespace
 {
@@ -56,6 +58,8 @@ int main()
 	auto& lootRoller = services.Register<LootRoller>();
 	services.Register<GameDataRepository>();
 	services.Register<ShopRoller>();
+	auto& combatResolver = services.Register<CombatResolver>();
+	services.Register<CombatManager>(combatResolver, diceSystem, &logSystem);
 
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);

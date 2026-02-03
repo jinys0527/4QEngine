@@ -63,7 +63,7 @@ public:
 
 	void CapturePlayerData(class Scene* scene);
 	void ApplyPlayerData(class Scene* scene);
-
+	class CombatManager* GetCombatManager() const;
 private:
 	void RegisterEventListeners();
 	void UnregisterEventListeners();
@@ -77,7 +77,6 @@ private:
 	void OnCombatTurnStateExit(CombatTurnState state);
 
 	class GameObject* FindPlayerObject(class Scene* scene) const;
-	class CombatManager* GetCombatManager() const;
 	class GameDataRepository* GetGameDataRepository() const;
 	class LogSystem* GetLogSystem() const;
 	class RandomMachine* GetRandomMachine() const;
@@ -91,6 +90,7 @@ private:
 	void SetFloodSystemActive(bool active);
 	void RefreshGridSystem();
 	void DispatchPlayerFSMEvent(const std::string& eventName);
+	void ResolveEnemyAttack();
 	std::vector<int> CollectOwnedItemIndices() const;
 private:
 
@@ -103,11 +103,14 @@ private:
 	ExplorationTurnState m_ExplorationTurnState;
 	CombatTurnState m_CombatTurnState;
 	float m_ExplorationTurnElapsed = 0.0f;
-	float m_ExplorationTurnLimit = 30.0f;
+	float m_ExplorationTurnLimit = 5.0f;
+	float m_CombatTurnElapsed = 0.0f;
+	float m_CombatTurnLimit = 30.0f;
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
 	bool  m_GameDataLoaded = false;
+	bool  m_BlockPostCombatShop = false;
 	int   m_CurrentFloor = 1;
 	std::vector<std::string> m_FloorSceneNames;
 	DataSheetPaths m_DataPaths{};

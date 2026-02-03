@@ -1,10 +1,11 @@
 ﻿#include "CombatBehaviorTasks.h"
 #include "Blackboard.h"
 #include "BlackboardKeys.h"
+#include <iostream>
 
-bool GetBool(Blackboard& bb, const char* key)
+bool GetBool(Blackboard& bb, const char* key, bool defaultValue = false)
 {
-    bool value = true;
+    bool value = defaultValue;
     bb.TryGet(key, value);
     return value;
 }
@@ -12,19 +13,16 @@ bool GetBool(Blackboard& bb, const char* key)
 BTStatus UpdateTargetLocationTask::OnTick(BTInstance& inst, Blackboard& bb)
 {
     (void)inst;
-    float targetX = 0.0f;
-    float targetY = 0.0f;
-    float targetZ = 0.0f;
-    if (!bb.TryGet(BlackboardKeys::TargetPosX, targetX)
-        || !bb.TryGet(BlackboardKeys::TargetPosY, targetY)
-        || !bb.TryGet(BlackboardKeys::TargetPosZ, targetZ))
-    {
-        return BTStatus::Failure;
+	int targetQ = 0;
+	int targetR = 0;
+	if (!bb.TryGet(BlackboardKeys::TargetQ, targetQ)
+		|| !bb.TryGet(BlackboardKeys::TargetR, targetR))
+	{
+		return BTStatus::Failure;
     }
 
-    bb.Set(BlackboardKeys::LastKnownTargetX, targetX);
-    bb.Set(BlackboardKeys::LastKnownTargetY, targetY);
-    bb.Set(BlackboardKeys::LastKnownTargetZ, targetZ);
+	bb.Set(BlackboardKeys::LastKnownTargetQ, targetQ);
+	bb.Set(BlackboardKeys::LastKnownTargetR, targetR);
     return BTStatus::Success;
 }
 
@@ -64,6 +62,7 @@ BTStatus MeleeAttackTask::OnTick(BTInstance& inst, Blackboard& bb)
 	{
 		return BTStatus::Failure;
 	}
+
 	bb.Set(BlackboardKeys::RequestMeleeAttack, true);
 	return BTStatus::Success;
 }
@@ -75,6 +74,7 @@ BTStatus RangedAttackTask::OnTick(BTInstance& inst, Blackboard& bb)
 	{
 		return BTStatus::Failure;
 	}
+
 	bb.Set(BlackboardKeys::RequestRangedAttack, true);
 	return BTStatus::Success;
 }
@@ -119,7 +119,7 @@ BTStatus PatrolMoveTask::OnTick(BTInstance& inst, Blackboard& bb)
 
 BTStatus EndTurnTask::OnTick(BTInstance& inst, Blackboard& bb)
 {
-	(void)inst;
+	(void)inst; 
 	bb.Set(BlackboardKeys::EndTurnRequested, true);
 	return BTStatus::Success;
 }

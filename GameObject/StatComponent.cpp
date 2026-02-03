@@ -17,3 +17,8 @@ void StatComponent::Update(float deltaTime)
 void StatComponent::OnEvent(EventType type, const void* data)
 {
 }
+
+void StatComponent::ModifyHP(int amount)
+{
+	m_CurrentHP = (std::max)(0, m_CurrentHP + amount);
+}

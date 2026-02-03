@@ -10,9 +10,6 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Objects\Source Files</Filter>
     </ClCompile>
@@ -83,18 +80,6 @@
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RectLightComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIButtonComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIProgressBarComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UISliderComponent.cpp">
-      <Filter>Components\Default\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UITextComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SceneChangeTestComponent.cpp">
@@ -169,7 +154,43 @@
     <ClCompile Include="ItemComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ItemSpawnerComponent.cpp">
+    <ClCompile Include="CameraLogicComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UITextComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIProgressBarComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UISliderComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIImageComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIButtonComponent.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Border.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Canvas.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HorizontalBox.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScaleBox.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SizeBox.cpp">
+      <Filter>Components\UI\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DoorComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -229,9 +250,6 @@
     <ClInclude Include="TransformComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UIComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PlayerMovementComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
@@ -269,18 +287,6 @@
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RectLightComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIButtonComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIProgressBarComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UISliderComponent.h">
-      <Filter>Components\Default\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UITextComponent.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SceneChangeTestComponent.h">
@@ -355,8 +361,46 @@
     <ClInclude Include="ItemComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="ItemSpawnerComponent.h">
+    <ClInclude Include="CameraLogicComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIPrimitives.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UITextComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UISliderComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIProgressBarComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIImageComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIButtonComponent.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Border.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Canvas.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HorizontalBox.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScaleBox.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SizeBox.h">
+      <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DoorComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -408,6 +452,15 @@
     </Filter>
     <Filter Include="Components\Utils\Source Files">
       <UniqueIdentifier>{c7443698-6f50-4d0f-9468-826b8502fc60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UI">
+      <UniqueIdentifier>{fca0c5c4-4bf3-4095-8abb-312831406070}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UI\Header Files">
+      <UniqueIdentifier>{526cc95b-62d3-4628-83bd-50f6f379d6ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\UI\Source Files">
+      <UniqueIdentifier>{46414225-d999-430c-aa13-eb46d6dc4ac2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

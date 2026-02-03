@@ -180,6 +180,15 @@ struct RenderContext
 	ComPtr<ID3D11PixelShader> PS_Post;
 	ComPtr<ID3DBlob> VSCode_Post;
 
+	ComPtr<ID3D11VertexShader> VS_UI;
+	ComPtr<ID3D11PixelShader> PS_UI;
+	ComPtr<ID3DBlob> VSCode_UI;
+
+	ComPtr<ID3D11Buffer> UIQuadVertexBuffer;
+	ComPtr<ID3D11Buffer> UIQuadIndexBuffer;
+	UINT UIQuadIndexCount = 0;
+	ComPtr<ID3D11ShaderResourceView> UIWhiteTexture;
+
 	//그림자 만들기
 	ComPtr<ID3D11VertexShader>	VS_MakeShadow;
 	ComPtr<ID3D11PixelShader>	PS_MakeShadow;
