@@ -385,16 +385,8 @@ void EnemyComponent::Update(float deltaTime) {
 
 	if (m_TargetPlayer)
 	{
-		std::cout << "[AI][Enemy] Target set: actor=" << GetActorId()
-			<< " q=" << m_TargetPlayer->GetQ()
-			<< " r=" << m_TargetPlayer->GetR() << "\n";
 		bb.Set(BlackboardKeys::TargetQ, m_TargetPlayer->GetQ());
 		bb.Set(BlackboardKeys::TargetR, m_TargetPlayer->GetR());
-	}
-	else
-	{
-		std::cout << "[AI][Enemy] Target missing: actor=" << GetActorId()
-			<< " m_TargetPlayer=null\n";
 	}
 
 	const bool hasHexData = m_GridSystem && m_TargetPlayer;
@@ -431,8 +423,6 @@ void EnemyComponent::Update(float deltaTime) {
 		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
 		if (targetVisible && distance <= attackRange)
 		{
-			std::cout << "[AI][Enemy] Combat enter: distance=" << distance
-				<< " attackRange=" << attackRange << " targetVisible=" << targetVisible << "\n";
 			auto* playerOwner = m_TargetPlayer->GetOwner();
 			if (playerOwner)
 			{
@@ -447,10 +437,6 @@ void EnemyComponent::Update(float deltaTime) {
 
 	bb.Set(BlackboardKeys::PreferRanged, preferRanged);
 	bb.Set(BlackboardKeys::MaintainRange, false);
-
-	std::cout << "[AI][Enemy] Tick AI: actor=" << GetActorId()
-		<< " phase=" << (gameManager ? static_cast<int>(gameManager->GetPhase()) : -1)
-		<< " inCombat=" << (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat) << "\n";
 
 	m_AIController->Tick(deltaTime);
 
