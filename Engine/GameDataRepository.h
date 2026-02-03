@@ -65,6 +65,8 @@ struct DropEntry
 {
 	int   itemIndex = 0;
 	float weight	= 0.0f;
+	int   minQuantity = 0;
+	int   maxQuantity = 0;
 };
 
 struct DropTableDefinition

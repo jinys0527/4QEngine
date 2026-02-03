@@ -62,10 +62,10 @@ std::optional<LootRollResult> LootRoller::RollDrop(const EnemyDefinition& enemy,
         cursor += ScaleWeight(entry.weight, weightScale);
         if (roll <= cursor)
         {
-            if (enemy.id == 0)
-            {
-                return std::nullopt;
-            }
+            //if (enemy.id == 0)
+            //{
+            //    return std::nullopt;
+            //}
 
             if (logger)
             {

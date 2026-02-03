@@ -20,15 +20,17 @@ bool GameDataRepository::LoadFromFiles(const DataSheetPaths& path, std::string* 
 		return false;
 	}
 
+	if (!LoadDropTablesFromFile(path.dropTablesPath, errorOut))
+	{
+		return false;
+	}
+
+
 	if (!LoadEnemiesFromFile(path.enemiesPath, errorOut))
 	{
 		return false;
 	}
 
-	if (!LoadDropTablesFromFile(path.dropTablesPath, errorOut))
-	{
-		return false;
-	}
 
 	return true;
 }
@@ -214,13 +216,36 @@ bool GameDataRepository::LoadDropTablesFromFile(const std::string& path, std::st
 	for (const auto& row : rows)
 	{
 		const int difficultyGroup = ParseInt(GetField(row, header, "difficultyGroup"), 1);
-		DropEntry drop{};
-		drop.itemIndex			  = ParseInt(GetField(row, header, "itemIndex"), 0);
-		drop.weight				  = ParseFloat(GetField(row, header, "weight"), 0.0f);
 
-		auto& table				  = m_DropTables[difficultyGroup];
-		table.difficultyGroup	  = difficultyGroup;
-		table.entries.push_back(drop);
+		auto& table = m_DropTables[difficultyGroup];
+		table.difficultyGroup = difficultyGroup;
+
+		for (int index = 1; index <= 10; ++index)
+		{
+			const std::string keyField = "DropItemKey" + std::to_string(index);
+			const std::string qtyField = "Quantity" + std::to_string(index);
+
+			const int itemIndex = ParseInt(GetField(row, header, keyField), 0);
+			if (itemIndex <= 0)
+			{
+				continue;
+			}
+
+			DropEntry drop{};
+			drop.itemIndex = itemIndex;
+			drop.weight = ParseFloat(GetField(row, header, qtyField), 0.0f);
+
+			if (index == 1)
+			{
+				drop.minQuantity = ParseInt(GetField(row, header, "DropGoldMin"), 0);
+				drop.maxQuantity = ParseInt(GetField(row, header, "DropGoldMax"), 0);
+			}
+
+			if (drop.weight > 0.0f)
+			{
+				table.entries.push_back(drop);
+			}
+		}
 	}
 
 	return true;

@@ -25,6 +25,8 @@ REGISTER_PROPERTY(ItemSpawnerComponent, FixedItemTemplateName)
 REGISTER_PROPERTY(ItemSpawnerComponent, DropItemTemplateName)
 REGISTER_PROPERTY(ItemSpawnerComponent, FixedItemIndex)
 REGISTER_PROPERTY(ItemSpawnerComponent, EnemyDefinitionId)
+REGISTER_PROPERTY(ItemSpawnerComponent, DropTableGroupOverride)
+REGISTER_PROPERTY(ItemSpawnerComponent, DebugDropTrigger)
 REGISTER_PROPERTY(ItemSpawnerComponent, DropOnDeath)
 
 namespace
@@ -166,6 +168,14 @@ void ItemSpawnerComponent::Update(float deltaTime)
 
 	SpwanFixedItem();
 
+	if (m_DebugDropTrigger)
+	{
+		m_DebugDropTrigger = false;
+		m_DropTriggered = false;
+		DropItem();
+		return;
+	}
+
 	if (!m_DropOnDeath || m_DropTriggered)
 	{
 		return;
@@ -295,7 +305,6 @@ void ItemSpawnerComponent::DropItem()
 
 	const EnemyDefinition* enemyDefinition = nullptr;
 	EnemyDefinition fallbackDefinition{};
-
 	if (m_EnemyDefinitionId > 0)
 	{
 		enemyDefinition = repository.GetEnemy(m_EnemyDefinitionId);
@@ -304,15 +313,32 @@ void ItemSpawnerComponent::DropItem()
 	if (!enemyDefinition)
 	{
 		auto* stat = owner->GetComponent<EnemyStatComponent>();
-		if (!stat)
+		if (!stat && m_DropTableGroupOverride <= 0)
 		{
 			return;
 		}
-
 		fallbackDefinition.name = owner->GetName();
-		fallbackDefinition.difficultyGroup = stat->GetDifficultyGroup();
-		fallbackDefinition.dropTableGroup = stat->GetDifficultyGroup();
+		if (stat)
+		{
+			fallbackDefinition.difficultyGroup = stat->GetDifficultyGroup();
+			fallbackDefinition.dropTableGroup = stat->GetDifficultyGroup();
+		}
+		else if (m_DropTableGroupOverride > 0)
+		{
+			fallbackDefinition.difficultyGroup = m_DropTableGroupOverride;
+			fallbackDefinition.dropTableGroup = m_DropTableGroupOverride;
+		}
 		enemyDefinition = &fallbackDefinition;
+	}
+	else
+	{
+		fallbackDefinition = *enemyDefinition;
+		enemyDefinition = &fallbackDefinition;
+	}
+
+	if (m_DropTableGroupOverride > 0)
+	{
+		fallbackDefinition.dropTableGroup = m_DropTableGroupOverride;
 	}
 
 	LootRoller lootRoller;

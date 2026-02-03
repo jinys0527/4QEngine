@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Component.h"
-#include <string>	
+#include <string>
 
 class GameObject;
 class GameDataRepository;
@@ -33,8 +33,15 @@ public:
 	const int& GetEnemyDefinitionId() const { return m_EnemyDefinitionId; }
 	void SetEnemyDefinitionId(const int& value) { m_EnemyDefinitionId = value; }
 
+	const int& GetDropTableGroupOverride() const { return m_DropTableGroupOverride; }
+	void SetDropTableGroupOverride(const int& value) { m_DropTableGroupOverride = value; }
+
+	const bool& GetDebugDropTrigger() const { return m_DebugDropTrigger; }
+	void SetDebugDropTrigger(const bool& value) { m_DebugDropTrigger = value; }
+
 	const bool& GetDropOnDeath() const { return m_DropOnDeath; }
 	void SetDropOnDeath(const bool& value) { m_DropOnDeath = value; }
+
 private:
 	GameObject* m_SpawnItem = nullptr;
 
@@ -42,6 +49,8 @@ private:
 	std::string m_DropItemTemplateName;
 	int m_FixedItemIndex = -1;
 	int m_EnemyDefinitionId = 0;
+	int m_DropTableGroupOverride = 0;
+	bool m_DebugDropTrigger = false;
 	bool m_DropOnDeath = true;
 	bool m_FixedItemSpawned = false;
 	bool m_DropTriggered = false;
