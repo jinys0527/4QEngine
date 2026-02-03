@@ -100,6 +100,7 @@ public:
 private:
 	AssetLoadResult	  LoadAsset		 (const std::string& assetMetaPath);
 	void LoadShaderSources(const fs::path& shaderDir);
+	void LoadLooseTextures(const fs::path& rootDir, bool sRGB, const std::string& displayPrefix);
 	
 	ResourceStore<RenderData::MeshData,			MeshHandle>         m_Meshes;
 	ResourceStore<RenderData::MaterialData,		MaterialHandle>     m_Materials;

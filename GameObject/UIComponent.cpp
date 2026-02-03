@@ -17,11 +17,11 @@ void UIComponent::OnEvent(EventType type, const void* data)
 
 void UIComponent::Serialize(nlohmann::json& j) const
 {
-
+	Component::Serialize(j);
 }
 
 void UIComponent::Deserialize(const nlohmann::json& j)
 {
-
+	Component::Deserialize(j);
 }
 
