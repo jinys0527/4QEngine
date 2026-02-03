@@ -17,31 +17,19 @@ public:
 	void Serialize(nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
-	void SetZOrder(int zOrder) { m_ZOrder = zOrder; }
-	int GetZOrder () const     { return m_ZOrder;   }
+
+	void SetZOrder(int zOrder);
+	void SetZOrderFromComponent(int zOrder);
+	int  GetZOrder() const { return m_ZOrder; }
+
 
 	bool HitCheck       (const POINT& pos);
 	
 	void SetIsFullScreen(bool isFullScreen) { m_IsFullScreen = isFullScreen; }
 	bool IsFullScreen   ();
 
-	void SetIsVisible(bool isVisible) 
-	{
-		m_IsVisible = isVisible;
-
-		//// 자식들한테도 재귀 호출해서 동일하게 적용
-		//for (auto& child : m_RectTransform->GetChild())
-		//{
-		//	if (child)
-		//	{
-		//		auto owner = dynamic_cast<UIObject*>(child->GetOwner());
-		//		if (owner)
-		//		{
-		//			owner->SetIsVisible(isVisible);
-		//		}
-		//	}
-		//}
-	}
+	void SetIsVisible(bool isVisible);
+	void SetIsVisibleFromComponent(bool isVisible);
 	bool IsVisible();
 
 	void SetBounds(const UIRect& bounds)

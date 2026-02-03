@@ -32,6 +32,7 @@ void SceneManager::Initialize()
 	if (m_InputManager)
 	{
 		m_InputManager->SetGameManager(m_GameManager);
+		m_InputManager->SetEventDispatcher(m_EventDispatcher);
 	}
 	// Sound Manager
 

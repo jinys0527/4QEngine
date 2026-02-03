@@ -5,7 +5,7 @@
 #include "Scene.h"
 #include "GameObject.h"
 
-REGISTER_COMPONENT_DERIVED(FloodUIComponent, UIComponent)
+REGISTER_UI_COMPONENT(FloodUIComponent)
 REGISTER_PROPERTY_READONLY(FloodUIComponent, DisplayedWaterLevel)
 REGISTER_PROPERTY_READONLY(FloodUIComponent, DisplayedTimeRemaining)
 REGISTER_PROPERTY_READONLY(FloodUIComponent, DisplayedGameOver)

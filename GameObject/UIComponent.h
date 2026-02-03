@@ -18,9 +18,9 @@ public:
 	void Serialize(nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
-	void SetVisible	(const bool& is) { m_Visible = is; }
-	void SetZOrder	(const int& v)	 { m_ZOrder = v; }
-	void SetOpacity(const float& v)  { m_Opacity = v; }
+	void SetVisible(const bool& visible);
+	void SetZOrder(const int& value);
+	void SetOpacity(const float& value);
 
 	//참조변환
 	const bool&	GetVisible()const { return m_Visible; }

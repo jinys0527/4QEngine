@@ -43,6 +43,18 @@
 #include "GameManager.h"
 #include <unordered_set>
 
+namespace
+{
+	bool IsUIComponentType(const std::string& typeName)
+	{
+		if (typeName == UIFSMComponent::StaticTypeName)
+		{
+			return true;
+		}
+		return ComponentRegistry::Instance().IsUIType(typeName);
+	}
+}
+
 #define DRAG_SPEED 0.01f
 namespace fs = std::filesystem;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -2075,6 +2087,10 @@ void EditorApplication::DrawInspector() {
 
 
 	for (const auto& typeName : selectedObject->GetComponentTypeNames()) {
+		if (IsUIComponentType(typeName))
+		{
+			continue;
+		}
 		// 여기서 각 Component별 Property와 조작까지 생성?
 		ImGui::PushID(typeName.c_str());
 		const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -2259,6 +2275,10 @@ void EditorApplication::DrawInspector() {
 		for (const auto& typeName : typeNames)
 		{
 			if (kHiddenTypes.contains(typeName))
+			{
+				continue;
+			}
+			if (IsUIComponentType(typeName))
 			{
 				continue;
 			}
@@ -3744,25 +3764,7 @@ void EditorApplication::DrawUIEditorPreview()
 
 		auto isUIComponentType = [](const std::string& typeName) -> bool
 			{
-				if (typeName == UIFSMComponent::StaticTypeName)
-				{
-					return true;
-				}
-				auto& registry = ComponentRegistry::Instance();
-				auto* typeInfo = registry.Find(typeName);
-				while (typeInfo)
-				{
-					if (typeInfo->name == UIComponent::StaticTypeName)
-					{
-						return true;
-					}
-					if (!typeInfo->parent && typeInfo->parentName)
-					{
-						typeInfo->parent = registry.Find(typeInfo->parentName);
-					}
-					typeInfo = typeInfo->parent;
-				}
-				return false;
+				return IsUIComponentType(typeName);
 			};
 
 		auto selectedObject = getUIObjectByName(m_SelectedUIObjectName);

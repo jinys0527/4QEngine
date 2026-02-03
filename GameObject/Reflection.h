@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <functional>
 #include <typeinfo>
@@ -215,6 +216,8 @@ using namespace MathUtils;
 		static ComponentRegistry& Instance();
 
 		void Register(ComponentTypeInfo* info);
+		void RegisterUIType(const string& name) { m_UITypes.insert(name); }
+		bool IsUIType(const string& name) const { return m_UITypes.find(name) != m_UITypes.end(); }
 		vector<string> GetTypeNames() const; // 등론된 이름 전체 return
 		ComponentTypeInfo* Find(const string& name) const {
 			auto it = m_Types.find(name);
@@ -281,6 +284,7 @@ using namespace MathUtils;
 		}
 	private:
 		unordered_map<string, ComponentTypeInfo*> m_Types; //이름 : 컴포넌트
+		unordered_set<string> m_UITypes;
 	};
 	// 게임에서 정의된 컴포넌트 들과 프로퍼티 (사전) -> Component List
 
