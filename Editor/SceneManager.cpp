@@ -383,32 +383,35 @@ bool SceneManager::SaveSceneToJson(const std::filesystem::path& filePath)const
 
 	auto mergeNamedArray = [](const nlohmann::json& base, const nlohmann::json& incoming)
 		{
-			std::unordered_map<std::string, nlohmann::json> byName;
+			if (!incoming.is_array())
+			{
+				return base.is_array() ? base : nlohmann::json::array();
+			}
+
+			nlohmann::json result = nlohmann::json::array();
+			std::unordered_map<std::string, nlohmann::json> baseByName;
 			if (base.is_array())
 			{
 				for (const auto& entry : base)
 				{
 					if (entry.contains("name"))
 					{
-						byName[entry.at("name").get<std::string>()] = entry;
+						baseByName[entry.at("name").get<std::string>()] = entry;
 					}
 				}
 			}
-			if (incoming.is_array())
+			for (const auto& entry : incoming)
 			{
-				for (const auto& entry : incoming)
+				if (!entry.contains("name"))
 				{
-					if (entry.contains("name"))
-					{
-						byName[entry.at("name").get<std::string>()] = entry;
-					}
+					continue;
 				}
-			}
-			nlohmann::json result = nlohmann::json::array();
-			for (const auto& [name, entry] : byName)
-			{
+
+				const auto name = entry.at("name").get<std::string>();
 				result.push_back(entry);
+				baseByName.erase(name);
 			}
+
 			return result;
 		};
 

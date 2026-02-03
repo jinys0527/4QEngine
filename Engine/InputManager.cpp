@@ -34,6 +34,9 @@ void InputManager::Update()
 	if (!m_Enabled)
 		return;
 
+	if (m_EventDispatcher == nullptr)
+		return;
+
 	const bool allowGameplayInput = !m_GameManager
 		|| m_GameManager->IsExplorationInputAllowed()
 		|| m_GameManager->IsCombatInputAllowed();
@@ -176,7 +179,6 @@ void InputManager::Update()
 		m_EventDispatcher->Dispatch(EventType::MouseRightClickUp, &m_Mouse);
 	}
 	
-
 
 	// Hovered : 매 프레임	
 	m_EventDispatcher->Dispatch(EventType::UIHovered, &m_Mouse);

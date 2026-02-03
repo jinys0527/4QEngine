@@ -47,6 +47,13 @@
     REGISTER_COMPONENT_DERIVED_DATA(TYPE, BASE) \
     REGISTER_LINK(TYPE)
 
+#define REGISTER_UI_COMPONENT(TYPE) \
+    REGISTER_COMPONENT_DATA(TYPE) \
+    static bool TYPE##_UIRegistered = [](){ \
+        ComponentRegistry::Instance().RegisterUIType(#TYPE); \
+        return true; \
+    }(); \
+    REGISTER_LINK(TYPE)
 
 
 // private 어캐 함? Get

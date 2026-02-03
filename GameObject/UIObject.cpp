@@ -3,6 +3,7 @@
 #include "UIButtonComponent.h"
 #include "UISliderComponent.h"
 #include "UIFSMComponent.h"
+#include "UIComponent.h"
 #include "Reflection.h"
 
 UIObject::UIObject(EventDispatcher& eventDispatcher) : Object(eventDispatcher)
@@ -243,6 +244,28 @@ void UIObject::Deserialize(const nlohmann::json& j)
 		}
 	}
 	UpdateInteractableFlags();
+	if (auto* baseComponent = GetComponent<UIComponent>())
+	{
+		baseComponent->SetVisible(m_IsVisible);
+		baseComponent->SetZOrder(m_ZOrder);
+	}
+}
+
+void UIObject::SetZOrder(int zOrder)
+{
+	m_ZOrder = zOrder;
+	if (auto* baseComponent = GetComponent<UIComponent>())
+	{
+		if (baseComponent->GetZOrder() != zOrder)
+		{
+			baseComponent->SetZOrder(zOrder);
+		}
+	}
+}
+
+void UIObject::SetZOrderFromComponent(int zOrder)
+{
+	m_ZOrder = zOrder;
 }
 
 bool UIObject::HitCheck(const POINT& pos)
@@ -262,6 +285,24 @@ bool UIObject::HitCheck(const POINT& pos)
 bool UIObject::IsFullScreen()
 {
 	return m_IsFullScreen;
+}
+
+void UIObject::SetIsVisible(bool isVisible)
+{
+	m_IsVisible = isVisible;
+
+	if (auto* baseComponent = GetComponent<UIComponent>())
+	{
+		if (baseComponent->GetVisible() != isVisible)
+		{
+			baseComponent->SetVisible(isVisible);
+		}
+	}
+}
+
+void UIObject::SetIsVisibleFromComponent(bool isVisible)
+{
+	m_IsVisible = isVisible;
 }
 
 bool UIObject::IsVisible()

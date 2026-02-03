@@ -2,7 +2,7 @@
 #include "ReflectionMacro.h"
 #include <algorithm>
 
-REGISTER_COMPONENT_DERIVED(ScaleBox, UIComponent)
+REGISTER_UI_COMPONENT(ScaleBox)
 REGISTER_PROPERTY(ScaleBox, Stretch)
 REGISTER_PROPERTY(ScaleBox, StretchDirection)
 
@@ -42,4 +42,13 @@ float ScaleBox::CalculateScale(const UISize& availableSize, const UISize& desire
 	}
 
 	return scale;
+}
+
+UISize ScaleBox::CalculateScaledSize(const UISize& availableSize, const UISize& desiredSize) const
+{
+	const float scale = CalculateScale(availableSize, desiredSize);
+	UISize scaled = desiredSize;
+	scaled.width  *= scale;
+	scaled.height *= scale;
+	return scaled;
 }

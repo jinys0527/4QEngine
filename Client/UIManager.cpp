@@ -152,7 +152,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 		}
 	}
 	else if (type == EventType::Released)
-	{		
+	{
 		for (auto& pair : uiMap)
 		{
 			auto& ui = pair.second;
@@ -257,51 +257,74 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 			{
 				button->HandleReleased();
 			}
-			else if (type == EventType::Hovered)
+			else if (type == EventType::UIHovered)
 			{
 				const auto mouseData = static_cast<const Events::MouseState*>(data);
 				const bool isHovered = ui->HitCheck(mouseData->pos);
 				button->HandleHover(isHovered);
 			}
-	}
-	if (ui->hasSlider)
-	{
-		auto sliders = ui->GetComponents<UISliderComponent>();
-		for (auto* slider : sliders)
+		}
+		if (ui->hasSlider)
 		{
-			if (!slider)
-				continue;
+			auto sliders = ui->GetComponents<UISliderComponent>();
+			for (auto* slider : sliders)
+			{
+				if (!slider)
+					continue;
 
-			if (type == EventType::Dragged)
-			{
-				const auto mouseData = static_cast<const Events::MouseState*>(data);
-				const auto bounds = ui->GetBounds();
-				float normalizedValue = 0.0f;
-				if (bounds.width > 0.0f)
+				if (type == EventType::UIDragged)
 				{
-					normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+					const auto mouseData = static_cast<const Events::MouseState*>(data);
+					const auto bounds = ui->GetBounds();
+					float normalizedValue = 0.0f;
+					const UIFillDirection direction = slider->GetFillDirection();
+					const bool isVertical = direction == UIFillDirection::TopToBottom
+						|| direction == UIFillDirection::BottomToTop;
+					if (isVertical)
+					{
+						if (bounds.height > 0.0f)
+						{
+							normalizedValue = (mouseData->pos.y - bounds.y) / bounds.height;
+						}
+						if (direction == UIFillDirection::BottomToTop)
+						{
+							normalizedValue = 1.0f - normalizedValue;
+						}
+					}
+					else
+					{
+						if (bounds.width > 0.0f)
+						{
+							normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+						}
+						if (direction == UIFillDirection::RightToLeft)
+						{
+							normalizedValue = 1.0f - normalizedValue;
+						}
+					}
+					normalizedValue = std::clamp(normalizedValue, 0.0f, 1.0f);
+					slider->HandleDrag(normalizedValue);
 				}
-				slider->HandleDrag(normalizedValue);
-			}
-			else if (type == EventType::Released)
-			{
-				slider->HandleReleased();
+				else if (type == EventType::Released)
+				{
+					slider->HandleReleased();
+				}
 			}
 		}
-	}
-	if (ui->hasUIFSM)
-	{
-		auto* fsm = ui->GetComponent<UIFSMComponent>();
-		if (fsm)
+		if (ui->hasUIFSM)
 		{
-			if (type == EventType::Hovered)
+			auto* fsm = ui->GetComponent<UIFSMComponent>();
+			if (fsm)
 			{
-				const auto mouseData = static_cast<const Events::MouseState*>(data);
-				if (!ui->HitCheck(mouseData->pos))
+				if (type == EventType::UIHovered)
 				{
-					return;
+					const auto mouseData = static_cast<const Events::MouseState*>(data);
+					if (!ui->HitCheck(mouseData->pos))
+					{
+						return;
+					}
+					fsm->OnEvent(type, data);
 				}
-				fsm->OnEvent(type, data);
 			}
 		}
 	}
@@ -467,7 +490,13 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			const UIFillDirection fillDirection = slider->GetFillDirection();
 			const bool isVertical = fillDirection == UIFillDirection::TopToBottom
 				|| fillDirection == UIFillDirection::BottomToTop;
-			const float handleSize = std::min(bounds.width, bounds.height);
+
+			float handleSize = std::min(bounds.width, bounds.height);
+			if (slider->HasHandleSizeOverride())
+			{
+				handleSize = slider->GetHandleSizeOverride();
+			}
+
 			if (handleSize > 0.0f)
 			{
 				UIRect handleRect = bounds;
@@ -499,12 +528,30 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		else
 		{
 			appendElement(bounds, baseZOrder, imageComponent);
+			if (auto* button = uiObject->GetComponent<UIButtonComponent>())
+			{
+				auto& element = frameData.uiElements.back();
+
+				if (button->HasStyleOverrides())
+				{
+					applyOverrides(element,
+						button->GetCurrentTextureHandle(),
+						button->GetShaderAssetHandle(),
+						button->GetVertexShaderHandle(),
+						button->GetPixelShaderHandle());
+				}
+				if (button->HasColorOverrides())
+				{
+					element.color = button->GetCurrentTintColor();
+				}
+			}
 		}
 
 		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
 		{
 			RenderData::UITextElement text{};
 			text.position = { bounds.x, bounds.y };
+			text.color = textComp->GetTextColor();
 			text.fontSize = textComp->GetFontSize();
 			text.text = textComp->GetText();
 			frameData.uiTexts.push_back(std::move(text));

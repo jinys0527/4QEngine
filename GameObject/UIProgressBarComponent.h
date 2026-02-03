@@ -3,6 +3,7 @@
 #include "UIPrimitives.h"
 #include "ResourceHandle.h"
 #include "UIImageComponent.h"
+#include <functional>
 
 class UIProgressBarComponent : public UIComponent
 {
@@ -15,6 +16,11 @@ public:
 
 	void SetPercent(const float& percent);
 	const float& GetPercent() const { return m_Percent; }
+
+	void SetOnPercentChanged(std::function<void(float)> callback)
+	{
+		m_OnPercentChanged = std::move(callback);
+	}
 
 	void SetBackgroundTextureHandle(const TextureHandle& handle) { m_BackgroundTextureHandle = handle; }
 	const TextureHandle& GetBackgroundTextureHandle() const { return m_BackgroundTextureHandle; }
@@ -45,6 +51,7 @@ public:
 private:
 	float m_Percent = 0.0f;
 	UIFillDirection m_FillDirection = UIFillDirection::LeftToRight;
+	std::function<void(float)> m_OnPercentChanged;
 
 	TextureHandle m_BackgroundTextureHandle = TextureHandle::Invalid();
 	ShaderAssetHandle m_BackgroundShaderAssetHandle = ShaderAssetHandle::Invalid();

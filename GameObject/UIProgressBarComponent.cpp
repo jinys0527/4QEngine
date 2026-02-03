@@ -3,7 +3,7 @@
 #include "UIFSMComponent.h"
 #include <algorithm>
 
-REGISTER_COMPONENT_DERIVED(UIProgressBarComponent, UIComponent)
+REGISTER_UI_COMPONENT(UIProgressBarComponent)
 REGISTER_PROPERTY(UIProgressBarComponent, Percent)
 REGISTER_PROPERTY(UIProgressBarComponent, FillDirection)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundTextureHandle)
@@ -32,6 +32,10 @@ void UIProgressBarComponent::SetPercent(const float& percent)
 	m_Percent = std::clamp(percent, 0.0f, 1.0f);
 	if (m_Percent != previous)
 	{
+		if (m_OnPercentChanged)
+		{
+			m_OnPercentChanged(m_Percent);
+		}
 		if (auto* owner = GetOwner())
 		{
 			if (auto* fsm = owner->GetComponent<UIFSMComponent>())

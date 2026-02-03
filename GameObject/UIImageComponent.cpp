@@ -1,7 +1,7 @@
 ﻿#include "UIImageComponent.h"
 #include "ReflectionMacro.h"
 
-REGISTER_COMPONENT_DERIVED(UIImageComponent, UIComponent)
+REGISTER_UI_COMPONENT(UIImageComponent)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, TextureHandle)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, ShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, VertexShaderHandle)

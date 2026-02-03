@@ -2,7 +2,7 @@
 #include "ReflectionMacro.h"
 #include <algorithm>
 
-REGISTER_COMPONENT_DERIVED(Border, UIComponent)
+REGISTER_UI_COMPONENT(Border)
 REGISTER_PROPERTY(Border, Padding)
 
 void Border::Update(float deltaTime)
