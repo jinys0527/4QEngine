@@ -103,10 +103,7 @@ extern "C" {
 	void Link_PlayerInventoryFSMComponent();
 	void Link_PlayerDoorFSMComponent();
 	void Link_ItemComponent();
-<<<<<<< HEAD
 	void Link_CameraLogicComponent();
-=======
->>>>>>> b0a439db6b3363439f663fe3476706a9051bd2c8
 	void Link_FloodSystemComponent();
 	void Link_FloodUIComponent();
 }
@@ -178,10 +175,7 @@ void LinkEngineComponents() {
 	Link_PlayerInventoryFSMComponent();
 	Link_PlayerDoorFSMComponent();
 	Link_ItemComponent();
-<<<<<<< HEAD
 	Link_CameraLogicComponent();
-=======
->>>>>>> b0a439db6b3363439f663fe3476706a9051bd2c8
 	Link_FloodSystemComponent();
 	Link_FloodUIComponent();
 }
