@@ -18,8 +18,21 @@ public:
 	const float& GetWaterRisePerSecond() const				   { return m_WaterRisePerSecond;	   }
 	void		 SetWaterRisePerSecond(const float& value)	   { m_WaterRisePerSecond = value;	   }
 
-	const float& GetGameOverLevel() const					   { return m_GameOverLevel;		   }
-	void		 SetGameOverLevel(const float& value)		   { m_GameOverLevel = value;		   }
+	const float& GetRiseIntervalSeconds() const				   { return m_RiseIntervalSeconds;	   }
+	void		 SetRiseIntervalSeconds(const float& seconds)  { m_RiseIntervalSeconds = seconds;  }
+
+	const float& GetRiseStepAmount() const					   { return m_RiseStepAmount;		   }
+	void		 SetRiseStepAmount(const float& value)		   { m_RiseStepAmount = value;		   }
+
+	const float& GetCorrectionMin() const					   { return m_CorrectionMin;		   }
+	void		 SetCorrectionMin(const float& value)		   { m_CorrectionMin = value;		   }
+
+	const float& GetCorrectionMax() const				       { return m_CorrectionMax;		   }
+	void		 SetCorrectionMax(const float& value)		   { m_CorrectionMax = value;		   }
+
+	const float& GetCorrectionDistanceMax() const			   { return m_CorrectionDistanceMax;   }
+	void		 SetCorrectionDistanceMax(const float& value)  { m_CorrectionDistanceMax = value;  }
+
 
 	const float  GetTurnElapsed  () const					   { return m_TurnElapsed;			   }
 	const float  GetTurnRemaining() const;
@@ -27,11 +40,20 @@ public:
 	const bool&  GetGameOver() const						   { return m_IsGameOver;			   }
 
 private:
-	float m_TurnElapsed			 = 0.0f;
-	float m_TurnTimeLimitSeconds = 30.0f;
-	float m_WaterLevel			 = 0.0f;
-	float m_WaterRisePerSecond	 = 0.1f;
-	float m_GameOverLevel	     = 10.0f;
-	bool  m_IsGameOver			 = false;
+	void  MarkGameOver();
+	float ComputeCorrectionFactor() const;
+	bool  ShouldAdvance() const;
+	float GetPlayerFloodHeightThreshold() const;
+
+	float m_TurnElapsed			  = 0.0f;
+	float m_TurnTimeLimitSeconds  = 30.0f;
+	float m_WaterLevel			  = 0.0f;
+	float m_WaterRisePerSecond	  = 0.1f;
+	float m_RiseIntervalSeconds   = 10.0f;
+	float m_RiseStepAmount		  = 0.1f;
+	float m_CorrectionMin		  = 0.5f;
+	float m_CorrectionMax		  = 2.0f;
+	float m_CorrectionDistanceMax = 20.0f;
+	bool  m_IsGameOver			  = false;
 };
 

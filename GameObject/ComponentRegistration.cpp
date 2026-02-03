@@ -44,6 +44,8 @@
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerInventoryFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
+#include "FloodSystemComponent.h"
+#include "FloodUIComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -102,6 +104,8 @@ extern "C" {
 	void Link_PlayerDoorFSMComponent();
 	void Link_ItemComponent();
 	void Link_CameraLogicComponent();
+	void Link_FloodSystemComponent();
+	void Link_FloodUIComponent();
 }
 
 void RegisterUIFSMDefinitions();
@@ -172,4 +176,6 @@ void LinkEngineComponents() {
 	Link_PlayerDoorFSMComponent();
 	Link_ItemComponent();
 	Link_CameraLogicComponent();
+	Link_FloodSystemComponent();
+	Link_FloodUIComponent();
 }
