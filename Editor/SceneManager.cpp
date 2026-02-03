@@ -59,7 +59,9 @@ void SceneManager::Update(float deltaTime)
 	if (!m_CurrentScene)
 		return;
 	if (m_CurrentScene->GetIsPause())
-		deltaTime = 0.0f;
+	{
+		return;
+	}
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
@@ -128,6 +130,8 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+	m_InputManager->ResetState();
+
 
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	m_UIManager->SetCurrentScene(m_CurrentScene->GetName());

@@ -40,6 +40,10 @@ void EnemyControllerComponent::Update(float deltaTime)
 
 	const Phase phase = gameManager->GetPhase();
 
+	if (phase == Phase::GameOver)
+	{
+		return;
+	}
 
 	// 1) 탐색 루프의 EnemyStep (다수 적 이동 끝나면 ExploreEnemyStepEnded 쏨)
 	if (phase == Phase::ExplorationLoop)

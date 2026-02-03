@@ -23,6 +23,9 @@ public:
 	// Abort는 tick-start에 호출될 수 있음
 	virtual void     OnAbort(BTInstance& inst, Blackboard& bb);
 
+	// 노드 서비스만 별도 실행 (후처리용)
+	void TickServicesOnly(BTInstance& inst, Blackboard& bb);
+
 	void AddDecorator(std::unique_ptr<Decorator> decorator);
 	void AddService  (std::unique_ptr<Service> service);
 

@@ -10,15 +10,21 @@
 #include "EnemyStatComponent.h"
 #include "GameObject.h"
 #include "PlayerComponent.h"
+#include "PlayerStatComponent.h"
 #include "GameManager.h"
 #include "Scene.h"
 #include "EnemyMovementComponent.h"
 #include "GridSystemComponent.h"
 #include "NodeComponent.h"
+#include "PlayerCombatFSMComponent.h"
+#include "ServiceRegistry.h"
+#include "CombatManager.h"
 #include <array>
 #include <cmath>
 #include <algorithm>
 #include < utility >
+#include <iostream>
+
 REGISTER_COMPONENT(EnemyComponent)
 REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
@@ -93,6 +99,15 @@ constexpr std::array<AxialDirection, 6> kFacingDirections{ {
 	{ -1, 0 },  // clock_9
 	{ -1, 1 }   // clock_11
 } };
+
+int AxialDistance(int q1, int r1, int q2, int r2)
+{
+	const int dq = q1 - q2;
+	const int dr = r1 - r2;
+	const int ds = dq + dr;
+	return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
+}
+
 std::pair<AxialDirection, AxialDirection> GetLateralDirections(int facingIndex)
 {
 	
@@ -131,7 +146,7 @@ bool IsTargetVisibleOnHexLine(
 	std::array<bool, 3> blocked{ false, false, false };
 
 	// 각 lane을 forward로 쭉 검사
-	for (int step = 1; step <= sightRange; ++step)
+	for (int step = 0; step < sightRange; ++step)
 	{
 		for (int lane = 0; lane < 3; ++lane)
 		{
@@ -243,33 +258,114 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto* scene = owner->GetScene();
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	
+	if (gameManager && gameManager->GetPhase() == Phase::GameOver)
+	{
+		return;
+	}
+
+	if (!m_TargetPlayer && scene)
+	{
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			if (!m_GridSystem)
+			{
+				if (auto* grid = object->GetComponent<GridSystemComponent>())
+				{
+					m_GridSystem = grid;
+				}
+			}
+
+			if (auto* player = object->GetComponent<PlayerComponent>())
+			{
+				m_TargetTransform = object->GetComponent<TransformComponent>();
+				m_TargetPlayer = player;
+				if (m_GridSystem)
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	auto& bb = m_AIController->GetBlackboard();
+	bb.Set(BlackboardKeys::IsInCombat, gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat);
+
+	bool isAlive = true;
+	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
+	{
+		isAlive = !stat->IsDead();
+	}
+	bb.Set(BlackboardKeys::IsAlive, isAlive);
+	if (!isAlive)
+	{
+		if (!m_DeathReported && gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
+		{
+			m_DeathReported = true;
+			if (scene && scene->GetServices().Has<CombatManager>())
+			{
+				bool playerAlive = true;
+				if (m_TargetPlayer)
+				{
+					if (auto* playerOwner = m_TargetPlayer->GetOwner())
+					{
+						if (auto* playerStat = playerOwner->GetComponent<PlayerStatComponent>())
+						{
+							playerAlive = !playerStat->IsDead();
+						}
+					}
+				}
+
+				bool enemiesRemaining = false;
+				if (m_GridSystem)
+				{
+					for (auto* enemy : m_GridSystem->GetEnemies())
+					{
+						if (!enemy)
+						{
+							continue;
+						}
+						auto* enemyOwner = enemy->GetOwner();
+						auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+						if (enemyStat && !enemyStat->IsDead())
+						{
+							enemiesRemaining = true;
+							break;
+						}
+					}
+				}
+
+				scene->GetServices().Get<CombatManager>().UpdateBattleOutcome(playerAlive, enemiesRemaining);
+			}
+		}
+		return;
+	}
+
 	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat
 		&& gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 	{
 		return;
 	}
 
-	auto& bb = m_AIController->GetBlackboard();
-	auto* transform = owner->GetComponent<TransformComponent>();
-	if (transform)
-	{
-		const auto pos = transform->GetPosition();
-		const auto forward = transform->GetForward();
-		bb.Set(BlackboardKeys::SelfPosX,         pos.x);
-		bb.Set(BlackboardKeys::SelfPosY,         pos.y);
-		bb.Set(BlackboardKeys::SelfPosZ,         pos.z);
-		bb.Set(BlackboardKeys::SelfForwardX, forward.x);
-		bb.Set(BlackboardKeys::SelfForwardY, forward.y);
-		bb.Set(BlackboardKeys::SelfForwardZ, forward.z);
-	}
+	
 	bb.Set(BlackboardKeys::SelfQ, m_Q);
 	bb.Set(BlackboardKeys::SelfR, m_R);
 	bb.Set(BlackboardKeys::FacingDirection, static_cast<int>(m_Facing));
 	float sightDistance = 0.0f;
 
+	int attackRange = 1;
+	bool preferRanged = false;
 	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
 	{
 		sightDistance = stat->GetSightDistance();
+		attackRange   = max(1, stat->GetAttackRange());
+		preferRanged = attackRange > 1;
 		bb.Set(BlackboardKeys::SightDistance, sightDistance);
 		bb.Set(BlackboardKeys::SightAngle,    stat->GetSightAngle());
 		bb.Set(BlackboardKeys::ThrowRange,    static_cast<float>(stat->GetMaxDiceValue()));
@@ -279,6 +375,7 @@ void EnemyComponent::Update(float deltaTime) {
 	else
 	{
 		sightDistance = 100.0f;
+		preferRanged = false;
 		bb.Set(BlackboardKeys::SightDistance, sightDistance);
 		bb.Set(BlackboardKeys::SightAngle, 180.0f);
 		bb.Set(BlackboardKeys::ThrowRange, 3.0f);
@@ -286,16 +383,23 @@ void EnemyComponent::Update(float deltaTime) {
 		bb.Set(BlackboardKeys::HP, 30);
 	}
 
-	if (m_TargetTransform)
+	if (m_TargetPlayer)
 	{
-		const auto targetPos = m_TargetTransform->GetPosition();
-		bb.Set(BlackboardKeys::TargetPosX, targetPos.x);
-		bb.Set(BlackboardKeys::TargetPosY, targetPos.y);
-		bb.Set(BlackboardKeys::TargetPosZ, targetPos.z);
+		std::cout << "[AI][Enemy] Target set: actor=" << GetActorId()
+			<< " q=" << m_TargetPlayer->GetQ()
+			<< " r=" << m_TargetPlayer->GetR() << "\n";
+		bb.Set(BlackboardKeys::TargetQ, m_TargetPlayer->GetQ());
+		bb.Set(BlackboardKeys::TargetR, m_TargetPlayer->GetR());
+	}
+	else
+	{
+		std::cout << "[AI][Enemy] Target missing: actor=" << GetActorId()
+			<< " m_TargetPlayer=null\n";
 	}
 
 	const bool hasHexData = m_GridSystem && m_TargetPlayer;
 	bb.Set(BlackboardKeys::HasHexSightData, hasHexData);
+	bool targetVisible = false;
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
@@ -309,7 +413,7 @@ void EnemyComponent::Update(float deltaTime) {
 			ClearSightDebug();
 		}
 
-		const bool targetVisible = IsTargetVisibleOnHexLine(
+		targetVisible = IsTargetVisibleOnHexLine(
 			m_GridSystem,
 			m_Q,
 			m_R,
@@ -322,8 +426,31 @@ void EnemyComponent::Update(float deltaTime) {
 		ClearSightDebug();
 	}
 
-	bb.Set(BlackboardKeys::PreferRanged, false);
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop && m_TargetPlayer && hasHexData)
+	{
+		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
+		if (targetVisible && distance <= attackRange)
+		{
+			std::cout << "[AI][Enemy] Combat enter: distance=" << distance
+				<< " attackRange=" << attackRange << " targetVisible=" << targetVisible << "\n";
+			auto* playerOwner = m_TargetPlayer->GetOwner();
+			if (playerOwner)
+			{
+				if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
+				{
+					combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
+				}
+			}
+			return;
+		}
+	}
+
+	bb.Set(BlackboardKeys::PreferRanged, preferRanged);
 	bb.Set(BlackboardKeys::MaintainRange, false);
+
+	std::cout << "[AI][Enemy] Tick AI: actor=" << GetActorId()
+		<< " phase=" << (gameManager ? static_cast<int>(gameManager->GetPhase()) : -1)
+		<< " inCombat=" << (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat) << "\n";
 
 	m_AIController->Tick(deltaTime);
 

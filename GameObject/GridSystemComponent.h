@@ -53,6 +53,7 @@ public:
 	int GetShortestPathLength(const AxialKey& start,const AxialKey& target);
 	vector<AxialKey> GetShortestPath(const AxialKey& start, const AxialKey& target) const;
 	NodeComponent* GetNodeByKey(const AxialKey& key) const;
+	EnemyComponent* GetEnemyAt(int q, int r) const;
 
 private:
 

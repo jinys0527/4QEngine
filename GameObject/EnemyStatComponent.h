@@ -28,6 +28,9 @@ public:
 	const int&   GetMaxDiceValue() const				 { return m_MaxDiceValue;		 }
 	void	     SetMaxDiceValue(const int& value)		 { m_MaxDiceValue = value;		 }
 					     
+	const int&   GetAttackRange() const { return m_AttackRange; }
+	void	     SetAttackRange(const int& value) { m_AttackRange = value; }
+
 	const float& GetSightDistance() const			     { return m_SightDistance;       }
 	void		 SetSightDistance(const float& value)    { m_SightDistance = value;      }
 													     								 
@@ -43,6 +46,7 @@ private:
 	int   m_AccuracyModifier   = 0;
 	int   m_DiceRollCount      = 0;
 	int   m_MaxDiceValue       = 0;
+	int   m_AttackRange		   = 1;
 	float m_SightDistance      = 5.0f;
 	float m_SightAngle         = 90.0f;
 	int   m_DifficultyGroup    = 1;

@@ -25,11 +25,25 @@ namespace CombatBehaviorTreeFactory
 		auto buildSenseUpdateTask = [dispatcher]()
 			{
 				auto updateTask = std::make_shared<UpdateTargetLocationTask>();
-				updateTask->AddService(std::make_unique<TargetSenseService>());
-				updateTask->AddService(std::make_unique<CombatStateSyncService>());
-				updateTask->AddService(std::make_unique<RangeUpdateService>());
-				updateTask->AddService(std::make_unique<EstimatePlayerDamageService>());
-				updateTask->AddService(std::make_unique<RepathService>());
+				auto targetSense = std::make_unique<TargetSenseService>();
+				targetSense->interval = 0.0f;
+				updateTask->AddService(std::move(targetSense));
+
+				auto combatSync = std::make_unique<CombatStateSyncService>();
+				combatSync->interval = 0.0f;
+				updateTask->AddService(std::move(combatSync));
+
+				auto rangeUpdate = std::make_unique<RangeUpdateService>();
+				rangeUpdate->interval = 0.0f;
+				updateTask->AddService(std::move(rangeUpdate));
+
+				auto estimateDamage = std::make_unique<EstimatePlayerDamageService>();
+				estimateDamage->interval = 0.0f;
+				updateTask->AddService(std::move(estimateDamage));
+
+				auto repath = std::make_unique<RepathService>();
+				repath->interval = 0.0f;
+				updateTask->AddService(std::move(repath));
 			
 				return updateTask;
 			};

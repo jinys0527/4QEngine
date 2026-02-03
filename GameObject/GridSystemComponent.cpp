@@ -274,6 +274,16 @@ NodeComponent* GridSystemComponent::GetNodeByKey(const AxialKey& key) const
 	return it->second;
 }
 
+EnemyComponent* GridSystemComponent::GetEnemyAt(int q, int r) const
+{
+	for (auto* enemy : m_Enemies)
+	{
+		if (enemy && enemy->GetQ() == q && enemy->GetR() == r)
+			return enemy;
+	}
+	return nullptr;
+}
+
 // 최초 위치에서 이동가능한 범위 표시
 void GridSystemComponent::UpdateMoveRange(NodeComponent* startNode, int range)
 {
@@ -382,6 +392,15 @@ void GridSystemComponent::UpdateActorPositions()
 					UpdateActorNodeState(previous, current, NodeState::HasPlayer);
 					m_Player->SetQR(current.q, current.r);
 				}
+				else
+				{
+					auto it = m_NodesByAxial.find(current);
+					if (it != m_NodesByAxial.end() && it->second)
+					{
+						it->second->SetState(NodeState::HasPlayer);
+						m_PlayerNode = it->second;
+					}
+				}
 			}
 		}
 	}
@@ -400,6 +419,14 @@ void GridSystemComponent::UpdateActorPositions()
 		if (!(previous == current)) {
 			UpdateActorNodeState(previous, current, NodeState::HasEnemy);
 			enemy->SetQR(current.q, current.r);
+		}
+		else
+		{
+			auto it = m_NodesByAxial.find(current);
+			if (it != m_NodesByAxial.end() && it->second)
+			{
+				it->second->SetState(NodeState::HasEnemy);
+			}
 		}
 	}
 }

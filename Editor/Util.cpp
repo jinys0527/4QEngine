@@ -23,6 +23,7 @@
 #include "FSMEventRegistry.h"
 #include "UIPrimitives.h"
 #include "HorizontalBox.h"
+#include "EnemyMovementComponent.h"
 #include "Canvas.h"
 
 #define DRAG_SPEED 0.01f
@@ -2630,6 +2631,50 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		}
 		result.activated = result.activated || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(std::array<EnemyMovementComponent::PatrolPoint, 3>))
+	{
+		std::array<EnemyMovementComponent::PatrolPoint, 3> points{};
+		property.GetValue(component, &points);
+
+		bool changed = false;
+
+		ImGui::PushID(property.GetName().c_str());
+
+		for (int i = 0; i < 3; ++i)
+		{
+			ImGui::SeparatorText(("PatrolPoint " + std::to_string(i)).c_str());
+
+			ImGui::PushID(i);
+
+			int q = points[i].q;
+			int r = points[i].r;
+
+			changed |= ImGui::InputInt("Q", &q);
+			changed |= ImGui::InputInt("R", &r);
+
+			if (changed)
+			{
+				points[i].q = q;
+				points[i].r = r;
+			}
+
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::PopID();
+		}
+
+		ImGui::PopID();
+
+		if (changed)
+		{
+			property.SetValue(component, &points);
+			result.updated = true;
+		}
+
 		return result;
 	}
 

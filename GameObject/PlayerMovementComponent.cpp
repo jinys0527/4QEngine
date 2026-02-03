@@ -14,53 +14,16 @@
 #include "GridSystemComponent.h"
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerFSMComponent.h"
+#include "EnemyComponent.h"
+#include "GameObject.h"
 #include "GameState.h"
 #include "GameManager.h"
 #include <array>
-//#include <cfloat>
+#include <cfloat>
 
 REGISTER_COMPONENT(PlayerMovementComponent)
 REGISTER_PROPERTY(PlayerMovementComponent, DragSpeed)
-
-static NodeComponent* FindClosestNodeHit(
-	Scene* scene,
-	const DirectX::XMFLOAT3& rayOrigin,
-	const DirectX::XMFLOAT3& rayDir,
-	float& outT)
-{
-	if (!scene) return nullptr;
-
-	auto& gameObjects = scene->GetGameObjects();
-
-	float closestT = FLT_MAX;
-	NodeComponent* closestNode = nullptr;
-
-	for (const auto& [name, object] : gameObjects)
-	{
-		if (!object) continue;
-
-		auto* node = object->GetComponent<NodeComponent>();
-		if (!node) continue;
-
-		auto* col = object->GetComponent<BoxColliderComponent>();
-		if (!col || !col->HasBounds()) continue;
-
-		float t = 0.0f;
-		if (!col->IntersectsRay(rayOrigin, rayDir, t)) continue;
-
-		if (t >= 0.0f && t < closestT)
-		{
-			closestT = t;
-			closestNode = node;
-		}
-	}
-
-	if (!closestNode)
-		return nullptr;
-
-	outT = closestT;
-	return closestNode;
-}
+REGISTER_PROPERTY(PlayerMovementComponent, HoldThreshold)
 
 static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& current, RotationOffset& outDir)
 {
@@ -150,6 +113,56 @@ void PlayerMovementComponent::Start()
 
 void PlayerMovementComponent::Update(float deltaTime)
 {
+	if (m_IsWaitingForDrag)
+	{
+		auto* owner = GetOwner();
+		if (!owner) return;
+
+		auto* scene = owner->GetScene();
+		if (!scene || !scene->GetServices().Has<InputManager>()) return;
+
+		auto& input = scene->GetServices().Get<InputManager>();
+
+		// Mouse released: treat as short click.
+		if (!input.IsLeftPressed())
+		{
+			m_IsWaitingForDrag = false;
+			if (m_ObjectBehindPlayer)
+			{
+				auto* player = owner->GetComponent<PlayerComponent>();
+				if (player)
+				{
+					if (auto* enemy = player->ResolveCombatTarget(m_ObjectBehindPlayer))
+					{
+						player->HandleCombatClick(enemy);
+					}
+				}
+			}
+			m_ObjectBehindPlayer = nullptr;
+			m_HoldTimer = 0.0f;
+			return;
+		}
+
+		m_HoldTimer += deltaTime;
+		if (m_HoldTimer >= m_HoldThreshold)
+		{
+			m_IsWaitingForDrag = false;
+
+			auto* transComp = owner->GetComponent<TransformComponent>();
+			auto* player = owner->GetComponent<PlayerComponent>();
+			if (transComp && player)
+			{
+				player->ClearCombatSelection();
+				m_HasDragRay = true;
+				m_DragStartPos = transComp->GetPosition();
+				m_DragStartNode = m_GridSystem ? m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() }) : nullptr;
+
+				DispatchPlayerStateEvent(owner, "Move_Start");
+				DispatchMoveEvent(owner, "Move_Select");
+			}
+			m_ObjectBehindPlayer = nullptr;
+		}
+	}
 }
 
 void PlayerMovementComponent::OnEvent(EventType type, const void* data)
@@ -165,10 +178,16 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			auto* owner = GetOwner();
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Revoke");
+			if (auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr)
+			{
+				player->ClearCombatSelection();
+			}
 
 			// 입력 상태 정리(프리뷰/원복은 FSM 액션에서 처리)
 			m_HasDragRay = false;
 			m_DragStartNode = nullptr;
+			m_IsWaitingForDrag = false;
+			m_ObjectBehindPlayer = nullptr;
 		}
 		return;
 	}
@@ -228,16 +247,30 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::MouseRightClick)
 	{
+		player->ClearCombatSelection();
 		// 턴 아니면 cancel
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 		{
+			if (moveFsm->HasPendingTarget())
+			{
+				const int tQ = moveFsm->GetPeningQ();
+				const int tR = moveFsm->GetPeningR();
+				if (!player->CommitMove(tQ, tR))
+					transComp->SetPosition(m_DragStartPos);
+				else
+					ApplyRotationForMove(tQ, tR);
+			}
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Revoke");
+			player->ClearCombatSelection();
 			m_HasDragRay = false;
+			m_IsWaitingForDrag = false;
+			m_ObjectBehindPlayer = nullptr;
 			return;
 		}
 
 		DispatchMoveEvent(owner, "Move_Revoke");
+		player->ClearCombatSelection();
 	}
 
 	// MouseUp: Commit/Cancel 의사만 FSM에 전달
@@ -248,21 +281,38 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		{
 			DispatchPlayerStateEvent(owner, "Move_Cancel");
 			DispatchMoveEvent(owner, "Move_Revoke");
+			player->ClearCombatSelection();
 			m_HasDragRay = false;
+			m_IsWaitingForDrag = false;
+			m_ObjectBehindPlayer = nullptr;
 			return;
 		}
 
-		if (!moveFsm->HasPendingTarget())
+		if (m_IsWaitingForDrag)
 		{
-			DispatchPlayerStateEvent(owner, "Move_Cancel");
-			DispatchMoveEvent(owner, "Move_Revoke");
-			m_HasDragRay = false;
+			m_IsWaitingForDrag = false;
+			if (m_ObjectBehindPlayer)
+			{
+				if (auto* enemy = player->ResolveCombatTarget(m_ObjectBehindPlayer))
+				{
+					player->HandleCombatClick(enemy);
+				}
+			}
+			m_ObjectBehindPlayer = nullptr;
 			return;
 		}
 
+		bool hasMoved = false;
+		if (moveFsm->HasPendingTarget() && m_DragStartNode)
+		{
+			if (moveFsm->GetPeningQ() != m_DragStartNode->GetQ()
+				|| moveFsm->GetPeningR() != m_DragStartNode->GetR())
+			{
+				hasMoved = true;
+			}
+		}
 
-		// 드래그(Selecting) 중일 때만 Confirm 올리는게 정상
-		if (moveFsm->HasPendingTarget())
+		if (hasMoved)
 		{
 			DispatchMoveEvent(owner, "Move_Confirm");
 		}
@@ -279,7 +329,7 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		return;
 
 	// MouseDown: Select 의사만 FSM에 전달
-	if (type == EventType::MouseLeftClick)
+	if (type == EventType::MouseLeftClick || type == EventType::MouseLeftDoubleClick)
 	{
 		if (player->GetCurrentTurn() != Turn::PlayerTurn)
 			return;
@@ -288,19 +338,11 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
 			return;
 
-		// 선택 판정(본인 or 노드 or 가장 가까운 collider)
-		auto* collider = owner->GetComponent<BoxColliderComponent>();
-		float ownerHitT = 0.0f;
-		const bool hitOwner = collider && collider->HasBounds()
-			&& collider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, ownerHitT);
-
-		const auto pos = transComp->GetPosition();
-		float nodeHitT = 0.0f;
-		NodeComponent* clickedNode = FindClosestNodeHit(scene, pickRay.m_Pos, pickRay.m_Dir, nodeHitT);
-
 		auto& gameObjects = scene->GetGameObjects();
-		float closestT = FLT_MAX;
-		GameObject* closestObject = nullptr;
+		float enemyT = FLT_MAX;
+		EnemyComponent* bestEnemy = nullptr;
+		float otherT = FLT_MAX;
+		GameObject* bestOther = nullptr;
 
 		for (const auto& [name, object] : gameObjects)
 		{
@@ -314,56 +356,101 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 			if (!otherCollider->IntersectsRay(pickRay.m_Pos, pickRay.m_Dir, hitT))
 				continue;
 
-			if (hitT >= 0.0f && hitT < closestT)
+			if (object.get() == owner)
 			{
-				closestT = hitT;
-				closestObject = object.get();
+				continue;
 			}
-		}
 
-		if (!hitOwner && closestObject != owner)
-			return;
-
-		// 드래그 오프셋 계산(입력 기반 데이터)
-		if (clickedNode)
-		{
-			auto* nodeOwner = clickedNode->GetOwner();
-			auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
-			if (nodeTransform)
+			if (auto* enemy = player->ResolveCombatTarget(object.get()))
 			{
-				const auto nodePos = nodeTransform->GetPosition();
-				m_DragOffset = { 0.0f, pos.y - nodePos.y, 0.0f };
+				if (hitT < enemyT)
+				{
+					enemyT = hitT;
+					bestEnemy = enemy;
+				}
 			}
 			else
 			{
-				m_DragOffset = { 0.0f, 0.0f, 0.0f };
+				if (hitT < otherT)
+				{
+					otherT = hitT;
+					bestOther = object.get();
+				}
 			}
 		}
-		else
+
+
+		bool tileUnderPlayerHit = false;
+		if (bestOther)
 		{
-			m_DragOffset = { 0.0f, 0.0f, 0.0f };
+			if (auto* node = bestOther->GetComponent<NodeComponent>())
+			{
+				if (node->GetQ() == player->GetQ() && node->GetR() == player->GetR())
+				{
+					tileUnderPlayerHit = true;
+				}
+			}
 		}
 
-		// 레이/시작 위치 저장
-		m_DragRayOrigin = pickRay.m_Pos;
-		m_DragRayDir = pickRay.m_Dir;
-		m_HasDragRay = true;
+		if (tileUnderPlayerHit)
+		{
+			m_IsWaitingForDrag = true;
+			m_HoldTimer = 0.0f;
+			m_ClickStartPos = mouseData->pos;
 
-		m_DragStartPos = transComp->GetPosition();
-		m_DragStartNode = nullptr;
+			if (bestEnemy)
+				m_ObjectBehindPlayer = static_cast<GameObject*>(bestEnemy->GetOwner());
+			else
+				m_ObjectBehindPlayer = bestOther;
 
-		if (m_GridSystem)
-			m_DragStartNode = m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() });
+			auto* nodeTransform = bestOther ? bestOther->GetComponent<TransformComponent>() : nullptr;
+			if (nodeTransform)
+				m_DragOffset = { 0.0f, transComp->GetPosition().y - nodeTransform->GetPosition().y, 0.0f };
+			else
+				m_DragOffset = { 0.0f, 0.0f, 0.0f };
 
-		// FSM에 상태 시작 의사 전달 (BeginMove/드래그 활성화는 FSM 액션에서)
-		DispatchPlayerStateEvent(owner, "Move_Start");
-		DispatchMoveEvent(owner, "Move_Select");
+			m_DragRayOrigin = pickRay.m_Pos;
+			m_DragRayDir = pickRay.m_Dir;
+			return;
+		}
+
+		m_IsWaitingForDrag = false;
+		if (bestEnemy)
+		{
+			player->HandleCombatClick(bestEnemy);
+			return;
+		}
+		player->ClearCombatSelection();
 		return;
 	}
 
 	// Dragged: 레이만 갱신
 	if (type != EventType::Dragged)
 		return;
+
+	if (m_IsWaitingForDrag)
+	{
+		const float dx = static_cast<float>(mouseData->pos.x - m_ClickStartPos.x);
+		const float dy = static_cast<float>(mouseData->pos.y - m_ClickStartPos.y);
+		if (dx * dx + dy * dy > 100.0f)
+		{
+			m_IsWaitingForDrag = false;
+			m_ObjectBehindPlayer = nullptr;
+			player->ClearCombatSelection();
+
+			auto* transComp = owner->GetComponent<TransformComponent>();
+			auto* player = owner->GetComponent<PlayerComponent>();
+			if (transComp && player)
+			{
+				m_HasDragRay = true;
+				m_DragStartPos = transComp->GetPosition();
+				m_DragStartNode = m_GridSystem ? m_GridSystem->GetNodeByKey({ player->GetQ(), player->GetR() }) : nullptr;
+
+				DispatchPlayerStateEvent(owner, "Move_Start");
+				DispatchMoveEvent(owner, "Move_Select");
+			}
+		}
+	}
 
 	// 드래그 활성은 FSM이 관리하지만, 레이는 계속 갱신해줘야 프리뷰가 움직임
 	if (!moveFsm->IsDraggingActive())
