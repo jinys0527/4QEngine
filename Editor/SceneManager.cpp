@@ -33,7 +33,7 @@ void SceneManager::Initialize()
 	{
 		m_GameManager->SetServices(&m_Services);
 		DataSheetPaths dataPaths{};
-		dataPaths.itemsPath = "Data/items.csv";
+		dataPaths.itemsPath = "../Resources/CSV/ItemDataTable.csv";
 		dataPaths.enemiesPath = "Data/enemies.csv";
 		dataPaths.dropTablesPath = "Data/drop_tables.csv";
 		m_GameManager->SetDataSheetPaths(dataPaths);

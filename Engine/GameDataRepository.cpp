@@ -113,29 +113,28 @@ bool GameDataRepository::LoadItemsFromFile(const std::string& path, std::string*
 	for (const auto& row : rows)
 	{
 		ItemDefinition item{};
-		item.index            = ParseInt(GetField(row, header, "index"), 0);
-		item.category         = ParseCategory(GetField(row, header, "category"));
-		item.name			  = GetField(row, header, "name");
-		item.description	  = GetField(row, header, "description");
-		item.iconPath		  = GetField(row, header, "iconPath");
-		item.meshPath		  = GetField(row, header, "meshPath");
-		item.basePrice		  = ParseInt(GetField(row, header, "basePrice"), 0);
-		item.difficultyGroup  = ParseInt(GetField(row, header, "difficultyGroup"), 1);
+		item.index					= ParseInt(GetField(row, header, "ItemKey"), 0);
+		item.category				= ParseCategory(GetField(row, header, "ItemType"));
+		item.name					= GetField(row, header, "한글 이름");
+		item.description			= GetField(row, header, "description");			//아이템 설명
+		item.iconPath				= GetField(row, header, "IconPath");
+		item.meshPath				= GetField(row, header, "MeshPath");
+		item.basePrice				= ParseInt(GetField(row, header, "Price"), 0);
+		item.difficultyGroup		= ParseInt(GetField(row, header, "DifficultyGroup"), 1);
 
-		item.minHealPercent   = ParseInt(GetField(row, header, "minHealPercent"), 0);
-		item.maxHealPercent   = ParseInt(GetField(row, header, "maxHealPercent"), 0);
-		item.minDamage        = ParseInt(GetField(row, header, "minDamage"), 0);
-		item.maxDamage        = ParseInt(GetField(row, header, "maxDamage"), 0);
+		item.diceRoll				= ParseInt(GetField(row, header, "DiceRollCount"), 0);			
+		item.diceType				= ParseInt(GetField(row, header, "DiceType"), 0);			
+		item.baseModifier			= ParseInt(GetField(row, header, "BaseModifier"), 0);
 
-		item.healthModifier   = ParseInt(GetField(row, header, "healthModifier"), 0);
-		item.strengthModifier = ParseInt(GetField(row, header, "strengthModifier"), 0);
-		item.agilityModifier  = ParseInt(GetField(row, header, "agilityModifier"), 0);
-		item.senseModifier	  = ParseInt(GetField(row, header, "senseModifier"), 0);
-		item.skillModifier	  = ParseInt(GetField(row, header, "skillModifier"), 0);
-		item.defenseBonus	  = ParseInt(GetField(row, header, "defenseBonus"), 0);
+		item.constitutionModifier	= ParseInt(GetField(row, header, "ConstitutionModifier"), 0);
+		item.strengthModifier		= ParseInt(GetField(row, header, "StrengthModifier"), 0);
+		item.agilityModifier		= ParseInt(GetField(row, header, "DexterityModifier"), 0);
+		item.senseModifier			= ParseInt(GetField(row, header, "PerceptionModifier"), 0);
+		item.skillModifier			= ParseInt(GetField(row, header, "SkillModifier"), 0);
+		item.defenseBonus			= ParseInt(GetField(row, header, "defenseBonus"), 0);
 
-		item.throwRange       = ParseInt(GetField(row, header, "throwRange"), 0);
-		item.range            = ParseInt(GetField(row, header, "range"), 0);
+		item.throwRange				= ParseInt(GetField(row, header, "Range"), 0);
+		item.range					= ParseInt(GetField(row, header, "Range"), 0);
 
 		if (item.index != 0)
 		{

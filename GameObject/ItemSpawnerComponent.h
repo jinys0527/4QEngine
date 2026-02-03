@@ -20,9 +20,29 @@ public:
 
 	void SpwanFixedItem();
 	void DropItem();
+
+	const std::string& GetFixedItemTemplateName() const { return m_FixedItemTemplateName; }
+	void SetFixedItemTemplateName(const std::string& value) { m_FixedItemTemplateName = value; }
+
+	const std::string& GetDropItemTemplateName() const { return m_DropItemTemplateName; }
+	void SetDropItemTemplateName(const std::string& value) { m_DropItemTemplateName = value; }
+
+	const int& GetFixedItemIndex() const { return m_FixedItemIndex; }
+	void SetFixedItemIndex(const int& value) { m_FixedItemIndex = value; }
+
+	const int& GetEnemyDefinitionId() const { return m_EnemyDefinitionId; }
+	void SetEnemyDefinitionId(const int& value) { m_EnemyDefinitionId = value; }
+
+	const bool& GetDropOnDeath() const { return m_DropOnDeath; }
+	void SetDropOnDeath(const bool& value) { m_DropOnDeath = value; }
 private:
 	GameObject* m_SpawnItem = nullptr;
 
-	GameDataRepository* m_GameDataRepository = nullptr;
+	std::string m_FixedItemTemplateName;
+	std::string m_DropItemTemplateName;
+	int m_FixedItemIndex = -1;
+	int m_EnemyDefinitionId = 0;
+	bool m_DropOnDeath = true;
+	bool m_FixedItemSpawned = false;
+	bool m_DropTriggered = false;
 };
-

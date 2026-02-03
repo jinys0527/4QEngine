@@ -46,20 +46,20 @@ public:
 	const int& GetDescriptionIndex() const { return m_DescriptionIndex; }
 	void SetDescriptionIndex(const int& value) { m_DescriptionIndex = value; }
 
-	const int& GetSellPrice() const { return m_SellPrice; }
-	void SetSellPrice(const int& value) { m_SellPrice = value; }
+	const int& GetPrice() const { return m_Price; }
+	void SetPrice(const int& value) { m_Price = value; }
 
 	const int& GetMeleeAttackRange() const { return m_MeleeAttackRange; }
 	void SetMeleeAttackRange(const int& value) { m_MeleeAttackRange = value; }
 
-	const int& GetMaxDiceRoll() const { return m_MaxDiceRoll; }
-	void SetMaxDiceRoll(const int& value) { m_MaxDiceRoll = value; }
+	const int& GetDiceRoll() const { return m_DiceRoll; }
+	void SetDiceRoll(const int& value) { m_DiceRoll = value; }
 
-	const int& GetMaxDiceValue() const { return m_MaxDiceValue; }
-	void SetMaxDiceValue(const int& value) { m_MaxDiceValue = value; }
+	const int& GetDiceType() const { return m_DiceType; }
+	void SetDiceType(const int& value) { m_DiceType = value; }
 
-	const int& GetBonusValue() const { return m_BonusValue; }
-	void SetBonusValue(const int& value) { m_BonusValue = value; }
+	const int& GetBaseModifier() const { return m_BaseModifier; }
+	void SetBaseModifier(const int& value) { m_BaseModifier = value; }
 
 	const int& GetHealth() const { return m_Health; }
 	void SetHealth(const int& value) { m_Health = value; }
@@ -89,6 +89,11 @@ public:
 	void SetEquipmentBindPose(const DirectX::XMFLOAT4X4& value) { m_EquipmentBindPose = value; }
 
 private:
+	void SelfRotate(float dTime);
+	void SelfBob(float dTime);
+
+	float m_BobTime = 0.0f;
+
 	int m_ItemIndex				= -1;
 
 	bool m_IsEquiped			= false;
@@ -97,11 +102,11 @@ private:
 	std::string m_IconPath		= "";
 	std::string m_MeshPath		= "";
 	int m_DescriptionIndex		= -1;
-	int m_SellPrice				= -1;
-	int m_MeleeAttackRange		= -1;
-	int m_MaxDiceRoll			= -1;     // 주사위 굴림횟수 (DnD룰에서 1d4의 d)
-	int m_MaxDiceValue			= -1;    // 주사위 면체 수 (DnD룰에서 1d4의 4)
-	int m_BonusValue			= -1;      // 데미지 보정치 (고정 추가 데미지)
+	int m_Price					= -1;
+	int m_MeleeAttackRange		= 1;
+	int m_DiceRoll				= -1;     // 주사위 굴림횟수 (DnD룰에서 1d4의 d)
+	int m_DiceType				= -1;    // 주사위 면체 수 (DnD룰에서 1d4의 4)
+	int m_BaseModifier			= -1;      // 데미지 보정치 (고정 추가 데미지)
 	int m_Health				= 0;
 	int m_Strength				= 0;
 	int m_Agility				= 0;
