@@ -171,7 +171,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	filename = L"../MRenderer/fx/YenaSky.dds";
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
@@ -639,6 +639,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pRTView_Post			= m_pRTView_Post;
 
 	m_RenderContext.pRTScene_BlurOrigin			= m_pRTScene_BlurOrigin;
+	m_RenderContext.pRTScene_BlurOriginMSAA		= m_pRTScene_BlurOriginMSAA;
 	m_RenderContext.pTexRvScene_BlurOrigin		= m_pTexRvScene_BlurOrigin;
 	m_RenderContext.pRTView_BlurOrigin			= m_pRTView_BlurOrigin;
 
@@ -646,9 +647,10 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Blur		= m_pTexRvScene_Blur;
 	m_RenderContext.pRTView_Blur			= m_pRTView_Blur;
 
-	m_RenderContext.pRTScene_Refraction		= m_pRTScene_Refraction;
-	m_RenderContext.pTexRvScene_Refraction	= m_pTexRvScene_Refraction;
-	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
+	m_RenderContext.pRTScene_Refraction			= m_pRTScene_Refraction;
+	m_RenderContext.pRTScene_RefractionMSAA		= m_pRTScene_RefractionMSAA;
+	m_RenderContext.pTexRvScene_Refraction		= m_pTexRvScene_Refraction;
+	m_RenderContext.pRTView_Refraction			= m_pRTView_Refraction;
 
 	m_RenderContext.pRTScene_EmissiveOrigin		= m_pRTScene_EmissiveOrigin;
 	m_RenderContext.pRTScene_EmissiveOriginMSAA = m_pRTScene_EmissiveOriginMSAA;
@@ -1777,7 +1779,17 @@ HRESULT Renderer::ReCreateRenderTarget()
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_BlurOrigin.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pRTView_BlurOrigin.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_BlurOriginMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_BlurOriginMSAA.Get(), m_pRTView_BlurOrigin.GetAddressOf());
+
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pRTView_BlurOrigin .GetAddressOf());
+
+	}
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pTexRvScene_BlurOrigin.GetAddressOf());
@@ -1811,8 +1823,17 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
 
-	RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_RefractionMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_RefractionMSAA.Get(), m_pRTView_Refraction.GetAddressOf());
 
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
+
+	}
 	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
 #pragma endregion
 

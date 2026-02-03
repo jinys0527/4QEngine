@@ -230,6 +230,7 @@ struct RenderContext
 
 	//BlurPass용
 	ComPtr<ID3D11Texture2D>				pRTScene_BlurOrigin;
+	ComPtr<ID3D11Texture2D>				pRTScene_BlurOriginMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_BlurOrigin;
 	ComPtr<ID3D11RenderTargetView>		pRTView_BlurOrigin;
 
@@ -240,6 +241,7 @@ struct RenderContext
 
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
+	ComPtr<ID3D11Texture2D>				pRTScene_RefractionMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
 

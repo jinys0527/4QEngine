@@ -98,6 +98,7 @@ private:
 
 	//BlurPass용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_BlurOrigin;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_BlurOriginMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_BlurOrigin;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_BlurOrigin;
 
@@ -108,6 +109,7 @@ private:
 
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Refraction;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_RefractionMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Refraction;
 

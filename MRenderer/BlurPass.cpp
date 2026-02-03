@@ -48,6 +48,17 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
     SetDepthStencilState(DS::DEPTH_OFF);
     SetSamplerState();
 
+
+    if (m_RenderContext.pRTScene_BlurOrigin && m_RenderContext.pRTScene_BlurOriginMSAA)
+    {
+        dxdc->ResolveSubresource(
+            m_RenderContext.pRTScene_BlurOrigin.Get(),
+            0,
+            m_RenderContext.pRTScene_BlurOriginMSAA.Get(),
+            0,
+            DXGI_FORMAT_R8G8B8A8_UNORM);
+    }
+
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_BlurOrigin.GetAddressOf());
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Quad.Get(), nullptr, 0);
