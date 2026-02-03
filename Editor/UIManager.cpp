@@ -578,7 +578,12 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					slider->GetFillPixelShaderHandle());
 			}
 
-			const float handleSize = min(bounds.width, bounds.height);
+			float handleSize = min(bounds.width, bounds.height);
+			if (slider->HasHandleSizeOverride())
+			{
+				handleSize = slider->GetHandleSizeOverride();
+			}
+
 			if (handleSize > 0.0f)
 			{
 				UIRect handleRect = bounds;
@@ -622,7 +627,13 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			const UIFillDirection fillDirection = slider->GetFillDirection();
 			const bool isVertical = fillDirection == UIFillDirection::TopToBottom
 				|| fillDirection == UIFillDirection::BottomToTop;
-			const float handleSize = min(bounds.width, bounds.height);
+
+			float handleSize = min(bounds.width, bounds.height);
+			if (slider->HasHandleSizeOverride())
+			{
+				handleSize = slider->GetHandleSizeOverride();
+			}
+
 			if (handleSize > 0.0f)
 			{
 				UIRect handleRect = bounds;
@@ -654,6 +665,15 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		else
 		{
 			appendElement(bounds, baseZOrder, imageComponent);
+			if (auto* button = uiObject->GetComponent<UIButtonComponent>(); button && button->HasStyleOverrides())
+			{
+				auto& element = frameData.uiElements.back();
+				applyOverrides(element,
+					button->GetCurrentTextureHandle(),
+					button->GetShaderAssetHandle(),
+					button->GetVertexShaderHandle(),
+					button->GetPixelShaderHandle());
+			}
 		}
 
 		if (auto* textComp = uiObject->GetComponent<UITextComponent>())

@@ -3,7 +3,7 @@
 #include "UIObject.h"
 #include <algorithm>
 
-REGISTER_COMPONENT_DERIVED(HorizontalBox, UIComponent)
+REGISTER_COMPONENT(HorizontalBox)
 REGISTER_PROPERTY(HorizontalBox, Slots)
 
 void HorizontalBox::Update(float deltaTime)

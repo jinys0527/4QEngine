@@ -3,11 +3,12 @@
 #include "UIButtonComponent.h"
 #include "UIFSMComponent.h"
 
-REGISTER_COMPONENT_DERIVED(UISliderComponent, UIComponent)
+REGISTER_COMPONENT(UISliderComponent)
 REGISTER_PROPERTY(UISliderComponent, Value)
 REGISTER_PROPERTY(UISliderComponent, MinValue)
 REGISTER_PROPERTY(UISliderComponent, MaxValue)
 REGISTER_PROPERTY(UISliderComponent, FillDirection)
+REGISTER_PROPERTY(UISliderComponent, HandleSizeOverride)
 REGISTER_PROPERTY_READONLY(UISliderComponent, IsDragging)
 REGISTER_PROPERTY_HANDLE(UISliderComponent, BackgroundTextureHandle)
 REGISTER_PROPERTY_HANDLE(UISliderComponent, BackgroundShaderAssetHandle)

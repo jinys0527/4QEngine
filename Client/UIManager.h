@@ -43,10 +43,6 @@ public:
 					m_LastHoveredUI = nullptr;
 				}
 				uiMap.erase(it2);
-				if (uiMap.empty())  // 씬 내 UI가 다 지워지면 씬 키도 지울 수 있음 (선택 사항)
-				{
-					m_UIObjects.erase(it);
-				}
 			}
 		}
 	}

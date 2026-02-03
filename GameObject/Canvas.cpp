@@ -3,7 +3,7 @@
 #include "UIObject.h"
 #include <algorithm>
 
-REGISTER_COMPONENT_DERIVED(Canvas, UIComponent)
+REGISTER_COMPONENT(Canvas)
 REGISTER_PROPERTY(Canvas, Slots)
 
 void Canvas::Update(float deltaTime)

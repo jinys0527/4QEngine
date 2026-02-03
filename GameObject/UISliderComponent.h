@@ -73,6 +73,11 @@ public:
 	void SetFillDirection(const UIFillDirection& direction) { m_FillDirection = direction; }
 	const UIFillDirection& GetFillDirection() const { return m_FillDirection; }
 
+	void SetHandleSizeOverride(const float& size) { m_HandleSizeOverride = size; }
+	const float& GetHandleSizeOverride() const { return m_HandleSizeOverride; }
+
+	bool HasHandleSizeOverride() const { return m_HandleSizeOverride > 0.0f; }
+
 private:
 	float m_MinValue = 0.0f;
 	float m_MaxValue = 1.0f;
@@ -81,6 +86,7 @@ private:
 	std::function<void(float)> m_OnValueChanged;
 
 	UIFillDirection m_FillDirection = UIFillDirection::LeftToRight;
+	float m_HandleSizeOverride = 0.0f;
 
 	TextureHandle m_BackgroundTextureHandle = TextureHandle::Invalid();
 	ShaderAssetHandle m_BackgroundShaderAssetHandle = ShaderAssetHandle::Invalid();

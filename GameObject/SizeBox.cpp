@@ -2,7 +2,7 @@
 #include "ReflectionMacro.h"
 #include <algorithm>
 
-REGISTER_COMPONENT_DERIVED(SizeBox, UIComponent)
+REGISTER_COMPONENT(SizeBox)
 REGISTER_PROPERTY(SizeBox, WidthOverride)
 REGISTER_PROPERTY(SizeBox, HeightOverride)
 REGISTER_PROPERTY(SizeBox, HasWidthOverride)
