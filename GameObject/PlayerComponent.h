@@ -7,7 +7,7 @@
 
 class GridSystemComponent;
 class EnemyComponent;
-
+class DoorComponent;
 // PlayerComponent 는 Player와 관련된 Data와 중요 로직
 // Player의 다른 Component의 중추적인 역할
 class PlayerComponent : public Component, public IEventListener {
@@ -73,6 +73,8 @@ public:
 	void SetPushSuccess(bool value) { m_PushSuccess = value; }
 	void SetDoorConfirmed(bool value) { m_DoorConfirmed = value; }
 	void SetDoorSuccess(bool value) { m_DoorSuccess = value; }
+	void SetPendingDoor(DoorComponent* door);
+	DoorComponent* ConsumePendingDoor();
 	void SetInventoryAtShop(bool value) { m_InventoryAtShop = value; }
 	void SetInventoryCanDrop(bool value) { m_InventoryCanDrop = value; }
 	void SetShopHasSpace(bool value) { m_ShopHasSpace = value; }
@@ -116,6 +118,7 @@ private:
 	bool m_PushSuccess = true;
 	bool m_DoorConfirmed = true;
 	bool m_DoorSuccess = true;
+	DoorComponent* m_PendingDoor = nullptr; 
 	bool m_InventoryAtShop = true;
 	bool m_InventoryCanDrop = true;
 	bool m_ShopHasSpace = true;

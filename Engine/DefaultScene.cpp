@@ -85,5 +85,10 @@ void DefaultScene::StateUpdate(float deltaTime)
 	{
 		m_EditorCamera->Update(deltaTime);
 	}
+	if (GetIsPause())
+	{
+		Scene::StateUpdate(deltaTime);
+		return;
+	}
 }
 

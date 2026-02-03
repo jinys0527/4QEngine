@@ -83,6 +83,15 @@ void Scene::StateUpdate(float deltaTime)
 {
 	// Camera는 BuildFromData를 하면서 자동으로 갱신이 되고있음
 	// Light의 경우 LightObject가 생기고 PointLight 같은 애의 위치가 바뀌면 만들수있을것같음?
+	if (!m_Pause)
+	{
+		return;
+	}
+
+	if (m_GameCamera)
+	{
+		m_GameCamera->Update(deltaTime);
+	}
 }
 
 void Scene::Enter()
