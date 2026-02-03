@@ -5,6 +5,7 @@
 
 REGISTER_UI_COMPONENT(HorizontalBox)
 REGISTER_PROPERTY(HorizontalBox, Slots)
+REGISTER_PROPERTY(HorizontalBox, Spacing)
 
 void HorizontalBox::Update(float deltaTime)
 {
@@ -86,11 +87,15 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 		totalFixedWidth += slotPadding * 2.0f;
 	}
 
+	const float totalSpacing = m_Slots.size() > 1 ? m_Spacing * static_cast<float>(m_Slots.size() - 1) : 0.0f;
+	totalFixedWidth += totalSpacing;
 	float remaining = availableSize.width - totalFixedWidth;
+	remaining = max(0.0f, remaining);
 	float cursorX = startX;
 
-	for (const auto& slot : m_Slots)
+	for (size_t index = 0; index < m_Slots.size(); ++index)
 	{
+		const auto& slot = m_Slots[index];
 		const float slotPadding = (slot.alignment == UIHorizontalAlignment::Fill) ? 0.0f : slot.padding;
 		float width = slot.desiredSize.width;
 		if (slot.alignment == UIHorizontalAlignment::Fill && totalFillWeight > 0.0f)
@@ -102,6 +107,11 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 		arranged.push_back(UIRect{ x, startY, width, availableSize.height });
 
 		cursorX += width + slotPadding * 2.0f;
+
+		if (index + 1 < m_Slots.size())
+		{
+			cursorX += m_Spacing;
+		}
 	}
 
 	return arranged;

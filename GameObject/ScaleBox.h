@@ -17,7 +17,8 @@ public:
 	void SetStretchDirection(const UIStretchDirection& direction) { m_StretchDirection = direction; }
 	const UIStretchDirection& GetStretchDirection() const		  { return m_StretchDirection;      }
 
-	float CalculateScale(const UISize& availableSize, const UISize& desiredSize) const;
+	float  CalculateScale(const UISize& availableSize, const UISize& desiredSize) const;
+	UISize CalculateScaledSize(const UISize& availableSize, const UISize& desiredSize) const;
 
 private:
 	UIStretch          m_Stretch          = UIStretch::ScaleToFit;

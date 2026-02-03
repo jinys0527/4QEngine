@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "UIComponent.h"
+#include "MathHelper.h"
 #include <string>
 
 class UITextComponent : public UIComponent
@@ -17,8 +18,12 @@ public:
 	void SetFontSize(const float& size) { m_FontSize = size; }
 	const float& GetFontSize() const { return m_FontSize; }
 
+	void SetTextColor(const XMFLOAT4& color) { m_TextColor = color; }
+	const XMFLOAT4& GetTextColor() const	 { return m_TextColor; }
+
 private:
 	std::string m_Text;
 	float m_FontSize = 16.0f;
+	XMFLOAT4 m_TextColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 };
 

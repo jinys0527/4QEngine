@@ -665,14 +665,21 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		else
 		{
 			appendElement(bounds, baseZOrder, imageComponent);
-			if (auto* button = uiObject->GetComponent<UIButtonComponent>(); button && button->HasStyleOverrides())
+			if (auto* button = uiObject->GetComponent<UIButtonComponent>())
 			{
 				auto& element = frameData.uiElements.back();
-				applyOverrides(element,
-					button->GetCurrentTextureHandle(),
-					button->GetShaderAssetHandle(),
-					button->GetVertexShaderHandle(),
-					button->GetPixelShaderHandle());
+				if (button->HasStyleOverrides())
+				{
+					applyOverrides(element,
+						button->GetCurrentTextureHandle(),
+						button->GetShaderAssetHandle(),
+						button->GetVertexShaderHandle(),
+						button->GetPixelShaderHandle());
+				}
+				if (button->HasColorOverrides())
+				{
+					element.color = button->GetCurrentTintColor();
+				}
 			}
 		}
 
@@ -680,6 +687,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		{
 			RenderData::UITextElement text{};
 			text.position = { bounds.x, bounds.y };
+			text.color = textComp->GetTextColor();
 			text.fontSize = textComp->GetFontSize();
 			text.text = textComp->GetText();
 			frameData.uiTexts.push_back(std::move(text));

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "UIComponent.h"
+#include "MathHelper.h"
 #include "ResourceHandle.h"
 #include <functional>
 
@@ -9,6 +10,10 @@ struct UIButtonStyle
 	TextureHandle hoveredTexture = TextureHandle::Invalid();
 	TextureHandle pressedTexture = TextureHandle::Invalid();
 	TextureHandle disabledTexture = TextureHandle::Invalid();
+	XMFLOAT4 normalColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+	XMFLOAT4 hoveredColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+	XMFLOAT4 pressedColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+	XMFLOAT4 disabledColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 	ShaderAssetHandle shaderAsset = ShaderAssetHandle::Invalid();
 	VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
 	PixelShaderHandle pixelShader = PixelShaderHandle::Invalid();
@@ -23,7 +28,7 @@ public:
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
-	void SetIsEnabled(const bool& enabled) { m_IsEnabled = enabled; }
+	void SetIsEnabled(const bool& enabled);
 	const bool& GetIsEnabled() const { return m_IsEnabled; }
 
 	const bool& GetIsPressed() const { return m_IsPressed; }
@@ -44,6 +49,18 @@ public:
 	void SetDisabledTextureHandle(const TextureHandle& handle) { m_Style.disabledTexture = handle; }
 	const TextureHandle& GetDisabledTextureHandle() const { return m_Style.disabledTexture; }
 
+	void SetNormalColor(const XMFLOAT4& color) { m_Style.normalColor = color; }
+	const XMFLOAT4& GetNormalColor() const { return m_Style.normalColor; }
+
+	void SetHoveredColor(const XMFLOAT4& color) { m_Style.hoveredColor = color; }
+	const XMFLOAT4& GetHoveredColor() const { return m_Style.hoveredColor; }
+
+	void SetPressedColor(const XMFLOAT4& color) { m_Style.pressedColor = color; }
+	const XMFLOAT4& GetPressedColor() const { return m_Style.pressedColor; }
+
+	void SetDisabledColor(const XMFLOAT4& color) { m_Style.disabledColor = color; }
+	const XMFLOAT4& GetDisabledColor() const { return m_Style.disabledColor; }
+
 	void SetShaderAssetHandle(const ShaderAssetHandle& handle) { m_Style.shaderAsset = handle; }
 	const ShaderAssetHandle& GetShaderAssetHandle() const { return m_Style.shaderAsset; }
 
@@ -54,11 +71,28 @@ public:
 	const PixelShaderHandle& GetPixelShaderHandle() const { return m_Style.pixelShader; }
 
 	TextureHandle GetCurrentTextureHandle() const;
+	XMFLOAT4 GetCurrentTintColor() const;
 	bool HasStyleOverrides() const;
+	bool HasColorOverrides() const;
 
 	void SetOnClicked(std::function<void()> callback)
 	{
 		m_OnClicked = std::move(callback);
+	}
+
+	void SetOnPressed(std::function<void()> callback)
+	{
+		m_OnPressed = std::move(callback);
+	}
+
+	void SetOnReleased(std::function<void()> callback)
+	{
+		m_OnReleased = std::move(callback);
+	}
+
+	void SetOnHovered(std::function<void(bool)> callback)
+	{
+		m_OnHovered = std::move(callback);
 	}
 
 	void HandlePressed();
@@ -71,5 +105,8 @@ private:
 	bool m_IsPressed = false;
 	bool m_IsHovered = false;
 	std::function<void()> m_OnClicked;
+	std::function<void()> m_OnPressed;
+	std::function<void()> m_OnReleased;
+	std::function<void(bool)> m_OnHovered;
 };
 

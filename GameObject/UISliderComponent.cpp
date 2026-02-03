@@ -55,12 +55,13 @@ void UISliderComponent::SetValue(const float& value)
 {
 	const float previous = m_Value;
 	m_Value = std::clamp(value, m_MinValue, m_MaxValue);
-	if (m_OnValueChanged)
-	{
-		m_OnValueChanged(m_Value);
-	}
+
 	if (m_Value != previous)
 	{
+		if (m_OnValueChanged)
+		{
+			m_OnValueChanged(m_Value);
+		}
 		if (auto* owner = GetOwner())
 		{
 			if (auto* fsm = owner->GetComponent<UIFSMComponent>())

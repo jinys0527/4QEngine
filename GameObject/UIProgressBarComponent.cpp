@@ -32,6 +32,10 @@ void UIProgressBarComponent::SetPercent(const float& percent)
 	m_Percent = std::clamp(percent, 0.0f, 1.0f);
 	if (m_Percent != previous)
 	{
+		if (m_OnPercentChanged)
+		{
+			m_OnPercentChanged(m_Percent);
+		}
 		if (auto* owner = GetOwner())
 		{
 			if (auto* fsm = owner->GetComponent<UIFSMComponent>())

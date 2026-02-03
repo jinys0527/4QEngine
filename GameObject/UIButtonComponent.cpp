@@ -10,6 +10,10 @@ REGISTER_PROPERTY_HANDLE(UIButtonComponent, NormalTextureHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, HoveredTextureHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, PressedTextureHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, DisabledTextureHandle)
+REGISTER_PROPERTY(UIButtonComponent, NormalColor)
+REGISTER_PROPERTY(UIButtonComponent, HoveredColor)
+REGISTER_PROPERTY(UIButtonComponent, PressedColor)
+REGISTER_PROPERTY(UIButtonComponent, DisabledColor)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, ShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, VertexShaderHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, PixelShaderHandle)
@@ -22,6 +26,29 @@ void UIButtonComponent::Update(float deltaTime)
 void UIButtonComponent::OnEvent(EventType type, const void* data)
 {
 	UIComponent::OnEvent(type, data);
+}
+
+void UIButtonComponent::SetIsEnabled(const bool& enabled)
+{
+	if (m_IsEnabled == enabled)
+	{
+		return;
+	}
+
+	m_IsEnabled = enabled;
+
+	if (!m_IsEnabled)
+	{
+		m_IsPressed = false;
+		if (m_IsHovered)
+		{
+			m_IsHovered = false;
+			if (m_OnHovered)
+			{
+				m_OnHovered(false);
+			}
+		}
+	}
 }
 
 TextureHandle UIButtonComponent::GetCurrentTextureHandle() const
@@ -41,6 +68,23 @@ TextureHandle UIButtonComponent::GetCurrentTextureHandle() const
 	return m_Style.normalTexture;
 }
 
+XMFLOAT4 UIButtonComponent::GetCurrentTintColor() const
+{
+	if (!m_IsEnabled)
+	{
+		return m_Style.disabledColor;
+	}
+	if (m_IsPressed)
+	{
+		return m_Style.pressedColor;
+	}
+	if (m_IsHovered)
+	{
+		return m_Style.hoveredColor;
+	}
+	return m_Style.normalColor;
+}
+
 bool UIButtonComponent::HasStyleOverrides() const
 {
 	return m_Style.normalTexture.IsValid()
@@ -52,11 +96,40 @@ bool UIButtonComponent::HasStyleOverrides() const
 		|| m_Style.pixelShader.IsValid();
 }
 
+bool UIButtonComponent::HasColorOverrides() const
+{
+	constexpr XMFLOAT4 kDefault{ 1.0f, 1.0f, 1.0f, 1.0f };
+	return m_Style.normalColor.x != kDefault.x
+		|| m_Style.normalColor.y != kDefault.y
+		|| m_Style.normalColor.z != kDefault.z
+		|| m_Style.normalColor.w != kDefault.w
+		|| m_Style.hoveredColor.x != kDefault.x
+		|| m_Style.hoveredColor.y != kDefault.y
+		|| m_Style.hoveredColor.z != kDefault.z
+		|| m_Style.hoveredColor.w != kDefault.w
+		|| m_Style.pressedColor.x != kDefault.x
+		|| m_Style.pressedColor.y != kDefault.y
+		|| m_Style.pressedColor.z != kDefault.z
+		|| m_Style.pressedColor.w != kDefault.w
+		|| m_Style.disabledColor.x != kDefault.x
+		|| m_Style.disabledColor.y != kDefault.y
+		|| m_Style.disabledColor.z != kDefault.z
+		|| m_Style.disabledColor.w != kDefault.w;
+}
+
 void UIButtonComponent::HandlePressed()
 {
 	if (!m_IsEnabled)
 		return;
-	m_IsPressed = true;
+
+	if (!m_IsPressed)
+	{
+		m_IsPressed = true;
+		if (m_OnPressed)
+		{
+			m_OnPressed();
+		}
+	}
 }
 
 void UIButtonComponent::HandleReleased()
@@ -67,6 +140,10 @@ void UIButtonComponent::HandleReleased()
 	if (m_IsPressed && m_OnClicked)
 	{
 		m_OnClicked();
+	}
+	if (m_IsPressed && m_OnReleased)
+	{
+		m_OnReleased();
 	}
 	if (m_IsPressed)
 	{
@@ -88,5 +165,14 @@ void UIButtonComponent::HandleHover(bool isHovered)
 	if (!m_IsEnabled)
 		return;
 
+	if (m_IsHovered == isHovered)
+	{
+		return;
+	}
+
 	m_IsHovered = isHovered;
+	if (m_OnHovered)
+	{
+		m_OnHovered(isHovered);
+	}
 }

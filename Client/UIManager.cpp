@@ -152,7 +152,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 		}
 	}
 	else if (type == EventType::Released)
-	{		
+	{
 		for (auto& pair : uiMap)
 		{
 			auto& ui = pair.second;
@@ -277,10 +277,32 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 					const auto mouseData = static_cast<const Events::MouseState*>(data);
 					const auto bounds = ui->GetBounds();
 					float normalizedValue = 0.0f;
-					if (bounds.width > 0.0f)
+					const UIFillDirection direction = slider->GetFillDirection();
+					const bool isVertical = direction == UIFillDirection::TopToBottom
+						|| direction == UIFillDirection::BottomToTop;
+					if (isVertical)
 					{
-						normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+						if (bounds.height > 0.0f)
+						{
+							normalizedValue = (mouseData->pos.y - bounds.y) / bounds.height;
+						}
+						if (direction == UIFillDirection::BottomToTop)
+						{
+							normalizedValue = 1.0f - normalizedValue;
+						}
 					}
+					else
+					{
+						if (bounds.width > 0.0f)
+						{
+							normalizedValue = (mouseData->pos.x - bounds.x) / bounds.width;
+						}
+						if (direction == UIFillDirection::RightToLeft)
+						{
+							normalizedValue = 1.0f - normalizedValue;
+						}
+					}
+					normalizedValue = std::clamp(normalizedValue, 0.0f, 1.0f);
 					slider->HandleDrag(normalizedValue);
 				}
 				else if (type == EventType::Released)
@@ -506,14 +528,22 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		else
 		{
 			appendElement(bounds, baseZOrder, imageComponent);
-			if (auto* button = uiObject->GetComponent<UIButtonComponent>(); button && button->HasStyleOverrides())
+			if (auto* button = uiObject->GetComponent<UIButtonComponent>())
 			{
 				auto& element = frameData.uiElements.back();
-				applyOverrides(element,
-					button->GetCurrentTextureHandle(),
-					button->GetShaderAssetHandle(),
-					button->GetVertexShaderHandle(),
-					button->GetPixelShaderHandle());
+
+				if (button->HasStyleOverrides())
+				{
+					applyOverrides(element,
+						button->GetCurrentTextureHandle(),
+						button->GetShaderAssetHandle(),
+						button->GetVertexShaderHandle(),
+						button->GetPixelShaderHandle());
+				}
+				if (button->HasColorOverrides())
+				{
+					element.color = button->GetCurrentTintColor();
+				}
 			}
 		}
 
@@ -521,6 +551,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		{
 			RenderData::UITextElement text{};
 			text.position = { bounds.x, bounds.y };
+			text.color = textComp->GetTextColor();
 			text.fontSize = textComp->GetFontSize();
 			text.text = textComp->GetText();
 			frameData.uiTexts.push_back(std::move(text));
