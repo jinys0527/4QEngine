@@ -48,7 +48,7 @@ public:
 	
 	const XMFLOAT3& GetPosition() const { return m_Position; }
 	const XMFLOAT4& GetRotation() const { return m_Rotation; }
-
+	const XMFLOAT3& GetWorldPos();
 	const XMFLOAT3& GetScale() const { return m_Scale; }
 
 	void Translate(const XMFLOAT3& delta);
@@ -93,6 +93,7 @@ private:
 	XMFLOAT3 m_Position = { 0.0f, 0.0f, 0.0f };
 	XMFLOAT4 m_Rotation = { 0.0f, 0.0f, 0.0f, 1.0f }; //quaternion
 	XMFLOAT3 m_Scale    = { 1.0f, 1.0f, 1.0f };
+	XMFLOAT3 m_WorldPos = { 0.0f,0.0f,0.0f };
 
 	XMFLOAT3 m_Pivot    = { 0.0f, 0.0f, 0.0f };
 

@@ -13,15 +13,16 @@ REGISTER_PROPERTY(CameraLogicComponent, MoveSpeed)
 
 CameraLogicComponent::~CameraLogicComponent()
 {
-	GetEventDispatcher().RemoveListener(EventType::MouseWheelUp, this);
-	GetEventDispatcher().RemoveListener(EventType::MouseWheelDown, this);
+	//GetEventDispatcher().RemoveListener(EventType::MouseWheelUp, this);
+	//GetEventDispatcher().RemoveListener(EventType::MouseWheelDown, this);
 }
 
-
+// Player 등록 필요. 
+// Player의 GetWorldPos로 월드 기준 좌표를 Look으로 설정
 void CameraLogicComponent::Start()
 {
-	GetEventDispatcher().AddListener(EventType::MouseWheelUp, this);
-	GetEventDispatcher().AddListener(EventType::MouseWheelDown, this);
+	//GetEventDispatcher().AddListener(EventType::MouseWheelUp, this);
+	//GetEventDispatcher().AddListener(EventType::MouseWheelDown, this);
 
 	auto* owner = GetOwner();
 	auto*  trans = owner->GetComponent<TransformComponent>();
