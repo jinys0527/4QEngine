@@ -70,5 +70,7 @@ BTStatus BTExecutor::Tick(BTInstance& inst, Blackboard& bb, float dt)
 		inst.ClearAbortRequest();
 	}
 
-	return m_Root->Tick(inst, bb);
+	const BTStatus status = m_Root->Tick(inst, bb);
+	m_Root->TickServicesOnly(inst, bb);
+	return status;
 }

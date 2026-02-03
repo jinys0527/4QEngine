@@ -392,6 +392,15 @@ void GridSystemComponent::UpdateActorPositions()
 					UpdateActorNodeState(previous, current, NodeState::HasPlayer);
 					m_Player->SetQR(current.q, current.r);
 				}
+				else
+				{
+					auto it = m_NodesByAxial.find(current);
+					if (it != m_NodesByAxial.end() && it->second)
+					{
+						it->second->SetState(NodeState::HasPlayer);
+						m_PlayerNode = it->second;
+					}
+				}
 			}
 		}
 	}
@@ -410,6 +419,14 @@ void GridSystemComponent::UpdateActorPositions()
 		if (!(previous == current)) {
 			UpdateActorNodeState(previous, current, NodeState::HasEnemy);
 			enemy->SetQR(current.q, current.r);
+		}
+		else
+		{
+			auto it = m_NodesByAxial.find(current);
+			if (it != m_NodesByAxial.end() && it->second)
+			{
+				it->second->SetState(NodeState::HasEnemy);
+			}
 		}
 	}
 }

@@ -56,9 +56,9 @@ public:
 	void SetEnabled(bool enabled);
 	bool IsEnabled () const       { return m_Enabled;    }
 
-private:
 	void ResetState();
 
+private:
 	std::unordered_set<char> m_KeysDown;			// 현재 눌림
 	std::unordered_set<char> m_KeysDownPrev;		// 이전 프레임 눌림
 

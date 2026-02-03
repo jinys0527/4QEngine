@@ -111,6 +111,7 @@ private:
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
 	bool  m_GameDataLoaded = false;
+	bool  m_BlockPostCombatShop = false;
 	int   m_CurrentFloor = 1;
 	std::vector<std::string> m_FloorSceneNames;
 	DataSheetPaths m_DataPaths{};

@@ -105,6 +105,11 @@ void Node::TickServices(BTInstance& inst, Blackboard& bb)
 	}
 }
 
+void Node::TickServicesOnly(BTInstance& inst, Blackboard& bb)
+{
+	TickServices(inst, bb);
+}
+
 Node::Node() = default;
 Node::~Node() = default;
 

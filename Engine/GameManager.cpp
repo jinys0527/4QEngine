@@ -170,6 +170,10 @@ void GameManager::OnEvent(EventType type, const void* data)
 		break;
 	case EventType::CombatExit:
 		std::cout << "AITurnCombatExitEndRequested\n";
+		if (m_BlockPostCombatShop)
+		{
+			break;
+		}
 		m_BattleCheck = Battle::NonBattle;
 		SetPhase(Phase::CombatEnd);
 		break;
@@ -219,6 +223,10 @@ void GameManager::OnEvent(EventType type, const void* data)
 		if (m_Phase == Phase::TurnBasedCombat)
 		{
 			ResolveEnemyAttack();
+			if (m_BlockPostCombatShop)
+			{
+				break;
+			}
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
@@ -253,10 +261,18 @@ void GameManager::OnEvent(EventType type, const void* data)
 		break;
 	case EventType::CombatEnded:
 		std::cout << "CombatEnded\n";
+		if (m_BlockPostCombatShop)
+		{
+			break;
+		}
 		SetPhase(Phase::CombatEnd);
 		break;
 	case EventType::PostCombatToShop:
 		std::cout << "PostCombatToShop\n";
+		if (m_BlockPostCombatShop || m_Phase == Phase::GameOver)
+		{
+			break;
+		}
 		SetPhase(Phase::Shop);
 		break;
 	case EventType::PostCombatToExploration:
@@ -288,6 +304,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 	case EventType::GameWin:
 	case EventType::GameOver:
 		std::cout << "GameWin or GameOver\n";
+		m_BlockPostCombatShop = true;
 		SetPhase(Phase::GameOver);
 		break;
 	default:
@@ -307,6 +324,7 @@ void GameManager::TurnReset()
 	m_GameDataLoaded = false;
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
+	m_BlockPostCombatShop = false;
 }
 
 void GameManager::Initial()
@@ -453,7 +471,7 @@ void GameManager::OnPhaseEnter(Phase phase)
 		{
 			logger->Add(LogChannel::Combat, "Combat ended. Resolving cleanup.");
 		}
-		if (m_EventDispatcher)
+		if (m_EventDispatcher && !m_BlockPostCombatShop)
 		{
 			m_EventDispatcher->Dispatch(EventType::PostCombatToShop, nullptr);
 		}
@@ -969,6 +987,7 @@ void GameManager::ResolveEnemyAttack()
 		std::cout << "[Combat] Player HP: " << prevHp << " -> " << nextHp << std::endl;
 		if (nextHp <= 0)
 		{
+			m_BlockPostCombatShop = true;
 			if (m_Services && m_Services->Has<CombatManager>())
 			{
 				m_Services->Get<CombatManager>().UpdateBattleOutcome(false, true);

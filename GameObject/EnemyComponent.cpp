@@ -146,7 +146,7 @@ bool IsTargetVisibleOnHexLine(
 	std::array<bool, 3> blocked{ false, false, false };
 
 	// 각 lane을 forward로 쭉 검사
-	for (int step = 1; step <= sightRange; ++step)
+	for (int step = 0; step < sightRange; ++step)
 	{
 		for (int lane = 0; lane < 3; ++lane)
 		{
@@ -259,6 +259,11 @@ void EnemyComponent::Update(float deltaTime) {
 	auto* scene = owner->GetScene();
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 	
+	if (gameManager && gameManager->GetPhase() == Phase::GameOver)
+	{
+		return;
+	}
+
 	if (!m_TargetPlayer && scene)
 	{
 		for (const auto& [name, object] : scene->GetGameObjects())

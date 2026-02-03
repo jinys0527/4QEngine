@@ -130,6 +130,8 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 
 
 	m_InputManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+	m_InputManager->ResetState();
+
 
 	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 	m_UIManager->SetCurrentScene(m_CurrentScene->GetName());

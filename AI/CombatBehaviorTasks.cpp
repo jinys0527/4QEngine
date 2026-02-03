@@ -18,12 +18,9 @@ BTStatus UpdateTargetLocationTask::OnTick(BTInstance& inst, Blackboard& bb)
 	if (!bb.TryGet(BlackboardKeys::TargetQ, targetQ)
 		|| !bb.TryGet(BlackboardKeys::TargetR, targetR))
 	{
-		std::cout << "[AI][Task] UpdateTargetLocation fail: TargetQ/TargetR missing\n";
-        return BTStatus::Failure;
+		return BTStatus::Failure;
     }
 
-	std::cout << "[AI][Task] UpdateTargetLocation: targetQ=" << targetQ
-		<< " targetR=" << targetR << "\n";
 	bb.Set(BlackboardKeys::LastKnownTargetQ, targetQ);
 	bb.Set(BlackboardKeys::LastKnownTargetR, targetR);
     return BTStatus::Success;
@@ -51,13 +48,9 @@ BTStatus ApproachTargetTask::OnTick(BTInstance& inst, Blackboard& bb)
 
 	if (distance <= meleeRange)
 	{
-		std::cout << "[AI][Task] ApproachTarget success: distance=" << distance
-			<< " meleeRange=" << meleeRange << "\n";
 		return BTStatus::Success;
 	}
 
-	std::cout << "[AI][Task] ApproachTarget move request: distance=" << distance
-		<< " meleeRange=" << meleeRange << "\n";
 	bb.Set(BlackboardKeys::MoveRequested, true);
 	return BTStatus::Success;
 }
@@ -67,11 +60,9 @@ BTStatus MeleeAttackTask::OnTick(BTInstance& inst, Blackboard& bb)
 	(void)inst;
 	if (!GetBool(bb, BlackboardKeys::InMeleeRange))
 	{
-		std::cout << "[AI][Task] MeleeAttack fail: not in melee range\n";
 		return BTStatus::Failure;
 	}
 
-	std::cout << "[AI][Task] MeleeAttack request\n";
 	bb.Set(BlackboardKeys::RequestMeleeAttack, true);
 	return BTStatus::Success;
 }
@@ -81,11 +72,9 @@ BTStatus RangedAttackTask::OnTick(BTInstance& inst, Blackboard& bb)
 	(void)inst;
 	if (!GetBool(bb, BlackboardKeys::InThrowRange))
 	{
-		std::cout << "[AI][Task] RangedAttack fail: not in throw range\n";
 		return BTStatus::Failure;
 	}
 
-	std::cout << "[AI][Task] RangedAttack request\n";
 	bb.Set(BlackboardKeys::RequestRangedAttack, true);
 	return BTStatus::Success;
 }
@@ -131,7 +120,6 @@ BTStatus PatrolMoveTask::OnTick(BTInstance& inst, Blackboard& bb)
 BTStatus EndTurnTask::OnTick(BTInstance& inst, Blackboard& bb)
 {
 	(void)inst; 
-	std::cout << "[AI][Task] EndTurn request\n";
 	bb.Set(BlackboardKeys::EndTurnRequested, true);
 	return BTStatus::Success;
 }
