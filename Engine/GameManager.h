@@ -63,7 +63,7 @@ public:
 
 	void CapturePlayerData(class Scene* scene);
 	void ApplyPlayerData(class Scene* scene);
-
+	class CombatManager* GetCombatManager() const;
 private:
 	void RegisterEventListeners();
 	void UnregisterEventListeners();
@@ -77,7 +77,6 @@ private:
 	void OnCombatTurnStateExit(CombatTurnState state);
 
 	class GameObject* FindPlayerObject(class Scene* scene) const;
-	class CombatManager* GetCombatManager() const;
 	class GameDataRepository* GetGameDataRepository() const;
 	class LogSystem* GetLogSystem() const;
 	class RandomMachine* GetRandomMachine() const;

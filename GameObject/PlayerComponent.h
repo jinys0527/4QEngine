@@ -120,6 +120,7 @@ private:
 	bool m_InventoryCanDrop = true;
 	bool m_ShopHasSpace = true;
 	bool m_ShopHasMoney = true;
+	bool m_IsMeleeMode = false;
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_Item = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장

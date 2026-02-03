@@ -190,6 +190,9 @@
     <ClCompile Include="SizeBox.cpp">
       <Filter>Components\UI\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DoorComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -360,7 +363,7 @@
     </ClInclude>
     <ClInclude Include="CameraLogicComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
-     </ClInclude>
+    </ClInclude>
     <ClInclude Include="UIPrimitives.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
@@ -396,6 +399,9 @@
     </ClInclude>
     <ClInclude Include="SizeBox.h">
       <Filter>Components\UI\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DoorComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

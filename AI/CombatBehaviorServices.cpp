@@ -50,12 +50,10 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	{
 		if (isInCombat)
 		{
-			std::cout << "[AI][Sense] InCombat=true (missing hex data) -> HasTarget=true\n";
 			bb.Set(BlackboardKeys::HasTarget, true);
 		}
 		else
 		{
-			std::cout << "[AI][Sense] Missing hex data -> HasTarget=false\n";
 			bb.Set(BlackboardKeys::HasTarget, false);
 		}
 		return;
@@ -73,7 +71,6 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 
 	if (isInCombat)
 	{
-		std::cout << "[AI][Sense] InCombat=true -> HasTarget=true\n";
 		bb.Set(BlackboardKeys::HasTarget, true);
 		return;
 	}
@@ -83,10 +80,6 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 		&& bb.TryGet(BlackboardKeys::HasTargetHexLine, hasTargetHexLine);
 
 	const bool inMeleeRange = distance <= meleeRange;
-	std::cout << "[AI][Sense] useHexSight=" << useHexSight
-		<< " hasTargetHexLine=" << hasTargetHexLine
-		<< " inMeleeRange=" << inMeleeRange << " -> HasTarget="
-		<< (inMeleeRange || (useHexSight && hasTargetHexLine)) << "\n";
 	bb.Set(BlackboardKeys::HasTarget, inMeleeRange || (useHexSight && hasTargetHexLine));
 }
 
@@ -118,10 +111,6 @@ void RangeUpdateService::TickService(BTInstance& inst, Blackboard& bb, float del
 
 	bb.Set(BlackboardKeys::InMeleeRange, distance <= meleeRange);
 	bb.Set(BlackboardKeys::InThrowRange, distance <= throwRange);
-	std::cout << "[AI][Range] distance=" << distance
-		<< " meleeRange=" << meleeRange << " throwRange=" << throwRange
-		<< " inMelee=" << (distance <= meleeRange)
-		<< " inThrow=" << (distance <= throwRange) << "\n";
 
 	// 추가: 원거리 선호면 MaintainRange 켜기
 	bool preferRanged = false;
