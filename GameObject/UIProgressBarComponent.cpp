@@ -3,7 +3,7 @@
 #include "UIFSMComponent.h"
 #include <algorithm>
 
-REGISTER_COMPONENT(UIProgressBarComponent)
+REGISTER_UI_COMPONENT(UIProgressBarComponent)
 REGISTER_PROPERTY(UIProgressBarComponent, Percent)
 REGISTER_PROPERTY(UIProgressBarComponent, FillDirection)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundTextureHandle)

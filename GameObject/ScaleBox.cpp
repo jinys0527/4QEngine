@@ -2,7 +2,7 @@
 #include "ReflectionMacro.h"
 #include <algorithm>
 
-REGISTER_COMPONENT(ScaleBox)
+REGISTER_UI_COMPONENT(ScaleBox)
 REGISTER_PROPERTY(ScaleBox, Stretch)
 REGISTER_PROPERTY(ScaleBox, StretchDirection)
 

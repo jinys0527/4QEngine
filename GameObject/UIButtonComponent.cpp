@@ -2,7 +2,7 @@
 #include "ReflectionMacro.h"
 #include "UIFSMComponent.h"
 
-REGISTER_COMPONENT(UIButtonComponent)
+REGISTER_UI_COMPONENT(UIButtonComponent)
 REGISTER_PROPERTY(UIButtonComponent, IsEnabled)
 REGISTER_PROPERTY_READONLY(UIButtonComponent, IsPressed)
 REGISTER_PROPERTY_READONLY(UIButtonComponent, IsHovered)

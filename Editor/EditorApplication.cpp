@@ -51,21 +51,7 @@ namespace
 		{
 			return true;
 		}
-		auto& registry = ComponentRegistry::Instance();
-		auto* typeInfo = registry.Find(typeName);
-		while (typeInfo)
-		{
-			if (typeInfo->name == UIComponent::StaticTypeName)
-			{
-				return true;
-			}
-			if (!typeInfo->parent && typeInfo->parentName)
-			{
-				typeInfo->parent = registry.Find(typeInfo->parentName);
-			}
-			typeInfo = typeInfo->parent;
-		}
-		return false;
+		return ComponentRegistry::Instance().IsUIType(typeName);
 	}
 }
 

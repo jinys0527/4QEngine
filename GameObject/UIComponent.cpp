@@ -1,7 +1,7 @@
 ﻿#include "UIComponent.h"
 #include "ReflectionMacro.h"
 #include "UIObject.h"
-REGISTER_COMPONENT(UIComponent);
+REGISTER_UI_COMPONENT(UIComponent);
 REGISTER_PROPERTY(UIComponent, Visible)
 REGISTER_PROPERTY(UIComponent, ZOrder)
 REGISTER_PROPERTY(UIComponent, Opacity)

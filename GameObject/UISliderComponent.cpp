@@ -3,7 +3,7 @@
 #include "UIButtonComponent.h"
 #include "UIFSMComponent.h"
 
-REGISTER_COMPONENT(UISliderComponent)
+REGISTER_UI_COMPONENT(UISliderComponent)
 REGISTER_PROPERTY(UISliderComponent, Value)
 REGISTER_PROPERTY(UISliderComponent, MinValue)
 REGISTER_PROPERTY(UISliderComponent, MaxValue)
