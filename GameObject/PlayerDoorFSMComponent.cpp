@@ -1,5 +1,6 @@
 ﻿#include "PlayerDoorFSMComponent.h"
 #include "PlayerComponent.h"
+#include "DoorComponent.h"
 #include "ReflectionMacro.h"
 #include "PlayerFSMComponent.h"
 #include "Object.h"
@@ -58,6 +59,13 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			// 애니메이션
 			if (auto* owner = GetOwner())
 			{
+				if (auto* player = owner->GetComponent<PlayerComponent>())
+				{
+					if (auto* door = player->ConsumePendingDoor())
+					{
+						door->OpenDoor();
+					}
+				}
 				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
 				{
 					playerFsm->DispatchEvent("Door_Complete");
@@ -68,6 +76,10 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 		{
 			if (auto* owner = GetOwner())
 			{
+				if (auto* player = owner->GetComponent<PlayerComponent>())
+				{
+					player->ConsumePendingDoor();
+				}
 				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
 				{
 					playerFsm->DispatchEvent("Door_Complete");

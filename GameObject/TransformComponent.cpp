@@ -5,7 +5,7 @@
 REGISTER_COMPONENT(TransformComponent)  //컴포넌트 등록
 // 컴포넌트 property 등록 **이름 주의**
 REGISTER_PROPERTY(TransformComponent, Position)
-//REGISTER_PROPERTY_READONLY(TransformComponent, WorldPos)
+REGISTER_PROPERTY_READONLY(TransformComponent, WorldPos)
 REGISTER_PROPERTY(TransformComponent, Rotation)
 REGISTER_PROPERTY(TransformComponent, Scale)
 
@@ -154,7 +154,6 @@ void TransformComponent::SetRotationEuler(const XMFLOAT3& rot)
 
 	XMFLOAT3 rotRad{ XMConvertToRadians(rot.x),XMConvertToRadians(rot.y),XMConvertToRadians(rot.z) };
 		
-
 	XMFLOAT4 result{};
 	XMStoreFloat4(&result, XMQuaternionRotationRollPitchYaw(rotRad.x, rotRad.y, rotRad.z));
 	m_Rotation = result;

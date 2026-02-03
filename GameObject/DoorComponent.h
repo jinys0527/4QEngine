@@ -2,6 +2,10 @@
 #include "Component.h"
 #include "IEventListener.h"
 
+class NodeComponent;
+class AnimFSMComponent;
+class AnimationComponent;
+
 class DoorComponent : public Component, public IEventListener
 {
 public:
@@ -15,5 +19,20 @@ public:
 
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
+
+	void OpenDoor();
+	bool IsOpen() const { return m_IsOpen; }
+
+	void SetLinkedNodeName(const std::string& name) { m_LinkedNodeName = name; }
+	const std::string& GetLinkedNodeName() const { return m_LinkedNodeName; }
+
+
+private :
+
+	NodeComponent*       m_Node = nullptr;
+	AnimFSMComponent*    m_AnimFsm = nullptr;
+	AnimationComponent*  m_Animation = nullptr;
+	bool m_IsOpen = false;
+	std::string m_LinkedNodeName;
 };
 
