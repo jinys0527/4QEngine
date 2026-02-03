@@ -22,9 +22,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float4 texMetal = texMetalr.xxxx;
     float4 texRough = texRoughr.xxxx;
     float4 texAO = texAOr.xxxx;
-    
-    texRough = 0.f;
-    
+        
     texRough = max(texRough, 0.04f); //GGX 안정을 위한 최소값 
     
     float3 T, B, N;
