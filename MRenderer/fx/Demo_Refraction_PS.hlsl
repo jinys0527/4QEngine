@@ -1,4 +1,5 @@
 #include "BaseBuffer.hlsl"
+#include "Lights.hlsl"
 
 float4 PS_Main(VSOutput_Refraction input) : SV_Target
 {
@@ -23,8 +24,8 @@ float4 PS_Main(VSOutput_Refraction input) : SV_Target
     uv += noise * noiseStrength;
 
 
-    float3 tint = float3(0.6f, 0.8f, 1.0f);
-    float alpha = 0.4f;
+    float3 tint = float3(0.6f, 0.9f, 0.9f);
+    float alpha = 1.f;
 
 
     float4 texRT = g_RTView.Sample(smpClamp, uv);
@@ -42,5 +43,7 @@ float4 PS_Main(VSOutput_Refraction input) : SV_Target
 
     outColor = lerp(outColor, white, val);
         
+    LinearToSRGB(outColor);
+    
     return float4(outColor, texRT.a);
 }
