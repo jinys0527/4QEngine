@@ -28,6 +28,16 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
+    if (m_RenderContext.pRTScene_Refraction && m_RenderContext.pRTScene_RefractionMSAA)
+    {
+        dxdc->ResolveSubresource(
+            m_RenderContext.pRTScene_Refraction.Get(),
+            0,
+            m_RenderContext.pRTScene_RefractionMSAA.Get(),
+            0,
+            DXGI_FORMAT_R8G8B8A8_UNORM);
+    }
+
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
 
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);

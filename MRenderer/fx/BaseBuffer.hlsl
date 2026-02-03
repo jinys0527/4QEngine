@@ -156,6 +156,7 @@ struct VSOutput_Refraction
 {
     float4 pos : SV_POSITION;
     float4 nrm : NORMAL;
+    float4 wPos : TEXCOORD1;
 };
 
 

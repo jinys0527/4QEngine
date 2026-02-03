@@ -179,7 +179,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
     //return finalBlur + emissive;
     
-    return RTView;
+    return RTView + emissive;
     
     //return tilt + emissive;
 

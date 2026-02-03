@@ -222,7 +222,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
-	dTime += 0.00025f;
+	dTime += 0.0025f;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
