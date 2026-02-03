@@ -19,6 +19,7 @@
 #include <cfloat>
 #include <cmath>
 #include "GameManager.h"
+#include "CombatManager.h"
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 
@@ -168,7 +169,9 @@ PlayerComponent::PlayerComponent() {
 PlayerComponent::~PlayerComponent() {
 	// Event Listener 쓰는 경우만	
 	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftDoubleClick, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseRightClick, this);
 }
 
 void PlayerComponent::Start()
@@ -180,7 +183,9 @@ void PlayerComponent::Start()
 	if (!scene) { return; }
 
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
+	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
+	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
 	const auto& objects = scene->GetGameObjects();
 
 	for (const auto& [name,object] : objects) {
@@ -269,6 +274,94 @@ void PlayerComponent::Update(float deltaTime) {
 
 void PlayerComponent::OnEvent(EventType type, const void* data)
 {
+	if (type == EventType::MouseLeftClick)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+		if (gameManager && gameManager->IsCombatInputAllowed())
+		{
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				if (combatFsm->TryExecutePlayerAttackFromInput())
+				{
+					return;
+				}
+			}
+		}
+
+		if (!gameManager || !gameManager->IsExplorationInputAllowed())
+		{
+			return;
+		}
+
+		if (!scene || !scene->GetServices().Has<InputManager>())
+		{
+			return;
+		}
+
+		auto& input = scene->GetServices().Get<InputManager>();
+		if (!input.IsPointInViewport(mouseData->pos))
+		{
+			return;
+		}
+
+		auto camera = scene->GetGameCamera();
+		if (!camera)
+		{
+			return;
+		}
+
+		Ray pickRay{};
+		if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+		{
+			return;
+		}
+
+		float hitT = 0.0f;
+		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+		if (!clickedNode)
+		{
+			return;
+		}
+
+		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+		if (!enemy)
+		{
+			return;
+		}
+
+		const int range = max(0, m_AttackRange);
+		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+		if (distance > range)
+		{
+			return;
+		}
+
+		if (!m_IsMeleeMode)
+		{
+			std::cout << "MeleeMode\n";
+			m_IsMeleeMode = true;
+		}
+		else
+		{
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				m_CombatConfirmRequested = true;
+				combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
+			}
+		}
+		
+		return;
+	}
+
 	if (type == EventType::MouseLeftDoubleClick)
 	{
 		const auto* mouseData = static_cast<const Events::MouseState*>(data);
@@ -340,14 +433,39 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
+		if (!m_IsMeleeMode)
+		{
+			std::cout << "MeleeMode\n";
+			m_IsMeleeMode = true;
+		}
+
 		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 		{
 			m_CombatConfirmRequested = true;
 			combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 		}
 
-
 		return;
+	}
+
+	if (type == EventType::MouseRightClick)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+		if(gameManager->GetCombatManager()->GetState() != Battle::InBattle)
+		{
+			std::cout << "IdleMode\n";
+
+			m_IsMeleeMode = false;
+		}
 	}
 
 	if (type != EventType::TurnChanged || !data)

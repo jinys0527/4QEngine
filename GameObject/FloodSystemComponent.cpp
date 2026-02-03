@@ -16,6 +16,7 @@ REGISTER_PROPERTY(FloodSystemComponent, RiseStepAmount)
 REGISTER_PROPERTY(FloodSystemComponent, CorrectionMin)
 REGISTER_PROPERTY(FloodSystemComponent, CorrectionMax)
 REGISTER_PROPERTY(FloodSystemComponent, CorrectionDistanceMax)
+REGISTER_PROPERTY(FloodSystemComponent, ShopCorrectionMultiplier)
 REGISTER_PROPERTY_READONLY(FloodSystemComponent, WaterLevel)
 REGISTER_PROPERTY_READONLY(FloodSystemComponent, TurnElapsed)
 REGISTER_PROPERTY_READONLY(FloodSystemComponent, GameOver)
@@ -37,9 +38,16 @@ void FloodSystemComponent::Update(float deltaTime)
 	}
 
 	m_TurnElapsed += deltaTime;
-	const float correction = ComputeCorrectionFactor();
-	const float stepInterval = max(0.01f, m_RiseIntervalSeconds * correction);
+	float correction = ComputeCorrectionFactor();
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (gameManager && gameManager->IsShopInputAllowed())
+	{
+		correction *= m_ShopCorrectionMultiplier;
+	}
 
+	const float stepInterval = max(0.01f, m_RiseIntervalSeconds * correction);
 	if (m_TurnElapsed >= stepInterval)
 	{
 		m_WaterLevel += m_RiseStepAmount * correction;
@@ -61,7 +69,15 @@ void FloodSystemComponent::OnEvent(EventType type, const void* data)
 
 const float FloodSystemComponent::GetTurnRemaining() const
 {
-	const float correction = ComputeCorrectionFactor();
+	float correction = ComputeCorrectionFactor();
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (gameManager && gameManager->IsShopInputAllowed())
+	{
+		correction *= m_ShopCorrectionMultiplier;
+	}
+
 	const float stepInterval = max(0.01f, m_RiseIntervalSeconds * correction);
 	const float remaining = stepInterval - m_TurnElapsed;
 	return remaining > 0.0f ? remaining : 0.0f;
