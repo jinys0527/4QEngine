@@ -340,6 +340,7 @@
     <ClInclude Include="PlayerPushFSMComponent.h" />
     <ClInclude Include="PlayerShopFSMComponent.h" />
     <ClInclude Include="PlayerStatComponent.h" />
+    <ClInclude Include="PushNodeComponent.h" />
     <ClInclude Include="RectLightComponent.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraObject.h" />
@@ -417,6 +418,7 @@
     <ClCompile Include="PlayerPushFSMComponent.cpp" />
     <ClCompile Include="PlayerShopFSMComponent.cpp" />
     <ClCompile Include="PlayerStatComponent.cpp" />
+    <ClCompile Include="PushNodeComponent.cpp" />
     <ClCompile Include="RectLightComponent.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CameraObject.cpp" />

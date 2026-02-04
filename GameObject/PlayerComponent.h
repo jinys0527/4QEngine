@@ -8,6 +8,9 @@
 class GridSystemComponent;
 class EnemyComponent;
 class DoorComponent;
+class NodeComponent;
+
+
 // PlayerComponent 는 Player와 관련된 Data와 중요 로직
 // Player의 다른 Component의 중추적인 역할
 class PlayerComponent : public Component, public IEventListener {
@@ -86,7 +89,9 @@ public:
 private:
 	void ResetSubFSMFlags();
 	bool ConsumeFlag(bool& flag);
-
+	bool TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent*& outNode) const;
+	bool ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode);
+	void ClearPendingPush();
 	// 외부지정 가능
 	// 이동력, 행동력
 	int m_MoveResource = 3; // 초기설정
@@ -113,12 +118,20 @@ private:
 	bool m_TurnEndRequested = false;
 	bool m_CombatConfirmRequested = false;
 	EnemyComponent* m_SelectedEnemy = nullptr;
+
+	// 밀기
 	bool m_PushPossible = true;
 	bool m_PushTargetFound = true;
 	bool m_PushSuccess = true;
+	EnemyComponent* m_PendingPushEnemy = nullptr;
+	NodeComponent* m_PendingPushNode = nullptr;
+
+	// 문
 	bool m_DoorConfirmed = true;
 	bool m_DoorSuccess = true;
 	DoorComponent* m_PendingDoor = nullptr; 
+
+	
 	bool m_InventoryAtShop = true;
 	bool m_InventoryCanDrop = true;
 	bool m_ShopHasSpace = true;
