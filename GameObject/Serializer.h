@@ -172,6 +172,16 @@ struct Serializer<UIFillDirection> {
 	}
 };
 
+template<>
+struct Serializer<UIProgressFillMode> {
+	static void ToJson(nlohmann::json& j, const UIProgressFillMode& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIProgressFillMode& v) {
+		v = static_cast<UIProgressFillMode>(j.get<int>());
+	}
+};
+
 template <>
 struct Serializer<CanvasSlot> {
 	static void ToJson(nlohmann::json& j, const CanvasSlot& v) {

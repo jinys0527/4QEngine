@@ -52,6 +52,11 @@ enum class UIFillDirection
 	BottomToTop
 };
 
+enum class UIProgressFillMode
+{
+	Rect,
+	Mask
+};
 
 inline float ClampUIValue(float value, float minValue, float maxValue)
 {

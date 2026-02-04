@@ -48,9 +48,13 @@ public:
 
 	void SetFillDirection(const UIFillDirection& direction) { m_FillDirection = direction; }
 	const UIFillDirection& GetFillDirection() const { return m_FillDirection; }
+
+	void SetFillMode(const UIProgressFillMode& mode) { m_FillMode = mode; }
+	const UIProgressFillMode& GetFillMode() const { return m_FillMode; }
 private:
 	float m_Percent = 0.0f;
 	UIFillDirection m_FillDirection = UIFillDirection::LeftToRight;
+	UIProgressFillMode m_FillMode = UIProgressFillMode::Rect;
 	std::function<void(float)> m_OnPercentChanged;
 
 	TextureHandle m_BackgroundTextureHandle = TextureHandle::Invalid();

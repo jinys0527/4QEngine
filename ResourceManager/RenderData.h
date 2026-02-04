@@ -201,6 +201,8 @@ namespace RenderData
 		XMFLOAT4	   color{ 1.0f,1.0f, 1.0f,1.0f };
 		FLOAT		   opacity = 1.0f;
 		FLOAT		   rotation = 0.0f;
+		FLOAT		   progress = 1.0f;
+		FLOAT		   progressDirection = 0.0f;
 		INT32		   zOrder = 0;
 		MaterialHandle material = MaterialHandle::Invalid();
 		UIMaterialData materialOverrides{};

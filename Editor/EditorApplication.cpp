@@ -3973,7 +3973,40 @@ void EditorApplication::DrawUIEditorPreview()
 					return true;
 				};
 
-
+			ImGui::Text("Name");
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(-1);
+			ImGui::InputText("##UIObjectName", m_UIObjectNameBuffer.data(), m_UIObjectNameBuffer.size());
+			if (ImGui::IsItemDeactivatedAfterEdit())
+			{
+				const std::string oldName = selectedObject->GetName();
+				const std::string newName = m_UIObjectNameBuffer.data();
+				if (!newName.empty() && newName != oldName)
+				{
+					if (applyUIObjectRename(oldName, newName))
+					{
+						m_UndoManager.Push(UndoManager::Command{
+							"Rename UI Object",
+							[this, applyUIObjectRename, oldName, newName]()
+							{
+								applyUIObjectRename(newName, oldName);
+							},
+							[this, applyUIObjectRename, oldName, newName]()
+							{
+								applyUIObjectRename(oldName, newName);
+							}
+							});
+					}
+					else
+					{
+						std::snprintf(m_UIObjectNameBuffer.data(), m_UIObjectNameBuffer.size(), "%s", oldName.c_str());
+					}
+				}
+				else
+				{
+					std::snprintf(m_UIObjectNameBuffer.data(), m_UIObjectNameBuffer.size(), "%s", oldName.c_str());
+				}
+			}
 
 			ImGui::SeparatorText("Layout");
 			ImGui::Text("Parent");

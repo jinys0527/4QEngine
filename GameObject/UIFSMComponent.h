@@ -27,6 +27,7 @@ public:
 	void Start() override;
 
 	void OnEvent(EventType type, const void* data) override;
+	bool ShouldHandleEvent(EventType type, const void* data) override;
 
 	using Callback = std::function<void(const std::string&, const void*)>;
 	using LegacyCallback = std::function<void(EventType, const void*)>;

@@ -734,7 +734,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 					image->GetPixelShaderHandle());
 			};
 
-		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image)
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float progress = 1.0f, float progressDirection = 0.0f)
 			{
 				RenderData::UIElement element{};
 				element.position = { rect.x, rect.y };
@@ -743,6 +743,8 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				element.zOrder = zOrder;
 				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
 				element.opacity = opacity;
+				element.progress = progress;
+				element.progressDirection = progressDirection;
 				applyImageOverrides(element, image);
 				frameData.uiElements.push_back(element);
 			};
@@ -786,8 +788,18 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
 			if (percent > 0.0f)
 			{
-				UIRect fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
-				appendElement(fillRect, baseZOrder + 1, nullptr);
+				UIRect fillRect = bounds;
+				float progressValue = percent;
+				if (progress->GetFillMode() == UIProgressFillMode::Rect)
+				{
+					fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
+				}
+				const UIFillDirection fillDirection = progress->GetFillDirection();
+				const bool isReverseFill = fillDirection == UIFillDirection::RightToLeft
+					|| fillDirection == UIFillDirection::BottomToTop;
+				const float progressDirection = isReverseFill ? 1.0f : 0.0f;
+				appendElement(fillRect, baseZOrder + 1, nullptr, progressValue, progressDirection);
+
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,
 					progress->GetFillTextureHandle(),
@@ -978,7 +990,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!ui->hasButton)
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
 				continue;
 			if (!hitAny && ui->HitCheck(mouseData->pos))
 				hitAny = true;

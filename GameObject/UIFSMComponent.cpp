@@ -221,6 +221,29 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 	HandleEventByName(*eventName, data);
 }
 
+bool UIFSMComponent::ShouldHandleEvent(EventType type, const void* data)
+{
+	if (type != EventType::UIHovered)
+	{
+		return true;
+	}
+
+	auto* owner = GetOwner();
+	auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+	if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+	{
+		return false;
+	}
+
+	const auto* mouseData = static_cast<const Events::MouseState*>(data);
+	if (!mouseData)
+	{
+		return false;
+	}
+
+	return uiObject->HitCheck(mouseData->pos);
+}
+
 
 void UIFSMComponent::RegisterCallback(const std::string& id, Callback callback)
 {
