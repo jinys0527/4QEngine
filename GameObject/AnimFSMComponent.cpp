@@ -78,6 +78,7 @@ void RegisterAnimFSMDefinitions()
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "AnimNotify_Hit", "Animation" });
 	eventRegistry.RegisterEvent({ "AnimNotify_Footstep", "Animation" });
+	eventRegistry.RegisterEvent({ "Anim_Play", "Animation" });
 }
 
 REGISTER_COMPONENT_DERIVED(AnimFSMComponent, FSMComponent)

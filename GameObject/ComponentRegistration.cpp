@@ -84,7 +84,7 @@ extern "C" {
 	void Link_HorizontalBox();
 	void Link_UIImageComponent();
 	void Link_BoxColliderComponent();
-	
+
 	//User Defined
 	void Link_SceneChangeTestComponent();
 	void Link_PlayerMovementComponent();
@@ -111,6 +111,7 @@ extern "C" {
 	void Link_FloodUIComponent();
 	void Link_PushNodeComponent();
 	void Link_ItemSpawnerComponent();
+}
 
 
 void RegisterUIFSMDefinitions();
