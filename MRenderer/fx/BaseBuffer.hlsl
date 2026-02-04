@@ -8,7 +8,7 @@ cbuffer BaseBuffer : register(b0)
     matrix mWorldInvTranspose;
     matrix mTextureMask;
     float2 screenSize;
-    float2 playerPos;           //x,y값은 uv좌표
+    float2 basePadding;
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -62,6 +62,12 @@ cbuffer SkinningBuffer : register(b3)
     uint count;
     float3 skinningpadding;
 };
+
+cbuffer MaskingBuffer : register(b4)
+{
+    matrix playerMask;
+    matrix enemyMask[16];
+}
 
 cbuffer MaterialBuffer : register(b5)
 {
@@ -126,9 +132,14 @@ struct VSOutput_Shadow
 struct VSOutput_Wall
 {
     float4 pos : SV_POSITION;
-    float4 uvmask : TEXCOORD0;
-    float2 uv : TEXCOORD1;
-
+    float4 nrm : NORMAL;
+    float2 uv : TEXCOORD0;
+    float4 wPos : TEXCOORD1;
+    float4 vPos : TEXCOORD2;
+    float3 envUVW : TEXCOORD3;
+    float4 T : TEXCOORD4;
+    float4 uvshadow : TEXCOORD5;
+    float2 screenUV : TEXCOORD6;
 };
 
 //그리드
@@ -156,12 +167,13 @@ struct VSOutput_Refraction
 {
     float4 pos : SV_POSITION;
     float4 nrm : NORMAL;
+    float4 wPos : TEXCOORD1;
 };
 
 
 //ShaderResourceView
 Texture2D g_RTView              : register(t0);
-//Texture2D g_Blur                : register(t1);
+Texture2D g_WallDepth           : register(t1);
 Texture2D g_ShadowMap           : register(t2);
 TextureCube g_SkyBox            : register(t3);
 Texture2D g_DepthMap            : register(t4);

@@ -124,9 +124,9 @@ void GameApplication::Render()
 		}
 	}
 
-	scene->Render(m_FrameData);
 	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
+	scene->Render(m_FrameData);
 	m_Renderer.RenderFrame(m_FrameData);
 	m_Renderer.RenderToBackBuffer();
 	Flip(m_Renderer.GetSwapChain().Get());

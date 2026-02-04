@@ -11,12 +11,15 @@
 #include "Event.h"
 #include "InputManager.h"
 #include "RayHelper.h"
+#include "PlayerStatComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
 #include <algorithm>
 #include <cfloat>
+#include "SkinningAnimationComponent.h"
+#include "MathHelper.h"
 #include <cmath>
 #include "GameManager.h"
 #include "CombatManager.h"
@@ -229,18 +232,59 @@ void PlayerComponent::Update(float deltaTime) {
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
 	{
-		if (!transformcomponent->GetChildrens().empty())
+		if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
 		{
-			m_Item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+			GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+			auto* itemcomp = item->GetComponent<ItemComponent>();
+			if (itemcomp && itemcomp->GetType() == 1)
+			{
+				m_MeeleItem = item;
+				itemcomp->SetIsEquiped(true);
+				m_InventoryItemIds.push_back(item->GetName());
+
+			}
 		}
 
 	}
 
-	//아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
+	//근접 아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
 	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
-	if (m_Item != nullptr)
+	if (m_MeeleItem != nullptr)
 	{
-		auto* itemcomponent = m_Item->GetComponent<ItemComponent>();
+		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
+
+		//근접 무기의 스탯 적용하기
+		if (!m_IsApplyMeeleStat)
+		{
+			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
+			if (!playerstatcomponent) return;
+
+			int health = playerstatcomponent->GetHealth();
+			int strength = playerstatcomponent->GetStrength();
+			int agility = playerstatcomponent->GetAgility();
+			int sense = playerstatcomponent->GetSense();
+			int skill = playerstatcomponent->GetSkill();
+
+			int ihealth = itemcomponent->GetHealth();
+			int istrength = itemcomponent->GetStrength();
+			int iagility = itemcomponent->GetAgility();
+			int isense = itemcomponent->GetSense();
+			int iskill = itemcomponent->GetSkill();
+			int idefense = itemcomponent->GetDEF();
+			int irange = itemcomponent->GetMeleeAttackRange();
+
+			playerstatcomponent->SetHealth(health + ihealth);
+			playerstatcomponent->SetStrength(strength + istrength);
+			playerstatcomponent->SetAgility(agility + iagility);
+			playerstatcomponent->SetSense(sense + isense);
+			playerstatcomponent->SetSkill(skill + iskill);
+			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
+			playerstatcomponent->SetRange(irange);
+
+			m_IsApplyMeeleStat = true;
+		}
+
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
 		if (!skeletal)
@@ -266,10 +310,30 @@ void PlayerComponent::Update(float deltaTime) {
 			return;
 		}
 
-		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
+		XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
+		const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
+		if (equipmentBoneIndex >= 0)
+		{
+			const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
+			if (animComp)
+			{
+				const auto& globalPose = animComp->GetGlobalPose();
+				if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
+				{
+					equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
+				}
+			}
+		}
+		XMMATRIX pose = XMLoadFloat4x4(&equipmentPose);
+		XMVECTOR translation = pose.r[3];
+		XMMATRIX scale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-		itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
-		int a = 0;
+		pose = XMMatrixMultiply(pose, scale);
+		pose.r[3] = translation;
+		XMStoreFloat4x4(&equipmentPose, pose);
+
+		itemcomponent->SetEquipmentBindPose(equipmentPose);
+
 	}
 }
 

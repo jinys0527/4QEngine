@@ -463,4 +463,7 @@
       <UniqueIdentifier>{46414225-d999-430c-aa13-eb46d6dc4ac2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GameObject.rc" />
+  </ItemGroup>
 </Project>

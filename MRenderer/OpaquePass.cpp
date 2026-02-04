@@ -76,7 +76,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	{
 		const auto& item = *queueItem.item;
 		SetBaseCB(item);
-		SetMaskingTM(item, frame.context.gameCamera.cameraPos);
 #ifdef _DEBUG
 // 		if (const auto* mesh = m_AssetLoader.GetMeshes().Get(item.mesh))
 // 		{
