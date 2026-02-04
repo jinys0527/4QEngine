@@ -65,8 +65,9 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			std::cout << "Door Select\n";
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
-			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
-			DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
+			//const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
+			//DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
+			DispatchEvent("Door_Confirm");
 		});
 	BindActionHandler("Door_Verdict", [this](const FSMAction& action)
 		{
@@ -90,10 +91,6 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 						door->OpenDoor();
 					}
 				}
-				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
-				{
-					playerFsm->DispatchEvent("Door_Complete");
-				}
 			}
 		});
 	BindActionHandler("Door_Fail", [this](const FSMAction& action)
@@ -104,10 +101,6 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 				if (auto* player = owner->GetComponent<PlayerComponent>())
 				{
 					player->ConsumePendingDoor();
-				}
-				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
-				{
-					playerFsm->DispatchEvent("Door_Complete");
 				}
 			}
 		});

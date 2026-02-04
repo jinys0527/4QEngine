@@ -48,6 +48,13 @@ namespace
 		{
 			if (auto* fsm = owner->GetComponent<PlayerDoorFSMComponent>())
 			{
+				/*std::string doorEvent = eventName;
+				if (doorEvent.find('_') != std::string::npos)
+				{
+					std::replace(doorEvent.begin(), doorEvent.end(), '_', ' ');
+				}
+				fsm->DispatchEvent(doorEvent);*/
+				std::cout << "Door\n";
 				fsm->DispatchEvent(eventName);
 			}
 			return;
@@ -102,7 +109,7 @@ namespace
 	//                       onExit  -> Player_DispatchEvent(event="Combat_End")
 	// - Player_Push       : onEnter -> Player_DispatchSubFSMEvent(target="Push", event="Push_Start")
 	//                       onExit  -> Player_DispatchEvent(event="Push_Complete")
-	// - Player_Door       : onEnter -> Player_DispatchSubFSMEvent(target="Door", event="Door Select")
+	// - Player_Door       : onEnter -> Player_DispatchSubFSMEvent(target="Door", event="Door_Select")
 	//                       onExit  -> Player_DispatchEvent(event="Door_Complete")
 
 void RegisterPlayerFSMDefinitions()
@@ -354,14 +361,16 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Door_Open",
 		"Door",
-		{}
+		{
+		}
 		});
 
 	// Door 실패
 	actionRegistry.RegisterAction({
 		"Door_Fail",
 		"Door",
-		{}
+		{
+		}
 		});
 
 
@@ -428,7 +437,7 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Shop_MoneyFail",    "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_Complete",     "Shop" });
 
-	eventRegistry.RegisterEvent({ "Door Select",   "Door" });
+	eventRegistry.RegisterEvent({ "Door_Select",   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Confirm",  "Door" });
 	eventRegistry.RegisterEvent({ "Door_CostPaid", "Door" });
 	eventRegistry.RegisterEvent({ "Door_Open",	   "Door" });
