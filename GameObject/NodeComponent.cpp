@@ -72,6 +72,11 @@ void NodeComponent::Start()
 
 void NodeComponent::Update(float deltaTime) {
 
+	if (!m_LinkedDoor && !m_LinkedDoorName.empty())
+	{
+		ResolveLinkedDoor();
+	}
+
 	switch (m_State)
 	{
 	case NodeState::Empty : m_StateInt = 0; break;
@@ -127,6 +132,20 @@ void NodeComponent::ClearHighlights()
 	m_UsingSightHighlight = false;
 	m_SightHighlightIntensity = 0.0f;
 	ApplyHighlight();
+}
+
+void NodeComponent::SetLinkedDoor(DoorComponent* door, const std::string& doorName)
+{
+	if (!door)
+	{
+		return;
+	}
+
+	m_LinkedDoor = door;
+	if (!doorName.empty())
+	{
+		m_LinkedDoorName = doorName;
+	}
 }
 
 void NodeComponent::ApplyHighlight()
@@ -188,13 +207,15 @@ void NodeComponent::ApplyHighlight()
 
 void NodeComponent::ResolveLinkedDoor()
 {
-	if (m_LinkedDoor || m_LinkedDoorName.empty())
+	//std::cout << "ResolveLinkedDoor" << std::endl;
+	if (m_LinkedDoorName.empty() || m_LinkedDoor)
 	{
 		return;
 	}
 
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
+
 	if (!scene)
 	{
 		return;
@@ -208,4 +229,5 @@ void NodeComponent::ResolveLinkedDoor()
 	}
 
 	m_LinkedDoor = it->second->GetComponent<DoorComponent>();
+	if (m_LinkedDoor) { std::cout << "Door Linked" << std::endl; }
 }

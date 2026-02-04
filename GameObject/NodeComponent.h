@@ -63,6 +63,7 @@ public:
 	void SetLinkedDoorName(const std::string& name) { m_LinkedDoorName = name; }
 	const std::string& GetLinkedDoorName() const { return m_LinkedDoorName; }
 	DoorComponent* GetLinkedDoor() const { return m_LinkedDoor; }
+	void SetLinkedDoor(DoorComponent* door, const std::string& doorName);
 
 private:
 	void ApplyHighlight();

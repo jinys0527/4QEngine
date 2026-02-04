@@ -8,6 +8,7 @@
 #include "ServiceRegistry.h"
 #include "ItemComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyStatComponent.h"
 #include "Event.h"
 #include "InputManager.h"
 #include "RayHelper.h"
@@ -16,6 +17,7 @@
 #include "TransformComponent.h"
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
+#include "PushNodeComponent.h"
 #include <algorithm>
 #include <cfloat>
 #include "SkinningAnimationComponent.h"
@@ -26,6 +28,7 @@
 #include "DoorComponent.h"
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
+#include "PlayerDoorFSMComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -62,6 +65,14 @@ namespace
 		if (!owner || !eventName) return;
 
 		if (auto* fsm = owner->GetComponent<PlayerCombatFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+
+	void DispatchDoorEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerDoorFSMComponent>())
 			fsm->DispatchEvent(eventName);
 	}
 }
@@ -350,7 +361,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
@@ -396,13 +406,24 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			return;
 		}
+		
+		std::cout << clickedNode->GetQ() << ", " << clickedNode->GetR() << std::endl; // 클릭된 Node Debug
 
 		if (!clickedNode->GetIsMoveable())
 		{
+
 			if (auto* door = clickedNode->GetLinkedDoor())
 			{
+				//std::cout << "Door Evenet Detected" << std::endl;
+				// 인접 노드 판별
+				const int distanceToDoor = AxialDistance(m_Q, m_R, clickedNode->GetQ(), clickedNode->GetR());
+				if (distanceToDoor > 1)
+				{
+					return;
+				}
 				m_PendingDoor = door;
 				DispatchPlayerStateEvent(owner, "Door_Interact");
+				
 				mouseData->handled = true;
 				return;
 			}
@@ -692,6 +713,87 @@ EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
 	return nullptr;
 }
 
+// 밀기 관련
+
+// 조건 체크
+bool PlayerComponent::TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent*& outNode) const
+{
+	outEnemy = nullptr;
+	outNode = nullptr;
+	if (!m_GridSystem)
+	{
+		return false;
+	}
+
+	const int playerQ = m_Q;
+	const int playerR = m_R;
+	const auto& enemies = m_GridSystem->GetEnemies();
+
+	for (auto* enemy : enemies) {
+		if (!enemy) { continue; }
+
+		const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
+
+		if (distance != 1) { continue; }
+
+		auto* enemyOwner = enemy->GetOwner();
+
+		if (!enemyOwner) { continue; }
+
+		if (auto* enemyStat = enemyOwner->GetComponent<EnemyStatComponent>())
+		{
+			if (enemyStat->IsDead()) { continue; }
+		}
+
+		const int dq = enemy->GetQ() - playerQ;
+		const int dr = enemy->GetR() - playerR;
+		const AxialKey targetKey{ enemy->GetQ() + dq ,enemy->GetR() + dr };
+		auto* targetNode = m_GridSystem->GetNodeByKey(targetKey);
+
+		if (!targetNode) { continue; }
+
+		auto* targetOwner = targetNode->GetOwner();
+		if (!targetOwner || !targetOwner->GetComponent<PushNodeComponent>()) { continue; }
+		// if (targetNode->GetState() != NodeState::Empty) { continue; } 
+		outEnemy = enemy;
+		outNode = targetNode;
+		return true; // 밀기 세팅 완료
+	}
+
+	return false;
+}
+
+// 밀기 동작
+bool PlayerComponent::ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode)
+{
+	if (!enemy || !targetNode || !m_GridSystem){ return false;}
+
+	auto* enemyOwner = enemy->GetOwner();
+	if (!enemyOwner){return false;}
+
+	auto* enemyTransform = enemyOwner->GetComponent<TransformComponent>();
+	auto* targetOwner = targetNode->GetOwner();
+	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
+
+
+	if (!enemyTransform || !targetTransform){return false;}
+
+	enemyTransform->SetPosition(targetTransform->GetPosition());
+	enemy->SetQR(targetNode->GetQ(), targetNode->GetR());
+
+	if (auto* enemyStat = enemyOwner->GetComponent<EnemyStatComponent>())
+	{
+		enemyStat->SetCurrentHP(0);
+	}
+
+	return true;
+}
+
+void PlayerComponent::ClearPendingPush()
+{
+	m_PendingPushEnemy = nullptr;
+	m_PendingPushNode = nullptr;
+}
 
 bool PlayerComponent::ConsumeCombatConfirmRequest()
 {
@@ -706,17 +808,71 @@ bool PlayerComponent::ConsumeCombatConfirmRequest()
 
 bool PlayerComponent::ConsumePushPossible()
 {
-	return ConsumeFlag(m_PushPossible);
+	//return ConsumeFlag(m_PushPossible);
+	EnemyComponent* enemy = nullptr;
+	NodeComponent* targetNode = nullptr;
+	const bool possible = TryFindPushTarget(enemy, targetNode);
+	if (possible)
+	{
+		m_PendingPushEnemy = enemy;
+		m_PendingPushNode = targetNode;
+	}
+	else
+	{
+		ClearPendingPush();
+	}
+	return possible;
 }
+
 
 bool PlayerComponent::ConsumePushTargetFound()
 {
-	return ConsumeFlag(m_PushTargetFound);
+	//return ConsumeFlag(m_PushTargetFound);
+	if (m_PendingPushEnemy && m_PendingPushNode)
+	{
+		return true;
+	}
+
+	EnemyComponent* enemy = nullptr;
+	NodeComponent* targetNode = nullptr;
+	const bool found = TryFindPushTarget(enemy, targetNode);
+	if (found)
+	{
+		m_PendingPushEnemy = enemy;
+		m_PendingPushNode = targetNode;
+		return true;
+	}
+
+	ClearPendingPush();
+	return false;
 }
 
 bool PlayerComponent::ConsumePushSuccess()
 {
-	return ConsumeFlag(m_PushSuccess);
+	//return ConsumeFlag(m_PushSuccess);
+	const bool diceSuccess = ConsumeFlag(m_PushSuccess);
+	if (!diceSuccess)
+	{
+		ClearPendingPush();
+		return false;
+	}
+
+	if (!m_PendingPushEnemy || !m_PendingPushNode)
+	{
+		EnemyComponent* enemy = nullptr;
+		NodeComponent* targetNode = nullptr;
+		if (!TryFindPushTarget(enemy, targetNode))
+		{
+			ClearPendingPush();
+			return false;
+		}
+		m_PendingPushEnemy = enemy;
+		m_PendingPushNode = targetNode;
+	}
+
+	const bool success = ResolvePushTarget(m_PendingPushEnemy, m_PendingPushNode);
+	ClearPendingPush();
+	return success;
 }
 
 bool PlayerComponent::ConsumeDoorConfirmed()
@@ -768,11 +924,13 @@ void PlayerComponent::ResetSubFSMFlags()
 	m_PushSuccess = true;
 	m_DoorConfirmed = true;
 	m_DoorSuccess = true;
-	m_PendingDoor = nullptr;
 	m_InventoryAtShop = true;
 	m_InventoryCanDrop = true;
 	m_ShopHasSpace = true;
 	m_ShopHasMoney = true;
+
+	m_PendingDoor = nullptr;
+	ClearPendingPush();
 }
 
 bool PlayerComponent::ConsumeFlag(bool& flag)
@@ -781,3 +939,5 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 	flag = true;
 	return value;
 }
+
+

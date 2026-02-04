@@ -11,4 +11,5 @@ public:
 	virtual ~PlayerPushFSMComponent() override = default;
 
 	void Start() override;
+	void Update(float deltaTime) override;
 };
