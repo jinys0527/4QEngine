@@ -2,9 +2,21 @@
 #include "NodeComponent.h"
 #include "ReflectionMacro.h"
 #include "MaterialComponent.h"
+#include "GameObject.h"
+#include "DoorComponent.h"
 #include "Object.h"
+#include "Scene.h"
 #include "Event.h"
 #include <algorithm>
+
+REGISTER_COMPONENT(NodeComponent)
+REGISTER_PROPERTY(NodeComponent, IsMoveable)
+REGISTER_PROPERTY(NodeComponent, IsSight)
+REGISTER_PROPERTY(NodeComponent, LinkedDoorName)
+REGISTER_PROPERTY_READONLY(NodeComponent, StateInt)
+REGISTER_PROPERTY_READONLY(NodeComponent, Q)
+REGISTER_PROPERTY_READONLY(NodeComponent, R)
+
 
 namespace
 {
@@ -30,13 +42,6 @@ namespace
 	}
 }
 
-REGISTER_COMPONENT(NodeComponent)
-REGISTER_PROPERTY(NodeComponent, IsMoveable)
-REGISTER_PROPERTY(NodeComponent, IsSight)
-REGISTER_PROPERTY_READONLY(NodeComponent, StateInt)
-REGISTER_PROPERTY_READONLY(NodeComponent, Q)
-REGISTER_PROPERTY_READONLY(NodeComponent, R)
-
 NodeComponent::NodeComponent() = default;
 
 NodeComponent::~NodeComponent() {
@@ -61,6 +66,7 @@ void NodeComponent::Start()
 			m_HasBaseMaterial = true;
 		}
 	}
+	ResolveLinkedDoor(); // Door 연결
 }
 
 
@@ -178,4 +184,28 @@ void NodeComponent::ApplyHighlight()
 	/*m_LastAppliedOverrides = overrides;
 	m_HasLastAppliedOverrides = true;*/
 	//m_UsingMoveRangeHighlight = true;
+}
+
+void NodeComponent::ResolveLinkedDoor()
+{
+	if (m_LinkedDoor || m_LinkedDoorName.empty())
+	{
+		return;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return;
+	}
+
+	const auto& objects = scene->GetGameObjects();
+	const auto it = objects.find(m_LinkedDoorName);
+	if (it == objects.end() || !it->second)
+	{
+		return;
+	}
+
+	m_LinkedDoor = it->second->GetComponent<DoorComponent>();
 }

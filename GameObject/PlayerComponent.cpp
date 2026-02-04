@@ -23,6 +23,7 @@
 #include <cmath>
 #include "GameManager.h"
 #include "CombatManager.h"
+#include "DoorComponent.h"
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 
@@ -396,6 +397,17 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
+		if (!clickedNode->GetIsMoveable())
+		{
+			if (auto* door = clickedNode->GetLinkedDoor())
+			{
+				m_PendingDoor = door;
+				DispatchPlayerStateEvent(owner, "Door_Interact");
+				mouseData->handled = true;
+				return;
+			}
+		}
+
 		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 		if (!enemy)
 		{
@@ -737,6 +749,18 @@ bool PlayerComponent::ConsumeShopHasMoney()
 	return ConsumeFlag(m_ShopHasMoney);
 }
 
+void PlayerComponent::SetPendingDoor(DoorComponent* door)
+{
+	m_PendingDoor = door;
+}
+
+DoorComponent* PlayerComponent::ConsumePendingDoor()
+{
+	DoorComponent* door = m_PendingDoor;
+	m_PendingDoor = nullptr;
+	return door;
+}
+
 void PlayerComponent::ResetSubFSMFlags()
 {
 	m_PushPossible = true;
@@ -744,6 +768,7 @@ void PlayerComponent::ResetSubFSMFlags()
 	m_PushSuccess = true;
 	m_DoorConfirmed = true;
 	m_DoorSuccess = true;
+	m_PendingDoor = nullptr;
 	m_InventoryAtShop = true;
 	m_InventoryCanDrop = true;
 	m_ShopHasSpace = true;

@@ -5,6 +5,7 @@
 #include "RenderData.h"
 
 class MaterialComponent;
+class DoorComponent;
 
 using namespace MathUtils;
 using namespace std; 
@@ -58,8 +59,15 @@ public:
 	void SetMoveRangeHighlight(float intensity, bool enabled);
 	void SetSightHighlight(float intensity, bool enabled);
 	void ClearHighlights();
+
+	void SetLinkedDoorName(const std::string& name) { m_LinkedDoorName = name; }
+	const std::string& GetLinkedDoorName() const { return m_LinkedDoorName; }
+	DoorComponent* GetLinkedDoor() const { return m_LinkedDoor; }
+
 private:
 	void ApplyHighlight();
+	void ResolveLinkedDoor(); //Door 연결
+
 
 	bool m_IsMoveable = true;	  //장애물 있으면 Editor에서 배치할때 false로 설정하기
 	bool m_IsSight = true; // 적 시야 판별 / false = 적 시야가 넘어가서 볼 수 없음 (벽 타일)
@@ -80,6 +88,8 @@ private:
 	int m_Q; 
 	int m_R;
 	int m_StateInt = 0; // Debug
+	std::string m_LinkedDoorName;
+	DoorComponent* m_LinkedDoor = nullptr;
 	// Property X
 	vector<NodeComponent*> m_Neighbors;
 };
