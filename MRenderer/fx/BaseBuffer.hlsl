@@ -8,7 +8,7 @@ cbuffer BaseBuffer : register(b0)
     matrix mWorldInvTranspose;
     matrix mTextureMask;
     float2 screenSize;
-    float2 playerPos;           //x,y값은 uv좌표
+    float2 basePadding;
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -62,6 +62,12 @@ cbuffer SkinningBuffer : register(b3)
     uint count;
     float3 skinningpadding;
 };
+
+cbuffer MaskingBuffer : register(b4)
+{
+    matrix playerMask;
+    matrix enemyMask[16];
+}
 
 cbuffer MaterialBuffer : register(b5)
 {

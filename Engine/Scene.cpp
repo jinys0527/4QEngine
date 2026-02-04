@@ -947,16 +947,88 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	frameData.lights.clear();
 	frameData.skinningPalettes.clear();
 	frameData.globalPoses.clear();
-
+	frameData.combatEnemyPositions.clear();
+	frameData.playerPosition = XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+	frameData.hasPlayerPosition = false;
 
 	RenderData::FrameContext& context = frameData.context;
+	const UINT32 frameIndex = context.frameIndex;
+	const FLOAT deltaTime = context.deltaTime;
 	context = RenderData::FrameContext{};
+	context.frameIndex = frameIndex;
+	context.deltaTime = deltaTime;
 
 	// 게임 카메라
 	if (m_GameCamera)
 	{
 		BuildCameraData(m_GameCamera, frameData, true);
 	}
+
+	//적 위치 정보 및 플레이어 위치 정보
+	const bool isCombatPhase = m_GameManager && m_GameManager->GetPhase() == Phase::TurnBasedCombat;
+	bool playerPositionSet = false;
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		if (!playerPositionSet)
+		{
+			if (gameObject->GetComponent<PlayerComponent>())
+			{
+				if (auto* transform = gameObject->GetComponent<TransformComponent>())
+				{
+					frameData.playerPosition = transform->GetWorldPos();
+					frameData.hasPlayerPosition = true;
+					playerPositionSet = true;
+				}
+			}
+		}
+
+		if (isCombatPhase && gameObject->GetComponent<EnemyComponent>())
+		{
+			if (auto* transform = gameObject->GetComponent<TransformComponent>())
+			{
+				frameData.combatEnemyPositions.push_back(transform->GetWorldPos());
+			}
+		}
+	}
+
+	/*
+	const bool isCombatPhase = m_GameManager && m_GameManager->GetPhase() == Phase::TurnBasedCombat;
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		if (gameObject->GetComponent<PlayerComponent>())
+		{
+			if (auto* transform = gameObject->GetComponent<TransformComponent>())
+			{
+				frameData.playerPosition = transform->GetWorldPos();
+				frameData.hasPlayerPosition = true;
+				break;
+			}
+		}
+	}
+
+	if (isCombatPhase)
+	{
+		for (const auto& [name, gameObject] : m_GameObjects)
+		{
+			if (!gameObject)
+				continue;
+
+			if (gameObject->GetComponent<EnemyComponent>())
+			{
+				if (auto* transform = gameObject->GetComponent<TransformComponent>())
+				{
+					frameData.combatEnemyPositions.push_back(transform->GetWorldPos());
+				}
+			}
+		}
+	}*/
+
 
 	//에디터 nullptr
 	if (m_EditorCamera)

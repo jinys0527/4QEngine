@@ -190,6 +190,8 @@ private:
 	UIBuffer					m_UIBuffer;
 	ComPtr<ID3D11Buffer>		m_pMatB;
 	MaterialBuffer				m_MatBuffer;
+	ComPtr<ID3D11Buffer>		m_pMaskB;
+	MaskingBuffer				m_MaskBuffer;
 
 
 	//임시
@@ -211,6 +213,12 @@ private:
 	ComPtr<ID3D11VertexShader>	m_pVS_PBR;
 	ComPtr<ID3D11PixelShader>	m_pPS_PBR;
 	ComPtr<ID3DBlob> m_pVSCode_PBR;
+
+	//Wall
+	ComPtr<ID3D11VertexShader>	m_pVS_Wall;
+	ComPtr<ID3D11PixelShader>	m_pPS_Wall;
+	ComPtr<ID3DBlob> m_pVSCode_Wall;
+
 
 	//Post
 	ComPtr<ID3D11VertexShader> m_pVS_Post;

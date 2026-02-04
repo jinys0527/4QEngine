@@ -75,7 +75,6 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 	//Flip();
 	m_RenderContext.VS = m_pVS;
 	m_RenderContext.PS = m_pPS;
-	m_RenderContext.VSCode = m_pVSCode;
 	m_RenderContext.InputLayout = m_pInputLayout;
 
 	//그리드
@@ -136,6 +135,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
@@ -224,7 +227,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
-	dTime += 0.0025f;
+	dTime += frame.context.deltaTime;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
@@ -570,10 +573,12 @@ void Renderer::CreateContext()
 	m_RenderContext.UIBuffer				= m_UIBuffer;
 	m_RenderContext.pMatB					= m_pMatB;
 	m_RenderContext.MatBuffer				= m_MatBuffer;
+	m_RenderContext.pMaskB					= m_pMaskB;
+	m_RenderContext.MaskBuffer				= m_MaskBuffer;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
-	m_RenderContext.VSCode					= m_pVSCode;
+
 	m_RenderContext.InputLayout				= m_pInputLayout;
 	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
 
@@ -581,23 +586,22 @@ void Renderer::CreateContext()
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
 	m_RenderContext.PS_Frustum				= m_pPS_Frustum;
-	m_RenderContext.VSCode_P				= m_pVSCode_P;
 
 	m_RenderContext.VS_PBR					= m_pVS_PBR;
 	m_RenderContext.PS_PBR					= m_pPS_PBR;
-	m_RenderContext.VSCode_PBR				= m_pVSCode_PBR;
+
+	m_RenderContext.VS_Wall					= m_pVS_Wall;
+	m_RenderContext.PS_Wall					= m_pPS_Wall;
 
 	m_RenderContext.VS_Quad					= m_pVS_Quad;
 	m_RenderContext.PS_Quad					= m_pPS_Quad;
-	m_RenderContext.VSCode_Quad				= m_pVSCode_Quad;
 
 	m_RenderContext.VS_Post					= m_pVS_Post;
 	m_RenderContext.PS_Post					= m_pPS_Post;
-	m_RenderContext.VSCode_Post				= m_pVSCode_Post;
 
 	m_RenderContext.VS_UI = m_pVS_UI;
 	m_RenderContext.PS_UI = m_pPS_UI;
-	m_RenderContext.VSCode_UI = m_pVSCode_UI;
+
 	m_RenderContext.UIQuadVertexBuffer = m_QuadVertexBuffers;
 	m_RenderContext.UIQuadIndexBuffer = m_QuadIndexBuffers;
 	m_RenderContext.UIQuadIndexCount = m_QuadIndexCounts;
@@ -1019,6 +1023,12 @@ HRESULT Renderer::CreateConstBuffer()
 		return hr;
 	}
 
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(MaskingBuffer), m_pMaskB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 
 	return hr;

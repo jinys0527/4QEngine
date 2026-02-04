@@ -30,9 +30,7 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
 	XMFLOAT2		ScreenSize{ 1920,1080 };
-	//플레이어 위치를 넘겨주는(투영공간)
-	XMFLOAT2		PlayerPos{ 0,0 };
-	
+	FLOAT			padding[2] = { 0, };
 };
 
 struct CameraConstBuffer
@@ -109,6 +107,14 @@ struct MaterialBuffer
 	float		padding[2] = { 0,0 };
 };
 
+constexpr size_t enemyMaskSize = 16;
+struct MaskingBuffer
+{
+	XMFLOAT4X4		PlayerMask;
+	
+	XMFLOAT4X4		EnemyMask[enemyMaskSize]{};
+};
+
 
 struct VertexShaderResources
 {
@@ -148,6 +154,8 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pUIB;
 	MaterialBuffer				MatBuffer;
 	ComPtr<ID3D11Buffer>		pMatB;
+	ComPtr<ID3D11Buffer>		pMaskB;
+	MaskingBuffer				MaskBuffer;
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
@@ -161,28 +169,25 @@ struct RenderContext
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
-	ComPtr<ID3DBlob> VSCode;
 
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3D11PixelShader> PS_P;
 	ComPtr<ID3D11PixelShader> PS_Frustum;
-	ComPtr<ID3DBlob> VSCode_P;
 
 	ComPtr<ID3D11VertexShader> VS_PBR;
 	ComPtr<ID3D11PixelShader> PS_PBR;
-	ComPtr<ID3DBlob> VSCode_PBR;
+
+	ComPtr<ID3D11VertexShader>	VS_Wall;
+	ComPtr<ID3D11PixelShader>	PS_Wall;
 
 	ComPtr<ID3D11VertexShader> VS_Quad;
 	ComPtr<ID3D11PixelShader> PS_Quad;
-	ComPtr<ID3DBlob> VSCode_Quad;
 
 	ComPtr<ID3D11VertexShader> VS_Post;
 	ComPtr<ID3D11PixelShader> PS_Post;
-	ComPtr<ID3DBlob> VSCode_Post;
 
 	ComPtr<ID3D11VertexShader> VS_UI;
 	ComPtr<ID3D11PixelShader> PS_UI;
-	ComPtr<ID3DBlob> VSCode_UI;
 
 	ComPtr<ID3D11Buffer> UIQuadVertexBuffer;
 	ComPtr<ID3D11Buffer> UIQuadIndexBuffer;
@@ -294,6 +299,5 @@ struct RenderContext
 	std::function<void(float width, float height)> MyDrawText;
 
 	//플레이어 위치 테스트
-	XMFLOAT2 playerPos{ 0,0 };
 	XMFLOAT4 camParams{ 0,0,0,0 };
 };
