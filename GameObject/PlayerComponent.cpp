@@ -8,21 +8,27 @@
 #include "ServiceRegistry.h"
 #include "ItemComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyStatComponent.h"
 #include "Event.h"
 #include "InputManager.h"
 #include "RayHelper.h"
+#include "PlayerStatComponent.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
 #include "BoxColliderComponent.h"
 #include "NodeComponent.h"
+#include "PushNodeComponent.h"
 #include <algorithm>
 #include <cfloat>
+#include "SkinningAnimationComponent.h"
+#include "MathHelper.h"
 #include <cmath>
 #include "GameManager.h"
 #include "CombatManager.h"
 #include "DoorComponent.h"
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
+#include "PlayerDoorFSMComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -59,6 +65,14 @@ namespace
 		if (!owner || !eventName) return;
 
 		if (auto* fsm = owner->GetComponent<PlayerCombatFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+
+	void DispatchDoorEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerDoorFSMComponent>())
 			fsm->DispatchEvent(eventName);
 	}
 }
@@ -229,18 +243,59 @@ void PlayerComponent::Update(float deltaTime) {
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
 	{
-		if (!transformcomponent->GetChildrens().empty())
+		if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
 		{
-			m_Item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+			GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+			auto* itemcomp = item->GetComponent<ItemComponent>();
+			if (itemcomp && itemcomp->GetType() == 1)
+			{
+				m_MeeleItem = item;
+				itemcomp->SetIsEquiped(true);
+				m_InventoryItemIds.push_back(item->GetName());
+
+			}
 		}
 
 	}
 
-	//아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
+	//근접 아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
 	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
-	if (m_Item != nullptr)
+	if (m_MeeleItem != nullptr)
 	{
-		auto* itemcomponent = m_Item->GetComponent<ItemComponent>();
+		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
+
+		//근접 무기의 스탯 적용하기
+		if (!m_IsApplyMeeleStat)
+		{
+			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
+			if (!playerstatcomponent) return;
+
+			int health = playerstatcomponent->GetHealth();
+			int strength = playerstatcomponent->GetStrength();
+			int agility = playerstatcomponent->GetAgility();
+			int sense = playerstatcomponent->GetSense();
+			int skill = playerstatcomponent->GetSkill();
+
+			int ihealth = itemcomponent->GetHealth();
+			int istrength = itemcomponent->GetStrength();
+			int iagility = itemcomponent->GetAgility();
+			int isense = itemcomponent->GetSense();
+			int iskill = itemcomponent->GetSkill();
+			int idefense = itemcomponent->GetDEF();
+			int irange = itemcomponent->GetMeleeAttackRange();
+
+			playerstatcomponent->SetHealth(health + ihealth);
+			playerstatcomponent->SetStrength(strength + istrength);
+			playerstatcomponent->SetAgility(agility + iagility);
+			playerstatcomponent->SetSense(sense + isense);
+			playerstatcomponent->SetSkill(skill + iskill);
+			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
+			playerstatcomponent->SetRange(irange);
+
+			m_IsApplyMeeleStat = true;
+		}
+
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
 		if (!skeletal)
@@ -266,10 +321,30 @@ void PlayerComponent::Update(float deltaTime) {
 			return;
 		}
 
-		XMFLOAT4X4 mtm = skeleton->equipmentBindPose;
+		XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
+		const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
+		if (equipmentBoneIndex >= 0)
+		{
+			const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
+			if (animComp)
+			{
+				const auto& globalPose = animComp->GetGlobalPose();
+				if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
+				{
+					equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
+				}
+			}
+		}
+		XMMATRIX pose = XMLoadFloat4x4(&equipmentPose);
+		XMVECTOR translation = pose.r[3];
+		XMMATRIX scale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-		itemcomponent->SetEquipmentBindPose(skeleton->equipmentBindPose);
-		int a = 0;
+		pose = XMMatrixMultiply(pose, scale);
+		pose.r[3] = translation;
+		XMStoreFloat4x4(&equipmentPose, pose);
+
+		itemcomponent->SetEquipmentBindPose(equipmentPose);
+
 	}
 }
 
@@ -286,7 +361,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
@@ -332,13 +406,24 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			return;
 		}
+		
+		std::cout << clickedNode->GetQ() << ", " << clickedNode->GetR() << std::endl; // 클릭된 Node Debug
 
 		if (!clickedNode->GetIsMoveable())
 		{
+
 			if (auto* door = clickedNode->GetLinkedDoor())
 			{
+				//std::cout << "Door Evenet Detected" << std::endl;
+				// 인접 노드 판별
+				const int distanceToDoor = AxialDistance(m_Q, m_R, clickedNode->GetQ(), clickedNode->GetR());
+				if (distanceToDoor > 1)
+				{
+					return;
+				}
 				m_PendingDoor = door;
 				DispatchPlayerStateEvent(owner, "Door_Interact");
+				
 				mouseData->handled = true;
 				return;
 			}
@@ -628,6 +713,87 @@ EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
 	return nullptr;
 }
 
+// 밀기 관련
+
+// 조건 체크
+bool PlayerComponent::TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent*& outNode) const
+{
+	outEnemy = nullptr;
+	outNode = nullptr;
+	if (!m_GridSystem)
+	{
+		return false;
+	}
+
+	const int playerQ = m_Q;
+	const int playerR = m_R;
+	const auto& enemies = m_GridSystem->GetEnemies();
+
+	for (auto* enemy : enemies) {
+		if (!enemy) { continue; }
+
+		const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
+
+		if (distance != 1) { continue; }
+
+		auto* enemyOwner = enemy->GetOwner();
+
+		if (!enemyOwner) { continue; }
+
+		if (auto* enemyStat = enemyOwner->GetComponent<EnemyStatComponent>())
+		{
+			if (enemyStat->IsDead()) { continue; }
+		}
+
+		const int dq = enemy->GetQ() - playerQ;
+		const int dr = enemy->GetR() - playerR;
+		const AxialKey targetKey{ enemy->GetQ() + dq ,enemy->GetR() + dr };
+		auto* targetNode = m_GridSystem->GetNodeByKey(targetKey);
+
+		if (!targetNode) { continue; }
+
+		auto* targetOwner = targetNode->GetOwner();
+		if (!targetOwner || !targetOwner->GetComponent<PushNodeComponent>()) { continue; }
+		// if (targetNode->GetState() != NodeState::Empty) { continue; } 
+		outEnemy = enemy;
+		outNode = targetNode;
+		return true; // 밀기 세팅 완료
+	}
+
+	return false;
+}
+
+// 밀기 동작
+bool PlayerComponent::ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode)
+{
+	if (!enemy || !targetNode || !m_GridSystem){ return false;}
+
+	auto* enemyOwner = enemy->GetOwner();
+	if (!enemyOwner){return false;}
+
+	auto* enemyTransform = enemyOwner->GetComponent<TransformComponent>();
+	auto* targetOwner = targetNode->GetOwner();
+	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
+
+
+	if (!enemyTransform || !targetTransform){return false;}
+
+	enemyTransform->SetPosition(targetTransform->GetPosition());
+	enemy->SetQR(targetNode->GetQ(), targetNode->GetR());
+
+	if (auto* enemyStat = enemyOwner->GetComponent<EnemyStatComponent>())
+	{
+		enemyStat->SetCurrentHP(0);
+	}
+
+	return true;
+}
+
+void PlayerComponent::ClearPendingPush()
+{
+	m_PendingPushEnemy = nullptr;
+	m_PendingPushNode = nullptr;
+}
 
 bool PlayerComponent::ConsumeCombatConfirmRequest()
 {
@@ -642,17 +808,71 @@ bool PlayerComponent::ConsumeCombatConfirmRequest()
 
 bool PlayerComponent::ConsumePushPossible()
 {
-	return ConsumeFlag(m_PushPossible);
+	//return ConsumeFlag(m_PushPossible);
+	EnemyComponent* enemy = nullptr;
+	NodeComponent* targetNode = nullptr;
+	const bool possible = TryFindPushTarget(enemy, targetNode);
+	if (possible)
+	{
+		m_PendingPushEnemy = enemy;
+		m_PendingPushNode = targetNode;
+	}
+	else
+	{
+		ClearPendingPush();
+	}
+	return possible;
 }
+
 
 bool PlayerComponent::ConsumePushTargetFound()
 {
-	return ConsumeFlag(m_PushTargetFound);
+	//return ConsumeFlag(m_PushTargetFound);
+	if (m_PendingPushEnemy && m_PendingPushNode)
+	{
+		return true;
+	}
+
+	EnemyComponent* enemy = nullptr;
+	NodeComponent* targetNode = nullptr;
+	const bool found = TryFindPushTarget(enemy, targetNode);
+	if (found)
+	{
+		m_PendingPushEnemy = enemy;
+		m_PendingPushNode = targetNode;
+		return true;
+	}
+
+	ClearPendingPush();
+	return false;
 }
 
 bool PlayerComponent::ConsumePushSuccess()
 {
-	return ConsumeFlag(m_PushSuccess);
+	//return ConsumeFlag(m_PushSuccess);
+	const bool diceSuccess = ConsumeFlag(m_PushSuccess);
+	if (!diceSuccess)
+	{
+		ClearPendingPush();
+		return false;
+	}
+
+	if (!m_PendingPushEnemy || !m_PendingPushNode)
+	{
+		EnemyComponent* enemy = nullptr;
+		NodeComponent* targetNode = nullptr;
+		if (!TryFindPushTarget(enemy, targetNode))
+		{
+			ClearPendingPush();
+			return false;
+		}
+		m_PendingPushEnemy = enemy;
+		m_PendingPushNode = targetNode;
+	}
+
+	const bool success = ResolvePushTarget(m_PendingPushEnemy, m_PendingPushNode);
+	ClearPendingPush();
+	return success;
 }
 
 bool PlayerComponent::ConsumeDoorConfirmed()
@@ -704,11 +924,13 @@ void PlayerComponent::ResetSubFSMFlags()
 	m_PushSuccess = true;
 	m_DoorConfirmed = true;
 	m_DoorSuccess = true;
-	m_PendingDoor = nullptr;
 	m_InventoryAtShop = true;
 	m_InventoryCanDrop = true;
 	m_ShopHasSpace = true;
 	m_ShopHasMoney = true;
+
+	m_PendingDoor = nullptr;
+	ClearPendingPush();
 }
 
 bool PlayerComponent::ConsumeFlag(bool& flag)
@@ -717,3 +939,5 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 	flag = true;
 	return value;
 }
+
+

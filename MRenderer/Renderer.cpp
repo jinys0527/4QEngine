@@ -75,7 +75,6 @@ void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int wid
 	//Flip();
 	m_RenderContext.VS = m_pVS;
 	m_RenderContext.PS = m_pPS;
-	m_RenderContext.VSCode = m_pVSCode;
 	m_RenderContext.InputLayout = m_pInputLayout;
 
 	//그리드
@@ -137,6 +136,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
 
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+
+
 	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
 
@@ -173,7 +176,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	filename = L"../MRenderer/fx/YenaSky.dds";
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
@@ -215,16 +218,21 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
 {
+	dTime += frame.context.deltaTime;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
+
+	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
 	m_Pipeline.Execute(frame);
+
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
-	dTime += 0.00025f;
+	dTime += frame.context.deltaTime;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
@@ -570,10 +578,12 @@ void Renderer::CreateContext()
 	m_RenderContext.UIBuffer				= m_UIBuffer;
 	m_RenderContext.pMatB					= m_pMatB;
 	m_RenderContext.MatBuffer				= m_MatBuffer;
+	m_RenderContext.pMaskB					= m_pMaskB;
+	m_RenderContext.MaskBuffer				= m_MaskBuffer;
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
-	m_RenderContext.VSCode					= m_pVSCode;
+
 	m_RenderContext.InputLayout				= m_pInputLayout;
 	m_RenderContext.InputLayout_P			= m_pInputLayout_P;
 
@@ -581,23 +591,22 @@ void Renderer::CreateContext()
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
 	m_RenderContext.PS_Frustum				= m_pPS_Frustum;
-	m_RenderContext.VSCode_P				= m_pVSCode_P;
 
 	m_RenderContext.VS_PBR					= m_pVS_PBR;
 	m_RenderContext.PS_PBR					= m_pPS_PBR;
-	m_RenderContext.VSCode_PBR				= m_pVSCode_PBR;
+
+	m_RenderContext.VS_Wall					= m_pVS_Wall;
+	m_RenderContext.PS_Wall					= m_pPS_Wall;
 
 	m_RenderContext.VS_Quad					= m_pVS_Quad;
 	m_RenderContext.PS_Quad					= m_pPS_Quad;
-	m_RenderContext.VSCode_Quad				= m_pVSCode_Quad;
 
 	m_RenderContext.VS_Post					= m_pVS_Post;
 	m_RenderContext.PS_Post					= m_pPS_Post;
-	m_RenderContext.VSCode_Post				= m_pVSCode_Post;
 
 	m_RenderContext.VS_UI = m_pVS_UI;
 	m_RenderContext.PS_UI = m_pPS_UI;
-	m_RenderContext.VSCode_UI = m_pVSCode_UI;
+
 	m_RenderContext.UIQuadVertexBuffer = m_QuadVertexBuffers;
 	m_RenderContext.UIQuadIndexBuffer = m_QuadIndexBuffers;
 	m_RenderContext.UIQuadIndexCount = m_QuadIndexCounts;
@@ -649,6 +658,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pRTView_Post			= m_pRTView_Post;
 
 	m_RenderContext.pRTScene_BlurOrigin			= m_pRTScene_BlurOrigin;
+	m_RenderContext.pRTScene_BlurOriginMSAA		= m_pRTScene_BlurOriginMSAA;
 	m_RenderContext.pTexRvScene_BlurOrigin		= m_pTexRvScene_BlurOrigin;
 	m_RenderContext.pRTView_BlurOrigin			= m_pRTView_BlurOrigin;
 
@@ -656,9 +666,10 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Blur		= m_pTexRvScene_Blur;
 	m_RenderContext.pRTView_Blur			= m_pRTView_Blur;
 
-	m_RenderContext.pRTScene_Refraction		= m_pRTScene_Refraction;
-	m_RenderContext.pTexRvScene_Refraction	= m_pTexRvScene_Refraction;
-	m_RenderContext.pRTView_Refraction		= m_pRTView_Refraction;
+	m_RenderContext.pRTScene_Refraction			= m_pRTScene_Refraction;
+	m_RenderContext.pRTScene_RefractionMSAA		= m_pRTScene_RefractionMSAA;
+	m_RenderContext.pTexRvScene_Refraction		= m_pTexRvScene_Refraction;
+	m_RenderContext.pRTView_Refraction			= m_pRTView_Refraction;
 
 	m_RenderContext.pRTScene_EmissiveOrigin		= m_pRTScene_EmissiveOrigin;
 	m_RenderContext.pRTScene_EmissiveOriginMSAA = m_pRTScene_EmissiveOriginMSAA;
@@ -1017,6 +1028,12 @@ HRESULT Renderer::CreateConstBuffer()
 		return hr;
 	}
 
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(MaskingBuffer), m_pMaskB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 
 
 	return hr;
@@ -1787,7 +1804,17 @@ HRESULT Renderer::ReCreateRenderTarget()
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_BlurOrigin.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pRTView_BlurOrigin.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_BlurOriginMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_BlurOriginMSAA.Get(), m_pRTView_BlurOrigin.GetAddressOf());
+
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pRTView_BlurOrigin .GetAddressOf());
+
+	}
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pTexRvScene_BlurOrigin.GetAddressOf());
@@ -1821,8 +1848,17 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
 
-	RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_RefractionMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_RefractionMSAA.Get(), m_pRTView_Refraction.GetAddressOf());
 
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
+
+	}
 	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
 #pragma endregion
 
@@ -1865,6 +1901,8 @@ HRESULT Renderer::ReCreateRenderTarget()
 		height /= 2;
 	}
 #pragma endregion
+
+
 
 	return hr;
 }

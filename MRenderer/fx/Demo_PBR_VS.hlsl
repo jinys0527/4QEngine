@@ -1,4 +1,5 @@
 #include "BaseBuffer.hlsl"
+#include "Animation.hlsl"
 
 VSOutput_PBR VS_Main(VSInput_PNUT input)
 {
@@ -6,6 +7,8 @@ VSOutput_PBR VS_Main(VSInput_PNUT input)
     
     float4 pos;
     pos = float4(input.pos, 1.0f);
+    pos = Skinning(pos, input.boneWeights, input.boneIndices);
+    
     pos = mul(pos, mWorld);
     float4 wPos = pos;
     float4 uvshadow = mul(pos, mShadow);

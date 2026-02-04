@@ -28,7 +28,7 @@ public:
 
 
 private :
-
+	void Resolve();
 	NodeComponent*       m_Node = nullptr;
 	AnimFSMComponent*    m_AnimFsm = nullptr;
 	AnimationComponent*  m_Animation = nullptr;

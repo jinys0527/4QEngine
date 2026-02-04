@@ -7,6 +7,7 @@ VSOutput_Refraction VS_Main(VSInput_PNUT input)
     float4 pos;
     pos = float4(input.pos, 1.0f);
     pos = mul(pos, mWorld);
+    float4 wPos = pos;
     pos = mul(pos, mView);
     pos = mul(pos, mProj);
 
@@ -16,6 +17,7 @@ VSOutput_Refraction VS_Main(VSInput_PNUT input)
 
     o.pos = pos;
     o.nrm = nrm;
+    o.wPos = wPos;
     
     return o;
 }

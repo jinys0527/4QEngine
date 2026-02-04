@@ -330,6 +330,7 @@
     <ClInclude Include="HorizontalBox.h" />
     <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="ItemComponent.h" />
+    <ClInclude Include="ItemSpawnerComponent.h" />
     <ClInclude Include="NodeComponent.h" />
     <ClInclude Include="PlayerCombatFSMComponent.h" />
     <ClInclude Include="PlayerComponent.h" />
@@ -340,6 +341,7 @@
     <ClInclude Include="PlayerPushFSMComponent.h" />
     <ClInclude Include="PlayerShopFSMComponent.h" />
     <ClInclude Include="PlayerStatComponent.h" />
+    <ClInclude Include="PushNodeComponent.h" />
     <ClInclude Include="RectLightComponent.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraObject.h" />
@@ -362,6 +364,7 @@
     <ClInclude Include="Reflection.h" />
     <ClInclude Include="ReflectionMacro.h" />
     <ClInclude Include="ScaleBox.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SceneChangeTestComponent.h" />
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SizeBox.h" />
@@ -407,6 +410,7 @@
     <ClCompile Include="HorizontalBox.cpp" />
     <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="ItemComponent.cpp" />
+    <ClCompile Include="ItemSpawnerComponent.cpp" />
     <ClCompile Include="NodeComponent.cpp" />
     <ClCompile Include="PlayerCombatFSMComponent.cpp" />
     <ClCompile Include="PlayerComponent.cpp" />
@@ -417,6 +421,7 @@
     <ClCompile Include="PlayerPushFSMComponent.cpp" />
     <ClCompile Include="PlayerShopFSMComponent.cpp" />
     <ClCompile Include="PlayerStatComponent.cpp" />
+    <ClCompile Include="PushNodeComponent.cpp" />
     <ClCompile Include="RectLightComponent.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CameraObject.cpp" />
@@ -467,6 +472,9 @@
     <ProjectReference Include="..\SoundSystem\SoundSystem.vcxproj">
       <Project>{325c5192-b1ee-455d-9f9e-d0aec399023b}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GameObject.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

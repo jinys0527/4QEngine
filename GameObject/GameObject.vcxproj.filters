@@ -193,6 +193,9 @@
     <ClCompile Include="DoorComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PushNodeComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -403,6 +406,9 @@
     <ClInclude Include="DoorComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PushNodeComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">
@@ -462,5 +468,8 @@
     <Filter Include="Components\UI\Source Files">
       <UniqueIdentifier>{46414225-d999-430c-aa13-eb46d6dc4ac2}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GameObject.rc" />
   </ItemGroup>
 </Project>

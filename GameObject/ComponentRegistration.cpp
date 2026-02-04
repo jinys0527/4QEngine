@@ -37,6 +37,8 @@
 #include "StatComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyStatComponent.h"
+#include "ItemComponent.h"
+#include "ItemSpawnerComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
@@ -53,6 +55,7 @@
 
 // 이름 Mangling 제거 "C"
 extern "C" {
+
 	void Link_TransformComponent();
 	void Link_MeshRenderer();
 	void Link_CameraComponent();
@@ -106,7 +109,9 @@ extern "C" {
 	void Link_CameraLogicComponent();
 	void Link_FloodSystemComponent();
 	void Link_FloodUIComponent();
-}
+	void Link_PushNodeComponent();
+	void Link_ItemSpawnerComponent();
+
 
 void RegisterUIFSMDefinitions();
 void RegisterCollisionFSMDefinitions();
@@ -178,4 +183,7 @@ void LinkEngineComponents() {
 	Link_CameraLogicComponent();
 	Link_FloodSystemComponent();
 	Link_FloodUIComponent();
+	Link_PushNodeComponent();
+	Link_ItemSpawnerComponent();
+
 }

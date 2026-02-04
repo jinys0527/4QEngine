@@ -1,4 +1,5 @@
 #include "BaseBuffer.hlsl"
+#include "Lights.hlsl"
 
 float4 PS_Main(VSOutput_Refraction input) : SV_Target
 {
@@ -11,6 +12,7 @@ float4 PS_Main(VSOutput_Refraction input) : SV_Target
 // dTime으로 노이즈 흐르게 만들기
     float2 noiseUV = uv * 4.0f + float2(dTime * 0.1f, dTime * 0.1f);
 
+    
 
     float4 texNoise = g_WaterNoise.Sample(smpWrap, noiseUV);
 
@@ -22,8 +24,8 @@ float4 PS_Main(VSOutput_Refraction input) : SV_Target
     uv += noise * noiseStrength;
 
 
-    float3 tint = float3(0.6f, 0.8f, 1.0f);
-    float alpha = 0.4f;
+    float3 tint = float3(0.6f, 0.9f, 0.9f);
+    float alpha = 1.f;
 
 
     float4 texRT = g_RTView.Sample(smpClamp, uv);
@@ -31,7 +33,17 @@ float4 PS_Main(VSOutput_Refraction input) : SV_Target
 
     float3 tinted = texRT.rgb * tint;
     float3 outColor = lerp(texRT.rgb, tinted, alpha);
+    
+    float3 white = float3(1.0f, 1.0f, 1.0f);
+    
+    float val = noise.r;
+    //val = pow(val, 2.0f);
+    val -= 0.4f;
+    val = saturate(val);
 
-
+    outColor = lerp(outColor, white, val);
+        
+    LinearToSRGB(outColor);
+    
     return float4(outColor, texRT.a);
 }

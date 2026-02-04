@@ -15,31 +15,29 @@ enum class ItemCategory
 
 struct ItemDefinition
 {
-	int			 index			  = 0;
-	ItemCategory category		  = ItemCategory::Currency;
+	int			 index					= 0;
+	ItemCategory category				= ItemCategory::Currency;
 	std::string  name;
 	std::string  description;
 	std::string  iconPath;
 	std::string  meshPath;
 				 
-	int			 basePrice		  = 0;
-	int			 difficultyGroup  = 1;
-				 				 
-	int			 minHealPercent   = 0;
-	int			 maxHealPercent   = 0;
+	int			 basePrice				= 0;
+	int			 difficultyGroup		= 1;
+				 										 
+	int			 diceRoll				= 0;
+	int			 diceType				= 0;
+	int			 baseModifier			= 0;			//기본 데미지 보정
 				 
-	int			 minDamage		  = 0;
-	int			 maxDamage		  = 0;
+	int			 constitutionModifier	= 0;
+	int			 strengthModifier		= 0;
+	int			 agilityModifier		= 0;
+	int			 senseModifier			= 0;
+	int			 skillModifier			= 0;
+	int			 defenseBonus			= 0;
 				 
-	int			 healthModifier   = 0;
-	int			 strengthModifier = 0;
-	int			 agilityModifier  = 0;
-	int			 senseModifier    = 0;
-	int			 skillModifier    = 0;
-	int			 defenseBonus	  = 0;
-				 
-	int			 throwRange		  = 0;			// 투척
-	int			 range			  = 0;			// 근접
+	int			 throwRange				= 0;			// 투척
+	int			 range					= 0;			// 근접
 };
 
 struct EnemyDefinition
@@ -67,6 +65,8 @@ struct DropEntry
 {
 	int   itemIndex = 0;
 	float weight	= 0.0f;
+	int   minQuantity = 0;
+	int   maxQuantity = 0;
 };
 
 struct DropTableDefinition
