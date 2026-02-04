@@ -113,7 +113,7 @@ public:
 	bool ClearSliderBinding(const std::string& sceneName, const std::string& sliderName);
 	const std::unordered_map<std::string, std::string>& GetButtonBindings(const std::string& sceneName) const;
 	const std::unordered_map<std::string, std::string>& GetSliderBindings(const std::string& sceneName) const;
-	void BuildUIFrameData(RenderData::FrameData& frameData) const;
+	void BuildUIFrameData(RenderData::FrameData& frameData);
 	bool RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot);
 	bool RemoveHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName);
 	bool ClearHorizontalSlots(const std::string& sceneName, const std::string& horizontalName);

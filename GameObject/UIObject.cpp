@@ -274,7 +274,7 @@ bool UIObject::HitCheck(const POINT& pos)
 		return false;
 
 	if (!m_HasBounds)
-		return true;
+		return false;
 
 	return pos.x >= m_Bounds.x
 		&& pos.y >= m_Bounds.y

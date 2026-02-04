@@ -103,7 +103,7 @@ public:
 
 	void RefreshUIListForCurrentScene();
 
-	void BuildUIFrameData(RenderData::FrameData& frameData) const;
+	void BuildUIFrameData(RenderData::FrameData& frameData);
 
 	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
 	void DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data);

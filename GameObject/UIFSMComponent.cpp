@@ -3,6 +3,7 @@
 #include "FSMEventRegistry.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
+#include "UIObject.h"
 #include "UIComponent.h"
 #include "UIButtonComponent.h"
 #include "UIProgressBarComponent.h"
@@ -52,6 +53,25 @@ void RegisterUIFSMDefinitions()
 		"UI",
 		{
 			{ "value", "float", 0.0f, false }
+		}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_CacheBounds",
+		"UI",
+		{}
+		});
+	actionRegistry.RegisterAction({
+		"UI_RestoreBounds",
+		"UI",
+		{}
+		});
+	actionRegistry.RegisterAction({
+		"UI_ApplyBoundsOffset",
+		"UI",
+		{
+			{ "x", "float", 0.0f, false },
+			{ "y", "float", 0.0f, false }
 		}
 		});
 
@@ -130,6 +150,43 @@ UIFSMComponent::UIFSMComponent()
 
 			const float value = action.params.value("value", progress->GetPercent());
 			progress->SetPercent(value);
+		});
+
+	BindActionHandler("UI_CacheBounds", [this](const FSMAction&)
+		{
+			auto* owner = GetOwner();
+			auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+			if (!uiObject || !uiObject->HasBounds())
+			{
+				return;
+			}
+			m_CachedBounds = uiObject->GetBounds();
+		});
+
+	BindActionHandler("UI_RestoreBounds", [this](const FSMAction&)
+		{
+			auto* owner = GetOwner();
+			auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+			if (!uiObject || !m_CachedBounds)
+			{
+				return;
+			}
+			uiObject->SetBounds(*m_CachedBounds);
+			m_CachedBounds.reset();
+		});
+
+	BindActionHandler("UI_ApplyBoundsOffset", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+			if (!uiObject || !uiObject->HasBounds())
+			{
+				return;
+			}
+			UIRect bounds = uiObject->GetBounds();
+			bounds.x += action.params.value("x", 0.0f);
+			bounds.y += action.params.value("y", 0.0f);
+			uiObject->SetBounds(bounds);
 		});
 }
 

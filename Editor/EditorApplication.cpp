@@ -3471,7 +3471,7 @@ void EditorApplication::DrawUIEditorPreview()
 							HorizontalBoxSlot slot;
 							slot.child = child.get();
 							slot.desiredSize = UISize{ bounds.width, bounds.height };
-							slot.padding = 0.0f;
+							slot.padding = UIPadding{};
 							slot.fillWeight = 1.0f;
 							slot.alignment = UIHorizontalAlignment::Fill;
 							uiManager->RegisterHorizontalSlot(sceneName, newParentName, childName, slot);
@@ -4737,7 +4737,7 @@ void EditorApplication::DrawUIEditorPreview()
 							HorizontalBoxSlot slot;
 							slot.child = child.get();
 							slot.desiredSize = UISize{ bounds.width, bounds.height };
-							slot.padding = 0.0f;
+							slot.padding = UIPadding{};
 							slot.fillWeight = 1.0f;
 							slot.alignment = UIHorizontalAlignment::Fill;
 							uiManager->RegisterHorizontalSlot(sceneName, selectedName, name, slot);
@@ -4825,7 +4825,7 @@ void EditorApplication::DrawUIEditorPreview()
 								HorizontalBoxSlot slot;
 								slot.child = child.get();
 								slot.desiredSize = UISize{ bounds.width, bounds.height };
-								slot.padding = 0.0f;
+								slot.padding = UIPadding{};
 								slot.fillWeight = 1.0f;
 								slot.alignment = UIHorizontalAlignment::Fill;
 								uiManager->RegisterHorizontalSlot(sceneName, selectedName, m_HorizontalSlotCandidate, slot);
@@ -4877,10 +4877,19 @@ void EditorApplication::DrawUIEditorPreview()
 								recordUILongEdit(makeUILayoutKey("HorizontalSlotDesired" + std::to_string(i)), desiredChanged, "Edit Horizontal Slot Desired Size");
 
 								ImGui::TableSetColumnIndex(2);
-								const bool paddingChanged = ImGui::DragFloat("##Padding", &slot.padding, 0.5f, 0.0f, 10000.0f);
+								float paddingValues[4] = {
+									slot.padding.left,
+									slot.padding.right,
+									slot.padding.top,
+									slot.padding.bottom
+								};
+								const bool paddingChanged = ImGui::DragFloat4("##Padding", paddingValues, 0.5f, 0.0f, 10000.0f);
 								if (paddingChanged)
 								{
-									slot.padding = max(0.0f, slot.padding);
+									slot.padding.left   = max(0.0f, paddingValues[0]);
+									slot.padding.right  = max(0.0f, paddingValues[1]);
+									slot.padding.top    = max(0.0f, paddingValues[2]);
+									slot.padding.bottom = max(0.0f, paddingValues[3]);
 									uiManager->ApplyHorizontalLayout(sceneName, selectedName);
 								}
 								recordUILongEdit(makeUILayoutKey("HorizontalSlotPadding" + std::to_string(i)), paddingChanged, "Edit Horizontal Slot Padding");

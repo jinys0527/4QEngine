@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "FSMComponent.h"
 #include <unordered_map>
+#include "UIPrimitives.h"
 
 struct UIFSMEventCallback
 {
@@ -50,6 +51,6 @@ private:
 	std::vector<UIFSMCallbackAction> m_CallbackActions;
 	std::unordered_map<std::string, Callback> m_Callbacks;
 	std::unordered_map<std::string, LegacyCallback> m_LegacyCallbacks;
-
+	std::optional<UIRect> m_CachedBounds;
 };
 

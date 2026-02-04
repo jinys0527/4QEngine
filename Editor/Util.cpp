@@ -2427,8 +2427,19 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 				activated = activated || ImGui::IsItemActivated();
 				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
-				if (ImGui::DragFloat("Padding", &slot.padding, DRAG_SPEED))
+				float paddingValues[4] = {
+					slot.padding.left,
+					slot.padding.right,
+					slot.padding.top,
+					slot.padding.bottom
+				};
+
+				if (ImGui::DragFloat4("Padding (L,R,T,B)", paddingValues, DRAG_SPEED))
 				{
+					slot.padding.left = paddingValues[0];
+					slot.padding.right = paddingValues[1];
+					slot.padding.top = paddingValues[2];
+					slot.padding.bottom = paddingValues[3];
 					updated = true;
 				}
 				activated = activated || ImGui::IsItemActivated();

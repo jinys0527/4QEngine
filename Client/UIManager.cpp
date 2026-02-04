@@ -80,6 +80,44 @@ namespace
 	// 		}
 	// 	} // 트리 구조도 아니고 시간 없어서 안쓸것같음
 
+	void ApplyHorizontalBoxLayout(UIObject& uiObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		auto* horizontalBox = uiObject.GetComponent<HorizontalBox>();
+		if (!horizontalBox || !uiObject.HasBounds())
+			return;
+
+		auto& slots = horizontalBox->GetSlotsMutable();
+		for (auto& slot : slots)
+		{
+			if (slot.child || slot.childName.empty())
+			{
+				continue;
+			}
+
+			auto itChild = uiMap.find(slot.childName);
+			if (itChild != uiMap.end())
+			{
+				slot.child = itChild->second.get();
+			}
+		}
+
+		const UIRect parentBounds = uiObject.GetBounds();
+		const bool   parentVisible = uiObject.IsVisible();
+		const int    parentZOrder = uiObject.GetZOrder();
+		const UISize availableSize{ parentBounds.width, parentBounds.height };
+		const auto arranged = horizontalBox->ArrangeChildren(parentBounds.x, parentBounds.y, availableSize);
+		const size_t count = std::min(arranged.size(), slots.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			if (slots[i].child)
+			{
+				slots[i].child->SetBounds(arranged[i]);
+				slots[i].child->SetIsVisible(parentVisible);
+				slots[i].child->SetZOrder(parentZOrder + static_cast<int>(i) + 1);
+			}
+		}
+	}
+
 	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
 	{
 		for (const auto& [name, uiObject] : uiMap)
@@ -89,12 +127,20 @@ namespace
 				ApplySizeBoxOverrides(*uiObject);
 			}
 		}
-
+		
 		for (const auto& [name, uiObject] : uiMap)
 		{
 			if (uiObject)
 			{
 				ApplyScaleBoxLayout(*uiObject, uiMap);
+			}
+		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplyHorizontalBoxLayout(*uiObject, uiMap);
 			}
 		}
 	}
@@ -200,24 +246,25 @@ void UIManager::OnEvent(EventType type, const void* data)
 		return;
 
 	auto& uiMap = it->second;
+	ApplyLayoutOverrides(uiMap);
+	UpdateSortedUI(uiMap);
 	auto mouseData = static_cast<const Events::MouseState*>(data);
 
 	if (type == EventType::Pressed)
 	{
 		m_ActiveUI = nullptr;
-		for (auto& pair : uiMap)
+		for (auto* ui : m_SortedUI)
 		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
+			if (!ui || !ui->IsVisible())
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!(ui->hasButton || ui->hasSlider))
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
 				continue;
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
 
-			m_ActiveUI = ui.get();
+			m_ActiveUI = ui;
 			if (mouseData)
 				mouseData->handled = true;
 			SendEventToUI(m_ActiveUI, type, data);
@@ -244,14 +291,13 @@ void UIManager::OnEvent(EventType type, const void* data)
 	}
 	else if (type == EventType::Released)
 	{
-		for (auto& pair : uiMap)
+		for (auto* ui : m_SortedUI)
 		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
+			if (!ui || !ui->IsVisible())
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!(ui->hasButton || ui->hasSlider))
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
 				continue;
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
@@ -263,21 +309,20 @@ void UIManager::OnEvent(EventType type, const void* data)
 	}
 	else if (type == EventType::UIDoubleClicked)
 	{
-		for (auto& pair : uiMap)
+		for (auto* ui : m_SortedUI)
 		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
+			if (!ui || !ui->IsVisible())
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!(ui->hasButton || ui->hasSlider))
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
 				continue;
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
 
 			if (mouseData)
 				mouseData->handled = true;
-			SendEventToUI(ui.get(), EventType::UIDoubleClicked, data);
+			SendEventToUI(ui, EventType::UIDoubleClicked, data);
 			break;
 		}
 	}
@@ -285,10 +330,9 @@ void UIManager::OnEvent(EventType type, const void* data)
 	{
 		// Hover는 모든 UI에 전달, 내부에서 입장/이탈 상태 관리
 		bool hitAny = false;
-		for (auto& pair : uiMap)
+		for (auto* ui : m_SortedUI)
 		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
+			if (!ui || !ui->IsVisible())
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
@@ -297,8 +341,9 @@ void UIManager::OnEvent(EventType type, const void* data)
 			if (!hitAny && ui->HitCheck(mouseData->pos))
 				hitAny = true;
 
-			SendEventToUI(ui.get(), type, data);
+			SendEventToUI(ui, type, data);
 		}
+
 		if (hitAny && mouseData)
 			mouseData->handled = true;
 	}
@@ -405,18 +450,19 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 		if (ui->hasUIFSM)
 		{
 			auto* fsm = ui->GetComponent<UIFSMComponent>();
-			if (fsm)
+			if (!fsm)
 			{
-				if (type == EventType::UIHovered)
+				return;
+			}
+			if (type == EventType::UIHovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				if (!ui->HitCheck(mouseData->pos))
 				{
-					const auto mouseData = static_cast<const Events::MouseState*>(data);
-					if (!ui->HitCheck(mouseData->pos))
-					{
-						return;
-					}
-					fsm->OnEvent(type, data);
+					return;
 				}
 			}
+			fsm->OnEvent(type, data);
 		}
 	}
 }
@@ -438,7 +484,7 @@ void UIManager::RefreshUIListForCurrentScene()
 	m_LastHoveredUI = nullptr;
 }
 
-void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
+void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 {
 	frameData.uiElements.clear();
 	frameData.uiTexts.clear();
@@ -446,6 +492,8 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 	auto it = m_UIObjects.find(m_CurrentSceneName);
 	if (it == m_UIObjects.end())
 		return;
+
+	ApplyLayoutOverrides(it->second);
 
 	for (const auto& [name, uiObject] : it->second)
 	{
