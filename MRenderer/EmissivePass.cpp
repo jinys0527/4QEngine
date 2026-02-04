@@ -26,11 +26,11 @@ void EmissivePass::Execute(const RenderData::FrameData& frame)
 	SetDirLight(frame);
 	SetOtherLights(frame);
 
+
 	for (const auto& queueItem : GetQueue())
 	{
 		const auto& item = *queueItem.item;
 		SetBaseCB(item);
-		SetMaskingTM(item, frame.context.gameCamera.cameraPos);
 
 		if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 		{

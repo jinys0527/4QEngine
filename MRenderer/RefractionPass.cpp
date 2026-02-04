@@ -8,6 +8,7 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
     FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+
     SetRenderTarget(m_RenderContext.pRTView_Refraction.Get(), nullptr, backcolor);
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());        
     SetBlendState(BS::ALPHABLEND_WALL);
@@ -54,12 +55,19 @@ void RefractionPass::Execute(const RenderData::FrameData& frame)
 
     m_RenderContext.DrawFSTriangle();
 
+
+
+
     SetCameraCB(frame);
 
     SetDirLight(frame);
 
+    ID3D11DepthStencilView* depthView = m_RenderContext.pDSViewScene_DepthMSAA
+        ? m_RenderContext.pDSViewScene_DepthMSAA.Get()
+        : m_RenderContext.pDSViewScene_Depth.Get();
 
-    dxdc->OMSetRenderTargets(1, m_RenderContext.pRTView_Refraction.GetAddressOf(), m_RenderContext.pDSViewScene_Depth.Get());
+
+    dxdc->OMSetRenderTargets(1, m_RenderContext.pRTView_Refraction.GetAddressOf(), depthView);
     SetDepthStencilState(DS::DEPTH_ON_WRITE_OFF);
 
     for (const auto& queueItem : GetQueue())

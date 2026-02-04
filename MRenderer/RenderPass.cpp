@@ -1,4 +1,5 @@
-﻿#include "RenderPass.h"
+﻿
+#include "RenderPass.h"
 
 void RenderPass::Setup(const RenderData::FrameData& frame)
 {
@@ -81,75 +82,81 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
 
+
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
 
-	//테스트
-	XMMATRIX mWorld = XMLoadFloat4x4(&item.world);
-	XMMATRIX mVP = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mVP);
-	XMMATRIX WVP = mWorld * mVP;
-
-	XMVECTOR localPos = XMVectorSet(0.f, 1.8f, 0.f, 1.f);
-	XMVECTOR clipPos = XMVector4Transform(localPos, WVP);
-
-	XMFLOAT4 clip;
-	XMStoreFloat4(&clip, clipPos);
-	//if (clip.w <= 0.0f)							//방어 코드를 추가하자. // 카메라 뒤 → DoF 비활성화 or 무시
-	//{
-	//	m_RenderContext.enableDoF = false;
-	//	return;
-	//}
-	//else
-	//{
-	//	m_RenderContext.enableDoF = true;
-	//}
-	float ndcX = clip.x / clip.w;
-	float ndcY = clip.y / clip.w;
-
-	float playerU = ndcX * 0.5f + 0.5f;
-	float playerV = -ndcY * 0.5f + 0.5f;
-
-	m_RenderContext.playerPos.x = playerU;
-	m_RenderContext.playerPos.y = playerV;
-
-
-	XMMATRIX mView = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mView);
-	XMMATRIX mWV = mWorld * mView;
-	XMVECTOR viewPos = XMVector3TransformCoord(localPos, mWV);
-	float focusZ = XMVectorGetZ(viewPos);
-	m_RenderContext.camParams.z = focusZ;
 }
 
+XMMATRIX BuildMaskTM(
+	const XMVECTOR& camPos,
+	const XMFLOAT3& enemyPos)
+{
+	XMVECTOR look = XMLoadFloat3(&enemyPos);
+	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+
+	if (XMVector3Equal(camPos, look))
+		return XMMatrixIdentity();
+
+	XMMATRIX view = XMMatrixLookAtLH(camPos, look, up);
+	XMMATRIX proj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
+
+	static const XMMATRIX texScale = XMMatrixSet(
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, -0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 1.0f
+	);
+
+	return view * proj * texScale;
+}
+
+
 //벽뚫 마스킹맵용 행렬
-void RenderPass::SetMaskingTM(const RenderData::RenderItem& item, const XMFLOAT3& campos)
+void RenderPass::SetMaskingTM(const RenderData::FrameData& frame, const XMFLOAT3& campos)
 {
 	if (!m_RenderContext.isEditCam)
 	{
-		XMMATRIX mTM, mView, mProj;
+		XMMATRIX mTM;
+
+		XMMATRIX mView = XMLoadFloat4x4(&frame.context.gameCamera.view);
+
 		XMVECTOR maincampos = XMLoadFloat3(&campos); 
-		XMMATRIX targetworld = XMLoadFloat4x4(&item.world);
-		XMVECTOR targetpos = targetworld.r[3];
-		XMVECTOR look = targetpos;
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-		if (XMVector3Equal(maincampos, look)) return;
-		mView = XMMatrixLookAtLH(maincampos, look, up);
-		mProj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
+		//전체 초기화
+		XMStoreFloat4x4(
+			&m_RenderContext.MaskBuffer.PlayerMask,
+			XMMatrixIdentity());
 
-		XMFLOAT4X4 m = {
-		0.5f,  0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f,  0.0f, 1.0f, 0.0f,
-		0.5f,  0.5f, 0.0f, 1.0f
-		};
+		for (int i = 0; i < enemyMaskSize; ++i)
+		{
+			XMStoreFloat4x4(
+				&m_RenderContext.MaskBuffer.EnemyMask[i],
+				XMMatrixIdentity());
+		}
 
-		XMMATRIX mscale = XMLoadFloat4x4(&m);
-		mTM = mView * mProj * mscale;
 
-		XMStoreFloat4x4(&m_RenderContext.BCBuffer.mTextureMask, mTM);
+		//버퍼 채워넣기
+		mTM = BuildMaskTM(maincampos, frame.playerPosition);
 
-		m_RenderContext.BCBuffer.mTextureMask;
+		XMStoreFloat4x4(&m_RenderContext.MaskBuffer.PlayerMask, mTM);
 
-		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+
+
+		int count = min(
+			(int)frame.combatEnemyPositions.size(),
+			enemyMaskSize
+		);
+		for (int i = 0; i < count; i++)
+		{
+			XMMATRIX mTM = BuildMaskTM(maincampos, frame.combatEnemyPositions[i]);
+
+			XMStoreFloat4x4(
+				&m_RenderContext.MaskBuffer.EnemyMask[i],
+				mTM);
+		}
+
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pMaskB.Get(), &(m_RenderContext.MaskBuffer), sizeof(m_RenderContext.MaskBuffer));
 	}
 }
 
@@ -196,9 +203,45 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 	m_RenderContext.camParams.x = context.gameCamera.camNear;
 	m_RenderContext.camParams.y = context.gameCamera.camFar;
-	m_RenderContext.camParams.w = 3.f;
+	m_RenderContext.camParams.w = 9.f;
 
 	m_RenderContext.CameraCBuffer.camParams = m_RenderContext.camParams;
+
+
+	//초점
+	XMVECTOR playerPos = XMLoadFloat3(&frame.playerPosition);
+	playerPos = XMVectorSetY(playerPos, XMVectorGetY(playerPos) + 1.8f);
+	XMMATRIX mWorld = XMMatrixTranslationFromVector(playerPos);
+	mVP = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mVP);
+	XMMATRIX WVP = mWorld * mVP;
+
+	XMVECTOR localPos = XMVectorSet(0.f, 1.8f, 0.f, 1.f);
+	XMVECTOR clipPos = XMVector4Transform(localPos, WVP);
+
+	XMFLOAT4 clip;
+	XMStoreFloat4(&clip, clipPos);
+	//if (clip.w <= 0.0f)							//방어 코드를 추가하자. // 카메라 뒤 → DoF 비활성화 or 무시
+	//{
+	//	m_RenderContext.enableDoF = false;
+	//	return;
+	//}
+	//else
+	//{
+	//	m_RenderContext.enableDoF = true;
+	//}
+	float ndcX = clip.x / clip.w;
+	float ndcY = clip.y / clip.w;
+
+	float playerU = ndcX * 0.5f + 0.5f;
+	float playerV = -ndcY * 0.5f + 0.5f;
+
+
+	XMMATRIX mView = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mView);
+	XMMATRIX mWV = mWorld * mView;
+	XMVECTOR viewPos = XMVector3TransformCoord(localPos, mWV);
+	float focusZ = XMVectorGetZ(viewPos);
+	m_RenderContext.camParams.z = focusZ;
+
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }
@@ -388,6 +431,8 @@ void RenderPass::DrawMesh(
 	dc->PSSetConstantBuffers(1, 1, m_RenderContext.pCameraCB.GetAddressOf());
 	dc->VSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
 	dc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+	dc->VSSetConstantBuffers(4, 1, m_RenderContext.pMaskB.GetAddressOf());
+	dc->PSSetConstantBuffers(4, 1, m_RenderContext.pMaskB.GetAddressOf());
 
 
 	//OutputDebugStringA("Drawing 3D Object Start\n");

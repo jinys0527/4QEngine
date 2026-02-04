@@ -151,9 +151,13 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 원본 emissive 추가 (중심부)
     float4 e0 = g_RTEmissive.Sample(smpClamp, uvW);
 
+    float core = e0.a; // ← 중심부 강도
+    
+    e0.rgb *= core;
+    
     float l = max(e0.r, max(e0.g, e0.b));
     e0.rgb = lerp(e0.rgb, 1.0.xxx, saturate(l * 1.2));
-    e0.rgb *= 2.0;
+    e0.rgb *= saturate(core);
     
 // 블러 emissive
     float4 e1 = SampleEmissiveDisk(g_RTEmissiveHalf, uvW, texelHalf);
@@ -166,14 +170,14 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 최종 합성
     float4 emissive =
       e0 * 1.0
-    + e1 * 0.6
-    + e2 * 0.3
-    + e3 * 0.1;
+    + e1 * 1.2
+    + e2 * 1.3
+    + e3 * 1.4;
 
 // 전체 emissive 세기
-    emissive.rgb *= 1.5;
+    //emissive.rgb *= 1.5;
 
-    //return finalBlur + emissive;
+    return finalBlur + emissive;
     
     return RTView;
     

@@ -37,6 +37,8 @@
 #include "StatComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyStatComponent.h"
+#include "ItemComponent.h"
+#include "ItemSpawnerComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
@@ -108,7 +110,8 @@ extern "C" {
 	void Link_FloodSystemComponent();
 	void Link_FloodUIComponent();
 	void Link_PushNodeComponent();
-}
+	void Link_ItemSpawnerComponent();
+
 
 void RegisterUIFSMDefinitions();
 void RegisterCollisionFSMDefinitions();
@@ -181,4 +184,6 @@ void LinkEngineComponents() {
 	Link_FloodSystemComponent();
 	Link_FloodUIComponent();
 	Link_PushNodeComponent();
+	Link_ItemSpawnerComponent();
+
 }

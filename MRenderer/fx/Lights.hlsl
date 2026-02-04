@@ -336,6 +336,8 @@ float4 UE_PointLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
 
     float s = saturate(1.0f - dist / max(lit.Range, 1e-4));
     att *= (s * s);
+    
+    roughness = max(roughness, 0.5f);
 
     BRDFResult brdf = BRDF_UE_Direct(float4(N.xyz, 0), float4(P.xyz, 1), float4(L, 0),
                                      base, metallic, roughness, ao, specularParam);
@@ -345,7 +347,9 @@ float4 UE_PointLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
     float ndotl = saturate(dot(N.xyz, L));
 
     float4 color = (brdf.diffuse + brdf.specular) * radiance * ndotl * att;
+    
     color.a = 1;
+    
     return color;
 }
 

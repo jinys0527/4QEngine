@@ -22,11 +22,13 @@ void WallPass::Execute(const RenderData::FrameData & frame)
     //임시 벽뚫 이미지 바인딩
     m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());
 
+    SetMaskingTM(frame, frame.context.gameCamera.cameraPos);             //현재는 각 오브젝트 전부 바라보고 있음, 후에 플레이어 정보를 받아서 플레이어쪽을 바라보도록 해야함, for문 위에서 미리 한번만 세팅해두는 방식이 좋을 듯
+
+
     for (const auto& queueItem : GetQueue())
     {
         const auto& item = *queueItem.item;
         SetBaseCB(item);
-        SetMaskingTM(item, frame.context.gameCamera.cameraPos);             //현재는 각 오브젝트 전부 바라보고 있음, 후에 플레이어 정보를 받아서 플레이어쪽을 바라보도록 해야함, for문 위에서 미리 한번만 세팅해두는 방식이 좋을 듯
 
         const auto* vertexBuffers = m_RenderContext.vertexBuffers;
         const auto* indexBuffers = m_RenderContext.indexBuffers;
@@ -35,8 +37,8 @@ void WallPass::Execute(const RenderData::FrameData & frame)
         const auto* vertexShaders = m_RenderContext.vertexShaders;
         const auto* pixelShaders = m_RenderContext.pixelShaders;
 
-        ID3D11VertexShader* vertexShader = m_RenderContext.VS_PBR.Get();
-        ID3D11PixelShader* pixelShader = m_RenderContext.PS_PBR.Get();
+        ID3D11VertexShader* vertexShader = m_RenderContext.VS_Wall.Get();
+        ID3D11PixelShader* pixelShader = m_RenderContext.PS_Wall.Get();
 
         const RenderData::MaterialData* mat = nullptr;
         if (item.useMaterialOverrides)

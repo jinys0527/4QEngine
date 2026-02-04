@@ -258,6 +258,8 @@ namespace RenderData
 		std::vector<XMFLOAT4X4>	   globalPoses;
 		std::vector<UIElement>	   uiElements;
 		std::vector<UITextElement> uiTexts;
-
+		XMFLOAT3                   playerPosition{ 0.0f, 0.0f, 0.0f };
+		bool                       hasPlayerPosition = false;
+		std::vector<XMFLOAT3>      combatEnemyPositions;
 	};
 }
