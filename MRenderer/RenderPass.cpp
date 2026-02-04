@@ -198,7 +198,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 	m_RenderContext.camParams.x = context.gameCamera.camNear;
 	m_RenderContext.camParams.y = context.gameCamera.camFar;
-	m_RenderContext.camParams.w = 3.f;
+	m_RenderContext.camParams.w = 9.f;
 
 	m_RenderContext.CameraCBuffer.camParams = m_RenderContext.camParams;
 

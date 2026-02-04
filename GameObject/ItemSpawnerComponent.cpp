@@ -1,7 +1,11 @@
 ﻿#include "ReflectionMacro.h"
 
+#include <algorithm>
+#include <cmath>
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include "AssetLoader.h"
 #include "DiceSystem.h"
@@ -17,7 +21,11 @@
 #include "Scene.h"
 #include "ServiceRegistry.h"
 #include "TransformComponent.h"
+#include "EnemyComponent.h"
 #include "EnemyStatComponent.h"
+#include "GridSystemComponent.h"
+#include "NodeComponent.h"
+#include "PlayerComponent.h"
 #include "json.hpp"
 
 REGISTER_COMPONENT(ItemSpawnerComponent)
@@ -139,16 +147,244 @@ namespace
 		}
 	}
 
-	void FinalizeSpawn(const Object& owner, const std::shared_ptr<GameObject>& spawned)
+	constexpr float kItemOverlapRatio = 0.2f;
+	constexpr int kNeighborCount = 6;
+	constexpr int kNeighborOffsets[kNeighborCount][2] = {
+		{ 1, 0 },
+		{ 1, -1 },
+		{ 0, -1 },
+		{ -1, 0 },
+		{ -1, 1 },
+		{ 0, 1 }
+	};
+
+	struct VertexCandidate
+	{
+		XMFLOAT3 position{};
+		float distanceSq = 0.0f;
+		int vertexIndex = 0;
+	};
+
+	float DistanceSq2D(const XMFLOAT3& a, const XMFLOAT3& b)
+	{
+		const float dx = a.x - b.x;
+		const float dz = a.z - b.z;
+		return dx * dx + dz * dz;
+	}
+
+	GridSystemComponent* FindGridSystem(const Scene& scene)
+	{
+		const auto& objects = scene.GetGameObjects();
+		for (const auto& [name, object] : objects)
+		{
+			if (!object)
+			{
+				continue;
+			}
+			if (auto* grid = object->GetComponent<GridSystemComponent>())
+			{
+				return grid;
+			}
+		}
+		return nullptr;
+	}
+
+	std::optional<XMFLOAT3> FindPlayerPosition(const Scene& scene)
+	{
+		const auto& objects = scene.GetGameObjects();
+		for (const auto& [name, object] : objects)
+		{
+			if (!object)
+			{
+				continue;
+			}
+			if (auto* player = object->GetComponent<PlayerComponent>())
+			{
+				if (auto* transform = object->GetComponent<TransformComponent>())
+				{
+					return transform->GetPosition();
+				}
+			}
+		}
+		return std::nullopt;
+	}
+
+	bool HasItemAtPosition(const Scene& scene, const XMFLOAT3& position, float threshold)
+	{
+		const float thresholdSq = threshold * threshold;
+		const auto& objects = scene.GetGameObjects();
+		for (const auto& [name, object] : objects)
+		{
+			if (!object)
+			{
+				continue;
+			}
+			if (!object->GetComponent<ItemComponent>())
+			{
+				continue;
+			}
+			auto* transform = object->GetComponent<TransformComponent>();
+			if (!transform)
+			{
+				continue;
+			}
+			if (DistanceSq2D(transform->GetPosition(), position) <= thresholdSq)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	float EstimateInnerRadius(NodeComponent* centerNode)
+	{
+		if (!centerNode)
+		{
+			return 1.0f;
+		}
+		auto* centerOwner = centerNode->GetOwner();
+		auto* centerTransform = centerOwner ? centerOwner->GetComponent<TransformComponent>() : nullptr;
+		if (!centerTransform)
+		{
+			return 1.0f;
+		}
+		for (auto* neighbor : centerNode->GetNeighbors())
+		{
+			if (!neighbor)
+			{
+				continue;
+			}
+			auto* neighborOwner = neighbor->GetOwner();
+			auto* neighborTransform = neighborOwner ? neighborOwner->GetComponent<TransformComponent>() : nullptr;
+			if (!neighborTransform)
+			{
+				continue;
+			}
+			const float dist = std::sqrt(DistanceSq2D(centerTransform->GetPosition(), neighborTransform->GetPosition()));
+			if (dist > 0.0f)
+			{
+				return dist * 0.5f;
+			}
+		}
+		return 1.0f;
+	}
+
+	std::optional<XMFLOAT3> FindDropVertexPosition(const Object& owner, const Scene& scene)
+	{
+		auto* ownerTransform = owner.GetComponent<TransformComponent>();
+		if (!ownerTransform)
+		{
+			return std::nullopt;
+		}
+
+		auto* grid = FindGridSystem(scene);
+		if (!grid)
+		{
+			return ownerTransform->GetPosition();
+		}
+
+		auto* enemy = owner.GetComponent<EnemyComponent>();
+		if (!enemy)
+		{
+			return ownerTransform->GetPosition();
+		}
+
+		const AxialKey centerKey{ enemy->GetQ(), enemy->GetR() };
+		auto* centerNode = grid->GetNodeByKey(centerKey);
+		const float innerRadius = EstimateInnerRadius(centerNode);
+		const float outerRadius = innerRadius * 2.0f / std::sqrt(3.0f);
+		const float itemOverlapThreshold = outerRadius * kItemOverlapRatio;
+		const XMFLOAT3 centerPos = ownerTransform->GetPosition();
+		const auto playerPos = FindPlayerPosition(scene);
+
+		std::vector<VertexCandidate> candidates;
+		candidates.reserve(kNeighborCount);
+
+		for (int i = 0; i < kNeighborCount; ++i)
+		{
+			const float angle = (60.0f * static_cast<float>(i) - 30.0f) * (3.1415926535f / 180.0f);
+			const XMFLOAT3 vertexPos{
+				centerPos.x + outerRadius * std::cos(angle),
+				centerPos.y,
+				centerPos.z + outerRadius * std::sin(angle)
+			};
+
+			const int prevIndex = (i + kNeighborCount - 1) % kNeighborCount;
+			const AxialKey neighborA{ centerKey.q + kNeighborOffsets[i][0], centerKey.r + kNeighborOffsets[i][1] };
+			const AxialKey neighborB{ centerKey.q + kNeighborOffsets[prevIndex][0], centerKey.r + kNeighborOffsets[prevIndex][1] };
+
+			NodeComponent* nodesToCheck[3] = {
+				centerNode,
+				grid->GetNodeByKey(neighborA),
+				grid->GetNodeByKey(neighborB)
+			};
+
+			bool valid = true;
+			for (auto* node : nodesToCheck)
+			{
+				if (!node || !node->GetIsMoveable())
+				{
+					valid = false;
+					break;
+				}
+			}
+			if (!valid)
+			{
+				continue;
+			}
+
+			float distanceSq = 0.0f;
+			if (playerPos)
+			{
+				distanceSq = DistanceSq2D(*playerPos, vertexPos);
+			}
+
+			candidates.push_back(VertexCandidate{ vertexPos, distanceSq, i });
+		}
+
+		if (candidates.empty())
+		{
+			return std::nullopt;
+		}
+
+		if (playerPos)
+		{
+			std::sort(candidates.begin(), candidates.end(),
+				[](const VertexCandidate& a, const VertexCandidate& b)
+				{
+					return a.distanceSq < b.distanceSq;
+				});
+		}
+
+		for (const auto& candidate : candidates)
+		{
+			if (HasItemAtPosition(scene, candidate.position, itemOverlapThreshold))
+			{
+				continue;
+			}
+			return candidate.position;
+		}
+
+		return std::nullopt;
+	}
+
+	void FinalizeSpawn(
+		const Object& owner,
+		const std::shared_ptr<GameObject>& spawned,
+		const std::optional<XMFLOAT3>& positionOverride = std::nullopt) 
 	{
 		if (!spawned)
 		{
 			return;
 		}
 
-		if (auto* ownerTransform = owner.GetComponent<TransformComponent>())
+		if (auto* spawnTransform = spawned->GetComponent<TransformComponent>())
 		{
-			if (auto* spawnTransform = spawned->GetComponent<TransformComponent>())
+			if (positionOverride)
+			{
+				spawnTransform->SetPosition(*positionOverride);
+			}
+			else if (auto* ownerTransform = owner.GetComponent<TransformComponent>()) 
 			{
 				spawnTransform->SetPosition(ownerTransform->GetPosition());
 			}
@@ -358,6 +594,13 @@ void ItemSpawnerComponent::DropItem()
 		return;
 	}
 
+	const std::optional<XMFLOAT3> dropPosition = FindDropVertexPosition(*owner, *scene);
+	if (!dropPosition)
+	{
+		m_DropTriggered = true;
+		return;
+	}
+
 	std::shared_ptr<GameObject> spawned;
 	const std::string templateName =
 		m_DropItemTemplateName.empty() ? m_FixedItemTemplateName : m_DropItemTemplateName;
@@ -407,6 +650,6 @@ void ItemSpawnerComponent::DropItem()
 		EnsureRenderComponents(*spawned, *itemDefinition);
 	}
 
-	FinalizeSpawn(*owner, spawned);
+	FinalizeSpawn(*owner, spawned, dropPosition);
 	m_DropTriggered = true;
 }
