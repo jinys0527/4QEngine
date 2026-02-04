@@ -644,7 +644,7 @@ void EditorApplication::Render() {
 
 	RenderImGUI();
 
-	Flip(m_Renderer.GetSwapChain().Get()); //★
+	Flip(m_Renderer.GetSwapChain().Get(), false); //★
 }
 
 void EditorApplication::RenderImGUI() {

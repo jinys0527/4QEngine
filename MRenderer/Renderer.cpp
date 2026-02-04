@@ -1631,64 +1631,37 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 
 HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
 {
-	//HRESULT hr = S_OK;
-	//DXGI_SWAP_CHAIN_DESC sd = {};
-	//sd.BufferCount = 1;
-	//sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	//sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	//sd.OutputWindow = hWnd;
-	//sd.SampleDesc.Count = 1;
-	//sd.Windowed = TRUE;
 
-	//UINT flags = D3D11_CREATE_DEVICE_DEBUG;
-	//hr = D3D11CreateDeviceAndSwapChain(
-	//	nullptr,
-	//	D3D_DRIVER_TYPE_HARDWARE,
-	//	nullptr,
-	//	D3D11_CREATE_DEVICE_DEBUG,
-	//	nullptr, 0,
-	//	D3D11_SDK_VERSION,
-	//	&sd,
-	//	m_pSwapChain.GetAddressOf(),
-	//	m_pDevice.GetAddressOf(),
-	//	nullptr,
-	//	m_pDXDC.GetAddressOf()
-	//);
-
-	//if (FAILED(hr))
-	//{
-	//	ERROR_MSG(hr);
-	//	return hr;
-	//}
-
-	//위는 device와 swapchain 동시 생성
 	ComPtr<IDXGIDevice> dxgiDevice;
-	m_pDevice->QueryInterface(__uuidof(IDXGIDevice), &dxgiDevice);
+	m_pDevice.As(&dxgiDevice);
 
 	ComPtr<IDXGIAdapter> adapter;
 	dxgiDevice->GetAdapter(&adapter);
 
-	ComPtr<IDXGIFactory> factory;
-	adapter->GetParent(__uuidof(IDXGIFactory), &factory);
+	ComPtr<IDXGIFactory2> factory;
+	adapter->GetParent(IID_PPV_ARGS(&factory));
 
-	HRESULT hr = S_OK;
-	DXGI_SWAP_CHAIN_DESC sd = {};
-	sd.BufferCount = 1;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = hWnd;
-	sd.SampleDesc.Count = 1;
-	sd.Windowed = TRUE;
+	DXGI_SWAP_CHAIN_DESC1 desc = {};
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	desc.BufferCount = 3;
+	desc.SampleDesc.Count = 1;
+	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-	hr = factory->CreateSwapChain(m_pDevice.Get(), &sd, m_pSwapChain.GetAddressOf());
+	ComPtr<IDXGISwapChain1> swapChain1;
+	factory->CreateSwapChainForHwnd(
+		m_pDevice.Get(),
+		hWnd,
+		&desc,
+		nullptr,
+		nullptr,
+		&swapChain1
+	);
 
-	if (FAILED(hr))
-	{
-		ERROR_MSG_HR(hr);
-		return hr;
-	}
+	swapChain1.As(&m_pSwapChain);
 
-	return hr;
+	return S_OK;
 }
 
 HRESULT Renderer::CreateRenderTarget()

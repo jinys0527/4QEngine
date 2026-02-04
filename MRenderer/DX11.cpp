@@ -25,9 +25,13 @@ int ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11Rende
     return 0;
 }
 
-int Flip(IDXGISwapChain* swapchain)
+int Flip(IDXGISwapChain* swapchain, bool vsync)
 {
-    swapchain->Present(FALSE, 0);			//수직 동기화 0:끔, 1:켬
+    UINT syncInterval = vsync ? 1 : 0;
+    UINT flags = (!vsync) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+
+    swapchain->Present(syncInterval, flags);
+
 
     return 0;
 }

@@ -129,7 +129,7 @@ void GameApplication::Render()
 	scene->Render(m_FrameData);
 	m_Renderer.RenderFrame(m_FrameData);
 	m_Renderer.RenderToBackBuffer();
-	Flip(m_Renderer.GetSwapChain().Get());
+	Flip(m_Renderer.GetSwapChain().Get(), false);
 }
 
 

@@ -171,8 +171,7 @@ extern int g_MonitorHeight;
 
 int		ClearBackBuffer(COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview);
 int		ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview, float depth = 1.0f, UINT stencil = 0);
-int Flip(IDXGISwapChain* swapchain);
-
+int Flip(IDXGISwapChain* swapchain, bool vsync);
 
 
 #pragma region 버퍼 운용함수
