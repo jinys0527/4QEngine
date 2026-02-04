@@ -111,7 +111,6 @@ constexpr size_t enemyMaskSize = 16;
 struct MaskingBuffer
 {
 	XMFLOAT4X4		PlayerMask;
-	
 	XMFLOAT4X4		EnemyMask[enemyMaskSize]{};
 };
 

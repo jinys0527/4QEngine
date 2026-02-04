@@ -1,9 +1,9 @@
 #include "BaseBuffer.hlsl"
 #include "Animation.hlsl"
 
-VSOutput_PBR VS_Main(VSInput_PNUT input)
+VSOutput_Wall VS_Main(VSInput_PNUT input)
 {
-    VSOutput_PBR o = (VSOutput_PBR) 0;
+    VSOutput_Wall o = (VSOutput_Wall) 0;
     
     float4 pos;
     pos = float4(input.pos, 1.0f);
@@ -26,6 +26,10 @@ VSOutput_PBR VS_Main(VSInput_PNUT input)
     float4 T = float4(input.T.xyz, 0.0f);
     T = mul(T, mWorld);
     
+    float2 screenUV;
+    screenUV = pos.xy / pos.w; 
+    screenUV = screenUV * float2(0.5f, -0.5f); 
+    screenUV += 0.5f;
     
     o.pos = pos;
     o.nrm = nrm;
@@ -35,5 +39,6 @@ VSOutput_PBR VS_Main(VSInput_PNUT input)
     o.envUVW = eR;
     o.T = float4(normalize(T.xyz), input.T.w);
     o.uvshadow = uvshadow;
+    o.screenUV = screenUV;
     return o;
 }

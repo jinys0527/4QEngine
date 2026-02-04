@@ -218,11 +218,16 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
 {
+	dTime += frame.context.deltaTime;
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
+
+	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
 	m_Pipeline.Execute(frame);
+
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
@@ -1896,6 +1901,8 @@ HRESULT Renderer::ReCreateRenderTarget()
 		height /= 2;
 	}
 #pragma endregion
+
+
 
 	return hr;
 }

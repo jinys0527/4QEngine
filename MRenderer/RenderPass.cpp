@@ -116,7 +116,10 @@ void RenderPass::SetMaskingTM(const RenderData::FrameData& frame, const XMFLOAT3
 {
 	if (!m_RenderContext.isEditCam)
 	{
-		XMMATRIX mTM, mView, mProj;
+		XMMATRIX mTM;
+
+		XMMATRIX mView = XMLoadFloat4x4(&frame.context.gameCamera.view);
+
 		XMVECTOR maincampos = XMLoadFloat3(&campos); 
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
@@ -137,6 +140,8 @@ void RenderPass::SetMaskingTM(const RenderData::FrameData& frame, const XMFLOAT3
 		mTM = BuildMaskTM(maincampos, frame.playerPosition);
 
 		XMStoreFloat4x4(&m_RenderContext.MaskBuffer.PlayerMask, mTM);
+
+
 
 		int count = min(
 			(int)frame.combatEnemyPositions.size(),

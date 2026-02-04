@@ -1,18 +1,25 @@
 #include "BaseBuffer.hlsl"
 #include "Lights.hlsl"
 
-float ComputeMaskAlpha(float4 worldPos)
+float ComputeMaskAlpha(float4 worldPos, float depth, float2 UV)
 {
     float alpha = 1.0f;
+    
 
-    // Player mask
+    // ===== projector 앞/뒤 판별 =====
+    float4 projPos = mul(worldPos, playerMask);
+
+    // 투영 카메라 뒤면 바로 제거
+    if (projPos.w <= 0.0f)
+        return 1.0f; // 또는 0.0f (의도에 따라)
+    
+
     {
         float4 uv = mul(worldPos, playerMask);
         float4 tex = Masking(uv);
         alpha *= tex.a;
     }
 
-    // Enemy masks
     [loop]
     for (int i = 0; i < 16; ++i)
     {
@@ -21,10 +28,12 @@ float ComputeMaskAlpha(float4 worldPos)
         alpha *= tex.a;
     }
 
+    
     return saturate(alpha);
 }
 
-float4 PS_Main(VSOutput_PBR input) : SV_Target
+
+float4 PS_Main(VSOutput_Wall input) : SV_Target
 {
     float4 texAlbedo = g_Albedo.Sample(smpWrap, input.uv);
     float4 texNrm = g_Normal.Sample(smpWrap, input.uv);
@@ -154,7 +163,6 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //float shadow = CastShadow(input.uvshadow);
     //col.rgb *= shadow;
     
-    col.rgb = LinearToSRGB(col.rgb);
 
     col.a = alpha;
     
@@ -163,14 +171,12 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //return float4(texMetal.xyz, 1);
     //return texRough ;
     //return texAO;    
-    float maskAlpha = ComputeMaskAlpha(input.wPos);
+    
+    float maskAlpha = ComputeMaskAlpha(input.wPos, input.vPos.z, input.screenUV);
+    
     col.a *= maskAlpha;
     
-    //float4 uuvv = mul(input.wPos, playerMask);
-    
-    //float4 masktex = Masking(uuvv);
-
-    //col.a = masktex.a;
+    col.rgb = LinearToSRGB(col.rgb);
     
     return col;
 }
