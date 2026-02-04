@@ -3774,6 +3774,7 @@ void EditorApplication::DrawUIEditorPreview()
 			{
 				m_PendingUIPropertySnapshots.clear();
 				m_LastSelectedUIObjectName = selectedObject->GetName();
+				std::snprintf(m_UIObjectNameBuffer.data(), m_UIObjectNameBuffer.size(), "%s", selectedObject->GetName().c_str());
 			}
 
 			auto recordUILongEdit = [&](size_t key, bool updated, const std::string& label)
@@ -3913,6 +3914,66 @@ void EditorApplication::DrawUIEditorPreview()
 					uiObject.SetBounds(local);
 				};
 
+			auto applyUIObjectRename = [&](const std::string& oldName, const std::string& newName) -> bool
+				{
+					if (!uiManager)
+					{
+						return false;
+					}
+
+					if (!uiManager->RenameUIObject(sceneName, oldName, newName))
+					{
+						return false;
+					}
+
+					if (m_SelectedUIObjectName == oldName)
+					{
+						m_SelectedUIObjectName = newName;
+					}
+
+					if (auto itName = m_SelectedUIObjectNames.find(oldName); itName != m_SelectedUIObjectNames.end())
+					{
+						m_SelectedUIObjectNames.erase(itName);
+						m_SelectedUIObjectNames.insert(newName);
+					}
+
+					if (m_LastSelectedUIObjectName == oldName)
+					{
+						m_LastSelectedUIObjectName = newName;
+					}
+
+					if (auto itButton = m_UIButtonBindingTargets.find(oldName); itButton != m_UIButtonBindingTargets.end())
+					{
+						m_UIButtonBindingTargets[newName] = itButton->second;
+						m_UIButtonBindingTargets.erase(itButton);
+					}
+					for (auto& [key, value] : m_UIButtonBindingTargets)
+					{
+						if (value == oldName)
+						{
+							value = newName;
+						}
+					}
+
+					if (auto itSlider = m_UISliderBindingTargets.find(oldName); itSlider != m_UISliderBindingTargets.end())
+					{
+						m_UISliderBindingTargets[newName] = itSlider->second;
+						m_UISliderBindingTargets.erase(itSlider);
+					}
+					for (auto& [key, value] : m_UISliderBindingTargets)
+					{
+						if (value == oldName)
+						{
+							value = newName;
+						}
+					}
+
+					uiManager->RefreshUIListForCurrentScene();
+					std::snprintf(m_UIObjectNameBuffer.data(), m_UIObjectNameBuffer.size(), "%s", newName.c_str());
+					return true;
+				};
+
+
 
 			ImGui::SeparatorText("Layout");
 			ImGui::Text("Parent");
@@ -3932,7 +3993,7 @@ void EditorApplication::DrawUIEditorPreview()
 					const bool isSelected = (selectedObject->GetParentName() == name);
 					if (ImGui::Selectable(name.c_str(), isSelected))
 					{
-						reparentUIObject(selectedObject->GetName(), "");
+						reparentUIObject(selectedObject->GetName(), name);
 					}
 					if (isSelected)
 					{
@@ -4705,6 +4766,74 @@ void EditorApplication::DrawUIEditorPreview()
 					auto* horizontalBox = selectedObject->GetComponent<HorizontalBox>();
 					if (horizontalBox)
 					{
+						std::unordered_set<std::string> registeredNames;
+						for (const auto& slot : horizontalBox->GetSlots())
+						{
+							const std::string slotName = slot.child ? slot.child->GetName() : slot.childName;
+							if (!slotName.empty())
+							{
+								registeredNames.insert(slotName);
+							}
+						}
+
+						std::vector<std::string> availableNames;
+						for (const auto& [name, uiObject] : it->second)
+						{
+							if (!uiObject || name == selectedName)
+							{
+								continue;
+							}
+							if (registeredNames.find(name) != registeredNames.end())
+							{
+								continue;
+							}
+							availableNames.push_back(name);
+						}
+
+						if (!m_HorizontalSlotCandidate.empty()
+							&& std::find(availableNames.begin(), availableNames.end(), m_HorizontalSlotCandidate) == availableNames.end())
+						{
+							m_HorizontalSlotCandidate.clear();
+						}
+
+						ImGui::SeparatorText("Add Horizontal Slot");
+						const char* preview = m_HorizontalSlotCandidate.empty() ? "<Select UI Object>" : m_HorizontalSlotCandidate.c_str();
+						if (ImGui::BeginCombo("##HorizontalSlotCandidate", preview))
+						{
+							for (const auto& name : availableNames)
+							{
+								const bool isSelected = (m_HorizontalSlotCandidate == name);
+								if (ImGui::Selectable(name.c_str(), isSelected))
+								{
+									m_HorizontalSlotCandidate = name;
+								}
+								if (isSelected)
+								{
+									ImGui::SetItemDefaultFocus();
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::BeginDisabled(m_HorizontalSlotCandidate.empty());
+						if (ImGui::Button("Add Slot"))
+						{
+							auto child = uiManager->FindUIObject(sceneName, m_HorizontalSlotCandidate);
+							if (child)
+							{
+								const auto bounds = child->GetBounds();
+								HorizontalBoxSlot slot;
+								slot.child = child.get();
+								slot.desiredSize = UISize{ bounds.width, bounds.height };
+								slot.padding = 0.0f;
+								slot.fillWeight = 1.0f;
+								slot.alignment = UIHorizontalAlignment::Fill;
+								uiManager->RegisterHorizontalSlot(sceneName, selectedName, m_HorizontalSlotCandidate, slot);
+								uiManager->RefreshUIListForCurrentScene();
+							}
+						}
+						ImGui::EndDisabled();
+
 						ImGui::SeparatorText("Horizontal Slots");
 						auto& slots = horizontalBox->GetSlotsRef();
 						if (slots.empty())
@@ -4879,6 +5008,70 @@ void EditorApplication::DrawUIEditorPreview()
 						auto* canvas = selectedObject->GetComponent<Canvas>();
 						if (canvas)
 						{
+							std::unordered_set<std::string> registeredNames;
+							for (const auto& slot : canvas->GetSlots())
+							{
+								const std::string slotName = slot.child ? slot.child->GetName() : slot.childName;
+								if (!slotName.empty())
+								{
+									registeredNames.insert(slotName);
+								}
+							}
+
+							std::vector<std::string> availableNames;
+							for (const auto& [name, uiObject] : it->second)
+							{
+								if (!uiObject || name == selectedName)
+								{
+									continue;
+								}
+								if (registeredNames.find(name) != registeredNames.end())
+								{
+									continue;
+								}
+								availableNames.push_back(name);
+							}
+
+							if (!m_CanvasSlotCandidate.empty()
+								&& std::find(availableNames.begin(), availableNames.end(), m_CanvasSlotCandidate) == availableNames.end())
+							{
+								m_CanvasSlotCandidate.clear();
+							}
+
+							ImGui::SeparatorText("Add Canvas Slot");
+							const char* preview = m_CanvasSlotCandidate.empty() ? "<Select UI Object>" : m_CanvasSlotCandidate.c_str();
+							if (ImGui::BeginCombo("##CanvasSlotCandidate", preview))
+							{
+								for (const auto& name : availableNames)
+								{
+									const bool isSelected = (m_CanvasSlotCandidate == name);
+									if (ImGui::Selectable(name.c_str(), isSelected))
+									{
+										m_CanvasSlotCandidate = name;
+									}
+									if (isSelected)
+									{
+										ImGui::SetItemDefaultFocus();
+									}
+								}
+								ImGui::EndCombo();
+							}
+
+							ImGui::BeginDisabled(m_CanvasSlotCandidate.empty());
+							if (ImGui::Button("Add Slot"))
+							{
+								auto child = uiManager->FindUIObject(sceneName, m_CanvasSlotCandidate);
+								if (child)
+								{
+									CanvasSlot slot;
+									slot.child = child.get();
+									slot.rect = child->GetBounds();
+									uiManager->RegisterCanvasSlot(sceneName, selectedName, m_CanvasSlotCandidate, slot);
+									uiManager->RefreshUIListForCurrentScene();
+								}
+							}
+							ImGui::EndDisabled();
+
 							ImGui::SeparatorText("Canvas Slots");
 							auto& slots = canvas->GetSlotsRef();
 							if (slots.empty())

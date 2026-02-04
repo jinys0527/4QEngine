@@ -122,6 +122,7 @@ public:
 	bool RemoveCanvasSlot(const std::string& sceneName, const std::string& canvasName, const std::string& childName);
 	bool ClearCanvasSlots(const std::string& sceneName, const std::string& canvasName);
 	bool ApplyCanvasLayout(const std::string& sceneName, const std::string& canvasName);
+	bool RenameUIObject(const std::string& sceneName, const std::string& oldName, const std::string& newName);
 
 	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
 	void DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data);

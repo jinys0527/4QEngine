@@ -8,10 +8,97 @@
 #include "UISliderComponent.h"
 #include "UITextComponent.h"
 #include "UIFSMComponent.h"
+#include "Border.h"
 #include "Canvas.h"
 #include "MaterialComponent.h"
+#include "ScaleBox.h"
+#include "SizeBox.h"
 #include <algorithm>
 
+namespace
+{
+	void ApplySizeBoxOverrides(UIObject& uiObject)
+	{
+		auto* sizeBox = uiObject.GetComponent<SizeBox>();
+		if (!sizeBox || !uiObject.HasBounds())
+			return;
+
+		UIRect bounds = uiObject.GetBounds();
+		const UISize desired = sizeBox->GetDesiredSize(UISize{ bounds.width, bounds.height });
+		if (desired.width != bounds.width || desired.height != bounds.height)
+		{
+			bounds.width = desired.width;
+			bounds.height = desired.height;
+			uiObject.SetBounds(bounds);
+		}
+	}
+
+	void ApplyScaleBoxLayout(UIObject& uiObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		auto* scaleBox = uiObject.GetComponent<ScaleBox>();
+		if (!scaleBox || !uiObject.HasBounds())
+			return;
+
+		const std::string& parentName = uiObject.GetParentName();
+		if (parentName.empty())
+			return;
+
+		auto itParent = uiMap.find(parentName);
+		if (itParent == uiMap.end() || !itParent->second || !itParent->second->HasBounds())
+			return;
+
+		const UIRect parentBounds = itParent->second->GetBounds();
+		UIRect bounds = uiObject.GetBounds();
+
+		const UISize scaled = scaleBox->CalculateScaledSize(
+			UISize{ parentBounds.width, parentBounds.height },
+			UISize{ bounds.width, bounds.height });
+		bounds.width  = scaled.width;
+		bounds.height = scaled.height;
+		bounds.x = parentBounds.x + (parentBounds.width - scaled.width) * 0.5f;
+		bounds.y = parentBounds.y + (parentBounds.height - scaled.height) * 0.5f;
+		uiObject.SetBounds(bounds);
+	}
+
+// 	void ApplyBorderLayout(UIObject& borderObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+// 	{
+// 		auto* border = borderObject.GetComponent<Border>();
+// 		if (!border || !borderObject.HasBounds())
+// 			return;
+// 
+// 		const std::string& parentName = borderObject.GetName();
+// 		const UIRect contentBounds = border->GetContentRect(borderObject.GetBounds());
+// 
+// 		for (const auto& [name, child] : uiMap)
+// 		{
+// 			if (!child || !child->HasBounds())
+// 			{
+// 				continue;
+// 			}
+// 
+// 			child->SetBounds(contentBounds);
+// 		}
+// 	} // 트리 구조도 아니고 시간 없어서 안쓸것같음
+
+	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplySizeBoxOverrides(*uiObject);
+			}
+		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplyScaleBoxLayout(*uiObject, uiMap);
+			}
+		}
+	}
+}
 
 UIManager::~UIManager()
 {
@@ -80,6 +167,8 @@ void UIManager::Update(float deltaTime)
 	{
 		pair.second->Update(deltaTime);
 	}
+
+	ApplyLayoutOverrides(it->second);
 }
 
 std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, const std::string& objectName)
@@ -436,6 +525,102 @@ bool UIManager::ApplyCanvasLayout(const std::string& sceneName, const std::strin
 	return true;
 }
 
+bool UIManager::RenameUIObject(const std::string& sceneName, const std::string& oldName, const std::string& newName)
+{
+	if (oldName.empty() || newName.empty() || oldName == newName)
+	{
+		return false;
+	}
+
+	auto itScene = m_UIObjects.find(sceneName);
+	if (itScene == m_UIObjects.end())
+	{
+		return false;
+	}
+
+	auto& uiMap = itScene->second;
+	if (uiMap.find(newName) != uiMap.end())
+	{
+		return false;
+	}
+
+	auto node = uiMap.extract(oldName);
+	if (node.empty() || !node.mapped())
+	{
+		return false;
+	}
+
+	auto renamedObject = node.mapped();
+	renamedObject->SetName(newName);
+	node.key() = newName;
+	uiMap.insert(std::move(node));
+
+	for (auto& [name, uiObject] : uiMap)
+	{
+		if (!uiObject)
+		{
+			continue;
+		}
+
+		if (uiObject->GetParentName() == oldName)
+		{
+			uiObject->SetParentName(newName);
+		}
+
+		if (auto* canvas = uiObject->GetComponent<Canvas>())
+		{
+			for (auto& slot : canvas->GetSlotsRef())
+			{
+				if (slot.childName == oldName)
+				{
+					slot.childName = newName;
+				}
+			}
+		}
+
+		if (auto* horizontal = uiObject->GetComponent<HorizontalBox>())
+		{
+			for (auto& slot : horizontal->GetSlotsRef())
+			{
+				if (slot.childName == oldName)
+				{
+					slot.childName = newName;
+				}
+			}
+		}
+	}
+
+	auto updateBindings = [&](auto& bindingsByScene)
+		{
+			auto itBindings = bindingsByScene.find(sceneName);
+			if (itBindings == bindingsByScene.end())
+			{
+				return;
+			}
+
+			auto& bindings = itBindings->second;
+			if (auto itKey = bindings.find(oldName); itKey != bindings.end())
+			{
+				const std::string value = itKey->second;
+				bindings.erase(itKey);
+				bindings.emplace(newName, value);
+			}
+
+			for (auto& [key, value] : bindings)
+			{
+				if (value == oldName)
+				{
+					value = newName;
+				}
+			}
+		};
+
+	updateBindings(m_ButtonBindingsByScene);
+	updateBindings(m_SliderBindingsByScene);
+
+	return true;
+}
+
 void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 {
 	frameData.uiElements.clear();
@@ -455,6 +640,15 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		const auto& bounds = uiObject->GetBounds();
 		const int baseZOrder = uiObject->GetZOrder();
 		const auto* imageComponent = uiObject->GetComponent<UIImageComponent>();
+		auto* progressComponent = uiObject->GetComponent<UIProgressBarComponent>();
+		auto* sliderComponent = uiObject->GetComponent<UISliderComponent>();
+		auto* buttonComponent = uiObject->GetComponent<UIButtonComponent>();
+		auto* textComponent = uiObject->GetComponent<UITextComponent>();
+		const bool hasVisualElement = imageComponent || progressComponent || sliderComponent || buttonComponent;
+		if (!hasVisualElement && !textComponent)
+		{
+			continue;
+		}
 
 		auto uiComp = uiObject->GetComponent<UIComponent>();
 		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
@@ -531,7 +725,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			};
 
 
-		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
+		if (auto* progress = progressComponent)
 		{
 			appendElement(bounds, baseZOrder, nullptr);
 			auto& backgroundElement = frameData.uiElements.back();
@@ -554,7 +748,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					progress->GetFillPixelShaderHandle());
 			}
 		}
-		else if (auto* slider = uiObject->GetComponent<UISliderComponent>())
+		else if (auto* slider = sliderComponent)
 		{
 			appendElement(bounds, baseZOrder, nullptr);
 			auto& backgroundElement = frameData.uiElements.back();
@@ -601,71 +795,10 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					slider->GetHandlePixelShaderHandle());
 			}
 		}
-		else if (auto* slider = uiObject->GetComponent<UISliderComponent>())
-		{
-			appendElement(bounds, baseZOrder, nullptr);
-			auto& backgroundElement = frameData.uiElements.back();
-			applyOverrides(backgroundElement,
-				slider->GetBackgroundTextureHandle(),
-				slider->GetBackgroundShaderAssetHandle(),
-				slider->GetBackgroundVertexShaderHandle(),
-				slider->GetBackgroundPixelShaderHandle());
-
-			const float normalized = std::clamp(slider->GetNormalizedValue(), 0.0f, 1.0f);
-			if (normalized > 0.0f)
-			{
-				UIRect fillRect = buildFillRect(bounds, normalized, slider->GetFillDirection());
-				appendElement(fillRect, baseZOrder + 1, nullptr);
-				auto& fillElement = frameData.uiElements.back();
-				applyOverrides(fillElement,
-					slider->GetFillTextureHandle(),
-					slider->GetFillShaderAssetHandle(),
-					slider->GetFillVertexShaderHandle(),
-					slider->GetFillPixelShaderHandle());
-			}
-
-			const UIFillDirection fillDirection = slider->GetFillDirection();
-			const bool isVertical = fillDirection == UIFillDirection::TopToBottom
-				|| fillDirection == UIFillDirection::BottomToTop;
-
-			float handleSize = min(bounds.width, bounds.height);
-			if (slider->HasHandleSizeOverride())
-			{
-				handleSize = slider->GetHandleSizeOverride();
-			}
-
-			if (handleSize > 0.0f)
-			{
-				UIRect handleRect = bounds;
-				handleRect.width = handleSize;
-				handleRect.height = handleSize;
-				if (isVertical)
-				{
-					const float ratio = fillDirection == UIFillDirection::BottomToTop ? 1.0f - normalized : normalized;
-					handleRect.x = bounds.x + (bounds.width - handleSize) * 0.5f;
-					handleRect.y = bounds.y + bounds.height * ratio - handleSize * 0.5f;
-					handleRect.y = std::clamp(handleRect.y, bounds.y, bounds.y + bounds.height - handleSize);
-				}
-				else
-				{
-					const float ratio = fillDirection == UIFillDirection::RightToLeft ? 1.0f - normalized : normalized;
-					handleRect.x = bounds.x + bounds.width * ratio - handleSize * 0.5f;
-					handleRect.x = std::clamp(handleRect.x, bounds.x, bounds.x + bounds.width - handleSize);
-					handleRect.y = bounds.y + (bounds.height - handleSize) * 0.5f;
-				}
-				appendElement(handleRect, baseZOrder + 2, nullptr);
-				auto& handleElement = frameData.uiElements.back();
-				applyOverrides(handleElement,
-					slider->GetHandleTextureHandle(),
-					slider->GetHandleShaderAssetHandle(),
-					slider->GetHandleVertexShaderHandle(),
-					slider->GetHandlePixelShaderHandle());
-			}
-		}
-		else
+		else if (hasVisualElement)
 		{
 			appendElement(bounds, baseZOrder, imageComponent);
-			if (auto* button = uiObject->GetComponent<UIButtonComponent>())
+			if (auto* button = buttonComponent)
 			{
 				auto& element = frameData.uiElements.back();
 				if (button->HasStyleOverrides())
@@ -683,7 +816,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			}
 		}
 
-		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
+		if (auto* textComp = textComponent)
 		{
 			RenderData::UITextElement text{};
 			text.position = { bounds.x, bounds.y };
