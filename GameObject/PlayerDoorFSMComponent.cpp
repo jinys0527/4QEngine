@@ -4,12 +4,16 @@
 #include "ReflectionMacro.h"
 #include "PlayerFSMComponent.h"
 #include "Object.h"
+#include "Scene.h"
+#include "ServiceRegistry.h"
+#include "DiceSystem.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerDoorFSMComponent, FSMComponent)
 
 namespace
 {
 	constexpr int DoorCost = 1;
+	constexpr int DoorRollThreshold = 5; // 문 성공 값(이상)
 }
 
 PlayerDoorFSMComponent::PlayerDoorFSMComponent()
@@ -32,14 +36,33 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 		{
 			// 난이도 표시 UI
 			// 주사위
+			std::cout << "Door Attempt" << std::endl;
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
 			DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
+			if (confirmed && player)
+			{
+				auto* scene = owner ? owner->GetScene() : nullptr;
+				if (scene)
+				{
+					auto& services = scene->GetServices();
+
+					// 주사위 판정
+					if (services.Has<DiceSystem>())
+					{
+						auto& diceSystem = services.Get<DiceSystem>();
+						const DiceConfig rollConfig{ 1, 20, 0 };
+						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
+						player->SetDoorSuccess(roll >= DoorRollThreshold);
+					}
+				}
+			}
 		});
 	BindActionHandler("Door_Select", [this](const FSMAction& action)
 		{
 			// 안내 UI
+			std::cout << "Door Select\n";
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
@@ -57,6 +80,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 		{
 			// 이동 가능하게 바꾸기
 			// 애니메이션
+			std::cout << "Door Success" << std::endl;
 			if (auto* owner = GetOwner())
 			{
 				if (auto* player = owner->GetComponent<PlayerComponent>())
@@ -74,6 +98,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 		});
 	BindActionHandler("Door_Fail", [this](const FSMAction& action)
 		{
+			std::cout << "Door Fail" << std::endl;
 			if (auto* owner = GetOwner())
 			{
 				if (auto* player = owner->GetComponent<PlayerComponent>())

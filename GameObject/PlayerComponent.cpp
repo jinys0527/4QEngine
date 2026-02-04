@@ -23,6 +23,7 @@
 #include "DoorComponent.h"
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
+#include "PlayerDoorFSMComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -59,6 +60,14 @@ namespace
 		if (!owner || !eventName) return;
 
 		if (auto* fsm = owner->GetComponent<PlayerCombatFSMComponent>())
+			fsm->DispatchEvent(eventName);
+	}
+
+	void DispatchDoorEvent(Object* owner, const char* eventName)
+	{
+		if (!owner || !eventName) return;
+
+		if (auto* fsm = owner->GetComponent<PlayerDoorFSMComponent>())
 			fsm->DispatchEvent(eventName);
 	}
 }
@@ -286,7 +295,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
@@ -332,13 +340,18 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			return;
 		}
+		
+		std::cout << clickedNode->GetQ() << ", " << clickedNode->GetR() << std::endl; // 클릭된 Node Debug
 
 		if (!clickedNode->GetIsMoveable())
 		{
+
 			if (auto* door = clickedNode->GetLinkedDoor())
 			{
+				std::cout << "Door Evenet Detected" << std::endl;
 				m_PendingDoor = door;
 				DispatchPlayerStateEvent(owner, "Door_Interact");
+				
 				mouseData->handled = true;
 				return;
 			}
