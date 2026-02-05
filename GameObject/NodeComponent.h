@@ -56,7 +56,10 @@ public:
 
 	void SetInMoveRange(bool isInMoveRange) { m_IsInMoveRange = isInMoveRange; }
 	bool IsInMoveRange() const { return m_IsInMoveRange; }
+	void SetInThrowRange(bool isInThrowRange) { m_IsInThrowRange = isInThrowRange; }
+	bool IsInThrowRange() const { return m_IsInThrowRange; }
 	void SetMoveRangeHighlight(float intensity, bool enabled);
+	void SetThrowRangeHighlight(float intensity, bool enabled);
 	void SetSightHighlight(float intensity, bool enabled);
 	void ClearHighlights();
 
@@ -73,12 +76,15 @@ private:
 	bool m_IsMoveable = true;	  //장애물 있으면 Editor에서 배치할때 false로 설정하기
 	bool m_IsSight = true; // 적 시야 판별 / false = 적 시야가 넘어가서 볼 수 없음 (벽 타일)
 	bool m_IsInMoveRange = false; // 이동가능 범위에 있는지
+	bool m_IsInThrowRange = false;	//던지는 범위에 있는지
 	//Read Only Property
 	NodeState m_State = NodeState::Empty;
 	bool m_UsingMoveRangeHighlight = false;
+	bool m_UsingThrowRangeHighlight = false;
 
 	bool m_UsingSightHighlight = false;
 	float m_MoveHighlightIntensity = 0.0f;
+	float m_ThrowHighlightIntensity = 0.0f;
 	float m_SightHighlightIntensity = 0.0f;
 
 	bool m_HasBaseMaterial = false;

@@ -258,6 +258,7 @@ void PlayerComponent::Update(float deltaTime) {
 	auto* gameManager = scene->GetGameManager();
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 
+	BeginThrowPreview();
 
 	//아이템 장착 테스트
 	if (m_DebugEquipItem)
@@ -294,22 +295,22 @@ void PlayerComponent::Update(float deltaTime) {
 
 
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
-	auto* transformcomponent = owner->GetComponent<TransformComponent>();
-	{
-		if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
-		{
-			GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
-			auto* itemcomp = item->GetComponent<ItemComponent>();
-			if (itemcomp && itemcomp->GetType() == 1)
-			{
-				m_MeeleItem = item;
-				itemcomp->SetIsEquiped(true);
-				m_InventoryItemIds.push_back(item->GetName());
+	//auto* transformcomponent = owner->GetComponent<TransformComponent>();
+	//{
+	//	if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
+	//	{
+	//		GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+	//		auto* itemcomp = item->GetComponent<ItemComponent>();
+	//		if (itemcomp && itemcomp->GetType() == 1)
+	//		{
+	//			m_MeeleItem = item;
+	//			itemcomp->SetIsEquiped(true);
+	//			m_InventoryItemIds.push_back(item->GetName());
 
-			}
-		}
+	//		}
+	//	}
 
-	}
+	//}
 
 	//근접 아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
 	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
@@ -388,16 +389,29 @@ void PlayerComponent::Update(float deltaTime) {
 				}
 			}
 		}
-		XMMATRIX pose = XMLoadFloat4x4(&equipmentPose);
-		XMVECTOR translation = pose.r[3];
-		XMMATRIX scale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-		pose = XMMatrixMultiply(pose, scale);
-		pose.r[3] = translation;
-		XMStoreFloat4x4(&equipmentPose, pose);
 
-		itemcomponent->SetEquipmentBindPose(equipmentPose);
+		// equipment 본 포즈 로드
+		XMMATRIX equipmentM = XMLoadFloat4x4(&equipmentPose);
 
+		// 스케일 적용 (회전 보존)
+		XMMATRIX scaleM = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+		equipmentM = XMMatrixMultiply(scaleM, equipmentM);
+
+		// 플레이어 월드 행렬
+		auto* playerTransform = owner->GetComponent<TransformComponent>();
+		if (!playerTransform) return;
+
+		XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
+
+		// ⭐ 로컬 → 월드 (중요)
+		XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
+
+		XMFLOAT4X4 finalPose;
+		XMStoreFloat4x4(&finalPose, finalM);
+
+		// 최종 적용
+		itemcomponent->SetEquipmentBindPose(finalPose);
 	}
 }
 
@@ -618,6 +632,38 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		}
 	}
 
+	if (type == EventType::MouseRightClickHold)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+		if (gameManager && !gameManager->IsExplorationInputAllowed())
+		{
+			return;
+		}
+
+		BeginThrowPreview();
+		return;
+	}
+
+	if (type == EventType::MouseRightClickUp)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		EndThrowPreview();
+		return;
+	}
+
 	if (type != EventType::TurnChanged || !data)
 	{
 		return;
@@ -635,6 +681,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	{
 		ResetTurnResources();
 	}
+	else
+	{
+		EndThrowPreview();
+	}
 }
 
 // 행동,이동력 초기화 // turn 초기화
@@ -645,6 +695,7 @@ void PlayerComponent::ResetTurnResources()
 	m_HasMoveStart = false;
 	m_CombatConfirmRequested = false;
 	m_SelectedEnemy = nullptr;
+	EndThrowPreview();
 	ResetSubFSMFlags();
 }
 
@@ -993,6 +1044,71 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 	return value;
 }
 
+bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
+{
+	int bestRange = -1;
+	for (const auto* itemObject : m_ConsumableItem)
+	{
+		if (!itemObject)
+		{
+			continue;
+		}
+
+		const auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			continue;
+		}
+
+		bestRange = max(bestRange, itemComponent->GetThrowRange());
+	}
+
+	if (bestRange <= 0)
+	{
+		return false;
+	}
+
+	outRange = bestRange;
+	return true;
+}
+
+void PlayerComponent::BeginThrowPreview()
+{
+	if (m_IsThrowPreviewActive)
+	{
+		return;
+	}
+
+	if (!m_GridSystem)
+	{
+		return;
+	}
+
+	int range = 0;
+	if (!TryGetConsumableThrowRange(range))
+	{
+		return;
+	}
+
+	m_IsThrowPreviewActive = true;
+	m_ThrowPreviewRange = range;
+	m_GridSystem->SetThrowRangePreview(true, range);
+}
+
+void PlayerComponent::EndThrowPreview()
+{
+	if (!m_IsThrowPreviewActive)
+	{
+		return;
+	}
+
+	m_IsThrowPreviewActive = false;
+	m_ThrowPreviewRange = 0;
+	if (m_GridSystem)
+	{
+		m_GridSystem->SetThrowRangePreview(false, 0);
+	}
+}
 
 bool PlayerComponent::TryPickup(ItemComponent* item)
 {

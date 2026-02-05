@@ -97,6 +97,9 @@ private:
 	bool TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent*& outNode) const;
 	bool ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode);
 	void ClearPendingPush();
+	bool TryGetConsumableThrowRange(int& outRange) const;
+	void BeginThrowPreview();
+	void EndThrowPreview();
 	// 외부지정 가능
 	// 이동력, 행동력
 	int m_MoveResource = 3; // 초기설정
@@ -143,6 +146,8 @@ private:
 	bool m_ShopHasMoney = true;
 	bool m_IsMeleeMode = false;
 	bool m_DebugEquipItem = false;
+	bool m_IsThrowPreviewActive = false;
+	int m_ThrowPreviewRange = 0;
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장

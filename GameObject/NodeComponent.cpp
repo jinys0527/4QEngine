@@ -118,6 +118,13 @@ void NodeComponent::SetMoveRangeHighlight(float intensity, bool enabled)
 	ApplyHighlight();
 }
 
+void NodeComponent::SetThrowRangeHighlight(float intensity, bool enabled)
+{
+	m_UsingThrowRangeHighlight = enabled;
+	m_ThrowHighlightIntensity = intensity;
+	ApplyHighlight();
+}
+
 void NodeComponent::SetSightHighlight(float intensity, bool enabled)
 {
 	m_UsingSightHighlight = enabled;
@@ -129,6 +136,8 @@ void NodeComponent::ClearHighlights()
 {
 	m_UsingMoveRangeHighlight = false;
 	m_MoveHighlightIntensity = 0.0f;
+	m_UsingThrowRangeHighlight = false;
+	m_ThrowHighlightIntensity = 0.0f;
 	m_UsingSightHighlight = false;
 	m_SightHighlightIntensity = 0.0f;
 	ApplyHighlight();
@@ -161,7 +170,7 @@ void NodeComponent::ApplyHighlight()
 		m_HasBaseMaterial = true;
 	}
 
-	if (!m_UsingMoveRangeHighlight && !m_UsingSightHighlight)
+	if (!m_UsingMoveRangeHighlight && !m_UsingThrowRangeHighlight && !m_UsingSightHighlight) 
 	{
 		m_Material->SetOverrides(m_BaseMaterialOverrides);
 	/*	m_LastAppliedOverrides = m_BaseMaterialOverrides;
@@ -175,8 +184,10 @@ void NodeComponent::ApplyHighlight()
 		m_HasBaseMaterial = true;
 	}*/
 	const float moveIntensity = m_UsingMoveRangeHighlight ? std::clamp(m_MoveHighlightIntensity, 0.0f, 1.0f) : 0.0f;
+	const float throwIntensity = m_UsingThrowRangeHighlight ? std::clamp(m_ThrowHighlightIntensity, 0.0f, 1.0f) : 0.0f;
 	const float sightIntensity = m_UsingSightHighlight ? std::clamp(m_SightHighlightIntensity, 0.0f, 1.0f) : 0.0f;
-	const float total = moveIntensity + sightIntensity;
+	const float moveTotal = moveIntensity + throwIntensity;
+	const float total = moveTotal + sightIntensity;
 	const float combinedIntensity = std::clamp(total, 0.0f, 1.0f);
 	RenderData::MaterialData overrides = m_BaseMaterialOverrides;
 	const auto& baseColor = m_BaseMaterialOverrides.baseColor;
@@ -186,7 +197,7 @@ void NodeComponent::ApplyHighlight()
 	DirectX::XMFLOAT4 blendedColor = moveColor;
 	if (total > 0.0f)
 	{
-		const float moveWeight = moveIntensity / total;
+		const float moveWeight = moveTotal / total;
 		const float sightWeight = sightIntensity / total;
 		blendedColor.x = moveColor.x * moveWeight + sightColor.x * sightWeight;
 		blendedColor.y = moveColor.y * moveWeight + sightColor.y * sightWeight;
