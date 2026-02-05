@@ -1,4 +1,4 @@
-﻿﻿#include "InitiativeUIComponent.h"
+﻿#include "InitiativeUIComponent.h"
 #include "EnemyComponent.h"
 #include "EnemyStatComponent.h"
 #include "HorizontalBox.h"

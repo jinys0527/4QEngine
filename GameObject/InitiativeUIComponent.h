@@ -26,13 +26,6 @@ public:
 
 	void		 SetScale(const float& scale);
 	const float& GetScale() const { return m_Scale; }
-
-	void				 SetPlayerIconTexture(const TextureHandle& handle) { m_PlayerIconTexture = handle; }
-	const TextureHandle& GetPlayerIconTexture() const					   { return m_PlayerIconTexture;   }
-
-	void				 SetEnemyIconTexture(const TextureHandle& handle)  { m_EnemyIconTexture = handle;  }
-	const TextureHandle& GetEnemyIconTexture() const					   { return m_EnemyIconTexture;    }
-
 	void				 SetDeadIconTexture(const TextureHandle& handle)   { m_DeadIconTexture = handle;   }
 	const TextureHandle& GetDeadIconTexture() const						   { return m_DeadIconTexture;	   }
 
