@@ -2,7 +2,8 @@
 
 #include "DX11.h"
 
-
+BOOL g_bVSync = FALSE;
+BOOL g_bAllowTearing = FALSE;
 
 
 
@@ -25,13 +26,16 @@ int ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11Rende
     return 0;
 }
 
-int Flip(IDXGISwapChain* swapchain, bool vsync)
+int Flip(IDXGISwapChain* swapchain)
 {
-    UINT syncInterval = vsync ? 1 : 0;
-    UINT flags = (!vsync) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
-    swapchain->Present(syncInterval, flags);
-
+    const UINT syncInterval = g_bVSync ? 1u : 0u;
+    UINT presentFlags = 0;
+    if (!g_bVSync && g_bAllowTearing)
+    {
+        presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+    }
+    swapchain->Present(syncInterval, presentFlags);
 
     return 0;
 }

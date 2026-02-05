@@ -8,6 +8,7 @@
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <dxgi1_5.h>
 
 #include <wrl/client.h>
 #include <memory>
@@ -162,6 +163,7 @@ struct TextureSize { int width, height; };
 
 
 extern	BOOL 		g_bVSync;
+extern	BOOL 		g_bAllowTearing;
 extern int g_MonitorWidth;
 extern int g_MonitorHeight;
 
@@ -171,7 +173,7 @@ extern int g_MonitorHeight;
 
 int		ClearBackBuffer(COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview);
 int		ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview, float depth = 1.0f, UINT stencil = 0);
-int Flip(IDXGISwapChain* swapchain, bool vsync);
+int Flip(IDXGISwapChain* swapchain);
 
 
 #pragma region 버퍼 운용함수

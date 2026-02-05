@@ -44,45 +44,129 @@ namespace
 
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
 
-void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height)
+void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc)
 {
 	if (m_bIsInitialized)
 		return;
 
-	m_RenderContext.vertexBuffers = &m_VertexBuffers;
-	m_RenderContext.indexBuffers = &m_IndexBuffers;
-	m_RenderContext.indexCounts = &m_IndexCounts;
+	m_WindowSize.width = width;		m_WindowSize.height = height;
 
-	// Device 생성을 여기서함 (원래는 engine에서 받는 거)
-	//DXSetup(hWnd, width, height, m_pDXDC.Get()); // 멤버함수로 교체
+	m_pDevice = device;
+	m_pDXDC = dxdc;
+
+	DXSetup(hWnd, width, height);
+	SetupText();
+
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
+	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
+
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
 
-	//CreateInputLayout(m_pDevice.Get(), m_pVSCode.Get(), m_pInputLayout.GetAddressOf());
+	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_PS_POS.hlsl"), m_pPS_P.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Frustum_PS.hlsl"), m_pPS_Frustum.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/UI_VS.hlsl"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/UI_PS.hlsl"), m_pPS_UI.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Post_VS.hlsl"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Post_PS.hlsl"), m_pPS_Post.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_MakeShadow_VS.hlsl"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadow_PS.hlsl"), m_pPS_MakeShadow.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.hlsl"), m_pPS_MakeShadow_Transparent.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
+
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
 
 
-	InitVB(frame);// 멤버함수로 교체
-	InitIB(frame);// 멤버함수로 교체
+	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
+
+	CreateInputLayout();
+
+	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<WallPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<EmissivePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<UIPass>(m_RenderContext, m_AssetLoader));
+	CreateConstBuffer();
 
-	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
-	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(SkinningConstBuffer), m_RenderContext.pSkinCB.GetAddressOf());
-	//이 아래는 확인용
-	//ClearBackBuffer(COLOR(0, 0, 1, 1));
 
-	//Flip();
-	m_RenderContext.VS = m_pVS;
-	m_RenderContext.PS = m_pPS;
-	m_RenderContext.InputLayout = m_pInputLayout;
+	InitTexture();
+	InitShaders();
+
+	//블러 테스트
+	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
+	hr = S_OK;
+	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+		nullptr, m_Vignetting.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+		nullptr, m_SkyBox.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
+	filename = L"../MRenderer/fx/WaterNoise.jpg";
+	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+		nullptr, m_WaterNoise.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+	}
+
+
 
 	//그리드
 	CreateGridVB();
 	const int gridSize = m_HalfCells * 2 + 1;
 	m_GridFlags.assign(gridSize, std::vector<int>(gridSize, 0));
 
+	//Quad
+	CreateQuadVB();
+	CreateQuadIB();
+	CreateUIWhiteTexture();
 
+
+	CreateContext();		//마지막에 실행
 
 	m_bIsInitialized = true;
 }
@@ -136,8 +220,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+	//LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	//LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
 
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
@@ -875,6 +962,47 @@ HRESULT Renderer::LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppP
 	return hr;
 }
 
+HRESULT Renderer::LoadVertexShaderCSO(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode)
+{
+	HRESULT hr = D3DReadFileToBlob(filename, ppVSCode);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+
+	}
+
+	hr = m_pDevice->CreateVertexShader(
+		(*ppVSCode)->GetBufferPointer(),
+		(*ppVSCode)->GetBufferSize(),
+		nullptr,
+		ppVS);
+
+	return hr;
+}
+
+HRESULT Renderer::LoadPixelShaderCSO(const TCHAR* filename, ID3D11PixelShader** ppPS)
+{
+	ID3DBlob* pCode = nullptr;
+
+	HRESULT hr = D3DReadFileToBlob(filename, &pCode);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+
+	}
+
+	hr = m_pDevice->CreatePixelShader(
+		pCode->GetBufferPointer(),
+		pCode->GetBufferSize(),
+		nullptr,
+		ppPS);
+
+	SafeRelease(pCode);
+	return hr;
+}
+
 HRESULT Renderer::TexturesLoad(const RenderData::TextureData* texData, const wchar_t* filename, ID3D11ShaderResourceView** textureRV)
 {
 	HRESULT hr = S_OK;
@@ -1566,7 +1694,8 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 	ReleaseScreenSizeResource();
 
 	// 3.SwapChain ResizeBuffers 호출
-	hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	const UINT swapChainFlags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+	hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, swapChainFlags);
 	if (FAILED(hr))
 	{
 		ERROR_MSG_HR(hr);
@@ -1631,37 +1760,80 @@ void Renderer::DXSetup(HWND hWnd, int width, int height)
 
 HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
 {
+	//HRESULT hr = S_OK;
+	//DXGI_SWAP_CHAIN_DESC sd = {};
+	//sd.BufferCount = 1;
+	//sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	//sd.OutputWindow = hWnd;
+	//sd.SampleDesc.Count = 1;
+	//sd.Windowed = TRUE;
 
+	//UINT flags = D3D11_CREATE_DEVICE_DEBUG;
+	//hr = D3D11CreateDeviceAndSwapChain(
+	//	nullptr,
+	//	D3D_DRIVER_TYPE_HARDWARE,
+	//	nullptr,
+	//	D3D11_CREATE_DEVICE_DEBUG,
+	//	nullptr, 0,
+	//	D3D11_SDK_VERSION,
+	//	&sd,
+	//	m_pSwapChain.GetAddressOf(),
+	//	m_pDevice.GetAddressOf(),
+	//	nullptr,
+	//	m_pDXDC.GetAddressOf()
+	//);
+
+	//if (FAILED(hr))
+	//{
+	//	ERROR_MSG(hr);
+	//	return hr;
+	//}
+
+	//위는 device와 swapchain 동시 생성
 	ComPtr<IDXGIDevice> dxgiDevice;
-	m_pDevice.As(&dxgiDevice);
+	m_pDevice->QueryInterface(__uuidof(IDXGIDevice), &dxgiDevice);
 
 	ComPtr<IDXGIAdapter> adapter;
 	dxgiDevice->GetAdapter(&adapter);
 
-	ComPtr<IDXGIFactory2> factory;
-	adapter->GetParent(IID_PPV_ARGS(&factory));
+	ComPtr<IDXGIFactory> factory;
+	adapter->GetParent(__uuidof(IDXGIFactory), &factory);
 
-	DXGI_SWAP_CHAIN_DESC1 desc = {};
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	desc.BufferCount = 3;
-	desc.SampleDesc.Count = 1;
-	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+	g_bAllowTearing = FALSE;
+	if (factory)
+	{
+		ComPtr<IDXGIFactory5> factory5;
+		if (SUCCEEDED(factory.As(&factory5)))
+		{
+			BOOL allowTearing = FALSE;
+			if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
+			{
+				g_bAllowTearing = allowTearing;
+			}
+		}
+	}
 
-	ComPtr<IDXGISwapChain1> swapChain1;
-	factory->CreateSwapChainForHwnd(
-		m_pDevice.Get(),
-		hWnd,
-		&desc,
-		nullptr,
-		nullptr,
-		&swapChain1
-	);
+	HRESULT hr = S_OK;
+	DXGI_SWAP_CHAIN_DESC sd = {};
+	sd.BufferCount = 2;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.OutputWindow = hWnd;
+	sd.SampleDesc.Count = 1;
+	sd.Windowed = TRUE;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	sd.Flags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
 
-	swapChain1.As(&m_pSwapChain);
+	hr = factory->CreateSwapChain(m_pDevice.Get(), &sd, m_pSwapChain.GetAddressOf());
 
-	return S_OK;
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	return hr;
 }
 
 HRESULT Renderer::CreateRenderTarget()
@@ -1904,7 +2076,8 @@ void Renderer::RecreateForAASampleChange(int width, int height, DWORD sampleCoun
 	ReleaseScreenSizeResource();
 
 	// 3. SwapChain ResizeBuffers 호출 (샘플 수 변경 시 백버퍼 재생성)
-	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	const UINT swapChainFlags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, swapChainFlags);
 
 	// 4. 새 BackBuffer 획득 & RTV 재생성
 	CreateRenderTarget();
