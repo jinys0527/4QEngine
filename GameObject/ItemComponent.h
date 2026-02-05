@@ -12,6 +12,13 @@ enum class ItemType
 	TYPE_MAX
 };
 
+enum class ItemPickupState
+{
+	World,
+	PickingUp,
+	Owned
+};
+
 class ItemComponent : public Component
 {
 public:
@@ -24,6 +31,10 @@ public:
 	void Start() override;
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
+
+	bool RequestPickup(Object* picker);
+	void CompletePickup(Object* picker);
+	ItemPickupState GetPickupState() const { return m_PickupState; }
 
 	const int& GetItemIndex() const { return m_ItemIndex; }
 	void SetItemIndex(const int& value) { m_ItemIndex = value; }
@@ -95,6 +106,9 @@ private:
 	float m_BobTime = 0.0f;
 
 	int m_ItemIndex				= -1;
+
+	ItemPickupState m_PickupState = ItemPickupState::World;
+	Object* m_PickupOwner = nullptr;
 
 	bool m_IsEquiped			= false;
 	int m_Type					= -1;

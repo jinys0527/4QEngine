@@ -45,6 +45,7 @@ void ItemComponent::Start()
 {
 	XMStoreFloat4x4(&m_EquipmentBindPose, XMMatrixIdentity());
 
+	m_IsEquiped = false;
 }
 
 void ItemComponent::Update(float deltaTime)
@@ -103,6 +104,29 @@ void ItemComponent::Update(float deltaTime)
 
 void ItemComponent::OnEvent(EventType type, const void* data)
 {
+}
+
+bool ItemComponent::RequestPickup(Object* picker)
+{
+	if (m_PickupState != ItemPickupState::World)
+	{
+		return false;
+	}
+
+	m_PickupState = ItemPickupState::PickingUp;
+	m_PickupOwner = picker;
+	return true;
+}
+
+void ItemComponent::CompletePickup(Object* picker)
+{
+	if (m_PickupState != ItemPickupState::PickingUp)
+	{
+		return;
+	}
+
+	m_PickupState = ItemPickupState::Owned;
+	m_PickupOwner = picker;
 }
 
 void ItemComponent::SelfRotate(float deltaTime)
