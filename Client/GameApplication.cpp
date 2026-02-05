@@ -30,7 +30,7 @@ bool GameApplication::Initialize()
 	m_SoundManager->Init();
 
 	OnResize(m_width, m_height);
-	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_Renderer.Initialize(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
 

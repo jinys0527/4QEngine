@@ -1,36 +1,37 @@
 #include "BaseBuffer.hlsl"
 #include "Lights.hlsl"
 
-float ComputeMaskAlpha(float4 worldPos, float depth, float2 UV)
+float ComputeMaskAlpha(float4 worldPos, float depth, float2 screenUV)
 {
     float alpha = 1.0f;
-    
 
-    // ===== projector 앞/뒤 판별 =====
-    float4 projPos = mul(worldPos, playerMask);
+    float4 uvp = mul(worldPos, playerMask);
 
-    // 투영 카메라 뒤면 바로 제거
-    if (projPos.w <= 0.0f)
-        return 1.0f; // 또는 0.0f (의도에 따라)
-    
+    // uvp.w가 0 근처면 폭주하니 보호
+    float zOverW = uvp.z / max(abs(uvp.w), 1e-4f);
 
-    {
-        float4 uv = mul(worldPos, playerMask);
-        float4 tex = Masking(uv);
-        alpha *= tex.a;
-    }
+    // 기존 0.01f 컷을 "부드럽게"
+    // (0.01 근처에서 0→1로 전환)
+    float gate = smoothstep(0.01f - 0.02f, 0.01f + 0.02f, zOverW);
+
+    // 추가 꼼수: 화면 y로 슬라이스 bias(원하면)
+    float slice = floor(screenUV.y * 6.0f);
+    gate = saturate(gate + slice * 0.03f); // 0.03은 약하게 시작
+
+    float4 tex = Masking(uvp);
+    alpha *= lerp(1.0f, tex.a, gate);
 
     [loop]
     for (int i = 0; i < 16; ++i)
     {
-        float4 uv = mul(worldPos, enemyMask[i]);
-        float4 tex = Masking(uv);
-        alpha *= tex.a;
+        float4 uve = mul(worldPos, enemyMask[i]);
+        float4 t = Masking(uve);
+        alpha *= t.a;
     }
 
-    
     return saturate(alpha);
 }
+
 
 
 float4 PS_Main(VSOutput_Wall input) : SV_Target
@@ -177,6 +178,6 @@ float4 PS_Main(VSOutput_Wall input) : SV_Target
     col.a *= maskAlpha;
     
     col.rgb = LinearToSRGB(col.rgb);
-    
+        
     return col;
 }
