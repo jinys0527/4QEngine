@@ -45,7 +45,8 @@ void DoorComponent::OpenDoor()
 	if (m_IsOpen) { return; }
 
 	if (m_Node) {
-		m_Node->SetIsMoveable(true);
+		m_Node->SetIsMoveable(true); // 노드열기
+		m_Node->SetIsSight(true);    // 노드시야 열기
 	}
 
 	if (m_AnimFsm) {
