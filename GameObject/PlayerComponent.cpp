@@ -34,11 +34,13 @@ REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
 REGISTER_PROPERTY_READONLY(PlayerComponent, R)
 REGISTER_PROPERTY(PlayerComponent, MoveResource)
+REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
 REGISTER_PROPERTY(PlayerComponent, ActResource)
+REGISTER_PROPERTY_READONLY(PlayerComponent, RemainActResource)
 REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
 REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
-REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
+
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
 
