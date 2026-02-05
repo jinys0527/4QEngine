@@ -58,7 +58,10 @@ void DefaultScene::Leave()
 
 void DefaultScene::FixedUpdate()
 {
-
+	if (GetIsPause())
+	{
+		return;
+	}
 	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)
@@ -70,6 +73,11 @@ void DefaultScene::FixedUpdate()
 
 void DefaultScene::Update(float deltaTime)
 {	
+
+	if (GetIsPause())
+	{
+		return;
+	}
 	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)
