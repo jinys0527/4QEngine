@@ -1194,7 +1194,8 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		return false;
 	}
 
-	constexpr float kPickupRadius = 1.4f;
+	//획득 반경
+	constexpr float kPickupRadius = 1.5f;
 	auto* itemTransform = itemObject->GetComponent<TransformComponent>();
 	auto* playerTransform = owner->GetComponent<TransformComponent>();
 	if (itemTransform && playerTransform)

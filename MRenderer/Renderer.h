@@ -371,7 +371,6 @@ private:
 
 		// 4. SpriteBatch 실행
 		// SpriteBatch가 자체적으로 InputLayout, BlendState, DepthStencil 등을 설정하도록 둠
-		OutputDebugStringA("Before SpriteBatch Begin\n");
 		m_SpriteBatch->Begin();
 
 
@@ -384,7 +383,6 @@ private:
 		);
 
 		m_SpriteBatch->End();
-		OutputDebugStringA("After End\n");
 	}
 
 };
