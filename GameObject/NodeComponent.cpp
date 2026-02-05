@@ -193,15 +193,29 @@ void NodeComponent::ApplyHighlight()
 	const auto& baseColor = m_BaseMaterialOverrides.baseColor;
 	const DirectX::XMFLOAT4 moveColor{ 0.2f, 1.0f, 0.2f, baseColor.w };
 	const DirectX::XMFLOAT4 sightColor{ 1.0f, 0.2f, 0.2f, baseColor.w };
+	const DirectX::XMFLOAT4 throwColor{ 0.2f, 0.2f, 1.0f, baseColor.w };
 
 	DirectX::XMFLOAT4 blendedColor = moveColor;
 	if (total > 0.0f)
 	{
 		const float moveWeight = moveTotal / total;
+		const float throwWeight = throwIntensity / total;
 		const float sightWeight = sightIntensity / total;
-		blendedColor.x = moveColor.x * moveWeight + sightColor.x * sightWeight;
-		blendedColor.y = moveColor.y * moveWeight + sightColor.y * sightWeight;
-		blendedColor.z = moveColor.z * moveWeight + sightColor.z * sightWeight;
+		blendedColor.x =
+			moveColor.x * moveWeight +
+			throwColor.x * throwWeight +
+			sightColor.x * sightWeight;
+
+		blendedColor.y =
+			moveColor.y * moveWeight +
+			throwColor.y * throwWeight +
+			sightColor.y * sightWeight;
+
+		blendedColor.z =
+			moveColor.z * moveWeight +
+			throwColor.z * throwWeight +
+			sightColor.z * sightWeight;
+
 		blendedColor.w = baseColor.w;
 	}
 

@@ -145,6 +145,7 @@ private:
 	bool m_ShopHasSpace = true;
 	bool m_ShopHasMoney = true;
 	bool m_IsMeleeMode = false;
+	bool m_IsThrowMode = true;
 	bool m_DebugEquipItem = false;
 	bool m_IsThrowPreviewActive = false;
 	int m_ThrowPreviewRange = 0;

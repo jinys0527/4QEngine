@@ -323,9 +323,6 @@ void PlayerComponent::Update(float deltaTime) {
 
 	auto* gameManager = scene->GetGameManager();
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
-
-	BeginThrowPreview();
-
 	//아이템 장착 테스트
 
 
@@ -396,6 +393,11 @@ void PlayerComponent::Update(float deltaTime) {
 
 			m_IsApplyMeeleStat = true;
 		}
+	}
+
+	if (m_IsThrowMode)
+	{
+		BeginThrowPreview();
 	}
 	
 	//근접 무기 모드면 근접무기 들기
