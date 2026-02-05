@@ -5,6 +5,7 @@
 #include "Object.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
+#include <algorithm>
 
 #include "ItemComponent.h"
 
@@ -59,6 +60,29 @@ void ItemComponent::Update(float deltaTime)
 	auto* transform = owner->GetComponent<TransformComponent>();
 	if (!transform)
 	{
+		return;
+	}
+
+	if (m_IsThrown)
+	{
+		m_ThrowElapsed += deltaTime;
+		const float duration = m_ThrowDuration > 0.0f ? m_ThrowDuration : 0.001f;
+		const float t = std::clamp(m_ThrowElapsed / duration, 0.0f, 1.0f);
+		const XMFLOAT3 pos{
+			m_ThrowStart.x + (m_ThrowTarget.x - m_ThrowStart.x) * t,
+			m_ThrowStart.y + (m_ThrowTarget.y - m_ThrowStart.y) * t,
+			m_ThrowStart.z + (m_ThrowTarget.z - m_ThrowStart.z) * t
+		};
+		transform->SetPosition(pos);
+
+		if (t >= 1.0f)
+		{
+			if (auto* scene = owner->GetScene())
+			{
+				scene->QueueGameObjectRemoval(owner->GetName());
+			}
+		}
+
 		return;
 	}
 
@@ -127,6 +151,23 @@ void ItemComponent::CompletePickup(Object* picker)
 
 	m_PickupState = ItemPickupState::Owned;
 	m_PickupOwner = picker;
+}
+
+void ItemComponent::BeginThrow(const XMFLOAT3& start, const XMFLOAT3& target, float duration)
+{
+	m_IsEquiped = false;
+	m_IsThrown = true;
+	m_ThrowElapsed = 0.0f;
+	m_ThrowDuration = duration > 0.0f ? duration : 0.001f;
+	m_ThrowStart = start;
+	m_ThrowTarget = target;
+	if (auto* owner = GetOwner())
+	{
+		if (auto* transform = owner->GetComponent<TransformComponent>())
+		{
+			transform->SetPosition(start);
+		}
+	}
 }
 
 void ItemComponent::SelfRotate(float deltaTime)

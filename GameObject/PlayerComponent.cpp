@@ -29,6 +29,7 @@
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
+#include "DiceSystem.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -59,6 +60,24 @@ namespace
 		const float dz = a.z - b.z;
 		return dx * dx + dz * dz;
 	}
+
+	GameObject* FindGameObjectByName(Scene* scene, const std::string& name)
+	{
+		if (!scene || name.empty())
+		{
+			return nullptr;
+		}
+
+		const auto& objects = scene->GetGameObjects();
+		auto it = objects.find(name);
+		if (it == objects.end())
+		{
+			return nullptr;
+		}
+
+		return it->second.get();
+	}
+
 
 	NodeComponent* FindClosestNodeByPosition(GridSystemComponent* grid, const XMFLOAT3& position)
 	{
@@ -394,11 +413,6 @@ void PlayerComponent::Update(float deltaTime) {
 			m_IsApplyMeeleStat = true;
 		}
 	}
-
-	if (m_IsThrowMode)
-	{
-		BeginThrowPreview();
-	}
 	
 	//근접 무기 모드면 근접무기 들기
 	if (/*m_IsMeleeMode && */m_MeeleItem != nullptr)
@@ -534,6 +548,12 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		}
 		hitT = 0.0f;
 
+
+		BeginThrowPreview();
+
+
+
+
 		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
 		if (!clickedNode)
 		{
@@ -568,8 +588,29 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		const int range = max(0, m_AttackRange);
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+		if (m_IsThrowPreviewActive)
+		{
+			int throwRange = 0;
+			ItemComponent* throwItem = nullptr;
+			if (TryGetConsumableThrowRange(throwRange) && TryGetConsumableThrowItem(throwItem))
+			{
+				if (distance <= throwRange && ApplyThrowDamage(throwItem, enemy))
+				{
+					auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+					auto* enemyOwner = enemy->GetOwner();
+					auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
+					const XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
+					const XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
+					throwItem->BeginThrow(startPos, targetPos);
+					ConsumeThrowItem(throwItem);
+					mouseData->handled = true;
+					return;
+				}
+			}
+		}
+
+		const int range = max(0, m_AttackRange);
 		if (distance > range)
 		{
 			return;
@@ -589,6 +630,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			}
 		}
 		
+
 		return;
 	}
 
@@ -714,7 +756,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		BeginThrowPreview();
+		
 		return;
 	}
 
@@ -1112,9 +1154,12 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 
 bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 {
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
 	int bestRange = -1;
-	for (const auto* itemObject : m_ConsumableItem)
+	for (const auto& itemName : m_ConsumableItemNames) 
 	{
+		auto* itemObject = FindGameObjectByName(scene, itemName);
 		if (!itemObject)
 		{
 			continue;
@@ -1122,6 +1167,11 @@ bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 
 		const auto* itemComponent = itemObject->GetComponent<ItemComponent>();
 		if (!itemComponent)
+		{
+			continue;
+		}
+
+		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
 		{
 			continue;
 		}
@@ -1136,6 +1186,138 @@ bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 
 	outRange = bestRange;
 	return true;
+}
+
+bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	outItem = nullptr;
+	int bestRange = -1;
+	for (const auto& itemName : m_ConsumableItemNames)
+	{
+		auto* itemObject = FindGameObjectByName(scene, itemName);
+		if (!itemObject)
+		{
+			continue;
+		}
+
+		auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			continue;
+		}
+
+		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		{
+			continue;
+		}
+
+		const int range = itemComponent->GetThrowRange();
+		if (range > bestRange)
+		{
+			bestRange = range;
+			outItem = itemComponent;
+		}
+	}
+
+	return outItem != nullptr && bestRange > 0;
+}
+
+bool PlayerComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy)
+{
+	if (!throwItem || !enemy)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* enemyOwner = enemy->GetOwner();
+	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+	if (!enemyStat)
+	{
+		return false;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<DiceSystem>())
+	{
+		return false;
+	}
+
+	auto& diceSystem = services.Get<DiceSystem>();
+	const int diceCount = max(0, throwItem->GetDiceRoll());
+	const int diceSides = max(0, throwItem->GetDiceType());
+	const int bonus = max(0, throwItem->GetBaseModifier());
+	int damage = bonus;
+
+	if (diceCount > 0 && diceSides > 0)
+	{
+		const DiceConfig rollConfig{ diceCount, diceSides, 0 };
+		damage += diceSystem.RollTotal(rollConfig, RandomDomain::World);
+	}
+
+	if (damage <= 0)
+	{
+		return false;
+	}
+
+	const int prevHp = enemyStat->GetCurrentHP();
+	const int nextHp = max(0, prevHp - damage);
+	enemyStat->SetCurrentHP(nextHp);
+	std::cout << "[Throw] Damage=" << damage << " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+	return true;
+}
+
+void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
+{
+	if (!throwItem)
+	{
+		return;
+	}
+
+	auto* itemOwner = throwItem->GetOwner();
+	const std::string itemName = itemOwner ? itemOwner->GetName() : std::string{};
+	for (auto& slotName : m_ConsumableItemNames)
+	{
+		if (!slotName.empty() && slotName == itemName)
+		{
+			slotName.clear();
+			break;
+		}
+	}
+
+	if (itemOwner)
+	{
+		const std::string& itemName = itemOwner->GetName();
+		auto it = std::remove(m_InventoryItemIds.begin(), m_InventoryItemIds.end(), itemName);
+		if (it != m_InventoryItemIds.end())
+		{
+			m_InventoryItemIds.erase(it, m_InventoryItemIds.end());
+		}
+	}
+
+	throwItem->SetIsEquiped(false);
+
+	int range = 0;
+	if (TryGetConsumableThrowRange(range))
+	{
+		m_ThrowPreviewRange = range;
+		if (m_GridSystem)
+		{
+			m_GridSystem->SetThrowRangePreview(true, range);
+		}
+	}
+	else
+	{
+		EndThrowPreview();
+	}
 }
 
 void PlayerComponent::BeginThrowPreview()
@@ -1224,7 +1406,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			if (!m_ConsumableItem[i])
+			if (m_ConsumableItemNames[i].empty()) 
 			{
 				consumableSlot = i;
 				break;
@@ -1251,7 +1433,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	}
 	else if (consumableSlot >= 0)
 	{
-		m_ConsumableItem[consumableSlot] = itemObject;
+		m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
 	}
 
 	item->CompletePickup(owner);
