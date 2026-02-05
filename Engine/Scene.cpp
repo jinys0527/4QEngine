@@ -1094,7 +1094,7 @@ void Scene::EnsureAutoComponentsForSave()
 		{
 			addIfMissing(*gameObject, static_cast<EnemyStatComponent*>(nullptr));
 			addIfMissing(*gameObject, static_cast<EnemyMovementComponent*>(nullptr));
-			addIfMissing(*gameObject, static_cast<EnemyControllerComponent*>(nullptr));
+			//addIfMissing(*gameObject, static_cast<EnemyControllerComponent*>(nullptr));
 		}
 
 		if (auto* node = gameObject->GetComponent<NodeComponent>())

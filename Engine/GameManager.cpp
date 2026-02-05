@@ -319,6 +319,7 @@ void GameManager::TurnReset()
 	SetPhase(Phase::GameStart);
 	SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
 	SetCombatTurnState(CombatTurnState::SelectActor);
+
 	m_ExplorationTurnElapsed = 0.0f;
 	m_CurrentFloor = 1;
 	m_GameDataLoaded = false;
