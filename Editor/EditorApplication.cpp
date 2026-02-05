@@ -42,6 +42,7 @@
 #include <limits>
 #include "GameManager.h"
 #include <unordered_set>
+#include "UIManager.h"
 
 namespace
 {
@@ -65,7 +66,7 @@ bool EditorApplication::Initialize()
 	const wchar_t* className = L"MIEditor";
 	const wchar_t* windowName = L"MIEditor";
 
-	if (false == Create(className, windowName, 1920, 1080))
+	if (false == Create(className, windowName, 2560, 1600))
 	{
 		return false;
 	}
@@ -192,6 +193,8 @@ void EditorApplication::Update()
 	UpdateInput();
 	m_SceneManager.StateUpdate(dTime);
 	m_SceneManager.Update(dTime);
+
+	UpdateInitiativeTestUI(dTime);
 
 	m_SoundManager->Update();
 }
@@ -3599,6 +3602,27 @@ void EditorApplication::DrawUIEditorPreview()
 					});
 			}
 		}
+
+		ImGui::SeparatorText("Initiative Test");
+		ImGui::Checkbox("Enable Initiative Test", &m_InitiativeTestEnabled);
+		ImGui::SliderInt("Participant Count", &m_InitiativeTestCount, 2, 11);
+		ImGui::SliderFloat("Turn Scale", &m_InitiativeTestScale, 1.0f, 1.6f, "%.2f");
+		ImGui::SliderFloat("Turn Interval", &m_InitiativeTestInterval, 0.1f, 2.0f, "%.2f");
+		if (ImGui::Button("Rebuild Initiative Test UI"))
+		{
+			RemoveInitiativeTestUI();
+			EnsureInitiativeTestUI(m_InitiativeTestCount);
+			m_InitiativeTestLastCount = m_InitiativeTestCount;
+			uiManager->RefreshUIListForCurrentScene();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Remove Initiative Test UI"))
+		{
+			RemoveInitiativeTestUI();
+			m_InitiativeTestLastCount = 0;
+			uiManager->RefreshUIListForCurrentScene();
+		}
+
 		ImGui::Separator();
 
 		if (it == uiObjectsByScene.end() || it->second.empty())
@@ -6593,6 +6617,211 @@ void EditorApplication::DrawUIEditorPreview()
 	}
 }
 
+void EditorApplication::UpdateInitiativeTestUI(float deltaTime)
+{
+	if (!m_InitiativeTestEnabled)
+	{
+		return;
+	}
+
+	auto scene = m_SceneManager.GetCurrentScene();
+	auto* uiManager = m_SceneManager.GetUIManager();
+	if (!scene || !uiManager)
+	{
+		return;
+	}
+
+	const std::string sceneName = scene->GetName();
+	auto box = uiManager->FindUIObject(sceneName, "InitiativeTestBox");
+	auto frame = uiManager->FindUIObject(sceneName, "InitiativeTestFrame");
+	if (!box || !frame || m_InitiativeTestLastCount != m_InitiativeTestCount)
+	{
+		EnsureInitiativeTestUI(m_InitiativeTestCount);
+		m_InitiativeTestLastCount = m_InitiativeTestCount;
+		box = uiManager->FindUIObject(sceneName, "InitiativeTestBox");
+		frame = uiManager->FindUIObject(sceneName, "InitiativeTestFrame");
+		if (!box || !frame)
+		{
+			return;
+		}
+	}
+
+	auto* horizontalBox = box->GetComponent<HorizontalBox>();
+	if (!horizontalBox)
+	{
+		return;
+	}
+
+	auto& slots = horizontalBox->GetSlotsMutable();
+	if (slots.empty())
+	{
+		return;
+	}
+
+	m_InitiativeTestTimer += deltaTime;
+	if (m_InitiativeTestTimer >= m_InitiativeTestInterval)
+	{
+		m_InitiativeTestTimer = 0.0f;
+		m_InitiativeTestIndex = (m_InitiativeTestIndex + 1) % static_cast<int>(slots.size());
+	}
+
+	for (size_t i = 0; i < slots.size(); ++i)
+	{
+		const bool isActive = static_cast<int>(i) == m_InitiativeTestIndex;
+		slots[i].layoutScale = isActive ? m_InitiativeTestScale : 1.0f;
+		const float scale = slots[i].layoutScale > 0.0f ? slots[i].layoutScale : 1.0f;
+		const float extraHeight = (scale - 1.0f) * slots[i].desiredSize.height;
+		const float basePadding = 10.0f;
+		slots[i].padding.top = basePadding;
+		slots[i].padding.bottom = basePadding - extraHeight;
+		slots[i].padding.left = basePadding;
+		slots[i].padding.right = basePadding;
+	}
+
+	const float spacing = horizontalBox->GetSpacing();
+	float contentWidth = 0.0f;
+	float contentHeight = 0.0f;
+	for (size_t i = 0; i < slots.size(); ++i)
+	{
+		const float basePadding = 10.0f;
+		const float scale = slots[i].layoutScale > 0.0f ? slots[i].layoutScale : 1.0f;
+		contentWidth += slots[i].desiredSize.width * scale + basePadding * 2.0f;
+		contentHeight = max(contentHeight, slots[i].desiredSize.height + basePadding * 2.0f);
+		if (i + 1 < slots.size())
+		{
+			contentWidth += spacing;
+		}
+	}
+
+	const UIRect frameBounds = frame->GetBounds();
+	UIRect boxBounds = box->GetBounds();
+	boxBounds.width = contentWidth;
+	boxBounds.height = max(contentHeight, boxBounds.height);
+	boxBounds.x = frameBounds.x + (frameBounds.width - contentWidth) * 0.5f;
+	boxBounds.y = frameBounds.y + (frameBounds.height - boxBounds.height) * 0.5f;
+	box->SetBounds(boxBounds);
+}
+
+void EditorApplication::EnsureInitiativeTestUI(int count)
+{
+	auto scene = m_SceneManager.GetCurrentScene();
+	auto* uiManager = m_SceneManager.GetUIManager();
+	if (!scene || !uiManager)
+	{
+		return;
+	}
+
+	const std::string sceneName = scene->GetName();
+	const float frameWidth = 1200.0f;
+	const float frameHeight = 120.0f;
+	const float frameX = (2560.0f - frameWidth) * 0.5f;
+	const float frameY = 0.0f;
+
+	auto findOrCreate = [&](const std::string& name) -> std::shared_ptr<UIObject>
+		{
+			auto found = uiManager->FindUIObject(sceneName, name);
+			if (found)
+			{
+				return found;
+			}
+			auto uiObject = std::make_shared<UIObject>(scene->GetEventDispatcher());
+			uiObject->SetName(name);
+			uiObject->SetAnchorMin(UIAnchor{ 0.0f, 0.0f });
+			uiObject->SetAnchorMax(UIAnchor{ 0.0f, 0.0f });
+			uiObject->SetPivot(UIAnchor{ 0.0f, 0.0f });
+			uiObject->UpdateInteractableFlags();
+			uiManager->AddUI(sceneName, uiObject);
+			return uiObject;
+		};
+
+	auto frame = findOrCreate("InitiativeTestFrame");
+	frame->SetBounds(UIRect{ frameX, frameY, frameWidth, frameHeight });
+	if (!frame->GetComponent<UIImageComponent>())
+	{
+		auto* frameImage = frame->AddComponent<UIImageComponent>();
+	}
+
+	auto box = findOrCreate("InitiativeTestBox");
+	box->SetBounds(UIRect{ frameX, frameY, frameWidth, frameHeight });
+	if (!box->GetComponent<HorizontalBox>())
+	{
+		auto* horizontalBox = box->AddComponent<HorizontalBox>();
+	}
+
+	auto* horizontalBox = box->GetComponent<HorizontalBox>();
+	if (!horizontalBox)
+	{
+		return;
+	}
+
+	horizontalBox->ClearSlots();
+
+	const float iconSize = 80.0f;
+	for (int i = 0; i < count; ++i)
+	{
+		const std::string iconName = "InitiativeTestIcon_" + std::to_string(i + 1);
+		auto icon = findOrCreate(iconName);
+		icon->SetBounds(UIRect{ 0.0f, 0.0f, iconSize, iconSize });
+
+		if (!icon->GetComponent<UIImageComponent>())
+		{
+			auto* iconImage = icon->AddComponent<UIImageComponent>();
+		}
+
+		HorizontalBoxSlot slot{};
+		slot.child = icon.get();
+		slot.childName = iconName;
+		slot.desiredSize = UISize{ iconSize, iconSize };
+		slot.layoutScale = 1.0f;
+		slot.padding = UIPadding{ 10.0f, 10.0f, 10.0f, 20.0f };
+		slot.alignment = UIHorizontalAlignment::Center;
+		horizontalBox->AddSlot(slot);
+	}
+
+	for (int i = count; i < 11; ++i)
+	{
+		const std::string iconName = "InitiativeTestIcon_" + std::to_string(i + 1);
+		auto icon = uiManager->FindUIObject(sceneName, iconName);
+		if (icon)
+		{
+			uiManager->RemoveUI(sceneName, icon);
+		}
+	}
+
+	uiManager->RefreshUIListForCurrentScene();
+}
+
+void EditorApplication::RemoveInitiativeTestUI()
+{
+	auto scene = m_SceneManager.GetCurrentScene();
+	auto* uiManager = m_SceneManager.GetUIManager();
+	if (!scene || !uiManager)
+	{
+		return;
+	}
+
+	const std::string sceneName = scene->GetName();
+	const std::vector<std::string> names = {
+		"InitiativeTestFrame",
+		"InitiativeTestBox",
+		"InitiativeTestIcon_1",
+		"InitiativeTestIcon_2",
+		"InitiativeTestIcon_3",
+		"InitiativeTestIcon_4",
+		"InitiativeTestIcon_5",
+		"InitiativeTestIcon_6"
+	};
+
+	for (const auto& name : names)
+	{
+		auto uiObject = uiManager->FindUIObject(sceneName, name);
+		if (uiObject)
+		{
+			uiManager->RemoveUI(sceneName, uiObject);
+		}
+	}
+}
+
 // 카메라 절두체 그림
 
 
@@ -6767,6 +6996,14 @@ void EditorApplication::ClearPendingPropertySnapshots()
 void EditorApplication::OnResize(int width, int height)
 {
 	__super::OnResize(width, height);
+
+	if (auto* uiManager = m_SceneManager.GetUIManager())
+	{
+		uiManager->SetViewportSize(UISize{ static_cast<float>(width), static_cast<float>(height) });
+		uiManager->SetReferenceResolution(UISize{ 2560.0f, 1600.0f });
+		uiManager->SetUseAnchorLayout(false);
+		uiManager->SetUseResolutionScale(true);
+	}
 }
 
 void EditorApplication::OnClose()

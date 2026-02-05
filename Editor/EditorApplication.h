@@ -71,6 +71,9 @@ private:
 	void DrawResourceBrowser();
 	void DrawGizmo();
 	void DrawUIEditorPreview();
+	void UpdateInitiativeTestUI(float deltaTime);
+	void EnsureInitiativeTestUI(int count);
+	void RemoveInitiativeTestUI();
 
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
 
@@ -157,4 +160,11 @@ private:
 
 	std::unordered_map<std::string, std::string> m_UIButtonBindingTargets;
 	std::unordered_map<std::string, std::string> m_UISliderBindingTargets;
+	bool m_InitiativeTestEnabled = false;
+	int m_InitiativeTestCount = 4;
+	int m_InitiativeTestLastCount = 0;
+	int m_InitiativeTestIndex = 0;
+	float m_InitiativeTestTimer = 0.0f;
+	float m_InitiativeTestInterval = 0.8f;
+	float m_InitiativeTestScale = 1.25f;
 };

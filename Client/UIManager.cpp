@@ -14,6 +14,7 @@
 #include "ScaleBox.h"
 #include "SizeBox.h"
 #include <algorithm>
+#include <unordered_set>
 
 namespace
 {
@@ -118,7 +119,120 @@ namespace
 		}
 	}
 
-	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	UIRect ResolveWorldBounds(const std::string& name,
+							  const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+							  std::unordered_map<std::string, UIRect>& cache,
+							  std::unordered_set<std::string>& visiting)
+	{
+		auto cached = cache.find(name);
+		if (cached != cache.end())
+		{
+			return cached->second;
+		}
+
+		auto itObj = uiMap.find(name);
+		if (itObj == uiMap.end() || !itObj->second)
+		{
+			return UIRect{};
+		}
+
+		if (!visiting.insert(name).second)
+		{
+			return itObj->second->GetBounds();
+		}
+
+		auto& uiObject = *itObj->second;
+		UIRect local = uiObject.GetBounds();
+		const std::string& parentName = uiObject.GetParentName();
+		if (parentName.empty() || uiMap.find(parentName) == uiMap.end())
+		{
+			cache[name] = local;
+			visiting.erase(name);
+			return local;
+		}
+
+		UIRect parentBounds      = ResolveWorldBounds(parentName, uiMap, cache, visiting);
+		const UIAnchor anchorMin = uiObject.GetAnchorMin();
+		const UIAnchor anchorMax = uiObject.GetAnchorMax();
+		const UIAnchor pivot     = uiObject.GetPivot();
+
+		const float anchorLeft   = parentBounds.x + parentBounds.width * anchorMin.x;
+		const float anchorTop    = parentBounds.y + parentBounds.height * anchorMin.y;
+		const float anchorRight  = parentBounds.x + parentBounds.width * anchorMax.x;
+		const float anchorBottom = parentBounds.y + parentBounds.height * anchorMax.y;
+
+		const bool stretchX    = anchorMin.x != anchorMax.x;
+		const bool stretchY    = anchorMin.y != anchorMax.y;
+		const float baseWidth  = stretchX ? (anchorRight - anchorLeft) : 0.0f;
+		const float baseHeight = stretchY ? (anchorBottom - anchorTop) : 0.0f;
+
+		const float width  = stretchX ? (baseWidth + local.width) : local.width;
+		const float height = stretchY ? (baseHeight + local.height) : local.height;
+
+		UIRect world;
+		world.width  = width;
+		world.height = height;
+		world.x = anchorLeft + local.x - width * pivot.x;
+		world.y = anchorTop + local.y - height * pivot.y;
+
+		cache[name] = world;
+		visiting.erase(name);
+		return world;
+	}
+
+	void ApplyAnchorLayout(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		std::unordered_map<std::string, UIRect> cache;
+		std::unordered_set<std::string> visiting;
+		cache.reserve(uiMap.size());
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject)
+			{
+				continue;
+			}
+			const UIRect world = ResolveWorldBounds(name, uiMap, cache, visiting);
+			uiObject->SetBounds(world);
+		}
+	}
+
+	void ApplyResolutionScale(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+						      const UISize& viewportSize,
+						      const UISize& referenceResolution)
+	{
+		if (referenceResolution.width <= 0.0f || referenceResolution.height <= 0.0f)
+		{
+			return;
+		}
+
+		const float scaleX = viewportSize.width / referenceResolution.width;
+		const float scaleY = viewportSize.height / referenceResolution.height;
+		const float uniformScale = std::min(scaleX, scaleY);
+		const float offsetX = (viewportSize.width - referenceResolution.width * uniformScale) * 0.5f;
+		const float offsetY = (viewportSize.height - referenceResolution.height * uniformScale) * 0.5f;
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject || !uiObject->HasBounds())
+			{
+				continue;
+			}
+
+			UIRect bounds = uiObject->GetBounds();
+			bounds.x = bounds.x * uniformScale + offsetX;
+			bounds.y = bounds.y * uniformScale + offsetY;
+			bounds.width *= uniformScale;
+			bounds.height *= uniformScale;
+			uiObject->SetBounds(bounds);
+		}
+	}
+
+	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+							  const UISize& viewportSize,
+							  const UISize& referenceResolution,
+							  const bool useAnchorLayout,
+							  const bool useResolutionScale)
 	{
 		for (const auto& [name, uiObject] : uiMap)
 		{
@@ -127,7 +241,7 @@ namespace
 				ApplySizeBoxOverrides(*uiObject);
 			}
 		}
-		
+
 		for (const auto& [name, uiObject] : uiMap)
 		{
 			if (uiObject)
@@ -136,12 +250,22 @@ namespace
 			}
 		}
 
+		if (useAnchorLayout)
+		{
+			ApplyAnchorLayout(uiMap);
+		}
+
 		for (const auto& [name, uiObject] : uiMap)
 		{
 			if (uiObject)
 			{
 				ApplyHorizontalBoxLayout(*uiObject, uiMap);
 			}
+		}
+
+		if (useResolutionScale)
+		{
+			ApplyResolutionScale(uiMap, viewportSize, referenceResolution);
 		}
 	}
 }
@@ -218,7 +342,7 @@ void UIManager::Update(float deltaTime)
 		pair.second->Update(deltaTime);
 	}
 
-	ApplyLayoutOverrides(it->second);
+	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_UseAnchorLayout, m_UseResolutionScale);
 }
 
 std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, const std::string& objectName)
@@ -246,7 +370,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 		return;
 
 	auto& uiMap = it->second;
-	ApplyLayoutOverrides(uiMap);
+	ApplyLayoutOverrides(uiMap, m_ViewportSize, m_ReferenceResolution, m_UseAnchorLayout, m_UseResolutionScale);
 	UpdateSortedUI(uiMap);
 	auto mouseData = static_cast<const Events::MouseState*>(data);
 
@@ -493,7 +617,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 	if (it == m_UIObjects.end())
 		return;
 
-	ApplyLayoutOverrides(it->second);
+	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_UseAnchorLayout, m_UseResolutionScale);
 
 	for (const auto& [name, uiObject] : it->second)
 	{

@@ -96,7 +96,8 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 	totalFixedWidth += totalSpacing;
 	float remaining = availableSize.width - totalFixedWidth;
 	remaining = max(0.0f, remaining);
-	float cursorX = startX;
+	const float contentWidth = totalFixedWidth + (totalFillWeight > 0.0f ? remaining : 0.0f);
+	float cursorX = startX + max(0.0f, (availableSize.width - contentWidth) * 0.5f);
 
 	for (size_t index = 0; index < m_Slots.size(); ++index)
 	{
@@ -116,7 +117,18 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 		const float x = cursorX + paddingLeft;
 		const float y = startY + paddingTop;
 		const float height = max(0.0f, availableSize.height - paddingTop - paddingBottom);
-		arranged.push_back(UIRect{ x, y, width, height });
+
+		const float clampedHeight = max(0.0f, min(height, width));
+		if (clampedHeight > 0.0f && height > clampedHeight)
+		{
+			const float extra = height - clampedHeight;
+			const float topAdjust = extra * 0.5f;
+			arranged.push_back(UIRect{ x, y + topAdjust, width, clampedHeight });
+		}
+		else
+		{
+			arranged.push_back(UIRect{ x, y, width, height });
+		}
 
 		cursorX += width + paddingLeft + paddingRight;
 

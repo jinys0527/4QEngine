@@ -11,6 +11,7 @@
 #include "InputManager.h"
 #include "CameraComponent.h"
 #include "CameraObject.h"
+#include "UIManager.h"
 
 
 bool GameApplication::Initialize()
@@ -18,7 +19,7 @@ bool GameApplication::Initialize()
 	const wchar_t* className = L"APT";
 	const wchar_t* windowName = L"APT";
 
-	if (false == Create(className, windowName, 1920, 1080)) // 해상도 변경
+	if (false == Create(className, windowName, 2560, 1600)) // 해상도 변경
 	{
 		return false;
 	}
@@ -30,6 +31,10 @@ bool GameApplication::Initialize()
 	m_SoundManager->Init();
 
 	OnResize(m_width, m_height);
+	auto& uiManager = m_Services.Get<UIManager>();
+	uiManager.SetReferenceResolution(UISize{ 2560.0f, 1600.0f });
+	uiManager.SetUseAnchorLayout(false);
+	uiManager.SetUseResolutionScale(true);
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
@@ -137,6 +142,7 @@ void GameApplication::OnResize(int width, int height)
 {
 	__super::OnResize(width, height);
 	m_InputManager.SetViewportRect({ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) });
+	m_Services.Get<UIManager>().SetViewportSize(UISize{ static_cast<float>(width), static_cast<float>(height) });
 }
 
 void GameApplication::OnClose()

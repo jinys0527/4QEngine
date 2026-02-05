@@ -71,6 +71,11 @@ public:
 		return m_CurrentSceneName;
 	}
 
+	void SetViewportSize       (const UISize& size)			   { m_ViewportSize = size;						}
+	void SetReferenceResolution(const UISize& size)			   { m_ReferenceResolution = size;				}
+	void SetUseAnchorLayout	   (const bool useAnchorLayout)    { m_UseAnchorLayout = useAnchorLayout;		}
+	void SetUseResolutionScale (const bool useResolutionScale) { m_UseResolutionScale = useResolutionScale; }
+
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>>& GetUIObjects()
 	{
 		return m_UIObjects;
@@ -118,6 +123,10 @@ private:
 	int m_FullScreenZ = -1;
 	EventDispatcher* m_EventDispatcher; 
 	std::string m_CurrentSceneName;
+	UISize m_ViewportSize		{ 2560.0f, 1600.0f };
+	UISize m_ReferenceResolution{ 2560.0f, 1600.0f };
+	bool m_UseAnchorLayout    = false;
+	bool m_UseResolutionScale = true;
 	void DispatchToTopUI(EventType type, const void* data);
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>> m_UIObjects;
 };
