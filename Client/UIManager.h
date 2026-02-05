@@ -23,6 +23,10 @@ public:
 	void AddUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
 	{
 		m_UIObjects[sceneName][uiObject->m_Name] = uiObject;
+		if (uiObject)
+		{
+			uiObject->Start();
+		}
 	}
 
 	void RemoveUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)

@@ -1273,6 +1273,7 @@ void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann:
 		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
 		uiObject->Deserialize(entry);
 		uiObject->UpdateInteractableFlags();
+		uiObject->Start();
 		uiMap[uiObject->GetName()] = uiObject;
 	}
 

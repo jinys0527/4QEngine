@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <vector>
 
-REGISTER_COMPONENT(InitiativeUIComponent)
+REGISTER_UI_COMPONENT(InitiativeUIComponent)
 REGISTER_PROPERTY(InitiativeUIComponent, Enabled)
 REGISTER_PROPERTY(InitiativeUIComponent, Scale)
 REGISTER_PROPERTY_HANDLE(InitiativeUIComponent, DeadIconTexture)
@@ -23,22 +23,39 @@ REGISTER_PROPERTY_HANDLE(InitiativeUIComponent, DeadIconTexture)
 
 InitiativeUIComponent::~InitiativeUIComponent()
 {
-	auto& dispatcher = GetEventDispatcher();
-	dispatcher.RemoveListener(EventType::CombatEnter, this);
-	dispatcher.RemoveListener(EventType::CombatInitiativeBuilt, this);
-	dispatcher.RemoveListener(EventType::CombatTurnAdvanced, this);
-	dispatcher.RemoveListener(EventType::CombatExit, this);
-	dispatcher.RemoveListener(EventType::CombatEnded, this);
+	if (!m_Dispatcher)
+	{
+		return;
+	}
+
+	m_Dispatcher = &GetEventDispatcher();
+	m_Dispatcher->RemoveListener(EventType::CombatEnter, this);
+	m_Dispatcher->RemoveListener(EventType::CombatInitiativeBuilt, this);
+	m_Dispatcher->RemoveListener(EventType::CombatTurnAdvanced, this);
+	m_Dispatcher->RemoveListener(EventType::CombatExit, this);
+	m_Dispatcher->RemoveListener(EventType::CombatEnded, this);
+
+	m_Dispatcher = nullptr;
+	m_UIManager = nullptr;
 }
 
 void InitiativeUIComponent::Start()
 {
-	auto& dispatcher = GetEventDispatcher();
-	dispatcher.AddListener(EventType::CombatEnter, this);
-	dispatcher.AddListener(EventType::CombatInitiativeBuilt, this);
-	dispatcher.AddListener(EventType::CombatTurnAdvanced, this);
-	dispatcher.AddListener(EventType::CombatExit, this);
-	dispatcher.AddListener(EventType::CombatEnded, this);
+	m_Dispatcher = &GetEventDispatcher();
+	m_Dispatcher->AddListener(EventType::CombatEnter, this);
+	m_Dispatcher->AddListener(EventType::CombatInitiativeBuilt, this);
+	m_Dispatcher->AddListener(EventType::CombatTurnAdvanced, this);
+	m_Dispatcher->AddListener(EventType::CombatExit, this);
+	m_Dispatcher->AddListener(EventType::CombatEnded, this);
+
+	if (auto* scene = GetScene())
+	{
+		auto& services = scene->GetServices();
+		if (services.Has<UIManager>())
+		{
+			m_UIManager = &services.Get<UIManager>();
+		}
+	}
 }
 
 void InitiativeUIComponent::Update(float deltaTime)
@@ -217,8 +234,14 @@ void InitiativeUIComponent::RemoveUI()
 	SetFrameVisible(false);
 	ResetIconPools();
 }
+
 UIManager* InitiativeUIComponent::GetUIManager() const
 {
+	if (m_UIManager)
+	{
+		return m_UIManager;
+	}
+
 	auto* scene = GetScene();
 	if (!scene)
 		return nullptr;
@@ -365,22 +388,57 @@ void InitiativeUIComponent::ResetIconPools()
 	m_PlayerIconPool.clear();
 	m_EnemyIconPool.clear();
 
-	for (const auto& name : m_PlayerIconNames)
+	const std::string& sceneName = scene->GetName();
+	auto& uiObjectsByScene = uiManager->GetUIObjects();
+	auto uiIt = uiObjectsByScene.find(sceneName);
+	if (uiIt == uiObjectsByScene.end())
 	{
-		if (auto icon = FindUI(*uiManager, *scene, name))
+		return;
+	}
+
+	auto startsWith = [](const std::string& name, const std::string& prefix)
 		{
-			icon->SetIsVisible(false);
-			m_PlayerIconPool.push_back(icon);
+			return name.rfind(prefix, 0) == 0;
+		};
+
+	std::vector<std::pair<std::string, std::shared_ptr<UIObject>>> playerIcons;
+	std::vector<std::pair<std::string, std::shared_ptr<UIObject>>> enemyIcons;
+	for (const auto& [name, uiObject] : uiIt->second)
+	{
+		if (!uiObject)
+		{
+			continue;
+		}
+
+		if (startsWith(name, kPlayerIconPrefix))
+		{
+			playerIcons.emplace_back(name, uiObject);
+		}
+		else if (startsWith(name, kEnemyIconPrefix))
+		{
+			enemyIcons.emplace_back(name, uiObject);
 		}
 	}
 
-	for (const auto& name : m_EnemyIconNames)
-	{
-		if (auto icon = FindUI(*uiManager, *scene, name))
+	auto byName = [](const auto& left, const auto& right)
 		{
-			icon->SetIsVisible(false);
-			m_EnemyIconPool.push_back(icon);
-		}
+			return left.first < right.first;
+		};
+	std::sort(playerIcons.begin(), playerIcons.end(), byName);
+	std::sort(enemyIcons.begin(), enemyIcons.end(), byName);
+
+	for (const auto& [name, icon] : playerIcons)
+	{
+		(void)name;
+		icon->SetIsVisible(false);
+		m_PlayerIconPool.push_back(icon);
+	}
+
+	for (const auto& [name, icon] : enemyIcons)
+	{
+		(void)name;
+		icon->SetIsVisible(false);
+		m_EnemyIconPool.push_back(icon);
 	}
 }
 
@@ -499,6 +557,17 @@ bool InitiativeUIComponent::IsActorDead(int actorId) const
 			if(player->GetActorId() == actorId)
 			{
 				if (auto* stat = object->GetComponent<PlayerStatComponent>())
+				{
+					return stat->IsDead();
+				}
+			}
+		}
+
+		if (auto* enemy = object->GetComponent<EnemyComponent>())
+		{
+			if (enemy->GetActorId() == actorId)
+			{
+				if (auto* stat = object->GetComponent<EnemyStatComponent>())
 				{
 					return stat->IsDead();
 				}

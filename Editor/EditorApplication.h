@@ -132,6 +132,8 @@ private:
 	nlohmann::json m_ObjectClipboard;
 	bool m_ObjectClipboardHasData = false;
 	bool m_ObjectClipboardIsOpaque = true;
+	nlohmann::json m_UIObjectClipboard;
+	bool m_UIObjectClipboardHasData = false;
 
 	// Floder View 변수
 	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음

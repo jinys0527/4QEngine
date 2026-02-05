@@ -9,7 +9,8 @@
 class UIManager;
 class Scene;
 class UIObject;
-
+class EventDispatcher;
+		
 class InitiativeUIComponent : public UIComponent
 {
 public:
@@ -61,21 +62,11 @@ private:
 	std::vector<std::shared_ptr<UIObject>> m_EnemyIconPool;
 	std::unordered_map<int, std::shared_ptr<UIObject>> m_ActorIcons;
 	std::unordered_map<int, ActorIconInfo> m_ActorInfo;
-	std::vector<std::string> m_PlayerIconNames{ "InitiativePlayerIcon_1" };
-	std::vector<std::string> m_EnemyIconNames{
-		"InitiativeEnemyIcon_1",
-		"InitiativeEnemyIcon_2",
-		"InitiativeEnemyIcon_3",
-		"InitiativeEnemyIcon_4",
-		"InitiativeEnemyIcon_5",
-		"InitiativeEnemyIcon_6",
-		"InitiativeEnemyIcon_7",
-		"InitiativeEnemyIcon_8",
-		"InitiativeEnemyIcon_9",
-		"InitiativeEnemyIcon_10"
-	};
+	static constexpr const char* kPlayerIconPrefix = "InitiativePlayerIcon_";
+	static constexpr const char* kEnemyIconPrefix  = "InitiativeEnemyIcon_";
 
 	TextureHandle m_DeadIconTexture   = TextureHandle::Invalid();
-
+	EventDispatcher* m_Dispatcher = nullptr;
+	UIManager* m_UIManager = nullptr;
 };
 
