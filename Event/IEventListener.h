@@ -69,6 +69,7 @@ enum class EventType
 
 	//Player
 	PlayerMove,
+	PlayerEquipFailed,
 };
 
 class IEventListener

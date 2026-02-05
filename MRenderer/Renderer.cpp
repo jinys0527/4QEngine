@@ -220,11 +220,11 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
 	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
 
-	//LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
-	//LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
 
-	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
-	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
+	//LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	//LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
 
 
 	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
