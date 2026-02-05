@@ -9,7 +9,7 @@ class GridSystemComponent;
 class EnemyComponent;
 class DoorComponent;
 class NodeComponent;
-
+class ItemComponent;
 
 // PlayerComponent 는 Player와 관련된 Data와 중요 로직
 // Player의 다른 Component의 중추적인 역할
@@ -48,6 +48,7 @@ public:
 	const std::vector<std::string>& GetInventoryItemIds() const { return m_InventoryItemIds; }
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
+	const bool& GetDebugEquipItem() const { return m_DebugEquipItem; }
 
 
 	void ResetTurnResources();
@@ -69,6 +70,8 @@ public:
 	bool ConsumeInventoryCanDrop();
 	bool ConsumeShopHasSpace();
 	bool ConsumeShopHasMoney();
+	bool TryPickup(ItemComponent* item);
+	void AddToInventory(ItemComponent* item);
 
 	void SetCurrentWeaponCost(const int& value) { m_CurrentWeaponCost = value; }
 	void SetAttackRange(const int& value) { m_AttackRange = value; }
@@ -86,6 +89,7 @@ public:
 	void SetActorId(int value) { m_ActorId = value; }
 	void SetMoney(const int& value) { m_Money = value; }
 	void SetInventoryItemIds(const std::vector<std::string>& value) { m_InventoryItemIds = value; }
+	void SetDebugEquipItem(bool value) { m_DebugEquipItem = value; }
 
 private:
 	void ResetSubFSMFlags();
@@ -138,6 +142,7 @@ private:
 	bool m_ShopHasSpace = true;
 	bool m_ShopHasMoney = true;
 	bool m_IsMeleeMode = false;
+	bool m_DebugEquipItem = false;
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
