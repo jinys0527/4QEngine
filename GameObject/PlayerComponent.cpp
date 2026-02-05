@@ -312,8 +312,7 @@ void PlayerComponent::Update(float deltaTime) {
 
 	//}
 
-	//근접 아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
-	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
+	//근접 무기 스탯 적용
 	if (m_MeeleItem != nullptr)
 	{
 		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
@@ -349,6 +348,13 @@ void PlayerComponent::Update(float deltaTime) {
 
 			m_IsApplyMeeleStat = true;
 		}
+	}
+	
+	//근접 무기 모드면 근접무기 들기
+	if (m_IsMeleeMode && m_MeeleItem != nullptr)
+	{
+		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
 
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
@@ -404,7 +410,6 @@ void PlayerComponent::Update(float deltaTime) {
 
 		XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
 
-		// ⭐ 로컬 → 월드 (중요)
 		XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
 
 		XMFLOAT4X4 finalPose;
