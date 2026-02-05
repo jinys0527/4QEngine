@@ -80,7 +80,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 	BindActionHandler("Door_Open", [this](const FSMAction& action)
 		{
 			// 이동 가능하게 바꾸기
-			// 애니메이션
+			// 애니메이션`1
 			std::cout << "Door Success" << std::endl;
 			if (auto* owner = GetOwner())
 			{
@@ -91,20 +91,33 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 						door->OpenDoor();
 					}
 				}
+
+				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+				{
+					playerFsm->DispatchEvent("Door_Complete");
+				}
 			}
+			//DispatchEvent("Door_Complete");
+			DispatchEvent("None");
 		});
 	BindActionHandler("Door_Fail", [this](const FSMAction& action)
 		{
 			std::cout << "Door Fail" << std::endl;
-			if (auto* owner = GetOwner())
+			auto* owner = GetOwner();
+			if (owner)
 			{
 				if (auto* player = owner->GetComponent<PlayerComponent>())
 				{
 					player->ConsumePendingDoor();
 				}
+			
+				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+				{
+					playerFsm->DispatchEvent("Door_Complete");
+				}
 			}
-			DispatchEvent("Door_Revoke");
-			return;
+			//DispatchEvent("Door_Complete");
+			DispatchEvent("None");
 		});
 }
 

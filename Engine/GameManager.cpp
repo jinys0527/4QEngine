@@ -184,7 +184,45 @@ void GameManager::OnEvent(EventType type, const void* data)
 			const auto* payload = static_cast<const CombatTurnAdvancedEvent*>(data);
 			if (payload)
 			{
-				SyncTurnFromActorId(payload->actorId);
+				//SyncTurnFromActorId(payload->actorId);
+				bool playerAlive = false;
+				bool enemiesRemaining = false;
+
+				if (m_ActiveScene)
+				{
+					if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+					{
+						if (auto* playerStat = playerObject->GetComponent<PlayerStatComponent>())
+						{
+							playerAlive = !playerStat->IsDead();
+						}
+					}
+
+					for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+					{
+						(void)name;
+						if (!object)
+						{
+							continue;
+						}
+
+						if (auto* enemyStat = object->GetComponent<EnemyStatComponent>())
+						{
+							if (!enemyStat->IsDead())
+							{
+								enemiesRemaining = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (auto* combatManager = GetCombatManager())
+				{
+					combatManager->UpdateBattleOutcome(playerAlive, enemiesRemaining);
+				}
+
+				if (m_Phase == Phase::TurnBasedCombat && m_BattleCheck == Battle::InBattle)
 				if (m_Phase == Phase::TurnBasedCombat)
 				{
 					SetCombatTurnState(payload->actorId == 1 ? CombatTurnState::PlayerTurn
@@ -738,7 +776,7 @@ void GameManager::InitializePlayer()
 		return;
 	}
 
-	stats->SetHealth(12);
+	stats->SetHealth(10000); // Player 초기화
 	stats->SetStrength(12);
 	stats->SetAgility(12);
 	stats->SetSense(12);

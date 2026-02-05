@@ -450,7 +450,7 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Door_Open",	   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Fail",	   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Revoke",   "Door" });
-	eventRegistry.RegisterEvent({ "Door_Complete", "Door" });
+	//eventRegistry.RegisterEvent({ "Door_Complete", "Door" });
 }
 
 REGISTER_COMPONENT_DERIVED(PlayerFSMComponent, FSMComponent)

@@ -43,6 +43,7 @@ public:
 
 	void SetDebugSightLines(const bool& value) { m_DebugSightLines = value; }
 	const bool& GetDebugSightLines() const { return m_DebugSightLines; }
+	bool IsTargetVisible() const { return m_TargetVisible; }
 
 
 private:
@@ -62,6 +63,7 @@ private:
 	PlayerComponent* m_TargetPlayer = nullptr;
 	GridSystemComponent* m_GridSystem = nullptr;
 	bool m_MoveRequested = false;
+	bool m_TargetVisible = false;
 	ERotationOffset m_Facing;
 	bool m_DebugSightLines = false;
 	bool m_DeathReported = false;

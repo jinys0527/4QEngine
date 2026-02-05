@@ -418,6 +418,8 @@ void EnemyComponent::Update(float deltaTime) {
 		ClearSightDebug();
 	}
 
+	m_TargetVisible = targetVisible;
+
 	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop && m_TargetPlayer && hasHexData)
 	{
 		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
