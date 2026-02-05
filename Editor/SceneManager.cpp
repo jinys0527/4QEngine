@@ -309,6 +309,18 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	if (m_UIManager && j.contains("ui"))
 	{
 		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(loadedScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (uiObject)
+				{
+					uiObject->SetScene(loadedScene.get());
+				}
+			}
+		}
 	}
 
 	return true;
@@ -339,6 +351,18 @@ bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::
 	if (m_UIManager && data.contains("ui"))
 	{
 		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), data.at("ui"));
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(loadedScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (uiObject)
+				{
+					uiObject->SetScene(loadedScene.get());
+				}
+			}
+		}
 	}
 
 	return true;

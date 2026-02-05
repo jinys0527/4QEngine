@@ -3859,6 +3859,7 @@ void EditorApplication::DrawUIEditorPreview()
 			uiObject->SetAnchorMin(UIAnchor{ 0.0f, 0.0f });
 			uiObject->SetAnchorMax(UIAnchor{ 0.0f, 0.0f });
 			uiObject->SetPivot(UIAnchor{ 0.0f, 0.0f });
+			uiObject->SetScene(scene.get());
 			uiObject->UpdateInteractableFlags();
 			uiManager->AddUI(sceneName, uiObject);
 			uiManager->RefreshUIListForCurrentScene();
