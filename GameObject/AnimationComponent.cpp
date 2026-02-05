@@ -208,6 +208,7 @@ void AnimationComponent::Stop()
 {
 	m_Playback.time = 0.0f;
 	m_Playback.playing = false;
+	ApplyStaticPoseToSkeletal();
 }
 
 void AnimationComponent::Pause()
@@ -362,6 +363,7 @@ void AnimationComponent::ClearRetargetOffsets()
 void AnimationComponent::Start()
 {
 	EnsureResourceStores();
+	ApplyStaticPoseToSkeletal();
 }
 
 void AnimationComponent::EnsureResourceStores()
@@ -413,6 +415,36 @@ void AnimationComponent::RefreshDerivedAfterClipChanged()
 
 	EnsureAutoBoneMask(*skel);
 	BuildPose(*skel, *clip, m_Playback.time);
+	ApplyPoseToSkeletal(skeletal);
+}
+
+void AnimationComponent::ApplyStaticPoseToSkeletal()
+{
+	Object* owner = GetOwner();
+	if (!owner)
+		return;
+
+	auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+	if (!skeletal)
+		return;
+
+	const RenderData::Skeleton* skeleton = ResolveSkeleton(skeletal->GetSkeletonHandle());
+	if (!skeleton || skeleton->bones.empty())
+		return;
+
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip)
+	{
+		if (m_SkinningPalette.empty())
+			BuildBindPosePalette(*skeleton, m_SkinningPalette);
+	}
+	else
+	{
+		EnsureAutoBoneMask(*skeleton);
+		m_Playback.time = ClampTimeToClip(m_Playback.time, clip);
+		BuildPose(*skeleton, *clip, m_Playback.time);
+	}
+
 	ApplyPoseToSkeletal(skeletal);
 }
 
@@ -505,7 +537,10 @@ void AnimationComponent::Update(float deltaTime)
 {
 	EnsureResourceStores();
 	if (!m_Playback.playing)
+	{
+		ApplyStaticPoseToSkeletal();
 		return;
+	}
 
 	Object* owner = GetOwner();
 	if (!owner)
