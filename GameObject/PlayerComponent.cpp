@@ -600,9 +600,15 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 					auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
 					auto* enemyOwner = enemy->GetOwner();
 					auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
-					const XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
-					const XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
-					throwItem->BeginThrow(startPos, targetPos);
+
+					XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
+					XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
+
+					// y값을 1.0f 위로 보정
+					startPos.y += 1.0f;
+					targetPos.y += 1.0f;
+
+					throwItem->BeginThrow(startPos, targetPos, 2.0f);
 					ConsumeThrowItem(throwItem);
 					mouseData->handled = true;
 					return;
