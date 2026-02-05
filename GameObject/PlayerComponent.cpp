@@ -53,9 +53,58 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 
 namespace
 {
-	ItemComponent* FindFirstWorldItem(Scene& scene)
+	float DistanceSq2D(const XMFLOAT3& a, const XMFLOAT3& b)
 	{
-		for (const auto& [name, object] : scene.GetGameObjects())
+		const float dx = a.x - b.x;
+		const float dz = a.z - b.z;
+		return dx * dx + dz * dz;
+	}
+
+	NodeComponent* FindClosestNodeByPosition(GridSystemComponent* grid, const XMFLOAT3& position)
+	{
+		if (!grid)
+		{
+			return nullptr;
+		}
+
+		float closestDistSq = FLT_MAX;
+		NodeComponent* closestNode = nullptr;
+		for (auto* node : grid->GetNodes())
+		{
+			if (!node)
+			{
+				continue;
+			}
+
+			auto* nodeOwner = node->GetOwner();
+			auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+			if (!nodeTransform)
+			{
+				continue;
+			}
+
+			const float distSq = DistanceSq2D(nodeTransform->GetPosition(), position);
+			if (distSq < closestDistSq)
+			{
+				closestDistSq = distSq;
+				closestNode = node;
+			}
+		}
+
+		return closestNode;
+	}
+
+	ItemComponent* FindClosestItemHit(Scene* scene, const Ray& ray, float& outT)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		float closestT = FLT_MAX;
+		ItemComponent* closestItem = nullptr;
+
+		for (const auto& [name, object] : scene->GetGameObjects())
 		{
 			(void)name;
 			if (!object)
@@ -69,15 +118,32 @@ namespace
 				continue;
 			}
 
-			if (item->GetPickupState() != ItemPickupState::World)
+			auto* collider = object->GetComponent<BoxColliderComponent>();
+			if (!collider || !collider->HasBounds())
 			{
 				continue;
 			}
 
-			return item;
+			float hitT = 0.0f;
+			if (!collider->IntersectsRay(ray.m_Pos, ray.m_Dir, hitT))
+			{
+				continue;
+			}
+
+			if (hitT >= 0.0f && hitT < closestT)
+			{
+				closestT = hitT;
+				closestItem = item;
+			}
 		}
 
-		return nullptr;
+		if (!closestItem)
+		{
+			return nullptr;
+		}
+
+		outT = closestT;
+		return closestItem;
 	}
 
 	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
@@ -261,24 +327,6 @@ void PlayerComponent::Update(float deltaTime) {
 	BeginThrowPreview();
 
 	//아이템 장착 테스트
-	if (m_DebugEquipItem)
-	{
-		if (auto* item = FindFirstWorldItem(*scene))
-		{
-			if (TryPickup(item))
-			{
-				auto* itemOwner = item->GetOwner();
-				auto* itemObject = itemOwner ? dynamic_cast<GameObject*>(itemOwner) : nullptr;
-				if (itemObject && item->GetType() == static_cast<int>(ItemType::EQUIPMENT))
-				{
-					m_MeeleItem = itemObject;
-					item->SetIsEquiped(true);
-				}
-			}
-		}
-
-		m_DebugEquipItem = false;
-	}
 
 
 	//Player Turn 종료 조건
@@ -351,7 +399,7 @@ void PlayerComponent::Update(float deltaTime) {
 	}
 	
 	//근접 무기 모드면 근접무기 들기
-	if (m_IsMeleeMode && m_MeeleItem != nullptr)
+	if (/*m_IsMeleeMode && */m_MeeleItem != nullptr)
 	{
 		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
 		if (!itemcomponent) return;
@@ -472,7 +520,18 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
+		//아이템 줍기
 		float hitT = 0.0f;
+		if (auto* clickedItem = FindClosestItemHit(scene, pickRay, hitT))
+		{
+			if (TryPickup(clickedItem))
+			{
+				mouseData->handled = true;
+				return;
+			}
+		}
+		hitT = 0.0f;
+
 		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
 		if (!clickedNode)
 		{
@@ -1135,6 +1194,19 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		return false;
 	}
 
+	constexpr float kPickupRadius = 1.4f;
+	auto* itemTransform = itemObject->GetComponent<TransformComponent>();
+	auto* playerTransform = owner->GetComponent<TransformComponent>();
+	if (itemTransform && playerTransform)
+	{
+		const float distSq = DistanceSq2D(playerTransform->GetPosition(), itemTransform->GetPosition());
+		if (distSq > kPickupRadius * kPickupRadius)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
+			return false;
+		}
+	}
+
 	const int itemType = item->GetType();
 	int consumableSlot = -1;
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
@@ -1182,9 +1254,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	item->CompletePickup(owner);
 	return true;
 }
-
-
-void PlayerComponent::AddToInventory(ItemComponent* item)
+void PlayerComponent::AddToInventory(ItemComponent * item)
 {
 	if (!item)
 	{
