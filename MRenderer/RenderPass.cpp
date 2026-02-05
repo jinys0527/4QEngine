@@ -97,7 +97,8 @@ XMMATRIX BuildMaskTM(
 	if (XMVector3Equal(camPos, look))
 		return XMMatrixIdentity();
 
-	XMMATRIX view = XMMatrixLookAtLH(camPos, look, up);
+	// look ↔ camPos 교체
+	XMMATRIX view = XMMatrixLookAtLH(look, camPos, up);
 	XMMATRIX proj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
 
 	static const XMMATRIX texScale = XMMatrixSet(
@@ -111,14 +112,13 @@ XMMATRIX BuildMaskTM(
 }
 
 
+
 //벽뚫 마스킹맵용 행렬
 void RenderPass::SetMaskingTM(const RenderData::FrameData& frame, const XMFLOAT3& campos)
 {
 	if (!m_RenderContext.isEditCam)
 	{
 		XMMATRIX mTM;
-
-		XMMATRIX mView = XMLoadFloat4x4(&frame.context.gameCamera.view);
 
 		XMVECTOR maincampos = XMLoadFloat3(&campos); 
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);

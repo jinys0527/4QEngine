@@ -34,11 +34,14 @@ REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
 REGISTER_PROPERTY_READONLY(PlayerComponent, R)
 REGISTER_PROPERTY(PlayerComponent, MoveResource)
+REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
 REGISTER_PROPERTY(PlayerComponent, ActResource)
+REGISTER_PROPERTY_READONLY(PlayerComponent, RemainActResource)
 REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
 REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
-REGISTER_PROPERTY_READONLY(PlayerComponent, RemainMoveResource)
+REGISTER_PROPERTY(PlayerComponent, DebugEquipItem)
+
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
 
@@ -52,6 +55,33 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 
 namespace
 {
+	ItemComponent* FindFirstWorldItem(Scene& scene)
+	{
+		for (const auto& [name, object] : scene.GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			auto* item = object->GetComponent<ItemComponent>();
+			if (!item)
+			{
+				continue;
+			}
+
+			if (item->GetPickupState() != ItemPickupState::World)
+			{
+				continue;
+			}
+
+			return item;
+		}
+
+		return nullptr;
+	}
+
 	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
 	{
 		if (!owner || !eventName) return;
@@ -211,6 +241,9 @@ void PlayerComponent::Start()
 			break;
 		}
 	}
+
+	m_DebugEquipItem = false;
+
 }
 
 void PlayerComponent::Update(float deltaTime) {
@@ -228,6 +261,27 @@ void PlayerComponent::Update(float deltaTime) {
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 
 
+	//아이템 장착 테스트
+	if (m_DebugEquipItem)
+	{
+		if (auto* item = FindFirstWorldItem(*scene))
+		{
+			if (TryPickup(item))
+			{
+				auto* itemOwner = item->GetOwner();
+				auto* itemObject = itemOwner ? dynamic_cast<GameObject*>(itemOwner) : nullptr;
+				if (itemObject && item->GetType() == static_cast<int>(ItemType::EQUIPMENT))
+				{
+					m_MeeleItem = itemObject;
+					item->SetIsEquiped(true);
+				}
+			}
+		}
+
+		m_DebugEquipItem = false;
+	}
+
+
 	//Player Turn 종료 조건
 // 	if (allowExplorationTurn) {
 // 		m_TurnElapsed += deltaTime;
@@ -239,6 +293,7 @@ void PlayerComponent::Update(float deltaTime) {
 // 		}
 // 	}
 	// 이제 전체 턴 관리하는 GameManager에서 넘김 여기선 UI에서 턴 종료했을때만 처리하면 될듯
+
 
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	auto* transformcomponent = owner->GetComponent<TransformComponent>();
@@ -941,3 +996,87 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 }
 
 
+bool PlayerComponent::TryPickup(ItemComponent* item)
+{
+	if (!item)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return false;
+	}
+
+	auto* itemOwner = item->GetOwner();
+	auto* itemObject = itemOwner ? dynamic_cast<GameObject*>(itemOwner) : nullptr;
+	if (!itemObject)
+	{
+		return false;
+	}
+
+	const int itemType = item->GetType();
+	int consumableSlot = -1;
+	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+	{
+		if (m_MeeleItem)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
+			return false;
+		}
+	}
+	else if (itemType == static_cast<int>(ItemType::HEAL) || itemType == static_cast<int>(ItemType::THROW))
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			if (!m_ConsumableItem[i])
+			{
+				consumableSlot = i;
+				break;
+			}
+		}
+
+		if (consumableSlot < 0)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
+			return false;
+		}
+	}
+
+	if (!item->RequestPickup(owner))
+	{
+		return false;
+	}
+
+	AddToInventory(item);
+	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+	{
+		m_MeeleItem = itemObject;
+		item->SetIsEquiped(true);
+	}
+	else if (consumableSlot >= 0)
+	{
+		m_ConsumableItem[consumableSlot] = itemObject;
+	}
+
+	item->CompletePickup(owner);
+	return true;
+}
+
+
+void PlayerComponent::AddToInventory(ItemComponent* item)
+{
+	if (!item)
+	{
+		return;
+	}
+
+	auto* itemOwner = item->GetOwner();
+	if (!itemOwner)
+	{
+		return;
+	}
+
+	m_InventoryItemIds.push_back(itemOwner->GetName());
+}

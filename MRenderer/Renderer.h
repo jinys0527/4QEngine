@@ -16,7 +16,7 @@ public:
 	RenderPipeline& GetPipeline() { return m_Pipeline; }
 	const RenderPipeline& GetPipeline() const { return m_Pipeline; }
 
-	void Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height);
+	void Initialize(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc);
 	void InitializeTest(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc);		//Editor의 Renderer 초기화
 	void RenderFrame(const RenderData::FrameData& frame);
 	void RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2);
@@ -138,6 +138,8 @@ private:
 	HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode);
 	HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
 	HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS);
+	HRESULT LoadVertexShaderCSO(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
+	HRESULT LoadPixelShaderCSO(const TCHAR* filename, ID3D11PixelShader** ppPS);
 	HRESULT TexturesLoad(const RenderData::TextureData* texData, const wchar_t* filename, ID3D11ShaderResourceView** textureRV);
 	HRESULT CreateInputLayout();			//일단 하나만, 나중에 레이아웃 추가되면 함수를 추가하든 여기서 추가하든 하면될듯
 	HRESULT CreateConstBuffer();

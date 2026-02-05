@@ -245,6 +245,7 @@ protected:
 private:
 	void EnsureResourceStores();
 	void RefreshDerivedAfterClipChanged();
+	void ApplyStaticPoseToSkeletal();
 
 	void SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind,
 							     const std::vector<DirectX::XMFLOAT4X4>& targetBind);

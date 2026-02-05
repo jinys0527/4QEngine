@@ -35,7 +35,7 @@ bool GameApplication::Initialize()
 	uiManager.SetReferenceResolution(UISize{ 2560.0f, 1600.0f });
 	uiManager.SetUseAnchorLayout(false);
 	uiManager.SetUseResolutionScale(true);
-	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_Renderer.Initialize(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
 

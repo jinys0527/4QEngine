@@ -830,9 +830,19 @@ void EditorApplication::DrawMainMenuBar()
 			if (m_EditorState == EditorPlayState::Stop)
 			{
 				m_SceneManager.SaveSceneToJson(m_CurrentScenePath);
+				if (m_GameManager)
+				{
+					m_GameManager->TurnReset();
+				}
 			}
-			m_GameManager->TurnReset();
-			m_SceneManager.GetCurrentScene()->SetIsPause(false);
+			// Pause -> Play: 단순 재개여야 하므로 TurnReset 금지
+			if (auto* currentScene = m_SceneManager.GetCurrentScene().get())
+			{
+				currentScene->SetIsPause(false);
+			}
+			//기존 Pause -> Play 시 TurnReset ban
+			/*m_GameManager->TurnReset();
+			m_SceneManager.GetCurrentScene()->SetIsPause(false);*/
 			m_EditorState = EditorPlayState::Play;
 		}
 		ImGui::EndDisabled();
@@ -2251,7 +2261,7 @@ void EditorApplication::DrawInspector() {
 		// Logic 
 		const auto existingTypes = selectedObject->GetComponentTypeNames(); //
 		const auto typeNames = ComponentRegistry::Instance().GetTypeNames();
-
+		// 숨길Components
 		static const std::unordered_set<std::string> kHiddenTypes = {
 			"TransformComponent",
 			"MeshComponent",
@@ -2268,7 +2278,6 @@ void EditorApplication::DrawInspector() {
 			"PlayerDoorFSMComponent",
 			"EnemyStatComponent",
 			"EnemyMovementComponent",
-			"EnemyControllerComponent",
 			"LightComponent",
 			"AnimationComponent",
 			"AnimFSMComponent",
