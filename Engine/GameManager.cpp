@@ -23,11 +23,11 @@
 #include "ShopRoller.h"
 #include "CombatResolver.h"
 #include "EnemyStatComponent.h"
+#include "EnemyComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
 #include <chrono>
 #include <charconv>
-#include "EnemyComponent.h"
 #include <system_error>
 
 GameManager::GameManager() :
@@ -206,6 +206,20 @@ void GameManager::OnEvent(EventType type, const void* data)
 							continue;
 						}
 
+						auto* enemy = object->GetComponent<EnemyComponent>();
+						if (!enemy)
+						{
+							continue;
+						}
+
+						if (auto* combatManager = GetCombatManager())
+						{
+							if (!combatManager->IsActorInBattle(enemy->GetActorId()))
+							{
+								continue;
+							}
+						}
+
 						if (auto* enemyStat = object->GetComponent<EnemyStatComponent>())
 						{
 							if (!enemyStat->IsDead())
@@ -364,6 +378,13 @@ void GameManager::TurnReset()
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
 	m_BlockPostCombatShop = false;
+
+	// 적 Reset
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->ResetSessionState();
+	}
+
 }
 
 void GameManager::Initial()
@@ -797,6 +818,31 @@ void GameManager::InitializeFloor()
 	m_CurrentFloor = 1;
 	AdvanceFloor();
 	RefreshGridSystem();
+
+	if (!m_ActiveScene)
+	{
+		return;
+	}
+
+	for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+	{
+		(void)name;
+		if (!object)
+		{
+			continue;
+		}
+
+		if (!object->GetComponent<EnemyComponent>())
+		{
+			continue;
+		}
+
+		if (auto* stat = object->GetComponent<EnemyStatComponent>())
+		{
+			stat->ResetCurrentHPToInitial();
+		}
+	}
+
 }
 
 void GameManager::AdvanceFloor()

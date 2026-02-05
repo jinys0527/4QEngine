@@ -12,10 +12,30 @@ REGISTER_PROPERTY(EnemyStatComponent, SightDistance)
 REGISTER_PROPERTY(EnemyStatComponent, SightAngle)
 REGISTER_PROPERTY(EnemyStatComponent, DifficultyGroup)
 
+void EnemyStatComponent::Start()
+{
+	if (!m_InitialHPCaptured)
+	{
+		m_InitialHP = GetCurrentHP();
+		m_InitialHPCaptured = true;
+	}
+}
+
 void EnemyStatComponent::Update(float deltaTime)
 {
 }
 
 void EnemyStatComponent::OnEvent(EventType type, const void* data)
 {
+}
+
+void EnemyStatComponent::ResetCurrentHPToInitial()
+{
+	if (!m_InitialHPCaptured)
+	{
+		m_InitialHP = GetCurrentHP();
+		m_InitialHPCaptured = true;
+	}
+
+	SetCurrentHP(m_InitialHP);
 }
