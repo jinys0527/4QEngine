@@ -13,7 +13,7 @@ REGISTER_COMPONENT_DERIVED(PlayerDoorFSMComponent, FSMComponent)
 namespace
 {
 	constexpr int DoorCost = 1;
-	constexpr int DoorRollThreshold = 5; // 문 성공 값(이상)
+	constexpr int DoorRollThreshold = 12; // 문 성공 값(이상)
 }
 
 PlayerDoorFSMComponent::PlayerDoorFSMComponent()
@@ -103,6 +103,8 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 					player->ConsumePendingDoor();
 				}
 			}
+			DispatchEvent("Door_Revoke");
+			return;
 		});
 }
 
