@@ -1007,15 +1007,61 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		return false;
 	}
 
+	auto* itemOwner = item->GetOwner();
+	auto* itemObject = itemOwner ? dynamic_cast<GameObject*>(itemOwner) : nullptr;
+	if (!itemObject)
+	{
+		return false;
+	}
+
+	const int itemType = item->GetType();
+	int consumableSlot = -1;
+	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+	{
+		if (m_MeeleItem)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
+			return false;
+		}
+	}
+	else if (itemType == static_cast<int>(ItemType::HEAL) || itemType == static_cast<int>(ItemType::THROW))
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			if (!m_ConsumableItem[i])
+			{
+				consumableSlot = i;
+				break;
+			}
+		}
+
+		if (consumableSlot < 0)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
+			return false;
+		}
+	}
+
 	if (!item->RequestPickup(owner))
 	{
 		return false;
 	}
 
 	AddToInventory(item);
+	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+	{
+		m_MeeleItem = itemObject;
+		item->SetIsEquiped(true);
+	}
+	else if (consumableSlot >= 0)
+	{
+		m_ConsumableItem[consumableSlot] = itemObject;
+	}
+
 	item->CompletePickup(owner);
 	return true;
 }
+
 
 void PlayerComponent::AddToInventory(ItemComponent* item)
 {
