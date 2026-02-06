@@ -1550,10 +1550,21 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		return false;
 	}
 
-	AddToInventory(item);
+	const bool isGoldBar = (item->GetItemIndex() == 1);
+	if (!isGoldBar)
+	{
+		AddToInventory(item);
+	}
+	auto* scene = owner->GetScene();
+	bool shouldRemovePickedObject = false;
+	if (isGoldBar)
+	{
+		m_Money += max(0, item->GetPrice());
+		shouldRemovePickedObject = true;
+	}
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT)
 		|| itemType == static_cast<int>(ItemType::HEAL)
-		|| itemType == static_cast<int>(ItemType::THROW))
+		|| itemType == static_cast<int>(ItemType::THROW)) 
 	{
 		auto* scene = owner->GetScene();
 		GameObject* equippedObject = nullptr;
@@ -1572,6 +1583,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 
 		if (equippedObject)
 		{
+			shouldRemovePickedObject = true;
 			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 			{
 				m_MeeleItem = equippedObject;
@@ -1584,6 +1596,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 
 			auto& inventoryName = m_InventoryItemIds.back();
 			inventoryName = equippedObject->GetName();
+
 			if (auto* renderer = itemObject->GetComponent<MeshRenderer>())
 			{
 				renderer->SetVisible(false);
@@ -1606,6 +1619,10 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	ConsumeActResource(1);
 
 	item->CompletePickup(owner);
+	if (shouldRemovePickedObject && scene)
+	{
+		scene->QueueGameObjectRemoval(itemObject->GetName());
+	}
 	return true;
 }
 void PlayerComponent::AddToInventory(ItemComponent* item)
