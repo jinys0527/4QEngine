@@ -134,9 +134,10 @@ void InitiativeUIComponent::Update(float deltaTime)
 
 	const UIRect frameBounds = frame->GetBounds();
 	UIRect boxBounds = box->GetBounds();
-	boxBounds.width = frameBounds.width;
+	const float clampedContentWidth = max(0.0f, min(contentWidth, frameBounds.width));
+	boxBounds.width = clampedContentWidth > 0.0f ? clampedContentWidth : frameBounds.width;
 	boxBounds.height = contentHeight;
-	boxBounds.x = frameBounds.x;
+	boxBounds.x = frameBounds.x + (frameBounds.width - boxBounds.width) * 0.5f;
 	boxBounds.y = frameBounds.y + (frameBounds.height - boxBounds.height) * 0.5f;
 	box->SetBounds(boxBounds);
 	uiManager->RefreshUIListForCurrentScene();
