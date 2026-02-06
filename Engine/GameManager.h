@@ -90,7 +90,8 @@ private:
 	void SetFloodSystemActive(bool active);
 	void RefreshGridSystem();
 	void DispatchPlayerFSMEvent(const std::string& eventName);
-	void ResolveEnemyAttack();
+	void ResolveEnemyAttack(int actorId = 0);
+	bool ResolveEnemyGroupTurn();
 	std::vector<int> CollectOwnedItemIndices() const;
 private:
 
@@ -103,15 +104,16 @@ private:
 	ExplorationTurnState m_ExplorationTurnState;
 	CombatTurnState m_CombatTurnState;
 	float m_ExplorationTurnElapsed = 0.0f;
-	float m_ExplorationTurnLimit = 15.0f;
+	float m_ExplorationTurnLimit = 2.0f; // 탐색 시간
 	float m_CombatTurnElapsed = 0.0f;
-	float m_CombatTurnLimit = 30.0f;
+	float m_CombatTurnLimit = 2.0f;      //전투 시간
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
 	bool  m_GameDataLoaded = false;
 	bool  m_BlockPostCombatShop = false;
 	int   m_CurrentFloor = 1;
+	bool  m_SkipToPlayerTurn = false;
 	std::vector<std::string> m_FloorSceneNames;
 	DataSheetPaths m_DataPaths{};
 	ShopStock m_CurrentShopStock{};

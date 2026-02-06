@@ -63,6 +63,7 @@ public:
 	bool HandleCombatClick(EnemyComponent* enemy);
 	void ClearCombatSelection();
 	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;
+	EnemyComponent* ConsumePendingAttackTarget();
 	bool ConsumeCombatConfirmRequest();
 	bool TryGetConsumableThrowRange(int& outRange) const;
 	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
@@ -131,6 +132,7 @@ private:
 	bool m_TurnEndRequested = false;
 	bool m_CombatConfirmRequested = false;
 	EnemyComponent* m_SelectedEnemy = nullptr;
+	EnemyComponent* m_PendingAttackTarget = nullptr;
 
 	// 밀기
 	bool m_PushPossible = true;

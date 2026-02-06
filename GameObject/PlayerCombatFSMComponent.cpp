@@ -3,9 +3,11 @@
 #include "PlayerComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyMovementComponent.h"
 #include "EnemyStatComponent.h"
 #include "GridSystemComponent.h"
 #include "ItemComponent.h"
+#include "PlayerMovementComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "Scene.h"
@@ -140,6 +142,12 @@ bool PlayerCombatFSMComponent::RequestCombatEnter(int initiatorId, int targetId)
 
 	if (m_CombatManager->GetState() == Battle::InBattle)
 	{
+		std::vector<CombatantSnapshot> combatants;
+		BuildCombatantSnapshots(combatants, targetId);
+		if (!combatants.empty())
+		{
+			m_CombatManager->AddCombatants(combatants);
+		}
 		if (m_CombatManager->GetCurrentActorId() == GetPlayerActorId())
 		{
 			DispatchEvent("Combat_StartTurn");
@@ -148,8 +156,23 @@ bool PlayerCombatFSMComponent::RequestCombatEnter(int initiatorId, int targetId)
 	}
 
 	std::vector<CombatantSnapshot> combatants;
-	BuildCombatantSnapshots(combatants);
+	//BuildCombatantSnapshots(combatants);
+	BuildCombatantSnapshots(combatants, targetId);
 	if (combatants.empty())
+	{
+		return false;
+	}
+
+	bool hasEnemyCombatant = false;
+	for (const auto& combatant : combatants)
+	{
+		if (!combatant.isPlayer)
+		{
+			hasEnemyCombatant = true;
+			break;
+		}
+	}
+	if (!hasEnemyCombatant)
 	{
 		return false;
 	}
@@ -326,22 +349,30 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	{
 		int range = 0;
 		ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+		EnemyComponent* pendingTarget = player->ConsumePendingAttackTarget();
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
-		const auto& enemies = grid->GetEnemies();
-		for (std::size_t index = 0; index < enemies.size(); ++index)
-		{
-			const auto* enemy = enemies[index];
-			if (!enemy)
-			{
-				continue;
-			}
+		const int range = max(0, player->GetAttackRange());
 
-			const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
-			if (distance <= range && enemy->GetActorId() != 0)
+		if (pendingTarget && pendingTarget->GetActorId() != 0)
+		{
+			if (m_CombatManager && !m_CombatManager->IsActorInBattle(pendingTarget->GetActorId()))
 			{
-				request.targetIds.push_back(enemy->GetActorId());
-				break;
+				pendingTarget = nullptr;
+			}
+		}
+
+		if (pendingTarget && pendingTarget->GetActorId() != 0)
+		{
+			auto* pendingOwner = pendingTarget->GetOwner();
+			auto* pendingStat = pendingOwner ? pendingOwner->GetComponent<EnemyStatComponent>() : nullptr;
+			if (!pendingStat || !pendingStat->IsDead())
+			{
+				const int distance = AxialDistance(playerQ, playerR, pendingTarget->GetQ(), pendingTarget->GetR());
+				if (distance <= range)
+				{
+					request.targetIds.push_back(pendingTarget->GetActorId());
+				}
 			}
 		}
 	}
@@ -364,6 +395,23 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 			}
 		}
 	}
+
+	if (enemy && player)
+	{
+		if (auto* moveComp = owner->GetComponent<PlayerMovementComponent>())
+		{
+			moveComp->RotateTowardTarget(enemy->GetQ(), enemy->GetR());
+		}
+		if (auto* enemyOwner = enemy->GetOwner())
+		{
+			if (auto* enemyMove = enemyOwner->GetComponent<EnemyMovementComponent>())
+			{
+				enemyMove->RotateTowardTarget(player->GetQ(), player->GetR());
+			}
+		}
+	}
+
+
 	if (scene && enemy)
 	{
 		auto& services = scene->GetServices();
@@ -418,6 +466,13 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 								{
 									continue;
 								}
+
+								// 전투중이 아닌 녀석들은 skip
+								if (!m_CombatManager->IsActorInBattle(candidate->GetActorId()))
+								{
+									continue;
+								}
+
 								auto* candidateOwner = candidate->GetOwner();
 								auto* candidateStat = candidateOwner ? candidateOwner->GetComponent<EnemyStatComponent>() : nullptr;
 								if (candidateStat && !candidateStat->IsDead())
@@ -440,9 +495,15 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	{
 		if (auto* gameManager = scene->GetGameManager())
 		{
-			if (gameManager->GetPhase() == Phase::ExplorationLoop)
+			if (gameManager->GetPhase() == Phase::ExplorationLoop
+				&& m_CombatManager
+				&& m_CombatManager->GetState() == Battle::NonBattle)
 			{
-				GetEventDispatcher().Dispatch(EventType::PhaseRequestEnterCombat, nullptr);
+				//GetEventDispatcher().Dispatch(EventType::PhaseRequestEnterCombat, nullptr);
+				if (!RequestCombatEnter(request.actorId, request.targetIds.front()))
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -579,7 +640,7 @@ bool PlayerCombatFSMComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyC
 	return true;
 }
 
-void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants) const
+void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants, int targetActorId) const
 {
 	outCombatants.clear();
 
@@ -605,13 +666,27 @@ void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnap
 	}
 
 	const auto& enemies = grid->GetEnemies();
+
+	const int playerQ = player->GetQ();
+	const int playerR = player->GetR();
+	const int joinRange = 1;
+
 	for (std::size_t index = 0; index < enemies.size(); ++index)
 	{
 		auto* enemy = enemies[index];
-		if (!enemy)
+
+		if (!enemy || enemy->GetActorId() == 0)
 		{
 			continue;
 		}
+
+		const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
+		const bool isTarget = (targetActorId != 0 && enemy->GetActorId() == targetActorId);
+		if (!isTarget && distance > joinRange)
+		{
+			continue;
+		}
+
 
 		int initiative = 0;
 		auto* enemyOwner = enemy->GetOwner();
@@ -619,6 +694,10 @@ void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnap
 		{
 			if (auto* stat = enemyOwner->GetComponent<EnemyStatComponent>())
 			{
+				if (stat->IsDead())
+				{
+					continue;
+				}
 				initiative = stat->GetInitiativeModifier();
 			}
 		}
@@ -652,6 +731,13 @@ bool PlayerCombatFSMComponent::HasEnemyInAttackRange() const
 	for (const auto* enemy : enemies)
 	{
 		if (!enemy)
+		{
+			continue;
+		}
+
+		auto* enemyOwner = enemy->GetOwner();
+		auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+		if (enemyStat && enemyStat->IsDead())
 		{
 			continue;
 		}

@@ -10,8 +10,10 @@ public:
 	EnemyStatComponent() = default;
 	~EnemyStatComponent() override = default;
 
+	void Start() override;
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
+	void ResetCurrentHPToInitial();
 
 	const int&   GetDefense() const						 { return m_Defense;			 }
 	void	     SetDefense(const int& value)			 { m_Defense = value;			 }
@@ -28,8 +30,8 @@ public:
 	const int&   GetMaxDiceValue() const				 { return m_MaxDiceValue;		 }
 	void	     SetMaxDiceValue(const int& value)		 { m_MaxDiceValue = value;		 }
 					     
-	const int&   GetAttackRange() const { return m_AttackRange; }
-	void	     SetAttackRange(const int& value) { m_AttackRange = value; }
+	const int&   GetAttackRange() const					 { return m_AttackRange; }
+	void	     SetAttackRange(const int& value)		 { m_AttackRange = value; }
 
 	const float& GetSightDistance() const			     { return m_SightDistance;       }
 	void		 SetSightDistance(const float& value)    { m_SightDistance = value;      }
@@ -50,5 +52,9 @@ private:
 	float m_SightDistance      = 5.0f;
 	float m_SightAngle         = 90.0f;
 	int   m_DifficultyGroup    = 1;
+
+	int   m_InitialHP = 100;   // 체력 주의
+	bool  m_InitialHPCaptured = false;
+
 };
 

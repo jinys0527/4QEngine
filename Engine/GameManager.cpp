@@ -13,6 +13,7 @@
 #include "PlayerInventoryFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
+#include "PlayerMovementComponent.h"
 #include "GridSystemComponent.h"
 #include "ServiceRegistry.h"
 #include "CombatManager.h"
@@ -23,11 +24,12 @@
 #include "ShopRoller.h"
 #include "CombatResolver.h"
 #include "EnemyStatComponent.h"
+#include "EnemyMovementComponent.h"
+#include "EnemyComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
 #include <chrono>
 #include <charconv>
-#include "EnemyComponent.h"
 #include <system_error>
 
 GameManager::GameManager() :
@@ -127,7 +129,16 @@ void GameManager::Update(float deltaTime)
 		auto* combatManager = GetCombatManager();
 		if (combatManager)
 		{
-			combatManager->AdvanceTurn();
+			//combatManager->AdvanceTurn();
+			if (m_SkipToPlayerTurn)
+			{
+				combatManager->AdvanceTurnToNextPlayer();
+				m_SkipToPlayerTurn = false;
+			}
+			else
+			{
+				combatManager->AdvanceTurn();
+			}
 			SetCombatTurnState(CombatTurnState::SelectActor);
 		}
 	}
@@ -157,8 +168,12 @@ void GameManager::OnEvent(EventType type, const void* data)
 	switch (type)
 	{
 	case EventType::AITurnEndRequested:
-		if (m_Phase == Phase::TurnBasedCombat && m_Turn == Turn::EnemyTurn)
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
+			if (m_SkipToPlayerTurn)
+			{
+				break;
+			}
 			std::cout << "AITurnEndRequested\n";
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
@@ -184,7 +199,59 @@ void GameManager::OnEvent(EventType type, const void* data)
 			const auto* payload = static_cast<const CombatTurnAdvancedEvent*>(data);
 			if (payload)
 			{
-				SyncTurnFromActorId(payload->actorId);
+				//SyncTurnFromActorId(payload->actorId);
+				bool playerAlive = false;
+				bool enemiesRemaining = false;
+
+				if (m_ActiveScene)
+				{
+					if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+					{
+						if (auto* playerStat = playerObject->GetComponent<PlayerStatComponent>())
+						{
+							playerAlive = !playerStat->IsDead();
+						}
+					}
+
+					for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+					{
+						(void)name;
+						if (!object)
+						{
+							continue;
+						}
+
+						auto* enemy = object->GetComponent<EnemyComponent>();
+						if (!enemy)
+						{
+							continue;
+						}
+
+						if (auto* combatManager = GetCombatManager())
+						{
+							if (!combatManager->IsActorInBattle(enemy->GetActorId()))
+							{
+								continue;
+							}
+						}
+
+						if (auto* enemyStat = object->GetComponent<EnemyStatComponent>())
+						{
+							if (!enemyStat->IsDead())
+							{
+								enemiesRemaining = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (auto* combatManager = GetCombatManager())
+				{
+					combatManager->UpdateBattleOutcome(playerAlive, enemiesRemaining);
+				}
+
+				if (m_Phase == Phase::TurnBasedCombat && m_BattleCheck == Battle::InBattle)
 				if (m_Phase == Phase::TurnBasedCombat)
 				{
 					SetCombatTurnState(payload->actorId == 1 ? CombatTurnState::PlayerTurn
@@ -218,18 +285,31 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::AIMeleeAttackRequested:
-	case EventType::AIRangedAttackRequested:
+	case EventType::AIRangedAttackRequested: {
 		std::cout << "AIAttackRequested\n";
 		if (m_Phase == Phase::TurnBasedCombat)
 		{
-			ResolveEnemyAttack();
-			if (m_BlockPostCombatShop)
-			{
-				break;
-			}
-			SetCombatTurnState(CombatTurnState::Resolve);
+			break;
 		}
+		//ResolveEnemyAttack();
+		int actorId = 0;
+		if (data)
+		{
+			const auto* payload = static_cast<const CombatAIRequestEvent*>(data);
+			if (payload)
+			{
+				actorId = payload->actorId;
+			}
+		}
+		ResolveEnemyAttack(actorId);
+
+		if (m_BlockPostCombatShop)
+		{
+			break;
+		}
+		SetCombatTurnState(CombatTurnState::Resolve);
 		break;
+	}
 	case EventType::ExploreTurnEnded:
 		std::cout << "ExploreTurnEnded\n";
 		if (m_Phase == Phase::ExplorationLoop)
@@ -326,6 +406,13 @@ void GameManager::TurnReset()
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
 	m_BlockPostCombatShop = false;
+
+	// 적 Reset
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->ResetSessionState();
+	}
+
 }
 
 void GameManager::Initial()
@@ -474,9 +561,10 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		if (m_EventDispatcher && !m_BlockPostCombatShop)
 		{
-			m_EventDispatcher->Dispatch(EventType::PostCombatToShop, nullptr);
+			m_EventDispatcher->Dispatch(EventType::PostCombatToExploration, nullptr);
 		}
 		break;
+
 	case Phase::Shop:
 		SetTurn(Turn::PlayerTurn);
 		SetPlayerShopState(true);
@@ -618,7 +706,14 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	}
 	else if (state == CombatTurnState::PlayerTurn)
 	{
+		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
+	}
+	else if (state == CombatTurnState::EnemyTurn)
+	{
+		SetTurn(Turn::EnemyTurn);
+		ResolveEnemyGroupTurn();
+		SetCombatTurnState(CombatTurnState::Resolve);
 	}
 }
 
@@ -738,7 +833,7 @@ void GameManager::InitializePlayer()
 		return;
 	}
 
-	stats->SetHealth(12);
+	stats->SetHealth(10000); // Player 초기화
 	stats->SetStrength(12);
 	stats->SetAgility(12);
 	stats->SetSense(12);
@@ -759,6 +854,31 @@ void GameManager::InitializeFloor()
 	m_CurrentFloor = 1;
 	AdvanceFloor();
 	RefreshGridSystem();
+
+	if (!m_ActiveScene)
+	{
+		return;
+	}
+
+	for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+	{
+		(void)name;
+		if (!object)
+		{
+			continue;
+		}
+
+		if (!object->GetComponent<EnemyComponent>())
+		{
+			continue;
+		}
+
+		if (auto* stat = object->GetComponent<EnemyStatComponent>())
+		{
+			stat->ResetCurrentHPToInitial();
+		}
+	}
+
 }
 
 void GameManager::AdvanceFloor()
@@ -885,7 +1005,9 @@ void GameManager::DispatchPlayerFSMEvent(const std::string& eventName)
 	}
 }
 
-void GameManager::ResolveEnemyAttack()
+
+//void GameManager::ResolveEnemyAttack()
+void GameManager::ResolveEnemyAttack(int actorId)
 {
 	if (!m_ActiveScene)
 	{
@@ -898,14 +1020,32 @@ void GameManager::ResolveEnemyAttack()
 		return;
 	}
 
-	const int actorId = combatManager->GetCurrentActorId();
+	
+	if (actorId == 0)
+	{
+		actorId = combatManager->GetCurrentActorId();
+	}
+
+	
+	//const int actorId = combatManager->GetCurrentActorId();
 	if (actorId == 0 || actorId == 1)
+	{
+		return;
+	}
+
+	if (!combatManager->IsActorInBattle(actorId))
 	{
 		return;
 	}
 
 	auto* playerObject = FindPlayerObject(m_ActiveScene);
 	if (!playerObject)
+	{
+		return;
+	}
+
+	auto* player = playerObject->GetComponent<PlayerComponent>();
+	if (!player)
 	{
 		return;
 	}
@@ -951,6 +1091,21 @@ void GameManager::ResolveEnemyAttack()
 	}
 
 	auto* enemyOwner = enemy->GetOwner();
+
+	if (enemyOwner)
+	{
+		if (auto* enemyMove = enemyOwner->GetComponent<EnemyMovementComponent>())
+		{
+			enemyMove->RotateTowardTarget(player->GetQ(), player->GetR());
+		}
+	}
+
+	if (auto* playerMove = playerObject->GetComponent<PlayerMovementComponent>())
+	{
+		playerMove->RotateTowardTarget(enemy->GetQ(), enemy->GetR());
+	}
+
+
 	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
 	if (!enemyStat)
 	{
@@ -999,6 +1154,47 @@ void GameManager::ResolveEnemyAttack()
 			}
 		}
 	}
+}
+
+bool GameManager::ResolveEnemyGroupTurn()
+{
+	auto* combatManager = GetCombatManager();
+	if (!combatManager || !m_ActiveScene)
+	{
+		return false;
+	}
+
+	int playerActorId = 1;
+	if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+	{
+		if (auto* player = playerObject->GetComponent<PlayerComponent>())
+		{
+			playerActorId = player->GetActorId();
+		}
+	}
+
+	bool resolvedAny = false;
+	const auto& initiativeOrder = combatManager->GetInitiativeOrder();
+	for (int actorId : initiativeOrder)
+	{
+		if (actorId == 0 || actorId == playerActorId)
+		{
+			continue;
+		}
+		if (!combatManager->IsActorInBattle(actorId))
+		{
+			continue;
+		}
+		ResolveEnemyAttack(actorId);
+		resolvedAny = true;
+	}
+
+	if (resolvedAny)
+	{
+		m_SkipToPlayerTurn = true;
+	}
+
+	return resolvedAny;
 }
 
 std::vector<int> GameManager::CollectOwnedItemIndices() const

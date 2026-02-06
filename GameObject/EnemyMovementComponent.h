@@ -49,6 +49,7 @@ public:
 	void RequestMoveToTarget();
 	void RequestRunOff();
 	void RequestMaintainRange();
+	void RotateTowardTarget(int targetQ, int targetR);
 
 
 	struct PatrolPoint

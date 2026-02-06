@@ -7,7 +7,9 @@
 #include "NodeComponent.h"
 #include "EnemyStatComponent.h"
 #include "EnemyComponent.h"
+#include "ServiceRegistry.h"
 #include "GameManager.h"
+#include "CombatManager.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -59,7 +61,10 @@ void EnemyMovementComponent::Update(float deltaTime)
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
 	if (!gameManager)
+		return;
+	if (!enemy)
 		return;
 
 	// 탐색 EnemyStep 또는 전투 EnemyTurn에서만 움직임 허용
@@ -67,27 +72,40 @@ void EnemyMovementComponent::Update(float deltaTime)
 		(gameManager->GetPhase() == Phase::ExplorationLoop &&
 			gameManager->GetExplorationTurnState() == ExplorationTurnState::EnemyStep);
 
-	const bool combatEnemyTurn =
-		(gameManager->GetPhase() == Phase::TurnBasedCombat &&
-			gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn);
+	const bool combatPhase = gameManager->GetPhase() == Phase::TurnBasedCombat;
+	bool isInBattleActor = false;
+	if (combatPhase && scene && scene->GetServices().Has<CombatManager>())
+	{
+		isInBattleActor = scene->GetServices().Get<CombatManager>().IsActorInBattle(enemy->GetActorId());
+	}
 
-	if (!explorationEnemyStep && !combatEnemyTurn)
-		return;
+	const bool combatEnemyTurn = (combatPhase && isInBattleActor && gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn);
 
+	const bool combatNonBattleActor = combatPhase && !isInBattleActor;
 
-	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
-	if (!enemy)
+	if (!explorationEnemyStep && !combatEnemyTurn && !combatNonBattleActor)
 		return;
 
 	if (explorationEnemyStep && enemy->GetCurrentTurn() != Turn::EnemyTurn)
 		return;
-
+	
+	if (combatNonBattleActor)
+	{
+		if (enemy->GetCurrentTurn() != Turn::EnemyTurn)
+			return;
+		if (m_IsMoveComplete)
+			return;
+	}
+	
 	bool hasRequest = false;
 
 	// 1) 기존 탐색 이동 요청도 계속 지원
 	if (enemy->ConsumeMoveRequest())
 	{
-		m_PendingOrder = EMoveOrder::Patrol;
+		//const bool canApproachPlayerBySight = !combatNonBattleActor;
+		m_PendingOrder = enemy->IsTargetVisible()
+			? EMoveOrder::Approach
+			: EMoveOrder::Patrol;
 		hasRequest = true;
 	}
 
@@ -374,6 +392,47 @@ void EnemyMovementComponent::RequestMaintainRange()
 {
 	m_PendingOrder = EMoveOrder::MaintainRange;
 	m_IsMoveComplete = false;
+}
+
+void EnemyMovementComponent::RotateTowardTarget(int targetQ, int targetR)
+{
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	auto* enemyTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+	if (!enemy || !enemyTransform)
+	{
+		return;
+	}
+
+	if (!m_GridSystem)
+	{
+		GetSystem();
+	}
+
+	if (!m_GridSystem)
+	{
+		return;
+	}
+
+	const AxialKey startKey{ enemy->GetQ(), enemy->GetR() };
+	const AxialKey targetKey{ targetQ, targetR };
+	if (startKey.q == targetKey.q && startKey.r == targetKey.r)
+	{
+		return;
+	}
+
+	const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
+	if (path.size() < 2)
+	{
+		return;
+	}
+
+	ERotationOffset rotation{};
+	if (TryGetRotationFromStep(startKey, path[1], rotation))
+	{
+		SetEnemyRotation(enemyTransform, rotation);
+		enemy->SetFacing(rotation);
+	}
 }
 
 void EnemyMovementComponent::MovePatrol()

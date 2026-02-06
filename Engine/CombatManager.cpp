@@ -6,6 +6,7 @@
 #include "LogSystem.h"
 #include "EventDispatcher.h"
 #include "CombatEvents.h"
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
@@ -31,7 +32,7 @@ void CombatManager::HandlePlayerAttack(const AttackRequest& request)
         EnterBattle(request.actorId, request.targetIds.front());
     }
 
-    AdvanceTurn();
+    //AdvanceTurn();
 }
 
 void CombatManager::TickAI(AIController& controller, float deltaTime)
@@ -50,6 +51,7 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
     (void)targetId;
 
     m_State = Battle::InBattle;
+    m_ActorIdsInBattle.clear();
 
 	std::cout << "[Combat] Enter battle: initiator=" << initiatorId
 		<< " target=" << targetId << std::endl;
@@ -61,6 +63,12 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 	}
 
     BuildInitiativeOrder();
+
+    for (int actorId : m_InitiativeOrder)
+    {
+        m_ActorIdsInBattle.insert(actorId);
+    }
+
     if (m_EventDispatcher)
     {
         m_EventDispatcher->Dispatch(EventType::CombatInitComplete, nullptr);
@@ -82,6 +90,7 @@ void CombatManager::ExitBattle()
 {
     m_State = Battle::NonBattle;
     m_InitiativeOrder.clear();
+    m_ActorIdsInBattle.clear();
     m_CurrentTurnIndex = 0;
 
     std::cout << "[Combat] Exit battle" << std::endl;
@@ -98,6 +107,59 @@ void CombatManager::SetCombatants(const std::vector<CombatantSnapshot>& combatan
 	m_Combatants = combatants;
 }
 
+bool CombatManager::AddCombatants(const std::vector<CombatantSnapshot>& combatants)
+{
+	if (combatants.empty())
+	{
+		return false;
+	}
+
+	bool added = false;
+	for (const auto& combatant : combatants)
+	{
+		if (combatant.actorId == 0)
+		{
+			continue;
+		}
+
+		const bool alreadyRegistered = std::any_of(
+			m_Combatants.begin(),
+			m_Combatants.end(),
+			[&combatant](const CombatantSnapshot& existing)
+			{
+				return existing.actorId == combatant.actorId;
+			});
+
+		if (alreadyRegistered)
+		{
+			continue;
+		}
+
+		m_Combatants.push_back(combatant);
+		added = true;
+	}
+
+	if (!added)
+	{
+		return false;
+	}
+
+	const int currentActor = GetCurrentActorId();
+	BuildInitiativeOrder();
+
+	if (m_State == Battle::InBattle && currentActor != 0 && !m_InitiativeOrder.empty())
+	{
+		const auto it = std::find(m_InitiativeOrder.begin(), m_InitiativeOrder.end(), currentActor);
+		if (it != m_InitiativeOrder.end())
+		{
+			m_CurrentTurnIndex = static_cast<std::size_t>(std::distance(m_InitiativeOrder.begin(), it));
+		}
+	}
+
+	return true;
+}
+
+
 void CombatManager::UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining)
 {
     if (m_State != Battle::InBattle)
@@ -105,6 +167,15 @@ void CombatManager::UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining)
 
     if (!playerAlive || !enemiesRemaining)
         ExitBattle();
+}
+
+void CombatManager::ResetSessionState()
+{
+    m_State = Battle::NonBattle;
+    m_Combatants.clear();
+    m_InitiativeOrder.clear();
+    m_ActorIdsInBattle.clear();
+    m_CurrentTurnIndex = 0;
 }
 
 int CombatManager::GetCurrentActorId() const
@@ -116,9 +187,11 @@ int CombatManager::GetCurrentActorId() const
 	return m_InitiativeOrder[m_CurrentTurnIndex];
 }
 
+
 void CombatManager::BuildInitiativeOrder()
 {
     m_InitiativeOrder.clear();
+    m_ActorIdsInBattle.clear();
 
     if (m_Combatants.empty())
         return;
@@ -147,6 +220,7 @@ void CombatManager::BuildInitiativeOrder()
     for (const InitiativeEntry& entry : entries)
     {
         m_InitiativeOrder.push_back(entry.actorId);
+        m_ActorIdsInBattle.insert(entry.actorId);
     }
 
 	if (!m_InitiativeOrder.empty())
@@ -165,6 +239,49 @@ void CombatManager::BuildInitiativeOrder()
 		const CombatInitiativeBuiltEvent eventData{ &m_InitiativeOrder };
 		m_EventDispatcher->Dispatch(EventType::CombatInitiativeBuilt, &eventData);
 	}
+}
+
+bool CombatManager::IsPlayerActorId(int actorId) const
+{
+	for (const auto& combatant : m_Combatants)
+	{
+		if (combatant.actorId == actorId)
+		{
+			return combatant.isPlayer;
+		}
+	}
+	return actorId == 1;
+}
+
+bool CombatManager::IsActorInBattle(int actorId) const
+{
+    return actorId != 0 && m_ActorIdsInBattle.find(actorId) != m_ActorIdsInBattle.end();
+}
+
+void CombatManager::AdvanceTurnToNextPlayer()
+{
+	if (m_InitiativeOrder.empty())
+	{
+		return;
+	}
+
+	const std::size_t maxSteps = m_InitiativeOrder.size();
+	for (std::size_t step = 0; step < maxSteps; ++step)
+	{
+		m_CurrentTurnIndex = (m_CurrentTurnIndex + 1) % m_InitiativeOrder.size();
+		if (IsPlayerActorId(m_InitiativeOrder[m_CurrentTurnIndex]))
+		{
+			break;
+		}
+	}
+
+	if (m_EventDispatcher)
+	{
+		const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
+		m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
+	}
+
+	std::cout << "[Combat] Turn advanced: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
 }
 
 bool CombatManager::CanAct(int actorId) const

@@ -442,13 +442,20 @@ static EnemyComponent* FindEnemyAt(GridSystemComponent* grid, int q, int r)
 		return nullptr;
 	}
 
+
+
 	for (auto* enemy : grid->GetEnemies())
 	{
 		if (!enemy)
 		{
 			continue;
 		}
-
+		auto* enemyOwner = enemy->GetOwner();
+		auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+		if (enemyStat && enemyStat->IsDead())
+		{
+			continue;
+		}
 		if (enemy->GetQ() == q && enemy->GetR() == r)
 		{
 			return enemy;
@@ -677,16 +684,66 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+		// 전투 Input
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
-			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			if (!scene || !scene->GetServices().Has<InputManager>())
 			{
+				return;
+			}
+
+			auto& input = scene->GetServices().Get<InputManager>();
+			if (!input.IsPointInViewport(mouseData->pos))
+			{
+				return;
+			}
+
+			auto camera = scene->GetGameCamera();
+			if (!camera)
+			{
+				return;
+			}
+
+			Ray pickRay{};
+			if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+			{
+				return;
+			}
+
+			float hitT = 0.0f;
+			auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+			if (!clickedNode)
+			{
+				return;
+			}
+
+			auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+			if (!enemy)
+			{
+				return;
+			}
+
+			const int range = max(0, m_AttackRange);
+			const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+			if (distance > range)
+			{
+				return;
+			}
+
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{	
+				m_PendingAttackTarget = enemy;
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
-					return;
+					//return;
+					mouseData->handled = true;
 				}
 			}
+			return;
 		}
+
+		// 이동 Input
 
 		if (!gameManager || !gameManager->IsExplorationInputAllowed())
 		{
@@ -821,13 +878,59 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
+			if (!scene || !scene->GetServices().Has<InputManager>())
+			{
+				return;
+			}
+
+			auto& input = scene->GetServices().Get<InputManager>();
+			if (!input.IsPointInViewport(mouseData->pos))
+			{
+				return;
+			}
+
+			auto camera = scene->GetGameCamera();
+			if (!camera)
+			{
+				return;
+			}
+
+			Ray pickRay{};
+			if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+			{
+				return;
+			}
+
+			float hitT = 0.0f;
+			auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+			if (!clickedNode)
+			{
+				return;
+			}
+
+			auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+			if (!enemy)
+			{
+				return;
+			}
+
+			const int range = max(0, m_AttackRange);
+			const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+			if (distance > range)
+			{
+				return;
+			}
+
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
+				m_PendingAttackTarget = enemy;
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
-					return;
+					//return;
+					mouseData->handled = true;
 				}
 			}
+			return;
 		}
 
 		if (!gameManager || !gameManager->IsExplorationInputAllowed())
@@ -1072,6 +1175,7 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 
 	if (m_SelectedEnemy == enemy)
 	{
+		m_PendingAttackTarget = enemy;
 		RequestCombatConfirm();
 		DispatchCombatEvent(owner, "Combat_Confirm");
 		m_SelectedEnemy = nullptr;
@@ -1079,6 +1183,7 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 	}
 
 	m_SelectedEnemy = enemy;
+	m_PendingAttackTarget = enemy;
 	DispatchPlayerStateEvent(owner, "Combat_Start");
 	return true;
 }
@@ -1086,6 +1191,7 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 void PlayerComponent::ClearCombatSelection()
 {
 	m_SelectedEnemy = nullptr;
+	m_PendingAttackTarget = nullptr;
 }
 
 EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
@@ -1099,6 +1205,14 @@ EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
 	}
 	return nullptr;
 }
+
+EnemyComponent* PlayerComponent::ConsumePendingAttackTarget()
+{
+	EnemyComponent* target = m_PendingAttackTarget;
+	m_PendingAttackTarget = nullptr;
+	return target;
+}
+
 
 // 밀기 관련
 
