@@ -268,6 +268,42 @@ void EnemyComponent::Update(float deltaTime) {
 		return;
 	}
 
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
+		&& m_CurrentTurn == Turn::EnemyTurn
+		&& m_ExploreTurnFinished)
+	{
+		return;
+	}
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
+		&& m_CurrentTurn == Turn::EnemyTurn
+		&& m_GridSystem)
+	{
+		EnemyComponent* activeEnemy = nullptr;
+		for (auto* enemy : m_GridSystem->GetEnemies())
+		{
+			if (!enemy)
+			{
+				continue;
+			}
+			auto* enemyOwner = enemy->GetOwner();
+			auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+			if (enemyStat && enemyStat->IsDead())
+			{
+				continue;
+			}
+			if (!enemy->IsExploreTurnFinished())
+			{
+				activeEnemy = enemy;
+				break;
+			}
+		}
+
+		if (activeEnemy && activeEnemy != this)
+		{
+			return;
+		}
+	}
+
 	if (!m_TargetPlayer && scene)
 	{
 		for (const auto& [name, object] : scene->GetGameObjects())
@@ -300,7 +336,11 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto& bb = m_AIController->GetBlackboard();
 	bb.Set(BlackboardKeys::IsInCombat, gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat);
-	bb.Set(BlackboardKeys::EndTurnDelay, m_EndTurnDelay);
+	float endTurnDelay = 0.0f;
+	if (!bb.TryGet(BlackboardKeys::EndTurnDelay, endTurnDelay))
+	{
+		bb.Set(BlackboardKeys::EndTurnDelay, m_EndTurnDelay);
+	}
 
 	bool isAlive = true;
 	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
@@ -381,10 +421,15 @@ void EnemyComponent::Update(float deltaTime) {
 	bool isInBattleActor = false;
 	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
 	{
+		bool canActThisTurn = true;
 		if (scene && scene->GetServices().Has<CombatManager>())
 		{
 			const auto& combatManager = scene->GetServices().Get<CombatManager>();
 			isInBattleActor = combatManager.IsActorInBattle(GetActorId());
+			if (isInBattleActor)
+			{
+				canActThisTurn = combatManager.CanAct(GetActorId());
+			}
 		}
 
 		if (!isInBattleActor)
@@ -406,6 +451,10 @@ void EnemyComponent::Update(float deltaTime) {
 					}
 				}
 			}
+		}
+		else if (!canActThisTurn)
+		{
+			return;
 		}
 		else if (gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 		{
@@ -504,6 +553,18 @@ void EnemyComponent::Update(float deltaTime) {
 
 	m_AIController->Tick(deltaTime);
 
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
+		&& m_CurrentTurn == Turn::EnemyTurn)
+	{
+		bool exploreEndTurnRequested = false;
+		if (bb.TryGet(BlackboardKeys::ExploreEndTurnRequested, exploreEndTurnRequested)
+			&& exploreEndTurnRequested)
+		{
+			m_ExploreTurnFinished = true;
+			bb.Set(BlackboardKeys::ExploreEndTurnRequested, false);
+		}
+	}
+
 	//if (!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat)
 	const bool canUseExplorationStyleMoveRequest =
 		(!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat || !isInBattleActor);
@@ -549,9 +610,19 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop)
+	{
+		if (m_CurrentTurn != Turn::EnemyTurn)
+		{
+			m_ExploreTurnFinished = false;
+		}
+	}
+
 	if (m_CurrentTurn == Turn::EnemyTurn
 		&& (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
 	{
+		m_ExploreTurnFinished = false;
 		m_MoveRequested = true;
 	}
 	else

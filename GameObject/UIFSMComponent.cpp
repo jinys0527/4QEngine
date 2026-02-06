@@ -242,8 +242,9 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::Released, this);
 	GetEventDispatcher().AddListener(EventType::UIDragged, this);
 	GetEventDispatcher().AddListener(EventType::UIDoubleClicked, this);
-	GetEventDispatcher().AddListener(EventType::TurnChanged, this); auto* owner = GetOwner();
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 
+	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 	if (gameManager)

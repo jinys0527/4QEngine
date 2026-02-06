@@ -97,7 +97,9 @@ void GameManager::SetFloorSceneNames(const std::vector<std::string>& names)
 
 void GameManager::Update(float deltaTime)
 {
-	if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
+	if (m_Phase == Phase::ExplorationLoop
+		&& m_ExplorationTurnState == ExplorationTurnState::PlayerTurn
+		&& m_Turn == Turn::PlayerTurn)
 	{
 		m_ExplorationTurnElapsed += deltaTime;
 		if (m_ExplorationTurnElapsed >= m_ExplorationTurnLimit)
@@ -287,7 +289,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 	case EventType::AIMeleeAttackRequested:
 	case EventType::AIRangedAttackRequested: {
 		std::cout << "AIAttackRequested\n";
-		if (m_Phase == Phase::TurnBasedCombat)
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState != CombatTurnState::EnemyTurn)
 		{
 			break;
 		}
@@ -307,7 +309,10 @@ void GameManager::OnEvent(EventType type, const void* data)
 		{
 			break;
 		}
-		SetCombatTurnState(CombatTurnState::Resolve);
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState != CombatTurnState::EnemyTurn)
+		{
+			SetCombatTurnState(CombatTurnState::Resolve);
+		}
 		break;
 	}
 	case EventType::ExploreTurnEnded:
@@ -714,8 +719,8 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	{
 		
 		SetTurn(Turn::EnemyTurn);
-		ResolveEnemyGroupTurn();
-		SetCombatTurnState(CombatTurnState::Resolve);
+		m_CombatTurnElapsed = 0.0f;
+		m_SkipToPlayerTurn = false;
 	}
 }
 

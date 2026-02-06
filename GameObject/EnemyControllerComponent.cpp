@@ -182,6 +182,9 @@ bool EnemyControllerComponent::CheckActiveEnemies()
 		auto* movement = owner->GetComponent<EnemyMovementComponent>();
 		if (!movement) continue;
 
+		if (!enemy->IsExploreTurnFinished())
+			return false;
+
 		if (!movement->IsMoveComplete())
 			return false;
 	}

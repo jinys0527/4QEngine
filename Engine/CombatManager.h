@@ -51,6 +51,7 @@ struct InitiativeEntry
 class CombatManager
 {
 	friend class GameManager;
+	friend class EnemyComponent;
 public:
 	CombatManager(CombatResolver& combatResolver,
 				  DiceSystem& diceSystem,

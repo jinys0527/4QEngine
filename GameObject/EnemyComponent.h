@@ -46,7 +46,7 @@ public:
 	void SetEndTurnDelay(const float& value) { m_EndTurnDelay = value; }
 	const float& GetEndTurnDelay() const { return m_EndTurnDelay; }
 	bool IsTargetVisible() const { return m_TargetVisible; }
-
+	bool IsExploreTurnFinished() const { return m_ExploreTurnFinished; }
 
 private:
 
@@ -66,9 +66,10 @@ private:
 	GridSystemComponent* m_GridSystem = nullptr;
 	bool m_MoveRequested = false;
 	bool m_TargetVisible = false;
-	float m_EndTurnDelay = 0.3f;
+	float m_EndTurnDelay = 3;
 	ERotationOffset m_Facing;
 	bool m_DebugSightLines = false;
 	bool m_DeathReported = false;
+	bool m_ExploreTurnFinished = false;
 	std::vector<NodeComponent*> m_SightDebugNodes;
 };
