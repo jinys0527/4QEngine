@@ -312,6 +312,15 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
 		const int range = max(0, player->GetAttackRange());
+
+		if (pendingTarget && pendingTarget->GetActorId() != 0)
+		{
+			if (m_CombatManager && !m_CombatManager->IsActorInBattle(pendingTarget->GetActorId()))
+			{
+				pendingTarget = nullptr;
+			}
+		}
+
 		if (pendingTarget && pendingTarget->GetActorId() != 0)
 		{
 			auto* pendingOwner = pendingTarget->GetOwner();
@@ -323,33 +332,6 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 				{
 					request.targetIds.push_back(pendingTarget->GetActorId());
 				}
-			}
-		}
-		const auto& enemies = grid->GetEnemies();
-		for (std::size_t index = 0; index < enemies.size(); ++index)
-		{
-			const auto* enemy = enemies[index];
-			if (!enemy)
-			{
-				continue;
-			}
-
-			auto* enemyOwner = enemy->GetOwner();
-			auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
-			if (enemyStat && enemyStat->IsDead())
-			{
-				continue;
-			}
-
-			const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
-			if (distance <= range && enemy->GetActorId() != 0)
-			{
-				//request.targetIds.push_back(enemy->GetActorId());
-				if (request.targetIds.empty())
-				{
-					request.targetIds.push_back(enemy->GetActorId());
-				}
-				break;
 			}
 		}
 	}

@@ -129,7 +129,16 @@ void GameManager::Update(float deltaTime)
 		auto* combatManager = GetCombatManager();
 		if (combatManager)
 		{
-			combatManager->AdvanceTurn();
+			//combatManager->AdvanceTurn();
+			if (m_SkipToPlayerTurn)
+			{
+				combatManager->AdvanceTurnToNextPlayer();
+				m_SkipToPlayerTurn = false;
+			}
+			else
+			{
+				combatManager->AdvanceTurn();
+			}
 			SetCombatTurnState(CombatTurnState::SelectActor);
 		}
 	}
@@ -161,6 +170,10 @@ void GameManager::OnEvent(EventType type, const void* data)
 	case EventType::AITurnEndRequested:
 		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
+			if (m_SkipToPlayerTurn)
+			{
+				break;
+			}
 			std::cout << "AITurnEndRequested\n";
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
@@ -272,29 +285,31 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::AIMeleeAttackRequested:
-	case EventType::AIRangedAttackRequested:
+	case EventType::AIRangedAttackRequested: {
 		std::cout << "AIAttackRequested\n";
 		if (m_Phase == Phase::TurnBasedCombat)
 		{
-			//ResolveEnemyAttack();
-			int actorId = 0;
-			if (data)
-			{
-				const auto* payload = static_cast<const CombatAIRequestEvent*>(data);
-				if (payload)
-				{
-					actorId = payload->actorId;
-				}
-			}
-			ResolveEnemyAttack(actorId);
-
-			if (m_BlockPostCombatShop)
-			{
-				break;
-			}
-			SetCombatTurnState(CombatTurnState::Resolve);
+			break;
 		}
+		//ResolveEnemyAttack();
+		int actorId = 0;
+		if (data)
+		{
+			const auto* payload = static_cast<const CombatAIRequestEvent*>(data);
+			if (payload)
+			{
+				actorId = payload->actorId;
+			}
+		}
+		ResolveEnemyAttack(actorId);
+
+		if (m_BlockPostCombatShop)
+		{
+			break;
+		}
+		SetCombatTurnState(CombatTurnState::Resolve);
 		break;
+	}
 	case EventType::ExploreTurnEnded:
 		std::cout << "ExploreTurnEnded\n";
 		if (m_Phase == Phase::ExplorationLoop)
@@ -697,6 +712,8 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	else if (state == CombatTurnState::EnemyTurn)
 	{
 		SetTurn(Turn::EnemyTurn);
+		ResolveEnemyGroupTurn();
+		SetCombatTurnState(CombatTurnState::Resolve);
 	}
 }
 
@@ -1137,6 +1154,47 @@ void GameManager::ResolveEnemyAttack(int actorId)
 			}
 		}
 	}
+}
+
+bool GameManager::ResolveEnemyGroupTurn()
+{
+	auto* combatManager = GetCombatManager();
+	if (!combatManager || !m_ActiveScene)
+	{
+		return false;
+	}
+
+	int playerActorId = 1;
+	if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+	{
+		if (auto* player = playerObject->GetComponent<PlayerComponent>())
+		{
+			playerActorId = player->GetActorId();
+		}
+	}
+
+	bool resolvedAny = false;
+	const auto& initiativeOrder = combatManager->GetInitiativeOrder();
+	for (int actorId : initiativeOrder)
+	{
+		if (actorId == 0 || actorId == playerActorId)
+		{
+			continue;
+		}
+		if (!combatManager->IsActorInBattle(actorId))
+		{
+			continue;
+		}
+		ResolveEnemyAttack(actorId);
+		resolvedAny = true;
+	}
+
+	if (resolvedAny)
+	{
+		m_SkipToPlayerTurn = true;
+	}
+
+	return resolvedAny;
 }
 
 std::vector<int> GameManager::CollectOwnedItemIndices() const

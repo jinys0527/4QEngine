@@ -554,7 +554,8 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			}
 
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
-			{
+			{	
+				m_PendingAttackTarget = enemy;
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
 					//return;
@@ -757,6 +758,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
+				m_PendingAttackTarget = enemy;
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
 					//return;

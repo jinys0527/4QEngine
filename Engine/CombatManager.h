@@ -71,9 +71,11 @@ public:
 	int GetCurrentActorId() const;
 	std::size_t GetCurrentTurnIndex() const { return m_CurrentTurnIndex; }
 	bool IsActorInBattle(int actorId) const;
+	void AdvanceTurnToNextPlayer();
 
 private:
 	void BuildInitiativeOrder();
+	bool IsPlayerActorId(int actorId) const;
 	bool CanAct(int actorId) const;
 	void AdvanceTurn();
 

@@ -388,6 +388,22 @@ void EnemyComponent::Update(float deltaTime) {
 		if (!isInBattleActor)
 		{
 			bb.Set(BlackboardKeys::IsInCombat, false);
+			if (m_TargetPlayer)
+			{
+				const int joinRange = 1;
+				const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
+				if (distance <= joinRange)
+				{
+					auto* playerOwner = m_TargetPlayer->GetOwner();
+					if (playerOwner)
+					{
+						if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
+						{
+							combatFsm->RequestCombatEnter(m_TargetPlayer->GetActorId(), GetActorId());
+						}
+					}
+				}
+			}
 		}
 		else if (gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 		{
