@@ -21,3 +21,8 @@ struct CombatTurnAdvancedEvent
 {
 	int actorId = 0;
 };
+
+struct CombatAIRequestEvent
+{
+	int actorId = 0;
+};

@@ -6,6 +6,7 @@
 #include "LogSystem.h"
 #include "EventDispatcher.h"
 #include "CombatEvents.h"
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
@@ -105,6 +106,59 @@ void CombatManager::SetCombatants(const std::vector<CombatantSnapshot>& combatan
 {
 	m_Combatants = combatants;
 }
+
+bool CombatManager::AddCombatants(const std::vector<CombatantSnapshot>& combatants)
+{
+	if (combatants.empty())
+	{
+		return false;
+	}
+
+	bool added = false;
+	for (const auto& combatant : combatants)
+	{
+		if (combatant.actorId == 0)
+		{
+			continue;
+		}
+
+		const bool alreadyRegistered = std::any_of(
+			m_Combatants.begin(),
+			m_Combatants.end(),
+			[&combatant](const CombatantSnapshot& existing)
+			{
+				return existing.actorId == combatant.actorId;
+			});
+
+		if (alreadyRegistered)
+		{
+			continue;
+		}
+
+		m_Combatants.push_back(combatant);
+		added = true;
+	}
+
+	if (!added)
+	{
+		return false;
+	}
+
+	const int currentActor = GetCurrentActorId();
+	BuildInitiativeOrder();
+
+	if (m_State == Battle::InBattle && currentActor != 0 && !m_InitiativeOrder.empty())
+	{
+		const auto it = std::find(m_InitiativeOrder.begin(), m_InitiativeOrder.end(), currentActor);
+		if (it != m_InitiativeOrder.end())
+		{
+			m_CurrentTurnIndex = static_cast<std::size_t>(std::distance(m_InitiativeOrder.begin(), it));
+		}
+	}
+
+	return true;
+}
+
 
 void CombatManager::UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining)
 {

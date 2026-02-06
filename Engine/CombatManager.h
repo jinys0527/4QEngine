@@ -61,6 +61,7 @@ public:
 	void EnterBattle(int initiatorId, int targetId);
 	void ExitBattle();
 	void SetCombatants(const std::vector<CombatantSnapshot>& combatants);
+	bool AddCombatants(const std::vector<CombatantSnapshot>& combatants);
 	void UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining);
 	void ResetSessionState();
 	void SetEventDispatcher(EventDispatcher* dispatcher) { m_EventDispatcher = dispatcher; }

@@ -90,7 +90,7 @@ private:
 	void SetFloodSystemActive(bool active);
 	void RefreshGridSystem();
 	void DispatchPlayerFSMEvent(const std::string& eventName);
-	void ResolveEnemyAttack();
+	void ResolveEnemyAttack(int actorId = 0);
 	std::vector<int> CollectOwnedItemIndices() const;
 private:
 

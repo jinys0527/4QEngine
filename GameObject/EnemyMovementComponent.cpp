@@ -102,8 +102,8 @@ void EnemyMovementComponent::Update(float deltaTime)
 	// 1) 기존 탐색 이동 요청도 계속 지원
 	if (enemy->ConsumeMoveRequest())
 	{
-		const bool canApproachPlayerBySight = !combatNonBattleActor;
-		m_PendingOrder = (canApproachPlayerBySight && enemy->IsTargetVisible())
+		//const bool canApproachPlayerBySight = !combatNonBattleActor;
+		m_PendingOrder = enemy->IsTargetVisible()
 			? EMoveOrder::Approach
 			: EMoveOrder::Patrol;
 		hasRequest = true;
@@ -392,6 +392,47 @@ void EnemyMovementComponent::RequestMaintainRange()
 {
 	m_PendingOrder = EMoveOrder::MaintainRange;
 	m_IsMoveComplete = false;
+}
+
+void EnemyMovementComponent::RotateTowardTarget(int targetQ, int targetR)
+{
+	auto* owner = GetOwner();
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
+	auto* enemyTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+	if (!enemy || !enemyTransform)
+	{
+		return;
+	}
+
+	if (!m_GridSystem)
+	{
+		GetSystem();
+	}
+
+	if (!m_GridSystem)
+	{
+		return;
+	}
+
+	const AxialKey startKey{ enemy->GetQ(), enemy->GetR() };
+	const AxialKey targetKey{ targetQ, targetR };
+	if (startKey.q == targetKey.q && startKey.r == targetKey.r)
+	{
+		return;
+	}
+
+	const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
+	if (path.size() < 2)
+	{
+		return;
+	}
+
+	ERotationOffset rotation{};
+	if (TryGetRotationFromStep(startKey, path[1], rotation))
+	{
+		SetEnemyRotation(enemyTransform, rotation);
+		enemy->SetFacing(rotation);
+	}
 }
 
 void EnemyMovementComponent::MovePatrol()
