@@ -13,6 +13,31 @@
 #include "Scene.h"
 #include "GameManager.h"
 
+namespace
+{
+	bool GraphHasAction(const FSMGraph& graph, const std::string& actionId)
+	{
+		for (const auto& state : graph.states)
+		{
+			for (const auto& action : state.onEnter)
+			{
+				if (action.id == actionId)
+				{
+					return true;
+				}
+			}
+			for (const auto& action : state.onExit)
+			{
+				if (action.id == actionId)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+}
+
 void RegisterUIFSMDefinitions()
 {
 	auto& actionRegistry = FSMActionRegistry::Instance();
@@ -212,6 +237,12 @@ UIFSMComponent::UIFSMComponent()
 				return;
 			}
 
+			if (gameManager->GetTurn() != Turn::PlayerTurn)
+			{
+				UpdateTurnEndButtonState(Turn::EnemyTurn);
+				return;
+			}
+
 			if (gameManager->GetPhase() == Phase::ExplorationLoop)
 			{
 				GetEventDispatcher().Dispatch(EventType::ExploreTurnEnded, nullptr);
@@ -237,6 +268,9 @@ void UIFSMComponent::Start()
 {
 	FSMComponent::Start();
 
+	m_HasTurnEndRequestAction = GraphHasAction(GetGraph(), "UI_RequestTurnEnd");
+
+
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
 	GetEventDispatcher().AddListener(EventType::UIHovered, this);
 	GetEventDispatcher().AddListener(EventType::Released, this);
@@ -249,6 +283,7 @@ void UIFSMComponent::Start()
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 	if (gameManager)
 	{
+		UpdateTurnEndButtonState(gameManager->GetTurn());
 		const auto turnEvent = gameManager->GetTurn() == Turn::PlayerTurn
 			? std::string("Player_TurnStart")
 			: std::string("Player_TurnEnd");
@@ -258,6 +293,34 @@ void UIFSMComponent::Start()
 
 void UIFSMComponent::OnEvent(EventType type, const void* data)
 {
+	if (type == EventType::TurnChanged)
+	{
+		const auto* payload = static_cast<const Events::TurnChanged*>(data);
+		if (payload)
+		{
+			UpdateTurnEndButtonState(static_cast<Turn>(payload->turn));
+		}
+	}
+
+	if (type == EventType::Pressed
+		|| type == EventType::Released
+		|| type == EventType::UIDragged
+		|| type == EventType::UIDoubleClicked)
+	{
+		auto* owner = GetOwner();
+		auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+		if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+		{
+			return;
+		}
+
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || !uiObject->HitCheck(mouseData->pos))
+		{
+			return;
+		}
+	}
+
 	const auto eventName = TranslateEvent(type, data);
 	if (!eventName)
 	{
@@ -269,27 +332,46 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 
 bool UIFSMComponent::ShouldHandleEvent(EventType type, const void* data)
 {
-	if (type != EventType::UIHovered)
+	if (type != EventType::UIHovered
+		&& type != EventType::Pressed
+		&& type != EventType::Released
+		&& type != EventType::UIDragged
+		&& type != EventType::UIDoubleClicked)
 	{
 		return true;
 	}
 
 	auto* owner = GetOwner();
 	auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
-	if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+	if (!uiObject || !uiObject->IsVisible())
 	{
 		return false;
 	}
 
 	const auto* mouseData = static_cast<const Events::MouseState*>(data);
-	if (!mouseData)
+	if (!mouseData || !uiObject->HasBounds())
 	{
-		return false;
+		return true;
 	}
 
 	return uiObject->HitCheck(mouseData->pos);
 }
 
+void UIFSMComponent::UpdateTurnEndButtonState(Turn turn)
+{
+	if (!m_HasTurnEndRequestAction)
+	{
+		return;
+	}
+
+	auto* button = GetOwner() ? GetOwner()->GetComponent<UIButtonComponent>() : nullptr;
+	if (!button)
+	{
+		return;
+	}
+
+	button->SetIsEnabled(turn == Turn::PlayerTurn);
+}
 
 void UIFSMComponent::RegisterCallback(const std::string& id, Callback callback)
 {

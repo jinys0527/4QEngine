@@ -60,7 +60,7 @@ public:
 
 	//void Render(std::vector<UIRenderInfo>& renderInfo, std::vector<UITextInfo>& textInfo);
 
-	void SendEventToUI(UIObject* ui, EventType type, const void* data);
+	bool SendEventToUI(UIObject* ui, EventType type, const void* data);
 
 	void Start();
 

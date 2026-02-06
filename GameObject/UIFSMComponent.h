@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include "UIPrimitives.h"
 
+enum class Turn;
+
 struct UIFSMEventCallback
 {
 	std::string eventName;
@@ -53,5 +55,9 @@ private:
 	std::unordered_map<std::string, Callback> m_Callbacks;
 	std::unordered_map<std::string, LegacyCallback> m_LegacyCallbacks;
 	std::optional<UIRect> m_CachedBounds;
+
+	bool m_HasTurnEndRequestAction = false;
+
+	void UpdateTurnEndButtonState(Turn turn);
 };
 

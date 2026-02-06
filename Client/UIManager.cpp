@@ -447,29 +447,50 @@ void UIManager::OnEvent(EventType type, const void* data)
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
 
-			m_ActiveUI = ui;
-			if (mouseData)
-				mouseData->handled = true;
-			SendEventToUI(m_ActiveUI, type, data);
-			break;
+			if (SendEventToUI(ui, type, data))
+			{
+				m_ActiveUI = ui;
+				if (mouseData)
+					mouseData->handled = true;
+				break;
+			}
 		}
 	}
 	else if (type == EventType::UIDragged || type == EventType::Released)
 	{
-		if (m_ActiveUI)
+		bool handled = false;
+		if (m_ActiveUI && m_ActiveUI->HitCheck(mouseData->pos))
 		{
-			if (mouseData)
-				mouseData->handled = true;
-			if (type == EventType::UIDragged)
+			handled = SendEventToUI(m_ActiveUI, type == EventType::UIDragged ? EventType::UIDragged : type, data);
+		}
+		if (!handled)
+		{
+			for (auto* ui : m_SortedUI)
 			{
-				SendEventToUI(m_ActiveUI, EventType::UIDragged, data);
+				if (!ui || !ui->IsVisible())
+					continue;
+				if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
+					continue;
+				if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
+					continue;
+				if (!ui->HitCheck(mouseData->pos))
+					continue;
+
+				if (SendEventToUI(ui, type == EventType::UIDragged ? EventType::UIDragged : type, data))
+				{
+					if (mouseData)
+						mouseData->handled = true;
+					break;
+				}
 			}
-			else
-			{
-				SendEventToUI(m_ActiveUI, type, data);
-			}
-			if (type == EventType::Released)
-				m_ActiveUI = nullptr;
+		}
+		if (handled && mouseData)
+		{
+			mouseData->handled = true;
+		}
+		if (type == EventType::Released)
+		{
+			m_ActiveUI = nullptr;
 		}
 	}
 	else if (type == EventType::Released)
@@ -485,9 +506,12 @@ void UIManager::OnEvent(EventType type, const void* data)
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
 
-			if (mouseData)
-				mouseData->handled = true;
-			break;
+			if (SendEventToUI(ui, type, data))
+			{
+				if (mouseData)
+					mouseData->handled = true;
+				break;
+			}
 		}
 	}
 	else if (type == EventType::UIDoubleClicked)
@@ -503,16 +527,16 @@ void UIManager::OnEvent(EventType type, const void* data)
 			if (!ui->HitCheck(mouseData->pos))
 				continue;
 
-			if (mouseData)
-				mouseData->handled = true;
-			SendEventToUI(ui, EventType::UIDoubleClicked, data);
-			break;
+			if (SendEventToUI(ui, EventType::UIDoubleClicked, data))
+			{
+				if (mouseData)
+					mouseData->handled = true;
+				break;
+			}
 		}
 	}
 	else if (type == EventType::UIHovered)
 	{
-		// Hover는 모든 UI에 전달, 내부에서 입장/이탈 상태 관리
-		bool hitAny = false;
 		for (auto* ui : m_SortedUI)
 		{
 			if (!ui || !ui->IsVisible())
@@ -521,14 +545,13 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (!ui->hasButton)
 				continue;
-			if (!hitAny && ui->HitCheck(mouseData->pos))
-				hitAny = true;
-
-			SendEventToUI(ui, type, data);
+			if (SendEventToUI(ui, EventType::UIDoubleClicked, data))
+			{
+				if (mouseData)
+					mouseData->handled = true;
+				break;
+			}
 		}
-
-		if (hitAny && mouseData)
-			mouseData->handled = true;
 	}
 }
 
@@ -558,8 +581,10 @@ void UIManager::UpdateSortedUI(const std::unordered_map<std::string, std::shared
 		});
 }
 
-void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
+bool UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
+	bool handled = false;
+
 	if (ui->hasButton)
 	{
 		auto buttons = ui->GetComponents<UIButtonComponent>();
@@ -568,19 +593,33 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 			if (!button)
 				continue;
 
+			const bool isEnabled = button->GetIsEnabled();
+
 			if (type == EventType::Pressed)
 			{
-				button->HandlePressed();
+				if (isEnabled)
+				{
+					button->HandlePressed();
+					handled = true;
+				}
 			}
 			else if (type == EventType::Released)
 			{
-				button->HandleReleased();
+				if (isEnabled)
+				{
+					button->HandleReleased();
+					handled = true;
+				}
 			}
 			else if (type == EventType::UIHovered)
 			{
 				const auto mouseData = static_cast<const Events::MouseState*>(data);
 				const bool isHovered = ui->HitCheck(mouseData->pos);
-				button->HandleHover(isHovered);
+				if (isEnabled)
+				{
+					button->HandleHover(isHovered);
+					handled = true;
+				}
 			}
 		}
 		if (ui->hasSlider)
@@ -623,10 +662,12 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 					}
 					normalizedValue = std::clamp(normalizedValue, 0.0f, 1.0f);
 					slider->HandleDrag(normalizedValue);
+					handled = true;
 				}
 				else if (type == EventType::Released)
 				{
 					slider->HandleReleased();
+					handled = true;
 				}
 			}
 		}
@@ -635,19 +676,27 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 			auto* fsm = ui->GetComponent<UIFSMComponent>();
 			if (!fsm)
 			{
-				return;
+				return handled;
 			}
+			if (!fsm->ShouldHandleEvent(type, data))
+			{
+				return handled;
+			}
+
 			if (type == EventType::UIHovered)
 			{
 				const auto mouseData = static_cast<const Events::MouseState*>(data);
 				if (!ui->HitCheck(mouseData->pos))
 				{
-					return;
+					return handled;
 				}
 			}
 			fsm->OnEvent(type, data);
+			handled = true;
 		}
 	}
+
+	return handled;
 }
 
 void UIManager::RefreshUIListForCurrentScene()

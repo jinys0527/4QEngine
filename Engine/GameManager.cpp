@@ -137,10 +137,26 @@ void GameManager::Update(float deltaTime)
 				combatManager->AdvanceTurnToNextPlayer();
 				m_SkipToPlayerTurn = false;
 			}
+			else if (m_ResolveEnemyTurn)
+			{
+				if (m_RemainingEnemyTurns > 0)
+				{
+					--m_RemainingEnemyTurns;
+				}
+				if (m_RemainingEnemyTurns > 0)
+				{
+					combatManager->AdvanceTurnToNextEnemyOrPlayer();
+				}
+				else
+				{
+					combatManager->AdvanceTurnToNextPlayer();
+				}
+			}
 			else
 			{
 				combatManager->AdvanceTurn();
 			}
+			m_ResolveEnemyTurn = false;
 			SetCombatTurnState(CombatTurnState::SelectActor);
 		}
 	}
@@ -177,6 +193,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 				break;
 			}
 			std::cout << "AITurnEndRequested\n";
+			m_ResolveEnemyTurn = true;
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
@@ -283,6 +300,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		else if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
+			m_ResolveEnemyTurn = true;
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
@@ -410,7 +428,9 @@ void GameManager::TurnReset()
 	m_GameDataLoaded = false;
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
-	m_BlockPostCombatShop = false;
+	m_BlockPostCombatShop = false;	
+	m_ResolveEnemyTurn = false;
+	m_RemainingEnemyTurns = 0;
 
 	// 적 Reset
 	if (auto* combatManager = GetCombatManager())
@@ -713,7 +733,7 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	{
 		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
-		
+		m_RemainingEnemyTurns = 0;
 	}
 	else if (state == CombatTurnState::EnemyTurn)
 	{
@@ -721,6 +741,32 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 		SetTurn(Turn::EnemyTurn);
 		m_CombatTurnElapsed = 0.0f;
 		m_SkipToPlayerTurn = false;
+
+		auto* combatManager = GetCombatManager();
+		if (combatManager && m_RemainingEnemyTurns == 0)
+		{
+			int playerActorId = 1;
+			if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+			{
+				if (auto* player = playerObject->GetComponent<PlayerComponent>())
+				{
+					playerActorId = player->GetActorId();
+				}
+			}
+
+			for (int actorId : combatManager->GetInitiativeOrder())
+			{
+				if (actorId == 0 || actorId == playerActorId)
+				{
+					continue;
+				}
+				if (!combatManager->IsActorInBattle(actorId))
+				{
+					continue;
+				}
+				++m_RemainingEnemyTurns;
+			}
+		}
 	}
 }
 

@@ -114,6 +114,8 @@ private:
 	bool  m_BlockPostCombatShop = false;
 	int   m_CurrentFloor = 1;
 	bool  m_SkipToPlayerTurn = false;
+	bool  m_ResolveEnemyTurn = false;
+	int   m_RemainingEnemyTurns = 0;
 
 	std::vector<std::string> m_FloorSceneNames;
 	DataSheetPaths m_DataPaths{};
