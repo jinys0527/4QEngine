@@ -87,7 +87,8 @@ void EnemyMovementComponent::Update(float deltaTime)
 	// 1) 기존 탐색 이동 요청도 계속 지원
 	if (enemy->ConsumeMoveRequest())
 	{
-		m_PendingOrder = EMoveOrder::Patrol;
+		//m_PendingOrder = EMoveOrder::Patrol;
+		m_PendingOrder = enemy->IsTargetVisible() ? EMoveOrder::Approach : EMoveOrder::Patrol;
 		hasRequest = true;
 	}
 

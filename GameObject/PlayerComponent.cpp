@@ -274,13 +274,20 @@ static EnemyComponent* FindEnemyAt(GridSystemComponent* grid, int q, int r)
 		return nullptr;
 	}
 
+
+
 	for (auto* enemy : grid->GetEnemies())
 	{
 		if (!enemy)
 		{
 			continue;
 		}
-
+		auto* enemyOwner = enemy->GetOwner();
+		auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+		if (enemyStat && enemyStat->IsDead())
+		{
+			continue;
+		}
 		if (enemy->GetQ() == q && enemy->GetR() == r)
 		{
 			return enemy;
@@ -499,16 +506,65 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* owner = GetOwner();
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+		// 전투 Input
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
+			if (!scene || !scene->GetServices().Has<InputManager>())
+			{
+				return;
+			}
+
+			auto& input = scene->GetServices().Get<InputManager>();
+			if (!input.IsPointInViewport(mouseData->pos))
+			{
+				return;
+			}
+
+			auto camera = scene->GetGameCamera();
+			if (!camera)
+			{
+				return;
+			}
+
+			Ray pickRay{};
+			if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+			{
+				return;
+			}
+
+			float hitT = 0.0f;
+			auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+			if (!clickedNode)
+			{
+				return;
+			}
+
+			auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+			if (!enemy)
+			{
+				return;
+			}
+
+			const int range = max(0, m_AttackRange);
+			const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+			if (distance > range)
+			{
+				return;
+			}
+
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
-					return;
+					//return;
+					mouseData->handled = true;
 				}
 			}
+			return;
 		}
+
+		// 이동 Input
 
 		if (!gameManager || !gameManager->IsExplorationInputAllowed())
 		{
@@ -656,13 +712,58 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		if (gameManager && gameManager->IsCombatInputAllowed())
 		{
+			if (!scene || !scene->GetServices().Has<InputManager>())
+			{
+				return;
+			}
+
+			auto& input = scene->GetServices().Get<InputManager>();
+			if (!input.IsPointInViewport(mouseData->pos))
+			{
+				return;
+			}
+
+			auto camera = scene->GetGameCamera();
+			if (!camera)
+			{
+				return;
+			}
+
+			Ray pickRay{};
+			if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+			{
+				return;
+			}
+
+			float hitT = 0.0f;
+			auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
+			if (!clickedNode)
+			{
+				return;
+			}
+
+			auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
+			if (!enemy)
+			{
+				return;
+			}
+
+			const int range = max(0, m_AttackRange);
+			const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+			if (distance > range)
+			{
+				return;
+			}
+
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
-					return;
+					//return;
+					mouseData->handled = true;
 				}
 			}
+			return;
 		}
 
 		if (!gameManager || !gameManager->IsExplorationInputAllowed())

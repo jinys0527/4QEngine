@@ -17,7 +17,10 @@
 #include "GridSystemComponent.h"
 #include "NodeComponent.h"
 #include "PlayerCombatFSMComponent.h"
+#include "MeshRenderer.h"
+#include "SkeletalMeshRenderer.h"
 #include "ServiceRegistry.h"
+#include "BoxColliderComponent.h"
 #include "CombatManager.h"
 #include <array>
 #include <cmath>
@@ -302,9 +305,29 @@ void EnemyComponent::Update(float deltaTime) {
 	{
 		isAlive = !stat->IsDead();
 	}
+
+	if (isAlive) {
+		m_DeathReported = false; 
+	}
 	bb.Set(BlackboardKeys::IsAlive, isAlive);
+
+	if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
+	{
+		meshRenderer->SetVisible(isAlive);
+	}
+	if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
+	{
+		skeletalRenderer->SetVisible(isAlive);
+	}
+	if (auto* collider = owner->GetComponent<BoxColliderComponent>())
+	{
+		collider->SetIsActive(isAlive);
+	}
+
 	if (!isAlive)
 	{
+		m_TargetVisible = false;
+		ClearSightDebug();
 		if (!m_DeathReported && gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
 		{
 			m_DeathReported = true;
@@ -331,6 +354,12 @@ void EnemyComponent::Update(float deltaTime) {
 						{
 							continue;
 						}
+						if (!scene->GetServices().Get<CombatManager>().IsActorInBattle(enemy->GetActorId()))
+						{
+							continue;
+						}
+
+
 						auto* enemyOwner = enemy->GetOwner();
 						auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
 						if (enemyStat && !enemyStat->IsDead())
@@ -347,10 +376,23 @@ void EnemyComponent::Update(float deltaTime) {
 		return;
 	}
 
-	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat
-		&& gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
+	bool isInBattleActor = false;
+	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
 	{
-		return;
+		if (scene && scene->GetServices().Has<CombatManager>())
+		{
+			const auto& combatManager = scene->GetServices().Get<CombatManager>();
+			isInBattleActor = combatManager.IsActorInBattle(GetActorId());
+		}
+
+		if (!isInBattleActor)
+		{
+			bb.Set(BlackboardKeys::IsInCombat, false);
+		}
+		else if (gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
+		{
+			return;
+		}
 	}
 
 	
@@ -418,6 +460,8 @@ void EnemyComponent::Update(float deltaTime) {
 		ClearSightDebug();
 	}
 
+	m_TargetVisible = targetVisible;
+
 	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop && m_TargetPlayer && hasHexData)
 	{
 		const int distance = AxialDistance(m_Q, m_R, m_TargetPlayer->GetQ(), m_TargetPlayer->GetR());
@@ -428,7 +472,8 @@ void EnemyComponent::Update(float deltaTime) {
 			{
 				if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
 				{
-					combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
+					//combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
+					combatFsm->RequestCombatEnter(m_TargetPlayer->GetActorId(), GetActorId());
 				}
 			}
 			return;
@@ -440,7 +485,11 @@ void EnemyComponent::Update(float deltaTime) {
 
 	m_AIController->Tick(deltaTime);
 
-	if (!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat)
+	//if (!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat)
+	const bool canUseExplorationStyleMoveRequest =
+		(!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat || !isInBattleActor);
+
+	if (canUseExplorationStyleMoveRequest)
 	{
 		bool moveRequested = false;
 		bool runOffRequested = false;

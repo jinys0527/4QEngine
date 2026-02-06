@@ -203,9 +203,15 @@ void PlayerMovementComponent::OnEvent(EventType type, const void* data)
 	if (!scene) return;
 
 	auto* gameManager = scene->GetGameManager();
-	if (gameManager && !gameManager->IsExplorationInputAllowed())
+	//if (gameManager && !gameManager->IsExplorationInputAllowed())
+	// 탐새(이동) 입력과/  전투입력
+	if (gameManager)
 	{
-		return;
+		const bool allowInput = gameManager->IsExplorationInputAllowed() || gameManager->IsCombatInputAllowed();
+		if (!allowInput)
+		{
+			return;
+		}
 	}
 
 	if (!scene->GetServices().Has<InputManager>())
