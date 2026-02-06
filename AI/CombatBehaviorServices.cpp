@@ -162,6 +162,16 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	if (!m_Dispatcher)
 		return;
 
+	bool isInCombat = false;
+	bb.TryGet(BlackboardKeys::IsInCombat, isInCombat);
+
+	// 전투 참여자가 아니면 글로벌 전투 이벤트(AIMoveRequested 등)를 쏘지 않는다.
+	// 비참여 적은 EnemyComponent에서 블랙보드 요청을 직접 소비해 순찰 이동한다.
+	if (!isInCombat)
+	{
+		return;
+	}
+
 	// 1) Move
 	bool moveRequested = false;
 	if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
