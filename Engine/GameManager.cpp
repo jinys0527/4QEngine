@@ -157,7 +157,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 	switch (type)
 	{
 	case EventType::AITurnEndRequested:
-		if (m_Phase == Phase::TurnBasedCombat && m_Turn == Turn::EnemyTurn)
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
 			std::cout << "AITurnEndRequested\n";
 			SetCombatTurnState(CombatTurnState::Resolve);
@@ -533,9 +533,10 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		if (m_EventDispatcher && !m_BlockPostCombatShop)
 		{
-			m_EventDispatcher->Dispatch(EventType::PostCombatToShop, nullptr);
+			m_EventDispatcher->Dispatch(EventType::PostCombatToExploration, nullptr);
 		}
 		break;
+
 	case Phase::Shop:
 		SetTurn(Turn::PlayerTurn);
 		SetPlayerShopState(true);
@@ -677,7 +678,12 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	}
 	else if (state == CombatTurnState::PlayerTurn)
 	{
+		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
+	}
+	else if (state == CombatTurnState::EnemyTurn)
+	{
+		SetTurn(Turn::EnemyTurn);
 	}
 }
 

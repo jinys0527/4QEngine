@@ -189,13 +189,20 @@ static EnemyComponent* FindEnemyAt(GridSystemComponent* grid, int q, int r)
 		return nullptr;
 	}
 
+
+
 	for (auto* enemy : grid->GetEnemies())
 	{
 		if (!enemy)
 		{
 			continue;
 		}
-
+		auto* enemyOwner = enemy->GetOwner();
+		auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+		if (enemyStat && enemyStat->IsDead())
+		{
+			continue;
+		}
 		if (enemy->GetQ() == q && enemy->GetR() == r)
 		{
 			return enemy;

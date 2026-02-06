@@ -17,7 +17,10 @@
 #include "GridSystemComponent.h"
 #include "NodeComponent.h"
 #include "PlayerCombatFSMComponent.h"
+#include "MeshRenderer.h"
+#include "SkeletalMeshRenderer.h"
 #include "ServiceRegistry.h"
+#include "BoxColliderComponent.h"
 #include "CombatManager.h"
 #include <array>
 #include <cmath>
@@ -307,8 +310,24 @@ void EnemyComponent::Update(float deltaTime) {
 		m_DeathReported = false; 
 	}
 	bb.Set(BlackboardKeys::IsAlive, isAlive);
+
+	if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
+	{
+		meshRenderer->SetVisible(isAlive);
+	}
+	if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
+	{
+		skeletalRenderer->SetVisible(isAlive);
+	}
+	if (auto* collider = owner->GetComponent<BoxColliderComponent>())
+	{
+		collider->SetIsActive(isAlive);
+	}
+
 	if (!isAlive)
 	{
+		m_TargetVisible = false;
+		ClearSightDebug();
 		if (!m_DeathReported && gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
 		{
 			m_DeathReported = true;

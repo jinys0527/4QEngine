@@ -31,7 +31,7 @@ void CombatManager::HandlePlayerAttack(const AttackRequest& request)
         EnterBattle(request.actorId, request.targetIds.front());
     }
 
-    AdvanceTurn();
+    //AdvanceTurn();
 }
 
 void CombatManager::TickAI(AIController& controller, float deltaTime)
