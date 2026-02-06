@@ -911,7 +911,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 
 		if (auto* progress = progressComponent)
 		{
-			appendElement(bounds, baseZOrder, nullptr, opacity);
+			appendElement(bounds, baseZOrder, nullptr, 1.0f);
 			auto& backgroundElement = frameData.uiElements.back();
 			applyOverrides(backgroundElement,
 				progress->GetBackgroundTextureHandle(),

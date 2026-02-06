@@ -39,6 +39,8 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float angleMask = step(angleOffset, targetLength) * step(angleOffset, arcLength);
     float mask = ringMask * angleMask;
 
-    tex.a *= mask;
+    float4 tint = float4(mTextureMask._11, mTextureMask._12, mTextureMask._13, mTextureMask._14);
+    tex.rgb *= tint.rgb;
+    tex.a *= tint.a * mask;
     return tex;
 }

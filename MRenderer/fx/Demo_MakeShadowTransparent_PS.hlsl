@@ -1,4 +1,4 @@
-﻿#include "BaseBuffer.hlsl"
+#include "BaseBuffer.hlsl"
 #include "Lights.hlsl"
 
 void PS_Main(VSOutput_PU input)

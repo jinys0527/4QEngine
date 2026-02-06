@@ -248,6 +248,7 @@ void UIObject::Deserialize(const nlohmann::json& j)
 	{
 		baseComponent->SetVisible(m_IsVisible);
 		baseComponent->SetZOrder(m_ZOrder);
+		SetOpacityFromComponent(baseComponent->GetOpacity());
 	}
 }
 
