@@ -43,6 +43,8 @@ public:
 
 	void SetDebugSightLines(const bool& value) { m_DebugSightLines = value; }
 	const bool& GetDebugSightLines() const { return m_DebugSightLines; }
+	void SetEndTurnDelay(const float& value) { m_EndTurnDelay = value; }
+	const float& GetEndTurnDelay() const { return m_EndTurnDelay; }
 	bool IsTargetVisible() const { return m_TargetVisible; }
 
 
@@ -64,6 +66,7 @@ private:
 	GridSystemComponent* m_GridSystem = nullptr;
 	bool m_MoveRequested = false;
 	bool m_TargetVisible = false;
+	float m_EndTurnDelay = 0.3f;
 	ERotationOffset m_Facing;
 	bool m_DebugSightLines = false;
 	bool m_DeathReported = false;

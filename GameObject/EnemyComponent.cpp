@@ -33,6 +33,7 @@ REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
 REGISTER_PROPERTY(EnemyComponent, MoveDistance)
 REGISTER_PROPERTY(EnemyComponent, DebugSightLines)
+REGISTER_PROPERTY(EnemyComponent, EndTurnDelay)
 
 EnemyComponent::EnemyComponent() {
 	m_Facing = ERotationOffset::clock_9;
@@ -299,6 +300,7 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto& bb = m_AIController->GetBlackboard();
 	bb.Set(BlackboardKeys::IsInCombat, gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat);
+	bb.Set(BlackboardKeys::EndTurnDelay, m_EndTurnDelay);
 
 	bool isAlive = true;
 	if (auto* stat = owner->GetComponent<EnemyStatComponent>())

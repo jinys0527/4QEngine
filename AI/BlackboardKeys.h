@@ -21,6 +21,7 @@ namespace BlackboardKeys
 	inline constexpr const char* RequestRunOffMove	   = "RequestRunOffMove";
 	inline constexpr const char* RequestMaintainRange  = "RequestMaintainRange";
 	inline constexpr const char* EndTurnRequested      = "EndTurnRequested";
+	inline constexpr const char* EndTurnDelay		   = "EndTurnDelay";
 	inline constexpr const char* RunOffTargetFound     = "RunOffTargetFound";
 	inline constexpr const char* SelfQ				   = "SelfQ";
 	inline constexpr const char* SelfR				   = "SelfR";

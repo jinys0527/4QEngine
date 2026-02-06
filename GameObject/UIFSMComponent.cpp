@@ -242,7 +242,17 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::Released, this);
 	GetEventDispatcher().AddListener(EventType::UIDragged, this);
 	GetEventDispatcher().AddListener(EventType::UIDoubleClicked, this);
-	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this); auto* owner = GetOwner();
+
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	if (gameManager)
+	{
+		const auto turnEvent = gameManager->GetTurn() == Turn::PlayerTurn
+			? std::string("Player_TurnStart")
+			: std::string("Player_TurnEnd");
+		HandleEventByName(turnEvent, nullptr);
+	}
 }
 
 void UIFSMComponent::OnEvent(EventType type, const void* data)

@@ -104,15 +104,12 @@ void EnemyControllerComponent::Update(float deltaTime)
 		if (gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn)
 		{
 			//if (IsCurrentEnemyMoveComplete())
-			if (m_CombatMoveInProgress)
+			if (m_CombatMoveInProgress && IsCurrentEnemyMoveComplete())
 			{
 				/*m_CombatMoveInProgress = false;
 				GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);*/
-				if (IsCurrentEnemyMoveComplete())
-				{
-					m_CombatMoveInProgress = false;
-					GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);
-				}
+				
+				m_CombatMoveInProgress = false;
 			}
 		}
 		else {

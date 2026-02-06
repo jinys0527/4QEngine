@@ -81,7 +81,6 @@ void InputManager::Update()
 		{
 			// 더블클릭 윈도우 지나면 싱글 확정 발사
 			m_PendingLeftClickMouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse);
 			if (!m_PendingLeftClickMouse.handled && allowGameplayInput)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
 			m_PendingLeftClick = false;
@@ -91,6 +90,9 @@ void InputManager::Update()
 	// 마우스 좌클릭
 	if (!m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
+		m_Mouse.handled = false;
+		m_EventDispatcher->Dispatch(EventType::Pressed, &m_Mouse);
+
 		// 더블 클릭 판정 : pending 존재 + 시간 / 거리 조건 만족
 		bool isDoubleClick = false;
 

@@ -58,7 +58,13 @@ protected:
 
 class EndTurnTask : public Task
 {
+public:
+	explicit EndTurnTask(float delaySeconds = 0.3f) : m_DelaySeconds(delaySeconds) {}
 protected:
+	void OnEnter(BTInstance& inst, Blackboard& bb) override;
 	BTStatus OnTick(BTInstance& inst, Blackboard& bb) override;
+
+private:
+	float m_DelaySeconds = 0.3f;
 };
 
