@@ -8,6 +8,10 @@
 #include "UIButtonComponent.h"
 #include "UIProgressBarComponent.h"
 #include "UISliderComponent.h"
+#include "Event.h"
+#include "GameState.h"
+#include "Scene.h"
+#include "GameManager.h"
 
 void RegisterUIFSMDefinitions()
 {
@@ -75,14 +79,23 @@ void RegisterUIFSMDefinitions()
 		}
 		});
 
+	actionRegistry.RegisterAction({
+		"UI_RequestTurnEnd",
+		"UI",
+		{}
+		});
+
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "UI_Pressed", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Hovered", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Released", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Dragged", "UI" });
+	eventRegistry.RegisterEvent({ "UI_Clicked", "UI" });
 	eventRegistry.RegisterEvent({ "UI_DoubleClicked", "UI" });
 	eventRegistry.RegisterEvent({ "UI_SliderValueChanged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_ProgressChanged", "UI" });
+	eventRegistry.RegisterEvent({ "Player_TurnStart", "UI" });
+	eventRegistry.RegisterEvent({ "Player_TurnEnd", "UI" });
 }
 
 
@@ -188,6 +201,26 @@ UIFSMComponent::UIFSMComponent()
 			bounds.y += action.params.value("y", 0.0f);
 			uiObject->SetBounds(bounds);
 		});
+
+	BindActionHandler("UI_RequestTurnEnd", [this](const FSMAction&)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+			if (!gameManager)
+			{
+				return;
+			}
+
+			if (gameManager->GetPhase() == Phase::ExplorationLoop)
+			{
+				GetEventDispatcher().Dispatch(EventType::ExploreTurnEnded, nullptr);
+			}
+			else
+			{
+				GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
+			}
+		});
 }
 
 UIFSMComponent::~UIFSMComponent()
@@ -197,6 +230,7 @@ UIFSMComponent::~UIFSMComponent()
 	GetEventDispatcher().RemoveListener(EventType::Released, this);
 	GetEventDispatcher().RemoveListener(EventType::UIDragged, this);
 	GetEventDispatcher().RemoveListener(EventType::UIDoubleClicked, this);
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
 }
 
 void UIFSMComponent::Start()
@@ -208,6 +242,7 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::Released, this);
 	GetEventDispatcher().AddListener(EventType::UIDragged, this);
 	GetEventDispatcher().AddListener(EventType::UIDoubleClicked, this);
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 }
 
 void UIFSMComponent::OnEvent(EventType type, const void* data)
@@ -292,6 +327,21 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("UI_Dragged");
 	case EventType::UIDoubleClicked:
 		return std::string("UI_DoubleClicked");
+	case EventType::TurnChanged:
+	{
+		if (!data)
+		{
+			return std::nullopt;
+		}
+		const auto* payload = static_cast<const Events::TurnChanged*>(data);
+		if (!payload)
+		{
+			return std::nullopt;
+		}
+		const auto turn = static_cast<Turn>(payload->turn);
+		return turn == Turn::PlayerTurn ? std::string("Player_TurnStart")
+			: std::string("Player_TurnEnd");
+	}
 	default:
 		return std::nullopt;
 	}

@@ -61,7 +61,7 @@ bool NzWndBase::Create(const wchar_t* className, const wchar_t* windowName, int 
 	SetWindowLongPtr((HWND)m_hwnd, GWLP_USERDATA, (LONG_PTR)this);
 
 	ShowWindow((HWND)m_hwnd, SW_SHOW);
-	UpdateWindow((HWND)m_hwnd);
+	//UpdateWindow((HWND)m_hwnd);
 
 	return true;
 }

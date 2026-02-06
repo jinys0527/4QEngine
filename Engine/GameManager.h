@@ -103,9 +103,9 @@ private:
 	ExplorationTurnState m_ExplorationTurnState;
 	CombatTurnState m_CombatTurnState;
 	float m_ExplorationTurnElapsed = 0.0f;
-	float m_ExplorationTurnLimit = 2.0f; // 탐색 시간
+	float m_ExplorationTurnLimit = 10.0f; // 탐색 시간
 	float m_CombatTurnElapsed = 0.0f;
-	float m_CombatTurnLimit = 2.0f;      //전투 시간
+	float m_CombatTurnLimit = 10.0f;      //전투 시간
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;

@@ -149,7 +149,7 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 			srv = m_RenderContext.UIWhiteTexture.Get();
 		}
 
-		m_RenderContext.pDXDC->PSSetShaderResources(0, 1, &srv);
+		m_RenderContext.pDXDC->PSSetShaderResources(21, 1, &srv);
 		m_RenderContext.pDXDC->PSSetSamplers(0, 1, m_RenderContext.SState[SS::CLAMP].GetAddressOf());
 		m_RenderContext.pDXDC->DrawIndexed(m_RenderContext.UIQuadIndexCount, 0, 0);
 	}

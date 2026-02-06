@@ -3258,7 +3258,7 @@ void EditorApplication::DrawGizmo()
 
 void EditorApplication::DrawUIEditorPreview()
 {
-	ImGui::SetNextWindowSize(ImVec2(1920, 1080), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(2560, 1600), ImGuiCond_Once);
 	ImGui::Begin("UI Editor");
 	ImGui::TextDisabled("UI Editor Preview");
 	ImGui::Separator();

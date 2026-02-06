@@ -6,10 +6,12 @@
 float4 PS_Main(VSOutput_PU i) : SV_TARGET
 {
     float2 uv = i.uv;
+    uv.x = 1.0f - uv.x;
     uv.y = 1.0f - uv.y;
 
-    float4 tex = g_RTView.Sample(smpClamp, uv);
+    float4 tex = g_UI_01.Sample(smpClamp, uv);
     tex.rgb = LinearToSRGB(tex.rgb);
+    float alpha = tex.a;
 
     const float progress = saturate(mTextureMask._21);
     const float reverseFill = step(0.5f, mTextureMask._22);
@@ -18,17 +20,17 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float radius = length(centered);
 
     // Adjust these for ring thickness/size.
-    const float outerRadius = 0.5f;
-    const float innerRadius = 0.38f;
+    const float outerRadius = 0.475f;
+    const float innerRadius = 0.37f;
 
     float ringMask = step(innerRadius, radius) * step(radius, outerRadius);
 
     float angle = atan2(centered.y, centered.x);
     angle = (angle + 3.14159265f) / (2.0f * 3.14159265f);
 
-    float start = 0.625f;
-    float end = 0.125f;
-
+    float start = 0.72f;
+    float end = 0.1225f;
+    
     float arcLength = frac(end - start + 1.0f);
     float targetLength = arcLength * progress;
 
@@ -41,6 +43,6 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
     float4 tint = float4(mTextureMask._11, mTextureMask._12, mTextureMask._13, mTextureMask._14);
     tex.rgb *= tint.rgb;
-    tex.a *= tint.a * mask;
+    tex.a = tint.a * mask * alpha;
     return tex;
 }

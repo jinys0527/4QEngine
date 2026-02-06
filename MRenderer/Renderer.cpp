@@ -181,7 +181,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_pDevice = device;
 	m_pDXDC = dxdc;
 
-	DXSetup(hWnd, width, height);
+	DXSetup(hWnd, width, 1600);
 	SetupText();
 
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
