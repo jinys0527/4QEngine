@@ -13,6 +13,7 @@
 #include "PlayerComponent.h"
 #include "PlayerMovementComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyStatComponent.h"
 
 REGISTER_COMPONENT(GridSystemComponent)
 REGISTER_PROPERTY_READONLY(GridSystemComponent, NodesCount)
@@ -316,6 +317,13 @@ EnemyComponent* GridSystemComponent::GetEnemyAt(int q, int r) const
 {
 	for (auto* enemy : m_Enemies)
 	{
+		auto* enemyOwner = enemy->GetOwner();
+		auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+		if (enemyStat && enemyStat->IsDead())
+		{
+			continue;
+		}
+
 		if (enemy && enemy->GetQ() == q && enemy->GetR() == r)
 			return enemy;
 	}
@@ -505,6 +513,18 @@ void GridSystemComponent::UpdateActorPositions()
 			continue;
 		}
 		const AxialKey previous{ enemy->GetQ(), enemy->GetR() };
+		
+		auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+		if (enemyStat && enemyStat->IsDead())
+		{
+			auto it = m_NodesByAxial.find(previous);
+			if (it != m_NodesByAxial.end() && it->second && it->second->GetState() == NodeState::HasEnemy)
+			{
+				it->second->SetState(NodeState::Empty);
+			}
+			continue;
+		}
+
 		const AxialKey current = AxialRound(WorldToAxialPointy(trans->GetPosition(), m_InnerRadius));
 		if (!(previous == current)) {
 			UpdateActorNodeState(previous, current, NodeState::HasEnemy);

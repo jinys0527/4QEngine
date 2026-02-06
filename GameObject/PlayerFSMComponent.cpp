@@ -373,6 +373,13 @@ void RegisterPlayerFSMDefinitions()
 		}
 		});
 
+	actionRegistry.RegisterAction({
+		"Door_Complete",
+		"Door",
+		{
+		}
+		});
+
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "Player" });
@@ -443,6 +450,7 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Door_Open",	   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Fail",	   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Revoke",   "Door" });
+	//eventRegistry.RegisterEvent({ "Door_Complete", "Door" });
 }
 
 REGISTER_COMPONENT_DERIVED(PlayerFSMComponent, FSMComponent)

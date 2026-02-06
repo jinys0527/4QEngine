@@ -91,6 +91,12 @@ bool BoxColliderComponent::BuildWorldBounds(DirectX::XMFLOAT3& outMin, DirectX::
 
 bool BoxColliderComponent::IntersectsRay(const DirectX::XMFLOAT3& rayOrigin, const DirectX::XMFLOAT3& rayDir, float& outT) const
 {
+	if (!m_IsActive)
+	{
+		return false;
+	}
+
+
 	DirectX::XMFLOAT3 boundsMin{};
 	DirectX::XMFLOAT3 boundsMax{};
 	if (!BuildWorldBounds(boundsMin, boundsMax))

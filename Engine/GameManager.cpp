@@ -23,11 +23,11 @@
 #include "ShopRoller.h"
 #include "CombatResolver.h"
 #include "EnemyStatComponent.h"
+#include "EnemyComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
 #include <chrono>
 #include <charconv>
-#include "EnemyComponent.h"
 #include <system_error>
 
 GameManager::GameManager() :
@@ -157,7 +157,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 	switch (type)
 	{
 	case EventType::AITurnEndRequested:
-		if (m_Phase == Phase::TurnBasedCombat && m_Turn == Turn::EnemyTurn)
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
 			std::cout << "AITurnEndRequested\n";
 			SetCombatTurnState(CombatTurnState::Resolve);
@@ -184,7 +184,59 @@ void GameManager::OnEvent(EventType type, const void* data)
 			const auto* payload = static_cast<const CombatTurnAdvancedEvent*>(data);
 			if (payload)
 			{
-				SyncTurnFromActorId(payload->actorId);
+				//SyncTurnFromActorId(payload->actorId);
+				bool playerAlive = false;
+				bool enemiesRemaining = false;
+
+				if (m_ActiveScene)
+				{
+					if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+					{
+						if (auto* playerStat = playerObject->GetComponent<PlayerStatComponent>())
+						{
+							playerAlive = !playerStat->IsDead();
+						}
+					}
+
+					for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+					{
+						(void)name;
+						if (!object)
+						{
+							continue;
+						}
+
+						auto* enemy = object->GetComponent<EnemyComponent>();
+						if (!enemy)
+						{
+							continue;
+						}
+
+						if (auto* combatManager = GetCombatManager())
+						{
+							if (!combatManager->IsActorInBattle(enemy->GetActorId()))
+							{
+								continue;
+							}
+						}
+
+						if (auto* enemyStat = object->GetComponent<EnemyStatComponent>())
+						{
+							if (!enemyStat->IsDead())
+							{
+								enemiesRemaining = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (auto* combatManager = GetCombatManager())
+				{
+					combatManager->UpdateBattleOutcome(playerAlive, enemiesRemaining);
+				}
+
+				if (m_Phase == Phase::TurnBasedCombat && m_BattleCheck == Battle::InBattle)
 				if (m_Phase == Phase::TurnBasedCombat)
 				{
 					SetCombatTurnState(payload->actorId == 1 ? CombatTurnState::PlayerTurn
@@ -326,6 +378,13 @@ void GameManager::TurnReset()
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
 	m_BlockPostCombatShop = false;
+
+	// 적 Reset
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->ResetSessionState();
+	}
+
 }
 
 void GameManager::Initial()
@@ -474,9 +533,10 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		if (m_EventDispatcher && !m_BlockPostCombatShop)
 		{
-			m_EventDispatcher->Dispatch(EventType::PostCombatToShop, nullptr);
+			m_EventDispatcher->Dispatch(EventType::PostCombatToExploration, nullptr);
 		}
 		break;
+
 	case Phase::Shop:
 		SetTurn(Turn::PlayerTurn);
 		SetPlayerShopState(true);
@@ -618,7 +678,12 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	}
 	else if (state == CombatTurnState::PlayerTurn)
 	{
+		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
+	}
+	else if (state == CombatTurnState::EnemyTurn)
+	{
+		SetTurn(Turn::EnemyTurn);
 	}
 }
 
@@ -738,7 +803,7 @@ void GameManager::InitializePlayer()
 		return;
 	}
 
-	stats->SetHealth(12);
+	stats->SetHealth(10000); // Player 초기화
 	stats->SetStrength(12);
 	stats->SetAgility(12);
 	stats->SetSense(12);
@@ -759,6 +824,31 @@ void GameManager::InitializeFloor()
 	m_CurrentFloor = 1;
 	AdvanceFloor();
 	RefreshGridSystem();
+
+	if (!m_ActiveScene)
+	{
+		return;
+	}
+
+	for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+	{
+		(void)name;
+		if (!object)
+		{
+			continue;
+		}
+
+		if (!object->GetComponent<EnemyComponent>())
+		{
+			continue;
+		}
+
+		if (auto* stat = object->GetComponent<EnemyStatComponent>())
+		{
+			stat->ResetCurrentHPToInitial();
+		}
+	}
+
 }
 
 void GameManager::AdvanceFloor()

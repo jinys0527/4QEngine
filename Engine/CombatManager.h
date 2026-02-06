@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <unordered_set>
 
 #include "GameState.h"
 
@@ -61,12 +62,14 @@ public:
 	void ExitBattle();
 	void SetCombatants(const std::vector<CombatantSnapshot>& combatants);
 	void UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining);
+	void ResetSessionState();
 	void SetEventDispatcher(EventDispatcher* dispatcher) { m_EventDispatcher = dispatcher; }
 
 	Battle GetState() const { return m_State; }
 	const std::vector<int>& GetInitiativeOrder() const { return m_InitiativeOrder; }
 	int GetCurrentActorId() const;
 	std::size_t GetCurrentTurnIndex() const { return m_CurrentTurnIndex; }
+	bool IsActorInBattle(int actorId) const;
 
 private:
 	void BuildInitiativeOrder();
@@ -76,6 +79,7 @@ private:
 	Battle		 m_State = Battle::NonBattle;
 	std::vector<CombatantSnapshot> m_Combatants;
 	std::vector<int> m_InitiativeOrder;
+	std::unordered_set<int> m_ActorIdsInBattle;
 	std::size_t		 m_CurrentTurnIndex = 0;
 
 	CombatResolver&  m_Resolver;

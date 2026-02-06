@@ -26,7 +26,8 @@ protected:
 private:
 	bool EnsureCombatManager();
 	bool ExecutePlayerAttack();
-	void BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants) const;
+	//void BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants) const;
+	void BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants, int targetActorId) const;
 	bool HasEnemyInAttackRange() const;
 	int  GetPlayerActorId() const;
 	bool IsPlayerActor(int actorId) const;
