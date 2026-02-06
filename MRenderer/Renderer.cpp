@@ -1796,6 +1796,10 @@ HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
 	ComPtr<IDXGIFactory> factory;
 	adapter->GetParent(__uuidof(IDXGIFactory), &factory);
 
+	ComPtr<IDXGIFactory2> factory2;
+	factory.As(&factory2);
+
+
 	g_bAllowTearing = FALSE;
 	if (factory)
 	{
@@ -1811,17 +1815,26 @@ HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
 	}
 
 	HRESULT hr = S_OK;
-	DXGI_SWAP_CHAIN_DESC sd = {};
+	DXGI_SWAP_CHAIN_DESC1 sd = {};
+	sd.Width = 0;
+	sd.Height = 0;
+	sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferCount = 2;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = hWnd;
 	sd.SampleDesc.Count = 1;
-	sd.Windowed = TRUE;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	sd.Flags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+	sd.Scaling = DXGI_SCALING_STRETCH;
+	sd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+	sd.Flags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
-	hr = factory->CreateSwapChain(m_pDevice.Get(), &sd, m_pSwapChain.GetAddressOf());
+	hr = factory2->CreateSwapChainForHwnd(
+		m_pDevice.Get(),
+		hWnd,
+		&sd,
+		nullptr,
+		nullptr,
+		m_pSwapChain.GetAddressOf()
+	);
 
 	if (FAILED(hr))
 	{

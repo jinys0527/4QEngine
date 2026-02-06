@@ -51,7 +51,7 @@ private:
 
 	ComPtr<ID3D11Device>				m_pDevice;
 	ComPtr<ID3D11DeviceContext>			m_pDXDC;
-	ComPtr<IDXGISwapChain>				m_pSwapChain;
+	ComPtr<IDXGISwapChain1>				m_pSwapChain;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView;
 	ComPtr<ID3D11Texture2D>				m_pDS;
 	ComPtr<ID3D11DepthStencilView>		m_pDSView;
