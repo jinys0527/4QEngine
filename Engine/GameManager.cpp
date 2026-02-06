@@ -708,9 +708,11 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	{
 		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
+		
 	}
 	else if (state == CombatTurnState::EnemyTurn)
 	{
+		
 		SetTurn(Turn::EnemyTurn);
 		ResolveEnemyGroupTurn();
 		SetCombatTurnState(CombatTurnState::Resolve);
