@@ -49,8 +49,10 @@ public:
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 	const bool& GetDebugEquipItem() const { return m_DebugEquipItem; }
+	const std::string& GetDebugCombatMode() const { return m_DebugCombatMode; }
 	bool IsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
-
+	void SetIsThrowPreviewActive(bool value) { m_IsThrowPreviewActive = value; }
+	const bool& GetIsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
 
 	void ResetTurnResources();
 	void BeginMove();
@@ -151,6 +153,7 @@ private:
 	bool m_DebugEquipItem = false;
 	bool m_IsThrowPreviewActive = false;
 	int m_ThrowPreviewRange = 0;
+	std::string m_DebugCombatMode = "MeleeMode";
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장

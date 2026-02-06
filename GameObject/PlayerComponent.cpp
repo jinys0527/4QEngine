@@ -46,6 +46,8 @@ REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
 REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
 REGISTER_PROPERTY(PlayerComponent, DebugEquipItem)
+REGISTER_PROPERTY_READONLY(PlayerComponent, DebugCombatMode)
+REGISTER_PROPERTY(PlayerComponent, IsThrowPreviewActive)
 
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
@@ -509,6 +511,7 @@ void PlayerComponent::Update(float deltaTime) {
 	}
 
 	auto* gameManager = scene->GetGameManager();
+	m_DebugCombatMode = m_IsThrowPreviewActive ? "ThrowMode" : "MeleeMode";
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 	//아이템 장착 테스트
 
