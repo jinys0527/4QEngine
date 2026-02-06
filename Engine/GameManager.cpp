@@ -136,9 +136,41 @@ void GameManager::Update(float deltaTime)
 			{
 				combatManager->AdvanceTurnToNextPlayer();
 				m_SkipToPlayerTurn = false;
+				m_WaitingEnemyTurnDelay = false;
+				m_EnemyTurnDelayElapsed = 0.0f;
+				m_ResolveEnemyTurn = false;
+				SetCombatTurnState(CombatTurnState::SelectActor);
+				return;
 			}
 			else if (m_ResolveEnemyTurn)
 			{
+				if (m_RemainingEnemyTurns <= 0)
+				{
+					combatManager->AdvanceTurnToNextPlayer();
+					m_WaitingEnemyTurnDelay = false;
+					m_EnemyTurnDelayElapsed = 0.0f;
+					m_ResolveEnemyTurn = false;
+					SetCombatTurnState(CombatTurnState::SelectActor);
+					return;
+				}
+
+				if (!m_WaitingEnemyTurnDelay)
+				{
+					m_WaitingEnemyTurnDelay = true;
+					m_EnemyTurnDelayElapsed = 0.0f;
+					return;
+				}
+
+				m_EnemyTurnDelayElapsed += deltaTime;
+				if (m_EnemyTurnDelayElapsed < m_EnemyTurnDelayDuration)
+				{
+					return;
+				}
+
+				m_WaitingEnemyTurnDelay = false;
+				m_EnemyTurnDelayElapsed = 0.0f;
+				--m_RemainingEnemyTurns;
+
 				if (m_RemainingEnemyTurns > 0)
 				{
 					--m_RemainingEnemyTurns;
@@ -151,6 +183,10 @@ void GameManager::Update(float deltaTime)
 				{
 					combatManager->AdvanceTurnToNextPlayer();
 				}
+
+				m_ResolveEnemyTurn = false;
+				SetCombatTurnState(CombatTurnState::SelectActor);
+				return;
 			}
 			else
 			{
@@ -327,8 +363,9 @@ void GameManager::OnEvent(EventType type, const void* data)
 		{
 			break;
 		}
-		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState != CombatTurnState::EnemyTurn)
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
+			m_ResolveEnemyTurn = true;
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
@@ -431,6 +468,9 @@ void GameManager::TurnReset()
 	m_BlockPostCombatShop = false;	
 	m_ResolveEnemyTurn = false;
 	m_RemainingEnemyTurns = 0;
+	m_WaitingEnemyTurnDelay = false;
+	m_EnemyTurnDelayElapsed = 0.0f;
+
 
 	// 적 Reset
 	if (auto* combatManager = GetCombatManager())
@@ -734,13 +774,18 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
 		m_RemainingEnemyTurns = 0;
+		m_WaitingEnemyTurnDelay = false;
+		m_EnemyTurnDelayElapsed = 0.0f;
+
 	}
 	else if (state == CombatTurnState::EnemyTurn)
 	{
-		
 		SetTurn(Turn::EnemyTurn);
 		m_CombatTurnElapsed = 0.0f;
 		m_SkipToPlayerTurn = false;
+		m_WaitingEnemyTurnDelay = false;
+		m_EnemyTurnDelayElapsed = 0.0f;
+
 
 		auto* combatManager = GetCombatManager();
 		if (combatManager && m_RemainingEnemyTurns == 0)
@@ -765,6 +810,36 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 					continue;
 				}
 				++m_RemainingEnemyTurns;
+			}
+		}
+
+		if (combatManager)
+		{
+			const int actorId = combatManager->GetCurrentActorId();
+			GridSystemComponent* grid = nullptr;
+			for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+			{
+				(void)name;
+				if (!object)
+				{
+					continue;
+				}
+				if (auto* candidate = object->GetComponent<GridSystemComponent>())
+				{
+					grid = candidate;
+					break;
+				}
+			}
+			if (grid)
+			{
+				for (auto* candidate : grid->GetEnemies())
+				{
+					if (candidate && candidate->GetActorId() == actorId)
+					{
+						m_EnemyTurnDelayDuration = candidate->GetEndTurnDelay();
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -1142,6 +1217,7 @@ void GameManager::ResolveEnemyAttack(int actorId)
 	{
 		return;
 	}
+	m_EnemyTurnDelayDuration = enemy->GetEndTurnDelay();
 
 	auto* enemyOwner = enemy->GetOwner();
 

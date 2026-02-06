@@ -180,6 +180,35 @@ bool IsTargetVisibleOnHexLine(
 
 //-----------------------------------
 
+void EnemyComponent::RefreshSightDebugLines()
+{
+	if (!m_DebugSightLines)
+	{
+		ClearSightDebug();
+		return;
+	}
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		ClearSightDebug();
+		return;
+	}
+
+	float sightDistance = 0.0f;
+	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
+	{
+		sightDistance = stat->GetSightDistance();
+	}
+	else
+	{
+		sightDistance = 100.0f;
+	}
+
+	const int sightRange = static_cast<int>(std::floor(sightDistance));
+	UpdateSightDebugLines(sightRange);
+}
+
 void EnemyComponent::ClearSightDebug()
 {
 	for (auto* node : m_SightDebugNodes)
@@ -276,31 +305,16 @@ void EnemyComponent::Update(float deltaTime) {
 	}
 	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
 		&& m_CurrentTurn == Turn::EnemyTurn
-		&& m_GridSystem)
+		&& !m_ExploreTurnFinished)
 	{
-		EnemyComponent* activeEnemy = nullptr;
-		for (auto* enemy : m_GridSystem->GetEnemies())
+		if (m_ExploreDelayRemaining > 0.0f)
 		{
-			if (!enemy)
-			{
-				continue;
-			}
-			auto* enemyOwner = enemy->GetOwner();
-			auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
-			if (enemyStat && enemyStat->IsDead())
-			{
-				continue;
-			}
-			if (!enemy->IsExploreTurnFinished())
-			{
-				activeEnemy = enemy;
-				break;
-			}
-		}
-
-		if (activeEnemy && activeEnemy != this)
-		{
+			m_ExploreDelayRemaining = max(0.0f, m_ExploreDelayRemaining - deltaTime);
 			return;
+		}
+		if (!m_MoveRequested)
+		{
+			m_MoveRequested = true;
 		}
 	}
 
@@ -505,7 +519,7 @@ void EnemyComponent::Update(float deltaTime) {
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
-		UpdateSightDebugLines(sightRange);
+
 		if (m_DebugSightLines)
 		{
 			UpdateSightDebugLines(sightRange);
@@ -616,6 +630,7 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 		if (m_CurrentTurn != Turn::EnemyTurn)
 		{
 			m_ExploreTurnFinished = false;
+			m_ExploreDelayRemaining = 0.0f;
 		}
 	}
 
@@ -623,7 +638,8 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 		&& (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
 	{
 		m_ExploreTurnFinished = false;
-		m_MoveRequested = true;
+		m_ExploreDelayRemaining = m_EndTurnDelay;
+		m_MoveRequested = m_ExploreDelayRemaining <= 0.0f;
 	}
 	else
 	{

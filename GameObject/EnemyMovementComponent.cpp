@@ -138,7 +138,7 @@ void EnemyMovementComponent::Update(float deltaTime)
 
 	m_PendingOrder = EMoveOrder::None;
 	m_IsMoveComplete = true;
-
+	enemy->RefreshSightDebugLines();
 }
 
 void EnemyMovementComponent::OnEvent(EventType type, const void* data)
@@ -623,6 +623,11 @@ bool EnemyMovementComponent::MoveToNode(const AxialKey& previous, const AxialKey
 	}
 
 	enemyTransform->SetPosition(targetTransform->GetPosition());
+	if (!(previous == current))
+	{
+		m_GridSystem->UpdateActorNodeState(previous, current, NodeState::HasEnemy);
+	}
+	enemy->SetQR(current.q, current.r);
 	return true;
 }
 

@@ -47,6 +47,9 @@ public:
 	const float& GetEndTurnDelay() const { return m_EndTurnDelay; }
 	bool IsTargetVisible() const { return m_TargetVisible; }
 	bool IsExploreTurnFinished() const { return m_ExploreTurnFinished; }
+	void RefreshSightDebugLines();
+	float GetExploreDelayRemaining() const { return m_ExploreDelayRemaining; }
+
 
 private:
 
@@ -64,12 +67,14 @@ private:
 	TransformComponent* m_TargetTransform = nullptr;
 	PlayerComponent* m_TargetPlayer = nullptr;
 	GridSystemComponent* m_GridSystem = nullptr;
-	bool m_MoveRequested = false;
-	bool m_TargetVisible = false;
+	bool  m_MoveRequested = false;
+	bool  m_TargetVisible = false;
 	float m_EndTurnDelay = 3;
 	ERotationOffset m_Facing;
-	bool m_DebugSightLines = false;
-	bool m_DeathReported = false;
-	bool m_ExploreTurnFinished = false;
+	bool  m_DebugSightLines = false;
+	bool  m_DeathReported = false;
+	bool  m_ExploreTurnFinished = false;
+	float m_ExploreDelayRemaining = 0.0f;
+	bool  m_PendingExploreEnd = false;
 	std::vector<NodeComponent*> m_SightDebugNodes;
 };

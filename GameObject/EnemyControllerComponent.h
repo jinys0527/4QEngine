@@ -28,6 +28,10 @@ private:
 	bool CheckActiveEnemies();
 
 	GridSystemComponent* m_GridSystem = nullptr;
-	bool m_TurnEndRequested = false;
-	bool m_CombatMoveInProgress = false;
+	bool  m_TurnEndRequested = false;
+	bool  m_CombatMoveInProgress = false;
+	int   m_ExploreEnemyIndex = 0;
+	bool  m_WaitingExploreDelay = false;
+	float m_ExploreDelayElapsed = 0.0f;
+	float m_ExploreDelayDuration = 0.0f;
 };

@@ -85,7 +85,10 @@ bool EditorApplication::Initialize()
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
 	m_SceneManager.Initialize();
 
-
+	if (m_InputManager)
+	{
+		m_InputManager->SetUIReferenceSize(DirectX::XMFLOAT2{ 2560.0f, 1600.0f });
+	}
 
 	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
 	m_SceneRenderTarget_edit.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
@@ -7235,6 +7238,11 @@ void EditorApplication::OnResize(int width, int height)
 		uiManager->SetReferenceResolution(UISize{ 2560.0f, 1600.0f });
 		uiManager->SetUseAnchorLayout(false);
 		uiManager->SetUseResolutionScale(true);
+	}
+
+	if (m_InputManager)
+	{
+		m_InputManager->SetUIReferenceSize(DirectX::XMFLOAT2{ 2560.0f, 1600.0f });
 	}
 }
 

@@ -107,6 +107,8 @@ private:
 	float m_ExplorationTurnLimit = 10.0f; // 탐색 시간
 	float m_CombatTurnElapsed = 0.0f;
 	float m_CombatTurnLimit = 10.0f;      //전투 시간
+	float m_EnemyTurnDelayElapsed = 0.0f;
+	float m_EnemyTurnDelayDuration = 0.5f;
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
@@ -115,6 +117,7 @@ private:
 	int   m_CurrentFloor = 1;
 	bool  m_SkipToPlayerTurn = false;
 	bool  m_ResolveEnemyTurn = false;
+	bool  m_WaitingEnemyTurnDelay = false;
 	int   m_RemainingEnemyTurns = 0;
 
 	std::vector<std::string> m_FloorSceneNames;

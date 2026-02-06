@@ -80,7 +80,7 @@ bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void GameApplication::UpdateLogic()
 {
-	m_SceneManager.ChangeScene();
+	//m_SceneManager.ChangeScene();
 }
 
 void GameApplication::Update()
@@ -131,7 +131,7 @@ void GameApplication::Render()
 
 	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
-	scene->Render(m_FrameData);
+	m_SceneManager.Render(m_FrameData);
 	m_Renderer.RenderFrame(m_FrameData);
 	m_Renderer.RenderToBackBuffer();
 	Flip(m_Renderer.GetSwapChain().Get());

@@ -51,6 +51,7 @@ void EnemyControllerComponent::Update(float deltaTime)
 		if (gameManager->GetExplorationTurnState() != ExplorationTurnState::EnemyStep)
 		{
 			m_TurnEndRequested = false;
+			m_ExploreEnemyIndex = 0;
 			return;
 		}
 
@@ -71,6 +72,7 @@ void EnemyControllerComponent::Update(float deltaTime)
 		if (currentTurn != Turn::EnemyTurn)
 		{
 			m_TurnEndRequested = false;
+			m_ExploreEnemyIndex = 0;
 			return;
 		}
 
@@ -84,12 +86,39 @@ void EnemyControllerComponent::Update(float deltaTime)
 			return;
 		}
 
-		// 모든 적 이동 완료 시 EnemyStep 종료
-		if (!m_TurnEndRequested && CheckActiveEnemies())
+		const int enemyCount = static_cast<int>(enemies.size());
+		while (m_ExploreEnemyIndex < enemyCount)
 		{
-			GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
-			m_TurnEndRequested = true;
+			auto* enemy = enemies[m_ExploreEnemyIndex];
+			if (enemy)
+			{
+				break;
+			}
+			++m_ExploreEnemyIndex;
 		}
+
+		if (m_ExploreEnemyIndex >= enemyCount)
+		{
+			if (!m_TurnEndRequested)
+			{
+				GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
+				m_TurnEndRequested = true;
+			}
+			return;
+		}
+
+		auto* currentEnemy = enemies[m_ExploreEnemyIndex];
+		auto* currentOwner = currentEnemy ? currentEnemy->GetOwner() : nullptr;
+		auto* movement = currentOwner ? currentOwner->GetComponent<EnemyMovementComponent>() : nullptr;
+		const bool isFinished = currentEnemy && currentEnemy->IsExploreTurnFinished()
+			&& movement && movement->IsMoveComplete();
+
+		if (!isFinished)
+		{
+			return;
+		}
+
+		++m_ExploreEnemyIndex;
 
 		return;
 	}

@@ -268,24 +268,24 @@ namespace
 							  const bool useAnchorLayout,
 							  const bool useResolutionScale)
 	{
-		constexpr float kMinScale = 0.001f;
-		if (useResolutionScale && hasScaleState && lastScale >= kMinScale)
-		{
-			for (const auto& [name, uiObject] : uiMap)
-			{
-				if (!uiObject || !uiObject->HasBounds())
-				{
-					continue;
-				}
-
-				UIRect bounds = uiObject->GetBounds();
-				bounds.x = (bounds.x - lastOffset.width) / lastScale;
-				bounds.y = (bounds.y - lastOffset.height) / lastScale;
-				bounds.width /= lastScale;
-				bounds.height /= lastScale;
-				uiObject->SetBounds(bounds);
-			}
-		}
+// 		constexpr float kMinScale = 0.001f;
+// 		if (useResolutionScale && hasScaleState && lastScale >= kMinScale)
+// 		{
+// 			for (const auto& [name, uiObject] : uiMap)
+// 			{
+// 				if (!uiObject || !uiObject->HasBounds())
+// 				{
+// 					continue;
+// 				}
+// 
+// 				UIRect bounds = uiObject->GetBounds();
+// 				bounds.x = (bounds.x - lastOffset.width) / lastScale;
+// 				bounds.y = (bounds.y - lastOffset.height) / lastScale;
+// 				bounds.width /= lastScale;
+// 				bounds.height /= lastScale;
+// 				uiObject->SetBounds(bounds);
+// 			}
+// 		}
 
 		for (const auto& [name, uiObject] : uiMap)
 		{
@@ -316,10 +316,10 @@ namespace
 			}
 		}
 
-		if (useResolutionScale)
-		{
-			ApplyResolutionScale(uiMap, viewportSize, referenceResolution, lastScale, lastOffset, hasScaleState);
-		}
+// 		if (useResolutionScale)
+// 		{
+// 			ApplyResolutionScale(uiMap, viewportSize, referenceResolution, lastScale, lastOffset, hasScaleState);
+// 		}
 	}
 }
 
@@ -1089,11 +1089,44 @@ void UIManager::OnEvent(EventType type, const void* data)
 	auto& uiMap = it->second;
 	ApplyLayoutOverrides(uiMap, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
 	UpdateSortedUI(uiMap);
-	auto mouseData = static_cast<const Events::MouseState*>(data);
+
+	auto* mouseData = static_cast<const Events::MouseState*>(data);
+	if (!mouseData)
+	{
+		return;
+	}
+
+	auto sendToHitUIs = [&](EventType eventType, UIObject* skipUi = nullptr, bool requireHit = true) {
+		bool handledAny = false;
+
+		for (auto* ui : m_SortedUI)
+		{
+			if (!ui || ui == skipUi || !ui->IsVisible())
+				continue;
+			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
+				continue;
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
+				continue;
+			if (requireHit && (!mouseData || !ui->HitCheck(mouseData->pos)))
+				continue;
+
+			if (SendEventToUI(ui, eventType, data))
+			{
+				handledAny = true;
+			}
+		}
+
+		if (handledAny && mouseData)
+			mouseData->handled = true;
+
+		return handledAny;
+		};
 
 	if (type == EventType::Pressed)
 	{
 		m_ActiveUI = nullptr;
+		bool handledAny = false;
+
 		for (auto* ui : m_SortedUI)
 		{
 			if (!ui || !ui->IsVisible())
@@ -1102,46 +1135,33 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
 				continue;
-			if (!ui->HitCheck(mouseData->pos))
+			if (!mouseData || !ui->HitCheck(mouseData->pos))
 				continue;
 
-			if (SendEventToUI(ui, type, data))
+			if (SendEventToUI(ui, type, mouseData))
 			{
-				m_ActiveUI = ui;
+				if (!m_ActiveUI && (ui->hasButton || ui->hasSlider))
+					m_ActiveUI = ui;
 				if (mouseData)
 					mouseData->handled = true;
-				break;
+				handledAny = true;
 			}
 		}
+
+		if (handledAny && mouseData)
+			mouseData->handled = true;
 	}
 	else if (type == EventType::UIDragged || type == EventType::Released)
 	{
 		bool handled = false;
-		if (m_ActiveUI && m_ActiveUI->HitCheck(mouseData->pos))
+		if (m_ActiveUI)
 		{
-			handled = SendEventToUI(m_ActiveUI, type == EventType::UIDragged ? EventType::UIDragged : type, data);
+			handled = SendEventToUI(m_ActiveUI, type == EventType::UIDragged ? EventType::UIDragged : type, mouseData);
 		}
-		if (!handled)
-		{
-			for (auto* ui : m_SortedUI)
-			{
-				if (!ui || !ui->IsVisible())
-					continue;
-				if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-					continue;
-				if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
-					continue;
-				if (!ui->HitCheck(mouseData->pos))
-					continue;
 
-				if (SendEventToUI(ui, type == EventType::UIDragged ? EventType::UIDragged : type, data))
-				{
-					if (mouseData)
-						mouseData->handled = true;
-					break;
-				}
-			}
-		}
+		const bool handledByHit = sendToHitUIs(type == EventType::UIDragged ? EventType::UIDragged : type, m_ActiveUI);
+		handled = handled || handledByHit;
+
 		if (handled && mouseData)
 		{
 			mouseData->handled = true;
@@ -1151,65 +1171,13 @@ void UIManager::OnEvent(EventType type, const void* data)
 			m_ActiveUI = nullptr;
 		}
 	}
-	else if (type == EventType::Released)
-	{
-		for (auto* ui : m_SortedUI)
-		{
-			if (!ui || !ui->IsVisible())
-				continue;
-			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-				continue;
-			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
-				continue;
-			if (!ui->HitCheck(mouseData->pos))
-				continue;
-
-			if (SendEventToUI(ui, type, data))
-			{
-				if (mouseData)
-					mouseData->handled = true;
-				break;
-			}
-		}
-	}
 	else if (type == EventType::UIDoubleClicked)
 	{
-		for (auto* ui : m_SortedUI)
-		{
-			if (!ui || !ui->IsVisible())
-				continue;
-			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-				continue;
-			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
-				continue;
-			if (!ui->HitCheck(mouseData->pos))
-				continue;
-
-			if (SendEventToUI(ui, EventType::UIDoubleClicked, data))
-			{
-				if (mouseData)
-					mouseData->handled = true;
-				break;
-			}
-		}
+		sendToHitUIs(EventType::UIDoubleClicked);
 	}
 	else if (type == EventType::UIHovered)
 	{
-		for (auto* ui : m_SortedUI)
-		{
-			if (!ui || !ui->IsVisible())
-				continue;
-			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-				continue;
-			if (!ui->hasButton)
-				continue;
-			if (SendEventToUI(ui, EventType::UIDoubleClicked, data))
-			{
-				if (mouseData)
-					mouseData->handled = true;
-				break;
-			}
-		}
+		sendToHitUIs(EventType::UIHovered, nullptr, false);
 	}
 }
 

@@ -94,14 +94,13 @@ void SceneManager::Reset()
 	m_CurrentScene.reset();
 }
 
-void SceneManager::Render()
+void SceneManager::Render(RenderData::FrameData& frameData)
 {
 	if (!m_CurrentScene)
 	{
 		return;
 	}
 
-	RenderData::FrameData frameData{};
 	m_CurrentScene->Render(frameData);
 	if (m_UIManager)
 	{
@@ -169,10 +168,11 @@ void SceneManager::SetCurrentScene(const std::string& name)
 			m_GameManager->SetActiveScene(m_CurrentScene.get());
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 		}
-// 
-// 		if (m_UIManager) {
-// 			m_UIManager->SetCurrentScene(name);
-// 		}
+		 
+ 		if (m_UIManager)
+		{
+ 			m_UIManager->SetCurrentScene(name);
+ 		}
 	}
 }
 
@@ -228,10 +228,10 @@ void SceneManager::ChangeScene(const std::string& name)
 		}
 		SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		//UI 생기면 그때
-		//if (m_UIManager)
-		//{
-		//	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-		//}
+		if (m_UIManager)
+		{
+			m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+		}
 
 		if (m_GameManager)
 		{
@@ -355,6 +355,25 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 	if (!m_CurrentScene)
 	{
 		SetCurrentScene(loadedScene->GetName());
+	}
+
+	if (m_UIManager && j.contains("ui"))
+	{
+		m_UIManager->SetEventDispatcher(&loadedScene->GetEventDispatcher());
+		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(loadedScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (uiObject)
+				{
+					uiObject->SetScene(loadedScene.get());
+					uiObject->Start();
+				}
+			}
+		}
 	}
 
 	return true;
