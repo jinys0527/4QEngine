@@ -1,5 +1,6 @@
 ﻿#include "PlayerPushFSMComponent.h"
 #include "PlayerComponent.h"
+#include "PlayerStatComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "scene.h"
@@ -60,7 +61,9 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 			// 주사위
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
-			if (player)
+			auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
+
+			if (player && playerStat)
 			{
 				auto* scene = owner ? owner->GetScene() : nullptr;
 				if (scene)
@@ -69,6 +72,7 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 					if (services.Has<DiceSystem>())
 					{
 						auto& diceSystem = services.Get<DiceSystem>();
+						int bonus = playerStat->GetCalculatedStrengthModifier();
 						const DiceConfig rollConfig{ 1, 20, 0 };
 						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
 						player->SetPushSuccess(roll >= PushRollThreshold); // 성공 시 SetPushSuccess

@@ -82,6 +82,17 @@ AxialKey AxialRound(const AxialCoord& axial)
 
 	return { static_cast<int>(rx), static_cast<int>(rz) };
 }
+namespace
+{
+	int AxialDistance(int q1, int r1, int q2, int r2)
+	{
+		const int dq = q1 - q2;
+		const int dr = r1 - r2;
+		const int ds = dq + dr;
+		return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
+	}
+
+}
 
 GridSystemComponent::GridSystemComponent() = default;
 
@@ -132,12 +143,39 @@ void GridSystemComponent::Update(float deltaTime) {
 		m_MoveRangePulseTime = 0.0f;
 		UpdateMoveRangeMaterials(0.0f, false);
 	}
+	if (m_ThrowRangePreviewActive && m_ThrowRange > 0)
+	{
+		UpdateThrowRange(m_PlayerNode, m_ThrowRange);
+		m_ThrowRangePulseTime += deltaTime;
+		const float pulseSpeed = 2.0f + static_cast<float>(m_ThrowRange) * 0.5f;
+		const float pulse = 0.5f + 0.5f * std::sin(m_ThrowRangePulseTime * pulseSpeed);
+		UpdateThrowRangeMaterials(pulse, true);
+	}
+	else
+	{
+		m_ThrowRangePulseTime = 0.0f;
+		UpdateThrowRange(nullptr, 0);
+		UpdateThrowRangeMaterials(0.0f, false);
+	}
 }
 
 void GridSystemComponent::OnEvent(EventType type, const void* data)
 {
 	(void)type;
 	(void)data;
+}
+
+void GridSystemComponent::SetThrowRangePreview(bool enabled, int range)
+{
+	m_ThrowRangePreviewActive = enabled;
+	m_ThrowRange = max(0, range);
+
+	if (!enabled)
+	{
+		m_ThrowRangePulseTime = 0.0f;
+		UpdateThrowRange(nullptr, 0);
+		UpdateThrowRangeMaterials(0.0f, false);
+	}
 }
 
 //Node object, player, Enemy 찾아서 배정
@@ -365,6 +403,58 @@ void GridSystemComponent::UpdateMoveRangeMaterials(float pulse, bool enabled)
 		else
 		{
 			node->SetMoveRangeHighlight(0.0f, false);
+		}
+	}
+}
+
+void GridSystemComponent::UpdateThrowRange(NodeComponent* startNode, int range)
+{
+	for (auto* node : m_Nodes)
+	{
+		if (!node)
+		{
+			continue;
+		}
+
+		node->SetInThrowRange(false);
+	}
+
+	if (!startNode || range <= 0)
+	{
+		return;
+	}
+
+	for (auto* node : m_Nodes)
+	{
+		if (!node || !node->GetIsMoveable())
+		{
+			continue;
+		}
+
+		const int distance = AxialDistance(startNode->GetQ(), startNode->GetR(), node->GetQ(), node->GetR());
+		if (distance <= range)
+		{
+			node->SetInThrowRange(true);
+		}
+	}
+}
+
+void GridSystemComponent::UpdateThrowRangeMaterials(float pulse, bool enabled)
+{
+	for (auto* node : m_Nodes)
+	{
+		if (!node)
+		{
+			continue;
+		}
+
+		if (enabled && node->IsInThrowRange())
+		{
+			node->SetThrowRangeHighlight(pulse, true);
+		}
+		else
+		{
+			node->SetThrowRangeHighlight(0.0f, false);
 		}
 	}
 }

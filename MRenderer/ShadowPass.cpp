@@ -4,6 +4,9 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
 {
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
+    ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+    dxdc->PSSetShaderResources(0, 128, nullSRVs);
+
     FLOAT backcolor[4] = { 0.f, 0.f, 0.f, 1.0f };
     SetRenderTarget(nullptr, m_RenderContext.pDSViewScene_Shadow.Get(), backcolor);
     SetViewPort(m_RenderContext.ShadowTextureSize.width, m_RenderContext.ShadowTextureSize.height, m_RenderContext.pDXDC.Get());
@@ -96,8 +99,6 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
         ID3D11VertexShader* vertexShader = m_RenderContext.VS_MakeShadow.Get();
         ID3D11PixelShader* pixelShader = m_RenderContext.PS_MakeShadow_Transparent.Get();
 
-        if (queueItem.layer == RenderData::OpaqueItems)
-            pixelShader = m_RenderContext.PS_MakeShadow.Get();
 
 
         const RenderData::MaterialData* mat = nullptr;

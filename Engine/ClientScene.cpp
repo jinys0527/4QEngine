@@ -46,6 +46,7 @@ void ClientScene::FixedUpdate()
 			gameObject->FixedUpdate();
 		}
 	}
+	ProcessPendingRemovals();
 }
 
 void ClientScene::Update(float dTime)
@@ -57,6 +58,7 @@ void ClientScene::Update(float dTime)
 			gameObject->Update(dTime);
 		}
 	}
+	ProcessPendingRemovals();
 }
 
 void ClientScene::StateUpdate(float dTime)

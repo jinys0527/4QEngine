@@ -69,6 +69,7 @@ void DefaultScene::FixedUpdate()
 			gameObject->FixedUpdate();
 		}
 	}
+	ProcessPendingRemovals();
 }
 
 void DefaultScene::Update(float deltaTime)
@@ -85,6 +86,7 @@ void DefaultScene::Update(float deltaTime)
 			gameObject->Update(deltaTime);
 		}
 	}
+	ProcessPendingRemovals();
 }
 
 void DefaultScene::StateUpdate(float deltaTime)

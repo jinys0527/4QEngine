@@ -29,6 +29,7 @@
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
+#include "DiceSystem.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -55,9 +56,76 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 
 namespace
 {
-	ItemComponent* FindFirstWorldItem(Scene& scene)
+	float DistanceSq2D(const XMFLOAT3& a, const XMFLOAT3& b)
 	{
-		for (const auto& [name, object] : scene.GetGameObjects())
+		const float dx = a.x - b.x;
+		const float dz = a.z - b.z;
+		return dx * dx + dz * dz;
+	}
+
+	GameObject* FindGameObjectByName(Scene* scene, const std::string& name)
+	{
+		if (!scene || name.empty())
+		{
+			return nullptr;
+		}
+
+		const auto& objects = scene->GetGameObjects();
+		auto it = objects.find(name);
+		if (it == objects.end())
+		{
+			return nullptr;
+		}
+
+		return it->second.get();
+	}
+
+
+	NodeComponent* FindClosestNodeByPosition(GridSystemComponent* grid, const XMFLOAT3& position)
+	{
+		if (!grid)
+		{
+			return nullptr;
+		}
+
+		float closestDistSq = FLT_MAX;
+		NodeComponent* closestNode = nullptr;
+		for (auto* node : grid->GetNodes())
+		{
+			if (!node)
+			{
+				continue;
+			}
+
+			auto* nodeOwner = node->GetOwner();
+			auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+			if (!nodeTransform)
+			{
+				continue;
+			}
+
+			const float distSq = DistanceSq2D(nodeTransform->GetPosition(), position);
+			if (distSq < closestDistSq)
+			{
+				closestDistSq = distSq;
+				closestNode = node;
+			}
+		}
+
+		return closestNode;
+	}
+
+	ItemComponent* FindClosestItemHit(Scene* scene, const Ray& ray, float& outT)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		float closestT = FLT_MAX;
+		ItemComponent* closestItem = nullptr;
+
+		for (const auto& [name, object] : scene->GetGameObjects())
 		{
 			(void)name;
 			if (!object)
@@ -71,15 +139,32 @@ namespace
 				continue;
 			}
 
-			if (item->GetPickupState() != ItemPickupState::World)
+			auto* collider = object->GetComponent<BoxColliderComponent>();
+			if (!collider || !collider->HasBounds())
 			{
 				continue;
 			}
 
-			return item;
+			float hitT = 0.0f;
+			if (!collider->IntersectsRay(ray.m_Pos, ray.m_Dir, hitT))
+			{
+				continue;
+			}
+
+			if (hitT >= 0.0f && hitT < closestT)
+			{
+				closestT = hitT;
+				closestItem = item;
+			}
 		}
 
-		return nullptr;
+		if (!closestItem)
+		{
+			return nullptr;
+		}
+
+		outT = closestT;
+		return closestItem;
 	}
 
 	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
@@ -259,27 +344,7 @@ void PlayerComponent::Update(float deltaTime) {
 
 	auto* gameManager = scene->GetGameManager();
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
-
-
 	//아이템 장착 테스트
-	if (m_DebugEquipItem)
-	{
-		if (auto* item = FindFirstWorldItem(*scene))
-		{
-			if (TryPickup(item))
-			{
-				auto* itemOwner = item->GetOwner();
-				auto* itemObject = itemOwner ? dynamic_cast<GameObject*>(itemOwner) : nullptr;
-				if (itemObject && item->GetType() == static_cast<int>(ItemType::EQUIPMENT))
-				{
-					m_MeeleItem = itemObject;
-					item->SetIsEquiped(true);
-				}
-			}
-		}
-
-		m_DebugEquipItem = false;
-	}
 
 
 	//Player Turn 종료 조건
@@ -296,25 +361,24 @@ void PlayerComponent::Update(float deltaTime) {
 
 
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
-	auto* transformcomponent = owner->GetComponent<TransformComponent>();
-	{
-		if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
-		{
-			GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
-			auto* itemcomp = item->GetComponent<ItemComponent>();
-			if (itemcomp && itemcomp->GetType() == 1)
-			{
-				m_MeeleItem = item;
-				itemcomp->SetIsEquiped(true);
-				m_InventoryItemIds.push_back(item->GetName());
+	//auto* transformcomponent = owner->GetComponent<TransformComponent>();
+	//{
+	//	if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
+	//	{
+	//		GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
+	//		auto* itemcomp = item->GetComponent<ItemComponent>();
+	//		if (itemcomp && itemcomp->GetType() == 1)
+	//		{
+	//			m_MeeleItem = item;
+	//			itemcomp->SetIsEquiped(true);
+	//			m_InventoryItemIds.push_back(item->GetName());
 
-			}
-		}
+	//		}
+	//	}
 
-	}
+	//}
 
-	//근접 아이템이 있으면 그 아이템에서 장착 본 행렬 넘겨주기
-	//스켈레탈이 있으면 장착 본 행렬을 RenderData에 넘겨주기
+	//근접 무기 스탯 적용
 	if (m_MeeleItem != nullptr)
 	{
 		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
@@ -350,6 +414,13 @@ void PlayerComponent::Update(float deltaTime) {
 
 			m_IsApplyMeeleStat = true;
 		}
+	}
+	
+	//근접 무기 모드면 근접무기 들기
+	if (/*m_IsMeleeMode && */m_MeeleItem != nullptr)
+	{
+		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
 
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
@@ -390,16 +461,28 @@ void PlayerComponent::Update(float deltaTime) {
 				}
 			}
 		}
-		XMMATRIX pose = XMLoadFloat4x4(&equipmentPose);
-		XMVECTOR translation = pose.r[3];
-		XMMATRIX scale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-		pose = XMMatrixMultiply(pose, scale);
-		pose.r[3] = translation;
-		XMStoreFloat4x4(&equipmentPose, pose);
 
-		itemcomponent->SetEquipmentBindPose(equipmentPose);
+		// equipment 본 포즈 로드
+		XMMATRIX equipmentM = XMLoadFloat4x4(&equipmentPose);
 
+		// 스케일 적용 (회전 보존)
+		XMMATRIX scaleM = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+		equipmentM = XMMatrixMultiply(scaleM, equipmentM);
+
+		// 플레이어 월드 행렬
+		auto* playerTransform = owner->GetComponent<TransformComponent>();
+		if (!playerTransform) return;
+
+		XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
+
+		XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
+
+		XMFLOAT4X4 finalPose;
+		XMStoreFloat4x4(&finalPose, finalM);
+
+		// 최종 적용
+		itemcomponent->SetEquipmentBindPose(finalPose);
 	}
 }
 
@@ -455,7 +538,24 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
+		//아이템 줍기
 		float hitT = 0.0f;
+		if (auto* clickedItem = FindClosestItemHit(scene, pickRay, hitT))
+		{
+			if (TryPickup(clickedItem))
+			{
+				mouseData->handled = true;
+				return;
+			}
+		}
+		hitT = 0.0f;
+
+
+		BeginThrowPreview();
+
+
+
+
 		auto* clickedNode = FindClosestNodeHit(scene, pickRay, hitT);
 		if (!clickedNode)
 		{
@@ -490,8 +590,35 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		const int range = max(0, m_AttackRange);
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+		if (m_IsThrowPreviewActive)
+		{
+			int throwRange = 0;
+			ItemComponent* throwItem = nullptr;
+			if (TryGetConsumableThrowRange(throwRange) && TryGetConsumableThrowItem(throwItem))
+			{
+				if (distance <= throwRange && ApplyThrowDamage(throwItem, enemy))
+				{
+					auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+					auto* enemyOwner = enemy->GetOwner();
+					auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
+
+					XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
+					XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
+
+					// y값을 1.0f 위로 보정
+					startPos.y += 1.0f;
+					targetPos.y += 1.0f;
+
+					throwItem->BeginThrow(startPos, targetPos, 2.0f);
+					ConsumeThrowItem(throwItem);
+					mouseData->handled = true;
+					return;
+				}
+			}
+		}
+
+		const int range = max(0, m_AttackRange);
 		if (distance > range)
 		{
 			return;
@@ -511,6 +638,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			}
 		}
 		
+
 		return;
 	}
 
@@ -620,6 +748,38 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		}
 	}
 
+	if (type == EventType::MouseRightClickHold)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+		if (gameManager && !gameManager->IsExplorationInputAllowed())
+		{
+			return;
+		}
+
+		
+		return;
+	}
+
+	if (type == EventType::MouseRightClickUp)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData || mouseData->handled)
+		{
+			return;
+		}
+
+		EndThrowPreview();
+		return;
+	}
+
 	if (type != EventType::TurnChanged || !data)
 	{
 		return;
@@ -637,6 +797,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	{
 		ResetTurnResources();
 	}
+	else
+	{
+		EndThrowPreview();
+	}
 }
 
 // 행동,이동력 초기화 // turn 초기화
@@ -647,6 +811,7 @@ void PlayerComponent::ResetTurnResources()
 	m_HasMoveStart = false;
 	m_CombatConfirmRequested = false;
 	m_SelectedEnemy = nullptr;
+	EndThrowPreview();
 	ResetSubFSMFlags();
 }
 
@@ -995,6 +1160,211 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 	return value;
 }
 
+bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	int bestRange = -1;
+	for (const auto& itemName : m_ConsumableItemNames) 
+	{
+		auto* itemObject = FindGameObjectByName(scene, itemName);
+		if (!itemObject)
+		{
+			continue;
+		}
+
+		const auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			continue;
+		}
+
+		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		{
+			continue;
+		}
+
+		bestRange = max(bestRange, itemComponent->GetThrowRange());
+	}
+
+	if (bestRange <= 0)
+	{
+		return false;
+	}
+
+	outRange = bestRange;
+	return true;
+}
+
+bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	outItem = nullptr;
+	int bestRange = -1;
+	for (const auto& itemName : m_ConsumableItemNames)
+	{
+		auto* itemObject = FindGameObjectByName(scene, itemName);
+		if (!itemObject)
+		{
+			continue;
+		}
+
+		auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			continue;
+		}
+
+		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		{
+			continue;
+		}
+
+		const int range = itemComponent->GetThrowRange();
+		if (range > bestRange)
+		{
+			bestRange = range;
+			outItem = itemComponent;
+		}
+	}
+
+	return outItem != nullptr && bestRange > 0;
+}
+
+bool PlayerComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy)
+{
+	if (!throwItem || !enemy)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* enemyOwner = enemy->GetOwner();
+	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+	if (!enemyStat)
+	{
+		return false;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<DiceSystem>())
+	{
+		return false;
+	}
+
+	auto& diceSystem = services.Get<DiceSystem>();
+	const int diceCount = max(0, throwItem->GetDiceRoll());
+	const int diceSides = max(0, throwItem->GetDiceType());
+	const int bonus = max(0, throwItem->GetBaseModifier());
+	int damage = bonus;
+
+	if (diceCount > 0 && diceSides > 0)
+	{
+		const DiceConfig rollConfig{ diceCount, diceSides, 0 };
+		damage += diceSystem.RollTotal(rollConfig, RandomDomain::World);
+	}
+
+	if (damage <= 0)
+	{
+		return false;
+	}
+
+	const int prevHp = enemyStat->GetCurrentHP();
+	const int nextHp = max(0, prevHp - damage);
+	enemyStat->SetCurrentHP(nextHp);
+	std::cout << "[Throw] Damage=" << damage << " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+	return true;
+}
+
+void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
+{
+	if (!throwItem)
+	{
+		return;
+	}
+
+	auto* itemOwner = throwItem->GetOwner();
+	const std::string itemName = itemOwner ? itemOwner->GetName() : std::string{};
+	for (auto& slotName : m_ConsumableItemNames)
+	{
+		if (!slotName.empty() && slotName == itemName)
+		{
+			slotName.clear();
+			break;
+		}
+	}
+
+	if (itemOwner)
+	{
+		const std::string& itemName = itemOwner->GetName();
+		auto it = std::remove(m_InventoryItemIds.begin(), m_InventoryItemIds.end(), itemName);
+		if (it != m_InventoryItemIds.end())
+		{
+			m_InventoryItemIds.erase(it, m_InventoryItemIds.end());
+		}
+	}
+
+	throwItem->SetIsEquiped(false);
+
+	int range = 0;
+	if (TryGetConsumableThrowRange(range))
+	{
+		m_ThrowPreviewRange = range;
+		if (m_GridSystem)
+		{
+			m_GridSystem->SetThrowRangePreview(true, range);
+		}
+	}
+	else
+	{
+		EndThrowPreview();
+	}
+}
+
+void PlayerComponent::BeginThrowPreview()
+{
+	if (m_IsThrowPreviewActive)
+	{
+		return;
+	}
+
+	if (!m_GridSystem)
+	{
+		return;
+	}
+
+	int range = 0;
+	if (!TryGetConsumableThrowRange(range))
+	{
+		return;
+	}
+
+	m_IsThrowPreviewActive = true;
+	m_ThrowPreviewRange = range;
+	m_GridSystem->SetThrowRangePreview(true, range);
+}
+
+void PlayerComponent::EndThrowPreview()
+{
+	if (!m_IsThrowPreviewActive)
+	{
+		return;
+	}
+
+	m_IsThrowPreviewActive = false;
+	m_ThrowPreviewRange = 0;
+	if (m_GridSystem)
+	{
+		m_GridSystem->SetThrowRangePreview(false, 0);
+	}
+}
 
 bool PlayerComponent::TryPickup(ItemComponent* item)
 {
@@ -1016,6 +1386,20 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		return false;
 	}
 
+	//획득 반경
+	constexpr float kPickupRadius = 1.5f;
+	auto* itemTransform = itemObject->GetComponent<TransformComponent>();
+	auto* playerTransform = owner->GetComponent<TransformComponent>();
+	if (itemTransform && playerTransform)
+	{
+		const float distSq = DistanceSq2D(playerTransform->GetPosition(), itemTransform->GetPosition());
+		if (distSq > kPickupRadius * kPickupRadius)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
+			return false;
+		}
+	}
+
 	const int itemType = item->GetType();
 	int consumableSlot = -1;
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
@@ -1030,7 +1414,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			if (!m_ConsumableItem[i])
+			if (m_ConsumableItemNames[i].empty()) 
 			{
 				consumableSlot = i;
 				break;
@@ -1057,15 +1441,13 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	}
 	else if (consumableSlot >= 0)
 	{
-		m_ConsumableItem[consumableSlot] = itemObject;
+		m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
 	}
 
 	item->CompletePickup(owner);
 	return true;
 }
-
-
-void PlayerComponent::AddToInventory(ItemComponent* item)
+void PlayerComponent::AddToInventory(ItemComponent * item)
 {
 	if (!item)
 	{

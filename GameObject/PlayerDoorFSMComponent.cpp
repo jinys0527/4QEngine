@@ -1,5 +1,6 @@
 ﻿#include "PlayerDoorFSMComponent.h"
 #include "PlayerComponent.h"
+#include "PlayerStatComponent.h"
 #include "DoorComponent.h"
 #include "ReflectionMacro.h"
 #include "PlayerFSMComponent.h"
@@ -39,9 +40,10 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			std::cout << "Door Attempt" << std::endl;
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
 			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
 			DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
-			if (confirmed && player)
+			if (confirmed && player && playerStat)
 			{
 				auto* scene = owner ? owner->GetScene() : nullptr;
 				if (scene)
@@ -52,7 +54,8 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 					if (services.Has<DiceSystem>())
 					{
 						auto& diceSystem = services.Get<DiceSystem>();
-						const DiceConfig rollConfig{ 1, 20, 0 };
+						int bonus = playerStat->GetCalculatedSkillModifier();
+						const DiceConfig rollConfig{ 1, 20, bonus };
 						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
 						player->SetDoorSuccess(roll >= DoorRollThreshold);
 					}

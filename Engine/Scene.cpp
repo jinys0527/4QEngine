@@ -123,7 +123,30 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
 
+void Scene::QueueGameObjectRemoval(const std::string& name)
+{
+	if (name.empty())
+	{
+		return;
+	}
 
+	m_PendingRemovalNames.push_back(name);
+}
+
+void Scene::ProcessPendingRemovals()
+{
+	if (m_PendingRemovalNames.empty())
+	{
+		return;
+	}
+
+	std::vector<std::string> pending;
+	pending.swap(m_PendingRemovalNames);
+	for (const auto& name : pending)
+	{
+		RemoveGameObjectByName(name);
+	}
+}
 
 void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
@@ -169,7 +192,6 @@ std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name)
 	AddGameObject(gameObject);
 	return gameObject;
 }
-
 
 bool Scene::RemoveGameObjectByName(const std::string& name)
 {

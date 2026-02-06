@@ -37,6 +37,8 @@ public:
 	void AddGameObject      (std::shared_ptr<GameObject> gameObject);
 	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject);
 	std::shared_ptr<GameObject> CreateGameObject(const std::string& name);
+	void QueueGameObjectRemoval(const std::string& name);
+	void ProcessPendingRemovals();
 
 
 	// For Editor map 자체 Getter( 수정 불가능 상태 )
@@ -84,6 +86,7 @@ protected:
 	std::string      m_Name;
 
 	bool		     m_Pause = false;
+	std::vector<std::string> m_PendingRemovalNames;
 	
 private:
 	AssetLoader*    m_AssetLoader;
