@@ -26,6 +26,7 @@
 #include "GridSystemComponent.h"
 #include "NodeComponent.h"
 #include "PlayerComponent.h"
+#include "BoxColliderComponent.h"
 #include "json.hpp"
 
 REGISTER_COMPONENT(ItemSpawnerComponent)
@@ -113,6 +114,13 @@ namespace
 		{
 			materialComponent = object.AddComponent<MaterialComponent>();
 		}
+
+		auto* boxColliderComponent = object.GetComponent<BoxColliderComponent>();
+		if (!boxColliderComponent)
+		{
+			boxColliderComponent = object.AddComponent<BoxColliderComponent>();
+		}
+
 
 		if (definition.meshPath.empty())
 		{
@@ -203,7 +211,7 @@ namespace
 			{
 				if (auto* transform = object->GetComponent<TransformComponent>())
 				{
-					return transform->GetPosition();
+					return transform->GetWorldPos();
 				}
 			}
 		}
@@ -229,7 +237,7 @@ namespace
 			{
 				continue;
 			}
-			if (DistanceSq2D(transform->GetPosition(), position) <= thresholdSq)
+			if (DistanceSq2D(transform->GetWorldPos(), position) <= thresholdSq)
 			{
 				return true;
 			}
@@ -281,13 +289,13 @@ namespace
 		auto* grid = FindGridSystem(scene);
 		if (!grid)
 		{
-			return ownerTransform->GetPosition();
+			return ownerTransform->GetWorldPos();
 		}
 
 		auto* enemy = owner.GetComponent<EnemyComponent>();
 		if (!enemy)
 		{
-			return ownerTransform->GetPosition();
+			return ownerTransform->GetWorldPos();
 		}
 
 		const AxialKey centerKey{ enemy->GetQ(), enemy->GetR() };
@@ -295,7 +303,7 @@ namespace
 		const float innerRadius = EstimateInnerRadius(centerNode);
 		const float outerRadius = innerRadius * 2.0f / std::sqrt(3.0f);
 		const float itemOverlapThreshold = outerRadius * kItemOverlapRatio;
-		const XMFLOAT3 centerPos = ownerTransform->GetPosition();
+		const XMFLOAT3 centerPos = ownerTransform->GetWorldPos();
 		const auto playerPos = FindPlayerPosition(scene);
 
 		std::vector<VertexCandidate> candidates;
