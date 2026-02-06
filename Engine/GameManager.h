@@ -53,6 +53,8 @@ public:
 	Phase GetPhase() const { return m_Phase; }
 	ExplorationTurnState GetExplorationTurnState() const { return m_ExplorationTurnState; }
 	CombatTurnState GetCombatTurnState() const { return m_CombatTurnState; }
+	int  GetExplorationActiveEnemyActorId() const { return m_ExplorationActiveEnemyActorId; }
+	void SetExplorationActiveEnemyActorId(int actorId);
 	bool IsExplorationInputAllowed() const;
 	bool IsCombatInputAllowed() const;
 	bool IsShopInputAllowed() const;
@@ -119,6 +121,7 @@ private:
 	bool  m_ResolveEnemyTurn = false;
 	bool  m_WaitingEnemyTurnDelay = false;
 	int   m_RemainingEnemyTurns = 0;
+	int   m_ExplorationActiveEnemyActorId = 0;
 
 	std::vector<std::string> m_FloorSceneNames;
 	DataSheetPaths m_DataPaths{};

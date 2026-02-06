@@ -508,6 +508,15 @@ void GameManager::SetTurn(Turn turn)
 	DispatchTurnChanged();
 }
 
+void GameManager::SetExplorationActiveEnemyActorId(int actorId)
+{
+	if (m_ExplorationActiveEnemyActorId == actorId)
+	{
+		return;
+	}
+	m_ExplorationActiveEnemyActorId = actorId;
+}
+
 bool GameManager::IsExplorationInputAllowed() const
 {
 	return m_Phase == Phase::ExplorationLoop
@@ -736,10 +745,12 @@ void GameManager::OnExplorationTurnStateEnter(ExplorationTurnState state)
 	case ExplorationTurnState::PlayerTurn:
 		m_ExplorationTurnElapsed = 0.0f;
 		SetTurn(Turn::PlayerTurn);
+		SetExplorationActiveEnemyActorId(0);
 		break;
 	case ExplorationTurnState::EnemyStep:
 		m_ExplorationTurnElapsed = 0.0f;
 		SetTurn(Turn::EnemyTurn);
+		SetExplorationActiveEnemyActorId(0);
 		break;
 	}
 }
@@ -747,6 +758,7 @@ void GameManager::OnExplorationTurnStateEnter(ExplorationTurnState state)
 void GameManager::OnExplorationTurnStateExit(ExplorationTurnState state)
 {
 	(void)state;
+	SetExplorationActiveEnemyActorId(0);
 }
 
 void GameManager::OnCombatTurnStateEnter(CombatTurnState state)

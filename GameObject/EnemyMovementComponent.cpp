@@ -89,6 +89,12 @@ void EnemyMovementComponent::Update(float deltaTime)
 	if (explorationEnemyStep && enemy->GetCurrentTurn() != Turn::EnemyTurn)
 		return;
 	
+	if (explorationEnemyStep
+		&& gameManager->GetExplorationActiveEnemyActorId() != enemy->GetActorId())
+	{
+		return;
+	}
+
 	if (combatNonBattleActor)
 	{
 		if (enemy->GetCurrentTurn() != Turn::EnemyTurn)

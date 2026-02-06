@@ -307,7 +307,7 @@ void EnemyComponent::Update(float deltaTime) {
 		&& m_CurrentTurn == Turn::EnemyTurn
 		&& !m_ExploreTurnFinished)
 	{
-		if (m_ExploreDelayRemaining > 0.0f)
+		if (gameManager->GetExplorationActiveEnemyActorId() != GetActorId())
 		{
 			m_ExploreDelayRemaining = max(0.0f, m_ExploreDelayRemaining - deltaTime);
 			return;
@@ -638,8 +638,8 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 		&& (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
 	{
 		m_ExploreTurnFinished = false;
-		m_ExploreDelayRemaining = m_EndTurnDelay;
-		m_MoveRequested = m_ExploreDelayRemaining <= 0.0f;
+		m_ExploreDelayRemaining = 0.0f;
+		m_MoveRequested = false;
 	}
 	else
 	{

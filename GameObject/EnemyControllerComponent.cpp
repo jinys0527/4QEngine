@@ -4,6 +4,7 @@
 #include "GridSystemComponent.h"
 #include "EnemyMovementComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyStatComponent.h"
 #include "Scene.h"
 #include "GameManager.h"
 
@@ -52,6 +53,10 @@ void EnemyControllerComponent::Update(float deltaTime)
 		{
 			m_TurnEndRequested = false;
 			m_ExploreEnemyIndex = 0;
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayElapsed = 0.0f;
+			m_ExploreDelayDuration = 0.0f;
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
@@ -73,6 +78,10 @@ void EnemyControllerComponent::Update(float deltaTime)
 		{
 			m_TurnEndRequested = false;
 			m_ExploreEnemyIndex = 0;
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayElapsed = 0.0f;
+			m_ExploreDelayDuration = 0.0f;
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
@@ -83,18 +92,42 @@ void EnemyControllerComponent::Update(float deltaTime)
 				GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
 				m_TurnEndRequested = true;
 			}
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
 		const int enemyCount = static_cast<int>(enemies.size());
+		if (m_WaitingExploreDelay)
+		{
+			m_ExploreDelayElapsed += deltaTime;
+			if (m_ExploreDelayElapsed < m_ExploreDelayDuration)
+			{
+				return;
+			}
+
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayElapsed = 0.0f;
+			m_ExploreDelayDuration = 0.0f;
+			++m_ExploreEnemyIndex;
+		}
+
 		while (m_ExploreEnemyIndex < enemyCount)
 		{
 			auto* enemy = enemies[m_ExploreEnemyIndex];
-			if (enemy)
+			if (!enemy)
 			{
-				break;
+				++m_ExploreEnemyIndex;
+				continue;
 			}
-			++m_ExploreEnemyIndex;
+
+			auto* enemyOwner = enemy->GetOwner();
+			auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+			if (enemyStat && enemyStat->IsDead())
+			{
+				++m_ExploreEnemyIndex;
+				continue;
+			}
+			break;
 		}
 
 		if (m_ExploreEnemyIndex >= enemyCount)
@@ -104,10 +137,16 @@ void EnemyControllerComponent::Update(float deltaTime)
 				GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
 				m_TurnEndRequested = true;
 			}
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
 		auto* currentEnemy = enemies[m_ExploreEnemyIndex];
+		if (currentEnemy)
+		{
+			gameManager->SetExplorationActiveEnemyActorId(currentEnemy->GetActorId());
+		}
+
 		auto* currentOwner = currentEnemy ? currentEnemy->GetOwner() : nullptr;
 		auto* movement = currentOwner ? currentOwner->GetComponent<EnemyMovementComponent>() : nullptr;
 		const bool isFinished = currentEnemy && currentEnemy->IsExploreTurnFinished()
@@ -118,7 +157,16 @@ void EnemyControllerComponent::Update(float deltaTime)
 			return;
 		}
 
-		++m_ExploreEnemyIndex;
+		gameManager->SetExplorationActiveEnemyActorId(0);
+		m_WaitingExploreDelay = true;
+		m_ExploreDelayElapsed = 0.0f;
+		m_ExploreDelayDuration = currentEnemy ? currentEnemy->GetEndTurnDelay() : 0.0f;
+		if (m_ExploreDelayDuration <= 0.0f)
+		{
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayDuration = 0.0f;
+			++m_ExploreEnemyIndex;
+		}
 
 		return;
 	}
