@@ -134,6 +134,12 @@ bool PlayerCombatFSMComponent::RequestCombatEnter(int initiatorId, int targetId)
 
 	if (m_CombatManager->GetState() == Battle::InBattle)
 	{
+		std::vector<CombatantSnapshot> combatants;
+		BuildCombatantSnapshots(combatants, targetId);
+		if (!combatants.empty())
+		{
+			m_CombatManager->AddCombatants(combatants);
+		}
 		if (m_CombatManager->GetCurrentActorId() == GetPlayerActorId())
 		{
 			DispatchEvent("Combat_StartTurn");
@@ -301,9 +307,24 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	auto* grid = player ? player->GetGridSystem() : nullptr;
 	if (grid && player)
 	{
-		const int range = max(0, player->GetAttackRange());
+		//const int range = max(0, player->GetAttackRange());
+		EnemyComponent* pendingTarget = player->ConsumePendingAttackTarget();
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
+		const int range = max(0, player->GetAttackRange());
+		if (pendingTarget && pendingTarget->GetActorId() != 0)
+		{
+			auto* pendingOwner = pendingTarget->GetOwner();
+			auto* pendingStat = pendingOwner ? pendingOwner->GetComponent<EnemyStatComponent>() : nullptr;
+			if (!pendingStat || !pendingStat->IsDead())
+			{
+				const int distance = AxialDistance(playerQ, playerR, pendingTarget->GetQ(), pendingTarget->GetR());
+				if (distance <= range)
+				{
+					request.targetIds.push_back(pendingTarget->GetActorId());
+				}
+			}
+		}
 		const auto& enemies = grid->GetEnemies();
 		for (std::size_t index = 0; index < enemies.size(); ++index)
 		{
@@ -323,7 +344,11 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 			const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
 			if (distance <= range && enemy->GetActorId() != 0)
 			{
-				request.targetIds.push_back(enemy->GetActorId());
+				//request.targetIds.push_back(enemy->GetActorId());
+				if (request.targetIds.empty())
+				{
+					request.targetIds.push_back(enemy->GetActorId());
+				}
 				break;
 			}
 		}
@@ -482,6 +507,11 @@ void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnap
 	}
 
 	const auto& enemies = grid->GetEnemies();
+
+	const int playerQ = player->GetQ();
+	const int playerR = player->GetR();
+	const int joinRange = 1;
+
 	for (std::size_t index = 0; index < enemies.size(); ++index)
 	{
 		auto* enemy = enemies[index];
@@ -491,7 +521,9 @@ void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnap
 			continue;
 		}
 
-		if (targetActorId != 0 && enemy->GetActorId() != targetActorId)
+		const int distance = AxialDistance(playerQ, playerR, enemy->GetQ(), enemy->GetR());
+		const bool isTarget = (targetActorId != 0 && enemy->GetActorId() == targetActorId);
+		if (!isTarget && distance > joinRange)
 		{
 			continue;
 		}

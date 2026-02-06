@@ -24,6 +24,7 @@ namespace BlackboardKeys
 	inline constexpr const char* RunOffTargetFound     = "RunOffTargetFound";
 	inline constexpr const char* SelfQ				   = "SelfQ";
 	inline constexpr const char* SelfR				   = "SelfR";
+	inline constexpr const char* ActorId			   = "ActorId";
 	inline constexpr const char* TargetQ			   = "TargetQ";
 	inline constexpr const char* TargetR			   = "TargetR";
 	inline constexpr const char* FacingDirection	   = "FacingDirection";

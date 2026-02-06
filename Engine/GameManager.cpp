@@ -276,7 +276,18 @@ void GameManager::OnEvent(EventType type, const void* data)
 		std::cout << "AIAttackRequested\n";
 		if (m_Phase == Phase::TurnBasedCombat)
 		{
-			ResolveEnemyAttack();
+			//ResolveEnemyAttack();
+			int actorId = 0;
+			if (data)
+			{
+				const auto* payload = static_cast<const CombatAIRequestEvent*>(data);
+				if (payload)
+				{
+					actorId = payload->actorId;
+				}
+			}
+			ResolveEnemyAttack(actorId);
+
 			if (m_BlockPostCombatShop)
 			{
 				break;
@@ -977,7 +988,9 @@ void GameManager::DispatchPlayerFSMEvent(const std::string& eventName)
 	}
 }
 
-void GameManager::ResolveEnemyAttack()
+
+//void GameManager::ResolveEnemyAttack()
+void GameManager::ResolveEnemyAttack(int actorId)
 {
 	if (!m_ActiveScene)
 	{
@@ -990,8 +1003,20 @@ void GameManager::ResolveEnemyAttack()
 		return;
 	}
 
-	const int actorId = combatManager->GetCurrentActorId();
+	
+	if (actorId == 0)
+	{
+		actorId = combatManager->GetCurrentActorId();
+	}
+
+	
+	//const int actorId = combatManager->GetCurrentActorId();
 	if (actorId == 0 || actorId == 1)
+	{
+		return;
+	}
+
+	if (!combatManager->IsActorInBattle(actorId))
 	{
 		return;
 	}

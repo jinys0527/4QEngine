@@ -5,6 +5,7 @@
 #include <cmath>
 #include "EventDispatcher.h"
 #include "IEventListener.h"
+#include "CombatEvents.h"
 
 bool TryGetFloat(Blackboard& bb, const char* key, float& out)
 {
@@ -204,14 +205,22 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 	bool meleeRequested = false;
 	if (bb.TryGet(BlackboardKeys::RequestMeleeAttack, meleeRequested) && meleeRequested)
 	{
-		m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, nullptr);
+		//m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, nullptr);
+		int actorId = 0;
+		bb.TryGet(BlackboardKeys::ActorId, actorId);
+		const CombatAIRequestEvent eventData{ actorId };
+		m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, &eventData);
 		bb.Set(BlackboardKeys::RequestMeleeAttack, false);
 	}
 
 	bool rangedRequested = false;
 	if (bb.TryGet(BlackboardKeys::RequestRangedAttack, rangedRequested) && rangedRequested)
 	{
-		m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, nullptr);
+		//m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, nullptr);
+		int actorId = 0;
+		bb.TryGet(BlackboardKeys::ActorId, actorId);
+		const CombatAIRequestEvent eventData{ actorId };
+		m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, &eventData);
 		bb.Set(BlackboardKeys::RequestRangedAttack, false);
 	}
 
