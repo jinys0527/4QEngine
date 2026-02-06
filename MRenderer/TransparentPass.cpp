@@ -16,6 +16,7 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
     SetCameraCB(frame);
 
     SetDirLight(frame);
+    SetOtherLights(frame);
 
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자

@@ -2,10 +2,17 @@
 
 #include "Scene.h"
 #include "AssetLoader.h"
+#include "GameDataRepository.h"
+#include "MaterialComponent.h"
+#include "GameObject.h"
+#include "MeshComponent.h"
+#include "MeshRenderer.h"
 #include "Object.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
+#include "ServiceRegistry.h"
 #include <algorithm>
+#include <cmath>
 
 #include "ItemComponent.h"
 
@@ -30,9 +37,114 @@ REGISTER_PROPERTY(ItemComponent, Sense)
 REGISTER_PROPERTY(ItemComponent, Skill)
 REGISTER_PROPERTY(ItemComponent, DEF)
 REGISTER_PROPERTY(ItemComponent, ThrowRange)
+REGISTER_PROPERTY(ItemComponent, ActionPointCost)
 REGISTER_PROPERTY(ItemComponent, DifficultyGroup)
-REGISTER_PROPERTY(ItemComponent, EquipmentBindPose)
 
+namespace
+{
+	int ToItemType(ItemCategory category)
+	{
+		switch (category)
+		{
+		case ItemCategory::Currency:
+			return static_cast<int>(ItemType::GOLD);
+		case ItemCategory::Healing:
+			return static_cast<int>(ItemType::HEAL);
+		case ItemCategory::Equipment:
+			return static_cast<int>(ItemType::EQUIPMENT);
+		case ItemCategory::Throwable:
+			return static_cast<int>(ItemType::THROW);
+		default:
+			return static_cast<int>(ItemType::GOLD);
+		}
+	}
+
+	void ApplyItemDefinition(ItemComponent& item, const ItemDefinition& definition)
+	{
+		item.SetItemIndex(definition.index);
+		item.SetType(ToItemType(definition.category));
+		item.SetIconPath(definition.iconPath);
+		item.SetMeshPath(definition.meshPath);
+		item.SetPrice(definition.basePrice);
+		item.SetMeleeAttackRange(definition.range);
+		item.SetThrowRange(definition.throwRange);
+		item.SetActionPointCost(definition.actionPointCost);
+		item.SetDifficultyGroup(definition.difficultyGroup);
+		item.SetHealth(definition.constitutionModifier);
+		item.SetStrength(definition.strengthModifier);
+		item.SetAgility(definition.agilityModifier);
+		item.SetSense(definition.senseModifier);
+		item.SetSkill(definition.skillModifier);
+		item.SetDEF(definition.defenseBonus);
+		if (definition.diceType > 0)
+		{
+			item.SetDiceType(definition.diceType);
+		}
+		if (definition.baseModifier > 0)
+		{
+			item.SetBaseModifier(definition.baseModifier);
+		}
+	}
+
+	void EnsureRenderComponents(Object& object, const std::string& meshPath)
+	{
+		auto* gameObject = dynamic_cast<GameObject*>(&object);
+		if (!gameObject)
+		{
+			return;
+		}
+
+		auto* meshComponent = gameObject->GetComponent<MeshComponent>();
+		if (!meshComponent)
+		{
+			meshComponent = gameObject->AddComponent<MeshComponent>();
+		}
+
+		auto* meshRenderer = gameObject->GetComponent<MeshRenderer>();
+		if (!meshRenderer)
+		{
+			meshRenderer = gameObject->AddComponent<MeshRenderer>();
+		}
+		if (meshRenderer)
+		{
+			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+			meshRenderer->SetVisible(true);
+		}
+
+		auto* materialComponent = gameObject->GetComponent<MaterialComponent>();
+		if (!materialComponent)
+		{
+			materialComponent = gameObject->AddComponent<MaterialComponent>();
+		}
+
+		if (meshPath.empty())
+		{
+			return;
+		}
+
+		auto* loader = AssetLoader::GetActive();
+		if (!loader)
+		{
+			return;
+		}
+
+		const auto* asset = loader->GetAsset(meshPath);
+		if (!asset)
+		{
+			return;
+		}
+
+		if (meshComponent && !asset->meshes.empty())
+		{
+			meshComponent->SetMeshHandle(asset->meshes.front());
+		}
+
+		if (materialComponent && !asset->materials.empty())
+		{
+			materialComponent->SetMaterialHandle(asset->materials.front());
+		}
+	}
+}
 
 ItemComponent::ItemComponent()
 {
@@ -47,6 +159,40 @@ void ItemComponent::Start()
 	XMStoreFloat4x4(&m_EquipmentBindPose, XMMatrixIdentity());
 
 	m_IsEquiped = false;
+
+	if (m_ItemIndex < 0)
+	{
+		return;
+	}
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return;
+	}
+
+	auto* scene = owner->GetScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	ServiceRegistry& services = scene->GetServices();
+	if (!services.Has<GameDataRepository>())
+	{
+		return;
+	}
+
+	auto& repository = services.Get<GameDataRepository>();
+
+	const ItemDefinition* definition = repository.GetItem(m_ItemIndex);
+	if (!definition)
+	{
+		return;
+	}
+
+	ApplyItemDefinition(*this, *definition);
+	EnsureRenderComponents(*owner, m_MeshPath);
 }
 
 void ItemComponent::Update(float deltaTime)
@@ -68,9 +214,10 @@ void ItemComponent::Update(float deltaTime)
 		m_ThrowElapsed += deltaTime;
 		const float duration = m_ThrowDuration > 0.0f ? m_ThrowDuration : 0.001f;
 		const float t = std::clamp(m_ThrowElapsed / duration, 0.0f, 1.0f);
+		const float arcOffset = 4.0f * m_ThrowArcHeight * t * (1.0f - t);
 		const XMFLOAT3 pos{
 			m_ThrowStart.x + (m_ThrowTarget.x - m_ThrowStart.x) * t,
-			m_ThrowStart.y + (m_ThrowTarget.y - m_ThrowStart.y) * t,
+			m_ThrowStart.y + (m_ThrowTarget.y - m_ThrowStart.y) * t + arcOffset,
 			m_ThrowStart.z + (m_ThrowTarget.z - m_ThrowStart.z) * t
 		};
 		transform->SetPosition(pos);
@@ -161,6 +308,10 @@ void ItemComponent::BeginThrow(const XMFLOAT3& start, const XMFLOAT3& target, fl
 	m_ThrowDuration = duration > 0.0f ? duration : 0.001f;
 	m_ThrowStart = start;
 	m_ThrowTarget = target;
+	const float dx = m_ThrowTarget.x - m_ThrowStart.x;
+	const float dz = m_ThrowTarget.z - m_ThrowStart.z;
+	const float planarDistance = sqrtf(dx * dx + dz * dz);
+	m_ThrowArcHeight = max(0.3f, planarDistance * 0.25f);
 	if (auto* owner = GetOwner())
 	{
 		if (auto* transform = owner->GetComponent<TransformComponent>())
