@@ -31,6 +31,7 @@ private:
 	bool EnsureCombatManager();
 	bool ExecutePlayerAttack();
 	bool ResolvePlayerAttackMode(PlayerComponent& player, int& outRange, ItemComponent*& outThrowItem, bool& outIsThrow) const;
+	int ResolveActionPointCost(PlayerComponent& player, bool isThrowMode, ItemComponent* throwItem) const;
 	bool ExecuteThrowAttack(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem);
 	bool ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy) const;
 	void BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants) const;

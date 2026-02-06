@@ -46,7 +46,12 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 				return;
 			}
 		
-			const int cost = player->GetCurrentWeaponCost();
+			int range = 0;
+			ItemComponent* throwItem = nullptr;
+			bool isThrowMode = false;
+			ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+
+			const int cost = ResolveActionPointCost(*player, isThrowMode, throwItem);
 			const bool consumed = player->ConsumeActResource(cost);
 			DispatchEvent(consumed ? "Combat_CostOk" : "Combat_CostFail");
 		});
@@ -197,7 +202,12 @@ bool PlayerCombatFSMComponent::TryExecutePlayerAttackFromInput()
 		return false;
 	}
 
-	const int cost = player->GetCurrentWeaponCost();
+	int range = 0;
+	ItemComponent* throwItem = nullptr;
+	bool isThrowMode = false;
+	ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+
+	const int cost = ResolveActionPointCost(*player, isThrowMode, throwItem);
 	if (!player->ConsumeActResource(cost))
 	{
 		return false;
@@ -461,6 +471,16 @@ bool PlayerCombatFSMComponent::ResolvePlayerAttackMode(PlayerComponent& player, 
 
 	outRange = max(0, player.GetAttackRange());
 	return true;
+}
+
+int PlayerCombatFSMComponent::ResolveActionPointCost(PlayerComponent& player, bool isThrowMode, ItemComponent* throwItem) const
+{
+	if (isThrowMode && throwItem)
+	{
+		return max(0, throwItem->GetActionPointCost());
+	}
+
+	return max(0, player.GetCurrentWeaponCost());
 }
 
 bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem)

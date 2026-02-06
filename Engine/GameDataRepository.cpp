@@ -137,6 +137,7 @@ bool GameDataRepository::LoadItemsFromFile(const std::string& path, std::string*
 
 		item.throwRange				= ParseInt(GetField(row, header, "Range"), 0);
 		item.range					= ParseInt(GetField(row, header, "Range"), 0);
+		item.actionPointCost		= ParseInt(GetField(row, header, "ConsumeActionPoints"), 1);
 
 		if (item.index != 0)
 		{

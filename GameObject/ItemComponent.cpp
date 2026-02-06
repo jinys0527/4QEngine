@@ -30,8 +30,8 @@ REGISTER_PROPERTY(ItemComponent, Sense)
 REGISTER_PROPERTY(ItemComponent, Skill)
 REGISTER_PROPERTY(ItemComponent, DEF)
 REGISTER_PROPERTY(ItemComponent, ThrowRange)
+REGISTER_PROPERTY(ItemComponent, ActionPointCost)
 REGISTER_PROPERTY(ItemComponent, DifficultyGroup)
-REGISTER_PROPERTY(ItemComponent, EquipmentBindPose)
 
 
 ItemComponent::ItemComponent()

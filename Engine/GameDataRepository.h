@@ -38,6 +38,7 @@ struct ItemDefinition
 				 
 	int			 throwRange				= 0;			// 투척
 	int			 range					= 0;			// 근접
+	int			 actionPointCost = 1;					// 행동 포인트 소모
 };
 
 struct EnemyDefinition

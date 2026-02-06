@@ -65,6 +65,7 @@ namespace
 		item.SetPrice(definition.basePrice);
 		item.SetMeleeAttackRange(definition.range);
 		item.SetThrowRange(definition.throwRange);
+		item.SetActionPointCost(definition.actionPointCost);
 		item.SetDifficultyGroup(definition.difficultyGroup);
 		item.SetHealth(definition.constitutionModifier);
 		item.SetStrength(definition.strengthModifier);

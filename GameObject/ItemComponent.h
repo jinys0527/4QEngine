@@ -93,6 +93,9 @@ public:
 	const int& GetThrowRange() const { return m_ThrowRange; }
 	void SetThrowRange(const int& value) { m_ThrowRange = value; }
 
+	const int& GetActionPointCost() const { return m_ActionPointCost; }
+	void SetActionPointCost(const int& value) { m_ActionPointCost = value; }
+
 	const int& GetDifficultyGroup() const { return m_DifficultyGroup; }
 	void SetDifficultyGroup(const int& value) { m_DifficultyGroup = value; }
 
@@ -129,6 +132,7 @@ private:
 	int m_Skill					= 0;
 	int m_DEF					= 0;
 	int m_ThrowRange			= -1;
+	int m_ActionPointCost		= 1;
 	int m_DifficultyGroup		= -1;
 
 	DirectX::XMFLOAT4X4 m_EquipmentBindPose{};

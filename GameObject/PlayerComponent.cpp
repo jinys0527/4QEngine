@@ -588,17 +588,17 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		}
 
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
-		if (m_IsThrowPreviewActive)
-		{
-			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
-			{
-				if (combatFsm->TryExecutePlayerThrowAttack(enemy)) 
-				{
-					mouseData->handled = true;
-					return;
-				}
-			}
-		}
+		//if (m_IsThrowPreviewActive)
+		//{
+		//	if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+		//	{
+		//		if (combatFsm->TryExecutePlayerThrowAttack(enemy)) 
+		//		{
+		//			mouseData->handled = true;
+		//			return;
+		//		}
+		//	}
+		//}
 
 		const int range = max(0, m_AttackRange);
 		if (distance > range)
@@ -1323,7 +1323,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	auto* playerTransform = owner->GetComponent<TransformComponent>();
 	if (itemTransform && playerTransform)
 	{
-		const float distSq = DistanceSq2D(playerTransform->GetPosition(), itemTransform->GetPosition());
+		const float distSq = DistanceSq2D(playerTransform->GetWorldPos(), itemTransform->GetWorldPos());
 		if (distSq > kPickupRadius * kPickupRadius)
 		{
 			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
