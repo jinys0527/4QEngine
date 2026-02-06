@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <array>
 
 class UIManager;
 class Scene;
@@ -32,13 +33,15 @@ public:
 
 	void RebuildUI();
 	void RemoveUI();
-	void	   DetachFromDispatcher();
+	void DetachFromDispatcher();
 
 private:
 	struct ActorIconInfo
 	{
 		bool isPlayer	  = false;
 		int  displayIndex = 0;
+		int  enemyType = 0;
+		int  typeIndex = 0;
 	};
 
 	UIManager* GetUIManager() const;
@@ -51,6 +54,7 @@ private:
 	void UpdateActiveSlotState();
 	void SetFrameVisible(bool visible);
 	bool IsActorDead(int actorId) const;
+	int  GetEnemyTypeForActorId(int actorId) const;
 
 	bool  m_Enabled  = false;
 	bool  m_InCombat = false;
@@ -61,10 +65,14 @@ private:
 	std::vector<int> m_InitiativeOrder;
 	std::vector<std::shared_ptr<UIObject>> m_PlayerIconPool;
 	std::vector<std::shared_ptr<UIObject>> m_EnemyIconPool;
+	std::array<std::vector<std::shared_ptr<UIObject>>, 3> m_EnemyTypeIconPools;
 	std::unordered_map<int, std::shared_ptr<UIObject>> m_ActorIcons;
 	std::unordered_map<int, ActorIconInfo> m_ActorInfo;
 	static constexpr const char* kPlayerIconPrefix = "InitiativePlayerIcon_";
 	static constexpr const char* kEnemyIconPrefix  = "InitiativeEnemyIcon_";
+	static constexpr const char* kEnemyType1IconPrefix = "InitiativeEnemyType1Icon_";
+	static constexpr const char* kEnemyType2IconPrefix = "InitiativeEnemyType2Icon_";
+	static constexpr const char* kEnemyType3IconPrefix = "InitiativeEnemyType3Icon_";
 
 	TextureHandle m_DeadIconTexture   = TextureHandle::Invalid();
 	EventDispatcher* m_Dispatcher = nullptr;

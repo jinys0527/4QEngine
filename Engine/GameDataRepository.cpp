@@ -118,6 +118,7 @@ bool GameDataRepository::LoadItemsFromFile(const std::string& path, std::string*
 		item.index					= ParseInt(GetField(row, header, "ItemKey"), 0);
 		item.category				= static_cast<ItemCategory>(ParseInt(GetField(row, header, "ItemType")));		
 		item.name					= GetField(row, header, "한글 이름");
+		enemy.type					= ParseInt(GetField(row, header, "type"), 0);
 		item.description			= GetField(row, header, "description");			//아이템 설명
 		item.iconPath				= GetField(row, header, "IconPath");
 		item.meshPath				= GetField(row, header, "MeshPath");

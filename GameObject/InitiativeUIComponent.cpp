@@ -308,11 +308,25 @@ void InitiativeUIComponent::RebuildInitiativeOrder()
 
 	int playerIndex = 0;
 	int enemyIndex = 0;
+	std::array<int, 3> enemyTypeIndices{ 0, 0, 0 };
 	for (int actorId : m_InitiativeOrder)
 	{
 		const bool isPlayer = actorId == 1;
 		const int displayIndex = isPlayer ? ++playerIndex : ++enemyIndex;
-		m_ActorInfo[actorId] = ActorIconInfo{ isPlayer, displayIndex };
+
+		ActorIconInfo info{};
+		info.isPlayer = isPlayer;
+		info.displayIndex = displayIndex;
+		if (!isPlayer)
+		{
+			const int enemyType = GetEnemyTypeForActorId(actorId);
+			info.enemyType = enemyType;
+			if (enemyType >= 1 && enemyType <= static_cast<int>(enemyTypeIndices.size()))
+			{
+				info.typeIndex = ++enemyTypeIndices[static_cast<size_t>(enemyType - 1)];
+			}
+		}
+		m_ActorInfo[actorId] = info;
 	}
 
 	horizontalBox->ClearSlots();
@@ -334,13 +348,23 @@ void InitiativeUIComponent::RebuildInitiativeOrder()
 		}
 		else
 		{
-			const size_t enemyIndex = static_cast<size_t>(max(0, info.displayIndex - 1));
+			std::vector<std::shared_ptr<UIObject>>* pool = &m_EnemyIconPool;
+			size_t enemyIndex = static_cast<size_t>(max(0, info.displayIndex - 1));
+			if (info.enemyType >= 1 && info.enemyType <= static_cast<int>(m_EnemyTypeIconPools.size()))
+			{
+				auto& typePool = m_EnemyTypeIconPools[static_cast<size_t>(info.enemyType - 1)];
+				if (!typePool.empty())
+				{
+					pool = &typePool;
+					enemyIndex = static_cast<size_t>(max(0, info.typeIndex - 1));
+				}
+			}
 
-			if (enemyIndex >= m_EnemyIconPool.size())
+			if (enemyIndex >= pool->size())
 			{
 				continue;
 			}
-			icon = m_EnemyIconPool[enemyIndex];
+			icon = (*pool)[enemyIndex];
 		}
 
 		if (!icon)
@@ -405,6 +429,11 @@ void InitiativeUIComponent::ResetIconPools()
 	m_PlayerIconPool.clear();
 	m_EnemyIconPool.clear();
 
+	for (auto& pool : m_EnemyTypeIconPools)
+	{
+		pool.clear();
+	}
+
 	const std::string& sceneName = scene->GetName();
 	auto& uiObjectsByScene = uiManager->GetUIObjects();
 	auto uiIt = uiObjectsByScene.find(sceneName);
@@ -420,6 +449,7 @@ void InitiativeUIComponent::ResetIconPools()
 
 	std::vector<std::pair<std::string, std::shared_ptr<UIObject>>> playerIcons;
 	std::vector<std::pair<std::string, std::shared_ptr<UIObject>>> enemyIcons;
+	std::array<std::vector<std::pair<std::string, std::shared_ptr<UIObject>>>, 3> enemyTypeIcons;
 	for (const auto& [name, uiObject] : uiIt->second)
 	{
 		if (!uiObject)
@@ -430,6 +460,18 @@ void InitiativeUIComponent::ResetIconPools()
 		if (startsWith(name, kPlayerIconPrefix))
 		{
 			playerIcons.emplace_back(name, uiObject);
+		}
+		else if (startsWith(name, kEnemyType1IconPrefix))
+		{
+			enemyTypeIcons[0].emplace_back(name, uiObject);
+		}
+		else if (startsWith(name, kEnemyType2IconPrefix))
+		{
+			enemyTypeIcons[1].emplace_back(name, uiObject);
+		}
+		else if (startsWith(name, kEnemyType3IconPrefix))
+		{
+			enemyTypeIcons[2].emplace_back(name, uiObject);
 		}
 		else if (startsWith(name, kEnemyIconPrefix))
 		{
@@ -444,6 +486,11 @@ void InitiativeUIComponent::ResetIconPools()
 	std::sort(playerIcons.begin(), playerIcons.end(), byName);
 	std::sort(enemyIcons.begin(), enemyIcons.end(), byName);
 
+	for (auto& typeIcons : enemyTypeIcons)
+	{
+		std::sort(typeIcons.begin(), typeIcons.end(), byName);
+	}
+
 	for (const auto& [name, icon] : playerIcons)
 	{
 		(void)name;
@@ -456,6 +503,16 @@ void InitiativeUIComponent::ResetIconPools()
 		(void)name;
 		icon->SetIsVisibleFromComponent(false);
 		m_EnemyIconPool.push_back(icon);
+	}
+
+	for (size_t index = 0; index < enemyTypeIcons.size(); ++index)
+	{
+		for (const auto& [name, icon] : enemyTypeIcons[index])
+		{
+			(void)name;
+			icon->SetIsVisibleFromComponent(false);
+			m_EnemyTypeIconPools[index].push_back(icon);
+		}
 	}
 }
 
@@ -593,4 +650,36 @@ bool InitiativeUIComponent::IsActorDead(int actorId) const
 	}
 
 	return false;
+}
+
+int InitiativeUIComponent::GetEnemyTypeForActorId(int actorId) const
+{
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		return 0;
+	}
+
+	for (const auto& [name, object] : scene->GetGameObjects())
+	{
+		(void)name;
+		if (!object)
+		{
+			continue;
+		}
+
+		if (auto* enemy = object->GetComponent<EnemyComponent>())
+		{
+			if (enemy->GetActorId() == actorId)
+			{
+				if (auto* stat = object->GetComponent<EnemyStatComponent>())
+				{
+					return stat->GetEnemyType();
+				}
+				return 0;
+			}
+		}
+	}
+
+	return 0;
 }
