@@ -49,7 +49,10 @@ public:
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 	const bool& GetDebugEquipItem() const { return m_DebugEquipItem; }
-
+	const std::string& GetDebugCombatMode() const { return m_DebugCombatMode; }
+	bool IsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
+	void SetIsThrowPreviewActive(bool value) { m_IsThrowPreviewActive = value; }
+	const bool& GetIsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
 
 	void ResetTurnResources();
 	void BeginMove();
@@ -62,6 +65,9 @@ public:
 	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;
 	EnemyComponent* ConsumePendingAttackTarget();
 	bool ConsumeCombatConfirmRequest();
+	bool TryGetConsumableThrowRange(int& outRange) const;
+	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
+	void ConsumeThrowItem(ItemComponent* throwItem);
 	bool ConsumePushPossible();
 	bool ConsumePushTargetFound();
 	bool ConsumePushSuccess();
@@ -98,10 +104,6 @@ private:
 	bool TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent*& outNode) const;
 	bool ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode);
 	void ClearPendingPush();
-	bool TryGetConsumableThrowRange(int& outRange) const;
-	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
-	bool ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy);
-	void ConsumeThrowItem(ItemComponent* throwItem);
 	void BeginThrowPreview();
 	void EndThrowPreview();
 	// 외부지정 가능
@@ -153,6 +155,7 @@ private:
 	bool m_DebugEquipItem = false;
 	bool m_IsThrowPreviewActive = false;
 	int m_ThrowPreviewRange = 0;
+	std::string m_DebugCombatMode = "MeleeMode";
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장

@@ -6,6 +6,7 @@
 #include "EnemyMovementComponent.h"
 #include "EnemyStatComponent.h"
 #include "GridSystemComponent.h"
+#include "ItemComponent.h"
 #include "PlayerMovementComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
@@ -19,6 +20,8 @@
 #include "CombatResolver.h"
 #include "DiceSystem.h"
 #include "LogSystem.h"
+#include "TransformComponent.h"
+#include "MeshRenderer.h"
 #include <iostream>
 
 REGISTER_COMPONENT_DERIVED(PlayerCombatFSMComponent, FSMComponent)
@@ -46,7 +49,12 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 				return;
 			}
 		
-			const int cost = player->GetCurrentWeaponCost();
+			int range = 0;
+			ItemComponent* throwItem = nullptr;
+			bool isThrowMode = false;
+			ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+
+			const int cost = ResolveActionPointCost(*player, isThrowMode, throwItem);
 			const bool consumed = player->ConsumeActResource(cost);
 			DispatchEvent(consumed ? "Combat_CostOk" : "Combat_CostFail");
 		});
@@ -218,13 +226,43 @@ bool PlayerCombatFSMComponent::TryExecutePlayerAttackFromInput()
 		return false;
 	}
 
-	const int cost = player->GetCurrentWeaponCost();
+	int range = 0;
+	ItemComponent* throwItem = nullptr;
+	bool isThrowMode = false;
+	ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+
+	const int cost = ResolveActionPointCost(*player, isThrowMode, throwItem);
 	if (!player->ConsumeActResource(cost))
 	{
 		return false;
 	}
 
 	return ExecutePlayerAttack();
+}
+
+bool PlayerCombatFSMComponent::TryExecutePlayerThrowAttack(EnemyComponent* enemy)
+{
+	auto* owner = GetOwner();
+	auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+	if (!player || !enemy)
+	{
+		return false;
+	}
+
+	int throwRange = 0;
+	ItemComponent* throwItem = nullptr;
+	if (!player->TryGetConsumableThrowRange(throwRange) || !player->TryGetConsumableThrowItem(throwItem))
+	{
+		return false;
+	}
+
+	const int distance = AxialDistance(player->GetQ(), player->GetR(), enemy->GetQ(), enemy->GetR());
+	if (distance > throwRange)
+	{
+		return false;
+	}
+
+	return ExecuteThrowAttack(*player, enemy, throwItem);
 }
 
 std::optional<std::string> PlayerCombatFSMComponent::TranslateEvent(EventType type, const void* data)
@@ -305,9 +343,12 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	auto* owner = GetOwner();
 	auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 	auto* grid = player ? player->GetGridSystem() : nullptr;
+	ItemComponent* throwItem = nullptr;
+	bool isThrowMode = false;
 	if (grid && player)
 	{
-		//const int range = max(0, player->GetAttackRange());
+		int range = 0;
+		ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
 		EnemyComponent* pendingTarget = player->ConsumePendingAttackTarget();
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
@@ -374,11 +415,20 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	if (scene && enemy)
 	{
 		auto& services = scene->GetServices();
-		if (services.Has<CombatResolver>() && services.Has<DiceSystem>())
+		if (player && isThrowMode)
+		{
+			if (!ExecuteThrowAttack(*player, enemy, throwItem))
+			{
+				return false;
+			}
+		}
+		else if (services.Has<CombatResolver>() && services.Has<DiceSystem>()) 
 		{
 			auto* enemyOwner = enemy->GetOwner();
 			auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
 			auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
+
+
 			if (enemyStat && playerStat)
 			{
 				AttackProfile attackProfile{};
@@ -462,7 +512,134 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	return true;
 }
 
-//void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants) const
+bool PlayerCombatFSMComponent::ResolvePlayerAttackMode(PlayerComponent& player, int& outRange, ItemComponent*& outThrowItem, bool& outIsThrow) const
+{
+	outRange = 0;
+	outThrowItem = nullptr;
+	outIsThrow = false;
+
+	if (player.IsThrowPreviewActive())
+	{
+		int throwRange = 0;
+		ItemComponent* throwItem = nullptr;
+		if (player.TryGetConsumableThrowRange(throwRange) && player.TryGetConsumableThrowItem(throwItem))
+		{
+			outRange = throwRange;
+			outThrowItem = throwItem;
+			outIsThrow = true;
+			return true;
+		}
+	}
+
+	outRange = max(0, player.GetAttackRange());
+	return true;
+}
+
+int PlayerCombatFSMComponent::ResolveActionPointCost(PlayerComponent& player, bool isThrowMode, ItemComponent* throwItem) const
+{
+	if (isThrowMode && throwItem)
+	{
+		return max(0, throwItem->GetActionPointCost());
+	}
+
+	return max(0, player.GetCurrentWeaponCost());
+}
+
+bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem)
+{
+	if (!enemy || !throwItem)
+	{
+		return false;
+	}
+
+	if (!ApplyThrowDamage(throwItem, enemy))
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+	auto* enemyOwner = enemy->GetOwner();
+	auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
+
+	XMFLOAT3 startPos = playerTransform ? playerTransform->GetWorldPos() : XMFLOAT3{};
+	XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetWorldPos() : XMFLOAT3{};
+	if (auto* throwOwner = throwItem->GetOwner())
+	{
+		if (auto* throwTransform = throwOwner->GetComponent<TransformComponent>())
+		{
+			startPos = throwTransform->GetWorldPos();
+		}
+
+		if (auto* renderer = throwOwner->GetComponent<MeshRenderer>())
+		{
+			renderer->SetVisible(true);
+			renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+		}
+	}
+
+	startPos.y += 1.0f;
+	targetPos.y += 1.0f;
+
+	throwItem->BeginThrow(startPos, targetPos, 2.0f);
+	player.ConsumeThrowItem(throwItem);
+	return true;
+}
+
+bool PlayerCombatFSMComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy) const
+{
+	if (!throwItem || !enemy)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* enemyOwner = enemy->GetOwner();
+	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+	auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
+	if (!enemyStat || !playerStat)
+	{
+		return false;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<DiceSystem>())
+	{
+		return false;
+	}
+
+	auto& diceSystem = services.Get<DiceSystem>();
+	const int diceCount = max(0, throwItem->GetDiceRoll());
+	const int diceSides = max(0, throwItem->GetDiceType());
+	const int bonus = throwItem->GetBaseModifier();
+	const int agilityModifier = playerStat->GetCalculatedAgilityModifier();
+	int damage = bonus + agilityModifier;
+
+	if (diceCount > 0 && diceSides > 0)
+	{
+		const DiceConfig rollConfig{ diceCount, diceSides, 0 };
+		damage += diceSystem.RollTotal(rollConfig, RandomDomain::World);
+	}
+
+	if (damage <= 0)
+	{
+		return false;
+	}
+
+	const int prevHp = enemyStat->GetCurrentHP();
+	const int nextHp = max(0, prevHp - damage);
+	enemyStat->SetCurrentHP(nextHp);
+	std::cout << "[Throw] Damage=" << damage << " (AGI mod=" << agilityModifier
+		<< ") Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+	return true;
+}
+
 void PlayerCombatFSMComponent::BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants, int targetActorId) const
 {
 	outCombatants.clear();
@@ -544,7 +721,10 @@ bool PlayerCombatFSMComponent::HasEnemyInAttackRange() const
 		return false;
 	}
 
-	const int range = max(0, player->GetAttackRange());
+	int range = 0;
+	ItemComponent* throwItem = nullptr;
+	bool isThrowMode = false;
+	ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
 	const int playerQ = player->GetQ();
 	const int playerR = player->GetR();
 	const auto& enemies = grid->GetEnemies();

@@ -7,6 +7,9 @@
 #include "GridSystemComponent.h"
 #include "ServiceRegistry.h"
 #include "ItemComponent.h"
+#include "MaterialComponent.h"
+#include "MeshComponent.h"
+#include "MeshRenderer.h"
 #include "EnemyComponent.h"
 #include "EnemyStatComponent.h"
 #include "Event.h"
@@ -29,7 +32,8 @@
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
-#include "DiceSystem.h"
+#include "AssetLoader.h"
+#include "GameDataRepository.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -42,6 +46,8 @@ REGISTER_PROPERTY(PlayerComponent, CurrentWeaponCost)
 REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
 REGISTER_PROPERTY(PlayerComponent, DebugEquipItem)
+REGISTER_PROPERTY_READONLY(PlayerComponent, DebugCombatMode)
+REGISTER_PROPERTY(PlayerComponent, IsThrowPreviewActive)
 
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
@@ -61,6 +67,168 @@ namespace
 		const float dx = a.x - b.x;
 		const float dz = a.z - b.z;
 		return dx * dx + dz * dz;
+	}
+
+	int ToItemType(ItemCategory category)
+	{
+		switch (category)
+		{
+		case ItemCategory::Currency:
+			return static_cast<int>(ItemType::GOLD);
+		case ItemCategory::Healing:
+			return static_cast<int>(ItemType::HEAL);
+		case ItemCategory::Equipment:
+			return static_cast<int>(ItemType::EQUIPMENT);
+		case ItemCategory::Throwable:
+			return static_cast<int>(ItemType::THROW);
+		default:
+			return static_cast<int>(ItemType::GOLD);
+		}
+	}
+
+	std::string BuildEquipMeshPath(const ItemDefinition& definition)
+	{
+		if (!definition.equipMeshPath.empty())
+		{
+			return definition.equipMeshPath;
+		}
+
+		if (definition.meshPath.empty())
+		{
+			return {};
+		}
+
+		std::string path = definition.meshPath;
+		const size_t dot = path.find_last_of('.');
+		const size_t insertPos = (dot == std::string::npos) ? path.size() : dot;
+		const std::string base = path.substr(0, insertPos);
+		if (base.size() >= 5 && base.compare(base.size() - 5, 5, "_grab") == 0)
+		{
+			return path;
+		}
+
+		path.insert(insertPos, "_grab");
+		return path;
+	}
+
+	void ApplyItemDefinition(ItemComponent& item, const ItemDefinition& definition, const std::string& meshPath)
+	{
+		item.SetItemIndex(definition.index);
+		item.SetType(ToItemType(definition.category));
+		item.SetIconPath(definition.iconPath);
+		item.SetMeshPath(meshPath);
+		item.SetPrice(definition.basePrice);
+		item.SetMeleeAttackRange(definition.range);
+		item.SetThrowRange(definition.throwRange);
+		item.SetDifficultyGroup(definition.difficultyGroup);
+		item.SetHealth(definition.constitutionModifier);
+		item.SetStrength(definition.strengthModifier);
+		item.SetAgility(definition.agilityModifier);
+		item.SetSense(definition.senseModifier);
+		item.SetSkill(definition.skillModifier);
+		item.SetDEF(definition.defenseBonus);
+		if (definition.diceType > 0)
+		{
+			item.SetDiceType(definition.diceType);
+		}
+		if (definition.baseModifier > 0)
+		{
+			item.SetBaseModifier(definition.baseModifier);
+		}
+	}
+
+	std::string BuildEquipObjectName(Scene& scene, const std::string& base)
+	{
+		const std::string root = base.empty() ? "EquippedItem" : base;
+		std::string name = root + "_equip";
+		int suffix = 1;
+		while (scene.HasGameObjectName(name))
+		{
+			name = root + "_equip_" + std::to_string(suffix++);
+		}
+		return name;
+	}
+
+	void EnsureRenderComponents(GameObject& object, const std::string& meshPath)
+	{
+		auto* meshComponent = object.GetComponent<MeshComponent>();
+		if (!meshComponent)
+		{
+			meshComponent = object.AddComponent<MeshComponent>();
+		}
+
+		auto* meshRenderer = object.GetComponent<MeshRenderer>();
+		if (!meshRenderer)
+		{
+			meshRenderer = object.AddComponent<MeshRenderer>();
+		}
+		if (meshRenderer)
+		{
+			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+			meshRenderer->SetVisible(true);
+		}
+
+		auto* materialComponent = object.GetComponent<MaterialComponent>();
+		if (!materialComponent)
+		{
+			materialComponent = object.AddComponent<MaterialComponent>();
+		}
+
+		if (meshPath.empty())
+		{
+			return;
+		}
+
+		auto* loader = AssetLoader::GetActive();
+		if (!loader)
+		{
+			return;
+		}
+
+		const auto* asset = loader->GetAsset(meshPath);
+		if (!asset)
+		{
+			return;
+		}
+
+		if (meshComponent && !asset->meshes.empty())
+		{
+			if (!meshComponent->GetMeshHandle().IsValid())
+			{
+				meshComponent->SetMeshHandle(asset->meshes.front());
+			}
+		}
+
+		if (materialComponent && !asset->materials.empty())
+		{
+			if (!materialComponent->GetMaterialHandle().IsValid())
+			{
+				materialComponent->SetMaterialHandle(asset->materials.front());
+			}
+		}
+	}
+
+	GameObject* SpawnEquippedItem(Scene& scene, const ItemDefinition& definition)
+	{
+		const std::string equipName = BuildEquipObjectName(scene, definition.name);
+		auto equippedObject = scene.CreateGameObject(equipName);
+		if (!equippedObject)
+		{
+			return nullptr;
+		}
+
+		auto* itemComponent = equippedObject->AddComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			return nullptr;
+		}
+
+		const std::string meshPath = BuildEquipMeshPath(definition);
+		ApplyItemDefinition(*itemComponent, definition, meshPath);
+		itemComponent->SetIsEquiped(true);
+		EnsureRenderComponents(*equippedObject, meshPath);
+
+		return equippedObject.get();
 	}
 
 	GameObject* FindGameObjectByName(Scene* scene, const std::string& name)
@@ -325,9 +493,9 @@ void PlayerComponent::Start()
 	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
 	const auto& objects = scene->GetGameObjects();
 
-	for (const auto& [name,object] : objects) {
+	for (const auto& [name, object] : objects) {
 		if (!object) { continue; }
-		
+
 		if (auto* grid = object->GetComponent<GridSystemComponent>()) {
 			m_GridSystem = grid;
 			break;
@@ -344,12 +512,13 @@ void PlayerComponent::Update(float deltaTime) {
 	//defense
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene ||scene->GetIsPause())
+	if (!scene || scene->GetIsPause())
 	{
 		return;
 	}
 
 	auto* gameManager = scene->GetGameManager();
+	m_DebugCombatMode = m_IsThrowPreviewActive ? "ThrowMode" : "MeleeMode";
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 	//아이템 장착 테스트
 
@@ -422,13 +591,22 @@ void PlayerComponent::Update(float deltaTime) {
 			m_IsApplyMeeleStat = true;
 		}
 	}
-	
-	//근접 무기 모드면 근접무기 들기
-	if (/*m_IsMeleeMode && */m_MeeleItem != nullptr)
-	{
-		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
-		if (!itemcomponent) return;
 
+	//장착 무기에 따라 다른 무기 들기
+	GameObject* equippedItemObject = m_MeeleItem;
+	if (m_IsThrowPreviewActive)
+	{
+		ItemComponent* throwItem = nullptr;
+		if (TryGetConsumableThrowItem(throwItem) && throwItem)
+		{
+			auto* throwOwner = throwItem->GetOwner();
+			equippedItemObject = throwOwner ? dynamic_cast<GameObject*>(throwOwner) : nullptr;
+		}
+	}
+	if (equippedItemObject != nullptr)
+	{
+		auto* itemcomponent = equippedItemObject->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
 		if (!skeletal)
@@ -601,6 +779,8 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (TryPickup(clickedItem))
 			{
+
+				cout << "PickUp" << endl;
 				mouseData->handled = true;
 				return;
 			}
@@ -618,7 +798,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			return;
 		}
-		
+
 		std::cout << clickedNode->GetQ() << ", " << clickedNode->GetR() << std::endl; // 클릭된 Node Debug
 
 		if (!clickedNode->GetIsMoveable())
@@ -635,7 +815,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 				}
 				m_PendingDoor = door;
 				DispatchPlayerStateEvent(owner, "Door_Interact");
-				
+
 				mouseData->handled = true;
 				return;
 			}
@@ -650,25 +830,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
 		if (m_IsThrowPreviewActive)
 		{
-			int throwRange = 0;
-			ItemComponent* throwItem = nullptr;
-			if (TryGetConsumableThrowRange(throwRange) && TryGetConsumableThrowItem(throwItem))
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				if (distance <= throwRange && ApplyThrowDamage(throwItem, enemy))
+				if (combatFsm->TryExecutePlayerThrowAttack(enemy))
 				{
-					auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
-					auto* enemyOwner = enemy->GetOwner();
-					auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
-
-					XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
-					XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
-
-					// y값을 1.0f 위로 보정
-					startPos.y += 1.0f;
-					targetPos.y += 1.0f;
-
-					throwItem->BeginThrow(startPos, targetPos, 2.0f);
-					ConsumeThrowItem(throwItem);
 					mouseData->handled = true;
 					return;
 				}
@@ -694,7 +859,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 				combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 			}
 		}
-		
+
 
 		return;
 	}
@@ -843,7 +1008,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 
-		if(gameManager->GetCombatManager()->GetState() != Battle::InBattle)
+		if (gameManager->GetCombatManager()->GetState() != Battle::InBattle)
 		{
 			std::cout << "IdleMode\n";
 
@@ -867,7 +1032,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		
+
 		return;
 	}
 
@@ -899,6 +1064,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	if (m_CurrentTurn == Turn::PlayerTurn)
 	{
 		ResetTurnResources();
+		BeginThrowPreview();
 	}
 	else
 	{
@@ -972,6 +1138,7 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	{
 		return false;
 	}
+	cout << "use cost" << amount << endl;
 	m_RemainActResource -= amount;
 	return true;
 }
@@ -1100,17 +1267,17 @@ bool PlayerComponent::TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent
 // 밀기 동작
 bool PlayerComponent::ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode)
 {
-	if (!enemy || !targetNode || !m_GridSystem){ return false;}
+	if (!enemy || !targetNode || !m_GridSystem) { return false; }
 
 	auto* enemyOwner = enemy->GetOwner();
-	if (!enemyOwner){return false;}
+	if (!enemyOwner) { return false; }
 
 	auto* enemyTransform = enemyOwner->GetComponent<TransformComponent>();
 	auto* targetOwner = targetNode->GetOwner();
 	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
 
 
-	if (!enemyTransform || !targetTransform){return false;}
+	if (!enemyTransform || !targetTransform) { return false; }
 
 	enemyTransform->SetPosition(targetTransform->GetPosition());
 	enemy->SetQR(targetNode->GetQ(), targetNode->GetR());
@@ -1279,7 +1446,7 @@ bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	int bestRange = -1;
-	for (const auto& itemName : m_ConsumableItemNames) 
+	for (const auto& itemName : m_ConsumableItemNames)
 	{
 		auto* itemObject = FindGameObjectByName(scene, itemName);
 		if (!itemObject)
@@ -1346,57 +1513,6 @@ bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 	return outItem != nullptr && bestRange > 0;
 }
 
-bool PlayerComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy)
-{
-	if (!throwItem || !enemy)
-	{
-		return false;
-	}
-
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene)
-	{
-		return false;
-	}
-
-	auto* enemyOwner = enemy->GetOwner();
-	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
-	if (!enemyStat)
-	{
-		return false;
-	}
-
-	auto& services = scene->GetServices();
-	if (!services.Has<DiceSystem>())
-	{
-		return false;
-	}
-
-	auto& diceSystem = services.Get<DiceSystem>();
-	const int diceCount = max(0, throwItem->GetDiceRoll());
-	const int diceSides = max(0, throwItem->GetDiceType());
-	const int bonus = max(0, throwItem->GetBaseModifier());
-	int damage = bonus;
-
-	if (diceCount > 0 && diceSides > 0)
-	{
-		const DiceConfig rollConfig{ diceCount, diceSides, 0 };
-		damage += diceSystem.RollTotal(rollConfig, RandomDomain::World);
-	}
-
-	if (damage <= 0)
-	{
-		return false;
-	}
-
-	const int prevHp = enemyStat->GetCurrentHP();
-	const int nextHp = max(0, prevHp - damage);
-	enemyStat->SetCurrentHP(nextHp);
-	std::cout << "[Throw] Damage=" << damage << " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
-	return true;
-}
-
 void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 {
 	if (!throwItem)
@@ -1438,6 +1554,7 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 	}
 	else
 	{
+		ConsumeActResource(throwItem->GetActionPointCost());
 		EndThrowPreview();
 	}
 }
@@ -1506,7 +1623,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	auto* playerTransform = owner->GetComponent<TransformComponent>();
 	if (itemTransform && playerTransform)
 	{
-		const float distSq = DistanceSq2D(playerTransform->GetPosition(), itemTransform->GetPosition());
+		const float distSq = DistanceSq2D(playerTransform->GetWorldPos(), itemTransform->GetWorldPos());
 		if (distSq > kPickupRadius * kPickupRadius)
 		{
 			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
@@ -1528,7 +1645,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			if (m_ConsumableItemNames[i].empty()) 
+			if (m_ConsumableItemNames[i].empty())
 			{
 				consumableSlot = i;
 				break;
@@ -1547,21 +1664,82 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		return false;
 	}
 
-	AddToInventory(item);
-	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+	const bool isGoldBar = (item->GetItemIndex() == 1);
+	if (!isGoldBar)
 	{
-		m_MeeleItem = itemObject;
-		item->SetIsEquiped(true);
+		AddToInventory(item);
 	}
-	else if (consumableSlot >= 0)
+	auto* scene = owner->GetScene();
+	bool shouldRemovePickedObject = false;
+	if (isGoldBar)
 	{
-		m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
+		m_Money += max(0, item->GetPrice());
+		shouldRemovePickedObject = true;
 	}
+	if (itemType == static_cast<int>(ItemType::EQUIPMENT)
+		|| itemType == static_cast<int>(ItemType::HEAL)
+		|| itemType == static_cast<int>(ItemType::THROW)) 
+	{
+		auto* scene = owner->GetScene();
+		GameObject* equippedObject = nullptr;
+		if (scene)
+		{
+			auto& services = scene->GetServices();
+			if (services.Has<GameDataRepository>())
+			{
+				const auto* definition = services.Get<GameDataRepository>().GetItem(item->GetItemIndex());
+				if (definition)
+				{
+					equippedObject = SpawnEquippedItem(*scene, *definition);
+				}
+			}
+		}
+
+		if (equippedObject)
+		{
+			shouldRemovePickedObject = true;
+			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+			{
+				m_MeeleItem = equippedObject;
+				m_IsApplyMeeleStat = false;
+			}
+			else if (consumableSlot >= 0)
+			{
+				m_ConsumableItemNames[consumableSlot] = equippedObject->GetName();
+			}
+
+			auto& inventoryName = m_InventoryItemIds.back();
+			inventoryName = equippedObject->GetName();
+
+			if (auto* renderer = itemObject->GetComponent<MeshRenderer>())
+			{
+				renderer->SetVisible(false);
+				renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::None));
+			}
+		}
+		else
+		{
+			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+			{
+				m_MeeleItem = itemObject;
+			}
+			else if (consumableSlot >= 0)
+			{
+				m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
+			}
+			item->SetIsEquiped(true);
+		}
+	}
+	ConsumeActResource(1);
 
 	item->CompletePickup(owner);
+	if (shouldRemovePickedObject && scene)
+	{
+		scene->QueueGameObjectRemoval(itemObject->GetName());
+	}
 	return true;
 }
-void PlayerComponent::AddToInventory(ItemComponent * item)
+void PlayerComponent::AddToInventory(ItemComponent* item)
 {
 	if (!item)
 	{

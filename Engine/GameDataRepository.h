@@ -8,8 +8,8 @@
 enum class ItemCategory
 {
 	Currency,	// 재화
-	Healing,
 	Equipment,
+	Healing,
 	Throwable
 };
 
@@ -21,6 +21,7 @@ struct ItemDefinition
 	std::string  description;
 	std::string  iconPath;
 	std::string  meshPath;
+	std::string  equipMeshPath;
 				 
 	int			 basePrice				= 0;
 	int			 difficultyGroup		= 1;
@@ -38,6 +39,7 @@ struct ItemDefinition
 				 
 	int			 throwRange				= 0;			// 투척
 	int			 range					= 0;			// 근접
+	int			 actionPointCost = 1;					// 행동 포인트 소모
 };
 
 struct EnemyDefinition

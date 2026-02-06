@@ -116,11 +116,12 @@ bool GameDataRepository::LoadItemsFromFile(const std::string& path, std::string*
 	{
 		ItemDefinition item{};
 		item.index					= ParseInt(GetField(row, header, "ItemKey"), 0);
-		item.category				= ParseCategory(GetField(row, header, "ItemType"));
+		item.category				= static_cast<ItemCategory>(ParseInt(GetField(row, header, "ItemType")));		
 		item.name					= GetField(row, header, "한글 이름");
 		item.description			= GetField(row, header, "description");			//아이템 설명
 		item.iconPath				= GetField(row, header, "IconPath");
 		item.meshPath				= GetField(row, header, "MeshPath");
+		item.equipMeshPath			= GetField(row, header, "EquipMeshPath");
 		item.basePrice				= ParseInt(GetField(row, header, "Price"), 0);
 		item.difficultyGroup		= ParseInt(GetField(row, header, "DifficultyGroup"), 1);
 
@@ -137,6 +138,7 @@ bool GameDataRepository::LoadItemsFromFile(const std::string& path, std::string*
 
 		item.throwRange				= ParseInt(GetField(row, header, "Range"), 0);
 		item.range					= ParseInt(GetField(row, header, "Range"), 0);
+		item.actionPointCost		= ParseInt(GetField(row, header, "ConsumeActionPoints"), 1);
 
 		if (item.index != 0)
 		{
