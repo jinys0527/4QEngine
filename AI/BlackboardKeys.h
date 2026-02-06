@@ -5,6 +5,7 @@ namespace BlackboardKeys
 	inline constexpr const char* IsAlive			   = "IsAlive";
 	inline constexpr const char* HasTarget             = "HasTarget";
 	inline constexpr const char* IsInCombat            = "IsInCombat";
+	inline constexpr const char* IsBattleActor		   = "IsBattleActor";
 	inline constexpr const char* ShouldRunOff		   = "ShouldRunOff";
 	inline constexpr const char* PreferRanged          = "PreferRanged";
 	inline constexpr const char* MaintainRange         = "MaintainRange";
@@ -23,6 +24,7 @@ namespace BlackboardKeys
 	inline constexpr const char* RunOffTargetFound     = "RunOffTargetFound";
 	inline constexpr const char* SelfQ				   = "SelfQ";
 	inline constexpr const char* SelfR				   = "SelfR";
+	inline constexpr const char* ActorId			   = "ActorId";
 	inline constexpr const char* TargetQ			   = "TargetQ";
 	inline constexpr const char* TargetR			   = "TargetR";
 	inline constexpr const char* FacingDirection	   = "FacingDirection";

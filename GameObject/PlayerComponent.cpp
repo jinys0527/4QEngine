@@ -1006,6 +1006,7 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 
 	if (m_SelectedEnemy == enemy)
 	{
+		m_PendingAttackTarget = enemy;
 		RequestCombatConfirm();
 		DispatchCombatEvent(owner, "Combat_Confirm");
 		m_SelectedEnemy = nullptr;
@@ -1013,6 +1014,7 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 	}
 
 	m_SelectedEnemy = enemy;
+	m_PendingAttackTarget = enemy;
 	DispatchPlayerStateEvent(owner, "Combat_Start");
 	return true;
 }
@@ -1020,6 +1022,7 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 void PlayerComponent::ClearCombatSelection()
 {
 	m_SelectedEnemy = nullptr;
+	m_PendingAttackTarget = nullptr;
 }
 
 EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
@@ -1033,6 +1036,14 @@ EnemyComponent* PlayerComponent::ResolveCombatTarget(GameObject* obj) const
 	}
 	return nullptr;
 }
+
+EnemyComponent* PlayerComponent::ConsumePendingAttackTarget()
+{
+	EnemyComponent* target = m_PendingAttackTarget;
+	m_PendingAttackTarget = nullptr;
+	return target;
+}
+
 
 // 밀기 관련
 
