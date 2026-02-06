@@ -142,4 +142,6 @@ private:
 	float m_ThrowDuration = 0.25f;
 	DirectX::XMFLOAT3 m_ThrowStart{};
 	DirectX::XMFLOAT3 m_ThrowTarget{};
+
+	float m_ThrowArcHeight = 0.0f;
 };

@@ -12,6 +12,7 @@
 #include "TransformComponent.h"
 #include "ServiceRegistry.h"
 #include <algorithm>
+#include <cmath>
 
 #include "ItemComponent.h"
 
@@ -213,9 +214,10 @@ void ItemComponent::Update(float deltaTime)
 		m_ThrowElapsed += deltaTime;
 		const float duration = m_ThrowDuration > 0.0f ? m_ThrowDuration : 0.001f;
 		const float t = std::clamp(m_ThrowElapsed / duration, 0.0f, 1.0f);
+		const float arcOffset = 4.0f * m_ThrowArcHeight * t * (1.0f - t);
 		const XMFLOAT3 pos{
 			m_ThrowStart.x + (m_ThrowTarget.x - m_ThrowStart.x) * t,
-			m_ThrowStart.y + (m_ThrowTarget.y - m_ThrowStart.y) * t,
+			m_ThrowStart.y + (m_ThrowTarget.y - m_ThrowStart.y) * t + arcOffset,
 			m_ThrowStart.z + (m_ThrowTarget.z - m_ThrowStart.z) * t
 		};
 		transform->SetPosition(pos);
@@ -306,6 +308,10 @@ void ItemComponent::BeginThrow(const XMFLOAT3& start, const XMFLOAT3& target, fl
 	m_ThrowDuration = duration > 0.0f ? duration : 0.001f;
 	m_ThrowStart = start;
 	m_ThrowTarget = target;
+	const float dx = m_ThrowTarget.x - m_ThrowStart.x;
+	const float dz = m_ThrowTarget.z - m_ThrowStart.z;
+	const float planarDistance = sqrtf(dx * dx + dz * dz);
+	m_ThrowArcHeight = max(0.3f, planarDistance * 0.25f);
 	if (auto* owner = GetOwner())
 	{
 		if (auto* transform = owner->GetComponent<TransformComponent>())
