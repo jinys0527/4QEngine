@@ -199,9 +199,19 @@ namespace
 
 	void ApplyResolutionScale(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
 						      const UISize& viewportSize,
-						      const UISize& referenceResolution)
+			                  const UISize& referenceResolution,
+			                  float& lastScale,
+			                  UISize& lastOffset,
+			                  bool& hasScaleState)
 	{
+		constexpr float kMinScale = 0.001f;
+
 		if (referenceResolution.width <= 0.0f || referenceResolution.height <= 0.0f)
+		{
+			return;
+		}
+
+		if (viewportSize.width <= 0.0f || viewportSize.height <= 0.0f)
 		{
 			return;
 		}
@@ -209,8 +219,18 @@ namespace
 		const float scaleX = viewportSize.width / referenceResolution.width;
 		const float scaleY = viewportSize.height / referenceResolution.height;
 		const float uniformScale = std::min(scaleX, scaleY);
+		if (uniformScale < kMinScale)
+		{
+			return;
+		}
+
 		const float offsetX = (viewportSize.width - referenceResolution.width * uniformScale) * 0.5f;
 		const float offsetY = (viewportSize.height - referenceResolution.height * uniformScale) * 0.5f;
+
+		const float previousScale = hasScaleState ? lastScale : 1.0f;
+		const float previousOffsetX = hasScaleState ? lastOffset.width : 0.0f;
+		const float previousOffsetY = hasScaleState ? lastOffset.height : 0.0f;
+		const bool canUnscale = previousScale > 0.0f;
 
 		for (const auto& [name, uiObject] : uiMap)
 		{
@@ -220,20 +240,53 @@ namespace
 			}
 
 			UIRect bounds = uiObject->GetBounds();
+			if (canUnscale)
+			{
+				bounds.x = (bounds.x - previousOffsetX) / previousScale;
+				bounds.y = (bounds.y - previousOffsetY) / previousScale;
+				bounds.width /= previousScale;
+				bounds.height /= previousScale;
+			}
 			bounds.x = bounds.x * uniformScale + offsetX;
 			bounds.y = bounds.y * uniformScale + offsetY;
 			bounds.width *= uniformScale;
 			bounds.height *= uniformScale;
 			uiObject->SetBounds(bounds);
 		}
+
+		lastScale = uniformScale;
+		lastOffset = UISize{ offsetX, offsetY };
+		hasScaleState = true;
 	}
 
 	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
 							  const UISize& viewportSize,
 							  const UISize& referenceResolution,
+							  float& lastScale,
+							  UISize& lastOffset,
+							  bool& hasScaleState,
 							  const bool useAnchorLayout,
 							  const bool useResolutionScale)
 	{
+		constexpr float kMinScale = 0.001f;
+		if (useResolutionScale && hasScaleState && lastScale >= kMinScale)
+		{
+			for (const auto& [name, uiObject] : uiMap)
+			{
+				if (!uiObject || !uiObject->HasBounds())
+				{
+					continue;
+				}
+
+				UIRect bounds = uiObject->GetBounds();
+				bounds.x = (bounds.x - lastOffset.width) / lastScale;
+				bounds.y = (bounds.y - lastOffset.height) / lastScale;
+				bounds.width /= lastScale;
+				bounds.height /= lastScale;
+				uiObject->SetBounds(bounds);
+			}
+		}
+
 		for (const auto& [name, uiObject] : uiMap)
 		{
 			if (uiObject)
@@ -265,7 +318,7 @@ namespace
 
 		if (useResolutionScale)
 		{
-			ApplyResolutionScale(uiMap, viewportSize, referenceResolution);
+			ApplyResolutionScale(uiMap, viewportSize, referenceResolution, lastScale, lastOffset, hasScaleState);
 		}
 	}
 }
@@ -348,7 +401,7 @@ void UIManager::Update(float deltaTime)
 		pair.second->Update(deltaTime);
 	}
 
-	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_UseAnchorLayout, m_UseResolutionScale);
+	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
 }
 
 std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, const std::string& objectName)
@@ -376,7 +429,7 @@ void UIManager::OnEvent(EventType type, const void* data)
 		return;
 
 	auto& uiMap = it->second;
-	ApplyLayoutOverrides(uiMap, m_ViewportSize, m_ReferenceResolution, m_UseAnchorLayout, m_UseResolutionScale);
+	ApplyLayoutOverrides(uiMap, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
 	UpdateSortedUI(uiMap);
 	auto mouseData = static_cast<const Events::MouseState*>(data);
 
@@ -623,7 +676,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 	if (it == m_UIObjects.end())
 		return;
 
-	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_UseAnchorLayout, m_UseResolutionScale);
+	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
 
 	for (const auto& [name, uiObject] : it->second)
 	{

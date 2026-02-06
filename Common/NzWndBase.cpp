@@ -12,7 +12,8 @@ LRESULT CALLBACK NzWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	switch (msg)
 	{
 	case WM_SIZE:
-		if (pNzWnd) pNzWnd->OnResize(LOWORD(lparam), HIWORD(lparam));
+		if (pNzWnd && wparam != SIZE_MINIMIZED)
+			pNzWnd->OnResize(LOWORD(lparam), HIWORD(lparam));
 		return 0;
 	case WM_CLOSE:
 		if (pNzWnd) pNzWnd->OnClose();
@@ -47,9 +48,10 @@ bool NzWndBase::Create(const wchar_t* className, const wchar_t* windowName, int 
 	m_height = height;
 
 	RECT rc = { 0, 0, width, height };
-	AdjustWindowRect(&rc, WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+	constexpr DWORD kWindowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
+	AdjustWindowRect(&rc, kWindowStyle, FALSE);
 
-	m_hwnd = CreateWindowEx(NULL, MAKEINTATOM(classId), L"", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 
+	m_hwnd = CreateWindowEx(NULL, MAKEINTATOM(classId), L"", kWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT,
 		rc.right - rc.left, rc.bottom - rc.top, HWND(), HMENU(), HINSTANCE(), NULL);
 
 	if (NULL == m_hwnd) return false;

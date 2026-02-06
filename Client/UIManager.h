@@ -130,6 +130,9 @@ private:
 	std::string m_CurrentSceneName;
 	UISize m_ViewportSize		{ 2560.0f, 1600.0f };
 	UISize m_ReferenceResolution{ 2560.0f, 1600.0f };
+	float m_LastResolutionScale = 1.0f;
+	UISize m_LastResolutionOffset{ 0.0f, 0.0f };
+	bool m_HasResolutionScaleState = false;
 	bool m_UseAnchorLayout    = false;
 	bool m_UseResolutionScale = true;
 	void DispatchToTopUI(EventType type, const void* data);
