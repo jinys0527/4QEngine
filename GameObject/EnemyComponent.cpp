@@ -395,7 +395,7 @@ void EnemyComponent::Update(float deltaTime) {
 		}
 	}
 
-	
+	bb.Set(BlackboardKeys::IsBattleActor, isInBattleActor);
 	bb.Set(BlackboardKeys::SelfQ, m_Q);
 	bb.Set(BlackboardKeys::SelfR, m_R);
 	bb.Set(BlackboardKeys::FacingDirection, static_cast<int>(m_Facing));

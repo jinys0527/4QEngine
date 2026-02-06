@@ -504,6 +504,39 @@ void PlayerMovementComponent::ApplyRotationForMove(int targetQ, int targetR)
 	}
 }
 
+void PlayerMovementComponent::RotateTowardAdjacentEnemy()
+{
+	auto* owner = GetOwner();
+	if (!owner || !m_GridSystem)
+		return;
+
+	auto* player = owner->GetComponent<PlayerComponent>();
+	auto* transComp = owner->GetComponent<TransformComponent>();
+	if (!player || !transComp)
+		return;
+
+	const AxialKey playerKey{ player->GetQ(), player->GetR() };
+	constexpr std::array<std::pair<AxialKey, RotationOffset>, 6> kDirections{ {
+		{ { 1, 0 }, RotationOffset::clock_3 },
+		{ { 1, -1 }, RotationOffset::clock_5 },
+		{ { 0, -1 }, RotationOffset::clock_7 },
+		{ { -1, 0 }, RotationOffset::clock_9 },
+		{ { -1, 1 }, RotationOffset::clock_11 },
+		{ { 0, 1 }, RotationOffset::clock_1 }
+	} };
+
+	for (const auto& [dir, rotation] : kDirections)
+	{
+		const int q = playerKey.q + dir.q;
+		const int r = playerKey.r + dir.r;
+		if (m_GridSystem->GetEnemyAt(q, r))
+		{
+			SetPlayerRotation(transComp, rotation);
+			return;
+		}
+	}
+}
+
 bool PlayerMovementComponent::IsDragging() const
 {
 	auto* owner = GetOwner();

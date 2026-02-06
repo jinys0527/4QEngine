@@ -90,7 +90,10 @@ void CombatStateSyncService::TickService(BTInstance& inst, Blackboard& bb, float
 	bool hasTarget = false;
 	bb.TryGet(BlackboardKeys::HasTarget, hasTarget);
 
-	if (hasTarget)
+	bool isBattleActor = false;
+	bb.TryGet(BlackboardKeys::IsBattleActor, isBattleActor);
+
+	if (hasTarget && isBattleActor)
 	{
 		bb.Set(BlackboardKeys::IsInCombat, true);
 	}
@@ -164,10 +167,12 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 
 	bool isInCombat = false;
 	bb.TryGet(BlackboardKeys::IsInCombat, isInCombat);
+	bool isBattleActor = false;
+	bb.TryGet(BlackboardKeys::IsBattleActor, isBattleActor);
 
 	// 전투 참여자가 아니면 글로벌 전투 이벤트(AIMoveRequested 등)를 쏘지 않는다.
 	// 비참여 적은 EnemyComponent에서 블랙보드 요청을 직접 소비해 순찰 이동한다.
-	if (!isInCombat)
+	if (!isInCombat || !isBattleActor)
 	{
 		return;
 	}

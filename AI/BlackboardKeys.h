@@ -5,6 +5,7 @@ namespace BlackboardKeys
 	inline constexpr const char* IsAlive			   = "IsAlive";
 	inline constexpr const char* HasTarget             = "HasTarget";
 	inline constexpr const char* IsInCombat            = "IsInCombat";
+	inline constexpr const char* IsBattleActor		   = "IsBattleActor";
 	inline constexpr const char* ShouldRunOff		   = "ShouldRunOff";
 	inline constexpr const char* PreferRanged          = "PreferRanged";
 	inline constexpr const char* MaintainRange         = "MaintainRange";
