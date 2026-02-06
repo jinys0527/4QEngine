@@ -23,20 +23,7 @@ REGISTER_PROPERTY_HANDLE(InitiativeUIComponent, DeadIconTexture)
 
 InitiativeUIComponent::~InitiativeUIComponent()
 {
-	if (!m_Dispatcher)
-	{
-		return;
-	}
-
-	m_Dispatcher = &GetEventDispatcher();
-	m_Dispatcher->RemoveListener(EventType::CombatEnter, this);
-	m_Dispatcher->RemoveListener(EventType::CombatInitiativeBuilt, this);
-	m_Dispatcher->RemoveListener(EventType::CombatTurnAdvanced, this);
-	m_Dispatcher->RemoveListener(EventType::CombatExit, this);
-	m_Dispatcher->RemoveListener(EventType::CombatEnded, this);
-
-	m_Dispatcher = nullptr;
-	m_UIManager = nullptr;
+	DetachFromDispatcher();
 }
 
 void InitiativeUIComponent::Start()
@@ -89,7 +76,14 @@ void InitiativeUIComponent::Update(float deltaTime)
 
 	auto& slots = horizontalBox->GetSlotsMutable();
 	if (slots.empty())
-		return;
+	{
+		RebuildInitiativeOrder();
+		auto& refreshedSlots = horizontalBox->GetSlotsMutable();
+		if (refreshedSlots.empty())
+		{
+			return;
+		}
+	}
 
 	for (size_t i = 0; i < slots.size(); ++i)
 	{
@@ -130,7 +124,7 @@ void InitiativeUIComponent::Update(float deltaTime)
 		const float scale = slots[i].layoutScale > 0.0f ? slots[i].layoutScale : 1.0f;
 
 		contentWidth += slots[i].desiredSize.width * scale + basePadding * 2.0f;
-		contentHeight = max(contentHeight, slots[i].desiredSize.height + basePadding * 2.0f);
+		contentHeight = max(contentHeight, slots[i].desiredSize.height * scale + basePadding * 2.0f);
 
 		if (i + 1 < slots.size())
 		{
@@ -140,11 +134,12 @@ void InitiativeUIComponent::Update(float deltaTime)
 
 	const UIRect frameBounds = frame->GetBounds();
 	UIRect boxBounds = box->GetBounds();
-	boxBounds.width  = contentWidth;
-	boxBounds.height = max(contentHeight, boxBounds.height);
-	boxBounds.x = frameBounds.x + (frameBounds.width  - contentWidth) * 0.5f;
+	boxBounds.width = frameBounds.width;
+	boxBounds.height = contentHeight;
+	boxBounds.x = frameBounds.x;
 	boxBounds.y = frameBounds.y + (frameBounds.height - boxBounds.height) * 0.5f;
 	box->SetBounds(boxBounds);
+	uiManager->RefreshUIListForCurrentScene();
 }
 
 void InitiativeUIComponent::OnEvent(EventType type, const void* data)
@@ -259,6 +254,26 @@ Scene* InitiativeUIComponent::GetScene() const
 	return owner ? owner->GetScene() : nullptr;
 }
 
+void InitiativeUIComponent::DetachFromDispatcher()
+{
+	auto* scene = GetScene();
+	if (m_Dispatcher && scene)
+	{
+		auto& dispatcher = scene->GetEventDispatcher();
+		if (&dispatcher == m_Dispatcher)
+		{
+			m_Dispatcher->RemoveListener(EventType::CombatEnter, this);
+			m_Dispatcher->RemoveListener(EventType::CombatInitiativeBuilt, this);
+			m_Dispatcher->RemoveListener(EventType::CombatTurnAdvanced, this);
+			m_Dispatcher->RemoveListener(EventType::CombatExit, this);
+			m_Dispatcher->RemoveListener(EventType::CombatEnded, this);
+		}
+	}
+
+	m_Dispatcher = nullptr;
+	m_UIManager = nullptr;
+}
+
 void InitiativeUIComponent::RebuildInitiativeOrder()
 {
 	if (!m_Enabled)
@@ -332,7 +347,7 @@ void InitiativeUIComponent::RebuildInitiativeOrder()
 			continue;
 		}
 
-		icon->SetIsVisible(true);
+		icon->SetIsVisibleFromComponent(true);
 		UpdateIconVisuals(*icon, actorId, info);
 		m_ActorIcons[actorId] = icon;
 
@@ -341,6 +356,7 @@ void InitiativeUIComponent::RebuildInitiativeOrder()
 		slot.childName   = icon->GetName();
 		slot.desiredSize = UISize{ iconSize, iconSize };
 		slot.layoutScale = 1.0f;
+		slot.alignment = UIHorizontalAlignment::Center;
 		slot.padding = UIPadding{ basePadding, basePadding, basePadding, basePadding };
 		horizontalBox->AddSlot(slot);
 	}
@@ -430,14 +446,14 @@ void InitiativeUIComponent::ResetIconPools()
 	for (const auto& [name, icon] : playerIcons)
 	{
 		(void)name;
-		icon->SetIsVisible(false);
+		icon->SetIsVisibleFromComponent(false);
 		m_PlayerIconPool.push_back(icon);
 	}
 
 	for (const auto& [name, icon] : enemyIcons)
 	{
 		(void)name;
-		icon->SetIsVisible(false);
+		icon->SetIsVisibleFromComponent(false);
 		m_EnemyIconPool.push_back(icon);
 	}
 }
@@ -532,7 +548,7 @@ void InitiativeUIComponent::SetFrameVisible(bool visible)
 		auto uiObject = uiManager->FindUIObject(sceneName, name);
 		if (uiObject)
 		{
-			uiObject->SetIsVisible(visible);
+			uiObject->SetIsVisibleFromComponent(visible);
 		}
 	}
 }

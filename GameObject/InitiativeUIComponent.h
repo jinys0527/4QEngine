@@ -32,6 +32,7 @@ public:
 
 	void RebuildUI();
 	void RemoveUI();
+	void	   DetachFromDispatcher();
 
 private:
 	struct ActorIconInfo

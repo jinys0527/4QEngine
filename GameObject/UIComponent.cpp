@@ -37,6 +37,10 @@ void UIComponent::SetZOrder(const int& value)
 void UIComponent::SetOpacity(const float& value)
 {
 	m_Opacity = value;
+	if (auto* owner = dynamic_cast<UIObject*>(GetOwner()))
+	{
+		owner->SetOpacityFromComponent(value);
+	}
 }
 
 void UIComponent::Serialize(nlohmann::json& j) const

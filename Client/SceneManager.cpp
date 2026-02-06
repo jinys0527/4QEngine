@@ -12,6 +12,7 @@
 #include "json.hpp"
 #include "CameraObject.h"
 #include "GameDataRepository.h"
+#include "InitiativeUIComponent.h"
 
 void SceneManager::Initialize()
 {
@@ -86,6 +87,8 @@ void SceneManager::Reset()
 {
 	if (m_GameManager)
 		m_GameManager->ClearEventDispatcher();
+	if (m_UIManager)
+		m_UIManager->Reset();
 	SetEventDispatcher(nullptr);
 	m_Scenes.clear();
 	m_CurrentScene.reset();
@@ -124,6 +127,28 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
+		if (m_UIManager && m_CurrentScene)
+		{
+			auto& uiMap = m_UIManager->GetUIObjects();
+			auto itScene = uiMap.find(m_CurrentScene->GetName());
+			if (itScene != uiMap.end())
+			{
+				for (const auto& [uiName, uiObject] : itScene->second)
+				{
+					if (!uiObject)
+					{
+						continue;
+					}
+
+					if (auto* initiative = uiObject->GetComponent<InitiativeUIComponent>())
+					{
+						initiative->DetachFromDispatcher();
+					}
+					uiObject->SetScene(nullptr);
+				}
+			}
+		}
+
 		if (m_GameManager && m_CurrentScene)
 		{
 			m_GameManager->CapturePlayerData(m_CurrentScene.get());
@@ -160,6 +185,29 @@ void SceneManager::ChangeScene(const std::string& name)
 {
 
 	if (m_CurrentScene) {
+		if (m_UIManager)
+		{
+			auto& uiMap = m_UIManager->GetUIObjects();
+			auto itScene = uiMap.find(m_CurrentScene->GetName());
+			if (itScene != uiMap.end())
+			{
+				for (const auto& [uiName, uiObject] : itScene->second)
+				{
+					if (!uiObject)
+					{
+						continue;
+					}
+
+					if (auto* initiative = uiObject->GetComponent<InitiativeUIComponent>())
+					{
+						initiative->DetachFromDispatcher();
+					}
+					uiObject->SetScene(nullptr);
+				}
+			}
+			m_UIManager->ClearSceneUI(m_CurrentScene->GetName());
+		}
+
 		if (m_GameManager)
 		{
 			m_GameManager->CapturePlayerData(m_CurrentScene.get());

@@ -3734,8 +3734,9 @@ void EditorApplication::DrawUIEditorPreview()
 
 					auto uiObject = std::make_shared<UIObject>(scene->GetEventDispatcher());
 					uiObject->Deserialize(objectJson);
+					uiObject->SetScene(scene.get());
 					uiObject->UpdateInteractableFlags();
-					itScene->second[uiObject->GetName()] = uiObject;
+					uiManager->AddUI(sceneName, uiObject);
 					createdObjects.push_back(uiObject);
 				}
 

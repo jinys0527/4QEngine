@@ -283,28 +283,32 @@ void UIManager::Start()
 
 void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Pressed))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::Pressed))
 	{
 		m_EventDispatcher->RemoveListener(EventType::Pressed, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIHovered))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIHovered))
 	{
 		m_EventDispatcher->RemoveListener(EventType::UIHovered, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDragged))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIDragged))
 	{
 		m_EventDispatcher->RemoveListener(EventType::UIDragged, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDoubleClicked))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIDoubleClicked))
 	{
 		m_EventDispatcher->RemoveListener(EventType::UIDoubleClicked, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Released))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::Released))
 	{
 		m_EventDispatcher->RemoveListener(EventType::Released, this);
 	}
 
 	m_EventDispatcher = eventDispatcher;
+
+	if (!m_EventDispatcher)
+		return;
+
 	m_EventDispatcher->AddListener(EventType::Pressed, this);
 	m_EventDispatcher->AddListener(EventType::UIHovered, this);
 	m_EventDispatcher->AddListener(EventType::UIDragged, this);
@@ -824,7 +828,11 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 		}
 
 		auto uiComp = uiObject->GetComponent<UIComponent>();
-		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
+
+		auto resolveOpacity = [](const std::shared_ptr<UIObject> uiObject)
+			{
+				return uiObject ? uiObject->GetOpacity() : 1.0f;
+			};
 
 		auto applyOverrides = [&](RenderData::UIElement& element,
 			const TextureHandle& texture,
@@ -859,7 +867,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 					image->GetPixelShaderHandle());
 			};
 
-		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float progress = 1.0f, float progressDirection = 0.0f)
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float opacity, float progress = 1.0f, float progressDirection = 0.0f)
 			{
 				RenderData::UIElement element{};
 				element.position = { rect.x, rect.y };
@@ -899,10 +907,11 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				return fill;
 			};
 
+		const float opacity = resolveOpacity(uiObject);
 
 		if (auto* progress = progressComponent)
 		{
-			appendElement(bounds, baseZOrder, nullptr);
+			appendElement(bounds, baseZOrder, nullptr, opacity);
 			auto& backgroundElement = frameData.uiElements.back();
 			applyOverrides(backgroundElement,
 				progress->GetBackgroundTextureHandle(),
@@ -923,7 +932,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				const bool isReverseFill = fillDirection == UIFillDirection::RightToLeft
 					|| fillDirection == UIFillDirection::BottomToTop;
 				const float progressDirection = isReverseFill ? 1.0f : 0.0f;
-				appendElement(fillRect, baseZOrder + 1, nullptr, progressValue, progressDirection);
+				appendElement(fillRect, baseZOrder + 1, nullptr, opacity, progressValue, progressDirection);
 
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,
@@ -935,7 +944,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 		}
 		else if (auto* slider = sliderComponent)
 		{
-			appendElement(bounds, baseZOrder, nullptr);
+			appendElement(bounds, baseZOrder, nullptr, opacity);
 			auto& backgroundElement = frameData.uiElements.back();
 			applyOverrides(backgroundElement,
 				slider->GetBackgroundTextureHandle(),
@@ -948,7 +957,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 			{
 				UIRect fillRect = bounds;
 				fillRect.width = bounds.width * normalized;
-				appendElement(fillRect, baseZOrder + 1, nullptr);
+				appendElement(fillRect, baseZOrder + 1, nullptr, opacity);
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,
 					slider->GetFillTextureHandle(),
@@ -971,7 +980,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				handleRect.x = bounds.x + bounds.width * normalized - handleSize * 0.5f;
 				handleRect.x = std::clamp(handleRect.x, bounds.x, bounds.x + bounds.width - handleSize);
 				handleRect.y = bounds.y + (bounds.height - handleSize) * 0.5f;
-				appendElement(handleRect, baseZOrder + 2, nullptr);
+				appendElement(handleRect, baseZOrder + 2, nullptr, opacity);
 				auto& handleElement = frameData.uiElements.back();
 				applyOverrides(handleElement,
 					slider->GetHandleTextureHandle(),
@@ -982,7 +991,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 		}
 		else if (hasVisualElement)
 		{
-			appendElement(bounds, baseZOrder, imageComponent);
+			appendElement(bounds, baseZOrder, imageComponent, opacity);
 			if (auto* button = buttonComponent)
 			{
 				auto& element = frameData.uiElements.back();
@@ -1006,6 +1015,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 			RenderData::UITextElement text{};
 			text.position = { bounds.x, bounds.y };
 			text.color = textComp->GetTextColor();
+			text.color.w = opacity;
 			text.fontSize = textComp->GetFontSize();
 			text.text = textComp->GetText();
 			frameData.uiTexts.push_back(std::move(text));
@@ -1273,7 +1283,6 @@ void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann:
 		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
 		uiObject->Deserialize(entry);
 		uiObject->UpdateInteractableFlags();
-		uiObject->Start();
 		uiMap[uiObject->GetName()] = uiObject;
 	}
 
@@ -1399,6 +1408,45 @@ void UIManager::RemoveBindingsForObject(const std::string& sceneName, const std:
 
 void UIManager::Reset()
 {
+	SetEventDispatcher(nullptr);
 	m_UIObjects.clear();
 	m_ActiveUI = nullptr;
+}
+
+void UIManager::ClearSceneUI(const std::string& sceneName)
+{
+	auto itScene = m_UIObjects.find(sceneName);
+	if (itScene == m_UIObjects.end())
+	{
+		return;
+	}
+
+	auto& uiMap = itScene->second;
+	if (m_ActiveUI)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject && uiObject.get() == m_ActiveUI)
+			{
+				m_ActiveUI = nullptr;
+				break;
+			}
+		}
+	}
+
+	if (m_LastHoveredUI)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject && uiObject.get() == m_LastHoveredUI)
+			{
+				m_LastHoveredUI = nullptr;
+				break;
+			}
+		}
+	}
+
+	m_ButtonBindingsByScene.erase(sceneName);
+	m_SliderBindingsByScene.erase(sceneName);
+	m_UIObjects.erase(itScene);
 }

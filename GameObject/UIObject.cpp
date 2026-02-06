@@ -305,6 +305,24 @@ void UIObject::SetIsVisibleFromComponent(bool isVisible)
 	m_IsVisible = isVisible;
 }
 
+void UIObject::SetOpacity(float opacity)
+{
+	m_Opacity = opacity;
+
+	if (auto* baseComponent = GetComponent<UIComponent>())
+	{
+		if (baseComponent->GetOpacity() != opacity)
+		{
+			baseComponent->SetOpacity(opacity);
+		}
+	}
+}
+
+void UIObject::SetOpacityFromComponent(float opacity)
+{
+	m_Opacity = opacity;
+}
+
 bool UIObject::IsVisible()
 {
 	return m_IsVisible;

@@ -96,8 +96,6 @@ void ShadowPass::Execute(const RenderData::FrameData& frame)
         ID3D11VertexShader* vertexShader = m_RenderContext.VS_MakeShadow.Get();
         ID3D11PixelShader* pixelShader = m_RenderContext.PS_MakeShadow_Transparent.Get();
 
-        if (queueItem.layer == RenderData::OpaqueItems)
-            pixelShader = m_RenderContext.PS_MakeShadow.Get();
 
 
         const RenderData::MaterialData* mat = nullptr;

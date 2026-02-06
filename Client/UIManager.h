@@ -64,6 +64,7 @@ public:
 	void Start();
 
 	void Reset();
+	void ClearSceneUI(const std::string& sceneName);
 
 	void SetCurrentScene(std::string currentSceneName) 
 	{
