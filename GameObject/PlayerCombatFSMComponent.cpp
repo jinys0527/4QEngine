@@ -3,8 +3,10 @@
 #include "PlayerComponent.h"
 #include "PlayerStatComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyMovementComponent.h"
 #include "EnemyStatComponent.h"
 #include "GridSystemComponent.h"
+#include "PlayerMovementComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
 #include "Scene.h"
@@ -345,6 +347,23 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 			}
 		}
 	}
+
+	if (enemy && player)
+	{
+		if (auto* moveComp = owner->GetComponent<PlayerMovementComponent>())
+		{
+			moveComp->RotateTowardTarget(enemy->GetQ(), enemy->GetR());
+		}
+		if (auto* enemyOwner = enemy->GetOwner())
+		{
+			if (auto* enemyMove = enemyOwner->GetComponent<EnemyMovementComponent>())
+			{
+				enemyMove->RotateTowardTarget(player->GetQ(), player->GetR());
+			}
+		}
+	}
+
+
 	if (scene && enemy)
 	{
 		auto& services = scene->GetServices();

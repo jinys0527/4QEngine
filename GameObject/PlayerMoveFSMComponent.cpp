@@ -114,10 +114,6 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			if (committed)
 			{
 				m_CommitSucceeded = true;
-				if (auto* moveComp = owner->GetComponent<PlayerMovementComponent>())
-				{
-					moveComp->RotateTowardAdjacentEnemy();
-				}
 				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
 				{
 					playerFsm->DispatchEvent("Move_Complete");

@@ -504,38 +504,42 @@ void PlayerMovementComponent::ApplyRotationForMove(int targetQ, int targetR)
 	}
 }
 
-void PlayerMovementComponent::RotateTowardAdjacentEnemy()
+
+void PlayerMovementComponent::RotateTowardTarget(int targetQ, int targetR)
 {
 	auto* owner = GetOwner();
 	if (!owner || !m_GridSystem)
+	{
 		return;
+	}
 
 	auto* player = owner->GetComponent<PlayerComponent>();
 	auto* transComp = owner->GetComponent<TransformComponent>();
 	if (!player || !transComp)
-		return;
-
-	const AxialKey playerKey{ player->GetQ(), player->GetR() };
-	constexpr std::array<std::pair<AxialKey, RotationOffset>, 6> kDirections{ {
-		{ { 1, 0 }, RotationOffset::clock_3 },
-		{ { 1, -1 }, RotationOffset::clock_5 },
-		{ { 0, -1 }, RotationOffset::clock_7 },
-		{ { -1, 0 }, RotationOffset::clock_9 },
-		{ { -1, 1 }, RotationOffset::clock_11 },
-		{ { 0, 1 }, RotationOffset::clock_1 }
-	} };
-
-	for (const auto& [dir, rotation] : kDirections)
 	{
-		const int q = playerKey.q + dir.q;
-		const int r = playerKey.r + dir.r;
-		if (m_GridSystem->GetEnemyAt(q, r))
-		{
-			SetPlayerRotation(transComp, rotation);
-			return;
-		}
+		return;
+	}
+
+	const AxialKey startKey{ player->GetQ(), player->GetR() };
+	const AxialKey targetKey{ targetQ, targetR };
+	if (startKey.q == targetKey.q && startKey.r == targetKey.r)
+	{
+		return;
+	}
+
+	const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
+	if (path.size() < 2)
+	{
+		return;
+	}
+
+	RotationOffset rotation{};
+	if (TryGetRotationFromStep(startKey, path[1], rotation))
+	{
+		SetPlayerRotation(transComp, rotation);
 	}
 }
+
 
 bool PlayerMovementComponent::IsDragging() const
 {

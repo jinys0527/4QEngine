@@ -13,6 +13,7 @@
 #include "PlayerInventoryFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
+#include "PlayerMovementComponent.h"
 #include "GridSystemComponent.h"
 #include "ServiceRegistry.h"
 #include "CombatManager.h"
@@ -23,6 +24,7 @@
 #include "ShopRoller.h"
 #include "CombatResolver.h"
 #include "EnemyStatComponent.h"
+#include "EnemyMovementComponent.h"
 #include "EnemyComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
@@ -1000,6 +1002,12 @@ void GameManager::ResolveEnemyAttack()
 		return;
 	}
 
+	auto* player = playerObject->GetComponent<PlayerComponent>();
+	if (!player)
+	{
+		return;
+	}
+
 	auto* playerStat = playerObject->GetComponent<PlayerStatComponent>();
 	if (!playerStat)
 	{
@@ -1041,6 +1049,21 @@ void GameManager::ResolveEnemyAttack()
 	}
 
 	auto* enemyOwner = enemy->GetOwner();
+
+	if (enemyOwner)
+	{
+		if (auto* enemyMove = enemyOwner->GetComponent<EnemyMovementComponent>())
+		{
+			enemyMove->RotateTowardTarget(player->GetQ(), player->GetR());
+		}
+	}
+
+	if (auto* playerMove = playerObject->GetComponent<PlayerMovementComponent>())
+	{
+		playerMove->RotateTowardTarget(enemy->GetQ(), enemy->GetR());
+	}
+
+
 	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
 	if (!enemyStat)
 	{
