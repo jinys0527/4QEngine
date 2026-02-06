@@ -543,6 +543,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (TryPickup(clickedItem))
 			{
+
 				cout << "PickUp" << endl;
 				mouseData->handled = true;
 				return;
@@ -591,17 +592,17 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		}
 
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
-		//if (m_IsThrowPreviewActive)
-		//{
-		//	if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
-		//	{
-		//		if (combatFsm->TryExecutePlayerThrowAttack(enemy)) 
-		//		{
-		//			mouseData->handled = true;
-		//			return;
-		//		}
-		//	}
-		//}
+		if (m_IsThrowPreviewActive)
+		{
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+			{
+				if (combatFsm->TryExecutePlayerThrowAttack(enemy)) 
+				{
+					mouseData->handled = true;
+					return;
+				}
+			}
+		}
 
 		const int range = max(0, m_AttackRange);
 		if (distance > range)
@@ -855,6 +856,7 @@ bool PlayerComponent::ConsumeActResource(int amount)
 	{
 		return false;
 	}
+	cout << "use cost" << amount << endl;
 	m_RemainActResource -= amount;
 	return true;
 }
@@ -1259,6 +1261,7 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 	}
 	else
 	{
+		ConsumeActResource(throwItem->GetActionPointCost());
 		EndThrowPreview();
 	}
 }
@@ -1378,6 +1381,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	{
 		m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
 	}
+	ConsumeActResource(1);
 
 	item->CompletePickup(owner);
 	return true;
