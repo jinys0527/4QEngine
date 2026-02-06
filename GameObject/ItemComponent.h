@@ -115,25 +115,25 @@ private:
 	Object* m_PickupOwner = nullptr;
 
 	bool m_IsEquiped			= false;
-	int m_Type					= -1;
-	int m_Name					= -1;
+	int m_Type					= 0;
+	int m_Name					= 0;
 	std::string m_IconPath		= "";
 	std::string m_MeshPath		= "";
-	int m_DescriptionIndex		= -1;
-	int m_Price					= -1;
+	int m_DescriptionIndex		= 0;
+	int m_Price					= 0;
 	int m_MeleeAttackRange		= 1;
-	int m_DiceRoll				= -1;     // 주사위 굴림횟수 (DnD룰에서 1d4의 d)
-	int m_DiceType				= -1;    // 주사위 면체 수 (DnD룰에서 1d4의 4)
-	int m_BaseModifier			= -1;      // 데미지 보정치 (고정 추가 데미지)
+	int m_DiceRoll				= 0;     // 주사위 굴림횟수 (DnD룰에서 1d4의 d)
+	int m_DiceType				= 0;    // 주사위 면체 수 (DnD룰에서 1d4의 4)
+	int m_BaseModifier			= 0;      // 데미지 보정치 (고정 추가 데미지)
 	int m_Health				= 0;
 	int m_Strength				= 0;
 	int m_Agility				= 0;
 	int m_Sense					= 0;
 	int m_Skill					= 0;
 	int m_DEF					= 0;
-	int m_ThrowRange			= -1;
+	int m_ThrowRange			= 0;
 	int m_ActionPointCost		= 1;
-	int m_DifficultyGroup		= -1;
+	int m_DifficultyGroup		= 0;
 
 	DirectX::XMFLOAT4X4 m_EquipmentBindPose{};
 
