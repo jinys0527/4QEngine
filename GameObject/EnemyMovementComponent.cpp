@@ -7,7 +7,9 @@
 #include "NodeComponent.h"
 #include "EnemyStatComponent.h"
 #include "EnemyComponent.h"
+#include "ServiceRegistry.h"
 #include "GameManager.h"
+#include "CombatManager.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -59,7 +61,10 @@ void EnemyMovementComponent::Update(float deltaTime)
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+	auto* enemy = owner ? owner->GetComponent<EnemyComponent>() : nullptr;
 	if (!gameManager)
+		return;
+	if (!enemy)
 		return;
 
 	// 탐색 EnemyStep 또는 전투 EnemyTurn에서만 움직임 허용
@@ -67,28 +72,40 @@ void EnemyMovementComponent::Update(float deltaTime)
 		(gameManager->GetPhase() == Phase::ExplorationLoop &&
 			gameManager->GetExplorationTurnState() == ExplorationTurnState::EnemyStep);
 
-	const bool combatEnemyTurn =
-		(gameManager->GetPhase() == Phase::TurnBasedCombat &&
-			gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn);
+	const bool combatPhase = gameManager->GetPhase() == Phase::TurnBasedCombat;
+	bool isInBattleActor = false;
+	if (combatPhase && scene && scene->GetServices().Has<CombatManager>())
+	{
+		isInBattleActor = scene->GetServices().Get<CombatManager>().IsActorInBattle(enemy->GetActorId());
+	}
 
-	if (!explorationEnemyStep && !combatEnemyTurn)
-		return;
+	const bool combatEnemyTurn = (combatPhase && isInBattleActor && gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn);
 
+	const bool combatNonBattleActor = combatPhase && !isInBattleActor;
 
-	auto* enemy = GetOwner()->GetComponent<EnemyComponent>();
-	if (!enemy)
+	if (!explorationEnemyStep && !combatEnemyTurn && !combatNonBattleActor)
 		return;
 
 	if (explorationEnemyStep && enemy->GetCurrentTurn() != Turn::EnemyTurn)
 		return;
-
+	
+	if (combatNonBattleActor)
+	{
+		if (enemy->GetCurrentTurn() != Turn::EnemyTurn)
+			return;
+		if (m_IsMoveComplete)
+			return;
+	}
+	
 	bool hasRequest = false;
 
 	// 1) 기존 탐색 이동 요청도 계속 지원
 	if (enemy->ConsumeMoveRequest())
 	{
-		//m_PendingOrder = EMoveOrder::Patrol;
-		m_PendingOrder = enemy->IsTargetVisible() ? EMoveOrder::Approach : EMoveOrder::Patrol;
+		const bool canApproachPlayerBySight = !combatNonBattleActor;
+		m_PendingOrder = (canApproachPlayerBySight && enemy->IsTargetVisible())
+			? EMoveOrder::Approach
+			: EMoveOrder::Patrol;
 		hasRequest = true;
 	}
 
