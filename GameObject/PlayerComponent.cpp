@@ -484,9 +484,9 @@ void PlayerComponent::Start()
 	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
 	const auto& objects = scene->GetGameObjects();
 
-	for (const auto& [name,object] : objects) {
+	for (const auto& [name, object] : objects) {
 		if (!object) { continue; }
-		
+
 		if (auto* grid = object->GetComponent<GridSystemComponent>()) {
 			m_GridSystem = grid;
 			break;
@@ -503,7 +503,7 @@ void PlayerComponent::Update(float deltaTime) {
 	//defense
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene ||scene->GetIsPause())
+	if (!scene || scene->GetIsPause())
 	{
 		return;
 	}
@@ -581,13 +581,22 @@ void PlayerComponent::Update(float deltaTime) {
 			m_IsApplyMeeleStat = true;
 		}
 	}
-	
-	//근접 무기 모드면 근접무기 들기
-	if (/*m_IsMeleeMode && */m_MeeleItem != nullptr)
-	{
-		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
-		if (!itemcomponent) return;
 
+	//장착 무기에 따라 다른 무기 들기
+	GameObject* equippedItemObject = m_MeeleItem;
+	if (m_IsThrowPreviewActive)
+	{
+		ItemComponent* throwItem = nullptr;
+		if (TryGetConsumableThrowItem(throwItem) && throwItem)
+		{
+			auto* throwOwner = throwItem->GetOwner();
+			equippedItemObject = throwOwner ? dynamic_cast<GameObject*>(throwOwner) : nullptr;
+		}
+	}
+	if (equippedItemObject != nullptr)
+	{
+		auto* itemcomponent = equippedItemObject->GetComponent<ItemComponent>();
+		if (!itemcomponent) return;
 
 		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
 		if (!skeletal)
@@ -729,7 +738,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			return;
 		}
-		
+
 		std::cout << clickedNode->GetQ() << ", " << clickedNode->GetR() << std::endl; // 클릭된 Node Debug
 
 		if (!clickedNode->GetIsMoveable())
@@ -746,7 +755,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 				}
 				m_PendingDoor = door;
 				DispatchPlayerStateEvent(owner, "Door_Interact");
-				
+
 				mouseData->handled = true;
 				return;
 			}
@@ -763,7 +772,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				if (combatFsm->TryExecutePlayerThrowAttack(enemy)) 
+				if (combatFsm->TryExecutePlayerThrowAttack(enemy))
 				{
 					mouseData->handled = true;
 					return;
@@ -790,7 +799,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 				combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 			}
 		}
-		
+
 
 		return;
 	}
@@ -893,7 +902,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 
-		if(gameManager->GetCombatManager()->GetState() != Battle::InBattle)
+		if (gameManager->GetCombatManager()->GetState() != Battle::InBattle)
 		{
 			std::cout << "IdleMode\n";
 
@@ -917,7 +926,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		
+
 		return;
 	}
 
@@ -1141,17 +1150,17 @@ bool PlayerComponent::TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent
 // 밀기 동작
 bool PlayerComponent::ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode)
 {
-	if (!enemy || !targetNode || !m_GridSystem){ return false;}
+	if (!enemy || !targetNode || !m_GridSystem) { return false; }
 
 	auto* enemyOwner = enemy->GetOwner();
-	if (!enemyOwner){return false;}
+	if (!enemyOwner) { return false; }
 
 	auto* enemyTransform = enemyOwner->GetComponent<TransformComponent>();
 	auto* targetOwner = targetNode->GetOwner();
 	auto* targetTransform = targetOwner ? targetOwner->GetComponent<TransformComponent>() : nullptr;
 
 
-	if (!enemyTransform || !targetTransform){return false;}
+	if (!enemyTransform || !targetTransform) { return false; }
 
 	enemyTransform->SetPosition(targetTransform->GetPosition());
 	enemy->SetQR(targetNode->GetQ(), targetNode->GetR());
@@ -1320,7 +1329,7 @@ bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	int bestRange = -1;
-	for (const auto& itemName : m_ConsumableItemNames) 
+	for (const auto& itemName : m_ConsumableItemNames)
 	{
 		auto* itemObject = FindGameObjectByName(scene, itemName);
 		if (!itemObject)
@@ -1519,7 +1528,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			if (m_ConsumableItemNames[i].empty()) 
+			if (m_ConsumableItemNames[i].empty())
 			{
 				consumableSlot = i;
 				break;
@@ -1539,7 +1548,9 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	}
 
 	AddToInventory(item);
-	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+	if (itemType == static_cast<int>(ItemType::EQUIPMENT)
+		|| itemType == static_cast<int>(ItemType::HEAL)
+		|| itemType == static_cast<int>(ItemType::THROW))
 	{
 		auto* scene = owner->GetScene();
 		GameObject* equippedObject = nullptr;
@@ -1558,8 +1569,18 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 
 		if (equippedObject)
 		{
-			m_MeeleItem = equippedObject;
-			m_IsApplyMeeleStat = false;
+			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+			{
+				m_MeeleItem = equippedObject;
+				m_IsApplyMeeleStat = false;
+			}
+			else if (consumableSlot >= 0)
+			{
+				m_ConsumableItemNames[consumableSlot] = equippedObject->GetName();
+			}
+
+			auto& inventoryName = m_InventoryItemIds.back();
+			inventoryName = equippedObject->GetName();
 			if (auto* renderer = itemObject->GetComponent<MeshRenderer>())
 			{
 				renderer->SetVisible(false);
@@ -1568,20 +1589,23 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		}
 		else
 		{
-			m_MeeleItem = itemObject;
+			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
+			{
+				m_MeeleItem = itemObject;
+			}
+			else if (consumableSlot >= 0)
+			{
+				m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
+			}
 			item->SetIsEquiped(true);
 		}
-	}
-	else if (consumableSlot >= 0)
-	{
-		m_ConsumableItemNames[consumableSlot] = itemObject->GetName();
 	}
 	ConsumeActResource(1);
 
 	item->CompletePickup(owner);
 	return true;
 }
-void PlayerComponent::AddToInventory(ItemComponent * item)
+void PlayerComponent::AddToInventory(ItemComponent* item)
 {
 	if (!item)
 	{

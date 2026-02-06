@@ -8,8 +8,8 @@
 enum class ItemCategory
 {
 	Currency,	// 재화
-	Healing,
 	Equipment,
+	Healing,
 	Throwable
 };
 

@@ -19,6 +19,7 @@
 #include "DiceSystem.h"
 #include "LogSystem.h"
 #include "TransformComponent.h"
+#include "MeshRenderer.h"
 #include <iostream>
 
 REGISTER_COMPONENT_DERIVED(PlayerCombatFSMComponent, FSMComponent)
@@ -502,6 +503,19 @@ bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, Enemy
 
 	XMFLOAT3 startPos = playerTransform ? playerTransform->GetWorldPos() : XMFLOAT3{};
 	XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetWorldPos() : XMFLOAT3{};
+	if (auto* throwOwner = throwItem->GetOwner())
+	{
+		if (auto* throwTransform = throwOwner->GetComponent<TransformComponent>())
+		{
+			startPos = throwTransform->GetWorldPos();
+		}
+
+		if (auto* renderer = throwOwner->GetComponent<MeshRenderer>())
+		{
+			renderer->SetVisible(true);
+			renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+		}
+	}
 
 	startPos.y += 1.0f;
 	targetPos.y += 1.0f;
