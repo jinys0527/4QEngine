@@ -69,7 +69,7 @@ private:
 	GridSystemComponent* m_GridSystem = nullptr;
 	bool  m_MoveRequested = false;
 	bool  m_TargetVisible = false;
-	float m_EndTurnDelay = 3;
+	float m_EndTurnDelay = 1;
 	ERotationOffset m_Facing;
 	bool  m_DebugSightLines = false;
 	bool  m_DeathReported = false;
