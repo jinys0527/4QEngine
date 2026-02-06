@@ -543,6 +543,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (TryPickup(clickedItem))
 			{
+				cout << "PickUp" << endl;
 				mouseData->handled = true;
 				return;
 			}
@@ -780,6 +781,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 	if (m_CurrentTurn == Turn::PlayerTurn)
 	{
 		ResetTurnResources();
+		BeginThrowPreview();
 	}
 	else
 	{

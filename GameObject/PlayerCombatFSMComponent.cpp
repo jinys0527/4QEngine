@@ -500,8 +500,8 @@ bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, Enemy
 	auto* enemyOwner = enemy->GetOwner();
 	auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
 
-	XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
-	XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
+	XMFLOAT3 startPos = playerTransform ? playerTransform->GetWorldPos() : XMFLOAT3{};
+	XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetWorldPos() : XMFLOAT3{};
 
 	startPos.y += 1.0f;
 	targetPos.y += 1.0f;
