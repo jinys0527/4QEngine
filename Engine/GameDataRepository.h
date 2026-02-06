@@ -21,6 +21,7 @@ struct ItemDefinition
 	std::string  description;
 	std::string  iconPath;
 	std::string  meshPath;
+	std::string  equipMeshPath;
 				 
 	int			 basePrice				= 0;
 	int			 difficultyGroup		= 1;

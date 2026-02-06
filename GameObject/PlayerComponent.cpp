@@ -7,6 +7,9 @@
 #include "GridSystemComponent.h"
 #include "ServiceRegistry.h"
 #include "ItemComponent.h"
+#include "MaterialComponent.h"
+#include "MeshComponent.h"
+#include "MeshRenderer.h"
 #include "EnemyComponent.h"
 #include "EnemyStatComponent.h"
 #include "Event.h"
@@ -29,6 +32,8 @@
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
+#include "AssetLoader.h"
+#include "GameDataRepository.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -60,6 +65,168 @@ namespace
 		const float dx = a.x - b.x;
 		const float dz = a.z - b.z;
 		return dx * dx + dz * dz;
+	}
+
+	int ToItemType(ItemCategory category)
+	{
+		switch (category)
+		{
+		case ItemCategory::Currency:
+			return static_cast<int>(ItemType::GOLD);
+		case ItemCategory::Healing:
+			return static_cast<int>(ItemType::HEAL);
+		case ItemCategory::Equipment:
+			return static_cast<int>(ItemType::EQUIPMENT);
+		case ItemCategory::Throwable:
+			return static_cast<int>(ItemType::THROW);
+		default:
+			return static_cast<int>(ItemType::GOLD);
+		}
+	}
+
+	std::string BuildEquipMeshPath(const ItemDefinition& definition)
+	{
+		if (!definition.equipMeshPath.empty())
+		{
+			return definition.equipMeshPath;
+		}
+
+		if (definition.meshPath.empty())
+		{
+			return {};
+		}
+
+		std::string path = definition.meshPath;
+		const size_t dot = path.find_last_of('.');
+		const size_t insertPos = (dot == std::string::npos) ? path.size() : dot;
+		const std::string base = path.substr(0, insertPos);
+		if (base.size() >= 5 && base.compare(base.size() - 5, 5, "_grab") == 0)
+		{
+			return path;
+		}
+
+		path.insert(insertPos, "_grab");
+		return path;
+	}
+
+	void ApplyItemDefinition(ItemComponent& item, const ItemDefinition& definition, const std::string& meshPath)
+	{
+		item.SetItemIndex(definition.index);
+		item.SetType(ToItemType(definition.category));
+		item.SetIconPath(definition.iconPath);
+		item.SetMeshPath(meshPath);
+		item.SetPrice(definition.basePrice);
+		item.SetMeleeAttackRange(definition.range);
+		item.SetThrowRange(definition.throwRange);
+		item.SetDifficultyGroup(definition.difficultyGroup);
+		item.SetHealth(definition.constitutionModifier);
+		item.SetStrength(definition.strengthModifier);
+		item.SetAgility(definition.agilityModifier);
+		item.SetSense(definition.senseModifier);
+		item.SetSkill(definition.skillModifier);
+		item.SetDEF(definition.defenseBonus);
+		if (definition.diceType > 0)
+		{
+			item.SetDiceType(definition.diceType);
+		}
+		if (definition.baseModifier > 0)
+		{
+			item.SetBaseModifier(definition.baseModifier);
+		}
+	}
+
+	std::string BuildEquipObjectName(Scene& scene, const std::string& base)
+	{
+		const std::string root = base.empty() ? "EquippedItem" : base;
+		std::string name = root + "_equip";
+		int suffix = 1;
+		while (scene.HasGameObjectName(name))
+		{
+			name = root + "_equip_" + std::to_string(suffix++);
+		}
+		return name;
+	}
+
+	void EnsureRenderComponents(GameObject& object, const std::string& meshPath)
+	{
+		auto* meshComponent = object.GetComponent<MeshComponent>();
+		if (!meshComponent)
+		{
+			meshComponent = object.AddComponent<MeshComponent>();
+		}
+
+		auto* meshRenderer = object.GetComponent<MeshRenderer>();
+		if (!meshRenderer)
+		{
+			meshRenderer = object.AddComponent<MeshRenderer>();
+		}
+		if (meshRenderer)
+		{
+			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+			meshRenderer->SetVisible(true);
+		}
+
+		auto* materialComponent = object.GetComponent<MaterialComponent>();
+		if (!materialComponent)
+		{
+			materialComponent = object.AddComponent<MaterialComponent>();
+		}
+
+		if (meshPath.empty())
+		{
+			return;
+		}
+
+		auto* loader = AssetLoader::GetActive();
+		if (!loader)
+		{
+			return;
+		}
+
+		const auto* asset = loader->GetAsset(meshPath);
+		if (!asset)
+		{
+			return;
+		}
+
+		if (meshComponent && !asset->meshes.empty())
+		{
+			if (!meshComponent->GetMeshHandle().IsValid())
+			{
+				meshComponent->SetMeshHandle(asset->meshes.front());
+			}
+		}
+
+		if (materialComponent && !asset->materials.empty())
+		{
+			if (!materialComponent->GetMaterialHandle().IsValid())
+			{
+				materialComponent->SetMaterialHandle(asset->materials.front());
+			}
+		}
+	}
+
+	GameObject* SpawnEquippedItem(Scene& scene, const ItemDefinition& definition)
+	{
+		const std::string equipName = BuildEquipObjectName(scene, definition.name);
+		auto equippedObject = scene.CreateGameObject(equipName);
+		if (!equippedObject)
+		{
+			return nullptr;
+		}
+
+		auto* itemComponent = equippedObject->AddComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			return nullptr;
+		}
+
+		const std::string meshPath = BuildEquipMeshPath(definition);
+		ApplyItemDefinition(*itemComponent, definition, meshPath);
+		itemComponent->SetIsEquiped(true);
+		EnsureRenderComponents(*equippedObject, meshPath);
+
+		return equippedObject.get();
 	}
 
 	GameObject* FindGameObjectByName(Scene* scene, const std::string& name)
@@ -1374,8 +1541,36 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	AddToInventory(item);
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 	{
-		m_MeeleItem = itemObject;
-		item->SetIsEquiped(true);
+		auto* scene = owner->GetScene();
+		GameObject* equippedObject = nullptr;
+		if (scene)
+		{
+			auto& services = scene->GetServices();
+			if (services.Has<GameDataRepository>())
+			{
+				const auto* definition = services.Get<GameDataRepository>().GetItem(item->GetItemIndex());
+				if (definition)
+				{
+					equippedObject = SpawnEquippedItem(*scene, *definition);
+				}
+			}
+		}
+
+		if (equippedObject)
+		{
+			m_MeeleItem = equippedObject;
+			m_IsApplyMeeleStat = false;
+			if (auto* renderer = itemObject->GetComponent<MeshRenderer>())
+			{
+				renderer->SetVisible(false);
+				renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::None));
+			}
+		}
+		else
+		{
+			m_MeeleItem = itemObject;
+			item->SetIsEquiped(true);
+		}
 	}
 	else if (consumableSlot >= 0)
 	{
