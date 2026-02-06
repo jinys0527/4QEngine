@@ -29,7 +29,6 @@
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
-#include "DiceSystem.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -591,25 +590,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
 		if (m_IsThrowPreviewActive)
 		{
-			int throwRange = 0;
-			ItemComponent* throwItem = nullptr;
-			if (TryGetConsumableThrowRange(throwRange) && TryGetConsumableThrowItem(throwItem))
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				if (distance <= throwRange && ApplyThrowDamage(throwItem, enemy))
+				if (combatFsm->TryExecutePlayerThrowAttack(enemy)) 
 				{
-					auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
-					auto* enemyOwner = enemy->GetOwner();
-					auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
-
-					XMFLOAT3 startPos = playerTransform ? playerTransform->GetPosition() : XMFLOAT3{};
-					XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetPosition() : XMFLOAT3{};
-
-					// y값을 1.0f 위로 보정
-					startPos.y += 1.0f;
-					targetPos.y += 1.0f;
-
-					throwItem->BeginThrow(startPos, targetPos, 2.0f);
-					ConsumeThrowItem(throwItem);
 					mouseData->handled = true;
 					return;
 				}
@@ -1228,57 +1212,6 @@ bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 	}
 
 	return outItem != nullptr && bestRange > 0;
-}
-
-bool PlayerComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy)
-{
-	if (!throwItem || !enemy)
-	{
-		return false;
-	}
-
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene)
-	{
-		return false;
-	}
-
-	auto* enemyOwner = enemy->GetOwner();
-	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
-	if (!enemyStat)
-	{
-		return false;
-	}
-
-	auto& services = scene->GetServices();
-	if (!services.Has<DiceSystem>())
-	{
-		return false;
-	}
-
-	auto& diceSystem = services.Get<DiceSystem>();
-	const int diceCount = max(0, throwItem->GetDiceRoll());
-	const int diceSides = max(0, throwItem->GetDiceType());
-	const int bonus = max(0, throwItem->GetBaseModifier());
-	int damage = bonus;
-
-	if (diceCount > 0 && diceSides > 0)
-	{
-		const DiceConfig rollConfig{ diceCount, diceSides, 0 };
-		damage += diceSystem.RollTotal(rollConfig, RandomDomain::World);
-	}
-
-	if (damage <= 0)
-	{
-		return false;
-	}
-
-	const int prevHp = enemyStat->GetCurrentHP();
-	const int nextHp = max(0, prevHp - damage);
-	enemyStat->SetCurrentHP(nextHp);
-	std::cout << "[Throw] Damage=" << damage << " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
-	return true;
 }
 
 void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)

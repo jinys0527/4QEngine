@@ -49,6 +49,7 @@ public:
 	Turn GetCurrentTurn() const { return m_CurrentTurn; }
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 	const bool& GetDebugEquipItem() const { return m_DebugEquipItem; }
+	bool IsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
 
 
 	void ResetTurnResources();
@@ -61,6 +62,9 @@ public:
 	void ClearCombatSelection();
 	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;
 	bool ConsumeCombatConfirmRequest();
+	bool TryGetConsumableThrowRange(int& outRange) const;
+	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
+	void ConsumeThrowItem(ItemComponent* throwItem);
 	bool ConsumePushPossible();
 	bool ConsumePushTargetFound();
 	bool ConsumePushSuccess();
@@ -97,10 +101,6 @@ private:
 	bool TryFindPushTarget(EnemyComponent*& outEnemy, NodeComponent*& outNode) const;
 	bool ResolvePushTarget(EnemyComponent* enemy, NodeComponent* targetNode);
 	void ClearPendingPush();
-	bool TryGetConsumableThrowRange(int& outRange) const;
-	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
-	bool ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy);
-	void ConsumeThrowItem(ItemComponent* throwItem);
 	void BeginThrowPreview();
 	void EndThrowPreview();
 	// 외부지정 가능
