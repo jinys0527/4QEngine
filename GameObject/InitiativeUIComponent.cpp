@@ -307,13 +307,11 @@ void InitiativeUIComponent::RebuildInitiativeOrder()
 	m_ActorIcons.clear();
 
 	int playerIndex = 0;
-	int enemyIndex = 0;
 	std::array<int, 3> enemyTypeIndices{ 0, 0, 0 };
 	for (int actorId : m_InitiativeOrder)
 	{
 		const bool isPlayer = actorId == 1;
-		const int displayIndex = isPlayer ? ++playerIndex : ++enemyIndex;
-
+		const int displayIndex = isPlayer ? ++playerIndex : 0;
 		ActorIconInfo info{};
 		info.isPlayer = isPlayer;
 		info.displayIndex = displayIndex;
@@ -348,23 +346,22 @@ void InitiativeUIComponent::RebuildInitiativeOrder()
 		}
 		else
 		{
-			std::vector<std::shared_ptr<UIObject>>* pool = &m_EnemyIconPool;
-			size_t enemyIndex = static_cast<size_t>(max(0, info.displayIndex - 1));
 			if (info.enemyType >= 1 && info.enemyType <= static_cast<int>(m_EnemyTypeIconPools.size()))
 			{
 				auto& typePool = m_EnemyTypeIconPools[static_cast<size_t>(info.enemyType - 1)];
 				if (!typePool.empty())
 				{
-					pool = &typePool;
-					enemyIndex = static_cast<size_t>(max(0, info.typeIndex - 1));
+					const size_t enemyIndex = static_cast<size_t>(max(0, info.typeIndex - 1));
+					if (enemyIndex < typePool.size())
+					{
+						icon = typePool[enemyIndex];
+					}
 				}
 			}
-
-			if (enemyIndex >= pool->size())
+			if (!icon)
 			{
 				continue;
 			}
-			icon = (*pool)[enemyIndex];
 		}
 
 		if (!icon)
@@ -427,7 +424,6 @@ void InitiativeUIComponent::ResetIconPools()
 	}
 
 	m_PlayerIconPool.clear();
-	m_EnemyIconPool.clear();
 
 	for (auto& pool : m_EnemyTypeIconPools)
 	{
@@ -448,7 +444,6 @@ void InitiativeUIComponent::ResetIconPools()
 		};
 
 	std::vector<std::pair<std::string, std::shared_ptr<UIObject>>> playerIcons;
-	std::vector<std::pair<std::string, std::shared_ptr<UIObject>>> enemyIcons;
 	std::array<std::vector<std::pair<std::string, std::shared_ptr<UIObject>>>, 3> enemyTypeIcons;
 	for (const auto& [name, uiObject] : uiIt->second)
 	{
@@ -473,10 +468,6 @@ void InitiativeUIComponent::ResetIconPools()
 		{
 			enemyTypeIcons[2].emplace_back(name, uiObject);
 		}
-		else if (startsWith(name, kEnemyIconPrefix))
-		{
-			enemyIcons.emplace_back(name, uiObject);
-		}
 	}
 
 	auto byName = [](const auto& left, const auto& right)
@@ -484,7 +475,6 @@ void InitiativeUIComponent::ResetIconPools()
 			return left.first < right.first;
 		};
 	std::sort(playerIcons.begin(), playerIcons.end(), byName);
-	std::sort(enemyIcons.begin(), enemyIcons.end(), byName);
 
 	for (auto& typeIcons : enemyTypeIcons)
 	{
@@ -496,13 +486,6 @@ void InitiativeUIComponent::ResetIconPools()
 		(void)name;
 		icon->SetIsVisibleFromComponent(false);
 		m_PlayerIconPool.push_back(icon);
-	}
-
-	for (const auto& [name, icon] : enemyIcons)
-	{
-		(void)name;
-		icon->SetIsVisibleFromComponent(false);
-		m_EnemyIconPool.push_back(icon);
 	}
 
 	for (size_t index = 0; index < enemyTypeIcons.size(); ++index)

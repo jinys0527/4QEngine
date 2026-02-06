@@ -64,12 +64,10 @@ private:
 
 	std::vector<int> m_InitiativeOrder;
 	std::vector<std::shared_ptr<UIObject>> m_PlayerIconPool;
-	std::vector<std::shared_ptr<UIObject>> m_EnemyIconPool;
 	std::array<std::vector<std::shared_ptr<UIObject>>, 3> m_EnemyTypeIconPools;
 	std::unordered_map<int, std::shared_ptr<UIObject>> m_ActorIcons;
 	std::unordered_map<int, ActorIconInfo> m_ActorInfo;
 	static constexpr const char* kPlayerIconPrefix = "InitiativePlayerIcon_";
-	static constexpr const char* kEnemyIconPrefix  = "InitiativeEnemyIcon_";
 	static constexpr const char* kEnemyType1IconPrefix = "InitiativeEnemyType1Icon_";
 	static constexpr const char* kEnemyType2IconPrefix = "InitiativeEnemyType2Icon_";
 	static constexpr const char* kEnemyType3IconPrefix = "InitiativeEnemyType3Icon_";
