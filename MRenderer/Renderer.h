@@ -51,7 +51,7 @@ private:
 
 	ComPtr<ID3D11Device>				m_pDevice;
 	ComPtr<ID3D11DeviceContext>			m_pDXDC;
-	ComPtr<IDXGISwapChain>				m_pSwapChain;
+	ComPtr<IDXGISwapChain1>				m_pSwapChain;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView;
 	ComPtr<ID3D11Texture2D>				m_pDS;
 	ComPtr<ID3D11DepthStencilView>		m_pDSView;
@@ -371,7 +371,6 @@ private:
 
 		// 4. SpriteBatch 실행
 		// SpriteBatch가 자체적으로 InputLayout, BlendState, DepthStencil 등을 설정하도록 둠
-		OutputDebugStringA("Before SpriteBatch Begin\n");
 		m_SpriteBatch->Begin();
 
 
@@ -384,7 +383,6 @@ private:
 		);
 
 		m_SpriteBatch->End();
-		OutputDebugStringA("After End\n");
 	}
 
 };

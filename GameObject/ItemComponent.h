@@ -98,6 +98,7 @@ public:
 
 	const DirectX::XMFLOAT4X4& GetEquipmentBindPose() const { return m_EquipmentBindPose; }
 	void SetEquipmentBindPose(const DirectX::XMFLOAT4X4& value) { m_EquipmentBindPose = value; }
+	void BeginThrow(const DirectX::XMFLOAT3& start, const DirectX::XMFLOAT3& target, float duration = 0.25f);
 
 private:
 	void SelfRotate(float dTime);
@@ -131,4 +132,10 @@ private:
 	int m_DifficultyGroup		= -1;
 
 	DirectX::XMFLOAT4X4 m_EquipmentBindPose{};
+
+	bool m_IsThrown = false;
+	float m_ThrowElapsed = 0.0f;
+	float m_ThrowDuration = 0.25f;
+	DirectX::XMFLOAT3 m_ThrowStart{};
+	DirectX::XMFLOAT3 m_ThrowTarget{};
 };

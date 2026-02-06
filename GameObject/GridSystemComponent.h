@@ -54,6 +54,7 @@ public:
 	vector<AxialKey> GetShortestPath(const AxialKey& start, const AxialKey& target) const;
 	NodeComponent* GetNodeByKey(const AxialKey& key) const;
 	EnemyComponent* GetEnemyAt(int q, int r) const;
+	void SetThrowRangePreview(bool enabled, int range);
 
 private:
 
@@ -67,6 +68,8 @@ private:
 	void MakeGraph();// 위치기반 노드 연결
 	void UpdateMoveRange(NodeComponent* startNode, int range);
 	void UpdateMoveRangeMaterials(float pulse, bool enabled);
+	void UpdateThrowRange(NodeComponent* startNode, int range);
+	void UpdateThrowRangeMaterials(float pulse, bool enabled);
 	void UpdateActorPositions();
 	void UpdateActorNodeState(const AxialKey& previous, const AxialKey& current, NodeState state);
 	PathResult PathBFS(const NodeComponent* startNode, const NodeComponent* targetNode) const; // 실제 경로 계산
@@ -82,4 +85,7 @@ private:
 
 	float m_InnerRadius = 1.0f; // 리소스 바뀌면 1로 변경 (현재는 외접기준 1)
 	float m_MoveRangePulseTime = 0.0f;
+	float m_ThrowRangePulseTime = 0.0f;
+	int m_ThrowRange = 0;
+	bool m_ThrowRangePreviewActive = false;
 };
