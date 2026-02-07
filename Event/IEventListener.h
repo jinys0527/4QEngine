@@ -12,7 +12,7 @@ enum class EventType
 	MouseRightClick,
 	MouseRightClickHold,
 	MouseRightClickUp,
-	Dragged, 
+	Dragged,
 	Hovered,
 	/*MouseWheelUp,
 	MouseWheelDown,*/
@@ -72,6 +72,12 @@ enum class EventType
 	PlayerAttack,
 	EnemyAttack,
 	PlayerEquipFailed,
+	PlayerDoorInteract,
+	PlayerDoorCancel,
+	PlayerShopOpen,
+	PlayerShopClose,
+	PlayerDiceRoll,
+
 };
 
 class IEventListener

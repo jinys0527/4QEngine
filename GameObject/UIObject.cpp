@@ -271,7 +271,7 @@ void UIObject::SetZOrderFromComponent(int zOrder)
 
 bool UIObject::HitCheck(const POINT& pos)
 {
-	if (!m_IsVisible)
+	if (!IsVisible())
 		return false;
 
 	if (!m_HasBounds)
@@ -306,6 +306,11 @@ void UIObject::SetIsVisibleFromComponent(bool isVisible)
 	m_IsVisible = isVisible;
 }
 
+void UIObject::SetIsVisibleFromParent(bool isVisible)
+{
+	m_IsVisibleFromParent = isVisible;
+}
+
 void UIObject::SetOpacity(float opacity)
 {
 	m_Opacity = opacity;
@@ -324,9 +329,9 @@ void UIObject::SetOpacityFromComponent(float opacity)
 	m_Opacity = opacity;
 }
 
-bool UIObject::IsVisible()
+bool UIObject::IsVisible() const
 {
-	return m_IsVisible;
+	return m_IsVisible && m_IsVisibleFromParent;
 }
 
 void UIObject::UpdateInteractableFlags()
