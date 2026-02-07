@@ -75,38 +75,62 @@ std::vector<UIRect> HorizontalBox::ArrangeChildren(float startX, float startY, c
 
 	for (const auto& slot : m_Slots)
 	{
-		const float slotPadding = (slot.alignment == UIHorizontalAlignment::Fill) ? 0.0f : slot.padding;
+		const float slotScale = slot.layoutScale > 0.0f ? slot.layoutScale : 1.0f;
+
+		const float paddingLeft = slot.padding.left;
+		const float paddingRight = slot.padding.right;
+
 		if (slot.alignment == UIHorizontalAlignment::Fill)
 		{
-			totalFillWeight += slot.fillWeight;
+			const float effectiveWeight = slot.fillWeight > 0.0f ? slot.fillWeight : 1.0f;
+			totalFillWeight += effectiveWeight;
 		}
 		else
 		{
-			totalFixedWidth += slot.desiredSize.width;
+			totalFixedWidth += slot.desiredSize.width * slotScale;
 		}
-		totalFixedWidth += slotPadding * 2.0f;
+		totalFixedWidth += paddingLeft + paddingRight;
 	}
 
 	const float totalSpacing = m_Slots.size() > 1 ? m_Spacing * static_cast<float>(m_Slots.size() - 1) : 0.0f;
 	totalFixedWidth += totalSpacing;
 	float remaining = availableSize.width - totalFixedWidth;
 	remaining = max(0.0f, remaining);
-	float cursorX = startX;
+	const float contentWidth = totalFixedWidth + (totalFillWeight > 0.0f ? remaining : 0.0f);
+	float cursorX = startX + max(0.0f, (availableSize.width - contentWidth) * 0.5f);
 
 	for (size_t index = 0; index < m_Slots.size(); ++index)
 	{
 		const auto& slot = m_Slots[index];
-		const float slotPadding = (slot.alignment == UIHorizontalAlignment::Fill) ? 0.0f : slot.padding;
-		float width = slot.desiredSize.width;
+		const float slotScale = slot.layoutScale > 0.0f ? slot.layoutScale : 1.0f;
+		const float paddingLeft = slot.padding.left;
+		const float paddingRight = slot.padding.right;
+		const float paddingTop = slot.padding.top;
+		const float paddingBottom = slot.padding.bottom;
+		float width = slot.desiredSize.width * slotScale;
 		if (slot.alignment == UIHorizontalAlignment::Fill && totalFillWeight > 0.0f)
 		{
-			width = max(0.0f, remaining * (slot.fillWeight / totalFillWeight));
+			const float effectiveWeight = slot.fillWeight > 0.0f ? slot.fillWeight : 1.0f;
+			width = max(0.0f, remaining * (effectiveWeight / totalFillWeight));
 		}
 
-		const float x = cursorX + slotPadding;
-		arranged.push_back(UIRect{ x, startY, width, availableSize.height });
+		const float x = cursorX + paddingLeft;
+		const float y = startY + paddingTop;
+		const float height = max(0.0f, availableSize.height - paddingTop - paddingBottom);
 
-		cursorX += width + slotPadding * 2.0f;
+		const float clampedHeight = max(0.0f, min(height, width));
+		if (clampedHeight > 0.0f && height > clampedHeight)
+		{
+			const float extra = height - clampedHeight;
+			const float topAdjust = extra * 0.5f;
+			arranged.push_back(UIRect{ x, y + topAdjust, width, clampedHeight });
+		}
+		else
+		{
+			arranged.push_back(UIRect{ x, y, width, height });
+		}
+
+		cursorX += width + paddingLeft + paddingRight;
 
 		if (index + 1 < m_Slots.size())
 		{

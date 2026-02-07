@@ -262,6 +262,12 @@
     <FxCompile Include="fx\UI_VS.hlsl">
       <Filter>HLSL\0_VS</Filter>
     </FxCompile>
+    <FxCompile Include="fx\UI_ProgressArc_Left_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_ProgressArc_Right_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

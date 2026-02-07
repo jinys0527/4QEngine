@@ -46,6 +46,7 @@ struct EnemyDefinition
 {
     int         id				   = 0;
     std::string name;
+	int         type			   = 0;
     int         health			   = 0;
     int         initiativeModifier = 0;
     int         defense			   = 0;

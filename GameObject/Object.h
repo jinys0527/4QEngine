@@ -7,6 +7,7 @@
 #include "CoreTypes.h"
 #include "Component.h"
 #include "RenderData.h"
+#include "InitiativeUIComponent.h"
 
 class Scene;
 

@@ -73,6 +73,28 @@ void InputManager::Update()
 
 	const ULONGLONG now = GetTickCount64();
 
+	auto makeUIMouseState = [&]() {
+		Events::MouseState uiMouse = m_Mouse;
+		if (m_HasViewportRect)
+		{
+			uiMouse.pos.x -= m_ViewportRect.left;
+			uiMouse.pos.y -= m_ViewportRect.top;
+		}
+		if (m_HasViewportRect && m_UIReferenceSize.x > 0.0f && m_UIReferenceSize.y > 0.0f)
+		{
+			const float width = static_cast<float>(m_ViewportRect.right - m_ViewportRect.left);
+			const float height = static_cast<float>(m_ViewportRect.bottom - m_ViewportRect.top);
+			if (width > 0.0f && height > 0.0f)
+			{
+				const float scaleX = m_UIReferenceSize.x / width;
+				const float scaleY = m_UIReferenceSize.y / height;
+				uiMouse.pos.x = static_cast<LONG>(uiMouse.pos.x * scaleX);
+				uiMouse.pos.y = static_cast<LONG>(uiMouse.pos.y * scaleY);
+			}
+		}
+		return uiMouse;
+		};
+
 	// pending 싱글클릭 타임아웃 체크(프레임마다)
 	if (m_PendingLeftClick)
 	{
@@ -81,7 +103,6 @@ void InputManager::Update()
 		{
 			// 더블클릭 윈도우 지나면 싱글 확정 발사
 			m_PendingLeftClickMouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::Pressed, &m_PendingLeftClickMouse);
 			if (!m_PendingLeftClickMouse.handled && allowGameplayInput)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftClick, &m_PendingLeftClickMouse);
 			m_PendingLeftClick = false;
@@ -91,6 +112,15 @@ void InputManager::Update()
 	// 마우스 좌클릭
 	if (!m_MousePrev.leftPressed && m_Mouse.leftPressed)
 	{
+		m_Mouse.handled = false;
+
+		Events::MouseState uiMouse = makeUIMouseState();
+		m_EventDispatcher->Dispatch(EventType::Pressed, &uiMouse);
+		if (uiMouse.handled)
+		{
+			m_Mouse.handled = true;
+		}
+
 		// 더블 클릭 판정 : pending 존재 + 시간 / 거리 조건 만족
 		bool isDoubleClick = false;
 
@@ -109,8 +139,12 @@ void InputManager::Update()
 			// 더블클릭이면 pending 싱글 취소 + 더블만 발사
 			m_PendingLeftClick = false;
 			m_SuppressDragAfterDoubleClick = true;
-			m_Mouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, &m_Mouse);
+			uiMouse.handled = false;
+			m_EventDispatcher->Dispatch(EventType::UIDoubleClicked, &uiMouse);
+			if (uiMouse.handled)
+			{
+				m_Mouse.handled = true;
+			}
 			if (!m_Mouse.handled && allowGameplayInput)
 				m_EventDispatcher->Dispatch(EventType::MouseLeftDoubleClick, &m_Mouse);
 		}
@@ -135,7 +169,14 @@ void InputManager::Update()
 		if (!m_SuppressDragAfterDoubleClick)
 		{
 			m_Mouse.handled = false;
-			m_EventDispatcher->Dispatch(EventType::UIDragged, &m_Mouse);
+
+			Events::MouseState uiMouse = makeUIMouseState();
+			m_EventDispatcher->Dispatch(EventType::UIDragged, &uiMouse);
+			if (uiMouse.handled)
+			{
+				m_Mouse.handled = true;
+			}
+
 			if (!m_Mouse.handled && allowGameplayInput)
 			{
 				m_Mouse.handled = false;
@@ -153,7 +194,14 @@ void InputManager::Update()
 	{
 		m_SuppressDragAfterDoubleClick = false;
 		m_Mouse.handled = false;
-		m_EventDispatcher->Dispatch(EventType::Released, &m_Mouse);
+		
+		Events::MouseState uiMouse = makeUIMouseState();
+		m_EventDispatcher->Dispatch(EventType::Released, &uiMouse);
+		if (uiMouse.handled)
+		{
+			m_Mouse.handled = true;
+		}
+
 		if (!m_Mouse.handled && allowGameplayInput)
 		{
 			m_Mouse.handled = false;
@@ -181,7 +229,16 @@ void InputManager::Update()
 	
 
 	// Hovered : 매 프레임	
-	m_EventDispatcher->Dispatch(EventType::UIHovered, &m_Mouse);
+	{
+		Events::MouseState uiMouse = makeUIMouseState();
+		m_EventDispatcher->Dispatch(EventType::UIHovered, &uiMouse);
+		if (uiMouse.handled)
+		{
+			m_Mouse.handled = true;
+		}
+	}
+
+
 	if (!m_Mouse.handled && allowGameplayInput)
 	{
 		m_Mouse.handled = false;
@@ -283,6 +340,11 @@ void InputManager::ClearViewportRect()
 {
 	m_ViewportRect    = { 0,0,0,0 };
 	m_HasViewportRect = false;
+}
+
+void InputManager::SetUIReferenceSize(const DirectX::XMFLOAT2& size)
+{
+	m_UIReferenceSize = size;
 }
 
 bool InputManager::TryGetMouseNDC(DirectX::XMFLOAT2& outNdc) const

@@ -23,6 +23,10 @@ public:
 	void AddUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
 	{
 		m_UIObjects[sceneName][uiObject->m_Name] = uiObject;
+		if (uiObject)
+		{
+			uiObject->Start();
+		}
 	}
 
 	void RemoveUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
@@ -55,11 +59,12 @@ public:
 
 	//void Render(std::vector<UIRenderInfo>& renderInfo, std::vector<UITextInfo>& textInfo);
 
-	void SendEventToUI(UIObject* ui, EventType type, const void* data);
+	bool SendEventToUI(UIObject* ui, EventType type, const void* data);
 
 	void Start();
 
 	void Reset();
+	void ClearSceneUI(const std::string& sceneName);
 
 	void SetCurrentScene(std::string currentSceneName) 
 	{
@@ -70,6 +75,11 @@ public:
 	{
 		return m_CurrentSceneName;
 	}
+
+	void SetViewportSize       (const UISize& size)			   { m_ViewportSize = size;						}
+	void SetReferenceResolution(const UISize& size)			   { m_ReferenceResolution = size;				}
+	void SetUseAnchorLayout	   (const bool useAnchorLayout)    { m_UseAnchorLayout = useAnchorLayout;		}
+	void SetUseResolutionScale (const bool useResolutionScale) { m_UseResolutionScale = useResolutionScale; }
 
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>>& GetUIObjects()
 	{
@@ -103,7 +113,7 @@ public:
 
 	void RefreshUIListForCurrentScene();
 
-	void BuildUIFrameData(RenderData::FrameData& frameData) const;
+	void BuildUIFrameData(RenderData::FrameData& frameData);
 
 	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
 	void DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data);
@@ -118,6 +128,13 @@ private:
 	int m_FullScreenZ = -1;
 	EventDispatcher* m_EventDispatcher; 
 	std::string m_CurrentSceneName;
+	UISize m_ViewportSize		{ 2560.0f, 1600.0f };
+	UISize m_ReferenceResolution{ 2560.0f, 1600.0f };
+	float m_LastResolutionScale = 1.0f;
+	UISize m_LastResolutionOffset{ 0.0f, 0.0f };
+	bool m_HasResolutionScaleState = false;
+	bool m_UseAnchorLayout    = false;
+	bool m_UseResolutionScale = true;
 	void DispatchToTopUI(EventType type, const void* data);
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>> m_UIObjects;
 };

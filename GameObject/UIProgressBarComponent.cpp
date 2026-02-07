@@ -6,6 +6,7 @@
 REGISTER_UI_COMPONENT(UIProgressBarComponent)
 REGISTER_PROPERTY(UIProgressBarComponent, Percent)
 REGISTER_PROPERTY(UIProgressBarComponent, FillDirection)
+REGISTER_PROPERTY(UIProgressBarComponent, FillMode)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundTextureHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, BackgroundVertexShaderHandle)
@@ -14,7 +15,7 @@ REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillTextureHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillVertexShaderHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillPixelShaderHandle)
-
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillMaskTextureHandle)
 
 void UIProgressBarComponent::Update(float deltaTime)
 {

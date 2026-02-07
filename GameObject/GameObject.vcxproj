@@ -328,6 +328,7 @@
     <ClInclude Include="FloodUIComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
     <ClInclude Include="HorizontalBox.h" />
+    <ClInclude Include="InitiativeUIComponent.h" />
     <ClInclude Include="InputEventTestComponent.h" />
     <ClInclude Include="ItemComponent.h" />
     <ClInclude Include="ItemSpawnerComponent.h" />
@@ -408,6 +409,7 @@
     <ClCompile Include="FloodUIComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
     <ClCompile Include="HorizontalBox.cpp" />
+    <ClCompile Include="InitiativeUIComponent.cpp" />
     <ClCompile Include="InputEventTestComponent.cpp" />
     <ClCompile Include="ItemComponent.cpp" />
     <ClCompile Include="ItemSpawnerComponent.cpp" />

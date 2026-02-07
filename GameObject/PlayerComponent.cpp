@@ -34,6 +34,8 @@
 #include "PlayerDoorFSMComponent.h"
 #include "AssetLoader.h"
 #include "GameDataRepository.h"
+#include "UIManager.h"
+#include "UIProgressBarComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -515,6 +517,14 @@ void PlayerComponent::Update(float deltaTime) {
 	if (!scene || scene->GetIsPause())
 	{
 		return;
+	}
+
+	if (m_LastRemainMoveResource != m_RemainMoveResource
+		|| m_LastRemainActResource != m_RemainActResource
+		|| m_LastMoveResource != m_MoveResource
+		|| m_LastActResource != m_ActResource)
+	{
+		UpdateResourceUI();
 	}
 
 	auto* gameManager = scene->GetGameManager();
@@ -1595,6 +1605,58 @@ void PlayerComponent::EndThrowPreview()
 	{
 		m_GridSystem->SetThrowRangePreview(false, 0);
 	}
+}
+
+void PlayerComponent::UpdateResourceUI()
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<UIManager>())
+	{
+		return;
+	}
+
+	auto& uiManager = services.Get<UIManager>();
+	const std::string sceneName = scene->GetName();
+
+	auto updateProgress = [&](const std::string& uiName, int remain, int maxValue)
+		{
+			auto uiObject = uiManager.FindUIObject(sceneName, uiName);
+			if (!uiObject)
+			{
+				return;
+			}
+
+			if (!uiObject->GetScene())
+			{
+				uiObject->SetScene(scene);
+			}
+
+			auto* progress = uiObject->GetComponent<UIProgressBarComponent>();
+			if (!progress)
+			{
+				return;
+			}
+
+			const float percent = (maxValue > 0)
+				? (static_cast<float>(remain) / static_cast<float>(maxValue))
+				: 0.0f;
+			progress->SetPercent(percent);
+		};
+
+	updateProgress("ActionPoint", m_RemainActResource, m_ActResource);
+	updateProgress("MovePoint", m_RemainMoveResource, m_MoveResource);
+
+	m_LastRemainMoveResource = m_RemainMoveResource;
+	m_LastRemainActResource = m_RemainActResource;
+	m_LastMoveResource = m_MoveResource;
+	m_LastActResource = m_ActResource;
 }
 
 bool PlayerComponent::TryPickup(ItemComponent* item)

@@ -284,6 +284,34 @@ void CombatManager::AdvanceTurnToNextPlayer()
 	std::cout << "[Combat] Turn advanced: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
 }
 
+bool CombatManager::AdvanceTurnToNextEnemyOrPlayer()
+{
+	if (m_InitiativeOrder.empty())
+	{
+		return false;
+	}
+
+	const std::size_t maxSteps = m_InitiativeOrder.size();
+	for (std::size_t step = 0; step < maxSteps; ++step)
+	{
+		m_CurrentTurnIndex = (m_CurrentTurnIndex + 1) % m_InitiativeOrder.size();
+		if (!IsPlayerActorId(m_InitiativeOrder[m_CurrentTurnIndex]))
+		{
+			if (m_EventDispatcher)
+			{
+				const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
+				m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
+			}
+
+			std::cout << "[Combat] Turn advanced: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
+			return true;
+		}
+	}
+
+	AdvanceTurnToNextPlayer();
+	return false;
+}
+
 bool CombatManager::CanAct(int actorId) const
 {
     if (m_InitiativeOrder.empty())

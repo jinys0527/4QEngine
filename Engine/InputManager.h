@@ -29,6 +29,8 @@ public:
 						   
 	void SetViewportRect   (const RECT& rect);
 	void ClearViewportRect ();
+	void SetUIReferenceSize(const DirectX::XMFLOAT2& size);
+
 	bool TryGetMouseNDC    (DirectX::XMFLOAT2& outNdc) const;
 	bool BuildPickRay      (const DirectX::XMFLOAT4X4& view, 
 						    const DirectX::XMFLOAT4X4& proj,
@@ -78,6 +80,7 @@ private:
 
 	RECT      m_ViewportRect{ 0, 0, 0, 0 };
 	bool      m_HasViewportRect = false;
+	DirectX::XMFLOAT2 m_UIReferenceSize{ 0.0f, 0.0f };
 	bool      m_Enabled = true;
 
 

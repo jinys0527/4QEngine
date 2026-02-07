@@ -4,6 +4,7 @@
 #include "GridSystemComponent.h"
 #include "EnemyMovementComponent.h"
 #include "EnemyComponent.h"
+#include "EnemyStatComponent.h"
 #include "Scene.h"
 #include "GameManager.h"
 
@@ -51,6 +52,11 @@ void EnemyControllerComponent::Update(float deltaTime)
 		if (gameManager->GetExplorationTurnState() != ExplorationTurnState::EnemyStep)
 		{
 			m_TurnEndRequested = false;
+			m_ExploreEnemyIndex = 0;
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayElapsed = 0.0f;
+			m_ExploreDelayDuration = 0.0f;
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
@@ -71,6 +77,11 @@ void EnemyControllerComponent::Update(float deltaTime)
 		if (currentTurn != Turn::EnemyTurn)
 		{
 			m_TurnEndRequested = false;
+			m_ExploreEnemyIndex = 0;
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayElapsed = 0.0f;
+			m_ExploreDelayDuration = 0.0f;
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
@@ -81,14 +92,80 @@ void EnemyControllerComponent::Update(float deltaTime)
 				GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
 				m_TurnEndRequested = true;
 			}
+			gameManager->SetExplorationActiveEnemyActorId(0);
 			return;
 		}
 
-		// 모든 적 이동 완료 시 EnemyStep 종료
-		if (!m_TurnEndRequested && CheckActiveEnemies())
+		const int enemyCount = static_cast<int>(enemies.size());
+		if (m_WaitingExploreDelay)
 		{
-			GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
-			m_TurnEndRequested = true;
+			m_ExploreDelayElapsed += deltaTime;
+			if (m_ExploreDelayElapsed < m_ExploreDelayDuration)
+			{
+				return;
+			}
+
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayElapsed = 0.0f;
+			m_ExploreDelayDuration = 0.0f;
+			++m_ExploreEnemyIndex;
+		}
+
+		while (m_ExploreEnemyIndex < enemyCount)
+		{
+			auto* enemy = enemies[m_ExploreEnemyIndex];
+			if (!enemy)
+			{
+				++m_ExploreEnemyIndex;
+				continue;
+			}
+
+			auto* enemyOwner = enemy->GetOwner();
+			auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+			if (enemyStat && enemyStat->IsDead())
+			{
+				++m_ExploreEnemyIndex;
+				continue;
+			}
+			break;
+		}
+
+		if (m_ExploreEnemyIndex >= enemyCount)
+		{
+			if (!m_TurnEndRequested)
+			{
+				GetEventDispatcher().Dispatch(EventType::ExploreEnemyStepEnded, nullptr);
+				m_TurnEndRequested = true;
+			}
+			gameManager->SetExplorationActiveEnemyActorId(0);
+			return;
+		}
+
+		auto* currentEnemy = enemies[m_ExploreEnemyIndex];
+		if (currentEnemy)
+		{
+			gameManager->SetExplorationActiveEnemyActorId(currentEnemy->GetActorId());
+		}
+
+		auto* currentOwner = currentEnemy ? currentEnemy->GetOwner() : nullptr;
+		auto* movement = currentOwner ? currentOwner->GetComponent<EnemyMovementComponent>() : nullptr;
+		const bool isFinished = currentEnemy && currentEnemy->IsExploreTurnFinished()
+			&& movement && movement->IsMoveComplete();
+
+		if (!isFinished)
+		{
+			return;
+		}
+
+		gameManager->SetExplorationActiveEnemyActorId(0);
+		m_WaitingExploreDelay = true;
+		m_ExploreDelayElapsed = 0.0f;
+		m_ExploreDelayDuration = currentEnemy ? currentEnemy->GetEndTurnDelay() : 0.0f;
+		if (m_ExploreDelayDuration <= 0.0f)
+		{
+			m_WaitingExploreDelay = false;
+			m_ExploreDelayDuration = 0.0f;
+			++m_ExploreEnemyIndex;
 		}
 
 		return;
@@ -104,15 +181,12 @@ void EnemyControllerComponent::Update(float deltaTime)
 		if (gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn)
 		{
 			//if (IsCurrentEnemyMoveComplete())
-			if (m_CombatMoveInProgress)
+			if (m_CombatMoveInProgress && IsCurrentEnemyMoveComplete())
 			{
 				/*m_CombatMoveInProgress = false;
 				GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);*/
-				if (IsCurrentEnemyMoveComplete())
-				{
-					m_CombatMoveInProgress = false;
-					GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);
-				}
+				
+				m_CombatMoveInProgress = false;
 			}
 		}
 		else {
@@ -184,6 +258,9 @@ bool EnemyControllerComponent::CheckActiveEnemies()
 
 		auto* movement = owner->GetComponent<EnemyMovementComponent>();
 		if (!movement) continue;
+
+		if (!enemy->IsExploreTurnFinished())
+			return false;
 
 		if (!movement->IsMoveComplete())
 			return false;

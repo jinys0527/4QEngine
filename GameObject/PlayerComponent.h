@@ -106,6 +106,8 @@ private:
 	void ClearPendingPush();
 	void BeginThrowPreview();
 	void EndThrowPreview();
+	void UpdateResourceUI();
+
 	// 외부지정 가능
 	// 이동력, 행동력
 	int m_MoveResource = 3; // 초기설정
@@ -122,6 +124,10 @@ private:
 	// 남은 값 (턴 변경 시 초기화)
 	int m_RemainMoveResource = 0;
 	int m_RemainActResource = 0;
+	int m_LastRemainMoveResource = -1;
+	int m_LastRemainActResource = -1;
+	int m_LastMoveResource = -1;
+	int m_LastActResource = -1;
 	int m_ActorId = 1;
 	int m_Money = 0;		
 	std::vector<std::string> m_InventoryItemIds;

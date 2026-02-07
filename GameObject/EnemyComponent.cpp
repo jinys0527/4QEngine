@@ -33,6 +33,7 @@ REGISTER_PROPERTY_READONLY(EnemyComponent, Q)
 REGISTER_PROPERTY_READONLY(EnemyComponent, R)
 REGISTER_PROPERTY(EnemyComponent, MoveDistance)
 REGISTER_PROPERTY(EnemyComponent, DebugSightLines)
+REGISTER_PROPERTY(EnemyComponent, EndTurnDelay)
 
 EnemyComponent::EnemyComponent() {
 	m_Facing = ERotationOffset::clock_9;
@@ -179,6 +180,35 @@ bool IsTargetVisibleOnHexLine(
 
 //-----------------------------------
 
+void EnemyComponent::RefreshSightDebugLines()
+{
+	if (!m_DebugSightLines)
+	{
+		ClearSightDebug();
+		return;
+	}
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		ClearSightDebug();
+		return;
+	}
+
+	float sightDistance = 0.0f;
+	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
+	{
+		sightDistance = stat->GetSightDistance();
+	}
+	else
+	{
+		sightDistance = 100.0f;
+	}
+
+	const int sightRange = static_cast<int>(std::floor(sightDistance));
+	UpdateSightDebugLines(sightRange);
+}
+
 void EnemyComponent::ClearSightDebug()
 {
 	for (auto* node : m_SightDebugNodes)
@@ -267,6 +297,27 @@ void EnemyComponent::Update(float deltaTime) {
 		return;
 	}
 
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
+		&& m_CurrentTurn == Turn::EnemyTurn
+		&& m_ExploreTurnFinished)
+	{
+		return;
+	}
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
+		&& m_CurrentTurn == Turn::EnemyTurn
+		&& !m_ExploreTurnFinished)
+	{
+		if (gameManager->GetExplorationActiveEnemyActorId() != GetActorId())
+		{
+			m_ExploreDelayRemaining = max(0.0f, m_ExploreDelayRemaining - deltaTime);
+			return;
+		}
+		if (!m_MoveRequested)
+		{
+			m_MoveRequested = true;
+		}
+	}
+
 	if (!m_TargetPlayer && scene)
 	{
 		for (const auto& [name, object] : scene->GetGameObjects())
@@ -299,6 +350,11 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto& bb = m_AIController->GetBlackboard();
 	bb.Set(BlackboardKeys::IsInCombat, gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat);
+	float endTurnDelay = 0.0f;
+	if (!bb.TryGet(BlackboardKeys::EndTurnDelay, endTurnDelay))
+	{
+		bb.Set(BlackboardKeys::EndTurnDelay, m_EndTurnDelay);
+	}
 
 	bool isAlive = true;
 	if (auto* stat = owner->GetComponent<EnemyStatComponent>())
@@ -379,10 +435,15 @@ void EnemyComponent::Update(float deltaTime) {
 	bool isInBattleActor = false;
 	if (gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
 	{
+		bool canActThisTurn = true;
 		if (scene && scene->GetServices().Has<CombatManager>())
 		{
 			const auto& combatManager = scene->GetServices().Get<CombatManager>();
 			isInBattleActor = combatManager.IsActorInBattle(GetActorId());
+			if (isInBattleActor)
+			{
+				canActThisTurn = combatManager.CanAct(GetActorId());
+			}
 		}
 
 		if (!isInBattleActor)
@@ -404,6 +465,10 @@ void EnemyComponent::Update(float deltaTime) {
 					}
 				}
 			}
+		}
+		else if (!canActThisTurn)
+		{
+			return;
 		}
 		else if (gameManager->GetCombatTurnState() != CombatTurnState::EnemyTurn)
 		{
@@ -454,7 +519,7 @@ void EnemyComponent::Update(float deltaTime) {
 	if (hasHexData)
 	{
 		const int sightRange = static_cast<int>(std::floor(sightDistance));
-		UpdateSightDebugLines(sightRange);
+
 		if (m_DebugSightLines)
 		{
 			UpdateSightDebugLines(sightRange);
@@ -502,6 +567,18 @@ void EnemyComponent::Update(float deltaTime) {
 
 	m_AIController->Tick(deltaTime);
 
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop
+		&& m_CurrentTurn == Turn::EnemyTurn)
+	{
+		bool exploreEndTurnRequested = false;
+		if (bb.TryGet(BlackboardKeys::ExploreEndTurnRequested, exploreEndTurnRequested)
+			&& exploreEndTurnRequested)
+		{
+			m_ExploreTurnFinished = true;
+			bb.Set(BlackboardKeys::ExploreEndTurnRequested, false);
+		}
+	}
+
 	//if (!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat)
 	const bool canUseExplorationStyleMoveRequest =
 		(!gameManager || gameManager->GetPhase() != Phase::TurnBasedCombat || !isInBattleActor);
@@ -547,10 +624,22 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+	if (gameManager && gameManager->GetPhase() == Phase::ExplorationLoop)
+	{
+		if (m_CurrentTurn != Turn::EnemyTurn)
+		{
+			m_ExploreTurnFinished = false;
+			m_ExploreDelayRemaining = 0.0f;
+		}
+	}
+
 	if (m_CurrentTurn == Turn::EnemyTurn
 		&& (!gameManager || gameManager->GetPhase() == Phase::ExplorationLoop))
 	{
-		m_MoveRequested = true;
+		m_ExploreTurnFinished = false;
+		m_ExploreDelayRemaining = 0.0f;
+		m_MoveRequested = false;
 	}
 	else
 	{

@@ -19,8 +19,9 @@ struct HorizontalBoxSlot
 	UIObject*             child		  = nullptr;
 	std::string			  childName;
 	UISize                desiredSize{};
-	float                 padding     = 0.0f;
+	UIPadding             padding{};
 	float                 fillWeight  = 0.0f;
+	float                 layoutScale = 1.0f;
 	UIHorizontalAlignment alignment   = UIHorizontalAlignment::Left;
 };
 
@@ -35,6 +36,7 @@ public:
 
 	void AddSlot(const HorizontalBoxSlot& slot);
 
+	std::vector<HorizontalBoxSlot>& GetSlotsMutable()	   { return m_Slots; }
 	const std::vector<HorizontalBoxSlot>& GetSlots() const { return m_Slots; }
 	void SetSlots(const std::vector<HorizontalBoxSlot>& slots);
 

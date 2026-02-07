@@ -30,6 +30,9 @@ public:
 
 	void SetIsVisible(bool isVisible);
 	void SetIsVisibleFromComponent(bool isVisible);
+	void SetOpacity(float opacity);
+	void SetOpacityFromComponent(float opacity);
+	float GetOpacity() const { return m_Opacity; }
 	bool IsVisible();
 
 	void SetBounds(const UIRect& bounds)
@@ -73,9 +76,10 @@ protected:
 	bool hasUIFSM = false;
 
 
-	int  m_ZOrder = 0;
-	bool m_IsFullScreen = false;
-	bool m_IsVisible = true;
+	int   m_ZOrder = 0;
+	bool  m_IsFullScreen = false;
+	bool  m_IsVisible = true;
+	float m_Opacity = 1.0f;
 
 	UIRect m_Bounds{};
 	bool m_HasBounds = false;

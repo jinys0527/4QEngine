@@ -28,7 +28,7 @@ bool IsMouseEvent(EventType type)
 
 void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 {
-	if (!listener) return;
+	if (!m_IsAlive || !listener) return;
 
 	auto& vec = m_Listeners[type]; // 여기선 생성 OK(등록이니까)
 	if (std::find(vec.begin(), vec.end(), listener) != vec.end())
@@ -39,7 +39,7 @@ void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 
 void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
 {
-	if (!listener) return;
+	if (!m_IsAlive || !listener) return;
 
 	auto it = m_Listeners.find(type);
 	if (it == m_Listeners.end())

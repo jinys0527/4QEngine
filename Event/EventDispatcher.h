@@ -7,9 +7,13 @@
 class EventDispatcher
 {
 public:
+	EventDispatcher() = default;
+	~EventDispatcher() { m_IsAlive = false; }
+
 	void AddListener(EventType type, IEventListener* listener);
 	void RemoveListener(EventType type, IEventListener* listener);
 	void Dispatch(EventType type, const void* data);
+	bool IsAlive() const { return m_IsAlive; }
 	std::vector<IEventListener*>* FindListeners(EventType type)
 	{
 		if (m_Listeners.empty())
@@ -31,5 +35,6 @@ public:
 
 private :
 	std::unordered_map<EventType, std::vector<IEventListener*>> m_Listeners;
+	bool m_IsAlive = true;
 };
 

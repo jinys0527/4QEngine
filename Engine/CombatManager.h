@@ -51,6 +51,7 @@ struct InitiativeEntry
 class CombatManager
 {
 	friend class GameManager;
+	friend class EnemyComponent;
 public:
 	CombatManager(CombatResolver& combatResolver,
 				  DiceSystem& diceSystem,
@@ -72,6 +73,7 @@ public:
 	std::size_t GetCurrentTurnIndex() const { return m_CurrentTurnIndex; }
 	bool IsActorInBattle(int actorId) const;
 	void AdvanceTurnToNextPlayer();
+	bool AdvanceTurnToNextEnemyOrPlayer();
 
 private:
 	void BuildInitiativeOrder();

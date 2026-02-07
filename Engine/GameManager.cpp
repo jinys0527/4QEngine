@@ -97,7 +97,9 @@ void GameManager::SetFloorSceneNames(const std::vector<std::string>& names)
 
 void GameManager::Update(float deltaTime)
 {
-	if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
+	if (m_Phase == Phase::ExplorationLoop
+		&& m_ExplorationTurnState == ExplorationTurnState::PlayerTurn
+		&& m_Turn == Turn::PlayerTurn)
 	{
 		m_ExplorationTurnElapsed += deltaTime;
 		if (m_ExplorationTurnElapsed >= m_ExplorationTurnLimit)
@@ -134,11 +136,63 @@ void GameManager::Update(float deltaTime)
 			{
 				combatManager->AdvanceTurnToNextPlayer();
 				m_SkipToPlayerTurn = false;
+				m_WaitingEnemyTurnDelay = false;
+				m_EnemyTurnDelayElapsed = 0.0f;
+				m_ResolveEnemyTurn = false;
+				SetCombatTurnState(CombatTurnState::SelectActor);
+				return;
+			}
+			else if (m_ResolveEnemyTurn)
+			{
+				if (m_RemainingEnemyTurns <= 0)
+				{
+					combatManager->AdvanceTurnToNextPlayer();
+					m_WaitingEnemyTurnDelay = false;
+					m_EnemyTurnDelayElapsed = 0.0f;
+					m_ResolveEnemyTurn = false;
+					SetCombatTurnState(CombatTurnState::SelectActor);
+					return;
+				}
+
+				if (!m_WaitingEnemyTurnDelay)
+				{
+					m_WaitingEnemyTurnDelay = true;
+					m_EnemyTurnDelayElapsed = 0.0f;
+					return;
+				}
+
+				m_EnemyTurnDelayElapsed += deltaTime;
+				if (m_EnemyTurnDelayElapsed < m_EnemyTurnDelayDuration)
+				{
+					return;
+				}
+
+				m_WaitingEnemyTurnDelay = false;
+				m_EnemyTurnDelayElapsed = 0.0f;
+				--m_RemainingEnemyTurns;
+
+				if (m_RemainingEnemyTurns > 0)
+				{
+					--m_RemainingEnemyTurns;
+				}
+				if (m_RemainingEnemyTurns > 0)
+				{
+					combatManager->AdvanceTurnToNextEnemyOrPlayer();
+				}
+				else
+				{
+					combatManager->AdvanceTurnToNextPlayer();
+				}
+
+				m_ResolveEnemyTurn = false;
+				SetCombatTurnState(CombatTurnState::SelectActor);
+				return;
 			}
 			else
 			{
 				combatManager->AdvanceTurn();
 			}
+			m_ResolveEnemyTurn = false;
 			SetCombatTurnState(CombatTurnState::SelectActor);
 		}
 	}
@@ -175,6 +229,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 				break;
 			}
 			std::cout << "AITurnEndRequested\n";
+			m_ResolveEnemyTurn = true;
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
@@ -281,13 +336,14 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		else if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
 		{
+			m_ResolveEnemyTurn = true;
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
 	case EventType::AIMeleeAttackRequested:
 	case EventType::AIRangedAttackRequested: {
 		std::cout << "AIAttackRequested\n";
-		if (m_Phase == Phase::TurnBasedCombat)
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState != CombatTurnState::EnemyTurn)
 		{
 			break;
 		}
@@ -307,7 +363,11 @@ void GameManager::OnEvent(EventType type, const void* data)
 		{
 			break;
 		}
-		SetCombatTurnState(CombatTurnState::Resolve);
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::EnemyTurn)
+		{
+			m_ResolveEnemyTurn = true;
+			SetCombatTurnState(CombatTurnState::Resolve);
+		}
 		break;
 	}
 	case EventType::ExploreTurnEnded:
@@ -405,7 +465,12 @@ void GameManager::TurnReset()
 	m_GameDataLoaded = false;
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
-	m_BlockPostCombatShop = false;
+	m_BlockPostCombatShop = false;	
+	m_ResolveEnemyTurn = false;
+	m_RemainingEnemyTurns = 0;
+	m_WaitingEnemyTurnDelay = false;
+	m_EnemyTurnDelayElapsed = 0.0f;
+
 
 	// 적 Reset
 	if (auto* combatManager = GetCombatManager())
@@ -441,6 +506,15 @@ void GameManager::SetTurn(Turn turn)
 
 	m_Turn = turn;
 	DispatchTurnChanged();
+}
+
+void GameManager::SetExplorationActiveEnemyActorId(int actorId)
+{
+	if (m_ExplorationActiveEnemyActorId == actorId)
+	{
+		return;
+	}
+	m_ExplorationActiveEnemyActorId = actorId;
 }
 
 bool GameManager::IsExplorationInputAllowed() const
@@ -671,10 +745,12 @@ void GameManager::OnExplorationTurnStateEnter(ExplorationTurnState state)
 	case ExplorationTurnState::PlayerTurn:
 		m_ExplorationTurnElapsed = 0.0f;
 		SetTurn(Turn::PlayerTurn);
+		SetExplorationActiveEnemyActorId(0);
 		break;
 	case ExplorationTurnState::EnemyStep:
 		m_ExplorationTurnElapsed = 0.0f;
 		SetTurn(Turn::EnemyTurn);
+		SetExplorationActiveEnemyActorId(0);
 		break;
 	}
 }
@@ -682,6 +758,7 @@ void GameManager::OnExplorationTurnStateEnter(ExplorationTurnState state)
 void GameManager::OnExplorationTurnStateExit(ExplorationTurnState state)
 {
 	(void)state;
+	SetExplorationActiveEnemyActorId(0);
 }
 
 void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
@@ -708,12 +785,75 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	{
 		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
+		m_RemainingEnemyTurns = 0;
+		m_WaitingEnemyTurnDelay = false;
+		m_EnemyTurnDelayElapsed = 0.0f;
+
 	}
 	else if (state == CombatTurnState::EnemyTurn)
 	{
 		SetTurn(Turn::EnemyTurn);
-		ResolveEnemyGroupTurn();
-		SetCombatTurnState(CombatTurnState::Resolve);
+		m_CombatTurnElapsed = 0.0f;
+		m_SkipToPlayerTurn = false;
+		m_WaitingEnemyTurnDelay = false;
+		m_EnemyTurnDelayElapsed = 0.0f;
+
+
+		auto* combatManager = GetCombatManager();
+		if (combatManager && m_RemainingEnemyTurns == 0)
+		{
+			int playerActorId = 1;
+			if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+			{
+				if (auto* player = playerObject->GetComponent<PlayerComponent>())
+				{
+					playerActorId = player->GetActorId();
+				}
+			}
+
+			for (int actorId : combatManager->GetInitiativeOrder())
+			{
+				if (actorId == 0 || actorId == playerActorId)
+				{
+					continue;
+				}
+				if (!combatManager->IsActorInBattle(actorId))
+				{
+					continue;
+				}
+				++m_RemainingEnemyTurns;
+			}
+		}
+
+		if (combatManager)
+		{
+			const int actorId = combatManager->GetCurrentActorId();
+			GridSystemComponent* grid = nullptr;
+			for (const auto& [name, object] : m_ActiveScene->GetGameObjects())
+			{
+				(void)name;
+				if (!object)
+				{
+					continue;
+				}
+				if (auto* candidate = object->GetComponent<GridSystemComponent>())
+				{
+					grid = candidate;
+					break;
+				}
+			}
+			if (grid)
+			{
+				for (auto* candidate : grid->GetEnemies())
+				{
+					if (candidate && candidate->GetActorId() == actorId)
+					{
+						m_EnemyTurnDelayDuration = candidate->GetEndTurnDelay();
+						break;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -1089,6 +1229,7 @@ void GameManager::ResolveEnemyAttack(int actorId)
 	{
 		return;
 	}
+	m_EnemyTurnDelayDuration = enemy->GetEndTurnDelay();
 
 	auto* enemyOwner = enemy->GetOwner();
 

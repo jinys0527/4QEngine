@@ -26,7 +26,7 @@ public:
 	void Initialize();
 	void Update(float deltaTime);
 	void StateUpdate(float deltaTime);
-	void Render();
+	void Render(RenderData::FrameData& frameData);
 
 	void SetCamera(CameraObject* camera) { m_Camera = camera; }
 	CameraObject* GetCamera() { return m_Camera; }

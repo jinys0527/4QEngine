@@ -53,6 +53,8 @@ public:
 	Phase GetPhase() const { return m_Phase; }
 	ExplorationTurnState GetExplorationTurnState() const { return m_ExplorationTurnState; }
 	CombatTurnState GetCombatTurnState() const { return m_CombatTurnState; }
+	int  GetExplorationActiveEnemyActorId() const { return m_ExplorationActiveEnemyActorId; }
+	void SetExplorationActiveEnemyActorId(int actorId);
 	bool IsExplorationInputAllowed() const;
 	bool IsCombatInputAllowed() const;
 	bool IsShopInputAllowed() const;
@@ -104,9 +106,11 @@ private:
 	ExplorationTurnState m_ExplorationTurnState;
 	CombatTurnState m_CombatTurnState;
 	float m_ExplorationTurnElapsed = 0.0f;
-	float m_ExplorationTurnLimit = 2.0f; // 탐색 시간
+	float m_ExplorationTurnLimit = 10.0f; // 탐색 시간
 	float m_CombatTurnElapsed = 0.0f;
-	float m_CombatTurnLimit = 2.0f;      //전투 시간
+	float m_CombatTurnLimit = 10.0f;      //전투 시간
+	float m_EnemyTurnDelayElapsed = 0.0f;
+	float m_EnemyTurnDelayDuration = 0.5f;
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
@@ -114,6 +118,11 @@ private:
 	bool  m_BlockPostCombatShop = false;
 	int   m_CurrentFloor = 1;
 	bool  m_SkipToPlayerTurn = false;
+	bool  m_ResolveEnemyTurn = false;
+	bool  m_WaitingEnemyTurnDelay = false;
+	int   m_RemainingEnemyTurns = 0;
+	int   m_ExplorationActiveEnemyActorId = 0;
+
 	std::vector<std::string> m_FloorSceneNames;
 	DataSheetPaths m_DataPaths{};
 	ShopStock m_CurrentShopStock{};

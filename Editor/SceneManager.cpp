@@ -12,6 +12,7 @@
 #include "UIManager.h"
 #include "CameraObject.h"
 #include "GameDataRepository.h"
+#include "InitiativeUIComponent.h"
 
 //editor 용으로 개발 필요함 - 편집할 Scene 선택, 생성
 void SceneManager::Initialize()
@@ -74,6 +75,11 @@ void SceneManager::Update(float deltaTime)
 		m_GameManager->Update(deltaTime);
 	}
 
+	if (m_UIManager)
+	{
+		m_UIManager->Update(deltaTime);
+	}
+
 	m_CurrentScene->Update(deltaTime);
 }
 
@@ -89,6 +95,8 @@ void SceneManager::Reset()
 {
 	if (m_GameManager)
 		m_GameManager->ClearEventDispatcher();
+	if (m_UIManager)
+		m_UIManager->Reset();
 	SetEventDispatcher(nullptr);
 	m_Scenes.clear();
 	m_CurrentScene.reset();
@@ -122,6 +130,30 @@ void SceneManager::SetCurrentScene(std::shared_ptr<Scene> scene)
 	{
 		m_GameManager->CapturePlayerData(m_CurrentScene.get());
 	}
+
+	if (m_UIManager && oldScene)
+	{
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(oldScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (!uiObject)
+				{
+					continue;
+				}
+
+				if (auto* initiative = uiObject->GetComponent<InitiativeUIComponent>())
+				{
+					initiative->DetachFromDispatcher();
+				}
+				uiObject->SetScene(nullptr);
+			}
+		}
+		m_UIManager->ClearSceneUI(m_CurrentScene->GetName());
+	}
+
 
 	m_CurrentScene = scene;
 	m_CurrentScene->Enter();
@@ -309,6 +341,19 @@ bool SceneManager::LoadSceneFromJson(const std::filesystem::path& filePath)
 	if (m_UIManager && j.contains("ui"))
 	{
 		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(loadedScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (uiObject)
+				{
+					uiObject->SetScene(loadedScene.get());
+					uiObject->Start();
+				}
+			}
+		}
 	}
 
 	return true;
@@ -339,6 +384,19 @@ bool SceneManager::LoadSceneFromJsonData(const nlohmann::json& data, const std::
 	if (m_UIManager && data.contains("ui"))
 	{
 		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), data.at("ui"));
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(loadedScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (uiObject)
+				{
+					uiObject->SetScene(loadedScene.get());
+					uiObject->Start();
+				}
+			}
+		}
 	}
 
 	return true;

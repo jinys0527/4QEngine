@@ -13,6 +13,7 @@ class Node;
 struct TaskMemory
 {
 	bool entered = false;
+	float elapsed = 0.0f;
 };
 
 // Selector / Sequance 런타임 메모리
