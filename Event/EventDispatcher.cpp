@@ -14,6 +14,8 @@ bool IsMouseEvent(EventType type)
 	case EventType::MouseRightClickUp:
 	case EventType::Dragged:
 	case EventType::Hovered:
+	case EventType::MouseWheelUp:
+	case EventType::MouseWheelDown:
 	case EventType::Pressed:
 	case EventType::Released:
 	case EventType::Moved:
