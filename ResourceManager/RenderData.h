@@ -203,6 +203,7 @@ namespace RenderData
 		FLOAT		   rotation = 0.0f;
 		FLOAT		   progress = 1.0f;
 		FLOAT		   progressDirection = 0.0f;
+		TextureHandle  maskTextureHandle = TextureHandle::Invalid();
 		INT32		   zOrder = 0;
 		MaterialHandle material = MaterialHandle::Invalid();
 		UIMaterialData materialOverrides{};

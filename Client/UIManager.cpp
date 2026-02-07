@@ -755,7 +755,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 					image->GetPixelShaderHandle());
 			};
 
-		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float opacity, float progress = 1.0f, float progressDirection = 0.0f)
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float opacity, float progress = 1.0f, float progressDirection = 0.0f, const TextureHandle& maskTexture = TextureHandle::Invalid()))
 			{
 				RenderData::UIElement element{};
 				element.position = { rect.x, rect.y };
@@ -766,6 +766,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				element.opacity = opacity;
 				element.progress = progress;
 				element.progressDirection = progressDirection;
+				element.maskTextureHandle = maskTexture;
 				applyImageOverrides(element, image);
 				frameData.uiElements.push_back(element);
 			};
@@ -820,7 +821,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				const bool isReverseFill = fillDirection == UIFillDirection::RightToLeft
 					|| fillDirection == UIFillDirection::BottomToTop;
 				const float progressDirection = isReverseFill ? 1.0f : 0.0f;
-				appendElement(fillRect, baseZOrder + 1, nullptr, opacity, progressValue, progressDirection);
+				appendElement(fillRect, baseZOrder + 1, nullptr, opacity, progressValue, progressDirection, progress->GetFillMaskTextureHandle());
 
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,

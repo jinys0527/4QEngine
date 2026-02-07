@@ -37,6 +37,9 @@ public:
 	void SetFillTextureHandle(const TextureHandle& handle) { m_FillTextureHandle = handle; }
 	const TextureHandle& GetFillTextureHandle() const { return m_FillTextureHandle; }
 
+	void SetFillMaskTextureHandle(const TextureHandle& handle) { m_FillMaskTextureHandle = handle; }
+	const TextureHandle& GetFillMaskTextureHandle() const { return m_FillMaskTextureHandle; }
+
 	void SetFillShaderAssetHandle(const ShaderAssetHandle& handle) { m_FillShaderAssetHandle = handle; }
 	const ShaderAssetHandle& GetFillShaderAssetHandle() const { return m_FillShaderAssetHandle; }
 
@@ -65,5 +68,6 @@ private:
 	ShaderAssetHandle m_FillShaderAssetHandle = ShaderAssetHandle::Invalid();
 	VertexShaderHandle m_FillVertexShaderHandle = VertexShaderHandle::Invalid();
 	PixelShaderHandle m_FillPixelShaderHandle = PixelShaderHandle::Invalid();
+	TextureHandle m_FillMaskTextureHandle = TextureHandle::Invalid();
 };
 

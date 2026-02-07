@@ -15,7 +15,7 @@ REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillTextureHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillVertexShaderHandle)
 REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillPixelShaderHandle)
-
+REGISTER_PROPERTY_HANDLE(UIProgressBarComponent, FillMaskTextureHandle)
 
 void UIProgressBarComponent::Update(float deltaTime)
 {

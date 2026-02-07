@@ -9,6 +9,8 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     uv.y = 1.0f - uv.y;
 
     float4 tex = g_UI_01.Sample(smpClamp, uv);
+    float4 maskTex = g_UI_02.Sample(smpClamp, uv);
+    clip(maskTex.a - 0.999f);
     tex.rgb = LinearToSRGB(tex.rgb);
     float alpha = tex.a;
 

@@ -149,7 +149,24 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 			srv = m_RenderContext.UIWhiteTexture.Get();
 		}
 
-		m_RenderContext.pDXDC->PSSetShaderResources(21, 1, &srv);
+		TextureHandle maskHandle = element.maskTextureHandle;
+		ID3D11ShaderResourceView* maskSrv = nullptr;
+		if (maskHandle.IsValid() && m_RenderContext.textures)
+		{
+			auto itMask = m_RenderContext.textures->find(maskHandle);
+			if (itMask != m_RenderContext.textures->end())
+			{
+				maskSrv = itMask->second.Get();
+			}
+		}
+		if (!maskSrv)
+		{
+			maskSrv = m_RenderContext.UIWhiteTexture.Get();
+		}
+
+		ID3D11ShaderResourceView* srvs[2] = { srv, maskSrv };
+
+		m_RenderContext.pDXDC->PSSetShaderResources(21, 2, srvs);
 		m_RenderContext.pDXDC->PSSetSamplers(0, 1, m_RenderContext.SState[SS::CLAMP].GetAddressOf());
 		m_RenderContext.pDXDC->DrawIndexed(m_RenderContext.UIQuadIndexCount, 0, 0);
 	}
