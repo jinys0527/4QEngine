@@ -42,10 +42,22 @@ void TargetSenseService::TickService(BTInstance& inst, Blackboard& bb, float del
 	bool isInCombat = false;
 	bb.TryGet(BlackboardKeys::IsInCombat, isInCombat);
 
-	const bool hasHexData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
+	/*const bool hasHexData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
 		&& TryGetInt(bb, BlackboardKeys::SelfR, selfR)
 		&& TryGetInt(bb, BlackboardKeys::TargetQ, targetQ)
+		&& TryGetInt(bb, BlackboardKeys::TargetR, targetR);*/
+	const bool hasSelfData = TryGetInt(bb, BlackboardKeys::SelfQ, selfQ)
+		&& TryGetInt(bb, BlackboardKeys::SelfR, selfR);
+	bool hasTargetData = TryGetInt(bb, BlackboardKeys::TargetQ, targetQ)
 		&& TryGetInt(bb, BlackboardKeys::TargetR, targetR);
+
+	if (!hasTargetData && isInCombat)
+	{
+		hasTargetData = TryGetInt(bb, BlackboardKeys::LastKnownTargetQ, targetQ)
+			&& TryGetInt(bb, BlackboardKeys::LastKnownTargetR, targetR);
+	}
+
+	const bool hasHexData = hasSelfData && hasTargetData;
 
 	if (!hasHexData)
 	{

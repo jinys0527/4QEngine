@@ -6,6 +6,8 @@
 #include "EnemyComponent.h"
 #include "EnemyStatComponent.h"
 #include "Scene.h"
+#include "ServiceRegistry.h"
+#include "CombatManager.h"
 #include "GameManager.h"
 
 REGISTER_COMPONENT(EnemyControllerComponent)
@@ -273,13 +275,27 @@ EnemyMovementComponent* EnemyControllerComponent::GetCurrentEnemyMovement()
 {
 	const auto& enemies = m_GridSystem->GetEnemies();
 
+	auto* scene = GetOwner() ? GetOwner()->GetScene() : nullptr;
+	auto* combatManager = (scene && scene->GetServices().Has<CombatManager>())
+		? &scene->GetServices().Get<CombatManager>()
+		: nullptr;
+
+	const int currentActorId = combatManager ? combatManager->GetCurrentActorId() : 0;
+
 	for (const auto* enemy : enemies)
 	{
 		if (!enemy) continue;
 
 		// 전투 턴에서 현재 적(actor) 판정 기준이 따로 있으면 그걸로 바꿔야 함.
-		// 지금은 최소로: EnemyTurn인 개체를 하나 집음.
-		if (enemy->GetCurrentTurn() != Turn::EnemyTurn)
+		// 지금은 최소로: EnemyTurn인 개체를 하나 집음. (수정 완)
+		if (currentActorId != 0)
+		{
+			if (enemy->GetActorId() != currentActorId)
+			{
+				continue;
+			}
+		}
+		else if (enemy->GetCurrentTurn() != Turn::EnemyTurn)
 			continue;
 
 		auto* owner = enemy->GetOwner();
