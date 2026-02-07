@@ -228,9 +228,23 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_DispatchUIEvent",
+		"UI",
+		{
+			{"event", "string", "", true}
+		}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestShopClose",
 		"UI",
 		{}
+		});
+
+	actionRegistry.RegisterAction({
+	"UI_RequestDoorCancel",
+	"UI",
+	{}
 		});
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
@@ -409,7 +423,7 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_DispatchSubFSMEvent", [this](const FSMAction& action)
 		{
-			const std::string target    = action.params.value("target", "");
+			const std::string target = action.params.value("target", "");
 			const std::string eventName = action.params.value("event", "");
 
 			auto* owner = GetOwner();
@@ -418,15 +432,31 @@ UIFSMComponent::UIFSMComponent()
 			DispatchPlayerSubEvent(scene, target, eventName);
 		});
 
+	BindActionHandler("UI_DispatchUIEvent", [this](const FSMAction& action)
+		{
+			const std::string eventName = action.params.value("event", "");
+			if (!eventName.empty())
+			{
+				DispatchEvent(eventName);
+			}
+		});
+
 	BindActionHandler("UI_RequestShopClose", [this](const FSMAction& action)
 		{
-			GetEventDispatcher().Dispatch(EventType::ShopDone, nullptr);
+			GetEventDispatcher().Dispatch(EventType::PlayerShopClose, nullptr);
+			DispatchEvent("None");
+		});
+
+	BindActionHandler("UI_RequestDoorCancel", [this](const FSMAction& action)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+			DispatchEvent("None");
 		});
 }
 
 UIFSMComponent::~UIFSMComponent()
 {
-	if(GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
 		GetEventDispatcher().RemoveListener(EventType::Pressed, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
 		GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
@@ -601,6 +631,14 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 {
 	switch (type)
 	{
+	case EventType::PlayerDoorCancel:
+		return std::string("Player_DoorCancel");
+	case EventType::PlayerShopOpen:
+		return std::string("Player_ShopOpen");
+	case EventType::PlayerShopClose:
+		return std::string("Player_ShopClose");
+	case EventType::PlayerDiceRoll:
+		return std::string("Player_DiceRoll");
 	case EventType::Pressed:
 		return std::string("UI_Pressed");
 	case EventType::UIHovered:
@@ -628,14 +666,6 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 	}
 	case EventType::PlayerDoorInteract:
 		return std::string("Player_DoorInteract");
-	case EventType::PlayerDoorCancel:
-		return std::string("Player_DoorCancel");
-	case EventType::PlayerShopOpen:
-		return std::string("Player_ShopOpen");
-	case EventType::PlayerShopClose:
-		return std::string("Player_ShopClose");
-	case EventType::PlayerDiceRoll:
-		return std::string("Player_DiceRoll");
 	default:
 		return std::nullopt;
 	}

@@ -101,7 +101,7 @@ namespace
 // Editor 설정 시 Player FSM 진입/종료 이벤트 정리:
 	// - Player_Move       : onEnter -> Player_DispatchSubFSMEvent(target="Move", event="Move_Select")
 	//                       onExit  -> Player_DispatchEvent(event="Move_Complete")
-	// - Player_Shop       : onEnter -> Player_DispatchSubFSMEvent(target="Shop", event="Shop_ItemSelect")
+	// - Player_Shop       : onEnter -> Player_DispatchSubFSMEvent(target="Shop", event="Shop_Select")
 	//                       onExit  -> Player_DispatchEvent(event="Shop_Close")
 	// - Player_Inventory  : onEnter -> Player_DispatchSubFSMEvent(target="Inventory", event="Inventory_Drop")
 	//                       onExit  -> Player_DispatchEvent(event="Inventory_Close")
@@ -301,6 +301,13 @@ void RegisterPlayerFSMDefinitions()
 		{}
 		});
 
+	// Shop 상호작용(자판기 등)
+	actionRegistry.RegisterAction({
+		"Shop_Select",
+		"Shop",
+		{}
+		});
+
 	// Shop ItemSelect
 	actionRegistry.RegisterAction({
 		"Shop_ItemSelect",
@@ -329,6 +336,13 @@ void RegisterPlayerFSMDefinitions()
 		{}
 		});
 
+	// Shop 닫기
+	actionRegistry.RegisterAction({
+		"Shop_Close",
+		"Shop",
+		{}
+		});
+
 	// Door 행동력 차감
 	actionRegistry.RegisterAction({
 		"Door_ConsumeActResource",
@@ -348,6 +362,14 @@ void RegisterPlayerFSMDefinitions()
 		"Door_Select",
 		"Door",
 		{}
+		});
+
+	// Door 취소
+	actionRegistry.RegisterAction({
+		"Door_Revoke",
+		"Door",
+		{
+		}
 		});
 
 	// Door 성공/실패 판정
@@ -405,22 +427,22 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Door_Interact",    "Player" });
 	eventRegistry.RegisterEvent({ "Door_Complete",    "Player" });
 	eventRegistry.RegisterEvent({ "Door_Cancel",      "Player" });
-															          
+
 	eventRegistry.RegisterEvent({ "Move_Select",       "Move" });
 	eventRegistry.RegisterEvent({ "Move_PointValid",   "Move" });
 	eventRegistry.RegisterEvent({ "Move_PointInvalid", "Move" });
 	eventRegistry.RegisterEvent({ "Move_Confirm",      "Move" });
 	eventRegistry.RegisterEvent({ "Move_Revoke",       "Move" });
-	
+
 	eventRegistry.RegisterEvent({ "Push_Start",			 "Push" });
-	eventRegistry.RegisterEvent({ "Push_Possible",       "Push"	});
+	eventRegistry.RegisterEvent({ "Push_Possible",       "Push" });
 	eventRegistry.RegisterEvent({ "Push_TargetFound",    "Push" });
 	eventRegistry.RegisterEvent({ "Push_TargetNone",     "Push" });
 	eventRegistry.RegisterEvent({ "Push_TargetSelected", "Push" });
 	eventRegistry.RegisterEvent({ "Push_Success",		 "Push" });
 	eventRegistry.RegisterEvent({ "Push_Fail",			 "Push" });
 	eventRegistry.RegisterEvent({ "Push_Revoke",		 "Push" });
-																      
+
 	eventRegistry.RegisterEvent({ "Combat_CheckRange",   "Combat" });
 	eventRegistry.RegisterEvent({ "Combat_RangeOk",      "Combat" });
 	eventRegistry.RegisterEvent({ "Combat_RangeFail",    "Combat" });
@@ -430,12 +452,14 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Combat_Cancel",       "Combat" });
 	eventRegistry.RegisterEvent({ "Combat_StartTurn",    "Combat" });
 	eventRegistry.RegisterEvent({ "Combat_TurnResolved", "Combat" });
-																      
+
 	eventRegistry.RegisterEvent({ "Inventory_Drop",        "Inventory" });
 	eventRegistry.RegisterEvent({ "Inventory_DropNoShop",  "Inventory" });
 	eventRegistry.RegisterEvent({ "Inventory_DropAtShop",  "Inventory" });
+	eventRegistry.RegisterEvent({ "Inventory_Sell",        "Inventory" });
 	eventRegistry.RegisterEvent({ "Inventory_Complete",    "Inventory" });
 
+	eventRegistry.RegisterEvent({ "Shop_Select",       "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_ItemSelect",   "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_BuyAttempt",   "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_SpaceOk",      "Shop" });
@@ -443,6 +467,7 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Shop_MoneyOk",      "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_MoneyFail",    "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_Complete",     "Shop" });
+	eventRegistry.RegisterEvent({ "Shop_Close",        "Shop" });
 
 	eventRegistry.RegisterEvent({ "Door_Select",   "Door" });
 	eventRegistry.RegisterEvent({ "Door_Confirm",  "Door" });
