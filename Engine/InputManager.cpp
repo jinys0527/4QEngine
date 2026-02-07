@@ -71,7 +71,7 @@ void InputManager::Update()
 
 	m_KeysDownPrev = m_KeysDown;
 
-	if (m_PendingWheelDelta != 0 && allowGameplayInput)
+	if (m_PendingWheelDelta != 0)
 	{
 		int wheelDelta = m_PendingWheelDelta;
 		m_PendingWheelDelta = 0;

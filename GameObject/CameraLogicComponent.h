@@ -19,23 +19,28 @@ public:
 
 	void SetMaxZoom(const float& value) { m_MaxZoom = value; }
 	void SetMinZoom(const float& value) { m_MinZoom = value; }
-	void SetMoveSpeed(const float& value) { m_MoveSpeed = value; }
+	void SetXOffset(const float& value) { m_XOffset = value; }
+	void SetThreshold(const float& value) { m_FollowThreshold = value; }
 
 	const float& GetMaxZoom() const { return m_MaxZoom; }
 	const float& GetMinZoom() const { return m_MinZoom; }
-	const float& GetMoveSpeed() const { return m_MoveSpeed; }
+	const float& GetXOffset() const { return m_XOffset; }
+	const float& GetThreshold() const { return m_FollowThreshold; }
+
 
 	void Start() override;
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 	void CamZoom(); 
+	void CamFollowX(float deltaTime);
 
 private:
 
 	float m_MaxZoom= 0.0f;
 	float m_MinZoom = 0.0f;
-	float m_MoveSpeed = 2.0f;
-	float m_ZoomSpeed = 2.0f;
+	float m_XOffset = 2.0f;
+	float m_ZoomSpeed = 1.0f;
+	float m_FollowThreshold = 3.0f;
 
 	TransformComponent* m_Transform = nullptr;
 	CameraComponent*    m_Camera = nullptr;

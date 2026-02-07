@@ -11,7 +11,8 @@
 REGISTER_COMPONENT(CameraLogicComponent)
 REGISTER_PROPERTY(CameraLogicComponent, MaxZoom)
 REGISTER_PROPERTY(CameraLogicComponent, MinZoom)
-REGISTER_PROPERTY(CameraLogicComponent, MoveSpeed)
+REGISTER_PROPERTY(CameraLogicComponent, XOffset)
+REGISTER_PROPERTY(CameraLogicComponent, Threshold)
 
 
 CameraLogicComponent::~CameraLogicComponent()
@@ -62,6 +63,7 @@ void CameraLogicComponent::Update(float deltaTime)
 	if (!m_PlayerTransform)
 		return;
 	CamZoom();
+	CamFollowX(deltaTime);
 
 
 }
@@ -80,16 +82,23 @@ void CameraLogicComponent::OnEvent(EventType type, const void* data)
 
 void CameraLogicComponent::CamZoom()
 {
+	if (m_PendingZoomInput == 0.0f)
+	{
+		return;
+	}
+
 	const XMFLOAT3 currentEye = m_Camera->GetEye();
-	XMFLOAT3 targetLook = m_Camera->GetLook();
+	const XMFLOAT3 currentLook = m_Camera->GetLook();
+	XMFLOAT3 zoomPivot = currentLook;
 	if (m_PlayerTransform)
 	{
-		targetLook = m_PlayerTransform->GetWorldPos();
+		//targetLook = m_PlayerTransform->GetWorldPos();
+		zoomPivot = m_PlayerTransform->GetWorldPos();
 	}
 
 	XMVECTOR eyeVec = XMLoadFloat3(&currentEye);
-	XMVECTOR lookVec = XMLoadFloat3(&targetLook);
-	XMVECTOR toEye = XMVectorSubtract(eyeVec, lookVec);
+	XMVECTOR pivotVec = XMLoadFloat3(&zoomPivot);
+	XMVECTOR toEye = XMVectorSubtract(eyeVec, pivotVec);
 	const float currentDistance = XMVectorGetX(XMVector3Length(toEye));
 	XMVECTOR dir = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);
 	if (currentDistance > 0.0001f)
@@ -98,22 +107,46 @@ void CameraLogicComponent::CamZoom()
 	}
 
 	float desiredDistance = currentDistance;
-	if (m_PendingZoomInput != 0.0f)
+	desiredDistance = currentDistance - (m_PendingZoomInput * m_ZoomSpeed);
+	const float minZoom = m_MinZoom;
+	const float maxZoom = m_MaxZoom;
+	if (maxZoom > 0.0f || minZoom > 0.0f)
 	{
-		desiredDistance = currentDistance - (m_PendingZoomInput * m_ZoomSpeed);
-		const float minZoom = m_MinZoom;
-		const float maxZoom = m_MaxZoom;
-		if (maxZoom > 0.0f || minZoom > 0.0f)
-		{
-			const float clampedMin = (std::min)(minZoom, maxZoom > 0.0f ? maxZoom : minZoom);
-			const float clampedMax = (std::max)(maxZoom, clampedMin);
-			desiredDistance = std::clamp(desiredDistance, clampedMin, clampedMax);
-		}
-		m_PendingZoomInput = 0.0f;
+		const float clampedMin = (std::min)(minZoom, maxZoom > 0.0f ? maxZoom : minZoom);
+		const float clampedMax = (std::max)(maxZoom, clampedMin);
+		desiredDistance = std::clamp(desiredDistance, clampedMin, clampedMax);
 	}
-
-	XMVECTOR newEyeVec = XMVectorAdd(lookVec, XMVectorScale(dir, desiredDistance));
+	m_PendingZoomInput = 0.0f;
+	//XMVECTOR newEyeVec = XMVectorAdd(lookVec, XMVectorScale(dir, desiredDistance));
+	XMVECTOR newEyeVec = XMVectorAdd(pivotVec, XMVectorScale(dir, desiredDistance));
 	XMFLOAT3 newEye{};
 	XMStoreFloat3(&newEye, newEyeVec);
-	m_Camera->SetEyeLookUp(newEye, targetLook, m_Camera->GetUp());
+	const XMVECTOR deltaEyeVec = XMVectorSubtract(newEyeVec, eyeVec);
+	XMFLOAT3 newLook{};
+	XMStoreFloat3(&newLook, XMVectorAdd(XMLoadFloat3(&currentLook), deltaEyeVec));
+	m_Camera->SetEyeLookUp(newEye, newLook, m_Camera->GetUp());
+
+}
+
+void CameraLogicComponent::CamFollowX(float deltaTime)
+{
+	const XMFLOAT3 currentEye = m_Camera->GetEye();
+	const XMFLOAT3 currentLook = m_Camera->GetLook();
+	const XMFLOAT3 playerPos = m_PlayerTransform->GetWorldPos();
+
+	const float deltaX = playerPos.x - currentLook.x;
+	if (std::abs(deltaX) < m_FollowThreshold)
+	{
+		return;
+	}
+
+	const float maxStep = 2.0f * deltaTime;
+	const float stepX = std::clamp(deltaX+ m_XOffset, -maxStep, maxStep);
+
+	XMFLOAT3 newEye = currentEye;
+	XMFLOAT3 newLook = currentLook;
+	newEye.x += stepX;
+	newLook.x += stepX;
+
+	m_Camera->SetEyeLookUp(newEye, newLook, m_Camera->GetUp());
 }
