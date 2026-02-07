@@ -75,6 +75,11 @@ void SceneManager::Update(float deltaTime)
 		m_GameManager->Update(deltaTime);
 	}
 
+	if (m_UIManager)
+	{
+		m_UIManager->Update(deltaTime);
+	}
+
 	m_CurrentScene->Update(deltaTime);
 }
 
