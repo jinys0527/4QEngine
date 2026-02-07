@@ -113,7 +113,7 @@ namespace
 			if (slots[i].child)
 			{
 				slots[i].child->SetBounds(arranged[i]);
-				slots[i].child->SetIsVisible(parentVisible);
+				slots[i].child->SetIsVisibleFromParent(parentVisible);
 				slots[i].child->SetZOrder(parentZOrder + static_cast<int>(i) + 1);
 			}
 		}
@@ -178,6 +178,47 @@ namespace
 		cache[name] = world;
 		visiting.erase(name);
 		return world;
+	}
+
+	bool ResolveInheritedVisibility(const std::string& name,
+								    const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+								    std::unordered_map<std::string, bool>& cache,
+								    std::unordered_set<std::string>& visiting)
+	{
+		auto cached = cache.find(name);
+		if (cached != cache.end())
+		{
+			return cached->second;
+		}
+
+		auto itObj = uiMap.find(name);
+		if (itObj == uiMap.end() || !itObj->second)
+		{
+			return true;
+		}
+
+		if (!visiting.insert(name).second)
+		{
+			const bool fallback = itObj->second->IsLocallyVisible();
+			cache[name] = fallback;
+			return fallback;
+		}
+
+		const UIObject& uiObject = *itObj->second;
+		bool visible = uiObject.IsLocallyVisible();
+		const std::string& parentName = uiObject.GetParentName();
+		if (!parentName.empty())
+		{
+			auto itParent = uiMap.find(parentName);
+			if (itParent != uiMap.end() && itParent->second)
+			{
+				visible = visible && ResolveInheritedVisibility(parentName, uiMap, cache, visiting);
+			}
+		}
+
+		cache[name] = visible;
+		visiting.erase(name);
+		return visible;
 	}
 
 	void ApplyAnchorLayout(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
@@ -314,6 +355,28 @@ namespace
 			{
 				ApplyHorizontalBoxLayout(*uiObject, uiMap);
 			}
+		}
+
+		std::unordered_map<std::string, bool> visibilityCache;
+		std::unordered_set<std::string> visibilityVisiting;
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject)
+			{
+				continue;
+			}
+
+			bool parentVisible = true;
+			const std::string& parentName = uiObject->GetParentName();
+			if (!parentName.empty())
+			{
+				auto itParent = uiMap.find(parentName);
+				if (itParent != uiMap.end() && itParent->second)
+				{
+					parentVisible = ResolveInheritedVisibility(parentName, uiMap, visibilityCache, visibilityVisiting);
+				}
+			}
+			uiObject->SetIsVisibleFromParent(parentVisible);
 		}
 
 // 		if (useResolutionScale)

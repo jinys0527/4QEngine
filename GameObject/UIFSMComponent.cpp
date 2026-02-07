@@ -12,6 +12,12 @@
 #include "GameState.h"
 #include "Scene.h"
 #include "GameManager.h"
+#include "GameObject.h"
+#include "PlayerDoorFSMComponent.h"
+#include "PlayerFSMComponent.h"
+#include "PlayerShopFSMComponent.h"
+#include <algorithm>
+#include <cctype>
 
 namespace
 {
@@ -36,6 +42,90 @@ namespace
 		}
 		return false;
 	}
+
+	std::string ToLower(std::string value)
+	{
+		std::transform(value.begin(), value.end(), value.begin(),
+			[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+		return value;
+	}
+
+	GameObject* FindPlayerObject(Scene* scene)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			if (object->GetComponent<PlayerFSMComponent>())
+			{
+				return object.get();
+			}
+		}
+
+		return nullptr;
+	}
+
+	void DispatchPlayerEvent(Scene* scene, const std::string& eventName)
+	{
+		if (!scene || eventName.empty())
+		{
+			return;
+		}
+
+		auto* player = FindPlayerObject(scene);
+		if (!player)
+		{
+			return;
+		}
+
+		if (auto* fsm = player->GetComponent<PlayerFSMComponent>())
+		{
+			fsm->DispatchEvent(eventName);
+		}
+	}
+
+	void DispatchPlayerSubEvent(Scene* scene, const std::string& target, const std::string& eventName)
+	{
+		if (!scene || target.empty() || eventName.empty())
+		{
+			return;
+		}
+
+		auto* player = FindPlayerObject(scene);
+		if (!player)
+		{
+			return;
+		}
+
+		const auto normalized = ToLower(target);
+
+		if (normalized == "shop")
+		{
+			if (auto* fsm = player->GetComponent<PlayerShopFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+
+		if (normalized == "door")
+		{
+			if (auto* fsm = player->GetComponent<PlayerDoorFSMComponent>())
+			{
+				fsm->DispatchEvent(eventName);
+			}
+			return;
+		}
+	}
 }
 
 void RegisterUIFSMDefinitions()
@@ -47,6 +137,16 @@ void RegisterUIFSMDefinitions()
 		{
 			{ "value", "bool", true, false }
 		}
+		});
+	actionRegistry.RegisterAction({
+		"UI_Show",
+		"UI",
+		{}
+		});
+	actionRegistry.RegisterAction({
+		"UI_Hide",
+		"UI",
+		{}
 		});
 	actionRegistry.RegisterAction({
 		"UI_SetOpacity",
@@ -110,6 +210,43 @@ void RegisterUIFSMDefinitions()
 		{}
 		});
 
+	actionRegistry.RegisterAction({
+		"UI_DispatchPlayerEvent",
+		"UI",
+		{
+			{"event", "string", "", true}
+		}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_DispatchSubFSMEvent",
+		"UI",
+		{
+			{"target", "string", "", true},
+			{"event",  "string", "", true}
+		}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_DispatchUIEvent",
+		"UI",
+		{
+			{"event", "string", "", true}
+		}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestShopClose",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+	"UI_RequestDoorCancel",
+	"UI",
+	{}
+		});
+
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "UI_Pressed", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Hovered", "UI" });
@@ -121,6 +258,11 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "UI_ProgressChanged", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnEnd", "UI" });
+	eventRegistry.RegisterEvent({ "Player_ShopOpen", "UI" });
+	eventRegistry.RegisterEvent({ "Player_ShopClose", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DoorInteract", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DoorCancel", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceRoll", "UI" });
 }
 
 
@@ -139,6 +281,24 @@ UIFSMComponent::UIFSMComponent()
 			const bool visible = action.params.value("value", true);
 			ui->SetVisible(visible);
 		});
+
+	BindActionHandler("UI_Show", [this](const FSMAction&)
+		{
+			auto* ui = GetOwner() ? GetOwner()->GetComponent<UIComponent>() : nullptr;
+			if (!ui)
+				return;
+
+			ui->SetVisible(true);
+		});
+	BindActionHandler("UI_Hide", [this](const FSMAction&)
+		{
+			auto* ui = GetOwner() ? GetOwner()->GetComponent<UIComponent>() : nullptr;
+			if (!ui)
+				return;
+
+			ui->SetVisible(false);
+		});
+
 
 	BindActionHandler("UI_SetOpacity", [this](const FSMAction& action)
 		{
@@ -252,16 +412,72 @@ UIFSMComponent::UIFSMComponent()
 				GetEventDispatcher().Dispatch(EventType::PlayerTurnEndRequested, nullptr);
 			}
 		});
+
+	BindActionHandler("UI_DispatchPlayerEvent", [this](const FSMAction& action)
+		{
+			const std::string eventName = action.params.value("event", "");
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, eventName);
+		});
+
+	BindActionHandler("UI_DispatchSubFSMEvent", [this](const FSMAction& action)
+		{
+			const std::string target = action.params.value("target", "");
+			const std::string eventName = action.params.value("event", "");
+
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+
+			DispatchPlayerSubEvent(scene, target, eventName);
+		});
+
+	BindActionHandler("UI_DispatchUIEvent", [this](const FSMAction& action)
+		{
+			const std::string eventName = action.params.value("event", "");
+			if (!eventName.empty())
+			{
+				DispatchEvent(eventName);
+			}
+		});
+
+	BindActionHandler("UI_RequestShopClose", [this](const FSMAction& action)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerShopClose, nullptr);
+			DispatchEvent("None");
+		});
+
+	BindActionHandler("UI_RequestDoorCancel", [this](const FSMAction& action)
+		{
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+			DispatchEvent("None");
+		});
 }
 
 UIFSMComponent::~UIFSMComponent()
 {
-	GetEventDispatcher().RemoveListener(EventType::Pressed, this);
-	GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
-	GetEventDispatcher().RemoveListener(EventType::Released, this);
-	GetEventDispatcher().RemoveListener(EventType::UIDragged, this);
-	GetEventDispatcher().RemoveListener(EventType::UIDoubleClicked, this);
-	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
+		GetEventDispatcher().RemoveListener(EventType::Pressed, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
+		GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Released))
+		GetEventDispatcher().RemoveListener(EventType::Released, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIDragged))
+		GetEventDispatcher().RemoveListener(EventType::UIDragged, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIDoubleClicked))
+		GetEventDispatcher().RemoveListener(EventType::UIDoubleClicked, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::TurnChanged))
+		GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorInteract))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorInteract, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorCancel))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorCancel, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopOpen))
+		GetEventDispatcher().RemoveListener(EventType::PlayerShopOpen, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopClose))
+		GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRoll))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRoll, this);
 }
 
 void UIFSMComponent::Start()
@@ -277,6 +493,11 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::UIDragged, this);
 	GetEventDispatcher().AddListener(EventType::UIDoubleClicked, this);
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDoorInteract, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDoorCancel, this);
+	GetEventDispatcher().AddListener(EventType::PlayerShopOpen, this);
+	GetEventDispatcher().AddListener(EventType::PlayerShopClose, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceRoll, this);
 
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
@@ -410,6 +631,14 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 {
 	switch (type)
 	{
+	case EventType::PlayerDoorCancel:
+		return std::string("Player_DoorCancel");
+	case EventType::PlayerShopOpen:
+		return std::string("Player_ShopOpen");
+	case EventType::PlayerShopClose:
+		return std::string("Player_ShopClose");
+	case EventType::PlayerDiceRoll:
+		return std::string("Player_DiceRoll");
 	case EventType::Pressed:
 		return std::string("UI_Pressed");
 	case EventType::UIHovered:
@@ -435,6 +664,8 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return turn == Turn::PlayerTurn ? std::string("Player_TurnStart")
 			: std::string("Player_TurnEnd");
 	}
+	case EventType::PlayerDoorInteract:
+		return std::string("Player_DoorInteract");
 	default:
 		return std::nullopt;
 	}

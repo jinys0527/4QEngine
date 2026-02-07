@@ -26,6 +26,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			if (!player)
 			{
 				DispatchEvent("Door_Revoke");
+				GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 				return;
 			}
 
@@ -41,14 +42,24 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
-			const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
-			DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
-			if (confirmed && player && playerStat)
+
+			if (!player)
+			{
+				DispatchEvent("Door_Revoke");
+				GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+				return;
+			}
+
+			DispatchEvent("Door_Confirm");
+
+			if (playerStat)
 			{
 				auto* scene = owner ? owner->GetScene() : nullptr;
 				if (scene)
 				{
 					auto& services = scene->GetServices();
+
+					GetEventDispatcher().Dispatch(EventType::PlayerDiceRoll, nullptr);
 
 					// 주사위 판정
 					if (services.Has<DiceSystem>())
@@ -69,8 +80,8 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			auto* owner = GetOwner();
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			//const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
-			//DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");
-			DispatchEvent("Door_Confirm");
+			//DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");'
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorInteract, nullptr);
 		});
 	BindActionHandler("Door_Verdict", [this](const FSMAction& action)
 		{
@@ -100,6 +111,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 					playerFsm->DispatchEvent("Door_Complete");
 				}
 			}
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			//DispatchEvent("Door_Complete");
 			DispatchEvent("None");
 		});
@@ -113,13 +125,32 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 				{
 					player->ConsumePendingDoor();
 				}
-			
+
 				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
 				{
 					playerFsm->DispatchEvent("Door_Complete");
 				}
 			}
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			//DispatchEvent("Door_Complete");
+			DispatchEvent("None");
+		});
+
+	BindActionHandler("Door_Revoke", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			if (owner)
+			{
+				if (auto* player = owner->GetComponent<PlayerComponent>())
+				{
+					player->ConsumePendingDoor();
+				}
+				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
+				{
+					playerFsm->DispatchEvent("Door_Complete");
+				}
+			}
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			DispatchEvent("None");
 		});
 }

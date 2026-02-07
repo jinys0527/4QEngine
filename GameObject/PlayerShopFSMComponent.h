@@ -11,4 +11,8 @@ public:
 	virtual ~PlayerShopFSMComponent() override = default;
 
 	void Start() override;
+
+private:
+	int m_SelectedPrice = 0;
+	int m_SelectedItemId = -1;
 };

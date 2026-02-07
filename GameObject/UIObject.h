@@ -14,26 +14,28 @@ public:
 	//void Render(std::vector<UIRenderInfo>& renderInfo);
 	//void Render(std::vector<UITextInfo>& textInfo);
 
-	void Serialize(nlohmann::json& j) const override;
-	void Deserialize(const nlohmann::json& j) override;
-
-
-	void SetZOrder(int zOrder);
-	void SetZOrderFromComponent(int zOrder);
-	int  GetZOrder() const { return m_ZOrder; }
-
-
-	bool HitCheck       (const POINT& pos);
-	
-	void SetIsFullScreen(bool isFullScreen) { m_IsFullScreen = isFullScreen; }
-	bool IsFullScreen   ();
-
-	void SetIsVisible(bool isVisible);
-	void SetIsVisibleFromComponent(bool isVisible);
-	void SetOpacity(float opacity);
-	void SetOpacityFromComponent(float opacity);
+	void  Serialize(nlohmann::json& j) const override;
+	void  Deserialize(const nlohmann::json& j) override;
+		  
+		  
+	void  SetZOrder(int zOrder);
+	void  SetZOrderFromComponent(int zOrder);
+	int   GetZOrder() const { return m_ZOrder; }
+		  
+		  
+	bool  HitCheck       (const POINT& pos);
+		  
+	void  SetIsFullScreen(bool isFullScreen) { m_IsFullScreen = isFullScreen; }
+	bool  IsFullScreen   ();
+		  
+	void  SetIsVisible(bool isVisible);
+	void  SetIsVisibleFromComponent(bool isVisible);
+	void  SetIsVisibleFromParent(bool isVisible);
+	void  SetOpacity(float opacity);
+	void  SetOpacityFromComponent(float opacity);
 	float GetOpacity() const { return m_Opacity; }
-	bool IsVisible();
+	bool  IsVisible() const;
+	bool  IsLocallyVisible() const { return m_IsVisible; }
 
 	void SetBounds(const UIRect& bounds)
 	{
@@ -79,6 +81,7 @@ protected:
 	int   m_ZOrder = 0;
 	bool  m_IsFullScreen = false;
 	bool  m_IsVisible = true;
+	bool  m_IsVisibleFromParent = true;
 	float m_Opacity = 1.0f;
 
 	UIRect m_Bounds{};
