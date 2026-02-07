@@ -27,4 +27,9 @@ namespace Events
 	{
 		int turn = 0;
 	};
+
+	struct ActorEvent
+	{
+		int actorId = 0;
+	};
 }

@@ -22,6 +22,7 @@
 #include "LogSystem.h"
 #include "TransformComponent.h"
 #include "MeshRenderer.h"
+#include "Event.h"
 #include <iostream>
 
 REGISTER_COMPONENT_DERIVED(PlayerCombatFSMComponent, FSMComponent)
@@ -509,6 +510,11 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	}
 
 	m_CombatManager->HandlePlayerAttack(request);
+	if (player && player->GetActorId() != 0)
+	{
+		const Events::ActorEvent actorEvent{ player->GetActorId() };
+		GetEventDispatcher().Dispatch(EventType::PlayerAttack, &actorEvent);
+	}
 	return true;
 }
 

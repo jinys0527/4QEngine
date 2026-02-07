@@ -9,7 +9,7 @@
 #include "PlayerFSMComponent.h"
 #include "NodeComponent.h"
 #include "BoxColliderComponent.h"
-
+#include "Event.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerMoveFSMComponent, FSMComponent)
 
@@ -114,6 +114,12 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			if (committed)
 			{
 				m_CommitSucceeded = true;
+				cout << "[Log] Player Moved" << endl;
+				if (player->GetActorId() != 0)
+				{
+					const Events::ActorEvent actorEvent{ player->GetActorId() };
+					GetEventDispatcher().Dispatch(EventType::PlayerMove, &actorEvent);
+				}
 				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
 				{
 					playerFsm->DispatchEvent("Move_Complete");
