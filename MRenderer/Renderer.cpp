@@ -263,7 +263,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	filename = L"../MRenderer/fx/ferndale_studio_12_4k.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,

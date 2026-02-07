@@ -352,7 +352,7 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 		EnemyComponent* pendingTarget = player->ConsumePendingAttackTarget();
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
-		const int range = max(0, player->GetAttackRange());
+		range = max(0, player->GetAttackRange());
 
 		if (pendingTarget && pendingTarget->GetActorId() != 0)
 		{
