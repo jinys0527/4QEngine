@@ -90,10 +90,10 @@ void RegisterAnimFSMDefinitions()
 	eventRegistry.RegisterEvent({ "AnimNotify_Hit", "Animation" });
 	eventRegistry.RegisterEvent({ "AnimNotify_Footstep", "Animation" });
 	eventRegistry.RegisterEvent({ "Anim_Play", "Animation" });
-	eventRegistry.RegisterEvent({ "Anim_TriggerHover", "Animation" });
 	eventRegistry.RegisterEvent({ "Anim_TriggerMoveComplete", "Animation" });
 	eventRegistry.RegisterEvent({ "Anim_TriggerPlayerAttack", "Animation" });
 	eventRegistry.RegisterEvent({ "Anim_TriggerEnemyAttack", "Animation" });
+	eventRegistry.RegisterEvent({ "Anim_TriggerClick", "Animation" });
 	eventRegistry.RegisterEvent({ "Anim_Finished", "Animation" });
 }
 
@@ -204,6 +204,7 @@ AnimFSMComponent::AnimFSMComponent()
 AnimFSMComponent::~AnimFSMComponent()
 {
 	//GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
+	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::PlayerMove, this);
 	GetEventDispatcher().RemoveListener(EventType::PlayerAttack, this);
 	GetEventDispatcher().RemoveListener(EventType::EnemyAttack, this);
@@ -213,6 +214,7 @@ void AnimFSMComponent::Start()
 {
 	FSMComponent::Start();
 	//GetEventDispatcher().AddListener(EventType::UIHovered, this);
+	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::PlayerMove, this);
 	GetEventDispatcher().AddListener(EventType::PlayerAttack, this);
 	GetEventDispatcher().AddListener(EventType::EnemyAttack, this);
@@ -263,6 +265,30 @@ void AnimFSMComponent::OnEvent(EventType type, const void* data)
 	//	m_IsHovered = isHovered;
 	//	return;
 	//}
+
+	if (type == EventType::MouseLeftClick)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		if (!owner || !owner->GetComponent<PlayerComponent>())
+		{
+			return;
+		}
+
+		if (!IsWithinBounds(mouseData->pos))
+		{
+			return;
+		}
+
+		DispatchEvent("Anim_TriggerClick");
+		DispatchEvent("Anim_Play");
+		return;
+	}
 
 	if (type == EventType::PlayerMove || type == EventType::PlayerAttack || type == EventType::EnemyAttack)
 	{
