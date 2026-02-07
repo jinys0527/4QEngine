@@ -10,38 +10,354 @@
 #include "UITextComponent.h"
 #include "UIFSMComponent.h"
 #include "UISliderComponent.h"
+#include "Border.h"
+#include "ScaleBox.h"
+#include "SizeBox.h"
 #include <algorithm>
+#include <unordered_set>
+
+namespace
+{
+	void ApplySizeBoxOverrides(UIObject& uiObject)
+	{
+		auto* sizeBox = uiObject.GetComponent<SizeBox>();
+		if (!sizeBox || !uiObject.HasBounds())
+			return;
+
+		UIRect bounds = uiObject.GetBounds();
+		const UISize desired = sizeBox->GetDesiredSize(UISize{ bounds.width, bounds.height });
+		if (desired.width != bounds.width || desired.height != bounds.height)
+		{
+			bounds.width = desired.width;
+			bounds.height = desired.height;
+			uiObject.SetBounds(bounds);
+		}
+	}
+
+	void ApplyScaleBoxLayout(UIObject& uiObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		auto* scaleBox = uiObject.GetComponent<ScaleBox>();
+		if (!scaleBox || !uiObject.HasBounds())
+			return;
+
+		const std::string& parentName = uiObject.GetParentName();
+		if (parentName.empty())
+			return;
+
+		auto itParent = uiMap.find(parentName);
+		if (itParent == uiMap.end() || !itParent->second || !itParent->second->HasBounds())
+			return;
+
+		const UIRect parentBounds = itParent->second->GetBounds();
+		UIRect bounds = uiObject.GetBounds();
+
+		const UISize scaled = scaleBox->CalculateScaledSize(
+			UISize{ parentBounds.width, parentBounds.height },
+			UISize{ bounds.width, bounds.height });
+		bounds.width = scaled.width;
+		bounds.height = scaled.height;
+		bounds.x = parentBounds.x + (parentBounds.width - scaled.width) * 0.5f;
+		bounds.y = parentBounds.y + (parentBounds.height - scaled.height) * 0.5f;
+		uiObject.SetBounds(bounds);
+	}
+
+	// 	void ApplyBorderLayout(UIObject& borderObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	// 	{
+	// 		auto* border = borderObject.GetComponent<Border>();
+	// 		if (!border || !borderObject.HasBounds())
+	// 			return;
+	// 
+	// 		const std::string& parentName = borderObject.GetName();
+	// 		const UIRect contentBounds = border->GetContentRect(borderObject.GetBounds());
+	// 
+	// 		for (const auto& [name, child] : uiMap)
+	// 		{
+	// 			if (!child || !child->HasBounds())
+	// 			{
+	// 				continue;
+	// 			}
+	// 
+	// 			child->SetBounds(contentBounds);
+	// 		}
+	// 	} // 트리 구조도 아니고 시간 없어서 안쓸것같음
+
+	void ApplyHorizontalBoxLayout(UIObject& uiObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		auto* horizontalBox = uiObject.GetComponent<HorizontalBox>();
+		if (!horizontalBox || !uiObject.HasBounds())
+			return;
+
+		auto& slots = horizontalBox->GetSlotsMutable();
+		for (auto& slot : slots)
+		{
+			if (slot.child || slot.childName.empty())
+			{
+				continue;
+			}
+
+			auto itChild = uiMap.find(slot.childName);
+			if (itChild != uiMap.end())
+			{
+				slot.child = itChild->second.get();
+			}
+		}
+
+		const UIRect parentBounds = uiObject.GetBounds();
+		const bool   parentVisible = uiObject.IsVisible();
+		const int    parentZOrder = uiObject.GetZOrder();
+		const UISize availableSize{ parentBounds.width, parentBounds.height };
+		const auto arranged = horizontalBox->ArrangeChildren(parentBounds.x, parentBounds.y, availableSize);
+		const size_t count = std::min(arranged.size(), slots.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			if (slots[i].child)
+			{
+				slots[i].child->SetBounds(arranged[i]);
+				slots[i].child->SetIsVisible(parentVisible);
+				slots[i].child->SetZOrder(parentZOrder + static_cast<int>(i) + 1);
+			}
+		}
+	}
+
+	UIRect ResolveWorldBounds(const std::string& name,
+		const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+		std::unordered_map<std::string, UIRect>& cache,
+		std::unordered_set<std::string>& visiting)
+	{
+		auto cached = cache.find(name);
+		if (cached != cache.end())
+		{
+			return cached->second;
+		}
+
+		auto itObj = uiMap.find(name);
+		if (itObj == uiMap.end() || !itObj->second)
+		{
+			return UIRect{};
+		}
+
+		if (!visiting.insert(name).second)
+		{
+			return itObj->second->GetBounds();
+		}
+
+		auto& uiObject = *itObj->second;
+		UIRect local = uiObject.GetBounds();
+		const std::string& parentName = uiObject.GetParentName();
+		if (parentName.empty() || uiMap.find(parentName) == uiMap.end())
+		{
+			cache[name] = local;
+			visiting.erase(name);
+			return local;
+		}
+
+		UIRect parentBounds = ResolveWorldBounds(parentName, uiMap, cache, visiting);
+		const UIAnchor anchorMin = uiObject.GetAnchorMin();
+		const UIAnchor anchorMax = uiObject.GetAnchorMax();
+		const UIAnchor pivot = uiObject.GetPivot();
+
+		const float anchorLeft = parentBounds.x + parentBounds.width * anchorMin.x;
+		const float anchorTop = parentBounds.y + parentBounds.height * anchorMin.y;
+		const float anchorRight = parentBounds.x + parentBounds.width * anchorMax.x;
+		const float anchorBottom = parentBounds.y + parentBounds.height * anchorMax.y;
+
+		const bool stretchX = anchorMin.x != anchorMax.x;
+		const bool stretchY = anchorMin.y != anchorMax.y;
+		const float baseWidth = stretchX ? (anchorRight - anchorLeft) : 0.0f;
+		const float baseHeight = stretchY ? (anchorBottom - anchorTop) : 0.0f;
+
+		const float width = stretchX ? (baseWidth + local.width) : local.width;
+		const float height = stretchY ? (baseHeight + local.height) : local.height;
+
+		UIRect world;
+		world.width = width;
+		world.height = height;
+		world.x = anchorLeft + local.x - width * pivot.x;
+		world.y = anchorTop + local.y - height * pivot.y;
+
+		cache[name] = world;
+		visiting.erase(name);
+		return world;
+	}
+
+	void ApplyAnchorLayout(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		std::unordered_map<std::string, UIRect> cache;
+		std::unordered_set<std::string> visiting;
+		cache.reserve(uiMap.size());
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject)
+			{
+				continue;
+			}
+			const UIRect world = ResolveWorldBounds(name, uiMap, cache, visiting);
+			uiObject->SetBounds(world);
+		}
+	}
+
+	void ApplyResolutionScale(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+		const UISize& viewportSize,
+		const UISize& referenceResolution,
+		float& lastScale,
+		UISize& lastOffset,
+		bool& hasScaleState)
+	{
+		constexpr float kMinScale = 0.001f;
+
+		if (referenceResolution.width <= 0.0f || referenceResolution.height <= 0.0f)
+		{
+			return;
+		}
+
+		if (viewportSize.width <= 0.0f || viewportSize.height <= 0.0f)
+		{
+			return;
+		}
+
+		const float scaleX = viewportSize.width / referenceResolution.width;
+		const float scaleY = viewportSize.height / referenceResolution.height;
+		const float uniformScale = std::min(scaleX, scaleY);
+		if (uniformScale < kMinScale)
+		{
+			return;
+		}
+
+		const float offsetX = (viewportSize.width - referenceResolution.width * uniformScale) * 0.5f;
+		const float offsetY = (viewportSize.height - referenceResolution.height * uniformScale) * 0.5f;
+
+		const float previousScale = hasScaleState ? lastScale : 1.0f;
+		const float previousOffsetX = hasScaleState ? lastOffset.width : 0.0f;
+		const float previousOffsetY = hasScaleState ? lastOffset.height : 0.0f;
+		const bool canUnscale = previousScale > 0.0f;
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject || !uiObject->HasBounds())
+			{
+				continue;
+			}
+
+			UIRect bounds = uiObject->GetBounds();
+			if (canUnscale)
+			{
+				bounds.x = (bounds.x - previousOffsetX) / previousScale;
+				bounds.y = (bounds.y - previousOffsetY) / previousScale;
+				bounds.width /= previousScale;
+				bounds.height /= previousScale;
+			}
+			bounds.x = bounds.x * uniformScale + offsetX;
+			bounds.y = bounds.y * uniformScale + offsetY;
+			bounds.width *= uniformScale;
+			bounds.height *= uniformScale;
+			uiObject->SetBounds(bounds);
+		}
+
+		lastScale = uniformScale;
+		lastOffset = UISize{ offsetX, offsetY };
+		hasScaleState = true;
+	}
+
+	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+		const UISize& viewportSize,
+		const UISize& referenceResolution,
+		float& lastScale,
+		UISize& lastOffset,
+		bool& hasScaleState,
+		const bool useAnchorLayout,
+		const bool useResolutionScale)
+	{
+// 		constexpr float kMinScale = 0.001f;
+// 		if (useResolutionScale && hasScaleState && lastScale >= kMinScale)
+// 		{
+// 			for (const auto& [name, uiObject] : uiMap)
+// 			{
+// 				if (!uiObject || !uiObject->HasBounds())
+// 				{
+// 					continue;
+// 				}
+// 
+// 				UIRect bounds = uiObject->GetBounds();
+// 				bounds.x = (bounds.x - lastOffset.width) / lastScale;
+// 				bounds.y = (bounds.y - lastOffset.height) / lastScale;
+// 				bounds.width /= lastScale;
+// 				bounds.height /= lastScale;
+// 				uiObject->SetBounds(bounds);
+// 			}
+// 		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplySizeBoxOverrides(*uiObject);
+			}
+		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplyScaleBoxLayout(*uiObject, uiMap);
+			}
+		}
+
+		if (useAnchorLayout)
+		{
+			ApplyAnchorLayout(uiMap);
+		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplyHorizontalBoxLayout(*uiObject, uiMap);
+			}
+		}
+
+// 		if (useResolutionScale)
+// 		{
+// 			ApplyResolutionScale(uiMap, viewportSize, referenceResolution, lastScale, lastOffset, hasScaleState);
+// 		}
+	}
+}
+
 
 UIManager::~UIManager()
 {
-
+	Reset();
 }
 
 
 void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Pressed))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::Pressed))
 	{
 		m_EventDispatcher->RemoveListener(EventType::Pressed, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIHovered))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIHovered))
 	{
 		m_EventDispatcher->RemoveListener(EventType::UIHovered, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDragged))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIDragged))
 	{
 		m_EventDispatcher->RemoveListener(EventType::UIDragged, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::UIDoubleClicked))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIDoubleClicked))
 	{
 		m_EventDispatcher->RemoveListener(EventType::UIDoubleClicked, this);
 	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->FindListeners(EventType::Released))
+	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::Released))
 	{
 		m_EventDispatcher->RemoveListener(EventType::Released, this);
 	}
 
 	m_EventDispatcher = eventDispatcher;
+
+	if (!m_EventDispatcher)
+		return;
+
 	m_EventDispatcher->AddListener(EventType::Pressed, this);
 	m_EventDispatcher->AddListener(EventType::UIHovered, this);
 	m_EventDispatcher->AddListener(EventType::UIDragged, this);
@@ -82,6 +398,8 @@ void UIManager::Update(float deltaTime)
 	{
 		pair.second->Update(deltaTime);
 	}
+
+	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
 }
 
 std::shared_ptr<UIObject> UIManager::FindUIObject(const std::string& sceneName, const std::string& objectName)
@@ -109,107 +427,100 @@ void UIManager::OnEvent(EventType type, const void* data)
 		return;
 
 	auto& uiMap = it->second;
-	auto mouseData = static_cast<const Events::MouseState*>(data);
+	ApplyLayoutOverrides(uiMap, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
+	UpdateSortedUI(uiMap);
+
+	const auto* rawMouseData = static_cast<const Events::MouseState*>(data);
+	Events::MouseState scaledMouseData = rawMouseData ? *rawMouseData : Events::MouseState{};
+
+	if (rawMouseData && m_UseResolutionScale && m_HasResolutionScaleState && m_LastResolutionScale > 0.0f)
+	{
+		scaledMouseData.pos.x = static_cast<LONG>(scaledMouseData.pos.x * m_LastResolutionScale + m_LastResolutionOffset.width);
+		scaledMouseData.pos.y = static_cast<LONG>(scaledMouseData.pos.y * m_LastResolutionScale + m_LastResolutionOffset.height);
+	}
+
+	const auto* mouseData = rawMouseData ? &scaledMouseData : nullptr;
+	auto sendToHitUIs = [&](EventType eventType, UIObject* skipUi = nullptr, bool requireHit = true) {
+		bool handledAny = false;
+
+		for (auto* ui : m_SortedUI)
+		{
+			if (!ui || ui == skipUi || !ui->IsVisible())
+				continue;
+			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
+				continue;
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
+				continue;
+			if (requireHit && (!mouseData || !ui->HitCheck(mouseData->pos)))
+				continue;
+
+			if (SendEventToUI(ui, eventType, mouseData))
+			{
+				handledAny = true;
+			}
+		}
+
+		if (handledAny && rawMouseData)
+			rawMouseData->handled = true;
+
+		return handledAny;
+	};
 
 	if (type == EventType::Pressed)
 	{
 		m_ActiveUI = nullptr;
-		for (auto& pair : uiMap)
+		bool handledAny = false;
+
+		for (auto* ui : m_SortedUI)
 		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
+			if (!ui || !ui->IsVisible())
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!(ui->hasButton || ui->hasSlider))
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
 				continue;
-			if (!ui->HitCheck(mouseData->pos))
+			if (!mouseData || !ui->HitCheck(mouseData->pos))
 				continue;
 
-			m_ActiveUI = ui.get();
-			if (mouseData)
-				mouseData->handled = true;
-			SendEventToUI(m_ActiveUI, type, data);
-			break;
+			if (SendEventToUI(ui, type, mouseData))
+			{
+				if (!m_ActiveUI && (ui->hasButton || ui->hasSlider))
+					m_ActiveUI = ui;
+				if (rawMouseData)
+					rawMouseData->handled = true;
+				handledAny = true;
+			}
 		}
+
+		if (handledAny && rawMouseData)
+			rawMouseData->handled = true;
 	}
 	else if (type == EventType::UIDragged || type == EventType::Released)
 	{
+		bool handled = false;
 		if (m_ActiveUI)
 		{
-			if (mouseData)
-				mouseData->handled = true;
-			if (type == EventType::UIDragged)
-			{
-				SendEventToUI(m_ActiveUI, EventType::UIDragged, data);
-			}
-			else
-			{
-				SendEventToUI(m_ActiveUI, type, data);
-			}
-			if (type == EventType::Released)
-				m_ActiveUI = nullptr;
+			handled = SendEventToUI(m_ActiveUI, type == EventType::UIDragged ? EventType::UIDragged : type, mouseData);
 		}
-	}
-	else if (type == EventType::Released)
-	{
-		for (auto& pair : uiMap)
-		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
-				continue;
-			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-				continue;
-			if (!(ui->hasButton || ui->hasSlider))
-				continue;
-			if (!ui->HitCheck(mouseData->pos))
-				continue;
 
-			if (mouseData)
-				mouseData->handled = true;
-			break;
+		const bool handledByHit = sendToHitUIs(type == EventType::UIDragged ? EventType::UIDragged : type, m_ActiveUI);
+		handled = handled || handledByHit;
+		if (handled && rawMouseData)
+		{
+			rawMouseData->handled = true;
+		}
+		if (type == EventType::Released)
+		{
+			m_ActiveUI = nullptr;
 		}
 	}
 	else if (type == EventType::UIDoubleClicked)
 	{
-		for (auto& pair : uiMap)
-		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
-				continue;
-			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-				continue;
-			if (!(ui->hasButton || ui->hasSlider))
-				continue;
-			if (!ui->HitCheck(mouseData->pos))
-				continue;
-
-			if (mouseData)
-				mouseData->handled = true;
-			SendEventToUI(ui.get(), EventType::UIDoubleClicked, data);
-			break;
-		}
+		sendToHitUIs(EventType::UIDoubleClicked);
 	}
 	else if (type == EventType::UIHovered)
 	{
-		// Hover는 모든 UI에 전달, 내부에서 입장/이탈 상태 관리
-		bool hitAny = false;
-		for (auto& pair : uiMap)
-		{
-			auto& ui = pair.second;
-			if (!ui->IsVisible())
-				continue;
-			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
-				continue;
-			if (!ui->hasButton)
-				continue;
-			if (!hitAny && ui->HitCheck(mouseData->pos))
-				hitAny = true;
-
-			SendEventToUI(ui.get(), type, data);
-		}
-		if (hitAny && mouseData)
-			mouseData->handled = true;
+		sendToHitUIs(EventType::UIHovered, nullptr, false);
 	}
 }
 
@@ -239,8 +550,10 @@ void UIManager::UpdateSortedUI(const std::unordered_map<std::string, std::shared
 		});
 }
 
-void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
+bool UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
+	bool handled = false;
+
 	if (ui->hasButton)
 	{
 		auto buttons = ui->GetComponents<UIButtonComponent>();
@@ -249,19 +562,33 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 			if (!button)
 				continue;
 
+			const bool isEnabled = button->GetIsEnabled();
+
 			if (type == EventType::Pressed)
 			{
-				button->HandlePressed();
+				if (isEnabled)
+				{
+					button->HandlePressed();
+					handled = true;
+				}
 			}
 			else if (type == EventType::Released)
 			{
-				button->HandleReleased();
+				if (isEnabled)
+				{
+					button->HandleReleased();
+					handled = true;
+				}
 			}
 			else if (type == EventType::UIHovered)
 			{
 				const auto mouseData = static_cast<const Events::MouseState*>(data);
 				const bool isHovered = ui->HitCheck(mouseData->pos);
-				button->HandleHover(isHovered);
+				if (isEnabled)
+				{
+					button->HandleHover(isHovered);
+					handled = true;
+				}
 			}
 		}
 		if (ui->hasSlider)
@@ -304,30 +631,41 @@ void UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 					}
 					normalizedValue = std::clamp(normalizedValue, 0.0f, 1.0f);
 					slider->HandleDrag(normalizedValue);
+					handled = true;
 				}
 				else if (type == EventType::Released)
 				{
 					slider->HandleReleased();
+					handled = true;
 				}
 			}
 		}
 		if (ui->hasUIFSM)
 		{
 			auto* fsm = ui->GetComponent<UIFSMComponent>();
-			if (fsm)
+			if (!fsm)
 			{
-				if (type == EventType::UIHovered)
+				return handled;
+			}
+			if (!fsm->ShouldHandleEvent(type, data))
+			{
+				return handled;
+			}
+
+			if (type == EventType::UIHovered)
+			{
+				const auto mouseData = static_cast<const Events::MouseState*>(data);
+				if (!ui->HitCheck(mouseData->pos))
 				{
-					const auto mouseData = static_cast<const Events::MouseState*>(data);
-					if (!ui->HitCheck(mouseData->pos))
-					{
-						return;
-					}
-					fsm->OnEvent(type, data);
+					return handled;
 				}
 			}
+			fsm->OnEvent(type, data);
+			handled = true;
 		}
 	}
+
+	return handled;
 }
 
 void UIManager::RefreshUIListForCurrentScene()
@@ -347,7 +685,7 @@ void UIManager::RefreshUIListForCurrentScene()
 	m_LastHoveredUI = nullptr;
 }
 
-void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
+void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 {
 	frameData.uiElements.clear();
 	frameData.uiTexts.clear();
@@ -355,6 +693,8 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 	auto it = m_UIObjects.find(m_CurrentSceneName);
 	if (it == m_UIObjects.end())
 		return;
+
+	ApplyLayoutOverrides(it->second, m_ViewportSize, m_ReferenceResolution, m_LastResolutionScale, m_LastResolutionOffset, m_HasResolutionScaleState, m_UseAnchorLayout, m_UseResolutionScale);
 
 	for (const auto& [name, uiObject] : it->second)
 	{
@@ -366,9 +706,21 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 		const auto& bounds = uiObject->GetBounds();
 		const int baseZOrder = uiObject->GetZOrder();
 		const auto* imageComponent = uiObject->GetComponent<UIImageComponent>();
+		auto* progressComponent = uiObject->GetComponent<UIProgressBarComponent>();
+		auto* sliderComponent = uiObject->GetComponent<UISliderComponent>();
+		auto* buttonComponent = uiObject->GetComponent<UIButtonComponent>();
+		auto* textComponent = uiObject->GetComponent<UITextComponent>();
+		const bool hasVisualElement = imageComponent || progressComponent || sliderComponent || buttonComponent;
+		if (!hasVisualElement && !textComponent)
+		{
+			continue;
+		}
 
 		auto uiComp = uiObject->GetComponent<UIComponent>();
-		const float opacity = uiComp ? uiComp->GetOpacity() : 1.0f;
+		auto resolveOpacity = [](const std::shared_ptr<UIObject> uiObject)
+			{
+				return uiObject ? uiObject->GetOpacity() : 1.0f;
+			};
 
 		auto applyOverrides = [&](RenderData::UIElement& element,
 			const TextureHandle& texture,
@@ -403,7 +755,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					image->GetPixelShaderHandle());
 			};
 
-		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image)
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float opacity, float progress = 1.0f, float progressDirection = 0.0f, const TextureHandle& maskTexture = TextureHandle::Invalid())
 			{
 				RenderData::UIElement element{};
 				element.position = { rect.x, rect.y };
@@ -412,6 +764,9 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 				element.zOrder = zOrder;
 				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
 				element.opacity = opacity;
+				element.progress = progress;
+				element.progressDirection = progressDirection;
+				element.maskTextureHandle = maskTexture;
 				applyImageOverrides(element, image);
 				frameData.uiElements.push_back(element);
 			};
@@ -441,9 +796,11 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 				return fill;
 			};
 
-		if (auto* progress = uiObject->GetComponent<UIProgressBarComponent>())
+		const float opacity = resolveOpacity(uiObject);
+
+		if (auto* progress = progressComponent)
 		{
-			appendElement(bounds, baseZOrder, nullptr);
+			appendElement(bounds, baseZOrder, nullptr, 1.0f);
 			auto& backgroundElement = frameData.uiElements.back();
 			applyOverrides(backgroundElement,
 				progress->GetBackgroundTextureHandle(),
@@ -454,8 +811,22 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			const float percent = std::clamp(progress->GetPercent(), 0.0f, 1.0f);
 			if (percent > 0.0f)
 			{
-				UIRect fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
-				appendElement(fillRect, baseZOrder + 1, nullptr);
+				UIRect fillRect = bounds;
+				float progressValue = percent;
+				const bool useMaskTexture = progress->GetFillMaskTextureHandle().IsValid();
+
+				if (progress->GetFillMode() == UIProgressFillMode::Rect && !useMaskTexture)
+				{
+					fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
+				}
+
+				const UIFillDirection fillDirection = progress->GetFillDirection();
+				const bool isReverseFill = fillDirection == UIFillDirection::RightToLeft
+					|| fillDirection == UIFillDirection::BottomToTop;
+
+				const float progressDirection = static_cast<float>(fillDirection);
+				appendElement(fillRect, baseZOrder + 1, nullptr, opacity, progressValue, progressDirection, progress->GetFillMaskTextureHandle());
+
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,
 					progress->GetFillTextureHandle(),
@@ -464,9 +835,9 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					progress->GetFillPixelShaderHandle());
 			}
 		}
-		else if (auto* slider = uiObject->GetComponent<UISliderComponent>())
+		else if (auto* slider = sliderComponent)
 		{
-			appendElement(bounds, baseZOrder, nullptr);
+			appendElement(bounds, baseZOrder, nullptr, opacity);
 			auto& backgroundElement = frameData.uiElements.back();
 			applyOverrides(backgroundElement,
 				slider->GetBackgroundTextureHandle(),
@@ -478,7 +849,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			if (normalized > 0.0f)
 			{
 				UIRect fillRect = buildFillRect(bounds, normalized, slider->GetFillDirection());
-				appendElement(fillRect, baseZOrder + 1, nullptr);
+				appendElement(fillRect, baseZOrder + 1, nullptr, opacity);
 				auto& fillElement = frameData.uiElements.back();
 				applyOverrides(fillElement,
 					slider->GetFillTextureHandle(),
@@ -516,7 +887,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					handleRect.x = std::clamp(handleRect.x, bounds.x, bounds.x + bounds.width - handleSize);
 					handleRect.y = bounds.y + (bounds.height - handleSize) * 0.5f;
 				}
-				appendElement(handleRect, baseZOrder + 2, nullptr);
+				appendElement(handleRect, baseZOrder + 2, nullptr, opacity);
 				auto& handleElement = frameData.uiElements.back();
 				applyOverrides(handleElement,
 					slider->GetHandleTextureHandle(),
@@ -525,10 +896,10 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 					slider->GetHandlePixelShaderHandle());
 			}
 		}
-		else
+		else if (hasVisualElement)
 		{
-			appendElement(bounds, baseZOrder, imageComponent);
-			if (auto* button = uiObject->GetComponent<UIButtonComponent>())
+			appendElement(bounds, baseZOrder, imageComponent, opacity);
+			if (auto* button = buttonComponent)
 			{
 				auto& element = frameData.uiElements.back();
 
@@ -547,11 +918,12 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData) const
 			}
 		}
 
-		if (auto* textComp = uiObject->GetComponent<UITextComponent>())
+		if (auto* textComp = textComponent)
 		{
 			RenderData::UITextElement text{};
 			text.position = { bounds.x, bounds.y };
 			text.color = textComp->GetTextColor();
+			text.color.w = opacity;
 			text.fontSize = textComp->GetFontSize();
 			text.text = textComp->GetText();
 			frameData.uiTexts.push_back(std::move(text));
@@ -595,18 +967,27 @@ void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann:
 	auto& uiMap = m_UIObjects[sceneName];
 	uiMap.clear();
 
-	if (!data.is_array())
+	nlohmann::json objects = nlohmann::json::array();
+	if (data.is_array())
 	{
-		return;
+		objects = data;
+	}
+	else if (data.is_object())
+	{
+		if (data.contains("objects") && data["objects"].is_array())
+		{
+			objects = data["objects"];
+		}
 	}
 
-	for (const auto& entry : data)
+	for (const auto& entry : objects)
 	{
 		auto uiObject = std::make_shared<UIObject>(*m_EventDispatcher);
 		uiObject->Deserialize(entry);
 		uiObject->UpdateInteractableFlags();
 		uiMap[uiObject->GetName()] = uiObject;
 	}
+
 	UpdateSortedUI(uiMap);
 }
 
@@ -630,6 +1011,43 @@ void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann:
 
 void UIManager::Reset()
 {
+	SetEventDispatcher(nullptr);
 	m_UIObjects.clear();
 	m_ActiveUI = nullptr;
+}
+
+void UIManager::ClearSceneUI(const std::string& sceneName)
+{
+	auto itScene = m_UIObjects.find(sceneName);
+	if (itScene == m_UIObjects.end())
+	{
+		return;
+	}
+
+	auto& uiMap = itScene->second;
+	if (m_ActiveUI)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject && uiObject.get() == m_ActiveUI)
+			{
+				m_ActiveUI = nullptr;
+				break;
+			}
+		}
+	}
+
+	if (m_LastHoveredUI)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject && uiObject.get() == m_LastHoveredUI)
+			{
+				m_LastHoveredUI = nullptr;
+				break;
+			}
+		}
+	}
+
+	m_UIObjects.erase(itScene);
 }

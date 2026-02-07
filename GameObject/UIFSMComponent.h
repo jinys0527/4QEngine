@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include "FSMComponent.h"
 #include <unordered_map>
+#include "UIPrimitives.h"
+
+enum class Turn;
 
 struct UIFSMEventCallback
 {
@@ -26,6 +29,7 @@ public:
 	void Start() override;
 
 	void OnEvent(EventType type, const void* data) override;
+	bool ShouldHandleEvent(EventType type, const void* data) override;
 
 	using Callback = std::function<void(const std::string&, const void*)>;
 	using LegacyCallback = std::function<void(EventType, const void*)>;
@@ -50,6 +54,10 @@ private:
 	std::vector<UIFSMCallbackAction> m_CallbackActions;
 	std::unordered_map<std::string, Callback> m_Callbacks;
 	std::unordered_map<std::string, LegacyCallback> m_LegacyCallbacks;
+	std::optional<UIRect> m_CachedBounds;
 
+	bool m_HasTurnEndRequestAction = false;
+
+	void UpdateTurnEndButtonState(Turn turn);
 };
 

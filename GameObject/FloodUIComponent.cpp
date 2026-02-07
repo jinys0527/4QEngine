@@ -2,8 +2,10 @@
 #include "FloodSystemComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
+#include "UIProgressBarComponent.h"
 #include "Scene.h"
 #include "GameObject.h"
+#include <algorithm>
 
 REGISTER_UI_COMPONENT(FloodUIComponent)
 REGISTER_PROPERTY_READONLY(FloodUIComponent, DisplayedWaterLevel)
@@ -38,6 +40,14 @@ void FloodUIComponent::Update(float deltaTime)
 	m_DisplayedWaterLevel	 = m_FloodSystem->GetWaterLevel();
 	m_DisplayedTimeRemaining = m_FloodSystem->GetTurnRemaining();
 	m_DisplayedGameOver		 = m_FloodSystem->GetGameOver();
+
+	if (auto* owner = GetOwner())
+	{
+		if (auto* progress = owner->GetComponent<UIProgressBarComponent>())
+		{
+			progress->SetPercent(std::clamp(m_DisplayedWaterLevel, 0.0f, 1.0f));
+		}
+	}
 }
 
 void FloodUIComponent::OnEvent(EventType type, const void* data)

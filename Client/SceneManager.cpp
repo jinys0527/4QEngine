@@ -12,6 +12,7 @@
 #include "json.hpp"
 #include "CameraObject.h"
 #include "GameDataRepository.h"
+#include "InitiativeUIComponent.h"
 
 void SceneManager::Initialize()
 {
@@ -71,6 +72,11 @@ void SceneManager::Update(float deltaTime)
 		m_GameManager->Update(deltaTime);
 	}
 
+	if (m_UIManager)
+	{
+		m_UIManager->Update(deltaTime);
+	}
+
 	m_CurrentScene->Update(deltaTime);
 }
 
@@ -86,19 +92,20 @@ void SceneManager::Reset()
 {
 	if (m_GameManager)
 		m_GameManager->ClearEventDispatcher();
+	if (m_UIManager)
+		m_UIManager->Reset();
 	SetEventDispatcher(nullptr);
 	m_Scenes.clear();
 	m_CurrentScene.reset();
 }
 
-void SceneManager::Render()
+void SceneManager::Render(RenderData::FrameData& frameData)
 {
 	if (!m_CurrentScene)
 	{
 		return;
 	}
 
-	RenderData::FrameData frameData{};
 	m_CurrentScene->Render(frameData);
 	if (m_UIManager)
 	{
@@ -124,6 +131,28 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
+		if (m_UIManager && m_CurrentScene)
+		{
+			auto& uiMap = m_UIManager->GetUIObjects();
+			auto itScene = uiMap.find(m_CurrentScene->GetName());
+			if (itScene != uiMap.end())
+			{
+				for (const auto& [uiName, uiObject] : itScene->second)
+				{
+					if (!uiObject)
+					{
+						continue;
+					}
+
+					if (auto* initiative = uiObject->GetComponent<InitiativeUIComponent>())
+					{
+						initiative->DetachFromDispatcher();
+					}
+					uiObject->SetScene(nullptr);
+				}
+			}
+		}
+
 		if (m_GameManager && m_CurrentScene)
 		{
 			m_GameManager->CapturePlayerData(m_CurrentScene.get());
@@ -143,11 +172,13 @@ void SceneManager::SetCurrentScene(const std::string& name)
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 			m_GameManager->SetActiveScene(m_CurrentScene.get());
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
+			m_GameManager->TurnReset();
 		}
-// 
-// 		if (m_UIManager) {
-// 			m_UIManager->SetCurrentScene(name);
-// 		}
+		 
+ 		if (m_UIManager)
+		{
+ 			m_UIManager->SetCurrentScene(name);
+ 		}
 	}
 }
 
@@ -160,6 +191,29 @@ void SceneManager::ChangeScene(const std::string& name)
 {
 
 	if (m_CurrentScene) {
+		if (m_UIManager)
+		{
+			auto& uiMap = m_UIManager->GetUIObjects();
+			auto itScene = uiMap.find(m_CurrentScene->GetName());
+			if (itScene != uiMap.end())
+			{
+				for (const auto& [uiName, uiObject] : itScene->second)
+				{
+					if (!uiObject)
+					{
+						continue;
+					}
+
+					if (auto* initiative = uiObject->GetComponent<InitiativeUIComponent>())
+					{
+						initiative->DetachFromDispatcher();
+					}
+					uiObject->SetScene(nullptr);
+				}
+			}
+			m_UIManager->ClearSceneUI(m_CurrentScene->GetName());
+		}
+
 		if (m_GameManager)
 		{
 			m_GameManager->CapturePlayerData(m_CurrentScene.get());
@@ -180,10 +234,10 @@ void SceneManager::ChangeScene(const std::string& name)
 		}
 		SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
 		//UI 생기면 그때
-		//if (m_UIManager)
-		//{
-		//	m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
-		//}
+		if (m_UIManager)
+		{
+			m_UIManager->SetEventDispatcher(&m_CurrentScene->GetEventDispatcher());
+		}
 
 		if (m_GameManager)
 		{
@@ -307,6 +361,25 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 	if (!m_CurrentScene)
 	{
 		SetCurrentScene(loadedScene->GetName());
+	}
+
+	if (m_UIManager && j.contains("ui"))
+	{
+		m_UIManager->SetEventDispatcher(&loadedScene->GetEventDispatcher());
+		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
+		auto& uiMap = m_UIManager->GetUIObjects();
+		auto itScene = uiMap.find(loadedScene->GetName());
+		if (itScene != uiMap.end())
+		{
+			for (const auto& [name, uiObject] : itScene->second)
+			{
+				if (uiObject)
+				{
+					uiObject->SetScene(loadedScene.get());
+					uiObject->Start();
+				}
+			}
+		}
 	}
 
 	return true;

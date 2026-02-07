@@ -132,6 +132,8 @@ private:
 	nlohmann::json m_ObjectClipboard;
 	bool m_ObjectClipboardHasData = false;
 	bool m_ObjectClipboardIsOpaque = true;
+	nlohmann::json m_UIObjectClipboard;
+	bool m_UIObjectClipboardHasData = false;
 
 	// Floder View 변수
 	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음
@@ -151,6 +153,9 @@ private:
 	std::string m_SelectedUIObjectName;
 	std::unordered_set<std::string> m_SelectedUIObjectNames;
 	std::string m_LastSelectedUIObjectName;
+	std::array<char, 256> m_UIObjectNameBuffer{};
+	std::string m_HorizontalSlotCandidate;
+	std::string m_CanvasSlotCandidate;
 
 	std::unordered_map<std::string, std::string> m_UIButtonBindingTargets;
 	std::unordered_map<std::string, std::string> m_UISliderBindingTargets;

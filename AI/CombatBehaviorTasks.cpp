@@ -1,6 +1,7 @@
 ﻿#include "CombatBehaviorTasks.h"
 #include "Blackboard.h"
 #include "BlackboardKeys.h"
+#include "BTInstance.h"
 #include <iostream>
 
 bool GetBool(Blackboard& bb, const char* key, bool defaultValue = false)
@@ -117,9 +118,23 @@ BTStatus PatrolMoveTask::OnTick(BTInstance& inst, Blackboard& bb)
 }
 
 
+void EndTurnTask::OnEnter(BTInstance& inst, Blackboard& bb)
+{
+	(void)bb;
+	auto& memory = inst.GetTaskMemory(GetId());
+	memory.elapsed = 0.0f;
+}
+
 BTStatus EndTurnTask::OnTick(BTInstance& inst, Blackboard& bb)
 {
-	(void)inst; 
+	auto& memory = inst.GetTaskMemory(GetId());
+	memory.elapsed += inst.GetDeltaTime();
+	float delaySeconds = m_DelaySeconds;
+	bb.TryGet(BlackboardKeys::EndTurnDelay, delaySeconds);
+	if (memory.elapsed < delaySeconds)
+	{
+		return BTStatus::Running;
+	}
 	bb.Set(BlackboardKeys::EndTurnRequested, true);
 	return BTStatus::Success;
 }

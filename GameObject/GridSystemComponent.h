@@ -36,6 +36,7 @@ struct AxialCoord {
 class GridSystemComponent : public Component, public IEventListener {
 	friend class Editor;
 	friend class GameManager;
+	friend class EnemyMovementComponent;
 public:
 	static constexpr const char* StaticTypeName = "GridSystemComponent";
 	const char* GetTypeName() const override;

@@ -24,6 +24,10 @@ public:
 	const int&   GetAccuracyModifier() const		     { return m_AccuracyModifier;    }
 	void	     SetAccuracyModifier(const int& value)   { m_AccuracyModifier = value;   }
 
+	const int&   GetEnemyType() const					 { return m_EnemyType;			 }
+	void	     SetEnemyType(const int& value)			 { m_EnemyType = value;			 }
+
+
 	const int&   GetDiceRollCount() const				 { return m_DiceRollCount;		 }
 	void	     SetDiceRollCount(const int& value)		 { m_DiceRollCount = value;		 }
 
@@ -46,6 +50,7 @@ private:
 	int   m_Defense			   = 0;
 	int   m_InitiativeModifier = 0;
 	int   m_AccuracyModifier   = 0;
+	int   m_EnemyType = 0;
 	int   m_DiceRollCount      = 0;
 	int   m_MaxDiceValue       = 0;
 	int   m_AttackRange		   = 1;

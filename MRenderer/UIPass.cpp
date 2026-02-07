@@ -75,9 +75,59 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 		tint._12 = element.color.y;
 		tint._13 = element.color.z;
 		tint._14 = element.color.w * element.opacity;
+		tint._21 = element.progress;
+		tint._22 = element.progressDirection;
 		m_RenderContext.BCBuffer.mTextureMask = tint;
 
 		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+
+		ID3D11VertexShader* vertexShader = m_RenderContext.VS_UI.Get();
+		ID3D11PixelShader* pixelShader = m_RenderContext.PS_UI.Get();
+		if (element.useMaterialOverrides)
+		{
+			VertexShaderHandle vertexShaderHandle = VertexShaderHandle::Invalid();
+			PixelShaderHandle pixelShaderHandle = PixelShaderHandle::Invalid();
+
+			if (element.materialOverrides.shaderAsset.IsValid())
+			{
+				const auto& shaderAssets = m_AssetLoader.GetShaderAssets();
+				if (const auto* asset = shaderAssets.Get(element.materialOverrides.shaderAsset))
+				{
+					vertexShaderHandle = asset->vertexShader;
+					pixelShaderHandle = asset->pixelShader;
+				}
+			}
+
+			if (element.materialOverrides.vertexShader.IsValid())
+			{
+				vertexShaderHandle = element.materialOverrides.vertexShader;
+			}
+			if (element.materialOverrides.pixelShader.IsValid())
+			{
+				pixelShaderHandle = element.materialOverrides.pixelShader;
+			}
+
+			if (vertexShaderHandle.IsValid() && m_RenderContext.vertexShaders)
+			{
+				auto it = m_RenderContext.vertexShaders->find(vertexShaderHandle);
+				if (it != m_RenderContext.vertexShaders->end())
+				{
+					vertexShader = it->second.vertexShader.Get();
+				}
+			}
+
+			if (pixelShaderHandle.IsValid() && m_RenderContext.pixelShaders)
+			{
+				auto it = m_RenderContext.pixelShaders->find(pixelShaderHandle);
+				if (it != m_RenderContext.pixelShaders->end())
+				{
+					pixelShader = it->second.pixelShader.Get();
+				}
+			}
+		}
+
+		m_RenderContext.pDXDC->VSSetShader(vertexShader, nullptr, 0);
+		m_RenderContext.pDXDC->PSSetShader(pixelShader, nullptr, 0);
 
 		TextureHandle textureHandle = TextureHandle::Invalid();
 		if (element.useMaterialOverrides && element.materialOverrides.textureHandle.IsValid())
@@ -99,7 +149,24 @@ void UIPass::Execute(const RenderData::FrameData & frame)
 			srv = m_RenderContext.UIWhiteTexture.Get();
 		}
 
-		m_RenderContext.pDXDC->PSSetShaderResources(0, 1, &srv);
+		TextureHandle maskHandle = element.maskTextureHandle;
+		ID3D11ShaderResourceView* maskSrv = nullptr;
+		if (maskHandle.IsValid() && m_RenderContext.textures)
+		{
+			auto itMask = m_RenderContext.textures->find(maskHandle);
+			if (itMask != m_RenderContext.textures->end())
+			{
+				maskSrv = itMask->second.Get();
+			}
+		}
+		if (!maskSrv)
+		{
+			maskSrv = m_RenderContext.UIWhiteTexture.Get();
+		}
+
+		ID3D11ShaderResourceView* srvs[2] = { srv, maskSrv };
+
+		m_RenderContext.pDXDC->PSSetShaderResources(21, 2, srvs);
 		m_RenderContext.pDXDC->PSSetSamplers(0, 1, m_RenderContext.SState[SS::CLAMP].GetAddressOf());
 		m_RenderContext.pDXDC->DrawIndexed(m_RenderContext.UIQuadIndexCount, 0, 0);
 	}

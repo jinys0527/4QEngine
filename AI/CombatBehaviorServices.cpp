@@ -173,62 +173,67 @@ void AIRequestDispatchService::TickService(BTInstance& inst, Blackboard& bb, flo
 
 	// 전투 참여자가 아니면 글로벌 전투 이벤트(AIMoveRequested 등)를 쏘지 않는다.
 	// 비참여 적은 EnemyComponent에서 블랙보드 요청을 직접 소비해 순찰 이동한다.
-	if (!isInCombat || !isBattleActor)
+	if (isInCombat && isBattleActor)
 	{
-		return;
-	}
+		// 1) Move
+		bool moveRequested = false;
+		if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
+		{
+			m_Dispatcher->Dispatch(EventType::AIMoveRequested, nullptr);
+			bb.Set(BlackboardKeys::MoveRequested, false);
+		}
 
-	// 1) Move
-	bool moveRequested = false;
-	if (bb.TryGet(BlackboardKeys::MoveRequested, moveRequested) && moveRequested)
-	{
-		m_Dispatcher->Dispatch(EventType::AIMoveRequested, nullptr);
-		bb.Set(BlackboardKeys::MoveRequested, false);
-	}
+		// 2) RunOff Move
+		bool runOffMoveRequested = false;
+		if (bb.TryGet(BlackboardKeys::RequestRunOffMove, runOffMoveRequested) && runOffMoveRequested)
+		{
+			m_Dispatcher->Dispatch(EventType::AIRunOffMoveRequested, nullptr);
+			bb.Set(BlackboardKeys::RequestRunOffMove, false);
+		}
 
-	// 2) RunOff Move
-	bool runOffMoveRequested = false;
-	if (bb.TryGet(BlackboardKeys::RequestRunOffMove, runOffMoveRequested) && runOffMoveRequested)
-	{
-		m_Dispatcher->Dispatch(EventType::AIRunOffMoveRequested, nullptr);
-		bb.Set(BlackboardKeys::RequestRunOffMove, false);
-	}
+		// 3) Maintain Range
+		bool maintainRangeRequested = false;
+		if (bb.TryGet(BlackboardKeys::RequestMaintainRange, maintainRangeRequested) && maintainRangeRequested)
+		{
+			m_Dispatcher->Dispatch(EventType::AIMaintainRangeRequested, nullptr);
+			bb.Set(BlackboardKeys::RequestMaintainRange, false);
+		}
 
-	// 3) Maintain Range
-	bool maintainRangeRequested = false;
-	if (bb.TryGet(BlackboardKeys::RequestMaintainRange, maintainRangeRequested) && maintainRangeRequested)
-	{
-		m_Dispatcher->Dispatch(EventType::AIMaintainRangeRequested, nullptr);
-		bb.Set(BlackboardKeys::RequestMaintainRange, false);
-	}
+		bool meleeRequested = false;
+		if (bb.TryGet(BlackboardKeys::RequestMeleeAttack, meleeRequested) && meleeRequested)
+		{
+			//m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, nullptr);
+			int actorId = 0;
+			bb.TryGet(BlackboardKeys::ActorId, actorId);
+			const CombatAIRequestEvent eventData{ actorId };
+			m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, &eventData);
+			bb.Set(BlackboardKeys::RequestMeleeAttack, false);
+		}
 
-	bool meleeRequested = false;
-	if (bb.TryGet(BlackboardKeys::RequestMeleeAttack, meleeRequested) && meleeRequested)
-	{
-		//m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, nullptr);
-		int actorId = 0;
-		bb.TryGet(BlackboardKeys::ActorId, actorId);
-		const CombatAIRequestEvent eventData{ actorId };
-		m_Dispatcher->Dispatch(EventType::AIMeleeAttackRequested, &eventData);
-		bb.Set(BlackboardKeys::RequestMeleeAttack, false);
-	}
-
-	bool rangedRequested = false;
-	if (bb.TryGet(BlackboardKeys::RequestRangedAttack, rangedRequested) && rangedRequested)
-	{
-		//m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, nullptr);
-		int actorId = 0;
-		bb.TryGet(BlackboardKeys::ActorId, actorId);
-		const CombatAIRequestEvent eventData{ actorId };
-		m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, &eventData);
-		bb.Set(BlackboardKeys::RequestRangedAttack, false);
+		bool rangedRequested = false;
+		if (bb.TryGet(BlackboardKeys::RequestRangedAttack, rangedRequested) && rangedRequested)
+		{
+			//m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, nullptr);
+			int actorId = 0;
+			bb.TryGet(BlackboardKeys::ActorId, actorId);
+			const CombatAIRequestEvent eventData{ actorId };
+			m_Dispatcher->Dispatch(EventType::AIRangedAttackRequested, &eventData);
+			bb.Set(BlackboardKeys::RequestRangedAttack, false);
+		}
 	}
 
 	// 4) End Turn
 	bool endTurnRequested = false;
 	if (bb.TryGet(BlackboardKeys::EndTurnRequested, endTurnRequested) && endTurnRequested)
 	{
-		m_Dispatcher->Dispatch(EventType::AITurnEndRequested, nullptr);
+		if (isInCombat)
+		{
+			m_Dispatcher->Dispatch(EventType::AITurnEndRequested, nullptr);
+		}
+		else
+		{
+			bb.Set(BlackboardKeys::ExploreEndTurnRequested, true);
+		}
 		bb.Set(BlackboardKeys::EndTurnRequested, false);
 	}
 }

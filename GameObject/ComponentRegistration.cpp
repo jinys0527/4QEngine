@@ -48,6 +48,7 @@
 #include "PlayerDoorFSMComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
+#include "InitiativeUIComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -111,6 +112,7 @@ extern "C" {
 	void Link_FloodUIComponent();
 	void Link_PushNodeComponent();
 	void Link_ItemSpawnerComponent();
+	void Link_InitiativeUIComponent();
 }
 
 
@@ -186,5 +188,5 @@ void LinkEngineComponents() {
 	Link_FloodUIComponent();
 	Link_PushNodeComponent();
 	Link_ItemSpawnerComponent();
-
+	Link_InitiativeUIComponent();
 }

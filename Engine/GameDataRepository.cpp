@@ -173,6 +173,7 @@ bool GameDataRepository::LoadEnemiesFromFile(const std::string& path, std::strin
 		EnemyDefinition enemy{};
 		enemy.id				 = ParseInt(GetField(row, header, "id"), 0);
 		enemy.name				 = GetField(row, header, "name");
+		enemy.type				 = ParseInt(GetField(row, header, "type"), 0);
 		enemy.health			 = ParseInt(GetField(row, header, "health"), 0);
 		enemy.initiativeModifier = ParseInt(GetField(row, header, "initiativeModifier"), 0);
 		enemy.defense			 = ParseInt(GetField(row, header, "defense"), 0);

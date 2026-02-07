@@ -23,6 +23,10 @@ public:
 	void AddUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
 	{
 		m_UIObjects[sceneName][uiObject->m_Name] = uiObject;
+		if (uiObject)
+		{
+			uiObject->Start();
+		}
 	}
 
 	void RemoveUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
@@ -56,11 +60,12 @@ public:
 
 	//void Render(std::vector<UIRenderInfo>& renderInfo, std::vector<UITextInfo>& textInfo);
 
-	void SendEventToUI(UIObject* ui, EventType type, const void* data);
+	bool SendEventToUI(UIObject* ui, EventType type, const void* data);
 
 	void Start();
 
 	void Reset();
+	void ClearSceneUI(const std::string& sceneName);
 
 	void SetCurrentScene(std::string currentSceneName)
 	{
@@ -71,6 +76,12 @@ public:
 	{
 		return m_CurrentSceneName;
 	}
+
+	void SetViewportSize       (const UISize& size)			   { m_ViewportSize = size;						}
+	void SetReferenceResolution(const UISize& size)			   { m_ReferenceResolution = size;				}
+	void SetUseAnchorLayout	   (const bool useAnchorLayout)    { m_UseAnchorLayout = useAnchorLayout;		}
+	void SetUseResolutionScale (const bool useResolutionScale) { m_UseResolutionScale = useResolutionScale; }
+
 
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>>& GetUIObjects()
 	{
@@ -113,7 +124,7 @@ public:
 	bool ClearSliderBinding(const std::string& sceneName, const std::string& sliderName);
 	const std::unordered_map<std::string, std::string>& GetButtonBindings(const std::string& sceneName) const;
 	const std::unordered_map<std::string, std::string>& GetSliderBindings(const std::string& sceneName) const;
-	void BuildUIFrameData(RenderData::FrameData& frameData) const;
+	void BuildUIFrameData(RenderData::FrameData& frameData);
 	bool RegisterHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName, const HorizontalBoxSlot& slot);
 	bool RemoveHorizontalSlot(const std::string& sceneName, const std::string& horizontalName, const std::string& childName);
 	bool ClearHorizontalSlots(const std::string& sceneName, const std::string& horizontalName);
@@ -122,6 +133,7 @@ public:
 	bool RemoveCanvasSlot(const std::string& sceneName, const std::string& canvasName, const std::string& childName);
 	bool ClearCanvasSlots(const std::string& sceneName, const std::string& canvasName);
 	bool ApplyCanvasLayout(const std::string& sceneName, const std::string& canvasName);
+	bool RenameUIObject(const std::string& sceneName, const std::string& oldName, const std::string& newName);
 
 	void SerializeSceneUI(const std::string& sceneName, nlohmann::json& out) const;
 	void DeserializeSceneUI(const std::string& sceneName, const nlohmann::json& data);
@@ -136,6 +148,13 @@ private:
 	int m_FullScreenZ = -1;
 	EventDispatcher* m_EventDispatcher;
 	std::string m_CurrentSceneName;
+	UISize m_ViewportSize		{ 2560.0f, 1600.0f };
+	UISize m_ReferenceResolution{ 2560.0f, 1600.0f };
+	float m_LastResolutionScale = 1.0f;
+	UISize m_LastResolutionOffset{ 0.0f, 0.0f };
+	bool m_HasResolutionScaleState = false;
+	bool m_UseAnchorLayout    = false;
+	bool m_UseResolutionScale = true;
 	void DispatchToTopUI(EventType type, const void* data);
 	void RemoveBindingsForObject(const std::string& sceneName, const std::string& objectName);
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>> m_UIObjects;

@@ -1,4 +1,6 @@
-﻿//editor
+﻿#include "InitiativeUIComponent.h"
+#include "InitiativeUIComponent.h"
+//editor
 #pragma once
 #include <memory>
 #include <unordered_map>

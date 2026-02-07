@@ -248,6 +248,7 @@ void UIObject::Deserialize(const nlohmann::json& j)
 	{
 		baseComponent->SetVisible(m_IsVisible);
 		baseComponent->SetZOrder(m_ZOrder);
+		SetOpacityFromComponent(baseComponent->GetOpacity());
 	}
 }
 
@@ -274,7 +275,7 @@ bool UIObject::HitCheck(const POINT& pos)
 		return false;
 
 	if (!m_HasBounds)
-		return true;
+		return false;
 
 	return pos.x >= m_Bounds.x
 		&& pos.y >= m_Bounds.y
@@ -303,6 +304,24 @@ void UIObject::SetIsVisible(bool isVisible)
 void UIObject::SetIsVisibleFromComponent(bool isVisible)
 {
 	m_IsVisible = isVisible;
+}
+
+void UIObject::SetOpacity(float opacity)
+{
+	m_Opacity = opacity;
+
+	if (auto* baseComponent = GetComponent<UIComponent>())
+	{
+		if (baseComponent->GetOpacity() != opacity)
+		{
+			baseComponent->SetOpacity(opacity);
+		}
+	}
+}
+
+void UIObject::SetOpacityFromComponent(float opacity)
+{
+	m_Opacity = opacity;
 }
 
 bool UIObject::IsVisible()
