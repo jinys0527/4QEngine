@@ -82,6 +82,7 @@ private:
 	bool      m_HasViewportRect = false;
 	DirectX::XMFLOAT2 m_UIReferenceSize{ 0.0f, 0.0f };
 	bool      m_Enabled = true;
+	int       m_PendingWheelDelta = 0;
 
 
 	EventDispatcher*       m_EventDispatcher;				// 참조 보관

@@ -14,7 +14,7 @@ public:
 	static constexpr const char* StaticTypeName = "CameraLogicComponent";
 	const char* GetTypeName() const override;
 
-	CameraLogicComponent() =default;
+	CameraLogicComponent() = default;
 	virtual ~CameraLogicComponent();
 
 	void SetMaxZoom(const float& value) { m_MaxZoom = value; }
@@ -28,6 +28,7 @@ public:
 	void Start() override;
 	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
+	void CamZoom(); 
 
 private:
 
@@ -36,6 +37,8 @@ private:
 	float m_MoveSpeed = 2.0f;
 	float m_ZoomSpeed = 2.0f;
 
-	TransformComponent* m_Transform;
-	CameraComponent*    m_Camera;
+	TransformComponent* m_Transform = nullptr;
+	CameraComponent*    m_Camera = nullptr;
+	TransformComponent* m_PlayerTransform = nullptr;
+	float m_PendingZoomInput = 0.0f;
 };
