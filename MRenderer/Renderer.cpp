@@ -313,7 +313,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame)
 
 	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
 	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
-	m_Pipeline.Execute(frame);
+	m_Pipeline.Execute(frame, m_pDXDC.Get());
 
 }
 
@@ -327,7 +327,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 
 	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
 	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
-	m_Pipeline.Execute(frame);
+	m_Pipeline.Execute(frame, m_pDXDC.Get());
 
 	ResolveImguiEditTargetIfNeeded();
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
@@ -338,7 +338,7 @@ void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetConte
 	m_RenderContext.isEditCam = m_IsEditCam;
 
 	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
-	m_Pipeline.Execute(frame);
+	m_Pipeline.Execute(frame, m_pDXDC.Get());
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
 }

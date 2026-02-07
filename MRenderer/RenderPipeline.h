@@ -16,7 +16,7 @@ public:
 	bool RemovePass(std::string_view name);
 	RenderPass* FindPass(std::string_view name);
 	const RenderPass* FindPass(std::string_view name) const;
-	void Execute(const RenderData::FrameData& frame);
+	void Execute(const RenderData::FrameData& frame, ID3D11DeviceContext* dxdc);
 
 	size_t GetPassCount() const { return m_Passes.size(); }
 	void Clear();
