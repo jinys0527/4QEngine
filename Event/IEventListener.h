@@ -69,6 +69,8 @@ enum class EventType
 
 	//Player
 	PlayerMove,
+	PlayerAttack,
+	EnemyAttack,
 	PlayerEquipFailed,
 };
 

@@ -55,7 +55,7 @@ const RenderPass* RenderPipeline::FindPass(std::string_view name) const
 	return nullptr;
 }
 
-void RenderPipeline::Execute(const RenderData::FrameData& frame)
+void RenderPipeline::Execute(const RenderData::FrameData& frame, ID3D11DeviceContext* dxdc)
 {
 	for (const auto& pass : m_Passes)
 	{
@@ -65,6 +65,8 @@ void RenderPipeline::Execute(const RenderData::FrameData& frame)
 		}
 
 		pass->Setup(frame);
+		ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+		dxdc->PSSetShaderResources(0, 128, nullSRVs);
 		pass->Execute(frame);
 	}
 }

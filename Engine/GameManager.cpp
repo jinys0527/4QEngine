@@ -2,6 +2,7 @@
 #include <iostream>
 #include "GameManager.h"
 #include "CombatEvents.h"
+#include "Event.h"
 #include "Scene.h"
 #include "GameObject.h"
 #include "PlayerComponent.h"
@@ -1277,6 +1278,11 @@ void GameManager::ResolveEnemyAttack(int actorId)
 	std::cout << "[Combat] Enemy ACC mod=" << attackProfile.attackModifier
 		<< " Player DEF=" << defenseProfile.defense << std::endl;
 	CombatRollResult result = resolver->ResolveAttack(attackProfile, defenseProfile, *diceSystem, logger);
+	const Events::ActorEvent enemyAttackEvent{ actorId };
+	if (m_EventDispatcher)
+	{
+		m_EventDispatcher->Dispatch(EventType::EnemyAttack, &enemyAttackEvent);
+	}
 	if (result.hit != HitResult::Miss && result.damage > 0)
 	{
 		const int nextHp = std::max(0, prevHp - result.damage);

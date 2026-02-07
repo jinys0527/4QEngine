@@ -61,8 +61,8 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	m_RenderContext.DrawFullscreenQuad();
 	//터레인 끝
 
-	m_RenderContext.UpdateGrid(frame);
-	m_RenderContext.DrawGrid();
+	//m_RenderContext.UpdateGrid(frame);
+	//m_RenderContext.DrawGrid();
 
 	//임시 벽뚫 이미지 바인딩
 	m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());
