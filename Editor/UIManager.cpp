@@ -919,7 +919,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 					image->GetPixelShaderHandle());
 			};
 
-		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float opacity, float progress = 1.0f, float progressDirection = 0.0f, const TextureHandle& maskTexture = TextureHandle::Invalid()))
+		auto appendElement = [&](const UIRect& rect, int zOrder, const UIImageComponent* image, float opacity, float progress = 1.0f, float progressDirection = 0.0f, const TextureHandle& maskTexture = TextureHandle::Invalid())
 			{
 				RenderData::UIElement element{};
 				element.position = { rect.x, rect.y };
