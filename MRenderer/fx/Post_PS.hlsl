@@ -167,7 +167,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 중심부 에너지 강화
     e0.rgb *= 2.0;
 
-// 최종 합성
+// 최종 합성   
     float4 emissive =
       e0 * 1.0
     + e1 * 1.2
@@ -177,7 +177,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 // 전체 emissive 세기
     //emissive.rgb *= 1.5;
 
-    return finalBlur + emissive;
+    //return finalBlur + emissive;
     
     return RTView;
     

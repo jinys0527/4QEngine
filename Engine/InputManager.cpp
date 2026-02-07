@@ -71,6 +71,22 @@ void InputManager::Update()
 
 	m_KeysDownPrev = m_KeysDown;
 
+	if (m_PendingWheelDelta != 0)
+	{
+		int wheelDelta = m_PendingWheelDelta;
+		m_PendingWheelDelta = 0;
+		while (wheelDelta >= WHEEL_DELTA)
+		{
+			m_EventDispatcher->Dispatch(EventType::MouseWheelUp, nullptr);
+			wheelDelta -= WHEEL_DELTA;
+		}
+		while (wheelDelta <= -WHEEL_DELTA)
+		{
+			m_EventDispatcher->Dispatch(EventType::MouseWheelDown, nullptr);
+			wheelDelta += WHEEL_DELTA;
+		}
+	}
+
 	const ULONGLONG now = GetTickCount64();
 
 	auto makeUIMouseState = [&]() {
@@ -292,6 +308,11 @@ bool InputManager::OnHandleMessage(const MSG& msg)
 		HandleMsgMouse(msg);
 	}
 	break;
+	case WM_MOUSEWHEEL:
+	{
+		m_PendingWheelDelta += GET_WHEEL_DELTA_WPARAM(msg.wParam);
+	}
+	break;
 
 	default:
 		return false; // Unhandled message
@@ -442,4 +463,5 @@ void InputManager::ResetState()
 	m_Mouse     = Events::MouseState{};
 	m_MousePrev = Events::MouseState{};
 	m_SuppressDragAfterDoubleClick = false;
+	m_PendingWheelDelta = 0;
 }
