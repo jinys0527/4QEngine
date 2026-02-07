@@ -977,14 +977,15 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 			{
 				UIRect fillRect = bounds;
 				float progressValue = percent;
-				if (progress->GetFillMode() == UIProgressFillMode::Rect)
+				const bool useMaskTexture = progress->GetFillMaskTextureHandle().IsValid();
+				if (progress->GetFillMode() == UIProgressFillMode::Rect && !useMaskTexture)
 				{
 					fillRect = buildFillRect(bounds, percent, progress->GetFillDirection());
 				}
 				const UIFillDirection fillDirection = progress->GetFillDirection();
 				const bool isReverseFill = fillDirection == UIFillDirection::RightToLeft
 					|| fillDirection == UIFillDirection::BottomToTop;
-				const float progressDirection = isReverseFill ? 1.0f : 0.0f;
+				const float progressDirection = static_cast<float>(fillDirection);
 				appendElement(fillRect, baseZOrder + 1, nullptr, opacity, progressValue, progressDirection, progress->GetFillMaskTextureHandle());
 
 				auto& fillElement = frameData.uiElements.back();
