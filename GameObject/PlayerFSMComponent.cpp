@@ -312,7 +312,10 @@ void RegisterPlayerFSMDefinitions()
 	actionRegistry.RegisterAction({
 		"Shop_ItemSelect",
 		"Shop",
-		{}
+		{
+			{ "price", "int", -1, false },
+			{ "itemId", "int", -1, false }
+		}
 		});
 
 	// Shop SpaceCheck
@@ -466,7 +469,7 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Shop_SpaceFail",    "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_MoneyOk",      "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_MoneyFail",    "Shop" });
-	eventRegistry.RegisterEvent({ "Shop_Complete",     "Shop" });
+	eventRegistry.RegisterEvent({ "Shop_BuyComplete",  "Shop" });
 	eventRegistry.RegisterEvent({ "Shop_Close",        "Shop" });
 
 	eventRegistry.RegisterEvent({ "Door_Select",   "Door" });
