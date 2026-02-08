@@ -25,6 +25,8 @@
 #include "HorizontalBox.h"
 #include "EnemyMovementComponent.h"
 #include "Canvas.h"
+#include "UIDiceDisplayTypes.h"
+#include "UIDicePanelTypes.h"
 
 #define DRAG_SPEED 0.01f
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
@@ -953,6 +955,83 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 
 	static std::unordered_map<const void*, RotationUIState> rotationUiState;
 
+	auto resolveTextureDisplay = [&assetLoader](const TextureHandle& handle) -> std::string
+		{
+			const std::string* key = assetLoader.GetTextures().GetKey(handle);
+			const std::string* displayName = assetLoader.GetTextures().GetDisplayName(handle);
+			if (displayName && !displayName->empty())
+			{
+				return *displayName;
+			}
+			if (key && !key->empty())
+			{
+				return *key;
+			}
+			return "<None>";
+		};
+
+	auto drawTextureHandle = [&](const char* label, TextureHandle& value) -> bool
+		{
+			bool updated = false;
+			const std::string display = resolveTextureDisplay(value);
+			const std::string buttonLabel = display + "##" + label;
+
+			ImGui::TextUnformatted(label);
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+				{
+					const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
+					value = dropped;
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			const std::string clearLabel = std::string("Clear##") + label;
+			if (ImGui::Button(clearLabel.c_str()))
+			{
+				value = TextureHandle::Invalid();
+				updated = true;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+			return updated;
+		};
+
+	auto drawAnchor = [&](const char* label, UIAnchor& value) -> bool
+		{
+			float data[2] = { value.x, value.y };
+			if (ImGui::DragFloat2(label, data, DRAG_SPEED, 0.0f, 1.0f))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				return true;
+			}
+			return false;
+		};
+
+	auto drawRect = [&](const char* label, UIRect& value) -> bool
+		{
+			float data[4] = { value.x, value.y, value.width, value.height };
+			if (ImGui::DragFloat4(label, data, DRAG_SPEED))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				value.width = data[2];
+				value.height = data[3];
+				return true;
+			}
+			return false;
+		};
+
+
 	if (typeInfo == typeid(int))
 	{
 		int value = 0;
@@ -1146,6 +1225,35 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+	if (typeInfo == typeid(UIAnchor))
+	{
+		UIAnchor value{};
+		property.GetValue(component, &value);
+		if (drawAnchor(property.GetName().c_str(), value))
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIRect))
+	{
+		UIRect value{};
+		property.GetValue(component, &value);
+		if (drawRect(property.GetName().c_str(), value))
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+
 	// 카메라
 	if (typeInfo == typeid(Viewport))
 	{
@@ -1313,6 +1421,184 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			label += "<None>";
 		}
 		ImGui::TextUnformatted(label.c_str());
+		return result;
+	}
+
+	if (typeInfo == typeid(std::array<TextureHandle, 10>))
+	{
+		std::array<TextureHandle, 10> value{};
+		property.GetValue(component, &value);
+		bool updated = false;
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string label = "Digit " + std::to_string(i);
+			updated |= drawTextureHandle(label.c_str(), value[i]);
+			ImGui::PopID();
+		}
+		ImGui::Unindent();
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIDiceLayout>))
+	{
+		std::vector<UIDiceLayout> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string header = value[i].type.empty() ? "Layout" : value[i].type;
+			if (ImGui::TreeNode("Layout", "%s %zu", header.c_str(), i))
+			{
+				std::array<char, 256> buffer{};
+				CopyStringToBuffer(value[i].type, buffer);
+				if (ImGui::InputText("Type", buffer.data(), buffer.size()))
+				{
+					value[i].type = buffer.data();
+					updated = true;
+				}
+				updated |= drawTextureHandle("DiceTexture", value[i].diceTexture);
+
+				if (ImGui::TreeNode("TensSlot"))
+				{
+					if (value[i].tens.anchor.x != 0.0f || value[i].tens.anchor.y != 0.0f)
+					{
+						value[i].tens.anchor = UIAnchor{ 0.0f, 0.0f };
+						updated = true;
+					}
+					if (value[i].tens.pivot.x != 0.0f || value[i].tens.pivot.y != 0.0f)
+					{
+						value[i].tens.pivot = UIAnchor{ 0.0f, 0.0f };
+						updated = true;
+					}
+					ImGui::TextUnformatted("Anchor/Pivot: (0, 0) fixed");
+					updated |= drawRect("Bounds", value[i].tens.bounds);
+					ImGui::TreePop();
+				}
+				if (ImGui::TreeNode("OnesSlot"))
+				{
+					if (value[i].ones.anchor.x != 0.0f || value[i].ones.anchor.y != 0.0f)
+					{
+						value[i].ones.anchor = UIAnchor{ 0.0f, 0.0f };
+						updated = true;
+					}
+					if (value[i].ones.pivot.x != 0.0f || value[i].ones.pivot.y != 0.0f)
+					{
+						value[i].ones.pivot = UIAnchor{ 0.0f, 0.0f };
+						updated = true;
+					}
+					ImGui::TextUnformatted("Anchor/Pivot: (0, 0) fixed");
+					updated |= drawRect("Bounds", value[i].ones.bounds);
+					ImGui::TreePop();
+				}
+
+				if (ImGui::Button("Remove Layout"))
+				{
+					value.erase(value.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::TreePop();
+					ImGui::PopID();
+					break;
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+
+		if (ImGui::Button("Add Layout"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIDicePanelSlot>))
+	{
+		std::vector<UIDicePanelSlot> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string header = value[i].objectName.empty() ? "Slot" : value[i].objectName;
+			if (ImGui::TreeNode("Slot", "%s %zu", header.c_str(), i))
+			{
+				std::array<char, 256> objectBuffer{};
+				CopyStringToBuffer(value[i].objectName, objectBuffer);
+				if (ImGui::InputText("ObjectName", objectBuffer.data(), objectBuffer.size()))
+				{
+					value[i].objectName = objectBuffer.data();
+					updated = true;
+				}
+
+				std::array<char, 256> typeBuffer{};
+				CopyStringToBuffer(value[i].diceType, typeBuffer);
+				if (ImGui::InputText("DiceType", typeBuffer.data(), typeBuffer.size()))
+				{
+					value[i].diceType = typeBuffer.data();
+					updated = true;
+				}
+
+				std::array<char, 256> contextBuffer{};
+				CopyStringToBuffer(value[i].diceContext, contextBuffer);
+				if (ImGui::InputText("DiceContext", contextBuffer.data(), contextBuffer.size()))
+				{
+					value[i].diceContext = contextBuffer.data();
+					updated = true;
+				}
+
+				if (ImGui::Checkbox("ApplyAnimation", &value[i].applyAnimation))
+				{
+					updated = true;
+				}
+
+				if (ImGui::Button("Remove Slot"))
+				{
+					value.erase(value.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::TreePop();
+					ImGui::PopID();
+					break;
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+
+		if (ImGui::Button("Add Slot"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
 		return result;
 	}
 

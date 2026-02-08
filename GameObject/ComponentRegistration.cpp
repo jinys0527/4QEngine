@@ -50,6 +50,9 @@
 #include "FloodUIComponent.h"
 #include "InitiativeUIComponent.h"
 #include "PlayerVisualPresetComponent.h"
+#include "UIDiceDisplayComponent.h"
+#include "UIDiceRollAnimationComponent.h"
+#include "UIDicePanelComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -115,6 +118,9 @@ extern "C" {
 	void Link_ItemSpawnerComponent();
 	void Link_InitiativeUIComponent();
 	void Link_PlayerVisualPresetComponent();
+	void Link_UIDiceDisplayComponent();
+	void Link_UIDiceRollAnimationComponent();
+	void Link_UIDicePanelComponent();
 }
 
 
@@ -192,5 +198,7 @@ void LinkEngineComponents() {
 	Link_ItemSpawnerComponent();
 	Link_InitiativeUIComponent();
 	Link_PlayerVisualPresetComponent();
-
+	Link_UIDiceDisplayComponent();
+	Link_UIDiceRollAnimationComponent();
+	Link_UIDicePanelComponent();
 }

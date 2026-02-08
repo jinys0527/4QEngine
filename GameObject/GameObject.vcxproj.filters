@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Component.cpp">
@@ -203,6 +203,15 @@
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ItemSpawnerComponent.cpp">
+		<Filter>Components\UserDefine\Source Files</Filter>
+	</ClCompile>
+    <ClCompile Include="UIDiceDisplayComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIDicePanelComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIDiceRollAnimationComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -426,6 +435,21 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ItemSpawnerComponent.h">
+		<Filter>Components\UserDefine\Header Files</Filter>
+	</ClInclude>
+    <ClInclude Include="UIDiceDisplayTypes.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIDicePanelTypes.h">
+      <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIDiceDisplayComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIDicePanelComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIDiceRollAnimationComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

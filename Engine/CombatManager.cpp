@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "CombatResolver.h"
 #include "DiceSystem.h"
+#include "Event.h"
 #include "LogSystem.h"
 #include "EventDispatcher.h"
 #include "CombatEvents.h"
@@ -204,6 +205,15 @@ void CombatManager::BuildInitiativeOrder()
         const DiceConfig rollConfig{ 1, 20, 0 };
         const int roll = m_DiceSystem.RollTotal(rollConfig, RandomDomain::Combat);
 		const int initiative = roll + combatant.initiativeBonus;
+
+		if (m_EventDispatcher && combatant.isPlayer)
+		{
+			const Events::DiceRollEvent rollEvent{ roll, rollConfig.count, rollConfig.sides, rollConfig.bonus, "InitiativeRoll" };
+			m_EventDispatcher->Dispatch(EventType::DiceRolled, &rollEvent);
+			const Events::DiceRollEvent totalEvent{ initiative, rollConfig.count, 0, combatant.initiativeBonus, "InitiativeTotal" };
+			m_EventDispatcher->Dispatch(EventType::DiceRolled, &totalEvent);
+		}
+
 		std::cout << "[Combat] Initiative roll actor=" << combatant.actorId
 			<< " d20=" << roll
 			<< " bonus=" << combatant.initiativeBonus

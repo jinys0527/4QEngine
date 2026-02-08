@@ -6,6 +6,7 @@
 #include "scene.h"
 #include "ServiceRegistry.h"
 #include "DiceSystem.h"
+#include "Event.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerPushFSMComponent, FSMComponent)
 
@@ -74,7 +75,14 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 						auto& diceSystem = services.Get<DiceSystem>();
 						int bonus = playerStat->GetCalculatedStrengthModifier();
 						const DiceConfig rollConfig{ 1, 20, 0 };
+
+						const Events::DiceRollEvent difficultyEvent{ PushRollThreshold, 1, 20, 0, "PushDifficulty" };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &difficultyEvent);
+
 						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
+						const Events::DiceRollEvent rollEvent{ roll, rollConfig.count, rollConfig.sides, rollConfig.bonus, "PushRoll" };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &rollEvent);
+
 						player->SetPushSuccess(roll >= PushRollThreshold); // 성공 시 SetPushSuccess
 					}
 				}

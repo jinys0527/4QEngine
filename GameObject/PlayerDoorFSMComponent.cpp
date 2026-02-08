@@ -8,6 +8,7 @@
 #include "Scene.h"
 #include "ServiceRegistry.h"
 #include "DiceSystem.h"
+#include "Event.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerDoorFSMComponent, FSMComponent)
 
@@ -67,7 +68,15 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 						auto& diceSystem = services.Get<DiceSystem>();
 						int bonus = playerStat->GetCalculatedSkillModifier();
 						const DiceConfig rollConfig{ 1, 20, bonus };
+
+						const Events::DiceRollEvent difficultyEvent{ DoorRollThreshold, 1, 20, 0, "DoorDifficulty" };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &difficultyEvent);
+
 						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
+
+						const Events::DiceRollEvent rollEvent{ roll, rollConfig.count, rollConfig.sides, rollConfig.bonus, "DoorRoll" };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &rollEvent);
+
 						player->SetDoorSuccess(roll >= DoorRollThreshold);
 					}
 				}

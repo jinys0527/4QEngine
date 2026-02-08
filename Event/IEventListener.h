@@ -77,7 +77,7 @@ enum class EventType
 	PlayerShopOpen,
 	PlayerShopClose,
 	PlayerDiceRoll,
-
+	DiceRolled,
 };
 
 class IEventListener

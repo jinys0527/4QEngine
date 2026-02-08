@@ -32,4 +32,13 @@ namespace Events
 	{
 		int actorId = 0;
 	};
+
+	struct DiceRollEvent
+	{
+		int value	  = 0;
+		int diceCount = 0;
+		int diceSides = 0;
+		int bonus	  = 0;
+		std::string context;
+	};
 }
