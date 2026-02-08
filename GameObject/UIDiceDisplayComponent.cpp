@@ -357,9 +357,18 @@ const UIDiceLayout* UIDiceDisplayComponent::FindLayout() const
 
 void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& owner, UIObject* tens, UIObject* ones)
 {
-	const auto resolveBounds = [&owner](const UIDiceDigitSlot& slot)
+	const auto resolveBounds = [&owner](const UIDiceDigitSlot& slot, const UIObject* target)
 		{
 			UIRect bounds = slot.bounds;
+			if (target && target->HasBounds())
+			{
+				const auto& current = target->GetBounds();
+				if (bounds.width == 0.0f && bounds.height == 0.0f)
+				{
+					bounds.width  = current.width;
+					bounds.height = current.height;
+				}
+			}
 			if (slot.useParentOffset && owner.HasBounds())
 			{
 				const auto& parentBounds = owner.GetBounds();
@@ -379,7 +388,7 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 
 	if (tens)
 	{
-		const UIRect bounds = resolveBounds(layout.tens);
+		const UIRect bounds = resolveBounds(layout.tens, tens);
 		tens->SetAnchorMin(layout.tens.anchor);
 		tens->SetAnchorMax(layout.tens.anchor);
 		tens->SetPivot	  (layout.tens.pivot);
@@ -388,7 +397,7 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 
 	if (ones)
 	{
-		const UIRect bounds = resolveBounds(layout.ones);
+		const UIRect bounds = resolveBounds(layout.ones, ones);
 		ones->SetAnchorMin(layout.ones.anchor);
 		ones->SetAnchorMax(layout.ones.anchor);
 		ones->SetPivot	  (layout.ones.pivot);
@@ -397,8 +406,8 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 
 	m_TensSlot = layout.tens;
 	m_OnesSlot = layout.ones;
-	m_TensSlot.bounds = resolveBounds(layout.tens);
-	m_OnesSlot.bounds = resolveBounds(layout.ones);
+	m_TensSlot.bounds = resolveBounds(layout.tens, tens);
+	m_OnesSlot.bounds = resolveBounds(layout.ones, ones);
 	m_HasLayout = true;
 }
 
