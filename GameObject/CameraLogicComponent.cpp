@@ -134,14 +134,17 @@ void CameraLogicComponent::CamFollowX(float deltaTime)
 	const XMFLOAT3 currentLook = m_Camera->GetLook();
 	const XMFLOAT3 playerPos = m_PlayerTransform->GetWorldPos();
 
-	const float deltaX = playerPos.x - currentLook.x;
+	const float playerDeltaFromLook = playerPos.x - currentLook.x;
+	const float directionalOffset = (playerDeltaFromLook >= 0.0f) ? m_XOffset : -m_XOffset;
+	const float targetLookX = playerPos.x + directionalOffset;
+	const float deltaX = targetLookX - currentLook.x;
 	if (std::abs(deltaX) < m_FollowThreshold)
 	{
 		return;
 	}
 
 	const float maxStep = 2.0f * deltaTime;
-	const float stepX = std::clamp(deltaX+ m_XOffset, -maxStep, maxStep);
+	const float stepX = std::clamp(deltaX, -maxStep, maxStep);
 
 	XMFLOAT3 newEye = currentEye;
 	XMFLOAT3 newLook = currentLook;
