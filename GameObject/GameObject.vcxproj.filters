@@ -196,8 +196,13 @@
     <ClCompile Include="PushNodeComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ItemSpawnerComponent.cpp" />
     <ClCompile Include="InitiativeUIComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerVisualPresetComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemSpawnerComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -413,9 +418,14 @@
     <ClInclude Include="PushNodeComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ItemSpawnerComponent.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="InitiativeUIComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerVisualPresetComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemSpawnerComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

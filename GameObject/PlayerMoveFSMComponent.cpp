@@ -10,6 +10,7 @@
 #include "NodeComponent.h"
 #include "BoxColliderComponent.h"
 #include "Event.h"
+#include "PlayerVisualPresetComponent.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerMoveFSMComponent, FSMComponent)
 
@@ -114,6 +115,11 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 			if (committed)
 			{
 				m_CommitSucceeded = true;
+				if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
+				{
+					m_DebugVisualToggleFlip = !m_DebugVisualToggleFlip;
+					visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "Meele" : "Throw");
+				}
 				cout << "[Log] Player Moved" << endl;
 				if (player->GetActorId() != 0)
 				{
