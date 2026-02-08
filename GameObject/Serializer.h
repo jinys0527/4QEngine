@@ -422,6 +422,7 @@ struct Serializer<UIDiceDigitSlot> {
 		Serializer<UIAnchor>::ToJson(j["pivot"], v.pivot);
 		Serializer<UIRect>::ToJson(j["bounds"], v.bounds);
 		Serializer<std::array<UIAnchor, 10>>::ToJson(j["digitOffsets"], v.digitOffsets);
+		Serializer<bool>::ToJson(j["useParentOffset"], v.useParentOffset);
 	}
 
 	static void FromJson(const nlohmann::json& j, UIDiceDigitSlot& v) {
@@ -440,6 +441,10 @@ struct Serializer<UIDiceDigitSlot> {
 		if (j.contains("digitOffsets"))
 		{
 			Serializer<std::array<UIAnchor, 10>>::FromJson(j.at("digitOffsets"), v.digitOffsets);
+		}
+		if (j.contains("useParentOffset"))
+		{
+			Serializer<bool>::FromJson(j.at("useParentOffset"), v.useParentOffset);
 		}
 	}
 };
