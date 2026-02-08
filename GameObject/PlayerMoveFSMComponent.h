@@ -39,4 +39,6 @@ private:
 
 	int  m_PendingQ = 0;
 	int  m_PendingR = 0;
+
+	bool m_DebugVisualToggleFlip = false;
 };
