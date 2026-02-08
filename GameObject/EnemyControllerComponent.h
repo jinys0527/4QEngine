@@ -26,10 +26,12 @@ private:
 
 	void GetSystem();
 	bool CheckActiveEnemies();
+	EnemyComponent* GetCurrentEnemy() const;
 
 	GridSystemComponent* m_GridSystem = nullptr;
 	bool  m_TurnEndRequested = false;
 	bool  m_CombatMoveInProgress = false;
+	bool  m_CombatTurnEndRequested = false;
 	int   m_ExploreEnemyIndex = 0;
 	bool  m_WaitingExploreDelay = false;
 	float m_ExploreDelayElapsed = 0.0f;
