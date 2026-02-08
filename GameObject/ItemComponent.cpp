@@ -80,6 +80,10 @@ namespace
 		{
 			item.SetDiceType(definition.diceType);
 		}
+		if (definition.diceRoll > 0)
+		{
+			item.SetDiceRoll(definition.diceRoll);
+		}
 		if (definition.baseModifier > 0)
 		{
 			item.SetBaseModifier(definition.baseModifier);

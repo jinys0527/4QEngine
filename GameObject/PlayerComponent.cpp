@@ -834,9 +834,22 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 		if (!enemy)
 		{
+			if (m_IsThrowPreviewActive)
+			{
+				if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+				{
+					if (combatFsm->TryExecutePlayerSelfThrow())
+					{
+						cout << "Self Throw" << endl;
+						mouseData->handled = true;
+					}
+				}
+			}
 			return;
 		}
 
+
+		//던지기
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
 		if (m_IsThrowPreviewActive)
 		{
@@ -1470,12 +1483,15 @@ bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 			continue;
 		}
 
-		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		const int itemType = itemComponent->GetType();
+		if (itemType != static_cast<int>(ItemType::THROW)
+			&& itemType != static_cast<int>(ItemType::HEAL)) 
 		{
 			continue;
 		}
 
-		bestRange = max(bestRange, itemComponent->GetThrowRange());
+		const int throwRange = itemComponent->GetThrowRange();
+		bestRange = max(bestRange, throwRange);
 	}
 
 	if (bestRange <= 0)
@@ -1507,7 +1523,9 @@ bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 			continue;
 		}
 
-		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		const int itemType = itemComponent->GetType();
+		if (itemType != static_cast<int>(ItemType::THROW)
+			&& itemType != static_cast<int>(ItemType::HEAL)) 
 		{
 			continue;
 		}
