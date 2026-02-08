@@ -182,17 +182,42 @@ void EnemyControllerComponent::Update(float deltaTime)
 		//if (m_CombatMoveInProgress)
 		if (gameManager->GetCombatTurnState() == CombatTurnState::EnemyTurn)
 		{
-			//if (IsCurrentEnemyMoveComplete())
+			auto* currentEnemy = GetCurrentEnemy();
+			bool currentEnemyDead = false;
+			if (currentEnemy)
+			{
+				auto* enemyOwner = currentEnemy->GetOwner();
+				auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+				currentEnemyDead = enemyStat && enemyStat->IsDead();
+			}
+			else
+			{
+				currentEnemyDead = true;
+			}
+
+			if (currentEnemyDead)
+			{
+				if (!m_CombatTurnEndRequested)
+				{
+					GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);
+					m_CombatTurnEndRequested = true;
+				}
+				m_CombatMoveInProgress = false;
+				return;
+			}
+
+			m_CombatTurnEndRequested = false;
+			
 			if (m_CombatMoveInProgress && IsCurrentEnemyMoveComplete())
 			{
-				/*m_CombatMoveInProgress = false;
-				GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);*/
-				
+				GetEventDispatcher().Dispatch(EventType::AITurnEndRequested, nullptr);
 				m_CombatMoveInProgress = false;
+				m_CombatTurnEndRequested = true;
 			}
 		}
 		else {
 			m_CombatMoveInProgress = false;
+			m_CombatTurnEndRequested = false;
 		}
 	}
 }
@@ -268,6 +293,39 @@ bool EnemyControllerComponent::CheckActiveEnemies()
 			return false;
 	}
 	return true;
+}
+
+EnemyComponent* EnemyControllerComponent::GetCurrentEnemy() const
+{
+	if (!m_GridSystem)
+	{
+		return nullptr;
+	}
+
+	auto* scene = GetOwner() ? GetOwner()->GetScene() : nullptr;
+	auto* combatManager = (scene && scene->GetServices().Has<CombatManager>())
+		? &scene->GetServices().Get<CombatManager>()
+		: nullptr;
+
+	const int currentActorId = combatManager ? combatManager->GetCurrentActorId() : 0;
+	if (currentActorId == 0)
+	{
+		return nullptr;
+	}
+
+	const auto& enemies = m_GridSystem->GetEnemies();
+	for (auto* enemy : enemies)
+	{
+		if (!enemy)
+		{
+			continue;
+		}
+		if (enemy->GetActorId() == currentActorId)
+		{
+			return enemy;
+		}
+	}
+	return nullptr;
 }
 
 // 전투에서 "현재 행동 중인 적"을 찾는 최소 구현
