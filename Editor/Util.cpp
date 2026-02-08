@@ -1031,6 +1031,18 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			return false;
 		};
 
+	auto drawOffset = [&](const char* label, UIAnchor& value) -> bool
+		{
+			float data[2] = { value.x, value.y };
+			if (ImGui::DragFloat2(label, data, DRAG_SPEED))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				return true;
+			}
+			return false;
+		};
+
 
 	if (typeInfo == typeid(int))
 	{
@@ -1486,7 +1498,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 						{
 							ImGui::PushID(static_cast<int>(digit));
 							const std::string label = "Digit " + std::to_string(digit);
-							updated |= drawAnchor(label.c_str(), value[i].tens.digitOffsets[digit]);
+							updated |= drawOffset(label.c_str(), value[i].tens.digitOffsets[digit]);
 							ImGui::PopID();
 						}
 						ImGui::TreePop();
@@ -1509,7 +1521,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 						{
 							ImGui::PushID(static_cast<int>(digit));
 							const std::string label = "Digit " + std::to_string(digit);
-							updated |= drawAnchor(label.c_str(), value[i].ones.digitOffsets[digit]);
+							updated |= drawOffset(label.c_str(), value[i].ones.digitOffsets[digit]);
 							ImGui::PopID();
 						}
 						ImGui::TreePop();
