@@ -357,6 +357,18 @@ const UIDiceLayout* UIDiceDisplayComponent::FindLayout() const
 
 void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& owner, UIObject* tens, UIObject* ones)
 {
+	const auto resolveBounds = [&owner](const UIDiceDigitSlot& slot)
+		{
+			UIRect bounds = slot.bounds;
+			if (slot.useParentOffset && owner.HasBounds())
+			{
+				const auto& parentBounds = owner.GetBounds();
+				bounds.x += parentBounds.x;
+				bounds.y += parentBounds.y;
+			}
+			return bounds;
+		};
+
 	if (auto* image = owner.GetComponent<UIImageComponent>())
 	{
 		if (layout.diceTexture.IsValid())
@@ -367,22 +379,26 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 
 	if (tens)
 	{
+		const UIRect bounds = resolveBounds(layout.tens);
 		tens->SetAnchorMin(layout.tens.anchor);
 		tens->SetAnchorMax(layout.tens.anchor);
 		tens->SetPivot	  (layout.tens.pivot);
-		tens->SetBounds	  (layout.tens.bounds);
+		tens->SetBounds	  (bounds);
 	}
 
 	if (ones)
 	{
+		const UIRect bounds = resolveBounds(layout.ones);
 		ones->SetAnchorMin(layout.ones.anchor);
 		ones->SetAnchorMax(layout.ones.anchor);
 		ones->SetPivot	  (layout.ones.pivot);
-		ones->SetBounds	  (layout.ones.bounds);
+		ones->SetBounds	  (bounds);
 	}
 
-	m_TensSlot  = layout.tens;
-	m_OnesSlot  = layout.ones;
+	m_TensSlot = layout.tens;
+	m_OnesSlot = layout.ones;
+	m_TensSlot.bounds = resolveBounds(layout.tens);
+	m_OnesSlot.bounds = resolveBounds(layout.ones);
 	m_HasLayout = true;
 }
 

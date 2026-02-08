@@ -10,6 +10,7 @@ struct UIDiceDigitSlot
 	UIAnchor pivot { 0.0f, 0.0f };
 	UIRect	 bounds{ 0.0f, 0.0f, 0.0f, 0.0f };
 	std::array<UIAnchor, 10> digitOffsets{};
+	bool useParentOffset = false;
 };
 
 struct UIDiceLayout

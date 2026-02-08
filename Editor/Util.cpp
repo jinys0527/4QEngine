@@ -1472,34 +1472,48 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 
 				if (ImGui::TreeNode("TensSlot"))
 				{
-					if (value[i].tens.anchor.x != 0.0f || value[i].tens.anchor.y != 0.0f)
+					updated |= drawAnchor("Anchor", value[i].tens.anchor);
+					updated |= drawAnchor("Pivot", value[i].tens.pivot);
+					if (ImGui::Checkbox("UseParentOffset", &value[i].tens.useParentOffset))
 					{
-						value[i].tens.anchor = UIAnchor{ 0.0f, 0.0f };
 						updated = true;
 					}
-					if (value[i].tens.pivot.x != 0.0f || value[i].tens.pivot.y != 0.0f)
-					{
-						value[i].tens.pivot = UIAnchor{ 0.0f, 0.0f };
-						updated = true;
-					}
-					ImGui::TextUnformatted("Anchor/Pivot: (0, 0) fixed");
+
 					updated |= drawRect("Bounds", value[i].tens.bounds);
+					if (ImGui::TreeNode("DigitOffsets"))
+					{
+						for (size_t digit = 0; digit < value[i].tens.digitOffsets.size(); ++digit)
+						{
+							ImGui::PushID(static_cast<int>(digit));
+							const std::string label = "Digit " + std::to_string(digit);
+							updated |= drawAnchor(label.c_str(), value[i].tens.digitOffsets[digit]);
+							ImGui::PopID();
+						}
+						ImGui::TreePop();
+					}
 					ImGui::TreePop();
 				}
 				if (ImGui::TreeNode("OnesSlot"))
 				{
-					if (value[i].ones.anchor.x != 0.0f || value[i].ones.anchor.y != 0.0f)
+					updated |= drawAnchor("Anchor", value[i].ones.anchor);
+					updated |= drawAnchor("Pivot", value[i].ones.pivot);
+					if (ImGui::Checkbox("UseParentOffset", &value[i].ones.useParentOffset))
 					{
-						value[i].ones.anchor = UIAnchor{ 0.0f, 0.0f };
 						updated = true;
 					}
-					if (value[i].ones.pivot.x != 0.0f || value[i].ones.pivot.y != 0.0f)
-					{
-						value[i].ones.pivot = UIAnchor{ 0.0f, 0.0f };
-						updated = true;
-					}
-					ImGui::TextUnformatted("Anchor/Pivot: (0, 0) fixed");
+
 					updated |= drawRect("Bounds", value[i].ones.bounds);
+					if (ImGui::TreeNode("DigitOffsets"))
+					{
+						for (size_t digit = 0; digit < value[i].ones.digitOffsets.size(); ++digit)
+						{
+							ImGui::PushID(static_cast<int>(digit));
+							const std::string label = "Digit " + std::to_string(digit);
+							updated |= drawAnchor(label.c_str(), value[i].ones.digitOffsets[digit]);
+							ImGui::PopID();
+						}
+						ImGui::TreePop();
+					}
 					ImGui::TreePop();
 				}
 
