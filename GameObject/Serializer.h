@@ -20,6 +20,7 @@
 #include "UIPrimitives.h"
 #include "UIDiceDisplayTypes.h"
 #include "UIDicePanelTypes.h"
+#include "UIDiceDisplayComponent.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -469,56 +470,6 @@ struct Serializer<UIDiceLayout> {
 	}
 };
 
-template<>
-struct Serializer<UIDiceDisplayComponent> {
-	static void ToJson(nlohmann::json& j, const UIDiceDisplayComponent& v) {
-		j["Enabled"] = v.GetEnabled();
-		j["DiceType"] = v.GetDiceType();
-		j["Value"] = v.GetValue();
-		j["LeadingZero"] = v.GetLeadingZero();
-		j["DiceContext"] = v.GetDiceContext();
-		j["AutoShow"] = v.GetAutoShow();
-		j["UseSidesForType"] = v.GetUseSidesForType();
-		j["TensDigitObjectName"] = v.GetTensDigitObjectName();
-		j["OnesDigitObjectName"] = v.GetOnesDigitObjectName();
-		j["ShowTotals"] = v.GetShowTotals();
-		j["ShowIndividuals"] = v.GetShowIndividuals();
-		j["UseRollFaces"] = v.GetUseRollFaces();
-		j["RollIndex"] = v.GetRollIndex();
-		Serializer<std::array<TextureHandle, 10>>::ToJson(j["DigitTextures"], v.GetDigitTextures());
-		Serializer<std::vector<UIDiceLayout>>::ToJson(j["Layouts"], v.GetLayouts());
-	}
-
-	static void FromJson(const nlohmann::json& j, UIDiceDisplayComponent& v) {
-		v.SetEnabled(j.value("Enabled", v.GetEnabled()));
-		v.SetDiceType(j.value("DiceType", v.GetDiceType()));
-		v.SetValue(j.value("Value", v.GetValue()));
-		v.SetLeadingZero(j.value("LeadingZero", v.GetLeadingZero()));
-		v.SetDiceContext(j.value("DiceContext", v.GetDiceContext()));
-		v.SetAutoShow(j.value("AutoShow", v.GetAutoShow()));
-		v.SetUseSidesForType(j.value("UseSidesForType", v.GetUseSidesForType()));
-		v.SetTensDigitObjectName(j.value("TensDigitObjectName", v.GetTensDigitObjectName()));
-		v.SetOnesDigitObjectName(j.value("OnesDigitObjectName", v.GetOnesDigitObjectName()));
-		v.SetShowTotals(j.value("ShowTotals", v.GetShowTotals()));
-		v.SetShowIndividuals(j.value("ShowIndividuals", v.GetShowIndividuals()));
-		v.SetUseRollFaces(j.value("UseRollFaces", v.GetUseRollFaces()));
-		v.SetRollIndex(j.value("RollIndex", v.GetRollIndex()));
-
-		if (j.contains("DigitTextures"))
-		{
-			std::array<TextureHandle, 10> textures{};
-			Serializer<std::array<TextureHandle, 10>>::FromJson(j.at("DigitTextures"), textures);
-			v.SetDigitTextures(textures);
-		}
-
-		if (j.contains("Layouts"))
-		{
-			std::vector<UIDiceLayout> layouts;
-			Serializer<std::vector<UIDiceLayout>>::FromJson(j.at("Layouts"), layouts);
-			v.SetLayouts(std::move(layouts));
-		}
-	}
-};
 
 
 template <>
