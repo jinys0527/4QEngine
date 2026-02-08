@@ -66,6 +66,18 @@ public:
 	void SetLayouts(std::vector<UIDiceLayout> layouts);
 	const std::vector<UIDiceLayout>& GetLayouts() const { return m_Layouts; }
 
+	void		SetShowTotals(const bool& show);
+	const bool& GetShowTotals() const { return m_ShowTotals; }
+
+	void		SetShowIndividuals(const bool& show);
+	const bool& GetShowIndividuals() const { return m_ShowIndividuals; }
+
+	void		SetUseRollFaces(const bool& useFaces);
+	const bool& GetUseRollFaces() const { return m_UseRollFaces; }
+
+	void	   SetRollIndex(const int& index);
+	const int& GetRollIndex() const { return m_RollIndex; }
+
 private:
 	UIManager* GetUIManager() const;
 	Scene*     GetScene() const;
@@ -88,6 +100,13 @@ private:
 	bool m_ValueDirty      = true;
 	bool m_AutoShow        = true;
 	bool m_UseSidesForType = false;
+	bool m_ShowTotals      = true;
+	bool m_ShowIndividuals = true;
+	bool m_UseRollFaces    = false;
+	bool m_HasLayout       = false;
+	int  m_RollIndex       = 0;
+	UIDiceDigitSlot m_TensSlot{};
+	UIDiceDigitSlot m_OnesSlot{};
 	mutable UIManager* m_UIManager = nullptr;
 	EventDispatcher* m_Dispatcher = nullptr;
 };

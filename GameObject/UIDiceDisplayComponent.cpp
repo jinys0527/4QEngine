@@ -21,6 +21,10 @@ REGISTER_PROPERTY(UIDiceDisplayComponent, TensDigitObjectName)
 REGISTER_PROPERTY(UIDiceDisplayComponent, OnesDigitObjectName)
 REGISTER_PROPERTY(UIDiceDisplayComponent, DigitTextures)
 REGISTER_PROPERTY(UIDiceDisplayComponent, Layouts)
+REGISTER_PROPERTY(UIDiceDisplayComponent, ShowTotals)
+REGISTER_PROPERTY(UIDiceDisplayComponent, ShowIndividuals)
+REGISTER_PROPERTY(UIDiceDisplayComponent, UseRollFaces)
+REGISTER_PROPERTY(UIDiceDisplayComponent, RollIndex)
 
 UIDiceDisplayComponent::~UIDiceDisplayComponent()
 {
@@ -305,6 +309,26 @@ void UIDiceDisplayComponent::SetLayouts(std::vector<UIDiceLayout> layouts)
 	m_LayoutDirty = true;
 }
 
+void UIDiceDisplayComponent::SetShowTotals(const bool& show)
+{
+	m_ShowTotals = show;
+}
+
+void UIDiceDisplayComponent::SetShowIndividuals(const bool& show)
+{
+	m_ShowIndividuals = show;
+}
+
+void UIDiceDisplayComponent::SetUseRollFaces(const bool& useFaces)
+{
+	m_UseRollFaces = useFaces;
+}
+
+void UIDiceDisplayComponent::SetRollIndex(const int& index)
+{
+	m_RollIndex = max(0, index);
+}
+
 const UIDiceLayout* UIDiceDisplayComponent::FindLayout() const
 {
 	if (m_Layouts.empty())
@@ -333,8 +357,6 @@ const UIDiceLayout* UIDiceDisplayComponent::FindLayout() const
 
 void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& owner, UIObject* tens, UIObject* ones)
 {
-	const UIAnchor topLeftAnchor{ 0.0f, 0.0f };
-
 	if (auto* image = owner.GetComponent<UIImageComponent>())
 	{
 		if (layout.diceTexture.IsValid())
@@ -345,25 +367,46 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 
 	if (tens)
 	{
-		tens->SetAnchorMin(topLeftAnchor);
-		tens->SetAnchorMax(topLeftAnchor);
-		tens->SetPivot	  (topLeftAnchor);
+		tens->SetAnchorMin(layout.tens.anchor);
+		tens->SetAnchorMax(layout.tens.anchor);
+		tens->SetPivot	  (layout.tens.pivot);
 		tens->SetBounds	  (layout.tens.bounds);
 	}
 
 	if (ones)
 	{
-		ones->SetAnchorMin(topLeftAnchor);
-		ones->SetAnchorMax(topLeftAnchor);
-		ones->SetPivot	  (topLeftAnchor);
+		ones->SetAnchorMin(layout.ones.anchor);
+		ones->SetAnchorMax(layout.ones.anchor);
+		ones->SetPivot	  (layout.ones.pivot);
 		ones->SetBounds	  (layout.ones.bounds);
 	}
+
+	m_TensSlot  = layout.tens;
+	m_OnesSlot  = layout.ones;
+	m_HasLayout = true;
 }
 
 void UIDiceDisplayComponent::ApplyValue(UIObject* tens, UIObject* ones)
 {
 	const int tensDigit = m_Value / 10;
 	const int onesDigit = m_Value % 10;
+
+	const auto applyDigitOffset = [this](UIObject* target, const UIDiceDigitSlot& slot, int digit)
+		{
+			if (!target || !m_HasLayout)
+			{
+				return;
+			}
+
+			UIRect adjusted = slot.bounds;
+			if (digit >= 0 && digit < static_cast<int>(slot.digitOffsets.size()))
+			{
+				const auto& offset = slot.digitOffsets[static_cast<size_t>(digit)];
+				adjusted.x += offset.x;
+				adjusted.y += offset.y;
+			}
+			target->SetBounds(adjusted);
+		};
 
 	if (tens)
 	{
@@ -374,6 +417,7 @@ void UIDiceDisplayComponent::ApplyValue(UIObject* tens, UIObject* ones)
 		else
 		{
 			tens->SetIsVisibleFromComponent(true);
+			applyDigitOffset(tens, m_TensSlot, tensDigit);
 			if (auto* image = tens->GetComponent<UIImageComponent>())
 			{
 				const auto& handle = m_DigitTextures[static_cast<size_t>(tensDigit)];
@@ -388,6 +432,7 @@ void UIDiceDisplayComponent::ApplyValue(UIObject* tens, UIObject* ones)
 	if (ones)
 	{
 		ones->SetIsVisibleFromComponent(true);
+		applyDigitOffset(ones, m_OnesSlot, onesDigit);
 		if (auto* image = ones->GetComponent<UIImageComponent>())
 		{
 			const auto& handle = m_DigitTextures[static_cast<size_t>(onesDigit)];
@@ -406,7 +451,31 @@ void UIDiceDisplayComponent::ApplyDiceEvent(const Events::DiceRollEvent& payload
 		SetDiceType("D" + std::to_string(payload.diceSides));
 	}
 
-	SetValue(payload.value);
+	if (payload.isTotal)
+	{
+		if (!m_ShowTotals)
+		{
+			return;
+		}
+
+		SetValue(payload.value);
+	}
+	else
+	{
+		if (!m_ShowIndividuals)
+		{
+			return;
+		}
+
+		if (m_UseRollFaces && !payload.faces.empty())
+		{
+			SetValueFromRollFaces(payload.faces, m_RollIndex);
+		}
+		else
+		{
+			SetValue(payload.value);
+		}
+	}
 
 	if (m_AutoShow)
 	{

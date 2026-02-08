@@ -79,11 +79,14 @@ PlayerPushFSMComponent::PlayerPushFSMComponent()
 						const Events::DiceRollEvent difficultyEvent{ PushRollThreshold, 1, 20, 0, "PushDifficulty" };
 						GetEventDispatcher().Dispatch(EventType::DiceRolled, &difficultyEvent);
 
-						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
-						const Events::DiceRollEvent rollEvent{ roll, rollConfig.count, rollConfig.sides, rollConfig.bonus, "PushRoll" };
+						const auto roll = diceSystem.Roll(rollConfig, RandomDomain::World);
+						const Events::DiceRollEvent rollEvent{ roll.total, rollConfig.count, rollConfig.sides, rollConfig.bonus, "PushRoll", false, roll.faces };
 						GetEventDispatcher().Dispatch(EventType::DiceRolled, &rollEvent);
 
-						player->SetPushSuccess(roll >= PushRollThreshold); // 성공 시 SetPushSuccess
+						const Events::DiceRollEvent totalEvent{ roll.total, rollConfig.count, rollConfig.sides, rollConfig.bonus, "PushRollTotal", true };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &totalEvent);
+
+						player->SetPushSuccess(roll.total >= PushRollThreshold); // 성공 시 SetPushSucces
 					}
 				}
 			}

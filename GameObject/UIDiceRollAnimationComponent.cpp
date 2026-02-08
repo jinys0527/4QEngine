@@ -19,6 +19,7 @@ REGISTER_PROPERTY(UIDiceRollAnimationComponent, ScaleStart)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, ScalePeak)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, ScaleEnd)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, ApplyToDigits)
+REGISTER_PROPERTY(UIDiceRollAnimationComponent, AnimateIndividuals)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, TensDigitObjectName)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, OnesDigitObjectName)
 
@@ -102,6 +103,12 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
+	if (!payload->isTotal && !m_AnimateIndividuals)
+	{
+		return;
+	}
+
+
 	BeginAnimation();
 }
 
@@ -162,6 +169,11 @@ void UIDiceRollAnimationComponent::SetScaleEnd(const float& scale)
 void UIDiceRollAnimationComponent::SetApplyToDigits(const bool& apply)
 {
 	m_ApplyToDigits = apply;
+}
+
+void UIDiceRollAnimationComponent::SetAnimateIndividuals(const bool& animate)
+{
+	m_AnimateIndividuals = animate;
 }
 
 void UIDiceRollAnimationComponent::SetTensDigitObjectName(const std::string& name)

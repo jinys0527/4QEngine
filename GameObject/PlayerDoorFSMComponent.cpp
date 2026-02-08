@@ -72,12 +72,12 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 						const Events::DiceRollEvent difficultyEvent{ DoorRollThreshold, 1, 20, 0, "DoorDifficulty" };
 						GetEventDispatcher().Dispatch(EventType::DiceRolled, &difficultyEvent);
 
-						const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::World);
+						const auto roll = diceSystem.Roll(rollConfig, RandomDomain::World);
 
-						const Events::DiceRollEvent rollEvent{ roll, rollConfig.count, rollConfig.sides, rollConfig.bonus, "DoorRoll" };
-						GetEventDispatcher().Dispatch(EventType::DiceRolled, &rollEvent);
+						const Events::DiceRollEvent totalEvent{ roll.total, rollConfig.count, rollConfig.sides, rollConfig.bonus, "DoorRollTotal", true };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &totalEvent);
 
-						player->SetDoorSuccess(roll >= DoorRollThreshold);
+						player->SetDoorSuccess(roll.total >= DoorRollThreshold);
 					}
 				}
 			}

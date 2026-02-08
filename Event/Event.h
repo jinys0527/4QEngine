@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Windows.h"
 #include <string>
+#include <vector>
 
 namespace Events
 {
@@ -40,5 +41,7 @@ namespace Events
 		int diceSides = 0;
 		int bonus	  = 0;
 		std::string context;
+		bool isTotal = false;
+		std::vector<int> faces;
 	};
 }

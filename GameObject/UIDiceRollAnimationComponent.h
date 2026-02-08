@@ -54,6 +54,9 @@ public:
 	void		SetApplyToDigits(const bool& apply);
 	const bool& GetApplyToDigits() const { return m_ApplyToDigits; }
 
+	void		SetAnimateIndividuals(const bool& animate);
+	const bool& GetAnimateIndividuals() const { return m_AnimateIndividuals; }
+
 	void			   SetTensDigitObjectName(const std::string& name);
 	const std::string& GetTensDigitObjectName() const { return m_TensDigitObjectName; }
 
@@ -82,18 +85,19 @@ private:
 	std::string m_DiceContext;
 	std::string m_TensDigitObjectName = "DiceTens";
 	std::string m_OnesDigitObjectName = "DiceOnes";
-	float m_DelayMin		  = 0.1f;
-	float m_DelayMax		  = 0.3f;
-	float m_AnimationDuration = 0.25f;
-	float m_ScaleStart		  = 1.2f;
-	float m_ScalePeak		  = 1.25f;
-	float m_ScaleEnd		  = 1.0f;
-	float m_DelayTimer		  = 0.0f;
-	float m_AnimationTimer    = 0.0f;
-	bool  m_Enabled           = true;
-	bool  m_ApplyToDigits     = true;
-	bool  m_Waiting           = false;
-	bool  m_Animating         = false;
+	float m_DelayMin		   = 0.1f;
+	float m_DelayMax		   = 0.3f;
+	float m_AnimationDuration  = 0.25f;
+	float m_ScaleStart		   = 1.2f;
+	float m_ScalePeak		   = 1.25f;
+	float m_ScaleEnd		   = 1.0f;
+	float m_AnimationTimer     = 0.0f;
+	bool  m_Enabled            = true;
+	bool  m_ApplyToDigits      = true;
+	float m_DelayTimer		   = 0.0f;
+	bool  m_Waiting            = false;
+	bool  m_Animating          = false;
+	bool  m_AnimateIndividuals = true;
 	mutable UIManager* m_UIManager  = nullptr;
 	EventDispatcher*   m_Dispatcher = nullptr;
 };
