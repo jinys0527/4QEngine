@@ -20,6 +20,12 @@ protected:
 	BTStatus OnTick(BTInstance& inst, Blackboard& bb) override;
 };
 
+class ApproachRangedTargetTask : public Task
+{
+protected:
+	BTStatus OnTick(BTInstance& inst, Blackboard& bb) override;
+};
+
 class MeleeAttackTask : public Task
 {
 protected:

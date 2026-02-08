@@ -16,11 +16,27 @@ BTStatus UpdateTargetLocationTask::OnTick(BTInstance& inst, Blackboard& bb)
     (void)inst;
 	int targetQ = 0;
 	int targetR = 0;
-	if (!bb.TryGet(BlackboardKeys::TargetQ, targetQ)
-		|| !bb.TryGet(BlackboardKeys::TargetR, targetR))
+	/*if (!bb.TryGet(BlackboardKeys::TargetQ, targetQ)
+		|| !bb.TryGet(BlackboardKeys::TargetR, targetR))*/
+	bool hasTarget = bb.TryGet(BlackboardKeys::TargetQ, targetQ)
+	&& bb.TryGet(BlackboardKeys::TargetR, targetR);
+	if (!hasTarget)
 	{
-		return BTStatus::Failure;
-    }
+		hasTarget = bb.TryGet(BlackboardKeys::LastKnownTargetQ, targetQ)
+			&& bb.TryGet(BlackboardKeys::LastKnownTargetR, targetR);
+		if (hasTarget)
+		{
+			bb.Set(BlackboardKeys::TargetQ, targetQ);
+			bb.Set(BlackboardKeys::TargetR, targetR);
+		}
+	}
+
+	if (!hasTarget)
+	{
+		bool isInCombat = false;
+		bb.TryGet(BlackboardKeys::IsInCombat, isInCombat);
+		return isInCombat ? BTStatus::Success : BTStatus::Failure;
+	}
 
 	bb.Set(BlackboardKeys::LastKnownTargetQ, targetQ);
 	bb.Set(BlackboardKeys::LastKnownTargetR, targetR);
@@ -136,5 +152,21 @@ BTStatus EndTurnTask::OnTick(BTInstance& inst, Blackboard& bb)
 		return BTStatus::Running;
 	}
 	bb.Set(BlackboardKeys::EndTurnRequested, true);
+	return BTStatus::Success;
+}
+
+BTStatus ApproachRangedTargetTask::OnTick(BTInstance& inst, Blackboard& bb)
+{
+	float distance = 0.0f;
+	float throwRange = 1.0f;
+	bb.TryGet(BlackboardKeys::TargetDistance, distance);
+	bb.TryGet(BlackboardKeys::ThrowRange, throwRange);
+
+	if (distance <= throwRange)
+	{
+		return BTStatus::Success;
+	}
+
+	bb.Set(BlackboardKeys::MoveRequested, true);
 	return BTStatus::Success;
 }

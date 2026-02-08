@@ -2,6 +2,7 @@
 #include <cmath>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include "GridSystemComponent.h"
 #include "TransformComponent.h"
@@ -470,6 +471,9 @@ void GridSystemComponent::UpdateThrowRangeMaterials(float pulse, bool enabled)
 //Player/ Enemy 변경에 따른 Node state Update
 void GridSystemComponent::UpdateActorPositions() 
 {
+	std::unordered_set<AxialKey, AxialKeyHash> occupiedByEnemy;
+	occupiedByEnemy.reserve(m_Enemies.size());
+
 	if (m_Player) {
 		bool skipPlayerUpdate = false;
 		auto* playerOwner = m_Player->GetOwner();
@@ -510,6 +514,12 @@ void GridSystemComponent::UpdateActorPositions()
 		auto* enemyOwner = enemy->GetOwner();
 		auto* trans = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
 		if (!trans) {
+			const AxialKey previous{ enemy->GetQ(), enemy->GetR() };
+			auto it = m_NodesByAxial.find(previous);
+			if (it != m_NodesByAxial.end() && it->second && it->second->GetState() == NodeState::HasEnemy)
+			{
+				it->second->SetState(NodeState::Empty);
+			}
 			continue;
 		}
 		const AxialKey previous{ enemy->GetQ(), enemy->GetR() };
@@ -529,6 +539,7 @@ void GridSystemComponent::UpdateActorPositions()
 		if (!(previous == current)) {
 			UpdateActorNodeState(previous, current, NodeState::HasEnemy);
 			enemy->SetQR(current.q, current.r);
+			occupiedByEnemy.insert(current);
 		}
 		else
 		{
@@ -536,7 +547,25 @@ void GridSystemComponent::UpdateActorPositions()
 			if (it != m_NodesByAxial.end() && it->second)
 			{
 				it->second->SetState(NodeState::HasEnemy);
+				occupiedByEnemy.insert(current);
 			}
+		}
+	}
+	for (auto* node : m_Nodes)
+	{
+		if (!node)
+		{
+			continue;
+		}
+		if (node->GetState() != NodeState::HasEnemy)
+		{
+			continue;
+		}
+
+		const AxialKey key{ node->GetQ(), node->GetR() };
+		if (occupiedByEnemy.find(key) == occupiedByEnemy.end())
+		{
+			node->SetState(NodeState::Empty);
 		}
 	}
 }
