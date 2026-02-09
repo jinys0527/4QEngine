@@ -520,6 +520,14 @@ void PlayerComponent::Update(float deltaTime) {
 		return;
 	}
 
+	SyncCombatModeFromInventory();
+	if (!m_HasAppliedCombatVisual || m_LastVisualCombatMode != m_CombatMode)
+	{
+		ApplyVisualPresetByCombatMode();
+		m_LastVisualCombatMode = m_CombatMode;
+		m_HasAppliedCombatVisual = true;
+	}
+
 	if (m_LastRemainMoveResource != m_RemainMoveResource
 		|| m_LastRemainActResource != m_RemainActResource
 		|| m_LastMoveResource != m_MoveResource
@@ -612,7 +620,7 @@ void PlayerComponent::Update(float deltaTime) {
 			playerstatcomponent->SetSense(sense + isense);
 			playerstatcomponent->SetSkill(skill + iskill);
 			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
-			playerstatcomponent->SetRange(irange);
+			playerstatcomponent->SetRange(static_cast<int>(irange));
 
 			m_IsApplyMeleeStat = true;
 		}
@@ -1080,11 +1088,11 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 
-		if (gameManager->GetCombatManager()->GetState() != Battle::InBattle)
+		if (!gameManager || gameManager->GetCombatManager()->GetState() != Battle::InBattle) 
 		{
-			std::cout << "IdleMode\n";
-
-			m_CombatMode = CombatMode::Idle;
+			std::cout << "Cancel Throw Preview\n";
+			EndThrowPreview();
+			SyncCombatModeFromInventory();
 		}
 	}
 
@@ -1619,20 +1627,13 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 	}
 
 	throwItem->SetIsEquiped(false);
+	ConsumeActResource(throwItem->GetActionPointCost());
 
-	int range = 0;
-	if (TryGetConsumableThrowRange(range))
+	m_CombatMode = ResolveBaseCombatMode();
+	m_ThrowPreviewRange = 0;
+	if (m_GridSystem) 
 	{
-		m_ThrowPreviewRange = range;
-		if (m_GridSystem)
-		{
-			m_GridSystem->SetThrowRangePreview(true, range);
-		}
-	}
-	else
-	{
-		ConsumeActResource(throwItem->GetActionPointCost());
-		EndThrowPreview();
+		m_GridSystem->SetThrowRangePreview(false, 0);
 	}
 }
 
@@ -1665,12 +1666,27 @@ void PlayerComponent::EndThrowPreview()
 		return;
 	}
 
-	m_CombatMode = CombatMode::Idle;
+	m_CombatMode = ResolveBaseCombatMode();
 	m_ThrowPreviewRange = 0;
 	if (m_GridSystem)
 	{
 		m_GridSystem->SetThrowRangePreview(false, 0);
 	}
+}
+
+PlayerComponent::CombatMode PlayerComponent::ResolveBaseCombatMode() const
+{
+	return m_MeleeItem ? CombatMode::Melee : CombatMode::Idle;
+}
+
+void PlayerComponent::SyncCombatModeFromInventory()
+{
+	if (m_CombatMode == CombatMode::Throw)
+	{
+		return;
+	}
+
+	m_CombatMode = ResolveBaseCombatMode();
 }
 
 void PlayerComponent::UpdateResourceUI()
@@ -1729,18 +1745,24 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 {
 	if (buttonEventName == "Player_Melee")
 	{
-		m_CombatMode = CombatMode::Melee;
+		SyncCombatModeFromInventory();
 	}
 	else if (buttonEventName == "Player_Throw")
 	{
-		m_CombatMode = CombatMode::Throw;
+		int throwRange = 0;
+		if (TryGetConsumableThrowRange(throwRange) && throwRange > 0)
+		{
+			m_CombatMode = CombatMode::Throw;
+		}
+		else
+		{
+			SyncCombatModeFromInventory();
+		}
 	}
 	else
 	{
 		return;
 	}
-
-	ApplyVisualPresetByCombatMode();
 }
 
 void PlayerComponent::ApplyVisualPresetByCombatMode()
@@ -1883,6 +1905,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 			{
 				m_MeleeItem = equippedObject;
 				m_IsApplyMeleeStat = false;
+				SyncCombatModeFromInventory();
 			}
 			else if (consumableSlot >= 0)
 			{
@@ -1903,6 +1926,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 			{
 				m_MeleeItem = itemObject;
+				SyncCombatModeFromInventory();
 			}
 			else if (consumableSlot >= 0)
 			{

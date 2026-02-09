@@ -115,6 +115,8 @@ private:
 	void ClearPendingPush();
 	void BeginThrowPreview();
 	void EndThrowPreview();
+	CombatMode ResolveBaseCombatMode() const;
+	void SyncCombatModeFromInventory();
 	void UpdateResourceUI();
 	void ApplyAnimation();
 	void ApplyVisualPresetByCombatMode();
@@ -128,8 +130,8 @@ private:
 
 	//ReadOnly
 	// Grid 기반 좌표 // 현재위치
-	int m_Q;
-	int m_R;
+	int m_Q = 0;
+	int m_R = 0;
 
 	//내부
 	// 남은 값 (턴 변경 시 초기화)
@@ -172,7 +174,9 @@ private:
 	bool m_DebugEquipItem = false;
 	int m_ThrowPreviewRange = 0;
 	std::string m_DebugCombatMode = "IdleMode";
-	GridSystemComponent* m_GridSystem;
+	CombatMode m_LastVisualCombatMode = CombatMode::Idle;
+	bool m_HasAppliedCombatVisual = false;
+	GridSystemComponent* m_GridSystem = nullptr;
 
 	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 	std::string m_ConsumableItemNames[3] = {};
