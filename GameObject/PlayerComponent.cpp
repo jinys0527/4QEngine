@@ -50,7 +50,6 @@ REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
 REGISTER_PROPERTY(PlayerComponent, DebugEquipItem)
 REGISTER_PROPERTY_READONLY(PlayerComponent, DebugCombatMode)
-REGISTER_PROPERTY(PlayerComponent, IsThrowPreviewActive)
 
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
@@ -1092,7 +1091,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			std::cout << "Cancel Throw Preview\n";
 			EndThrowPreview();
-			SyncCombatModeFromInventory();
 		}
 	}
 
@@ -1639,7 +1637,7 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 
 void PlayerComponent::BeginThrowPreview()
 {
-	if (m_CombatMode == CombatMode::Throw) 
+	if (m_CombatMode != CombatMode::Throw) 
 	{
 		return;
 	}
@@ -1676,7 +1674,18 @@ void PlayerComponent::EndThrowPreview()
 
 PlayerComponent::CombatMode PlayerComponent::ResolveBaseCombatMode() const
 {
-	return m_MeleeItem ? CombatMode::Melee : CombatMode::Idle;
+	if (!m_MeleeItem)
+	{
+		return CombatMode::Idle;
+	}
+
+	auto* meleeItemComponent = m_MeleeItem->GetComponent<ItemComponent>();
+	if (!meleeItemComponent || !meleeItemComponent->GetIsEquiped())
+	{
+		return CombatMode::Idle;
+	}
+
+	return CombatMode::Melee;
 }
 
 void PlayerComponent::SyncCombatModeFromInventory()
@@ -1745,7 +1754,14 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 {
 	if (buttonEventName == "Player_Melee")
 	{
-		SyncCombatModeFromInventory();
+		if (m_CombatMode == CombatMode::Throw)
+		{
+			EndThrowPreview();
+		}
+		else
+		{
+			m_CombatMode = ResolveBaseCombatMode();
+		}
 	}
 	else if (buttonEventName == "Player_Throw")
 	{
@@ -1756,7 +1772,7 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 		}
 		else
 		{
-			SyncCombatModeFromInventory();
+			m_CombatMode = ResolveBaseCombatMode();
 		}
 	}
 	else
