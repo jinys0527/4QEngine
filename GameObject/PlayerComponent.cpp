@@ -626,6 +626,19 @@ void PlayerComponent::Update(float deltaTime) {
 	}
 
 	// 장착 무기 표시/숨김: CombatMode에 따라 근접, 던지기, 없음(Idle)
+	std::vector<GameObject*> consumableObjects;
+	consumableObjects.reserve(3);
+	for (const auto& itemName : m_ConsumableItemNames)
+	{
+		auto* itemObject = FindGameObjectByName(scene, itemName);
+		if (!itemObject)
+		{
+			continue;
+		}
+
+		consumableObjects.push_back(itemObject);
+	}
+
 	ItemComponent* throwItem = nullptr;
 	GameObject* throwItemObject = nullptr;
 	if (TryGetConsumableThrowItem(throwItem) && throwItem)
@@ -663,7 +676,10 @@ void PlayerComponent::Update(float deltaTime) {
 			}
 		};
 	setItemVisible(m_MeleeItem, equippedItemObject == m_MeleeItem && equippedItemObject != nullptr);
-	setItemVisible(throwItemObject, equippedItemObject == throwItemObject && equippedItemObject != nullptr);
+	for (auto* consumableObject : consumableObjects)
+	{
+		setItemVisible(consumableObject, equippedItemObject == consumableObject && equippedItemObject != nullptr);
+	}
 
 	if (equippedItemObject == nullptr)
 	{
@@ -1522,80 +1538,97 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 
 bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 {
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	int bestRange = -1;
-	for (const auto& itemName : m_ConsumableItemNames)
-	{
-		auto* itemObject = FindGameObjectByName(scene, itemName);
-		if (!itemObject)
-		{
-			continue;
-		}
-
-		const auto* itemComponent = itemObject->GetComponent<ItemComponent>();
-		if (!itemComponent)
-		{
-			continue;
-		}
-
-		const int itemType = itemComponent->GetType();
-		if (itemType != static_cast<int>(ItemType::THROW)
-			&& itemType != static_cast<int>(ItemType::HEAL)) 
-		{
-			continue;
-		}
-
-		const int throwRange = itemComponent->GetThrowRange();
-		bestRange = max(bestRange, throwRange);
-	}
-
-	if (bestRange <= 0)
+	ItemComponent* throwItem = nullptr;
+	if (!TryGetConsumableThrowItem(throwItem) || !throwItem)
 	{
 		return false;
 	}
 
-	outRange = bestRange;
+	const int throwRange = throwItem->GetThrowRange();
+	if (throwRange <= 0)
+	{
+		return false;
+	}
+
+	outRange = throwRange;
+	return true;
+}
+
+bool PlayerComponent::TryGetConsumableThrowItemBySlot(int slotIndex, ItemComponent*& outItem) const
+{
+	outItem = nullptr;
+	if (slotIndex < 0 || slotIndex >= 3)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	const auto& itemName = m_ConsumableItemNames[slotIndex];
+	auto* itemObject = FindGameObjectByName(scene, itemName);
+	if (!itemObject) 
+	{
+		return false;
+	}
+
+	auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+	if (!itemComponent)
+	{
+		return false;
+	}
+
+	const int itemType = itemComponent->GetType();
+	if (itemType != static_cast<int>(ItemType::THROW)
+		&& itemType != static_cast<int>(ItemType::HEAL))
+	{
+		return false;
+	}
+
+	
+
+	if (itemComponent->GetThrowRange() <= 0) 
+	{
+		return false;
+	}
+
+	outItem = itemComponent;
 	return true;
 }
 
 bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 {
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	outItem = nullptr;
-	int bestRange = -1;
-	for (const auto& itemName : m_ConsumableItemNames)
+	if (TryGetConsumableThrowItemBySlot(m_SelectedConsumableSlot, outItem))
 	{
-		auto* itemObject = FindGameObjectByName(scene, itemName);
-		if (!itemObject)
+		return true;
+	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		if (i == m_SelectedConsumableSlot)
 		{
 			continue;
 		}
 
-		auto* itemComponent = itemObject->GetComponent<ItemComponent>();
-		if (!itemComponent)
+		if (TryGetConsumableThrowItemBySlot(i, outItem))
 		{
-			continue;
-		}
-
-		const int itemType = itemComponent->GetType();
-		if (itemType != static_cast<int>(ItemType::THROW)
-			&& itemType != static_cast<int>(ItemType::HEAL)) 
-		{
-			continue;
-		}
-
-		const int range = itemComponent->GetThrowRange();
-		if (range > bestRange)
-		{
-			bestRange = range;
-			outItem = itemComponent;
+			return true;
 		}
 	}
 
-	return outItem != nullptr && bestRange > 0;
+	outItem = nullptr;
+	return false;
 }
+
+void PlayerComponent::SelectConsumableThrowSlot(int slotIndex)
+{
+	if (slotIndex < 0 || slotIndex >= 3)
+	{
+		return;
+	}
+
+	m_SelectedConsumableSlot = slotIndex;
+}
+
 
 void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 {
@@ -1606,14 +1639,24 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 
 	auto* itemOwner = throwItem->GetOwner();
 	const std::string itemName = itemOwner ? itemOwner->GetName() : std::string{};
-	for (auto& slotName : m_ConsumableItemNames)
+	int consumedSlot = -1;
+	for (int i = 0; i < 3; ++i) 
 	{
-		if (!slotName.empty() && slotName == itemName)
+		if (!m_ConsumableItemNames[i].empty() && m_ConsumableItemNames[i] == itemName) 
 		{
-			slotName.clear();
+			consumedSlot = i;
 			break;
 		}
 	}
+	if (consumedSlot >= 0)
+	{
+		for (int i = consumedSlot; i < 2; ++i)
+		{
+			m_ConsumableItemNames[i] = std::move(m_ConsumableItemNames[i + 1]);
+		}
+		m_ConsumableItemNames[2].clear();
+	}
+
 
 	if (itemOwner)
 	{
@@ -1755,6 +1798,7 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 {
 	if (buttonEventName == "Player_Melee")
 	{
+		cout << "Melee" << endl;
 		if (m_CombatMode == CombatMode::Throw)
 		{
 			EndThrowPreview();
@@ -1763,24 +1807,42 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 		{
 			m_CombatMode = ResolveBaseCombatMode();
 		}
+		return;
 	}
-	else if (buttonEventName == "Player_Throw1" 
-		|| buttonEventName == "Player_Throw2"
-		|| buttonEventName == "Player_Throw3")
+
+	int throwSlot = -1;
+	if (buttonEventName == "Player_Throw1" || buttonEventName == "Player_Throw_1")
 	{
-		int throwRange = 0;
-		if (TryGetConsumableThrowRange(throwRange) && throwRange > 0)
-		{
-			m_CombatMode = CombatMode::Throw;
-		}
-		else
-		{
-			m_CombatMode = ResolveBaseCombatMode();
-		}
+		cout << "Player_Throw1" << endl;
+
+		throwSlot = 0;
+	}
+	else if (buttonEventName == "Player_Throw2" || buttonEventName == "Player_Throw_2")
+	{
+		cout << "Player_Throw2" << endl;
+
+		throwSlot = 1;
+	}
+	else if (buttonEventName == "Player_Throw3" || buttonEventName == "Player_Throw_3")
+	{
+		cout << "Player_Throw3" << endl;
+
+		throwSlot = 2;
 	}
 	else
 	{
 		return;
+	}
+
+	SelectConsumableThrowSlot(throwSlot);
+	int throwRange = 0;
+	if (TryGetConsumableThrowRange(throwRange) && throwRange > 0)
+	{
+		m_CombatMode = CombatMode::Throw;
+	}
+	else
+	{
+		m_CombatMode = ResolveBaseCombatMode();
 	}
 }
 

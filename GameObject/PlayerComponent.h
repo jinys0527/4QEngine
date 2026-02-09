@@ -76,6 +76,7 @@ public:
 	bool TryGetConsumableThrowRange(int& outRange) const;
 	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
 	void ConsumeThrowItem(ItemComponent* throwItem);
+	void SelectConsumableThrowSlot(int slotIndex);
 	bool ConsumePushPossible();
 	bool ConsumePushTargetFound();
 	bool ConsumePushSuccess();
@@ -120,6 +121,7 @@ private:
 	void UpdateResourceUI();
 	void ApplyAnimation();
 	void ApplyVisualPresetByCombatMode();
+	bool TryGetConsumableThrowItemBySlot(int slotIndex, ItemComponent*& outItem) const;
 
 	// 외부지정 가능
 	// 이동력, 행동력
@@ -180,5 +182,6 @@ private:
 
 	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 	std::string m_ConsumableItemNames[3] = {};
+	int m_SelectedConsumableSlot = 0;
 	bool m_IsApplyMeleeStat = false;
 };

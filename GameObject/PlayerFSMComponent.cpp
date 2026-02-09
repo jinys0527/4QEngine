@@ -560,6 +560,7 @@ void PlayerFSMComponent::Start()
 
 void PlayerFSMComponent::DispatchEvent(const std::string& eventName)
 {
+	cout << "Event: " << eventName << endl;
 	auto* owner = GetOwner();
 	auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 	if (!player)
