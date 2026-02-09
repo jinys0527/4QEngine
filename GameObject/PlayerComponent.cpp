@@ -890,7 +890,8 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 		if (!enemy)
 		{
-			if (m_CombatMode == CombatMode::Throw) 
+			const bool isSelfTile = (clickedNode->GetQ() == m_Q) && (clickedNode->GetR() == m_R);
+			if (isSelfTile && m_CombatMode == CombatMode::Throw) 
 			{
 				if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 				{
@@ -1763,7 +1764,9 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 			m_CombatMode = ResolveBaseCombatMode();
 		}
 	}
-	else if (buttonEventName == "Player_Throw")
+	else if (buttonEventName == "Player_Throw1" 
+		|| buttonEventName == "Player_Throw2"
+		|| buttonEventName == "Player_Throw3")
 	{
 		int throwRange = 0;
 		if (TryGetConsumableThrowRange(throwRange) && throwRange > 0)

@@ -421,7 +421,9 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Combat_Start",	  "Player" });
 	eventRegistry.RegisterEvent({ "Combat_End",		  "Player" });
 	eventRegistry.RegisterEvent({ "Player_Melee",      "Player" });
-	eventRegistry.RegisterEvent({ "Player_Throw",      "Player" });
+	eventRegistry.RegisterEvent({ "Player_Throw_1",      "Player" });
+	eventRegistry.RegisterEvent({ "Player_Throw_2",      "Player" });
+	eventRegistry.RegisterEvent({ "Player_Throw_3",      "Player" });
 
 	eventRegistry.RegisterEvent({ "Inventory_Open",	  "Player" });
 	eventRegistry.RegisterEvent({ "Inventory_Close",  "Player" });
