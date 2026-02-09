@@ -115,6 +115,7 @@ extern "C" {
 	void Link_ItemSpawnerComponent();
 	void Link_InitiativeUIComponent();
 	void Link_PlayerVisualPresetComponent();
+	void Link_BoatComponent();
 }
 
 
@@ -192,5 +193,6 @@ void LinkEngineComponents() {
 	Link_ItemSpawnerComponent();
 	Link_InitiativeUIComponent();
 	Link_PlayerVisualPresetComponent();
+	Link_BoatComponent();
 
 }
