@@ -11,6 +11,7 @@
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
 #include "ServiceRegistry.h"
+#include "PlayerComponent.h"
 #include <algorithm>
 #include <cmath>
 
@@ -88,6 +89,30 @@ namespace
 		{
 			item.SetBaseModifier(definition.baseModifier);
 		}
+	}
+
+	PlayerComponent* FindPlayerComponent(Scene* scene)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			if (auto* player = object->GetComponent<PlayerComponent>())
+			{
+				return player;
+			}
+		}
+
+		return nullptr;
 	}
 
 	void EnsureRenderComponents(Object& object, const std::string& meshPath)
@@ -302,6 +327,26 @@ void ItemComponent::CompletePickup(Object* picker)
 
 	m_PickupState = ItemPickupState::Owned;
 	m_PickupOwner = picker;
+}
+
+bool ItemComponent::Sell()
+{
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return false;
+	}
+
+	auto* scene = owner->GetScene();
+	auto* player = FindPlayerComponent(scene);
+	if (!player)
+	{
+		return false;
+	}
+
+	const int sellPrice = max(0, m_Price);
+	player->SetMoney(player->GetMoney() + sellPrice);
+	return true;
 }
 
 void ItemComponent::BeginThrow(const XMFLOAT3& start, const XMFLOAT3& target, float duration)
