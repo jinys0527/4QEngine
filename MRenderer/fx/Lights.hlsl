@@ -4,6 +4,17 @@
 
 #include "BaseBuffer.hlsl"
 
+float3 ToneMap_ACES(float3 x)
+{
+    const float a = 2.51f;
+    const float b = 0.03f;
+    const float c = 2.43f;
+    const float d = 0.59f;
+    const float e = 0.14f;
+
+    return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+}
+
 float4 DirectLight(float4 nrm)
 {
     float4 diff = 0;   diff.a = 1;

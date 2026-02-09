@@ -13,6 +13,11 @@
 #include "UIPass.h"
 #include "Renderer.h"
 
+namespace
+{
+	constexpr DXGI_FORMAT kSceneColorFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+}
+
 #include <algorithm>
 //맵 순회하면서 지우거나 찾는 헬퍼 함수
 namespace
@@ -134,7 +139,7 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
-		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT, 
 		nullptr, m_SkyBox.GetAddressOf());
 
 	if (FAILED(hr))
@@ -263,10 +268,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	filename = L"../MRenderer/fx/ferndale_studio_12_4k.dds";
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
-		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT, 
 		nullptr, m_SkyBox.GetAddressOf());
 
 	if (FAILED(hr))
@@ -855,7 +860,7 @@ void Renderer::ResolveImguiEditTargetIfNeeded()
 		return;
 	}
 
-	m_pDXDC->ResolveSubresource(m_pRTScene_Imgui_edit.Get(), 0, m_pRTScene_Imgui_editMSAA.Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	m_pDXDC->ResolveSubresource(m_pRTScene_Imgui_edit.Get(), 0, m_pRTScene_Imgui_editMSAA.Get(), 0, kSceneColorFormat);
 }
 
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
@@ -1893,7 +1898,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 {
 	HRESULT hr = S_OK;
 #pragma region Imgui RenderTarget
-	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT fmt = kSceneColorFormat;
 
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
 	if (m_dwAA > 1)
@@ -1942,7 +1947,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 
 
 #pragma region Post
-	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	fmt = kSceneColorFormat;
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Post.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
@@ -1954,7 +1959,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 #pragma endregion
 
 #pragma region Blur
-	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	fmt = kSceneColorFormat;
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_BlurOrigin.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
@@ -1998,7 +2003,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 #pragma endregion
 
 #pragma region Refraction
-	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	fmt = kSceneColorFormat;
 
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
 
@@ -2017,7 +2022,7 @@ HRESULT Renderer::ReCreateRenderTarget()
 #pragma endregion
 
 #pragma region Emissive
-	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	fmt = kSceneColorFormat;
 
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_EmissiveOrigin.GetAddressOf());
 

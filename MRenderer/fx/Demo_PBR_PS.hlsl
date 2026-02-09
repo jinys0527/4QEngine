@@ -90,7 +90,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     float mipLevel = texRough.r * 6.0f;
     float3 envColor = g_SkyBox.SampleLevel(smpClamp, eR, mipLevel).rgb;
     
-    envColor = 1;
+    //return float4(envColor, 1);
     
     //envColor = float3(0.125f, 0.125f, 0.125f);
     //envColor = float3(1, 1, 1);
@@ -131,15 +131,13 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
     //float shadow = CastShadow(input.uvshadow);
     //col.rgb *= shadow;
     
+    float exposure = 1.0f;
+    col.rgb *= exposure;
+
+    col.rgb = ToneMap_ACES(col.rgb);
+
     col.rgb = LinearToSRGB(col.rgb);
 
     col.a = alpha;
-    
-    //return texAlbedo;
-    //return texNrm   ;
-    //return float4(texMetal.xyz, 1);
-    //return texRough ;
-    //return texAO;    
-    
     return col;
 }
