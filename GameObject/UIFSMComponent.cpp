@@ -276,6 +276,18 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_DoorInteract", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorCancel", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceRoll", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceUIOpen", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceRollRequested", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceRollApplied", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceTotalsApplied", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceResultShown", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceUIClose", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceDecisionRequested", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceDecisionResult", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceStatRollRequested", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceTypeDetermined", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceAnimationStarted", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceContinueRequested", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw", "UI" });
 }
@@ -507,6 +519,30 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRoll))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRoll, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIOpen))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIOpen, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRollRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRollRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRollApplied))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRollApplied, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceTotalsApplied))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceTotalsApplied, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceResultShown))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceResultShown, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIClose))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIClose, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceDecisionRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceDecisionRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceDecisionResult))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceDecisionResult, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceStatRollRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatRollRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceTypeDetermined))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceTypeDetermined, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationStarted))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationStarted, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceContinueRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceContinueRequested, this);
 }
 
 void UIFSMComponent::Start()
@@ -527,6 +563,18 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::PlayerShopOpen, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopClose, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceRoll, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceUIOpen, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceRollRequested, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceRollApplied, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceTotalsApplied, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceResultShown, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceUIClose, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceDecisionRequested, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceDecisionResult, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceStatRollRequested, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceTypeDetermined, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationStarted, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceContinueRequested, this);
 
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
@@ -668,6 +716,30 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("Player_ShopClose");
 	case EventType::PlayerDiceRoll:
 		return std::string("Player_DiceRoll");
+	case EventType::PlayerDiceUIOpen:
+		return std::string("Player_DiceUIOpen");
+	case EventType::PlayerDiceRollRequested:
+		return std::string("Player_DiceRollRequested");
+	case EventType::PlayerDiceRollApplied:
+		return std::string("Player_DiceRollApplied");
+	case EventType::PlayerDiceTotalsApplied:
+		return std::string("Player_DiceTotalsApplied");
+	case EventType::PlayerDiceResultShown:
+		return std::string("Player_DiceResultShown");
+	case EventType::PlayerDiceUIClose:
+		return std::string("Player_DiceUIClose");
+	case EventType::PlayerDiceDecisionRequested:
+		return std::string("Player_DiceDecisionRequested");
+	case EventType::PlayerDiceDecisionResult:
+		return std::string("Player_DiceDecisionResult");
+	case EventType::PlayerDiceStatRollRequested:
+		return std::string("Player_DiceStatRollRequested");
+	case EventType::PlayerDiceTypeDetermined:
+		return std::string("Player_DiceTypeDetermined");
+	case EventType::PlayerDiceAnimationStarted:
+		return std::string("Player_DiceAnimationStarted");
+	case EventType::PlayerDiceContinueRequested:
+		return std::string("Player_DiceContinueRequested");
 	case EventType::Pressed:
 		return std::string("UI_Pressed");
 	case EventType::UIHovered:

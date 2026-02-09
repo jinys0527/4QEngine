@@ -200,6 +200,8 @@ void CombatManager::BuildInitiativeOrder()
     std::vector<InitiativeEntry> entries;
     entries.reserve(m_Combatants.size());
 
+	m_EventDispatcher->Dispatch(EventType::PlayerDiceUIOpen, nullptr);
+
     for (const CombatantSnapshot& combatant : m_Combatants)
     {
         const DiceConfig rollConfig{ 1, 20, 0 };

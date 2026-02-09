@@ -80,6 +80,7 @@ void UIDicePanelComponent::SetSlots(std::vector<UIDicePanelSlot> slots)
 {
 	m_Slots = std::move(slots);
 	m_BindingsDirty = true;
+	ApplySlotsImmediate();
 }
 
 void UIDicePanelComponent::SetActiveDiceType(const std::string& type)
@@ -91,6 +92,7 @@ void UIDicePanelComponent::SetActiveDiceType(const std::string& type)
 
 	m_ActiveDiceType = type;
 	m_BindingsDirty = true;
+	ApplySlotsImmediate();
 }
 
 void UIDicePanelComponent::SetAutoVisibility(const bool& enabled)
@@ -102,11 +104,13 @@ void UIDicePanelComponent::SetAutoVisibility(const bool& enabled)
 
 	m_AutoVisibility = enabled;
 	m_BindingsDirty = true;
+	ApplySlotsImmediate();
 }
 
 void UIDicePanelComponent::RefreshBindings()
 {
 	m_BindingsDirty = true;
+	ApplySlotsImmediate();
 }
 
 UIManager* UIDicePanelComponent::GetUIManager() const
@@ -179,6 +183,37 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 		if (!slot.diceContext.empty())
 		{
 			diceAnim->SetDiceContext(slot.diceContext);
+		}
+	}
+}
+
+void UIDicePanelComponent::ApplySlotsImmediate() const
+{
+	if (!m_Enabled)
+	{
+		return;
+	}
+
+	if (!GetOwner())
+	{
+		return;
+	}
+
+	if (!GetScene() || !GetUIManager())
+	{
+		return;
+	}
+
+	for (const auto& slot : m_Slots)
+	{
+		if (slot.objectName.empty())
+		{
+			continue;
+		}
+
+		if (auto* target = FindUIObject(slot.objectName))
+		{
+			ApplySlot(*target, slot);
 		}
 	}
 }

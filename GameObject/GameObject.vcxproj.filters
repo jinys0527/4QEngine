@@ -203,8 +203,8 @@
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ItemSpawnerComponent.cpp">
-		<Filter>Components\UserDefine\Source Files</Filter>
-	</ClCompile>
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="UIDiceDisplayComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
@@ -212,6 +212,9 @@
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIDiceRollAnimationComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UINumberSpriteComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -435,8 +438,8 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ItemSpawnerComponent.h">
-		<Filter>Components\UserDefine\Header Files</Filter>
-	</ClInclude>
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="UIDiceDisplayTypes.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
@@ -450,6 +453,9 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIDiceRollAnimationComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UINumberSpriteComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>

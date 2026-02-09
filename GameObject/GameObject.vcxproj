@@ -385,6 +385,7 @@
     <ClInclude Include="UIDiceRollAnimationComponent.h" />
     <ClInclude Include="UIFSMComponent.h" />
     <ClInclude Include="UIImageComponent.h" />
+    <ClInclude Include="UINumberSpriteComponent.h" />
     <ClInclude Include="UIObject.h" />
     <ClInclude Include="UIPrimitives.h" />
     <ClInclude Include="UIProgressBarComponent.h" />
@@ -466,6 +467,7 @@
     <ClCompile Include="UIDiceRollAnimationComponent.cpp" />
     <ClCompile Include="UIFSMComponent.cpp" />
     <ClCompile Include="UIImageComponent.cpp" />
+    <ClCompile Include="UINumberSpriteComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
     <ClCompile Include="UIProgressBarComponent.cpp" />
     <ClCompile Include="UISliderComponent.cpp" />

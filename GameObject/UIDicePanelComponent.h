@@ -40,6 +40,7 @@ private:
 	Scene*     GetScene() const;
 	UIObject*  FindUIObject(const std::string& name) const;
 	void ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const;
+	void ApplySlotsImmediate() const;
 
 	std::vector<UIDicePanelSlot> m_Slots;
 	std::string m_ActiveDiceType;

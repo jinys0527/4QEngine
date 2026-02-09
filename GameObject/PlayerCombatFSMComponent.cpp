@@ -515,6 +515,7 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 						m_CombatManager->UpdateBattleOutcome(playerAlive, enemiesRemaining);
 					}
 				}
+				GetEventDispatcher().Dispatch(EventType::PlayerDiceUIClose, nullptr);
 			}
 		}
 	}
