@@ -105,6 +105,7 @@ public:
 	void SetMoney(const int& value) { m_Money = value; }
 	void SetInventoryItemIds(const std::vector<std::string>& value) { m_InventoryItemIds = value; }
 	void SetDebugEquipItem(bool value) { m_DebugEquipItem = value; }
+	void HandleCombatModeButtonState(const std::string& buttonEventName);
 
 private:
 	void ResetSubFSMFlags();
@@ -116,6 +117,7 @@ private:
 	void EndThrowPreview();
 	void UpdateResourceUI();
 	void ApplyAnimation();
+	void ApplyVisualPresetByCombatMode();
 
 	// 외부지정 가능
 	// 이동력, 행동력

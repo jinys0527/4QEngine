@@ -11,7 +11,6 @@
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerPushFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
-#include "PlayerVisualPresetComponent.h"
 #include "ReflectionMacro.h"
 #include "Scene.h"
 #include "GameManager.h"
@@ -559,42 +558,13 @@ void PlayerFSMComponent::Start()
 
 void PlayerFSMComponent::DispatchEvent(const std::string& eventName)
 {
-	FSMComponent::DispatchEvent(eventName);
-
-	if (eventName == "Player_Melee")
+	auto* owner = GetOwner();
+	auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+	if (!player)
 	{
-		auto* owner = GetOwner();
-		if (!owner)
-		{
-			return;
-		}
-
-		auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>();
-		if (visualPreset)
-		{
-			if (!visualPreset->ApplyByStateTag("Melee"))
-			{
-				visualPreset->ApplyByStateTag("Meele");
-			}
-		}
+		return;
 	}
-	if (eventName == "Player_Throw")
-	{
-		auto* owner = GetOwner();
-		if (!owner)
-		{
-			return;
-		}
-
-		auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>();
-		if (visualPreset)
-		{
-			if (!visualPreset->ApplyByStateTag("Throw"))
-			{
-				visualPreset->ApplyByStateTag("Throw");
-			}
-		}
-	}
+	player->HandleCombatModeButtonState(eventName);
 }
 
 std::optional<std::string> PlayerFSMComponent::TranslateEvent(EventType type, const void* data)

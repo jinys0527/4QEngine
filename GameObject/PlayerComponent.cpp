@@ -618,83 +618,117 @@ void PlayerComponent::Update(float deltaTime) {
 		}
 	}
 
-	//장착 무기에 따라 다른 무기 들기
-	GameObject* equippedItemObject = m_MeleeItem;
-	if (m_CombatMode == CombatMode::Throw) 
+	// 장착 무기 표시/숨김: CombatMode에 따라 근접, 던지기, 없음(Idle)
+	ItemComponent* throwItem = nullptr;
+	GameObject* throwItemObject = nullptr;
+	if (TryGetConsumableThrowItem(throwItem) && throwItem)
 	{
-		ItemComponent* throwItem = nullptr;
-		if (TryGetConsumableThrowItem(throwItem) && throwItem)
-		{
-			auto* throwOwner = throwItem->GetOwner();
-			equippedItemObject = throwOwner ? dynamic_cast<GameObject*>(throwOwner) : nullptr;
-		}
+		auto* throwOwner = throwItem->GetOwner();
+		throwItemObject = throwOwner ? dynamic_cast<GameObject*>(throwOwner) : nullptr;
 	}
-	if (equippedItemObject != nullptr)
+
+	GameObject* equippedItemObject = nullptr;
+	switch (m_CombatMode)
 	{
-		auto* itemcomponent = equippedItemObject->GetComponent<ItemComponent>();
-		if (!itemcomponent) return;
+	case CombatMode::Melee:
+		equippedItemObject = m_MeleeItem;
+		break;
+	case CombatMode::Throw:
+		equippedItemObject = throwItemObject;
+		break;
+	case CombatMode::Idle:
+	default:
+		equippedItemObject = nullptr;
+		break;
+	}
 
-		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
-		if (!skeletal)
+	auto setItemVisible = [](GameObject* itemObject, bool visible)
 		{
-			return;
-		}
-
-		auto* loader = AssetLoader::GetActive();
-		if (!loader)
-		{
-			return;
-		}
-
-		const SkeletonHandle skeletonHandle = skeletal->GetSkeletonHandle();
-		if (!skeletonHandle.IsValid())
-		{
-			return;
-		}
-
-		RenderData::Skeleton* skeleton = loader->GetSkeletons().Get(skeletonHandle);
-		if (!skeleton)
-		{
-			return;
-		}
-
-		XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
-		const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
-		if (equipmentBoneIndex >= 0)
-		{
-			const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
-			if (animComp)
+			if (!itemObject)
 			{
-				const auto& globalPose = animComp->GetGlobalPose();
-				if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
-				{
-					equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
-				}
+				return;
+			}
+
+			auto* renderer = itemObject->GetComponent<MeshRenderer>();
+			if (renderer)
+			{
+				renderer->SetVisible(visible);
+			}
+		};
+	setItemVisible(m_MeleeItem, equippedItemObject == m_MeleeItem && equippedItemObject != nullptr);
+	setItemVisible(throwItemObject, equippedItemObject == throwItemObject && equippedItemObject != nullptr);
+
+	if (equippedItemObject == nullptr)
+	{
+		return;
+	}
+	auto* itemcomponent = equippedItemObject->GetComponent<ItemComponent>();
+	if (!itemcomponent)
+	{
+		return;
+	}
+
+	auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+	if (!skeletal)
+	{
+		return;
+	}
+
+	auto* loader = AssetLoader::GetActive();
+	if (!loader)
+	{
+		return;
+	}
+
+	const SkeletonHandle skeletonHandle = skeletal->GetSkeletonHandle();
+	if (!skeletonHandle.IsValid())
+	{
+		return;
+	}
+
+	RenderData::Skeleton* skeleton = loader->GetSkeletons().Get(skeletonHandle);
+	if (!skeleton)
+	{
+		return;
+	}
+
+	XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
+	const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
+	if (equipmentBoneIndex >= 0)
+	{
+		const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
+		if (animComp)
+		{
+
+			const auto& globalPose = animComp->GetGlobalPose();
+			if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
+			{
+				equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
 			}
 		}
-
-
-		// equipment 본 포즈 로드
-		XMMATRIX equipmentM = XMLoadFloat4x4(&equipmentPose);
-
-		// 스케일 적용 (회전 보존)
-		XMMATRIX scaleM = XMMatrixScaling(0.01f, 0.01f, 0.01f);
-		equipmentM = XMMatrixMultiply(scaleM, equipmentM);
-
-		// 플레이어 월드 행렬
-		auto* playerTransform = owner->GetComponent<TransformComponent>();
-		if (!playerTransform) return;
-
-		XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
-
-		XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
-
-		XMFLOAT4X4 finalPose;
-		XMStoreFloat4x4(&finalPose, finalM);
-
-		// 최종 적용
-		itemcomponent->SetEquipmentBindPose(finalPose);
 	}
+
+	// equipment 본 포즈 로드
+	XMMATRIX equipmentM = XMLoadFloat4x4(&equipmentPose);
+
+	// 스케일 적용 (회전 보존)
+	XMMATRIX scaleM = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+	equipmentM = XMMatrixMultiply(scaleM, equipmentM);
+
+	// 플레이어 월드 행렬
+	auto* playerTransform = owner->GetComponent<TransformComponent>();
+	if (!playerTransform)
+	{
+		return;
+	}
+
+	XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
+	XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
+
+	XMFLOAT4X4 finalPose;
+	XMStoreFloat4x4(&finalPose, finalM);
+
+	itemcomponent->SetEquipmentBindPose(finalPose);
 }
 
 void PlayerComponent::OnEvent(EventType type, const void* data)
@@ -1620,7 +1654,6 @@ void PlayerComponent::BeginThrowPreview()
 		return;
 	}
 
-	m_CombatMode = CombatMode::Throw;
 	m_ThrowPreviewRange = range;
 	m_GridSystem->SetThrowRangePreview(true, range);
 }
@@ -1692,31 +1725,57 @@ void PlayerComponent::UpdateResourceUI()
 	m_LastActResource = m_ActResource;
 }
 
-void PlayerComponent::ApplyAnimation()
+void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEventName)
+{
+	if (buttonEventName == "Player_Melee")
+	{
+		m_CombatMode = CombatMode::Melee;
+	}
+	else if (buttonEventName == "Player_Throw")
+	{
+		m_CombatMode = CombatMode::Throw;
+	}
+	else
+	{
+		return;
+	}
+
+	ApplyVisualPresetByCombatMode();
+}
+
+void PlayerComponent::ApplyVisualPresetByCombatMode()
 {
 	auto* owner = GetOwner();
 	if (!owner)
 	{
 		return;
 	}
-	//if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
-	//{
-	//	m_DebugVisualToggleFlip = !m_DebugVisualToggleFlip;
-	//	visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "melee" : "Throw");
-	//}
 
-	auto* visualcomponent = owner->GetComponent<PlayerVisualPresetComponent>();
-
-	if (m_MeleeItem)
+	auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>();
+	if (!visualPreset)
 	{
-		visualcomponent->ApplyByStateTag("Melee");
-
+		return;
 	}
-	if (m_CombatMode == CombatMode::Throw) 
+
+	switch (m_CombatMode)
 	{
-		visualcomponent->ApplyByStateTag("Throw");
-
+	case CombatMode::Melee:
+		if (!visualPreset->ApplyByStateTag("Melee"))
+		{
+			visualPreset->ApplyByStateTag("Meele");
+		}
+		break;
+	case CombatMode::Throw:
+		visualPreset->ApplyByStateTag("Throw");
+		break;
+	default:
+		break;
 	}
+}
+
+void PlayerComponent::ApplyAnimation()
+{
+	ApplyVisualPresetByCombatMode();
 }
 
 bool PlayerComponent::TryPickup(ItemComponent* item)
