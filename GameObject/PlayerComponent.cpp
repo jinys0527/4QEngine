@@ -36,6 +36,7 @@
 #include "GameDataRepository.h"
 #include "UIManager.h"
 #include "UIProgressBarComponent.h"
+#include "PlayerVisualPresetComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -549,13 +550,13 @@ void PlayerComponent::Update(float deltaTime) {
 	//임시로 첫번째 자식을 가지고 있는 아이템으로 지정
 	//auto* transformcomponent = owner->GetComponent<TransformComponent>();
 	//{
-	//	if (!transformcomponent->GetChildrens().empty() && m_MeeleItem == nullptr)
+	//	if (!transformcomponent->GetChildrens().empty() && m_MeleeItem == nullptr)
 	//	{
 	//		GameObject* item = dynamic_cast<GameObject*>(transformcomponent->GetChildrens()[0]->GetOwner());
 	//		auto* itemcomp = item->GetComponent<ItemComponent>();
 	//		if (itemcomp && itemcomp->GetType() == 1)
 	//		{
-	//			m_MeeleItem = item;
+	//			m_MeleeItem = item;
 	//			itemcomp->SetIsEquiped(true);
 	//			m_InventoryItemIds.push_back(item->GetName());
 
@@ -564,14 +565,15 @@ void PlayerComponent::Update(float deltaTime) {
 
 	//}
 
+
 	//근접 무기 스탯 적용
-	if (m_MeeleItem != nullptr)
+	if (m_MeleeItem != nullptr)
 	{
-		auto* itemcomponent = m_MeeleItem->GetComponent<ItemComponent>();
+		auto* itemcomponent = m_MeleeItem->GetComponent<ItemComponent>();
 		if (!itemcomponent) return;
 
 		//근접 무기의 스탯 적용하기
-		if (!m_IsApplyMeeleStat)
+		if (!m_IsApplyMeleeStat)
 		{
 			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
 			if (!playerstatcomponent) return;
@@ -598,12 +600,12 @@ void PlayerComponent::Update(float deltaTime) {
 			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
 			playerstatcomponent->SetRange(irange);
 
-			m_IsApplyMeeleStat = true;
+			m_IsApplyMeleeStat = true;
 		}
 	}
 
 	//장착 무기에 따라 다른 무기 들기
-	GameObject* equippedItemObject = m_MeeleItem;
+	GameObject* equippedItemObject = m_MeleeItem;
 	if (m_IsThrowPreviewActive)
 	{
 		ItemComponent* throwItem = nullptr;
@@ -789,7 +791,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (TryPickup(clickedItem))
 			{
-
 				cout << "PickUp" << endl;
 				mouseData->handled = true;
 				return;
@@ -834,9 +835,22 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 		if (!enemy)
 		{
+			if (m_IsThrowPreviewActive)
+			{
+				if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+				{
+					if (combatFsm->TryExecutePlayerSelfThrow())
+					{
+						cout << "Self Throw" << endl;
+						mouseData->handled = true;
+					}
+				}
+			}
 			return;
 		}
 
+
+		//던지기
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
 		if (m_IsThrowPreviewActive)
 		{
@@ -1470,12 +1484,15 @@ bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 			continue;
 		}
 
-		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		const int itemType = itemComponent->GetType();
+		if (itemType != static_cast<int>(ItemType::THROW)
+			&& itemType != static_cast<int>(ItemType::HEAL)) 
 		{
 			continue;
 		}
 
-		bestRange = max(bestRange, itemComponent->GetThrowRange());
+		const int throwRange = itemComponent->GetThrowRange();
+		bestRange = max(bestRange, throwRange);
 	}
 
 	if (bestRange <= 0)
@@ -1507,7 +1524,9 @@ bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 			continue;
 		}
 
-		if (itemComponent->GetType() != static_cast<int>(ItemType::THROW))
+		const int itemType = itemComponent->GetType();
+		if (itemType != static_cast<int>(ItemType::THROW)
+			&& itemType != static_cast<int>(ItemType::HEAL)) 
 		{
 			continue;
 		}
@@ -1659,6 +1678,33 @@ void PlayerComponent::UpdateResourceUI()
 	m_LastActResource = m_ActResource;
 }
 
+void PlayerComponent::ApplyAnimation()
+{
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return;
+	}
+	//if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
+	//{
+	//	m_DebugVisualToggleFlip = !m_DebugVisualToggleFlip;
+	//	visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "melee" : "Throw");
+	//}
+
+	auto* visualcomponent = owner->GetComponent<PlayerVisualPresetComponent>();
+
+	if (m_MeleeItem)
+	{
+		visualcomponent->ApplyByStateTag("Melee");
+
+	}
+	if (m_IsThrowPreviewActive)
+	{
+		visualcomponent->ApplyByStateTag("Throw");
+
+	}
+}
+
 bool PlayerComponent::TryPickup(ItemComponent* item)
 {
 	if (!item)
@@ -1697,7 +1743,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	int consumableSlot = -1;
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 	{
-		if (m_MeeleItem)
+		if (m_MeleeItem)
 		{
 			GetEventDispatcher().Dispatch(EventType::PlayerEquipFailed, item);
 			return false;
@@ -1762,8 +1808,8 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 			shouldRemovePickedObject = true;
 			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 			{
-				m_MeeleItem = equippedObject;
-				m_IsApplyMeeleStat = false;
+				m_MeleeItem = equippedObject;
+				m_IsApplyMeleeStat = false;
 			}
 			else if (consumableSlot >= 0)
 			{
@@ -1783,7 +1829,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		{
 			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 			{
-				m_MeeleItem = itemObject;
+				m_MeleeItem = itemObject;
 			}
 			else if (consumableSlot >= 0)
 			{

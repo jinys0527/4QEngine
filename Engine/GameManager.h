@@ -58,6 +58,7 @@ public:
 	bool IsExplorationInputAllowed() const;
 	bool IsCombatInputAllowed() const;
 	bool IsShopInputAllowed() const;
+	int  GetCurrentFloor() const { return m_CurrentFloor; }
 	void SetTurn(Turn turn);
 	void SetPhase(Phase phase);
 	void SetExplorationTurnState(ExplorationTurnState state);
