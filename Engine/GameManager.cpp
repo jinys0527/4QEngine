@@ -127,6 +127,17 @@ void GameManager::Update(float deltaTime)
 	}
 
 
+	if (m_PlayerActionInputLocked)
+	{
+		m_PlayerActionInputLockElapsed += deltaTime;
+		if (m_PlayerActionInputLockElapsed >= m_PlayerActionInputLockDuration)
+		{
+			m_PlayerActionInputLocked = false;
+			m_PlayerActionInputLockElapsed = 0.0f;
+		}
+	}
+
+
 	if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::Resolve)
 	{
 		auto* combatManager = GetCombatManager();
@@ -316,6 +327,14 @@ void GameManager::OnEvent(EventType type, const void* data)
 			}
 		}
 		break;
+	case EventType::PlayerAttack:
+	case EventType::PlayerMove:
+		if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::PlayerTurn)
+		{
+			m_PlayerActionInputLocked = true;
+			m_PlayerActionInputLockElapsed = 0.0f;
+		}
+		break;
 	case EventType::PlayerTurnEndRequested:
 		std::cout << "PlayerTurnEndRequested\n";
 		if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
@@ -468,6 +487,8 @@ void GameManager::TurnReset()
 	m_FloorReadyPending = false;
 	m_BlockPostCombatShop = false;	
 	m_ResolveEnemyTurn = false;
+	m_PlayerActionInputLocked = false;
+	m_PlayerActionInputLockElapsed = 0.0f;
 	m_RemainingEnemyTurns = 0;
 	m_WaitingEnemyTurnDelay = false;
 	m_EnemyTurnDelayElapsed = 0.0f;
@@ -521,13 +542,15 @@ void GameManager::SetExplorationActiveEnemyActorId(int actorId)
 bool GameManager::IsExplorationInputAllowed() const
 {
 	return m_Phase == Phase::ExplorationLoop
-		&& m_ExplorationTurnState == ExplorationTurnState::PlayerTurn;
+		&& m_ExplorationTurnState == ExplorationTurnState::PlayerTurn
+		&& !m_PlayerActionInputLocked;
 }
 
 bool GameManager::IsCombatInputAllowed() const
 {
 	return m_Phase == Phase::TurnBasedCombat
-		&& m_CombatTurnState == CombatTurnState::PlayerTurn;
+		&& m_CombatTurnState == CombatTurnState::PlayerTurn
+		&& !m_PlayerActionInputLocked;
 }
 
 bool GameManager::IsShopInputAllowed() const
@@ -786,6 +809,8 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 	{
 		SetTurn(Turn::PlayerTurn);
 		m_CombatTurnElapsed = 0.0f;
+		m_PlayerActionInputLocked = false;
+		m_PlayerActionInputLockElapsed = 0.0f;
 		m_RemainingEnemyTurns = 0;
 		m_WaitingEnemyTurnDelay = false;
 		m_EnemyTurnDelayElapsed = 0.0f;
@@ -796,6 +821,8 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 		SetTurn(Turn::EnemyTurn);
 		m_CombatTurnElapsed = 0.0f;
 		m_SkipToPlayerTurn = false;
+		m_PlayerActionInputLocked = false;
+		m_PlayerActionInputLockElapsed = 0.0f;
 		m_WaitingEnemyTurnDelay = false;
 		m_EnemyTurnDelayElapsed = 0.0f;
 
@@ -1453,6 +1480,8 @@ void GameManager::RegisterEventListeners()
 	m_EventDispatcher->AddListener(EventType::AITurnEndRequested, this);
 	m_EventDispatcher->AddListener(EventType::AIMeleeAttackRequested, this);
 	m_EventDispatcher->AddListener(EventType::AIRangedAttackRequested, this);
+	m_EventDispatcher->AddListener(EventType::PlayerAttack, this);
+	m_EventDispatcher->AddListener(EventType::PlayerMove, this);
 	m_EventDispatcher->AddListener(EventType::PlayerTurnEndRequested, this);
 	m_EventDispatcher->AddListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->AddListener(EventType::CombatEnter, this);
@@ -1484,6 +1513,8 @@ void GameManager::UnregisterEventListeners()
 	m_EventDispatcher->RemoveListener(EventType::AITurnEndRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::AIMeleeAttackRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::AIRangedAttackRequested, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerAttack, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerMove, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerTurnEndRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatEnter, this);
