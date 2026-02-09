@@ -50,7 +50,6 @@ REGISTER_PROPERTY(PlayerComponent, AttackRange)
 REGISTER_PROPERTY(PlayerComponent, Money)
 REGISTER_PROPERTY(PlayerComponent, DebugEquipItem)
 REGISTER_PROPERTY_READONLY(PlayerComponent, DebugCombatMode)
-REGISTER_PROPERTY(PlayerComponent, IsThrowPreviewActive)
 
 
 //REGISTER_PROPERTY(PlayerComponent, Item)
@@ -520,6 +519,17 @@ void PlayerComponent::Update(float deltaTime) {
 		return;
 	}
 
+	SyncCombatModeFromInventory();
+	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
+	const bool isDead = playerStat && playerStat->IsDead();
+	if (!m_HasAppliedCombatVisual || m_LastVisualCombatMode != m_CombatMode || m_LastVisualIsDead != isDead) 
+	{
+		ApplyVisualPresetByCombatMode();
+		m_LastVisualCombatMode = m_CombatMode;
+		m_LastVisualIsDead = isDead;
+		m_HasAppliedCombatVisual = true;
+	}
+
 	if (m_LastRemainMoveResource != m_RemainMoveResource
 		|| m_LastRemainActResource != m_RemainActResource
 		|| m_LastMoveResource != m_MoveResource
@@ -529,7 +539,21 @@ void PlayerComponent::Update(float deltaTime) {
 	}
 
 	auto* gameManager = scene->GetGameManager();
-	m_DebugCombatMode = m_IsThrowPreviewActive ? "ThrowMode" : "MeleeMode";
+	switch (m_CombatMode)
+	{
+	case CombatMode::Idle:
+		m_DebugCombatMode = "IdleMode";
+		break;
+	case CombatMode::Melee:
+		m_DebugCombatMode = "MeleeMode";
+		break;
+	case CombatMode::Throw:
+		m_DebugCombatMode = "ThrowMode";
+		break;
+	default:
+		m_DebugCombatMode = "IdleMode";
+		break;
+	}
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 	//아이템 장착 테스트
 
@@ -598,89 +622,139 @@ void PlayerComponent::Update(float deltaTime) {
 			playerstatcomponent->SetSense(sense + isense);
 			playerstatcomponent->SetSkill(skill + iskill);
 			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
-			playerstatcomponent->SetRange(irange);
+			playerstatcomponent->SetRange(static_cast<int>(irange));
 
 			m_IsApplyMeleeStat = true;
 		}
 	}
 
-	//장착 무기에 따라 다른 무기 들기
-	GameObject* equippedItemObject = m_MeleeItem;
-	if (m_IsThrowPreviewActive)
+	// 장착 무기 표시/숨김: CombatMode에 따라 근접, 던지기, 없음(Idle)
+	std::vector<GameObject*> consumableObjects;
+	consumableObjects.reserve(3);
+	for (const auto& itemName : m_ConsumableItemNames)
 	{
-		ItemComponent* throwItem = nullptr;
-		if (TryGetConsumableThrowItem(throwItem) && throwItem)
+		auto* itemObject = FindGameObjectByName(scene, itemName);
+		if (!itemObject)
 		{
-			auto* throwOwner = throwItem->GetOwner();
-			equippedItemObject = throwOwner ? dynamic_cast<GameObject*>(throwOwner) : nullptr;
+			continue;
 		}
+
+		consumableObjects.push_back(itemObject);
 	}
-	if (equippedItemObject != nullptr)
+
+	ItemComponent* throwItem = nullptr;
+	GameObject* throwItemObject = nullptr;
+	if (TryGetConsumableThrowItem(throwItem) && throwItem)
 	{
-		auto* itemcomponent = equippedItemObject->GetComponent<ItemComponent>();
-		if (!itemcomponent) return;
+		auto* throwOwner = throwItem->GetOwner();
+		throwItemObject = throwOwner ? dynamic_cast<GameObject*>(throwOwner) : nullptr;
+	}
 
-		auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
-		if (!skeletal)
-		{
-			return;
-		}
+	GameObject* equippedItemObject = nullptr;
+	switch (m_CombatMode)
+	{
+	case CombatMode::Melee:
+		equippedItemObject = m_MeleeItem;
+		break;
+	case CombatMode::Throw:
+		equippedItemObject = throwItemObject;
+		break;
+	case CombatMode::Idle:
+	default:
+		equippedItemObject = nullptr;
+		break;
+	}
 
-		auto* loader = AssetLoader::GetActive();
-		if (!loader)
+	auto setItemVisible = [](GameObject* itemObject, bool visible)
 		{
-			return;
-		}
-
-		const SkeletonHandle skeletonHandle = skeletal->GetSkeletonHandle();
-		if (!skeletonHandle.IsValid())
-		{
-			return;
-		}
-
-		RenderData::Skeleton* skeleton = loader->GetSkeletons().Get(skeletonHandle);
-		if (!skeleton)
-		{
-			return;
-		}
-
-		XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
-		const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
-		if (equipmentBoneIndex >= 0)
-		{
-			const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
-			if (animComp)
+			if (!itemObject)
 			{
-				const auto& globalPose = animComp->GetGlobalPose();
-				if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
-				{
-					equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
-				}
+				return;
+			}
+
+			auto* renderer = itemObject->GetComponent<MeshRenderer>();
+			if (renderer)
+			{
+				renderer->SetVisible(visible);
+			}
+		};
+	setItemVisible(m_MeleeItem, equippedItemObject == m_MeleeItem && equippedItemObject != nullptr);
+	for (auto* consumableObject : consumableObjects)
+	{
+		setItemVisible(consumableObject, equippedItemObject == consumableObject && equippedItemObject != nullptr);
+	}
+
+	if (equippedItemObject == nullptr)
+	{
+		return;
+	}
+	auto* itemcomponent = equippedItemObject->GetComponent<ItemComponent>();
+	if (!itemcomponent)
+	{
+		return;
+	}
+
+	auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+	if (!skeletal)
+	{
+		return;
+	}
+
+	auto* loader = AssetLoader::GetActive();
+	if (!loader)
+	{
+		return;
+	}
+
+	const SkeletonHandle skeletonHandle = skeletal->GetSkeletonHandle();
+	if (!skeletonHandle.IsValid())
+	{
+		return;
+	}
+
+	RenderData::Skeleton* skeleton = loader->GetSkeletons().Get(skeletonHandle);
+	if (!skeleton)
+	{
+		return;
+	}
+
+	XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
+	const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
+	if (equipmentBoneIndex >= 0)
+	{
+		const auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
+		if (animComp)
+		{
+
+			const auto& globalPose = animComp->GetGlobalPose();
+			if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
+			{
+				equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
 			}
 		}
-
-
-		// equipment 본 포즈 로드
-		XMMATRIX equipmentM = XMLoadFloat4x4(&equipmentPose);
-
-		// 스케일 적용 (회전 보존)
-		XMMATRIX scaleM = XMMatrixScaling(0.01f, 0.01f, 0.01f);
-		equipmentM = XMMatrixMultiply(scaleM, equipmentM);
-
-		// 플레이어 월드 행렬
-		auto* playerTransform = owner->GetComponent<TransformComponent>();
-		if (!playerTransform) return;
-
-		XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
-
-		XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
-
-		XMFLOAT4X4 finalPose;
-		XMStoreFloat4x4(&finalPose, finalM);
-
-		// 최종 적용
-		itemcomponent->SetEquipmentBindPose(finalPose);
 	}
+
+	// equipment 본 포즈 로드
+	XMMATRIX equipmentM = XMLoadFloat4x4(&equipmentPose);
+
+	// 스케일 적용 (회전 보존)
+	XMMATRIX scaleM = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+	equipmentM = XMMatrixMultiply(scaleM, equipmentM);
+
+	// 플레이어 월드 행렬
+	auto* playerTransform = owner->GetComponent<TransformComponent>();
+	if (!playerTransform)
+	{
+		return;
+	}
+
+	XMMATRIX playerWorldM = XMLoadFloat4x4(&playerTransform->GetWorldMatrix());
+	XMMATRIX finalM = XMMatrixMultiply(equipmentM, playerWorldM);
+
+	XMFLOAT4X4 finalPose;
+	XMStoreFloat4x4(&finalPose, finalM);
+
+	itemcomponent->SetEquipmentBindPose(finalPose);
 }
 
 void PlayerComponent::OnEvent(EventType type, const void* data)
@@ -835,7 +909,8 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 		if (!enemy)
 		{
-			if (m_IsThrowPreviewActive)
+			const bool isSelfTile = (clickedNode->GetQ() == m_Q) && (clickedNode->GetR() == m_R);
+			if (isSelfTile && m_CombatMode == CombatMode::Throw) 
 			{
 				if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 				{
@@ -852,7 +927,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		//던지기
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
-		if (m_IsThrowPreviewActive)
+		if (m_CombatMode == CombatMode::Throw) 
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
@@ -870,10 +945,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		if (!m_IsMeleeMode)
+		if (m_CombatMode != CombatMode::Melee) 
 		{
 			std::cout << "MeleeMode\n";
-			m_IsMeleeMode = true;
+			m_CombatMode = CombatMode::Melee;
 		}
 		else
 		{
@@ -1005,10 +1080,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		if (!m_IsMeleeMode)
+		m_CombatMode = CombatMode::Melee; 
 		{
 			std::cout << "MeleeMode\n";
-			m_IsMeleeMode = true;
+			m_CombatMode = CombatMode::Melee;
 		}
 
 		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
@@ -1032,11 +1107,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* scene = owner ? owner->GetScene() : nullptr;
 		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 
-		if (gameManager->GetCombatManager()->GetState() != Battle::InBattle)
+		if (!gameManager || gameManager->GetCombatManager()->GetState() != Battle::InBattle) 
 		{
-			std::cout << "IdleMode\n";
-
-			m_IsMeleeMode = false;
+			std::cout << "Cancel Throw Preview\n";
+			EndThrowPreview();
 		}
 	}
 
@@ -1467,80 +1541,97 @@ bool PlayerComponent::ConsumeFlag(bool& flag)
 
 bool PlayerComponent::TryGetConsumableThrowRange(int& outRange) const
 {
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	int bestRange = -1;
-	for (const auto& itemName : m_ConsumableItemNames)
-	{
-		auto* itemObject = FindGameObjectByName(scene, itemName);
-		if (!itemObject)
-		{
-			continue;
-		}
-
-		const auto* itemComponent = itemObject->GetComponent<ItemComponent>();
-		if (!itemComponent)
-		{
-			continue;
-		}
-
-		const int itemType = itemComponent->GetType();
-		if (itemType != static_cast<int>(ItemType::THROW)
-			&& itemType != static_cast<int>(ItemType::HEAL)) 
-		{
-			continue;
-		}
-
-		const int throwRange = itemComponent->GetThrowRange();
-		bestRange = max(bestRange, throwRange);
-	}
-
-	if (bestRange <= 0)
+	ItemComponent* throwItem = nullptr;
+	if (!TryGetConsumableThrowItem(throwItem) || !throwItem)
 	{
 		return false;
 	}
 
-	outRange = bestRange;
+	const int throwRange = throwItem->GetThrowRange();
+	if (throwRange <= 0)
+	{
+		return false;
+	}
+
+	outRange = throwRange;
+	return true;
+}
+
+bool PlayerComponent::TryGetConsumableThrowItemBySlot(int slotIndex, ItemComponent*& outItem) const
+{
+	outItem = nullptr;
+	if (slotIndex < 0 || slotIndex >= 3)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	const auto& itemName = m_ConsumableItemNames[slotIndex];
+	auto* itemObject = FindGameObjectByName(scene, itemName);
+	if (!itemObject) 
+	{
+		return false;
+	}
+
+	auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+	if (!itemComponent)
+	{
+		return false;
+	}
+
+	const int itemType = itemComponent->GetType();
+	if (itemType != static_cast<int>(ItemType::THROW)
+		&& itemType != static_cast<int>(ItemType::HEAL))
+	{
+		return false;
+	}
+
+	
+
+	if (itemComponent->GetThrowRange() <= 0) 
+	{
+		return false;
+	}
+
+	outItem = itemComponent;
 	return true;
 }
 
 bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 {
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	outItem = nullptr;
-	int bestRange = -1;
-	for (const auto& itemName : m_ConsumableItemNames)
+	if (TryGetConsumableThrowItemBySlot(m_SelectedConsumableSlot, outItem))
 	{
-		auto* itemObject = FindGameObjectByName(scene, itemName);
-		if (!itemObject)
+		return true;
+	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		if (i == m_SelectedConsumableSlot)
 		{
 			continue;
 		}
 
-		auto* itemComponent = itemObject->GetComponent<ItemComponent>();
-		if (!itemComponent)
+		if (TryGetConsumableThrowItemBySlot(i, outItem))
 		{
-			continue;
-		}
-
-		const int itemType = itemComponent->GetType();
-		if (itemType != static_cast<int>(ItemType::THROW)
-			&& itemType != static_cast<int>(ItemType::HEAL)) 
-		{
-			continue;
-		}
-
-		const int range = itemComponent->GetThrowRange();
-		if (range > bestRange)
-		{
-			bestRange = range;
-			outItem = itemComponent;
+			return true;
 		}
 	}
 
-	return outItem != nullptr && bestRange > 0;
+	outItem = nullptr;
+	return false;
 }
+
+void PlayerComponent::SelectConsumableThrowSlot(int slotIndex)
+{
+	if (slotIndex < 0 || slotIndex >= 3)
+	{
+		return;
+	}
+
+	m_SelectedConsumableSlot = slotIndex;
+}
+
 
 void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 {
@@ -1551,14 +1642,24 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 
 	auto* itemOwner = throwItem->GetOwner();
 	const std::string itemName = itemOwner ? itemOwner->GetName() : std::string{};
-	for (auto& slotName : m_ConsumableItemNames)
+	int consumedSlot = -1;
+	for (int i = 0; i < 3; ++i) 
 	{
-		if (!slotName.empty() && slotName == itemName)
+		if (!m_ConsumableItemNames[i].empty() && m_ConsumableItemNames[i] == itemName) 
 		{
-			slotName.clear();
+			consumedSlot = i;
 			break;
 		}
 	}
+	if (consumedSlot >= 0)
+	{
+		for (int i = consumedSlot; i < 2; ++i)
+		{
+			m_ConsumableItemNames[i] = std::move(m_ConsumableItemNames[i + 1]);
+		}
+		m_ConsumableItemNames[2].clear();
+	}
+
 
 	if (itemOwner)
 	{
@@ -1571,26 +1672,19 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 	}
 
 	throwItem->SetIsEquiped(false);
+	ConsumeActResource(throwItem->GetActionPointCost());
 
-	int range = 0;
-	if (TryGetConsumableThrowRange(range))
+	m_CombatMode = ResolveBaseCombatMode();
+	m_ThrowPreviewRange = 0;
+	if (m_GridSystem) 
 	{
-		m_ThrowPreviewRange = range;
-		if (m_GridSystem)
-		{
-			m_GridSystem->SetThrowRangePreview(true, range);
-		}
-	}
-	else
-	{
-		ConsumeActResource(throwItem->GetActionPointCost());
-		EndThrowPreview();
+		m_GridSystem->SetThrowRangePreview(false, 0);
 	}
 }
 
 void PlayerComponent::BeginThrowPreview()
 {
-	if (m_IsThrowPreviewActive)
+	if (m_CombatMode != CombatMode::Throw) 
 	{
 		return;
 	}
@@ -1606,24 +1700,49 @@ void PlayerComponent::BeginThrowPreview()
 		return;
 	}
 
-	m_IsThrowPreviewActive = true;
 	m_ThrowPreviewRange = range;
 	m_GridSystem->SetThrowRangePreview(true, range);
 }
 
 void PlayerComponent::EndThrowPreview()
 {
-	if (!m_IsThrowPreviewActive)
+	if (m_CombatMode != CombatMode::Throw) 
 	{
 		return;
 	}
 
-	m_IsThrowPreviewActive = false;
+	m_CombatMode = ResolveBaseCombatMode();
 	m_ThrowPreviewRange = 0;
 	if (m_GridSystem)
 	{
 		m_GridSystem->SetThrowRangePreview(false, 0);
 	}
+}
+
+PlayerComponent::CombatMode PlayerComponent::ResolveBaseCombatMode() const
+{
+	if (!m_MeleeItem)
+	{
+		return CombatMode::Idle;
+	}
+
+	auto* meleeItemComponent = m_MeleeItem->GetComponent<ItemComponent>();
+	if (!meleeItemComponent || !meleeItemComponent->GetIsEquiped())
+	{
+		return CombatMode::Idle;
+	}
+
+	return CombatMode::Melee;
+}
+
+void PlayerComponent::SyncCombatModeFromInventory()
+{
+	if (m_CombatMode == CombatMode::Throw)
+	{
+		return;
+	}
+
+	m_CombatMode = ResolveBaseCombatMode();
 }
 
 void PlayerComponent::UpdateResourceUI()
@@ -1678,31 +1797,125 @@ void PlayerComponent::UpdateResourceUI()
 	m_LastActResource = m_ActResource;
 }
 
-void PlayerComponent::ApplyAnimation()
+void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEventName)
+{
+	if (buttonEventName == "Player_Melee")
+	{
+		cout << "Melee" << endl;
+		if (m_CombatMode == CombatMode::Throw)
+		{
+			EndThrowPreview();
+		}
+		else
+		{
+			m_CombatMode = ResolveBaseCombatMode();
+		}
+		return;
+	}
+
+	int throwSlot = -1;
+	if (buttonEventName == "Player_Throw1" || buttonEventName == "Player_Throw_1")
+	{
+		cout << "Player_Throw1" << endl;
+
+		throwSlot = 0;
+	}
+	else if (buttonEventName == "Player_Throw2" || buttonEventName == "Player_Throw_2")
+	{
+		cout << "Player_Throw2" << endl;
+
+		throwSlot = 1;
+	}
+	else if (buttonEventName == "Player_Throw3" || buttonEventName == "Player_Throw_3")
+	{
+		cout << "Player_Throw3" << endl;
+
+		throwSlot = 2;
+	}
+	else
+	{
+		return;
+	}
+
+	SelectConsumableThrowSlot(throwSlot);
+	int throwRange = 0;
+	if (TryGetConsumableThrowRange(throwRange) && throwRange > 0)
+	{
+		m_CombatMode = CombatMode::Throw;
+	}
+	else
+	{
+		m_CombatMode = ResolveBaseCombatMode();
+	}
+}
+
+void PlayerComponent::ApplyVisualPresetByCombatMode()
 {
 	auto* owner = GetOwner();
 	if (!owner)
 	{
 		return;
 	}
-	//if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
-	//{
-	//	m_DebugVisualToggleFlip = !m_DebugVisualToggleFlip;
-	//	visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "melee" : "Throw");
-	//}
 
-	auto* visualcomponent = owner->GetComponent<PlayerVisualPresetComponent>();
-
-	if (m_MeleeItem)
+	auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>();
+	if (!visualPreset)
 	{
-		visualcomponent->ApplyByStateTag("Melee");
+		return;
+	}
+
+	auto tryApplyAny = [visualPreset](std::initializer_list<const char*> stateTags)
+		{
+			for (const char* tag : stateTags)
+			{
+				if (tag && visualPreset->ApplyByStateTag(tag))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
+	const bool isDead = playerStat && playerStat->IsDead();
+	if (isDead)
+	{
+		switch (m_CombatMode)
+		{
+		case CombatMode::Melee:
+			if (!tryApplyAny({ "MeleeDead" }))
+			{
+				tryApplyAny({ "MeleeDead" });
+			}
+			return;
+		case CombatMode::Throw:
+			if (!tryApplyAny({ "ThrowDead" }))
+			{
+				tryApplyAny({ "ThrowDead" });
+			}
+			return;
+		default:
+			tryApplyAny({ "Dead", "IdleDead" });
+			break;
+		}
 
 	}
-	if (m_IsThrowPreviewActive)
+	switch (m_CombatMode)
 	{
-		visualcomponent->ApplyByStateTag("Throw");
-
+	case CombatMode::Melee:
+		tryApplyAny({ "Melee", "Meele" });
+		break;
+	case CombatMode::Throw:
+		tryApplyAny({ "Throw" });
+		break;
+	default:
+		break;
 	}
+}
+
+void PlayerComponent::ApplyAnimation()
+{
+	ApplyVisualPresetByCombatMode();
 }
 
 bool PlayerComponent::TryPickup(ItemComponent* item)
@@ -1810,6 +2023,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 			{
 				m_MeleeItem = equippedObject;
 				m_IsApplyMeleeStat = false;
+				SyncCombatModeFromInventory();
 			}
 			else if (consumableSlot >= 0)
 			{
@@ -1830,6 +2044,7 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 			if (itemType == static_cast<int>(ItemType::EQUIPMENT))
 			{
 				m_MeleeItem = itemObject;
+				SyncCombatModeFromInventory();
 			}
 			else if (consumableSlot >= 0)
 			{

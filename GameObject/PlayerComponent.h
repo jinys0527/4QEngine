@@ -16,6 +16,13 @@ class ItemComponent;
 class PlayerComponent : public Component, public IEventListener {
 	friend class Editor;
 public:
+	enum class CombatMode
+	{
+		Idle,
+		Melee,
+		Throw
+	};
+
 	static constexpr const char* StaticTypeName = "PlayerComponent";
 	const char* GetTypeName() const override;
 
@@ -50,9 +57,10 @@ public:
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 	const bool& GetDebugEquipItem() const { return m_DebugEquipItem; }
 	const std::string& GetDebugCombatMode() const { return m_DebugCombatMode; }
-	bool IsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
-	void SetIsThrowPreviewActive(bool value) { m_IsThrowPreviewActive = value; }
-	const bool& GetIsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
+	bool IsThrowPreviewActive() const { return m_CombatMode == CombatMode::Throw; }
+	void SetIsThrowPreviewActive(bool value) { if (value) m_CombatMode = CombatMode::Throw; else if (m_CombatMode == CombatMode::Throw) m_CombatMode = CombatMode::Idle; }
+	bool GetIsThrowPreviewActive() const { return IsThrowPreviewActive(); }
+	CombatMode GetCombatMode() const { return m_CombatMode; }
 
 	void ResetTurnResources();
 	void BeginMove();
@@ -68,6 +76,7 @@ public:
 	bool TryGetConsumableThrowRange(int& outRange) const;
 	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
 	void ConsumeThrowItem(ItemComponent* throwItem);
+	void SelectConsumableThrowSlot(int slotIndex);
 	bool ConsumePushPossible();
 	bool ConsumePushTargetFound();
 	bool ConsumePushSuccess();
@@ -97,6 +106,7 @@ public:
 	void SetMoney(const int& value) { m_Money = value; }
 	void SetInventoryItemIds(const std::vector<std::string>& value) { m_InventoryItemIds = value; }
 	void SetDebugEquipItem(bool value) { m_DebugEquipItem = value; }
+	void HandleCombatModeButtonState(const std::string& buttonEventName);
 
 private:
 	void ResetSubFSMFlags();
@@ -106,8 +116,12 @@ private:
 	void ClearPendingPush();
 	void BeginThrowPreview();
 	void EndThrowPreview();
+	CombatMode ResolveBaseCombatMode() const;
+	void SyncCombatModeFromInventory();
 	void UpdateResourceUI();
 	void ApplyAnimation();
+	void ApplyVisualPresetByCombatMode();
+	bool TryGetConsumableThrowItemBySlot(int slotIndex, ItemComponent*& outItem) const;
 
 	// 외부지정 가능
 	// 이동력, 행동력
@@ -118,8 +132,8 @@ private:
 
 	//ReadOnly
 	// Grid 기반 좌표 // 현재위치
-	int m_Q;
-	int m_R;
+	int m_Q = 0;
+	int m_R = 0;
 
 	//내부
 	// 남은 값 (턴 변경 시 초기화)
@@ -158,14 +172,17 @@ private:
 	bool m_InventoryCanDrop = true;
 	bool m_ShopHasSpace = true;
 	bool m_ShopHasMoney = true;
-	bool m_IsMeleeMode = false;
+	CombatMode m_CombatMode = CombatMode::Idle;
 	bool m_DebugEquipItem = false;
-	bool m_IsThrowPreviewActive = false;
 	int m_ThrowPreviewRange = 0;
-	std::string m_DebugCombatMode = "MeleeMode";
-	GridSystemComponent* m_GridSystem;
+	std::string m_DebugCombatMode = "IdleMode";
+	CombatMode m_LastVisualCombatMode = CombatMode::Idle;
+	bool m_HasAppliedCombatVisual = false;
+	bool m_LastVisualIsDead = false;
+	GridSystemComponent* m_GridSystem = nullptr;
 
 	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 	std::string m_ConsumableItemNames[3] = {};
+	int m_SelectedConsumableSlot = 0;
 	bool m_IsApplyMeleeStat = false;
 };
