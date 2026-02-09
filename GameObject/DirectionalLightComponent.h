@@ -14,6 +14,8 @@ public:
 
 	void  SetDirection(const XMFLOAT3& direction) { m_Direction = direction;	  }
 	const XMFLOAT3& GetDirection() const          { return m_Direction;			  }
+	void  SetContrast(const float& contrast) { m_Contrast = contrast; }
+	const float& GetContrast() const { return m_Contrast; }
 
 	void  SetLightViewProj(const XMFLOAT4X4& viewProj) { m_LightViewProj = viewProj; }
 	const XMFLOAT4X4& GetLightViewProj() const { return m_LightViewProj; }
@@ -26,6 +28,7 @@ protected:
 
 protected:
 	XMFLOAT3   m_Direction{ 1, 0, 0 };
+	float      m_Contrast = 1.0f;
 	XMFLOAT4X4 m_LightViewProj{};
 };
 

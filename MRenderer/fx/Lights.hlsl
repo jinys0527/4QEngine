@@ -15,6 +15,11 @@ float3 ToneMap_ACES(float3 x)
     return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
 }
 
+float3 AdjustContrast(float3 color, float contrast)
+{
+    return saturate((color - 0.5f) * contrast + 0.5f);
+}
+
 float4 DirectLight(float4 nrm)
 {
     float4 diff = 0;   diff.a = 1;

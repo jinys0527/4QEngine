@@ -62,10 +62,11 @@ struct Light
 	XMFLOAT3   viewDir{ 0,-1,0 };
 	float      Intensity = 1.0f;
 
-	float		SpotInnerAngle = 0.0f;
-	float		SpotOutterAngle = 0.0f;
-	float		AttenuationRadius = 0.0f;
-	float		padding1 = 0.0f;
+	float      Contrast = 1.0f;
+	float	   SpotInnerAngle = 0.0f;
+	float	   SpotOutterAngle = 0.0f;
+	float	   AttenuationRadius = 0.0f;
+	float	   padding1 = 0.0f;
 
 	UINT       CastShadow = TRUE;
 	UINT	   type = static_cast<UINT>(RenderData::LightType::None);

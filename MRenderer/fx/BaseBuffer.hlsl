@@ -39,6 +39,7 @@ struct Light
     float3 viewDir; 
     float Intensity; 
 
+    float Contrast;
     float SpotInnerAngle;
     float SpotOutterAngle;
     float AttenuationRadius;

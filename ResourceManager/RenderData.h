@@ -120,6 +120,7 @@ namespace RenderData
 		XMFLOAT3   posiiton{ 0.0f, 0.0f, 0.0f };
 		FLOAT      range = 0.0f;
 		XMFLOAT3   direction{ 0.0f, -1.0f, 0.0f };
+		FLOAT      contrast = 1.0f;
 		FLOAT      spotInnerAngle = 0.0f;
 		FLOAT      spotOutterAngle = 0.0f;
 		FLOAT      attenuationRadius = 0.0f;
