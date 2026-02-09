@@ -12,6 +12,7 @@
 class GameManager : public IEventListener
 {
 public:
+	// Scene 넘어갈 때 가지고 가야할 Data
 	struct PlayerPersistentData
 	{
 		bool hasData = false;

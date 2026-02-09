@@ -28,7 +28,7 @@ void SceneManager::Initialize()
 		dataPaths.enemiesPath = "Data/enemies.csv";
 		dataPaths.dropTablesPath = "Data/drop_tables.csv";
 		m_GameManager->SetDataSheetPaths(dataPaths);
-		m_GameManager->SetFloorSceneNames({ "Stage1 ", "Stage2 ", "Stage3 ", "Ending " });
+		m_GameManager->SetFloorSceneNames({ "Stage1_Test ", "Stage2_Test ", "Stage3 ", "Ending " });
 	}
 	if (m_InputManager)
 	{
@@ -41,7 +41,9 @@ void SceneManager::Initialize()
 
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
-		"Stage1"
+		"Title",
+		"Stage1_Test",
+		"Stage2_Test"
 		//"BossStage"
 		});
 
@@ -178,6 +180,7 @@ void SceneManager::SetCurrentScene(const std::string& name)
  		if (m_UIManager)
 		{
  			m_UIManager->SetCurrentScene(name);
+			RestoreSceneUI(m_CurrentScene);
  		}
 	}
 }
@@ -249,6 +252,7 @@ void SceneManager::ChangeScene(const std::string& name)
 		if (m_UIManager)
 		{
 			m_UIManager->SetCurrentScene(name);
+			RestoreSceneUI(m_CurrentScene);
 		}
 	}
 }
@@ -256,6 +260,9 @@ void SceneManager::ChangeScene(const std::string& name)
 void SceneManager::ChangeScene()
 {
 	// 현재 이름과 다르면 Change 
+	if (m_ChangeSceneName.empty() || !m_CurrentScene || m_ChangeSceneName == m_CurrentScene->GetName()) {
+		return;
+	}
 	if (m_ChangeSceneName != m_CurrentScene->GetName()) {
 		ChangeScene(m_ChangeSceneName);
 		m_ChangeSceneName.clear();
@@ -301,6 +308,7 @@ void SceneManager::OnEvent(EventType type, const void* data)
 	}
 
 	SetChangeScene(request->name);
+	ChangeScene();
 }
 
 
@@ -365,6 +373,7 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 
 	if (m_UIManager && j.contains("ui"))
 	{
+		m_SceneUIData[loadedScene->GetName()] = j.at("ui");
 		m_UIManager->SetEventDispatcher(&loadedScene->GetEventDispatcher());
 		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
 		auto& uiMap = m_UIManager->GetUIObjects();
@@ -384,4 +393,34 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 
 	return true;
 
+}
+
+void SceneManager::RestoreSceneUI(const std::shared_ptr<Scene>& scene)
+{
+	if (!m_UIManager || !scene)
+	{
+		return;
+	}
+
+	const auto& sceneName = scene->GetName();
+	auto itData = m_SceneUIData.find(sceneName);
+	if (itData == m_SceneUIData.end())
+	{
+		return;
+	}
+
+	m_UIManager->DeserializeSceneUI(sceneName, itData->second);
+	auto& uiMap = m_UIManager->GetUIObjects();
+	auto itScene = uiMap.find(sceneName);
+	if (itScene != uiMap.end())
+	{
+		for (const auto& [name, uiObject] : itScene->second)
+		{
+			if (uiObject)
+			{
+				uiObject->SetScene(scene.get());
+				uiObject->Start();
+			}
+		}
+	}
 }

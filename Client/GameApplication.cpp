@@ -80,7 +80,7 @@ bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void GameApplication::UpdateLogic()
 {
-	//m_SceneManager.ChangeScene();
+	m_SceneManager.ChangeScene();
 }
 
 void GameApplication::Update()
