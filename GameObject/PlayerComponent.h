@@ -107,6 +107,7 @@ private:
 	void BeginThrowPreview();
 	void EndThrowPreview();
 	void UpdateResourceUI();
+	void ApplyAnimation();
 
 	// 외부지정 가능
 	// 이동력, 행동력

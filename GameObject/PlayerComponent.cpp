@@ -36,6 +36,7 @@
 #include "GameDataRepository.h"
 #include "UIManager.h"
 #include "UIProgressBarComponent.h"
+#include "PlayerVisualPresetComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
 REGISTER_PROPERTY_READONLY(PlayerComponent, Q)
@@ -563,6 +564,9 @@ void PlayerComponent::Update(float deltaTime) {
 	//	}
 
 	//}
+
+	ApplyAnimation();
+
 
 	//근접 무기 스탯 적용
 	if (m_MeeleItem != nullptr)
@@ -1675,6 +1679,33 @@ void PlayerComponent::UpdateResourceUI()
 	m_LastRemainActResource = m_RemainActResource;
 	m_LastMoveResource = m_MoveResource;
 	m_LastActResource = m_ActResource;
+}
+
+void PlayerComponent::ApplyAnimation()
+{
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		return;
+	}
+	//if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
+	//{
+	//	m_DebugVisualToggleFlip = !m_DebugVisualToggleFlip;
+	//	visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "Meele" : "Throw");
+	//}
+
+	auto* visualcomponent = owner->GetComponent<PlayerVisualPresetComponent>();
+
+	if (m_MeeleItem)
+	{
+		visualcomponent->ApplyByStateTag("Meele");
+
+	}
+	if (m_IsThrowPreviewActive)
+	{
+		visualcomponent->ApplyByStateTag("Throw");
+
+	}
 }
 
 bool PlayerComponent::TryPickup(ItemComponent* item)
