@@ -529,7 +529,21 @@ void PlayerComponent::Update(float deltaTime) {
 	}
 
 	auto* gameManager = scene->GetGameManager();
-	m_DebugCombatMode = m_IsThrowPreviewActive ? "ThrowMode" : "MeleeMode";
+	switch (m_CombatMode)
+	{
+	case CombatMode::Idle:
+		m_DebugCombatMode = "IdleMode";
+		break;
+	case CombatMode::Melee:
+		m_DebugCombatMode = "MeleeMode";
+		break;
+	case CombatMode::Throw:
+		m_DebugCombatMode = "ThrowMode";
+		break;
+	default:
+		m_DebugCombatMode = "IdleMode";
+		break;
+	}
 	const bool allowExplorationTurn = !gameManager && m_CurrentTurn == Turn::PlayerTurn;
 	//아이템 장착 테스트
 
@@ -606,7 +620,7 @@ void PlayerComponent::Update(float deltaTime) {
 
 	//장착 무기에 따라 다른 무기 들기
 	GameObject* equippedItemObject = m_MeleeItem;
-	if (m_IsThrowPreviewActive)
+	if (m_CombatMode == CombatMode::Throw) 
 	{
 		ItemComponent* throwItem = nullptr;
 		if (TryGetConsumableThrowItem(throwItem) && throwItem)
@@ -835,7 +849,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 		if (!enemy)
 		{
-			if (m_IsThrowPreviewActive)
+			if (m_CombatMode == CombatMode::Throw) 
 			{
 				if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 				{
@@ -852,7 +866,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		//던지기
 		const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
-		if (m_IsThrowPreviewActive)
+		if (m_CombatMode == CombatMode::Throw) 
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
@@ -870,10 +884,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		if (!m_IsMeleeMode)
+		if (m_CombatMode != CombatMode::Melee) 
 		{
 			std::cout << "MeleeMode\n";
-			m_IsMeleeMode = true;
+			m_CombatMode = CombatMode::Melee;
 		}
 		else
 		{
@@ -1005,10 +1019,10 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		if (!m_IsMeleeMode)
+		m_CombatMode = CombatMode::Melee; 
 		{
 			std::cout << "MeleeMode\n";
-			m_IsMeleeMode = true;
+			m_CombatMode = CombatMode::Melee;
 		}
 
 		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
@@ -1036,7 +1050,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			std::cout << "IdleMode\n";
 
-			m_IsMeleeMode = false;
+			m_CombatMode = CombatMode::Idle;
 		}
 	}
 
@@ -1590,7 +1604,7 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 
 void PlayerComponent::BeginThrowPreview()
 {
-	if (m_IsThrowPreviewActive)
+	if (m_CombatMode == CombatMode::Throw) 
 	{
 		return;
 	}
@@ -1606,19 +1620,19 @@ void PlayerComponent::BeginThrowPreview()
 		return;
 	}
 
-	m_IsThrowPreviewActive = true;
+	m_CombatMode = CombatMode::Throw;
 	m_ThrowPreviewRange = range;
 	m_GridSystem->SetThrowRangePreview(true, range);
 }
 
 void PlayerComponent::EndThrowPreview()
 {
-	if (!m_IsThrowPreviewActive)
+	if (m_CombatMode != CombatMode::Throw) 
 	{
 		return;
 	}
 
-	m_IsThrowPreviewActive = false;
+	m_CombatMode = CombatMode::Idle;
 	m_ThrowPreviewRange = 0;
 	if (m_GridSystem)
 	{
@@ -1698,7 +1712,7 @@ void PlayerComponent::ApplyAnimation()
 		visualcomponent->ApplyByStateTag("Melee");
 
 	}
-	if (m_IsThrowPreviewActive)
+	if (m_CombatMode == CombatMode::Throw) 
 	{
 		visualcomponent->ApplyByStateTag("Throw");
 

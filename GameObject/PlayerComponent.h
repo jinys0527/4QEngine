@@ -16,6 +16,13 @@ class ItemComponent;
 class PlayerComponent : public Component, public IEventListener {
 	friend class Editor;
 public:
+	enum class CombatMode
+	{
+		Idle,
+		Melee,
+		Throw
+	};
+
 	static constexpr const char* StaticTypeName = "PlayerComponent";
 	const char* GetTypeName() const override;
 
@@ -50,9 +57,10 @@ public:
 	GridSystemComponent* GetGridSystem() const { return m_GridSystem; }
 	const bool& GetDebugEquipItem() const { return m_DebugEquipItem; }
 	const std::string& GetDebugCombatMode() const { return m_DebugCombatMode; }
-	bool IsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
-	void SetIsThrowPreviewActive(bool value) { m_IsThrowPreviewActive = value; }
-	const bool& GetIsThrowPreviewActive() const { return m_IsThrowPreviewActive; }
+	bool IsThrowPreviewActive() const { return m_CombatMode == CombatMode::Throw; }
+	void SetIsThrowPreviewActive(bool value) { if (value) m_CombatMode = CombatMode::Throw; else if (m_CombatMode == CombatMode::Throw) m_CombatMode = CombatMode::Idle; }
+	bool GetIsThrowPreviewActive() const { return IsThrowPreviewActive(); }
+	CombatMode GetCombatMode() const { return m_CombatMode; }
 
 	void ResetTurnResources();
 	void BeginMove();
@@ -158,11 +166,10 @@ private:
 	bool m_InventoryCanDrop = true;
 	bool m_ShopHasSpace = true;
 	bool m_ShopHasMoney = true;
-	bool m_IsMeleeMode = false;
+	CombatMode m_CombatMode = CombatMode::Idle;
 	bool m_DebugEquipItem = false;
-	bool m_IsThrowPreviewActive = false;
 	int m_ThrowPreviewRange = 0;
-	std::string m_DebugCombatMode = "MeleeMode";
+	std::string m_DebugCombatMode = "IdleMode";
 	GridSystemComponent* m_GridSystem;
 
 	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
