@@ -118,7 +118,7 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 				//if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
 				//{
 				//	m_DebugVisualToggleFlip = !m_DebugVisualToggleFlip;
-				//	visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "Meele" : "Throw");
+				//	visualPreset->ApplyByStateTag(m_DebugVisualToggleFlip ? "Melee" : "Throw");
 				//}
 				cout << "[Log] Player Moved" << endl;
 				if (player->GetActorId() != 0)

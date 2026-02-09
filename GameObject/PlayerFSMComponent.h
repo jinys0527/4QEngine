@@ -11,6 +11,7 @@ public:
 	virtual ~PlayerFSMComponent() override;
 
 	void Start() override;
+	void DispatchEvent(const std::string& eventName);
 
 protected:
 	std::optional<std::string> TranslateEvent(EventType type, const void* data) override;
