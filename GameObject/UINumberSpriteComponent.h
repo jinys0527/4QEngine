@@ -1,10 +1,13 @@
 ﻿#pragma once
 #include "UIComponent.h"
 #include "ResourceHandle.h"
+#include "UIPrimitives.h"
+#include <DirectXMath.h>
 #include <array>
 #include <string>
 #include <vector>
 
+class EventDispatcher;
 class UIManager;
 class UIObject;
 class Scene;
@@ -13,6 +16,7 @@ class UINumberSpriteComponent : public UIComponent
 {
 public:
 	static constexpr const char* StaticTypeName = "UINumberSpriteComponent";
+	~UINumberSpriteComponent() override;
 	const char* GetTypeName() const override;
 
 	void Start  () override;
@@ -36,13 +40,57 @@ public:
 	void SetDigitTextures(const std::array<TextureHandle, 10>& textures);
 	const std::array<TextureHandle, 10>& GetDigitTextures() const { return m_DigitTextures; }
 
+	void SetDigitSpacing(const float& spacing);
+	const float& GetDigitSpacing() const { return m_DigitSpacing; }
+	void SetDigitOffsets(std::vector<UIAnchor> offsets);
+	const std::vector<UIAnchor>& GetDigitOffsets() const { return m_DigitOffsets; }
+	void SetPerDigitAdvance(const std::array<float, 10>& offsets);
+	const std::array<float, 10>& GetPerDigitAdvance() const { return m_PerDigitAdvance; }
+	void SetFixedDigitCount(const int& count);
+	const int& GetFixedDigitCount() const { return m_FixedDigitCount; }
+	void SetDigitTintColor(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetDigitTintColor() const { return m_DigitTintColor; }
+
+	void SetUseAsCombatPopup(const bool& useAsPopup);
+	const bool& GetUseAsCombatPopup() const { return m_UseAsCombatPopup; }
+	void SetPopupObjectNames(std::vector<std::string> names);
+	const std::vector<std::string>& GetPopupObjectNames() const { return m_PopupObjectNames; }
+	void SetPopupTrackActorId(const int& actorId);
+	const int& GetPopupTrackActorId() const { return m_PopupTrackActorId; }
+	void SetPopupRiseDistance(const float& rise);
+	const float& GetPopupRiseDistance() const { return m_PopupRiseDistance; }
+	void SetPopupLifetime(const float& time);
+	const float& GetPopupLifetime() const { return m_PopupLifetime; }
+	void SetPopupFadeOutTime(const float& time);
+	const float& GetPopupFadeOutTime() const { return m_PopupFadeOutTime; }
+	void SetDamageTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetDamageTint() const { return m_DamageTint; }
+	void SetHealTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetHealTint() const { return m_HealTint; }
+	void SetDealTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetDealTint() const { return m_DealTint; }
+	void SetMissTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetMissTint() const { return m_MissTint; }
+
+
 	void RefreshVisuals();
 
 private:
+	struct PopupState
+	{
+		std::string objectName;
+		float elapsed = 0.0f;
+		bool  active = false;
+		UIRect baseBounds{};
+	};
+
 	UIManager* GetUIManager() const;
 	Scene*     GetScene() const;
 	UIObject*  FindUIObject(const std::string& name) const;
 	void       ApplyValue();
+	void       UpdatePopupPool();
+	void       TickPopups(float deltaTime);
+	void       ShowPopup(int value, const DirectX::XMFLOAT4& tint);
 
 	int  m_Value = 0;
 	bool m_Enabled = true;
@@ -50,6 +98,25 @@ private:
 	bool m_ValueDirty = true;
 	std::vector<std::string>	  m_DigitObjectNames;
 	std::array<TextureHandle, 10> m_DigitTextures{};
-	mutable UIManager* m_UIManager = nullptr;
+	float m_DigitSpacing = 0.0f;
+	std::vector<UIAnchor> m_DigitOffsets;
+	std::array<float, 10> m_PerDigitAdvance{};
+	int m_FixedDigitCount = 0;
+	DirectX::XMFLOAT4 m_DigitTintColor{ 1, 1, 1, 1 };
+
+	bool m_UseAsCombatPopup = false;
+	std::vector<std::string> m_PopupObjectNames;
+	int m_PopupTrackActorId = 0;
+	float m_PopupRiseDistance = 40.0f;
+	float m_PopupLifetime = 0.6f;
+	float m_PopupFadeOutTime = 0.25f;
+	DirectX::XMFLOAT4 m_DamageTint{ 1.0f, 0.3f, 0.3f, 1.0f };
+	DirectX::XMFLOAT4 m_HealTint{ 0.3f, 1.0f, 0.3f, 1.0f };
+	DirectX::XMFLOAT4 m_DealTint{ 1.0f, 0.9f, 0.25f, 1.0f };
+	DirectX::XMFLOAT4 m_MissTint{ 0.75f, 0.75f, 0.75f, 1.0f };
+	std::vector<PopupState> m_PopupStates;
+	std::vector<UIRect>     m_BaseDigitBounds;
+	mutable UIManager*      m_UIManager = nullptr;
+	EventDispatcher*        m_Dispatcher = nullptr;
 };
 

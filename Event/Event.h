@@ -44,4 +44,12 @@ namespace Events
 		bool isTotal = false;
 		std::vector<int> faces;
 	};
+
+	struct CombatNumberPopupEvent
+	{
+		int instigatorActorId = 0;
+		int targetActorId = 0;
+		int hpDelta = 0;
+		bool isMiss = false;
+	};
 }

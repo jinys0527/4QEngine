@@ -58,6 +58,34 @@ struct Serializer<std::string> {
 };
 
 template<>
+struct Serializer<std::vector<std::string>> {
+	static void ToJson(nlohmann::json& j, const std::vector<std::string>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v)
+		{
+			nlohmann::json entry;
+			Serializer<std::string>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<std::string>& v) {
+		v.clear();
+		if (!j.is_array())
+		{
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			std::string value;
+			Serializer<std::string>::FromJson(entry, value);
+			v.push_back(std::move(value));
+		}
+	}
+};
+
+template<>
 struct Serializer<XMFLOAT2> {
 	static void ToJson(nlohmann::json& j, const XMFLOAT2& v) {
 		j = { {"x", v.x}, {"y", v.y}};
@@ -387,6 +415,59 @@ struct Serializer<UIRect> {
 		v.y = j.value("y", 0.0f);
 		v.width = j.value("width", 0.0f);
 		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<std::array<float, 10>> {
+	static void ToJson(nlohmann::json& j, const std::array<float, 10>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json valueJson;
+			Serializer<float>::ToJson(valueJson, entry);
+			j.push_back(std::move(valueJson));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::array<float, 10>& v) {
+		if (!j.is_array())
+		{
+			return;
+		}
+		const size_t count = (std::min)(j.size(), v.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			Serializer<float>::FromJson(j.at(i), v[i]);
+		}
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIAnchor>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIAnchor>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json anchorJson;
+			Serializer<UIAnchor>::ToJson(anchorJson, entry);
+			j.push_back(std::move(anchorJson));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<UIAnchor>& v) {
+		v.clear();
+		if (!j.is_array())
+		{
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			UIAnchor value{};
+			Serializer<UIAnchor>::FromJson(entry, value);
+			v.push_back(value);
+		}
 	}
 };
 

@@ -1436,6 +1436,87 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+	if (typeInfo == typeid(std::vector<std::string>))
+	{
+		std::vector<std::string> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			std::array<char, 256> buffer{};
+			CopyStringToBuffer(value[i], buffer);
+			if (ImGui::InputText("Item", buffer.data(), buffer.size()))
+			{
+				value[i] = buffer.data();
+				updated = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long>(i));
+				updated = true;
+				ImGui::PopID();
+				break;
+			}
+			ImGui::PopID();
+		}
+		if (ImGui::Button("Add Item"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIAnchor>))
+	{
+		std::vector<UIAnchor> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string label = "Offset " + std::to_string(i);
+			updated |= drawOffset(label.c_str(), value[i]);
+			ImGui::SameLine();
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long>(i));
+				updated = true;
+				ImGui::PopID();
+				break;
+			}
+			ImGui::PopID();
+		}
+		if (ImGui::Button("Add Offset"))
+		{
+			value.push_back(UIAnchor{});
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
 	if (typeInfo == typeid(std::array<TextureHandle, 10>))
 	{
 		std::array<TextureHandle, 10> value{};
@@ -1448,6 +1529,34 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			ImGui::PushID(static_cast<int>(i));
 			const std::string label = "Digit " + std::to_string(i);
 			updated |= drawTextureHandle(label.c_str(), value[i]);
+			ImGui::PopID();
+		}
+		ImGui::Unindent();
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::array<float, 10>))
+	{
+		std::array<float, 10> value{};
+		property.GetValue(component, &value);
+		bool updated = false;
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			float item = value[i];
+			const std::string label = "Digit " + std::to_string(i);
+			if (ImGui::DragFloat(label.c_str(), &item, DRAG_SPEED))
+			{
+				value[i] = item;
+				updated = true;
+			}
 			ImGui::PopID();
 		}
 		ImGui::Unindent();

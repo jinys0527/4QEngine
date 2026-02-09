@@ -216,6 +216,7 @@
     </ClCompile>
     <ClCompile Include="UINumberSpriteComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
+	</ClCompile>
     <ClCompile Include="BoatComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
@@ -227,13 +228,12 @@
     <ClInclude Include="Object.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>Objects\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UIObject.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CoreTypes.h" />
+    <ClInclude Include="CoreTypes.h">
+	  <Filter>Objects\Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="CameraObject.h">
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
@@ -432,7 +432,9 @@
     <ClInclude Include="PushNodeComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource.h">
+	  <Filter>Components\UserDefine\Header Files</Filter>
+	</ClInclude>
     <ClInclude Include="InitiativeUIComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>

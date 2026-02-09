@@ -90,6 +90,7 @@ enum class EventType
 	PlayerDiceContinueRequested,
 
 	DiceRolled,
+	CombatNumberPopup,
 
 	//Enemy
 	EnemyAttack,

@@ -6,6 +6,7 @@ REGISTER_PROPERTY_HANDLE(UIImageComponent, TextureHandle)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, ShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, VertexShaderHandle)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, PixelShaderHandle)
+REGISTER_PROPERTY(UIImageComponent, TintColor)
 
 void UIImageComponent::Update(float deltaTime)
 {

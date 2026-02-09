@@ -1288,6 +1288,13 @@ void GameManager::ResolveEnemyAttack(int actorId)
 		const int nextHp = std::max(0, prevHp - result.damage);
 		playerStat->SetCurrentHP(nextHp);
 		std::cout << "[Combat] Player HP: " << prevHp << " -> " << nextHp << std::endl;
+
+		if (m_EventDispatcher)
+		{
+			const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), nextHp - prevHp, false };
+			m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
+		}
+
 		if (nextHp <= 0)
 		{
 			m_BlockPostCombatShop = true;
@@ -1299,6 +1306,11 @@ void GameManager::ResolveEnemyAttack(int actorId)
 			{
 				m_EventDispatcher->Dispatch(EventType::GameOver, nullptr);
 			}
+		}
+		else if (m_EventDispatcher)
+		{
+			const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), 0, true };
+			m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
 		}
 	}
 }
