@@ -308,6 +308,7 @@
     <ClInclude Include="AnimBlendCurveFunction.h" />
     <ClInclude Include="AnimFSMComponent.h" />
     <ClInclude Include="BoatComponent.h" />
+    <ClInclude Include="BoatEndComponent.h" />
     <ClInclude Include="Border.h" />
     <ClInclude Include="BoxColliderComponent.h" />
     <ClInclude Include="CameraLogicComponent.h" />
@@ -391,6 +392,7 @@
     <ClCompile Include="AnimationComponent.cpp" />
     <ClCompile Include="AnimFSMComponent.cpp" />
     <ClCompile Include="BoatComponent.cpp" />
+    <ClCompile Include="BoatEndComponent.cpp" />
     <ClCompile Include="Border.cpp" />
     <ClCompile Include="BoxColliderComponent.cpp" />
     <ClCompile Include="CameraLogicComponent.cpp" />
