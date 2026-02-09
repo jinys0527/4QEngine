@@ -74,9 +74,14 @@ public:
 	bool IsActorInBattle(int actorId) const;
 	void AdvanceTurnToNextPlayer();
 	bool AdvanceTurnToNextEnemyOrPlayer();
+	void HandlePlayerDiceDecisionRequested();
+	void HandlePlayerDiceStatRollRequested();
+	void HandlePlayerDiceContinueRequested();
+	bool IsDiceFlowActive() const { return m_DiceFlowActive; }
 
 private:
 	void BuildInitiativeOrder();
+	void FinalizeBattleStart();
 	bool IsPlayerActorId(int actorId) const;
 	bool CanAct(int actorId) const;
 	void AdvanceTurn();
@@ -86,6 +91,13 @@ private:
 	std::vector<int> m_InitiativeOrder;
 	std::unordered_set<int> m_ActorIdsInBattle;
 	std::size_t		 m_CurrentTurnIndex = 0;
+	bool m_DiceFlowActive = false;
+	bool m_PlayerDecisionReady = false;
+	int m_PlayerDecisionD20 = 0;
+	int m_PlayerInitiativeDiceBonus = 0;
+	int m_PlayerInitiativeTotal = 0;
+	int m_PlayerActorId = 1;
+	std::vector<InitiativeEntry> m_PendingInitiativeEntries;
 
 	CombatResolver&  m_Resolver;
 	DiceSystem&      m_DiceSystem;

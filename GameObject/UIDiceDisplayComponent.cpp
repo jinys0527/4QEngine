@@ -32,6 +32,10 @@ UIDiceDisplayComponent::~UIDiceDisplayComponent()
 	{
 		m_Dispatcher->RemoveListener(EventType::DiceRolled, this);
 	}
+	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceUIReset))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceUIReset, this);
+	}
 }
 
 void UIDiceDisplayComponent::Start()
@@ -47,6 +51,7 @@ void UIDiceDisplayComponent::Start()
 
 	m_Dispatcher  = &GetEventDispatcher();
 	m_Dispatcher->AddListener(EventType::DiceRolled, this);
+	m_Dispatcher->AddListener(EventType::PlayerDiceUIReset, this);
 	m_LayoutDirty = true;
 	m_ValueDirty  = true;
 }
@@ -100,6 +105,12 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	if (!m_Enabled)
 	{
+		return;
+	}
+
+	if (type == EventType::PlayerDiceUIReset)
+	{
+		SetValue(0);
 		return;
 	}
 

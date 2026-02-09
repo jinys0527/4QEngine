@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 
 CombatManager::CombatManager(CombatResolver& combatResolver, DiceSystem& diceSystem, LogSystem* logger)
@@ -53,6 +54,14 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 
     m_State = Battle::InBattle;
     m_ActorIdsInBattle.clear();
+	m_InitiativeOrder.clear();
+	m_CurrentTurnIndex = 0;
+	m_DiceFlowActive = false;
+	m_PlayerDecisionReady = false;
+	m_PlayerDecisionD20 = 0;
+	m_PlayerInitiativeDiceBonus = 0;
+	m_PlayerInitiativeTotal = 0;
+	m_PendingInitiativeEntries.clear();
 
 	std::cout << "[Combat] Enter battle: initiator=" << initiatorId
 		<< " target=" << targetId << std::endl;
@@ -64,27 +73,6 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 	}
 
     BuildInitiativeOrder();
-
-    for (int actorId : m_InitiativeOrder)
-    {
-        m_ActorIdsInBattle.insert(actorId);
-    }
-
-    if (m_EventDispatcher)
-    {
-        m_EventDispatcher->Dispatch(EventType::CombatInitComplete, nullptr);
-    }
-    m_CurrentTurnIndex = 0;
-    if (m_EventDispatcher && !m_InitiativeOrder.empty())
-    {
-        const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
-        m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
-    }
-
-	if (!m_InitiativeOrder.empty())
-	{
-		std::cout << "[Combat] Turn start: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
-	}
 }
 
 void CombatManager::ExitBattle()
@@ -93,6 +81,12 @@ void CombatManager::ExitBattle()
     m_InitiativeOrder.clear();
     m_ActorIdsInBattle.clear();
     m_CurrentTurnIndex = 0;
+	m_DiceFlowActive = false;
+	m_PlayerDecisionReady = false;
+	m_PlayerDecisionD20 = 0;
+	m_PlayerInitiativeDiceBonus = 0;
+	m_PlayerInitiativeTotal = 0;
+	m_PendingInitiativeEntries.clear();
 
     std::cout << "[Combat] Exit battle" << std::endl;
 	if (m_EventDispatcher)
@@ -148,7 +142,7 @@ bool CombatManager::AddCombatants(const std::vector<CombatantSnapshot>& combatan
 	const int currentActor = GetCurrentActorId();
 	BuildInitiativeOrder();
 
-	if (m_State == Battle::InBattle && currentActor != 0 && !m_InitiativeOrder.empty())
+	if (!m_DiceFlowActive && m_State == Battle::InBattle && currentActor != 0 && !m_InitiativeOrder.empty())
 	{
 		const auto it = std::find(m_InitiativeOrder.begin(), m_InitiativeOrder.end(), currentActor);
 		if (it != m_InitiativeOrder.end())
@@ -177,6 +171,12 @@ void CombatManager::ResetSessionState()
     m_InitiativeOrder.clear();
     m_ActorIdsInBattle.clear();
     m_CurrentTurnIndex = 0;
+	m_DiceFlowActive = false;
+	m_PlayerDecisionReady = false;
+	m_PlayerDecisionD20 = 0;
+	m_PlayerInitiativeDiceBonus = 0;
+	m_PlayerInitiativeTotal = 0;
+	m_PendingInitiativeEntries.clear();
 }
 
 int CombatManager::GetCurrentActorId() const
@@ -193,47 +193,80 @@ void CombatManager::BuildInitiativeOrder()
 {
     m_InitiativeOrder.clear();
     m_ActorIdsInBattle.clear();
+	m_PendingInitiativeEntries.clear();
 
     if (m_Combatants.empty())
         return;
 
-    std::vector<InitiativeEntry> entries;
-    entries.reserve(m_Combatants.size());
-
-	m_EventDispatcher->Dispatch(EventType::PlayerDiceUIOpen, nullptr);
+	bool requiresPlayerDiceFlow = false;
 
     for (const CombatantSnapshot& combatant : m_Combatants)
     {
+
+		if (combatant.actorId == 0)
+		{
+			continue;
+		}
+
+		if (combatant.isPlayer)
+		{
+			m_PlayerActorId = combatant.actorId;
+			m_PlayerInitiativeDiceBonus = combatant.initiativeBonus;
+			requiresPlayerDiceFlow = true;
+			continue;
+		}
+
         const DiceConfig rollConfig{ 1, 20, 0 };
         const int roll = m_DiceSystem.RollTotal(rollConfig, RandomDomain::Combat);
 		const int initiative = roll + combatant.initiativeBonus;
 
-		if (m_EventDispatcher && combatant.isPlayer)
-		{
-			const Events::DiceRollEvent rollEvent{ roll, rollConfig.count, rollConfig.sides, rollConfig.bonus, "InitiativeRoll" };
-			m_EventDispatcher->Dispatch(EventType::DiceRolled, &rollEvent);
-			const Events::DiceRollEvent totalEvent{ initiative, rollConfig.count, 0, combatant.initiativeBonus, "InitiativeTotal" };
-			m_EventDispatcher->Dispatch(EventType::DiceRolled, &totalEvent);
-		}
-
-		std::cout << "[Combat] Initiative roll actor=" << combatant.actorId
+				std::cout << "[Combat] Initiative roll actor=" << combatant.actorId
 			<< " d20=" << roll
 			<< " bonus=" << combatant.initiativeBonus
 			<< " total=" << initiative << std::endl;
-		entries.push_back({ combatant.actorId, initiative });
-    }
 
-    std::sort(entries.begin(), entries.end(),
-        [](const InitiativeEntry& left, const InitiativeEntry& right)
-        {
-            return left.initiative > right.initiative;
-        });
+		m_PendingInitiativeEntries.push_back({ combatant.actorId, initiative });
+	}
 
-    for (const InitiativeEntry& entry : entries)
-    {
-        m_InitiativeOrder.push_back(entry.actorId);
-        m_ActorIdsInBattle.insert(entry.actorId);
-    }
+	if (requiresPlayerDiceFlow)
+	{
+		m_DiceFlowActive = true;
+		m_PlayerDecisionReady = false;
+		m_PlayerDecisionD20 = 0;
+		m_PlayerInitiativeTotal = 0;
+		if (m_EventDispatcher)
+		{
+			m_EventDispatcher->Dispatch(EventType::PlayerDiceUIOpen, nullptr);
+			m_EventDispatcher->Dispatch(EventType::PlayerDiceUIReset, nullptr);
+		}
+		return;
+	}
+
+	FinalizeBattleStart();
+}
+
+void CombatManager::FinalizeBattleStart()
+{
+	if (m_State != Battle::InBattle)
+	{
+		return;
+	}
+
+	if (m_PlayerDecisionReady && m_PlayerActorId != 0)
+	{
+		m_PendingInitiativeEntries.push_back({ m_PlayerActorId, m_PlayerInitiativeTotal });
+	}
+
+	std::sort(m_PendingInitiativeEntries.begin(), m_PendingInitiativeEntries.end(),
+		[](const InitiativeEntry& left, const InitiativeEntry& right)
+		{
+			return left.initiative > right.initiative;
+		});
+	for (const InitiativeEntry& entry : m_PendingInitiativeEntries)
+	{
+		m_InitiativeOrder.push_back(entry.actorId);
+		m_ActorIdsInBattle.insert(entry.actorId);
+	}
 
 	if (!m_InitiativeOrder.empty())
 	{
@@ -250,7 +283,130 @@ void CombatManager::BuildInitiativeOrder()
 	{
 		const CombatInitiativeBuiltEvent eventData{ &m_InitiativeOrder };
 		m_EventDispatcher->Dispatch(EventType::CombatInitiativeBuilt, &eventData);
+		m_EventDispatcher->Dispatch(EventType::CombatInitComplete, nullptr);
 	}
+
+	m_CurrentTurnIndex = 0;
+	if (m_EventDispatcher && !m_InitiativeOrder.empty())
+	{
+		const CombatTurnAdvancedEvent eventData{ m_InitiativeOrder[m_CurrentTurnIndex] };
+		m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &eventData);
+	}
+
+	if (!m_InitiativeOrder.empty())
+	{
+		std::cout << "[Combat] Turn start: actor=" << m_InitiativeOrder[m_CurrentTurnIndex] << std::endl;
+	}
+
+	m_DiceFlowActive = false;
+	m_PlayerDecisionReady = false;
+	m_PlayerDecisionD20 = 0;
+	m_PlayerInitiativeTotal = 0;
+	m_PendingInitiativeEntries.clear();
+}
+
+void CombatManager::HandlePlayerDiceDecisionRequested()
+{
+	if (!m_DiceFlowActive || m_State != Battle::InBattle)
+	{
+		return;
+	}
+
+	const DiceConfig d20x3{ 3, 20, 0 };
+	const DiceRoll roll = m_DiceSystem.Roll(d20x3, RandomDomain::Combat);
+	if (roll.faces.empty())
+	{
+		return;
+	}
+
+	m_PlayerDecisionReady = false;
+	m_PlayerInitiativeTotal = 0;
+	m_PlayerDecisionD20 = *std::max_element(roll.faces.begin(), roll.faces.end());
+
+	if (m_EventDispatcher)
+	{
+		for (size_t i = 0; i < roll.faces.size(); ++i)
+		{
+			const std::string context = "InitiativeDecisionRoll_" + std::to_string(i + 1);
+			const Events::DiceDecisionFaceEvent faceEvent{ static_cast<int>(i), roll.faces[i], m_PlayerDecisionD20, context };
+			m_EventDispatcher->Dispatch(EventType::PlayerDiceDecisionFaceRolled, &faceEvent);
+
+			const Events::DiceRollEvent oneDieEvent{ roll.faces[i], 1, d20x3.sides, 0, context, false, { roll.faces[i] } };
+			m_EventDispatcher->Dispatch(EventType::DiceRolled, &oneDieEvent);
+		}
+
+		const Events::DiceRollEvent rollEvent{ m_PlayerDecisionD20, d20x3.count, d20x3.sides, 0, "InitiativeDecisionRoll", false, roll.faces };
+		m_EventDispatcher->Dispatch(EventType::DiceRolled, &rollEvent);
+
+		const Events::DiceInitiativeResolvedEvent resultEvent{ roll.faces, m_PlayerDecisionD20, m_PlayerInitiativeDiceBonus, 0 };
+		m_EventDispatcher->Dispatch(EventType::PlayerDiceInitiativeResolved, &resultEvent);
+		m_EventDispatcher->Dispatch(EventType::PlayerDiceDecisionResult, &resultEvent);
+	}
+}
+
+void CombatManager::HandlePlayerDiceStatRollRequested()
+{
+	if (!m_DiceFlowActive || m_State != Battle::InBattle || m_PlayerDecisionD20 <= 0)
+	{
+		return;
+	}
+
+	DiceConfig statConfig{ 1, 6, 0 };
+	if (m_PlayerDecisionD20 <= 5)
+	{
+		statConfig = { 2, 12, 0 };
+	}
+	else if (m_PlayerDecisionD20 <= 10)
+	{
+		statConfig = { 3, 8, 0 };
+	}
+	else if (m_PlayerDecisionD20 <= 15)
+	{
+		statConfig = { 4, 6, 0 };
+	}
+	else
+	{
+		statConfig = { 6, 4, 0 };
+	}
+
+	const DiceRoll statRoll = m_DiceSystem.Roll(statConfig, RandomDomain::Combat);
+	m_PlayerInitiativeTotal = statRoll.total + m_PlayerInitiativeDiceBonus;
+	m_PlayerDecisionReady = true;
+
+	if (m_EventDispatcher)
+	{
+		const Events::DiceRollEvent diceTypeEvent{ m_PlayerDecisionD20, 1, 20, 0, "InitiativeDiceType", true };
+		m_EventDispatcher->Dispatch(EventType::PlayerDiceTypeDetermined, &diceTypeEvent);
+
+		const Events::DiceRollEvent statRollEvent{ statRoll.total, statConfig.count, statConfig.sides, 0, "InitiativeStatRoll", true, statRoll.faces };
+		m_EventDispatcher->Dispatch(EventType::DiceRolled, &statRollEvent);
+
+		const Events::DiceStatResolvedEvent resultEvent{
+			m_PlayerDecisionD20,
+			statConfig.count,
+			statConfig.sides,
+			statRoll.faces,
+			statRoll.total,
+			m_PlayerInitiativeDiceBonus,
+			m_PlayerInitiativeTotal };
+		m_EventDispatcher->Dispatch(EventType::PlayerDiceStatResolved, &resultEvent);
+	}
+}
+
+void CombatManager::HandlePlayerDiceContinueRequested()
+{
+	if (!m_DiceFlowActive || !m_PlayerDecisionReady)
+	{
+		return;
+	}
+
+	if (m_EventDispatcher)
+	{
+		m_EventDispatcher->Dispatch(EventType::PlayerDiceUIReset, nullptr);
+		m_EventDispatcher->Dispatch(EventType::PlayerDiceUIClose, nullptr);
+	}
+
+	FinalizeBattleStart();
 }
 
 bool CombatManager::IsPlayerActorId(int actorId) const
