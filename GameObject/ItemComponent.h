@@ -34,6 +34,7 @@ public:
 
 	bool RequestPickup(Object* picker);
 	void CompletePickup(Object* picker);
+	bool Sell();
 	ItemPickupState GetPickupState() const { return m_PickupState; }
 
 	const int& GetItemIndex() const { return m_ItemIndex; }

@@ -216,6 +216,8 @@
     </ClCompile>
     <ClCompile Include="UINumberSpriteComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
+    <ClCompile Include="BoatComponent.cpp">
+      <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -457,6 +459,9 @@
     </ClInclude>
     <ClInclude Include="UINumberSpriteComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoatComponent.h">
+      <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

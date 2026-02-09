@@ -11,7 +11,6 @@
 #include "PlayerMoveFSMComponent.h"
 #include "PlayerPushFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
-#include "PlayerVisualPresetComponent.h"
 #include "ReflectionMacro.h"
 #include "Scene.h"
 #include "GameManager.h"
@@ -422,7 +421,9 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Combat_Start",	  "Player" });
 	eventRegistry.RegisterEvent({ "Combat_End",		  "Player" });
 	eventRegistry.RegisterEvent({ "Player_Melee",      "Player" });
-	eventRegistry.RegisterEvent({ "Player_Throw",      "Player" });
+	eventRegistry.RegisterEvent({ "Player_Throw_1",      "Player" });
+	eventRegistry.RegisterEvent({ "Player_Throw_2",      "Player" });
+	eventRegistry.RegisterEvent({ "Player_Throw_3",      "Player" });
 
 	eventRegistry.RegisterEvent({ "Inventory_Open",	  "Player" });
 	eventRegistry.RegisterEvent({ "Inventory_Close",  "Player" });
@@ -559,42 +560,14 @@ void PlayerFSMComponent::Start()
 
 void PlayerFSMComponent::DispatchEvent(const std::string& eventName)
 {
-	FSMComponent::DispatchEvent(eventName);
-
-	if (eventName == "Player_Melee")
+	cout << "Event: " << eventName << endl;
+	auto* owner = GetOwner();
+	auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+	if (!player)
 	{
-		auto* owner = GetOwner();
-		if (!owner)
-		{
-			return;
-		}
-
-		auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>();
-		if (visualPreset)
-		{
-			if (!visualPreset->ApplyByStateTag("Melee"))
-			{
-				visualPreset->ApplyByStateTag("Meele");
-			}
-		}
+		return;
 	}
-	if (eventName == "Player_Throw")
-	{
-		auto* owner = GetOwner();
-		if (!owner)
-		{
-			return;
-		}
-
-		auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>();
-		if (visualPreset)
-		{
-			if (!visualPreset->ApplyByStateTag("Throw"))
-			{
-				visualPreset->ApplyByStateTag("Throw");
-			}
-		}
-	}
+	player->HandleCombatModeButtonState(eventName);
 }
 
 std::optional<std::string> PlayerFSMComponent::TranslateEvent(EventType type, const void* data)

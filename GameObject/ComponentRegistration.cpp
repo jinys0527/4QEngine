@@ -121,6 +121,7 @@ extern "C" {
 	void Link_UIDiceDisplayComponent();
 	void Link_UIDiceRollAnimationComponent();
 	void Link_UIDicePanelComponent();
+	void Link_BoatComponent();
 }
 
 
@@ -201,4 +202,5 @@ void LinkEngineComponents() {
 	Link_UIDiceDisplayComponent();
 	Link_UIDiceRollAnimationComponent();
 	Link_UIDicePanelComponent();
+	Link_BoatComponent();
 }

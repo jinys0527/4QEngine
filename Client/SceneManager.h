@@ -7,6 +7,7 @@
 #include "Scene.h"
 #include "EventDispatcher.h"
 #include "IEventListener.h"
+#include "json.hpp"
 
 
 class ServiceRegistry;
@@ -52,8 +53,10 @@ private:
 	ServiceRegistry& m_Services;
 	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames);
 	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
+	void RestoreSceneUI(const std::shared_ptr<Scene>& scene);
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
+	std::unordered_map<std::string, nlohmann::json> m_SceneUIData;
 	std::shared_ptr<Scene> m_CurrentScene;
 	CameraObject*   m_Camera = nullptr;
 	GameManager*	m_GameManager;

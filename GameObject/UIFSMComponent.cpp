@@ -254,7 +254,19 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
-		"UI_RequestPlayerThrow",
+		"UI_RequestPlayerThrow_1",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestPlayerThrow_2",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestPlayerThrow_3",
 		"UI",
 		{}
 		});
@@ -289,7 +301,9 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_DiceAnimationStarted", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceContinueRequested", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Melee", "UI" });
-	eventRegistry.RegisterEvent({ "Player_Throw", "UI" });
+	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
+	eventRegistry.RegisterEvent({ "Player_Throw_2", "UI" });
+	eventRegistry.RegisterEvent({ "Player_Throw_3", "UI" });
 }
 
 
@@ -487,12 +501,27 @@ UIFSMComponent::UIFSMComponent()
 			DispatchPlayerEvent(scene, "Player_Melee");
 		});
 
-	BindActionHandler("UI_RequestPlayerThrow", [this](const FSMAction& action)
+	BindActionHandler("UI_RequestPlayerThrow_1", [this](const FSMAction& action)
 		{
 			auto* owner = GetOwner();
 			auto* scene = owner ? owner->GetScene() : nullptr;
-			DispatchPlayerEvent(scene, "Player_Throw");
+			DispatchPlayerEvent(scene, "Player_Throw_1");
 		});
+
+	BindActionHandler("UI_RequestPlayerThrow_2", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Player_Throw_2");
+		});
+
+	BindActionHandler("UI_RequestPlayerThrow_3", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Player_Throw_3");
+		});
+
 }
 
 UIFSMComponent::~UIFSMComponent()
