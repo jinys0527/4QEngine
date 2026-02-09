@@ -41,6 +41,36 @@ REGISTER_PROPERTY(PlayerVisualPresetComponent, Animation2)
 REGISTER_PROPERTY(PlayerVisualPresetComponent, UseAnimation2)
 REGISTER_PROPERTY(PlayerVisualPresetComponent, BlendTime2)
 
+REGISTER_PROPERTY(PlayerVisualPresetComponent, StateTag3)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, MeshHandle3)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Mesh3)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, SkeletonHandle3)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Skeleton3)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, AnimationHandle3)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Animation3)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, UseAnimation3)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, BlendTime3)
+
+REGISTER_PROPERTY(PlayerVisualPresetComponent, StateTag4)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, MeshHandle4)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Mesh4)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, SkeletonHandle4)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Skeleton4)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, AnimationHandle4)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Animation4)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, UseAnimation4)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, BlendTime4)
+
+REGISTER_PROPERTY(PlayerVisualPresetComponent, StateTag5)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, MeshHandle5)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Mesh5)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, SkeletonHandle5)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Skeleton5)
+REGISTER_PROPERTY_HANDLE(PlayerVisualPresetComponent, AnimationHandle5)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, Animation5)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, UseAnimation5)
+REGISTER_PROPERTY(PlayerVisualPresetComponent, BlendTime5)
+
 void PlayerVisualPresetComponent::Start()
 {
 	if (m_ApplyOnStart)
@@ -156,6 +186,106 @@ void PlayerVisualPresetComponent::SetAnimationHandle2(const AnimationHandle& val
 	m_Animation2 = ref;
 }
 
+void PlayerVisualPresetComponent::SetMeshHandle3(const MeshHandle& value)
+{
+	m_MeshHandle3 = value;
+
+	MeshRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetMeshAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Mesh3 = ref;
+}
+
+void PlayerVisualPresetComponent::SetSkeletonHandle3(const SkeletonHandle& value)
+{
+	m_SkeletonHandle3 = value;
+
+	SkeletonRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetSkeletonAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Skeleton3 = ref;
+}
+
+void PlayerVisualPresetComponent::SetAnimationHandle3(const AnimationHandle& value)
+{
+	m_AnimationHandle3 = value;
+
+	AnimationRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetAnimationAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Animation3 = ref;
+}
+
+void PlayerVisualPresetComponent::SetMeshHandle4(const MeshHandle& value)
+{
+	m_MeshHandle4 = value;
+
+	MeshRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetMeshAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Mesh4 = ref;
+}
+
+void PlayerVisualPresetComponent::SetSkeletonHandle4(const SkeletonHandle& value)
+{
+	m_SkeletonHandle4 = value;
+
+	SkeletonRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetSkeletonAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Skeleton4 = ref;
+}
+
+void PlayerVisualPresetComponent::SetAnimationHandle4(const AnimationHandle& value)
+{
+	m_AnimationHandle4 = value;
+
+	AnimationRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetAnimationAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Animation4 = ref;
+}
+
+void PlayerVisualPresetComponent::SetMeshHandle5(const MeshHandle& value)
+{
+	m_MeshHandle5 = value;
+
+	MeshRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetMeshAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Mesh5 = ref;
+}
+
+void PlayerVisualPresetComponent::SetSkeletonHandle5(const SkeletonHandle& value)
+{
+	m_SkeletonHandle5 = value;
+
+	SkeletonRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetSkeletonAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Skeleton5 = ref;
+}
+
+void PlayerVisualPresetComponent::SetAnimationHandle5(const AnimationHandle& value)
+{
+	m_AnimationHandle5 = value;
+
+	AnimationRef ref{};
+	if (auto* loader = AssetLoader::GetActive())
+		loader->GetAnimationAssetReference(value, ref.assetPath, ref.assetIndex);
+
+	m_Animation5 = ref;
+}
+
+
 bool PlayerVisualPresetComponent::ApplyByStateTag(const std::string& stateTag)
 {
 	if (stateTag.empty())
@@ -197,6 +327,21 @@ bool PlayerVisualPresetComponent::TryApplySlotByTag(const std::string& stateTag)
 	if (stateTag == m_StateTag2)
 	{
 		return ApplySlot(2);
+	}
+
+	if (stateTag == m_StateTag3)
+	{
+		return ApplySlot(3);
+	}
+
+	if (stateTag == m_StateTag4)
+	{
+		return ApplySlot(4);
+	}
+
+	if (stateTag == m_StateTag5)
+	{
+		return ApplySlot(5);
 	}
 
 	return false;
@@ -262,6 +407,36 @@ bool PlayerVisualPresetComponent::ApplySlot(int slotIndex)
 		animationHandle = m_AnimationHandle2;
 		useAnimation = m_UseAnimation2;
 		blendTime = m_BlendTime2;
+		break;
+	case 3:
+		meshRef = &m_Mesh3;
+		meshHandle = m_MeshHandle3;
+		skeletonRef = &m_Skeleton3;
+		skeletonHandle = m_SkeletonHandle3;
+		animationRef = &m_Animation3;
+		animationHandle = m_AnimationHandle3;
+		useAnimation = m_UseAnimation3;
+		blendTime = m_BlendTime3;
+		break;
+	case 4:
+		meshRef = &m_Mesh4;
+		meshHandle = m_MeshHandle4;
+		skeletonRef = &m_Skeleton4;
+		skeletonHandle = m_SkeletonHandle4;
+		animationRef = &m_Animation4;
+		animationHandle = m_AnimationHandle4;
+		useAnimation = m_UseAnimation4;
+		blendTime = m_BlendTime4;
+		break;
+	case 5:
+		meshRef = &m_Mesh5;
+		meshHandle = m_MeshHandle5;
+		skeletonRef = &m_Skeleton5;
+		skeletonHandle = m_SkeletonHandle5;
+		animationRef = &m_Animation5;
+		animationHandle = m_AnimationHandle5;
+		useAnimation = m_UseAnimation5;
+		blendTime = m_BlendTime5;
 		break;
 	default:
 		return false;
