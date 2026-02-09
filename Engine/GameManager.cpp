@@ -99,6 +99,28 @@ void GameManager::SetFloorSceneNames(const std::vector<std::string>& names)
 void GameManager::Update(float deltaTime)
 {
 	auto* combatManager = GetCombatManager();
+	if (combatManager)
+	{
+		if (m_PendingPlayerDiceDecisionRequest)
+		{
+			m_PendingPlayerDiceDecisionRequest = false;
+			std::cout << "[GameManager] Process pending PlayerDiceDecisionRequested" << std::endl;
+			combatManager->HandlePlayerDiceDecisionRequested();
+		}
+		if (m_PendingPlayerDiceStatRollRequest)
+		{
+			m_PendingPlayerDiceStatRollRequest = false;
+			std::cout << "[GameManager] Process pending PlayerDiceStatRollRequested" << std::endl;
+			combatManager->HandlePlayerDiceStatRollRequested();
+		}
+		if (m_PendingPlayerDiceContinueRequest)
+		{
+			m_PendingPlayerDiceContinueRequest = false;
+			std::cout << "[GameManager] Process pending PlayerDiceContinueRequested" << std::endl;
+			combatManager->HandlePlayerDiceContinueRequested();
+		}
+	}
+
 	if (combatManager && combatManager->IsDiceFlowActive())
 	{
 		return;
@@ -343,29 +365,20 @@ void GameManager::OnEvent(EventType type, const void* data)
 		break;
 	case EventType::PlayerDiceDecisionRequested:
 	{
-		auto* combatManager = GetCombatManager();
-		if (combatManager)
-		{
-			combatManager->HandlePlayerDiceDecisionRequested();
-		}
+		std::cout << "[GameManager] Event PlayerDiceDecisionRequested -> CombatManager" << std::endl;
+		m_PendingPlayerDiceDecisionRequest = true;
 		break;
 	}
 	case EventType::PlayerDiceStatRollRequested:
 	{
-		auto* combatManager = GetCombatManager();
-		if (combatManager)
-		{
-			combatManager->HandlePlayerDiceStatRollRequested();
-		}
+		std::cout << "[GameManager] Event PlayerDiceStatRollRequested -> CombatManager" << std::endl;
+		m_PendingPlayerDiceStatRollRequest = true;
 		break;
 	}
 	case EventType::PlayerDiceContinueRequested:
 	{
-		auto* combatManager = GetCombatManager();
-		if (combatManager)
-		{
-			combatManager->HandlePlayerDiceContinueRequested();
-		}
+		std::cout << "[GameManager] Event PlayerDiceContinueRequested -> CombatManager" << std::endl;
+		m_PendingPlayerDiceContinueRequest = true;
 		break;
 	}
 	case EventType::PlayerTurnEndRequested:

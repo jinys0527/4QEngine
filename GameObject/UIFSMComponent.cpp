@@ -18,6 +18,7 @@
 #include "PlayerShopFSMComponent.h"
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 
 namespace
 {
@@ -312,6 +313,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_DiceResultShown", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceUIClose", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceDecisionRequested", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceDecisionFaceRolled", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceDecisionResult", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceInitiativeResolved", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceStatRollRequested", "UI" });
@@ -475,16 +477,22 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestDiceDecision", [this](const FSMAction&)
 		{
+			// Backward compatibility: 일부 에디터 FSM은 DecisionReady 전이에
+			// Player_DiceRollRequested 를 사용하고 있어 먼저 같이 발행한다.
+			std::cout << "[UIFSM] Action UI_RequestDiceDecision -> dispatch PlayerDiceRollRequested, PlayerDiceDecisionRequested" << std::endl;
+			GetEventDispatcher().Dispatch(EventType::PlayerDiceRollRequested, nullptr);
 			GetEventDispatcher().Dispatch(EventType::PlayerDiceDecisionRequested, nullptr);
 		});
 
 	BindActionHandler("UI_RequestDiceStatRoll", [this](const FSMAction&)
 		{
+			std::cout << "[UIFSM] Action UI_RequestDiceStatRoll -> dispatch PlayerDiceStatRollRequested" << std::endl;
 			GetEventDispatcher().Dispatch(EventType::PlayerDiceStatRollRequested, nullptr);
 		});
 
 	BindActionHandler("UI_RequestDiceContinue", [this](const FSMAction&)
 		{
+			std::cout << "[UIFSM] Action UI_RequestDiceContinue -> dispatch PlayerDiceContinueRequested" << std::endl;
 			GetEventDispatcher().Dispatch(EventType::PlayerDiceContinueRequested, nullptr);
 		});
 
@@ -657,6 +665,7 @@ void UIFSMComponent::Start()
 		const auto turnEvent = gameManager->GetTurn() == Turn::PlayerTurn
 			? std::string("Player_TurnStart")
 			: std::string("Player_TurnEnd");
+
 		HandleEventByName(turnEvent, nullptr);
 	}
 }
@@ -695,6 +704,23 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 	if (!eventName)
 	{
 		return;
+	}
+
+	if (type == EventType::PlayerDiceUIOpen
+		|| type == EventType::PlayerDiceUIReset
+		|| type == EventType::PlayerDiceRollRequested
+		|| type == EventType::PlayerDiceDecisionRequested
+		|| type == EventType::PlayerDiceDecisionFaceRolled
+		|| type == EventType::PlayerDiceDecisionResult
+		|| type == EventType::PlayerDiceStatRollRequested
+		|| type == EventType::PlayerDiceTypeDetermined
+		|| type == EventType::PlayerDiceStatResolved
+		|| type == EventType::PlayerDiceContinueRequested
+		|| type == EventType::PlayerDiceUIClose)
+	{
+		std::cout << "[UIFSM] OnEvent type=" << static_cast<int>(type)
+			<< " translated=" << *eventName
+			<< " currentState=" << GetCurrentStateName() << std::endl;
 	}
 
 	HandleEventByName(*eventName, data);

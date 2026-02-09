@@ -7,6 +7,7 @@
 #include "UIManager.h"
 #include "UIObject.h"
 #include <algorithm>
+#include <iostream>
 #include <random>
 
 REGISTER_UI_COMPONENT(UIDiceRollAnimationComponent)
@@ -100,14 +101,21 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 
 	if (!m_DiceContext.empty() && payload->context != m_DiceContext)
 	{
+		std::cout << "[UIDiceAnim] skip context mismatch slot=" << m_DiceContext
+			<< " payload=" << payload->context << std::endl;
 		return;
 	}
 
 	if (!payload->isTotal && !m_AnimateIndividuals)
 	{
+		std::cout << "[UIDiceAnim] skip individual roll. slot=" << m_DiceContext
+			<< " payloadContext=" << payload->context << std::endl;
 		return;
 	}
 
+	std::cout << "[UIDiceAnim] begin animation context=" << payload->context
+		<< " value=" << payload->value
+		<< " isTotal=" << payload->isTotal << std::endl;
 
 	BeginAnimation();
 }

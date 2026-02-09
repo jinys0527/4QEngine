@@ -8,6 +8,7 @@
 #include "UIObject.h"
 #include "UIImageComponent.h"
 #include <algorithm>
+#include <iostream>
 
 REGISTER_UI_COMPONENT(UIDiceDisplayComponent)
 REGISTER_PROPERTY(UIDiceDisplayComponent, Enabled)
@@ -110,6 +111,7 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::PlayerDiceUIReset)
 	{
+		std::cout << "[UIDiceDisplay] reset context=" << m_DiceContext << " -> value=0" << std::endl;
 		SetValue(0);
 		return;
 	}
@@ -127,8 +129,14 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	if (!m_DiceContext.empty() && payload->context != m_DiceContext)
 	{
+		std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
+			<< " payload=" << payload->context << std::endl;
 		return;
 	}
+
+	std::cout << "[UIDiceDisplay] apply context=" << payload->context
+		<< " value=" << payload->value
+		<< " diceType=" << m_DiceType << std::endl;
 
 	ApplyDiceEvent(*payload);
 }
