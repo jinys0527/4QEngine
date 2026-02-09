@@ -129,9 +129,32 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	if (!m_DiceContext.empty() && payload->context != m_DiceContext)
 	{
-		std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
-			<< " payload=" << payload->context << std::endl;
-		return;
+		const auto resolveBaseContext = [](const std::string& context) -> std::string
+			{
+				const auto pos = context.find_last_of('_');
+				if (pos == std::string::npos)
+				{
+					return context;
+				}
+				const auto suffix = context.substr(pos + 1);
+				if (suffix.empty())
+				{
+					return context;
+				}
+				if (std::all_of(suffix.begin(), suffix.end(), ::isdigit))
+				{
+					return context.substr(0, pos);
+				}
+				return context;
+			};
+
+		const std::string baseContext = resolveBaseContext(m_DiceContext);
+		if (payload->context != baseContext)
+		{
+			std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
+				<< " payload=" << payload->context << std::endl;
+			return;
+		}
 	}
 
 	std::cout << "[UIDiceDisplay] apply context=" << payload->context
@@ -151,6 +174,20 @@ void UIDiceDisplayComponent::SetEnabled(const bool& enabled)
 	m_Enabled	  = enabled;
 	m_LayoutDirty = true;
 	m_ValueDirty  = true;
+
+	if (!m_Enabled)
+	{
+		auto* tens = FindUIObject(m_TensDigitObjectName);
+		auto* ones = FindUIObject(m_OnesDigitObjectName);
+		if (tens)
+		{
+			tens->SetIsVisibleFromComponent(false);
+		}
+		if (ones)
+		{
+			ones->SetIsVisibleFromComponent(false);
+		}
+	}
 }
 
 void UIDiceDisplayComponent::SetDiceType(const std::string& type)
@@ -412,6 +449,7 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 		tens->SetAnchorMax(layout.tens.anchor);
 		tens->SetPivot	  (layout.tens.pivot);
 		tens->SetBounds	  (bounds);
+		tens->SetZOrderFromComponent(owner.GetZOrder() + 2);
 	}
 
 	if (ones)
@@ -421,6 +459,7 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 		ones->SetAnchorMax(layout.ones.anchor);
 		ones->SetPivot	  (layout.ones.pivot);
 		ones->SetBounds	  (bounds);
+		ones->SetZOrderFromComponent(owner.GetZOrder() + 2);
 	}
 
 	m_TensSlot = layout.tens;
@@ -490,7 +529,7 @@ void UIDiceDisplayComponent::ApplyValue(UIObject* tens, UIObject* ones)
 
 void UIDiceDisplayComponent::ApplyDiceEvent(const Events::DiceRollEvent& payload)
 {
-	if (m_UseSidesForType && payload.diceSides > 0)
+	if (m_UseSidesForType && payload.diceSides > 0 && m_DiceType.empty())
 	{
 		SetDiceType("D" + std::to_string(payload.diceSides));
 	}
@@ -513,7 +552,14 @@ void UIDiceDisplayComponent::ApplyDiceEvent(const Events::DiceRollEvent& payload
 
 		if (m_UseRollFaces && !payload.faces.empty())
 		{
-			SetValueFromRollFaces(payload.faces, m_RollIndex);
+			if (m_RollIndex >= 0 && m_RollIndex < static_cast<int>(payload.faces.size()))
+			{
+				SetValueFromRollFaces(payload.faces, m_RollIndex);
+			}
+			else
+			{
+				SetValue(payload.value);
+			}
 		}
 		else
 		{

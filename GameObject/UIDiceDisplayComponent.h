@@ -99,7 +99,7 @@ private:
 	bool m_LayoutDirty	   = true;
 	bool m_ValueDirty      = true;
 	bool m_AutoShow        = true;
-	bool m_UseSidesForType = false;
+	bool m_UseSidesForType = true;
 	bool m_ShowTotals      = true;
 	bool m_ShowIndividuals = true;
 	bool m_UseRollFaces    = false;
@@ -108,6 +108,7 @@ private:
 	UIDiceDigitSlot m_TensSlot{};
 	UIDiceDigitSlot m_OnesSlot{};
 	mutable UIManager* m_UIManager = nullptr;
+	mutable Scene* m_UIScene = nullptr;
 	EventDispatcher* m_Dispatcher = nullptr;
 };
 

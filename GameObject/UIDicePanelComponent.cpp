@@ -1,4 +1,5 @@
 ﻿#include "UIDicePanelComponent.h"
+#include "Event.h"
 #include "ReflectionMacro.h"
 #include "Scene.h"
 #include "ServiceRegistry.h"
@@ -24,7 +25,27 @@ void UIDicePanelComponent::Start()
 		}
 	}
 
+	m_Dispatcher = &GetEventDispatcher();
+	m_Dispatcher->AddListener(EventType::PlayerDiceStatRollRequested, this);
+	m_Dispatcher->AddListener(EventType::PlayerDiceTypeDetermined, this);
+	m_Dispatcher->AddListener(EventType::PlayerDiceDecisionFaceRolled, this);
 	m_BindingsDirty = true;
+}
+
+UIDicePanelComponent::~UIDicePanelComponent()
+{
+	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceStatRollRequested))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceStatRollRequested, this);
+	}
+	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceTypeDetermined))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceTypeDetermined, this);
+	}
+	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceDecisionFaceRolled))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceDecisionFaceRolled, this);
+	}
 }
 
 void UIDicePanelComponent::Update(float deltaTime)
@@ -61,8 +82,113 @@ void UIDicePanelComponent::Update(float deltaTime)
 void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 {
 	UIComponent::OnEvent(type, data);
-	(void)type;
-	(void)data;
+
+	if (!m_Enabled)
+	{
+		return;
+	}
+
+	if (type == EventType::PlayerDiceDecisionRequested)
+	{
+		if (m_ActiveDiceType != "D20")
+		{
+			SetActiveDiceType("D20");
+		}
+		return;
+	}
+
+	if (type == EventType::PlayerDiceStatRollRequested)
+	{
+		if (!m_PendingDiceType.empty())
+		{
+			SetActiveDiceType(m_PendingDiceType);
+		}
+		return;
+	}
+
+	if (type == EventType::PlayerDiceDecisionFaceRolled)
+	{
+		const auto* payload = static_cast<const Events::DiceDecisionFaceEvent*>(data);
+		if (!payload)
+		{
+			return;
+		}
+
+		const auto hasMatchingContext = [&]()
+			{
+				for (const auto& slot : m_Slots)
+				{
+					if (slot.diceContext == payload->context)
+					{
+						return true;
+					}
+				}
+				return false;
+			};
+
+		if (!hasMatchingContext())
+		{
+			return;
+		}
+
+		const int d20 = payload->value;
+		int diceSides = 0;
+		if (d20 <= 5)
+		{
+			diceSides = 12;
+		}
+		else if (d20 <= 10)
+		{
+			diceSides = 8;
+		}
+		else if (d20 <= 15)
+		{
+			diceSides = 6;
+		}
+		else
+		{
+			diceSides = 4;
+		}
+
+		m_PendingDiceType = "D" + std::to_string(diceSides);
+		return;
+	}
+
+	if (type != EventType::PlayerDiceTypeDetermined)
+	{
+		return;
+	}
+
+	const auto hasDecisionContext = [&]()
+		{
+			for (const auto& slot : m_Slots)
+			{
+				if (slot.diceContext.find("InitiativeDecisionRoll_") != std::string::npos)
+				{
+					return true;
+				}
+			}
+			return false;
+		};
+
+	if (hasDecisionContext())
+	{
+		return;
+	}
+
+	const auto* payload = static_cast<const Events::DiceRollEvent*>(data);
+	if (!payload)
+	{
+		return;
+	}
+
+	const int diceSides = payload->diceSides > 0 ? payload->diceSides : payload->value;
+	if (diceSides <= 0)
+	{
+		return;
+	}
+
+	m_PendingDiceType = "D" + std::to_string(diceSides);
 }
 
 void UIDicePanelComponent::SetEnabled(const bool& enabled)
@@ -92,6 +218,7 @@ void UIDicePanelComponent::SetActiveDiceType(const std::string& type)
 
 	m_ActiveDiceType = type;
 	m_BindingsDirty = true;
+	ResetActiveSlotValues();
 	ApplySlotsImmediate();
 }
 
@@ -158,14 +285,26 @@ UIObject* UIDicePanelComponent::FindUIObject(const std::string& name) const
 
 void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const
 {
-	if (m_AutoVisibility && !m_ActiveDiceType.empty())
+	if (m_AutoVisibility)
 	{
-		const bool matches = slot.diceType.empty() || slot.diceType == m_ActiveDiceType;
-		object.SetIsVisibleFromComponent(matches);
+		const bool shouldShow = m_ActiveDiceType.empty() || slot.diceType == m_ActiveDiceType;
+		object.SetIsVisibleFromComponent(shouldShow);
 	}
 
 	if (auto* diceDisplay = object.GetComponent<UIDiceDisplayComponent>())
 	{
+		if (m_AutoVisibility)
+		{
+			if (m_ActiveDiceType.empty())
+			{
+				diceDisplay->SetEnabled(true);
+			}
+			else
+			{
+				diceDisplay->SetEnabled(slot.diceType == m_ActiveDiceType);
+			}
+		}
+
 		if (!slot.diceType.empty())
 		{
 			diceDisplay->SetDiceType(slot.diceType);
@@ -179,7 +318,22 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 
 	if (auto* diceAnim = object.GetComponent<UIDiceRollAnimationComponent>())
 	{
-		diceAnim->SetEnabled(slot.applyAnimation);
+		if (m_AutoVisibility)
+		{
+			if (m_ActiveDiceType.empty())
+			{
+				diceAnim->SetEnabled(slot.applyAnimation);
+			}
+			else
+			{
+				diceAnim->SetEnabled(slot.applyAnimation && slot.diceType == m_ActiveDiceType);
+			}
+		}
+		else
+		{
+			diceAnim->SetEnabled(slot.applyAnimation);
+		}
+
 		if (!slot.diceContext.empty())
 		{
 			diceAnim->SetDiceContext(slot.diceContext);
@@ -214,6 +368,30 @@ void UIDicePanelComponent::ApplySlotsImmediate() const
 		if (auto* target = FindUIObject(slot.objectName))
 		{
 			ApplySlot(*target, slot);
+		}
+	}
+}
+
+void UIDicePanelComponent::ResetActiveSlotValues() const
+{
+	if (m_ActiveDiceType.empty())
+	{
+		return;
+	}
+
+	for (const auto& slot : m_Slots)
+	{
+		if (slot.objectName.empty() || slot.diceType != m_ActiveDiceType)
+		{
+			continue;
+		}
+
+		if (auto* target = FindUIObject(slot.objectName))
+		{
+			if (auto* diceDisplay = target->GetComponent<UIDiceDisplayComponent>())
+			{
+				diceDisplay->SetValue(0);
+			}
 		}
 	}
 }
