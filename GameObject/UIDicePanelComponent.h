@@ -27,6 +27,12 @@ public:
 	void SetSlots(std::vector<UIDicePanelSlot> slots);
 	const std::vector<UIDicePanelSlot>& GetSlots() const { return m_Slots; }
 
+	void			   SetActiveDiceType(const std::string& type);
+	const std::string& GetActiveDiceType() const { return m_ActiveDiceType; }
+
+	void		SetAutoVisibility(const bool& enabled);
+	const bool& GetAutoVisibility() const { return m_AutoVisibility; }
+
 	void RefreshBindings();
 
 private:
@@ -36,7 +42,9 @@ private:
 	void ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const;
 
 	std::vector<UIDicePanelSlot> m_Slots;
+	std::string m_ActiveDiceType;
 	bool m_Enabled = true;
+	bool m_AutoVisibility = true;
 	bool m_BindingsDirty = true;
 	mutable UIManager* m_UIManager = nullptr;
 };

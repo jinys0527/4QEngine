@@ -242,10 +242,23 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
-	"UI_RequestDoorCancel",
-	"UI",
-	{}
+		"UI_RequestDoorCancel",
+		"UI",
+		{}
 		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestPlayerMelee",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestPlayerThrow",
+		"UI",
+		{}
+		});
+
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "UI_Pressed", "UI" });
@@ -263,6 +276,8 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_DoorInteract", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorCancel", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceRoll", "UI" });
+	eventRegistry.RegisterEvent({ "Player_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "Player_Throw", "UI" });
 }
 
 
@@ -451,6 +466,20 @@ UIFSMComponent::UIFSMComponent()
 		{
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			DispatchEvent("None");
+		});
+
+	BindActionHandler("UI_RequestPlayerMelee", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Player_Melee");
+		});
+
+	BindActionHandler("UI_RequestPlayerThrow", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Player_Throw");
 		});
 }
 

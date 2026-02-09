@@ -23,6 +23,7 @@ public:
 	bool RequestCombatEnter(int initiatorId, int targetId);
 	bool TryExecutePlayerAttackFromInput();
 	bool TryExecutePlayerThrowAttack(EnemyComponent* enemy);
+	bool TryExecutePlayerSelfThrow();
 
 protected:
 	std::optional<std::string> TranslateEvent(EventType type, const void* data) override;
@@ -34,6 +35,7 @@ private:
 	bool ResolvePlayerAttackMode(PlayerComponent& player, int& outRange, ItemComponent*& outThrowItem, bool& outIsThrow) const;
 	int ResolveActionPointCost(PlayerComponent& player, bool isThrowMode, ItemComponent* throwItem) const;
 	bool ExecuteThrowAttack(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem);
+	bool ApplyThrowHealing(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem) const;
 	bool ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy) const;
 	void BuildCombatantSnapshots(std::vector<CombatantSnapshot>& outCombatants, int targetActorId) const;
 	bool HasEnemyInAttackRange() const;

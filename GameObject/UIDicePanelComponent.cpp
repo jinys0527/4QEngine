@@ -10,6 +10,8 @@
 REGISTER_UI_COMPONENT(UIDicePanelComponent)
 REGISTER_PROPERTY(UIDicePanelComponent, Enabled)
 REGISTER_PROPERTY(UIDicePanelComponent, Slots)
+REGISTER_PROPERTY(UIDicePanelComponent, ActiveDiceType)
+REGISTER_PROPERTY(UIDicePanelComponent, AutoVisibility)
 
 void UIDicePanelComponent::Start()
 {
@@ -80,6 +82,28 @@ void UIDicePanelComponent::SetSlots(std::vector<UIDicePanelSlot> slots)
 	m_BindingsDirty = true;
 }
 
+void UIDicePanelComponent::SetActiveDiceType(const std::string& type)
+{
+	if (m_ActiveDiceType == type)
+	{
+		return;
+	}
+
+	m_ActiveDiceType = type;
+	m_BindingsDirty = true;
+}
+
+void UIDicePanelComponent::SetAutoVisibility(const bool& enabled)
+{
+	if (m_AutoVisibility == enabled)
+	{
+		return;
+	}
+
+	m_AutoVisibility = enabled;
+	m_BindingsDirty = true;
+}
+
 void UIDicePanelComponent::RefreshBindings()
 {
 	m_BindingsDirty = true;
@@ -130,6 +154,12 @@ UIObject* UIDicePanelComponent::FindUIObject(const std::string& name) const
 
 void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const
 {
+	if (m_AutoVisibility && !m_ActiveDiceType.empty())
+	{
+		const bool matches = slot.diceType.empty() || slot.diceType == m_ActiveDiceType;
+		object.SetIsVisibleFromComponent(matches);
+	}
+
 	if (auto* diceDisplay = object.GetComponent<UIDiceDisplayComponent>())
 	{
 		if (!slot.diceType.empty())

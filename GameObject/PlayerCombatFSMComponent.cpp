@@ -266,6 +266,31 @@ bool PlayerCombatFSMComponent::TryExecutePlayerThrowAttack(EnemyComponent* enemy
 	return ExecuteThrowAttack(*player, enemy, throwItem);
 }
 
+
+bool PlayerCombatFSMComponent::TryExecutePlayerSelfThrow()
+{
+	auto* owner = GetOwner();
+	auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+	if (!player)
+	{
+		return false;
+	}
+
+	int throwRange = 0;
+	ItemComponent* throwItem = nullptr;
+	if (!player->TryGetConsumableThrowRange(throwRange) || !player->TryGetConsumableThrowItem(throwItem))
+	{
+		return false;
+	}
+
+	if (throwItem->GetType() != static_cast<int>(ItemType::HEAL))
+	{
+		return false;
+	}
+
+	return ExecuteThrowAttack(*player, nullptr, throwItem);
+}
+
 std::optional<std::string> PlayerCombatFSMComponent::TranslateEvent(EventType type, const void* data)
 {
 	if ((type != EventType::CombatInitiativeBuilt && type != EventType::CombatTurnAdvanced) || !data)
@@ -346,10 +371,12 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	auto* grid = player ? player->GetGridSystem() : nullptr;
 	ItemComponent* throwItem = nullptr;
 	bool isThrowMode = false;
+	bool isHealThrow = false;
 	if (grid && player)
 	{
 		int range = 0;
 		ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+		isHealThrow = isThrowMode && throwItem && throwItem->GetType() == static_cast<int>(ItemType::HEAL);
 		EnemyComponent* pendingTarget = player->ConsumePendingAttackTarget();
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
@@ -378,14 +405,14 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 		}
 	}
 
-	if (request.targetIds.empty())
+	if (!isHealThrow && request.targetIds.empty()) 
 	{
 		return false;
 	}
 
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	EnemyComponent* enemy = nullptr;
-	if (grid)
+	if (grid && !request.targetIds.empty()) 
 	{
 		for (auto* candidate : grid->GetEnemies())
 		{
@@ -413,7 +440,7 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 	}
 
 
-	if (scene && enemy)
+	if (scene && (enemy || (isHealThrow && player))) 
 	{
 		auto& services = scene->GetServices();
 		if (player && isThrowMode)
@@ -501,7 +528,7 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 				&& m_CombatManager->GetState() == Battle::NonBattle)
 			{
 				//GetEventDispatcher().Dispatch(EventType::PhaseRequestEnterCombat, nullptr);
-				if (!RequestCombatEnter(request.actorId, request.targetIds.front()))
+				if (!request.targetIds.empty() && !RequestCombatEnter(request.actorId, request.targetIds.front())) 
 				{
 					return false;
 				}
@@ -553,28 +580,29 @@ int PlayerCombatFSMComponent::ResolveActionPointCost(PlayerComponent& player, bo
 
 bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem)
 {
-	if (!enemy || !throwItem)
-	{
-		return false;
-	}
-
-	if (!ApplyThrowDamage(throwItem, enemy))
+	if (!throwItem)
 	{
 		return false;
 	}
 
 	auto* owner = GetOwner();
 	auto* playerTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
-	auto* enemyOwner = enemy->GetOwner();
+
+	auto* enemyOwner = enemy ? enemy->GetOwner() : nullptr;
 	auto* enemyTransform = enemyOwner ? enemyOwner->GetComponent<TransformComponent>() : nullptr;
 
 	XMFLOAT3 startPos = playerTransform ? playerTransform->GetWorldPos() : XMFLOAT3{};
-	XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetWorldPos() : XMFLOAT3{};
+
+	XMFLOAT3 targetPos = enemyTransform ? enemyTransform->GetWorldPos() : startPos;
 	if (auto* throwOwner = throwItem->GetOwner())
 	{
 		if (auto* throwTransform = throwOwner->GetComponent<TransformComponent>())
 		{
 			startPos = throwTransform->GetWorldPos();
+			if (!enemyTransform)
+			{
+				targetPos = startPos;
+			}
 		}
 
 		if (auto* renderer = throwOwner->GetComponent<MeshRenderer>())
@@ -587,11 +615,107 @@ bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, Enemy
 	startPos.y += 1.0f;
 	targetPos.y += 1.0f;
 
+	if (throwItem->GetType() == static_cast<int>(ItemType::HEAL))
+	{
+		if (!enemy)
+		{
+			targetPos.x += 0.25f;
+		}
+
+		throwItem->BeginThrow(startPos, targetPos, 2.0f);
+
+		if (!ApplyThrowHealing(player, enemy, throwItem))
+		{
+			return false;
+		}
+
+		player.ConsumeThrowItem(throwItem);
+		return true;
+	}
+
+	if (!enemy)
+	{
+		return false;
+	}
+
+	if (!ApplyThrowDamage(throwItem, enemy))
+	{
+		return false;
+	}
+
 	throwItem->BeginThrow(startPos, targetPos, 2.0f);
 	player.ConsumeThrowItem(throwItem);
 	return true;
 }
 
+bool PlayerCombatFSMComponent::ApplyThrowHealing(PlayerComponent& player, EnemyComponent* enemy, ItemComponent* throwItem) const
+{
+
+	if (!throwItem)
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!owner || !scene)
+	{
+		return false;
+	}
+
+	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
+	auto* enemyOwner = enemy ? enemy->GetOwner() : nullptr;
+	auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+	if (!playerStat || (enemy && !enemyStat))
+	{
+		return false;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<DiceSystem>())
+	{
+		return false;
+	}
+
+	auto& diceSystem = services.Get<DiceSystem>();
+	const int diceSides = max(0, throwItem->GetDiceType());
+	if (diceSides <= 0)
+	{
+		return false;
+	}
+
+	const DiceConfig rollConfig{ 1, diceSides, 0 };
+	const int healAmount = max(0, diceSystem.RollTotal(rollConfig, RandomDomain::World));
+	if (healAmount <= 0)
+	{
+		return false;
+	}
+
+	if (enemyStat)
+	{
+		const int prevHp = enemyStat->GetCurrentHP();
+		const int nextHp = prevHp + healAmount;
+		enemyStat->SetCurrentHP(nextHp);
+		std::cout << "[Throw-Heal] Heal=" << healAmount
+			<< " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+		return true;
+	}
+
+	auto* gameManager = scene->GetGameManager();
+	if (!gameManager)
+	{
+		return false;
+	}
+
+	const int prevHp = playerStat->GetCurrentHP();
+	const int maxHp = playerStat->GetMaxHealthForFloor(gameManager->GetCurrentFloor());
+	const int nextHp = min(maxHp, prevHp + healAmount);
+	playerStat->SetCurrentHP(nextHp);
+
+	std::cout << "[Throw-Heal] Heal=" << healAmount
+		<< " Player HP: " << prevHp << " -> " << nextHp << std::endl;
+	return true;
+}
 bool PlayerCombatFSMComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy) const
 {
 	if (!throwItem || !enemy)
@@ -731,6 +855,10 @@ bool PlayerCombatFSMComponent::HasEnemyInAttackRange() const
 	ItemComponent* throwItem = nullptr;
 	bool isThrowMode = false;
 	ResolvePlayerAttackMode(*player, range, throwItem, isThrowMode);
+	if (isThrowMode && throwItem && throwItem->GetType() == static_cast<int>(ItemType::HEAL))
+	{
+		return true;
+	}
 	const int playerQ = player->GetQ();
 	const int playerR = player->GetR();
 	const auto& enemies = grid->GetEnemies();

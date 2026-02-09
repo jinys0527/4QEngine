@@ -107,6 +107,7 @@ private:
 	void BeginThrowPreview();
 	void EndThrowPreview();
 	void UpdateResourceUI();
+	void ApplyAnimation();
 
 	// 외부지정 가능
 	// 이동력, 행동력
@@ -164,7 +165,7 @@ private:
 	std::string m_DebugCombatMode = "MeleeMode";
 	GridSystemComponent* m_GridSystem;
 
-	GameObject* m_MeeleItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
+	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 	std::string m_ConsumableItemNames[3] = {};
-	bool m_IsApplyMeeleStat = false;
+	bool m_IsApplyMeleeStat = false;
 };

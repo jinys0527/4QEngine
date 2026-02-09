@@ -70,14 +70,18 @@ enum class EventType
 	//Player
 	PlayerMove,
 	PlayerAttack,
-	EnemyAttack,
 	PlayerEquipFailed,
 	PlayerDoorInteract,
 	PlayerDoorCancel,
 	PlayerShopOpen,
 	PlayerShopClose,
 	PlayerDiceRoll,
+
 	DiceRolled,
+
+	//Enemy
+	EnemyAttack,
+
 };
 
 class IEventListener
