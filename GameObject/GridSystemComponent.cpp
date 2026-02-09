@@ -94,6 +94,45 @@ namespace
 		return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
 	}
 
+	CubeCoord AxialToCube(int q, int r)
+	{
+		return CubeCoord{ static_cast<float>(q), static_cast<float>(-q - r), static_cast<float>(r) };
+	}
+
+	CubeCoord CubeLerp(const CubeCoord& a, const CubeCoord& b, float t)
+	{
+		return CubeCoord{
+			a.x + (b.x - a.x) * t,
+			a.y + (b.y - a.y) * t,
+			a.z + (b.z - a.z) * t
+		};
+	}
+
+	AxialKey CubeRound(const CubeCoord& cube)
+	{
+		float rx = std::round(cube.x);
+		float ry = std::round(cube.y);
+		float rz = std::round(cube.z);
+
+		const float dx = std::fabs(rx - cube.x);
+		const float dy = std::fabs(ry - cube.y);
+		const float dz = std::fabs(rz - cube.z);
+
+		if (dx > dy && dx > dz)
+		{
+			rx = -ry - rz;
+		}
+		else if (dy > dz)
+		{
+			ry = -rx - rz;
+		}
+		else
+		{
+			rz = -rx - ry;
+		}
+
+		return { static_cast<int>(rx), static_cast<int>(rz) };
+	}
 }
 
 GridSystemComponent::GridSystemComponent() = default;
@@ -441,11 +480,46 @@ void GridSystemComponent::UpdateThrowRange(NodeComponent* startNode, int range)
 		}
 
 		const int distance = AxialDistance(startNode->GetQ(), startNode->GetR(), node->GetQ(), node->GetR());
-		if (distance <= range)
+		if (distance <= range && HasClearSightLine(startNode->GetQ(), startNode->GetR(), node->GetQ(), node->GetR())) 
 		{
 			node->SetInThrowRange(true);
 		}
 	}
+}
+
+bool GridSystemComponent::HasClearSightLine(int fromQ, int fromR, int toQ, int toR) const
+{
+	if (fromQ == toQ && fromR == toR)
+	{
+		return true;
+	}
+
+	const int distance = AxialDistance(fromQ, fromR, toQ, toR);
+	if (distance <= 0)
+	{
+		return true;
+	}
+
+	const CubeCoord startCube = AxialToCube(fromQ, fromR);
+	const CubeCoord endCube = AxialToCube(toQ, toR);
+
+	for (int step = 1; step < distance; ++step)
+	{
+		const float t = static_cast<float>(step) / static_cast<float>(distance);
+		const AxialKey key = CubeRound(CubeLerp(startCube, endCube, t));
+		auto it = m_NodesByAxial.find(key);
+		if (it == m_NodesByAxial.end() || !it->second)
+		{
+			return false;
+		}
+
+		if (!it->second->GetIsSight())
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void GridSystemComponent::UpdateThrowRangeMaterials(float pulse, bool enabled)

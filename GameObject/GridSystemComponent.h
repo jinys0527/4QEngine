@@ -56,6 +56,7 @@ public:
 	NodeComponent* GetNodeByKey(const AxialKey& key) const;
 	EnemyComponent* GetEnemyAt(int q, int r) const;
 	void SetThrowRangePreview(bool enabled, int range);
+	bool HasClearSightLine(int fromQ, int fromR, int toQ, int toR) const;
 
 private:
 

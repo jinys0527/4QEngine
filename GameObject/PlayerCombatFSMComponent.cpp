@@ -263,6 +263,12 @@ bool PlayerCombatFSMComponent::TryExecutePlayerThrowAttack(EnemyComponent* enemy
 		return false;
 	}
 
+	auto* grid = player->GetGridSystem();
+	if (!grid || !grid->HasClearSightLine(player->GetQ(), player->GetR(), enemy->GetQ(), enemy->GetR()))
+	{
+		return false;
+	}
+
 	return ExecuteThrowAttack(*player, enemy, throwItem);
 }
 

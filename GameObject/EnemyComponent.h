@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Component.h"
 #include "GameState.h"
+#include "ResourceHandle.h"
+#include "ResourceRefs.h"
 
 #include <memory>
 #include <vector>
@@ -46,6 +48,14 @@ public:
 	void SetEndTurnDelay(const float& value) { m_EndTurnDelay = value; }
 	const float& GetEndTurnDelay() const { return m_EndTurnDelay; }
 	bool IsTargetVisible() const { return m_TargetVisible; }
+	const AnimationHandle& GetDeathAnimationHandle() const { return m_DeathAnimationHandle; }
+	void SetDeathAnimationHandle(const AnimationHandle& value);
+	const AnimationRef& GetDeathAnimation() const { return m_DeathAnimation; }
+	void SetDeathAnimation(const AnimationRef& value) { m_DeathAnimation = value; }
+	const float& GetDeathAnimationBlendTime() const { return m_DeathAnimationBlendTime; }
+	void SetDeathAnimationBlendTime(const float& value) { m_DeathAnimationBlendTime = value; }
+	const bool& GetUseDeathAnimationBlend() const { return m_UseDeathAnimationBlend; }
+	void SetUseDeathAnimationBlend(const bool& value) { m_UseDeathAnimationBlend = value; }
 	bool IsExploreTurnFinished() const { return m_ExploreTurnFinished; }
 	void RefreshSightDebugLines();
 	float GetExploreDelayRemaining() const { return m_ExploreDelayRemaining; }
@@ -72,9 +82,15 @@ private:
 	float m_EndTurnDelay = 1;
 	ERotationOffset m_Facing;
 	bool  m_DebugSightLines = false;
+	bool  m_DeathAnimationStarted = false;
+	bool  m_DeathAnimationCompleted = false;
 	bool  m_DeathReported = false;
 	bool  m_ExploreTurnFinished = false;
 	float m_ExploreDelayRemaining = 0.0f;
 	bool  m_PendingExploreEnd = false;
+	AnimationHandle m_DeathAnimationHandle = AnimationHandle::Invalid();
+	AnimationRef m_DeathAnimation;
+	float m_DeathAnimationBlendTime = 0.15f;
+	bool m_UseDeathAnimationBlend = true;
 	std::vector<NodeComponent*> m_SightDebugNodes;
 };
