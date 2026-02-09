@@ -178,6 +178,7 @@ private:
 	std::string m_DebugCombatMode = "IdleMode";
 	CombatMode m_LastVisualCombatMode = CombatMode::Idle;
 	bool m_HasAppliedCombatVisual = false;
+	bool m_LastVisualIsDead = false;
 	GridSystemComponent* m_GridSystem = nullptr;
 
 	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장

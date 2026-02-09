@@ -520,10 +520,13 @@ void PlayerComponent::Update(float deltaTime) {
 	}
 
 	SyncCombatModeFromInventory();
-	if (!m_HasAppliedCombatVisual || m_LastVisualCombatMode != m_CombatMode)
+	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
+	const bool isDead = playerStat && playerStat->IsDead();
+	if (!m_HasAppliedCombatVisual || m_LastVisualCombatMode != m_CombatMode || m_LastVisualIsDead != isDead) 
 	{
 		ApplyVisualPresetByCombatMode();
 		m_LastVisualCombatMode = m_CombatMode;
+		m_LastVisualIsDead = isDead;
 		m_HasAppliedCombatVisual = true;
 	}
 
@@ -1860,16 +1863,50 @@ void PlayerComponent::ApplyVisualPresetByCombatMode()
 		return;
 	}
 
+	auto tryApplyAny = [visualPreset](std::initializer_list<const char*> stateTags)
+		{
+			for (const char* tag : stateTags)
+			{
+				if (tag && visualPreset->ApplyByStateTag(tag))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
+	const bool isDead = playerStat && playerStat->IsDead();
+	if (isDead)
+	{
+		switch (m_CombatMode)
+		{
+		case CombatMode::Melee:
+			if (!tryApplyAny({ "MeleeDead" }))
+			{
+				tryApplyAny({ "MeleeDead" });
+			}
+			return;
+		case CombatMode::Throw:
+			if (!tryApplyAny({ "ThrowDead" }))
+			{
+				tryApplyAny({ "ThrowDead" });
+			}
+			return;
+		default:
+			tryApplyAny({ "Dead", "IdleDead" });
+			break;
+		}
+
+	}
 	switch (m_CombatMode)
 	{
 	case CombatMode::Melee:
-		if (!visualPreset->ApplyByStateTag("Melee"))
-		{
-			visualPreset->ApplyByStateTag("Meele");
-		}
+		tryApplyAny({ "Melee", "Meele" });
 		break;
 	case CombatMode::Throw:
-		visualPreset->ApplyByStateTag("Throw");
+		tryApplyAny({ "Throw" });
 		break;
 	default:
 		break;
