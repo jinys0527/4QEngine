@@ -94,7 +94,8 @@ namespace CombatBehaviorTreeFactory
 				auto rangedMoveSequence = std::make_shared<Sequance>();
 				rangedMoveSequence->AddChild(std::make_shared<BlackboardConditionTask>(BlackboardKeys::PreferRanged, true));
 				rangedMoveSequence->AddChild(std::make_shared<BlackboardConditionTask>(BlackboardKeys::InThrowRange, false));
-				rangedMoveSequence->AddChild(std::make_shared<MaintainRangeTask>());
+				//rangedMoveSequence->AddChild(std::make_shared<MaintainRangeTask>());
+				rangedMoveSequence->AddChild(std::make_shared<ApproachRangedTargetTask>());
 				rangedMoveSequence->AddChild(std::make_shared<EndTurnTask>());
 				combatSelector->AddChild(rangedMoveSequence);
 			}
