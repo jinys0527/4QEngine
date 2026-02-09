@@ -974,7 +974,7 @@ void GameManager::InitializePlayer()
 		return;
 	}
 
-	stats->SetHealth(1); // Player 초기화
+	stats->SetHealth(12); // Player 초기화
 	stats->SetStrength(12);
 	stats->SetAgility(12);
 	stats->SetSense(12);

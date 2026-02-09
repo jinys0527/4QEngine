@@ -19,9 +19,11 @@
 #include "PlayerCombatFSMComponent.h"
 #include "MeshRenderer.h"
 #include "SkeletalMeshRenderer.h"
+#include "SkinningAnimationComponent.h"
 #include "ServiceRegistry.h"
 #include "BoxColliderComponent.h"
 #include "CombatManager.h"
+#include "AssetLoader.h"
 #include <array>
 #include <cmath>
 #include <algorithm>
@@ -34,6 +36,10 @@ REGISTER_PROPERTY_READONLY(EnemyComponent, R)
 REGISTER_PROPERTY(EnemyComponent, MoveDistance)
 REGISTER_PROPERTY(EnemyComponent, DebugSightLines)
 REGISTER_PROPERTY(EnemyComponent, EndTurnDelay)
+REGISTER_PROPERTY_HANDLE(EnemyComponent, DeathAnimationHandle)
+REGISTER_PROPERTY(EnemyComponent, DeathAnimation)
+REGISTER_PROPERTY(EnemyComponent, DeathAnimationBlendTime)
+REGISTER_PROPERTY(EnemyComponent, UseDeathAnimationBlend)
 
 EnemyComponent::EnemyComponent() {
 	m_Facing = ERotationOffset::clock_9;
@@ -42,6 +48,15 @@ EnemyComponent::EnemyComponent() {
 EnemyComponent::~EnemyComponent() {
 	// Event Listener 쓰는 경우만
 	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+}
+
+void EnemyComponent::SetDeathAnimationHandle(const AnimationHandle& value)
+{
+	m_DeathAnimationHandle = value;
+	if (auto* loader = AssetLoader::GetActive())
+	{
+		loader->GetAnimationAssetReference(value, m_DeathAnimation.assetPath, m_DeathAnimation.assetIndex);
+	}
 }
 
 void EnemyComponent::Start()
@@ -364,24 +379,73 @@ void EnemyComponent::Update(float deltaTime) {
 
 	if (isAlive) {
 		m_DeathReported = false; 
+		m_DeathAnimationStarted = false;
+		m_DeathAnimationCompleted = false;
 	}
 	bb.Set(BlackboardKeys::IsAlive, isAlive);
 
-	if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
-	{
-		meshRenderer->SetVisible(isAlive);
-	}
-	if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
-	{
-		skeletalRenderer->SetVisible(isAlive);
-	}
-	if (auto* collider = owner->GetComponent<BoxColliderComponent>())
-	{
-		collider->SetIsActive(isAlive);
-	}
-
 	if (!isAlive)
 	{
+		auto* anim = owner->GetComponent<SkinningAnimationComponent>();
+		if (!m_DeathAnimationStarted)
+		{
+			m_DeathAnimationStarted = true;
+			m_DeathAnimationCompleted = true;
+
+			AnimationHandle deathClip = m_DeathAnimationHandle;
+			if (!deathClip.IsValid() && !m_DeathAnimation.assetPath.empty())
+			{
+				if (auto* loader = AssetLoader::GetActive())
+				{
+					deathClip = loader->ResolveAnimation(m_DeathAnimation.assetPath, m_DeathAnimation.assetIndex);
+				}
+			}
+
+			if (anim && deathClip.IsValid())
+			{
+				if (m_UseDeathAnimationBlend)
+				{
+					anim->StartBlend(deathClip, max(0.0f, m_DeathAnimationBlendTime));
+				}
+				else
+				{
+					anim->SetClipHandle(deathClip);
+				}
+
+				auto playback = anim->GetPlayback();
+				playback.looping = false;
+				playback.playing = true;
+				playback.reverse = false;
+				anim->SetPlayback(playback);
+				anim->SeekTime(0.0f);
+				m_DeathAnimationCompleted = false;
+			}
+		}
+
+		if (anim)
+		{
+			const auto& playback = anim->GetPlayback();
+			if (!playback.playing)
+			{
+				m_DeathAnimationCompleted = true;
+			}
+		}
+
+		const bool shouldHide = m_DeathAnimationCompleted;
+		if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
+		{
+			meshRenderer->SetVisible(!shouldHide);
+		}
+		if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
+		{
+			skeletalRenderer->SetVisible(!shouldHide);
+		}
+		if (auto* collider = owner->GetComponent<BoxColliderComponent>())
+		{
+			collider->SetIsActive(!shouldHide);
+		}
+
+
 		m_TargetVisible = false;
 		ClearSightDebug();
 		if (!m_DeathReported && gameManager && gameManager->GetPhase() == Phase::TurnBasedCombat)
@@ -430,6 +494,19 @@ void EnemyComponent::Update(float deltaTime) {
 			}
 		}
 		return;
+	}
+
+	if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
+	{
+		meshRenderer->SetVisible(true);
+	}
+	if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
+	{
+		skeletalRenderer->SetVisible(true);
+	}
+	if (auto* collider = owner->GetComponent<BoxColliderComponent>())
+	{
+		collider->SetIsActive(true);
 	}
 
 	bool isInBattleActor = false;
