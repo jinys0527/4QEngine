@@ -83,7 +83,7 @@ namespace
 		return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
 	}
 
-	TextureHandle ResolveTextureByIconPath(AssetLoader& assetLoader, const std::string& iconPath)
+	TextureHandle ResolveTextureByPath(AssetLoader& assetLoader, const std::string& iconPath) 
 	{
 		if (iconPath.empty())
 		{
@@ -208,7 +208,36 @@ namespace
 			return TextureHandle::Invalid();
 		}
 
-		return ResolveTextureByIconPath(assetLoader, itemComponent->GetIconPath());
+		return ResolveTextureByPath(assetLoader, itemComponent->GetIconPath());
+	}
+
+	TextureHandle ResolveInfoTextureFromItemObject(Scene* scene, GameObject* itemObject, AssetLoader& assetLoader)
+	{
+		if (!scene || !itemObject)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<GameDataRepository>())
+		{
+			return TextureHandle::Invalid();
+		}
+
+		auto& repository = services.Get<GameDataRepository>();
+		const ItemDefinition* definition = repository.GetItem(itemComponent->GetItemIndex());
+		if (!definition)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		return ResolveTextureByPath(assetLoader, definition->infoPath);
 	}
 
 
@@ -253,6 +282,63 @@ namespace
 			"InventoryInfoPanel"
 		};
 		return kInventoryInfoPanelNames;
+	}
+
+	const std::vector<std::string>& GetMeleeInfoPanelNameCandidates()
+	{
+		static const std::vector<std::string> kMeleeInfoPanelNames =
+		{
+			"MainWeaponInfo",
+			"InventoryInfo",
+			"Player_InventoryInfo",
+			"ItemInfo",
+			"Player_ItemInfo",
+			"InventoryInfoPanel"
+		};
+		return kMeleeInfoPanelNames;
+	}
+
+	const std::vector<std::string>& GetThrowInfoPanelNameCandidates(int slotIndex)
+	{
+		static const std::vector<std::string> kEmpty{};
+		static const std::array<std::vector<std::string>, 3> kThrowInfoPanelNames =
+		{
+			std::vector<std::string>{ "SubWeapon1Info", "InventoryInfo", "Player_InventoryInfo", "ItemInfo", "Player_ItemInfo", "InventoryInfoPanel" },
+			std::vector<std::string>{ "SubWeapon2Info", "InventoryInfo", "Player_InventoryInfo", "ItemInfo", "Player_ItemInfo", "InventoryInfoPanel" },
+			std::vector<std::string>{ "SubWeapon3Info", "InventoryInfo", "Player_InventoryInfo", "ItemInfo", "Player_ItemInfo", "InventoryInfoPanel" }
+		};
+
+		if (slotIndex < 0 || slotIndex >= static_cast<int>(kThrowInfoPanelNames.size()))
+		{
+			return kEmpty;
+		}
+
+		return kThrowInfoPanelNames[slotIndex];
+	}
+
+	void UpdateInfoPanelTexture(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::vector<std::string>& panelNames,
+		const TextureHandle& infoTexture)
+	{
+		for (const auto& panelName : panelNames)
+		{
+			std::shared_ptr<UIObject> target;
+			auto* image = FindImageComponentOrFirstChildImage(uiManager, sceneName, panelName, target);
+			if (!image || !target)
+			{
+				continue;
+			}
+
+			image->SetTextureHandle(infoTexture);
+			// 정보창 표시/숨김은 hover FSM 이벤트에서 제어한다.
+			// 여기서는 텍스처만 갱신하고, 비어있는 슬롯일 때만 강제로 숨겨 잔상만 방지한다.
+			if (!infoTexture.IsValid())
+			{
+				target->SetIsVisible(false);
+			}
+			return;
+		}
 	}
 
 	void BindInventoryInfoHoverEvents(const std::shared_ptr<UIObject>& buttonObject,
@@ -2096,17 +2182,26 @@ void PlayerComponent::UpdateInventorySlotUI()
 	const std::string sceneName = scene->GetName();
 
 	const TextureHandle meleeIcon = ResolveIconTextureFromItemObject(m_MeleeItem, assetLoader);
+	const TextureHandle meleeInfo = ResolveInfoTextureFromItemObject(scene, m_MeleeItem, assetLoader);
 	UpdateSlotIcon(uiManager, sceneName, GetMeleeSlotIconNameCandidates(), meleeIcon);
+	UpdateInfoPanelTexture(uiManager, sceneName, GetMeleeInfoPanelNameCandidates(), meleeInfo);
 
 	for (int i = 0; i < 3; ++i)
 	{
 		// 인벤토리 인덱스 0/1/2 -> UI의 1/2/3번 슬롯
 		auto* itemObject = FindGameObjectByName(scene, m_ConsumableItemNames[i]);
 		const TextureHandle throwIcon = ResolveIconTextureFromItemObject(itemObject, assetLoader);
+		const TextureHandle throwInfo = ResolveInfoTextureFromItemObject(scene, itemObject, assetLoader);
 		const auto& slotNames = GetThrowSlotIconNameCandidates(i);
 		if (!slotNames.empty())
 		{
 			UpdateSlotIcon(uiManager, sceneName, slotNames, throwIcon);
+		}
+
+		const auto& infoPanelNames = GetThrowInfoPanelNameCandidates(i);
+		if (!infoPanelNames.empty())
+		{
+			UpdateInfoPanelTexture(uiManager, sceneName, infoPanelNames, throwInfo);
 		}
 	}
 }
