@@ -107,9 +107,10 @@ bool VendingComponent::Clicked(const Events::MouseState* mouseData)
 
 	if (distanceSq < minDistanceSq)
 	{
-		/*std::cout << "[Vending] Clicked while player is far enough. distance="
-			<< std::sqrt(distanceSq) << " threshold=" << m_Distance << std::endl;*/
+		std::cout << "[Vending] Clicked while player is far enough. distance="
+			<< std::sqrt(distanceSq) << " threshold=" << m_Distance << std::endl;
 		return true; 
+		//Event -> UI 띄우기 ( 돈 템 사면 )
 	}
 }
 
