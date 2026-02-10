@@ -23,8 +23,8 @@ public:
 	~UIDiceDisplayComponent() override;
 	const char* GetTypeName() const override;
 
-	void Start  () override;
-	void Update (float deltaTime) override;
+	void Start() override;
+	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
 	void		SetEnabled(const bool& enabled);
@@ -80,7 +80,7 @@ public:
 	const int& GetRollIndex() const { return m_RollIndex; }
 
 private:
-	UIObject*  FindUIObject(const std::string& name) const;
+	UIObject* FindUIObject(const std::string& name) const;
 	const UIDiceLayout* FindLayout() const;
 	void ApplyLayout(const UIDiceLayout& layout, UIObject& owner, UIObject* tens, UIObject* ones);
 	void ApplyValue(UIObject* tens, UIObject* ones);
@@ -96,18 +96,18 @@ private:
 	std::string m_DiceContext;
 	std::string m_TensDigitObjectName = "DiceTens";
 	std::string m_OnesDigitObjectName = "DiceOnes";
-	int  m_Value		   = 0;
-	bool m_LeadingZero	   = true;
-	bool m_Enabled		   = true;
-	bool m_LayoutDirty	   = true;
-	bool m_ValueDirty      = true;
-	bool m_AutoShow        = true;
+	int  m_Value = 0;
+	bool m_LeadingZero = true;
+	bool m_Enabled = true;
+	bool m_LayoutDirty = true;
+	bool m_ValueDirty = true;
+	bool m_AutoShow = true;
 	bool m_UseSidesForType = true;
-	bool m_ShowTotals      = true;
+	bool m_ShowTotals = true;
 	bool m_ShowIndividuals = true;
-	bool m_UseRollFaces    = false;
-	bool m_HasLayout       = false;
-	int  m_RollIndex       = 0;
+	bool m_UseRollFaces = false;
+	bool m_HasLayout = false;
+	int  m_RollIndex = 0;
 	UIDiceDigitSlot m_TensSlot{};
 	UIDiceDigitSlot m_OnesSlot{};
 	EventDispatcher* m_Dispatcher = nullptr;

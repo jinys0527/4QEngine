@@ -402,26 +402,6 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	}
-	case EventType::PlayerDiceAnimationStarted:
-	{
-		const auto* payload = static_cast<const Events::DiceAnimationEvent*>(data);
-		auto* combatManager = GetCombatManager();
-		if (combatManager && payload)
-		{
-			combatManager->HandlePlayerDiceAnimationStarted(*payload);
-		}
-		break;
-	}
-	case EventType::PlayerDiceAnimationCompleted:
-	{
-		const auto* payload = static_cast<const Events::DiceAnimationEvent*>(data);
-		auto* combatManager = GetCombatManager();
-		if (combatManager && payload)
-		{
-			combatManager->HandlePlayerDiceAnimationCompleted(*payload);
-		}
-		break;
-	}
 	case EventType::EnemyTurnEndRequested:
 	{
 		std::cout << "EnemyTurnEndRequested\n";
@@ -1581,8 +1561,6 @@ void GameManager::RegisterEventListeners()
 	m_EventDispatcher->AddListener(EventType::PlayerDiceDecisionRequested, this);
 	m_EventDispatcher->AddListener(EventType::PlayerDiceStatRollRequested, this);
 	m_EventDispatcher->AddListener(EventType::PlayerDiceContinueRequested, this);
-	m_EventDispatcher->AddListener(EventType::PlayerDiceAnimationStarted, this);
-	m_EventDispatcher->AddListener(EventType::PlayerDiceAnimationCompleted, this);
 	m_EventDispatcher->AddListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->AddListener(EventType::CombatEnter, this);
 	m_EventDispatcher->AddListener(EventType::CombatExit, this);
@@ -1619,8 +1597,6 @@ void GameManager::UnregisterEventListeners()
 	m_EventDispatcher->RemoveListener(EventType::PlayerDiceDecisionRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerDiceStatRollRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerDiceContinueRequested, this);
-	m_EventDispatcher->RemoveListener(EventType::PlayerDiceAnimationStarted, this);
-	m_EventDispatcher->RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
 	m_EventDispatcher->RemoveListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatEnter, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatExit, this);

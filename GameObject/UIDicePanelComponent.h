@@ -19,8 +19,8 @@ public:
 
 	virtual ~UIDicePanelComponent();
 
-	void Start  () override;
-	void Update (float deltaTime) override;
+	void Start() override;
+	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
 	void		SetEnabled(const bool& enabled);
@@ -41,7 +41,7 @@ public:
 	void RefreshBindings();
 
 private:
-	UIObject*  FindUIObject(const std::string& name) const;
+	UIObject* FindUIObject(const std::string& name) const;
 	void ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const;
 	bool CanApplySlotsImmediately() const;
 	void ApplySlotsImmediate() const;

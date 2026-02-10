@@ -14,7 +14,7 @@ namespace Events
 	{
 		POINT  pos{ 0, 0 };
 
-		bool   leftPressed { false };
+		bool   leftPressed{ false };
 		bool   rightPressed{ false };
 		mutable bool   handled{ false };
 	};
@@ -36,10 +36,10 @@ namespace Events
 
 	struct DiceRollEvent
 	{
-		int value	  = 0;
+		int value = 0;
 		int diceCount = 0;
 		int diceSides = 0;
-		int bonus	  = 0;
+		int bonus = 0;
 		std::string context;
 		bool isTotal = false;
 		std::vector<int> faces;
@@ -59,12 +59,6 @@ namespace Events
 		int selectedD20 = 0;
 		int initiativeBonus = 0;
 		int initiativeTotal = 0;
-	};
-
-	struct DiceAnimationEvent
-	{
-		std::string context;
-		bool isTotal = false;
 	};
 
 	struct DiceStatResolvedEvent

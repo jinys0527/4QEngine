@@ -54,12 +54,12 @@ void UIDiceDisplayComponent::Start()
 		}
 	}
 
-	m_Dispatcher  = &GetEventDispatcher();
+	m_Dispatcher = &GetEventDispatcher();
 	m_Dispatcher->AddListener(EventType::DiceRolled, this);
 	m_Dispatcher->AddListener(EventType::PlayerDiceUIReset, this);
 	m_Dispatcher->AddListener(EventType::PlayerDiceStatResolved, this);
 	m_LayoutDirty = true;
-	m_ValueDirty  = true;
+	m_ValueDirty = true;
 }
 
 void UIDiceDisplayComponent::Update(float deltaTime)
@@ -158,7 +158,7 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 		if (payload->isTotal)
 		{
-			if(slotHasSuffix)
+			if (slotHasSuffix)
 			{
 				if (payload->context != m_DiceContext)
 				{
@@ -197,14 +197,14 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 void UIDiceDisplayComponent::SetEnabled(const bool& enabled)
 {
-	if(m_Enabled == enabled)
+	if (m_Enabled == enabled)
 	{
 		return;
 	}
 
-	m_Enabled	  = enabled;
+	m_Enabled = enabled;
 	m_LayoutDirty = true;
-	m_ValueDirty  = true;
+	m_ValueDirty = true;
 
 	if (!m_Enabled)
 	{
@@ -228,7 +228,7 @@ void UIDiceDisplayComponent::SetDiceType(const std::string& type)
 		return;
 	}
 
-	m_DiceType    = type;
+	m_DiceType = type;
 	m_LayoutDirty = true;
 }
 
@@ -240,7 +240,7 @@ void UIDiceDisplayComponent::SetValue(const int& value)
 		return;
 	}
 
-	m_Value		 = clamped;
+	m_Value = clamped;
 	m_ValueDirty = true;
 }
 
@@ -267,7 +267,7 @@ void UIDiceDisplayComponent::SetLeadingZero(const bool& leadingZero)
 	}
 
 	m_LeadingZero = leadingZero;
-	m_ValueDirty  = true;
+	m_ValueDirty = true;
 }
 
 void UIDiceDisplayComponent::SetDiceContext(const std::string& context)
@@ -298,8 +298,8 @@ void UIDiceDisplayComponent::SetTensDigitObjectName(const std::string& name)
 	}
 
 	m_TensDigitObjectName = name;
-	m_LayoutDirty		  = true;
-	m_ValueDirty		  = true;
+	m_LayoutDirty = true;
+	m_ValueDirty = true;
 }
 
 void UIDiceDisplayComponent::SetOnesDigitObjectName(const std::string& name)
@@ -310,8 +310,8 @@ void UIDiceDisplayComponent::SetOnesDigitObjectName(const std::string& name)
 	}
 
 	m_OnesDigitObjectName = name;
-	m_LayoutDirty		  = true;
-	m_ValueDirty		  = true;
+	m_LayoutDirty = true;
+	m_ValueDirty = true;
 }
 
 void UIDiceDisplayComponent::SetDigitTextureHandle(int digit, const TextureHandle& handle)
@@ -338,17 +338,12 @@ const TextureHandle& UIDiceDisplayComponent::GetDigitTextureHandle(int digit) co
 void UIDiceDisplayComponent::RefreshVisuals()
 {
 	m_LayoutDirty = true;
-	m_ValueDirty  = true;
+	m_ValueDirty = true;
 }
 
 UIObject* UIDiceDisplayComponent::FindUIObject(const std::string& name) const
 {
 	if (name.empty())
-	{
-		return nullptr;
-	}
-
-	if (!m_UIScene)
 	{
 		return nullptr;
 	}
@@ -388,12 +383,12 @@ UIObject* UIDiceDisplayComponent::FindUIObject(const std::string& name) const
 void UIDiceDisplayComponent::SetDigitTextures(const std::array<TextureHandle, 10>& textures)
 {
 	m_DigitTextures = textures;
-	m_ValueDirty	= true;
+	m_ValueDirty = true;
 }
 
 void UIDiceDisplayComponent::SetLayouts(std::vector<UIDiceLayout> layouts)
 {
-	m_Layouts	  = std::move(layouts);
+	m_Layouts = std::move(layouts);
 	m_LayoutDirty = true;
 }
 
@@ -453,7 +448,7 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 				const auto& current = target->GetBounds();
 				if (bounds.width == 0.0f && bounds.height == 0.0f)
 				{
-					bounds.width  = current.width;
+					bounds.width = current.width;
 					bounds.height = current.height;
 				}
 			}
@@ -479,8 +474,8 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 		const UIRect bounds = resolveBounds(layout.tens, tens);
 		tens->SetAnchorMin(layout.tens.anchor);
 		tens->SetAnchorMax(layout.tens.anchor);
-		tens->SetPivot	  (layout.tens.pivot);
-		tens->SetBounds	  (bounds);
+		tens->SetPivot(layout.tens.pivot);
+		tens->SetBounds(bounds);
 		tens->SetZOrderFromComponent(owner.GetZOrder() + 2);
 	}
 
@@ -489,8 +484,8 @@ void UIDiceDisplayComponent::ApplyLayout(const UIDiceLayout& layout, UIObject& o
 		const UIRect bounds = resolveBounds(layout.ones, ones);
 		ones->SetAnchorMin(layout.ones.anchor);
 		ones->SetAnchorMax(layout.ones.anchor);
-		ones->SetPivot	  (layout.ones.pivot);
-		ones->SetBounds	  (bounds);
+		ones->SetPivot(layout.ones.pivot);
+		ones->SetBounds(bounds);
 		ones->SetZOrderFromComponent(owner.GetZOrder() + 2);
 	}
 

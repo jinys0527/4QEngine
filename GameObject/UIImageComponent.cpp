@@ -1,5 +1,8 @@
 ﻿#include "UIImageComponent.h"
 #include "ReflectionMacro.h"
+#include "Scene.h"
+#include "ServiceRegistry.h"
+#include "UIManager.h"
 
 REGISTER_UI_COMPONENT(UIImageComponent)
 REGISTER_PROPERTY_HANDLE(UIImageComponent, TextureHandle)

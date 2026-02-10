@@ -176,9 +176,9 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 
 		m_PendingDiceType = "D" + std::to_string(diceSides);
 
-		if (hasDecisionContext() && m_ActiveDiceType != m_PendingDiceType)
+		if (!m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
 		{
-			SetActiveDiceType(m_PendingDiceType);
+			SetActiveDiceType("D20");
 		}
 		return;
 	}

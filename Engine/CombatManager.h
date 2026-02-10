@@ -12,11 +12,6 @@ class LogSystem;
 class CombatResolver;
 class AIController;
 
-namespace Events
-{
-	struct DiceAnimationEvent;
-}
-
 enum class AttackAreaType
 {
 	SingleTarget,
@@ -35,16 +30,16 @@ struct AttackRequest
 	int actorId = 0;
 	std::vector<int> targetIds;
 	AttackAreaType areaType = AttackAreaType::SingleTarget;
-	float radius    = 0.0f;
+	float radius = 0.0f;
 	float coneAngle = 0.0f;
 	AttackType attackType = AttackType::Melee;
 };
 
 struct CombatantSnapshot
 {
-	int  actorId		 = 0;
+	int  actorId = 0;
 	int  initiativeBonus = 0;
-	bool isPlayer		 = false;
+	bool isPlayer = false;
 };
 
 struct InitiativeEntry
@@ -59,8 +54,8 @@ class CombatManager
 	friend class EnemyComponent;
 public:
 	CombatManager(CombatResolver& combatResolver,
-				  DiceSystem& diceSystem,
-				  LogSystem* logger = nullptr);
+		DiceSystem& diceSystem,
+		LogSystem* logger = nullptr);
 
 	void HandlePlayerAttack(const AttackRequest& request);
 	void TickAI(AIController& controller, float deltaTime);
@@ -82,14 +77,9 @@ public:
 	void HandlePlayerDiceDecisionRequested();
 	void HandlePlayerDiceStatRollRequested();
 	void HandlePlayerDiceContinueRequested();
-	void HandlePlayerDiceAnimationStarted(const Events::DiceAnimationEvent& payload);
-	void HandlePlayerDiceAnimationCompleted(const Events::DiceAnimationEvent& payload);
 	bool IsDiceFlowActive() const { return m_DiceFlowActive; }
 
 private:
-	void DispatchPlayerDiceDecisionResolved();
-	void DispatchPlayerDiceStatResolved();
-
 	void BuildInitiativeOrder();
 	void FinalizeBattleStart();
 	bool IsPlayerActorId(int actorId) const;
@@ -111,15 +101,10 @@ private:
 	std::vector<int> m_PlayerStatRollTotalsHistory;
 	int m_PlayerActorId = 1;
 	std::vector<InitiativeEntry> m_PendingInitiativeEntries;
-	bool m_WaitingForDecisionAnimations = false;
-	int m_DecisionAnimationsPending = 0;
-	bool m_WaitingForStatAnimations = false;
-	int m_StatAnimationsInFlight = 0;
-	int m_SelectedStatHistoryIndex = -1;
 
-	CombatResolver&  m_Resolver;
-	DiceSystem&      m_DiceSystem;
-	LogSystem*       m_LogSystem = nullptr;
+	CombatResolver& m_Resolver;
+	DiceSystem& m_DiceSystem;
+	LogSystem* m_LogSystem = nullptr;
 	EventDispatcher* m_EventDispatcher = nullptr;
 };
 

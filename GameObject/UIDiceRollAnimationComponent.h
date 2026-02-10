@@ -21,8 +21,8 @@ public:
 	~UIDiceRollAnimationComponent() override;
 	const char* GetTypeName() const override;
 
-	void Start  () override;
-	void Update (float deltaTime) override;
+	void Start() override;
+	void Update(float deltaTime) override;
 	void OnEvent(EventType type, const void* data) override;
 
 	void		SetEnabled(const bool& enabled);
@@ -70,34 +70,31 @@ private:
 		UIRect	  bounds{};
 	};
 
-	UIObject*  FindUIObject(const std::string& name) const;
+	UIObject* FindUIObject(const std::string& name) const;
 
-	void  BeginAnimation(bool isTotal);
-	void  CacheBounds	();
-	void  ApplyScale	(float scale);
-	void  RestoreBounds ();
+	void  BeginAnimation();
+	void  CacheBounds();
+	void  ApplyScale(float scale);
+	void  RestoreBounds();
 	float GetRandomDelay();
-	float EvaluateScale (float t) const;
+	float EvaluateScale(float t) const;
 
 	std::vector<BoundsSnapshot> m_Targets;
 	std::string m_DiceContext;
 	std::string m_TensDigitObjectName = "DiceTens";
 	std::string m_OnesDigitObjectName = "DiceOnes";
-	float m_DelayMin		   = 0.1f;
-	float m_DelayMax		   = 0.3f;
-	float m_AnimationDuration  = 0.25f;
-	float m_ScaleStart		   = 1.2f;
-	float m_ScalePeak		   = 1.25f;
-	float m_ScaleEnd		   = 1.0f;
-	float m_AnimationTimer     = 0.0f;
-	bool  m_Enabled            = true;
-	bool  m_ApplyToDigits      = true;
-	float m_DelayTimer		   = 0.0f;
-	bool  m_Waiting            = false;
-	bool  m_Animating          = false;
+	float m_DelayMin = 0.1f;
+	float m_DelayMax = 0.3f;
+	float m_AnimationDuration = 0.25f;
+	float m_ScaleStart = 1.2f;
+	float m_ScalePeak = 1.25f;
+	float m_ScaleEnd = 1.0f;
+	float m_AnimationTimer = 0.0f;
+	bool  m_Enabled = true;
+	bool  m_ApplyToDigits = true;
+	float m_DelayTimer = 0.0f;
+	bool  m_Waiting = false;
+	bool  m_Animating = false;
 	bool  m_AnimateIndividuals = true;
-	bool  m_CurrentAnimationIsTotal = false;
-	bool  m_AnimationStartDispatched = false;
-	EventDispatcher*   m_Dispatcher = nullptr;
+	EventDispatcher* m_Dispatcher = nullptr;
 };
-

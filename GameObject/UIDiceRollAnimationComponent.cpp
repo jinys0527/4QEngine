@@ -56,9 +56,6 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 		return;
 	}
 
-	// 전이 지연 흐름 (1~2):
-	// 1) 실제 애니메이션이 시작되는 타이밍에 PlayerDiceAnimationStarted를 발행하고
-	// 2) 애니메이션 종료 시 PlayerDiceAnimationCompleted를 발행한다.
 	if (m_Waiting)
 	{
 		m_DelayTimer -= deltaTime;
@@ -67,13 +64,6 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 			m_Waiting = false;
 			m_Animating = true;
 			m_AnimationTimer = 0.0f;
-
-			if (m_Dispatcher)
-			{
-				const Events::DiceAnimationEvent startedEvent{ m_DiceContext, m_CurrentAnimationIsTotal };
-				m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationStarted, &startedEvent);
-				m_AnimationStartDispatched = true;
-			}
 		}
 	}
 
@@ -91,14 +81,6 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 	{
 		RestoreBounds();
 		m_Animating = false;
-
-		if (m_Dispatcher && m_AnimationStartDispatched)
-		{
-			const Events::DiceAnimationEvent completedEvent{ m_DiceContext, m_CurrentAnimationIsTotal };
-			m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationCompleted, &completedEvent);
-		}
-
-		m_AnimationStartDispatched = false;
 	}
 }
 
@@ -135,7 +117,7 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 		<< " value=" << payload->value
 		<< " isTotal=" << payload->isTotal << std::endl;
 
-	BeginAnimation(payload->isTotal);
+	BeginAnimation();
 }
 
 void UIDiceRollAnimationComponent::SetEnabled(const bool& enabled)
@@ -250,14 +232,12 @@ UIObject* UIDiceRollAnimationComponent::FindUIObject(const std::string& name) co
 	return nullptr;
 }
 
-void UIDiceRollAnimationComponent::BeginAnimation(bool isTotal)
+void UIDiceRollAnimationComponent::BeginAnimation()
 {
 	CacheBounds();
 	m_DelayTimer = GetRandomDelay();
-	m_Waiting    = true;
-	m_Animating  = false;
-	m_CurrentAnimationIsTotal = isTotal;
-	m_AnimationStartDispatched = false;
+	m_Waiting = true;
+	m_Animating = false;
 }
 
 void UIDiceRollAnimationComponent::CacheBounds()
