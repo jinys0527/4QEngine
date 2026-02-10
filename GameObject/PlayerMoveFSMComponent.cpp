@@ -11,6 +11,8 @@
 #include "BoxColliderComponent.h"
 #include "Event.h"
 #include "PlayerVisualPresetComponent.h"
+#include "ServiceRegistry.h"
+#include "SoundManager.h"
 
 REGISTER_COMPONENT_DERIVED(PlayerMoveFSMComponent, FSMComponent)
 
@@ -114,6 +116,17 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 
 			if (committed)
 			{
+				auto* scene = owner->GetScene();
+				if (scene)
+				{
+					auto& services = scene->GetServices();
+					if (services.Has<SoundManager>())
+					{
+						services.Get<SoundManager>().SFX_Shot(L"Dice_Success");
+					}
+				}
+
+
 				m_CommitSucceeded = true;
 				//if (auto* visualPreset = owner->GetComponent<PlayerVisualPresetComponent>())
 				//{
