@@ -1284,22 +1284,41 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 			if (!enemy)
 			{
+				const bool isSelfTile = (clickedNode->GetQ() == m_Q) && (clickedNode->GetR() == m_R);
+				if (isSelfTile && m_CombatMode == CombatMode::Throw)
+				{
+					if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+					{
+						if (combatFsm->TryExecutePlayerSelfThrow())
+						{
+							mouseData->handled = true;
+						}
+					}
+				}
 				return;
 			}
 
-			const int range = max(0, m_AttackRange);
-			const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
-			if (distance > range)
+			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr) 
 			{
-				return;
-			}
+				if (m_CombatMode == CombatMode::Throw)
+				{
+					if (combatFsm->TryExecutePlayerThrowAttack(enemy))
+					{
+						mouseData->handled = true;
+					}
+					return;
+				}
 
-			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
-			{	
+				const int range = max(0, m_AttackRange);
+				const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+				if (distance > range)
+				{
+					return;
+				}
+
 				m_PendingAttackTarget = enemy;
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
-					//return;
 					mouseData->handled = true;
 				}
 			}
@@ -1487,22 +1506,41 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			auto* enemy = FindEnemyAt(m_GridSystem, clickedNode->GetQ(), clickedNode->GetR());
 			if (!enemy)
 			{
-				return;
-			}
-
-			const int range = max(0, m_AttackRange);
-			const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
-			if (distance > range)
-			{
+				const bool isSelfTile = (clickedNode->GetQ() == m_Q) && (clickedNode->GetR() == m_R);
+				if (isSelfTile && m_CombatMode == CombatMode::Throw)
+				{
+					if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
+					{
+						if (combatFsm->TryExecutePlayerSelfThrow())
+						{
+							mouseData->handled = true;
+						}
+					}
+				}
 				return;
 			}
 
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
+				if (m_CombatMode == CombatMode::Throw)
+				{
+					if (combatFsm->TryExecutePlayerThrowAttack(enemy))
+					{
+						mouseData->handled = true;
+					}
+					return;
+				}
+
+				const int range = max(0, m_AttackRange);
+				const int distance = AxialDistance(m_Q, m_R, enemy->GetQ(), enemy->GetR());
+				if (distance > range)
+				{
+					return;
+				}
+
 				m_PendingAttackTarget = enemy;
 				if (combatFsm->TryExecutePlayerAttackFromInput())
 				{
-					//return;
 					mouseData->handled = true;
 				}
 			}
@@ -2413,10 +2451,16 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 	if (TryGetConsumableThrowRange(throwRange) && throwRange > 0)
 	{
 		m_CombatMode = CombatMode::Throw;
+		BeginThrowPreview();
 	}
 	else
 	{
 		m_CombatMode = ResolveBaseCombatMode();
+		if (m_CombatMode == CombatMode::Throw && m_GridSystem)
+		{
+			m_ThrowPreviewRange = 0;
+			m_GridSystem->SetThrowRangePreview(false, 0);
+		}
 	}
 }
 
