@@ -29,6 +29,18 @@ bool GameApplication::Initialize()
 	m_AssetLoader->LoadAll();
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
+	m_SoundManager->CreateBGMSource(m_AssetLoader->GetBGMPaths());
+	m_SoundManager->CreateSFXSource(m_AssetLoader->GetSFXPaths());
+
+	m_SceneBGMMap.clear();
+
+	// Scene별 곡 등록
+	// 별도 등록하지 않으면 직전 Scene의 BGM 계속 Loop
+	m_SceneBGMMap.emplace("Title", L"Renai");
+	/*m_SceneBGMMap.emplace("Stage1_Test", L"Renai");
+	m_SceneBGMMap.emplace("Stage2_Test", L"Main");*/
+	//m_SceneBGMMap.emplace("Stage1", L"GameBGM");
+
 
 	OnResize(m_width, m_height);
 	auto& uiManager = m_Services.Get<UIManager>();
@@ -81,11 +93,12 @@ bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 void GameApplication::UpdateLogic()
 {
 	m_SceneManager.ChangeScene();
+	ApplySceneBGM();
 }
 
 void GameApplication::Update()
 {
-
+	ApplySceneBGM();
 	float dTime = m_Engine.GetTime();
 	dTime *= m_GameSpeed;
 	//m_Engine.UpdateInput();
@@ -102,6 +115,30 @@ void GameApplication::Update()
 		}
 
 	}
+}
+
+void GameApplication::ApplySceneBGM()
+{
+	auto currentScene = m_SceneManager.GetCurrentScene();
+	if (!currentScene)
+	{
+		return;
+	}
+
+	const std::string sceneName = currentScene->GetName();
+	if (sceneName == m_LastSceneName)
+	{
+		return;
+	}
+
+	m_LastSceneName = sceneName;
+	auto it = m_SceneBGMMap.find(sceneName);
+	if (it == m_SceneBGMMap.end())
+	{
+		return;
+	}
+
+	m_SoundManager->BGM_Shot(it->second, m_SceneChangeBGMFadeTime);
 }
 
 void GameApplication::Render()

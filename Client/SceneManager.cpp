@@ -41,8 +41,9 @@ void SceneManager::Initialize()
 
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
-		"Title",
-		"Stage1",
+
+		//"Title",
+		"Stage1_Test",
 		"Stage2_Test"
 		//"BossStage"
 		});

@@ -593,6 +593,8 @@ AssetLoader::~AssetLoader()
 	m_TextureRefs.clear();
 	m_SkeletonRefs.clear();
 	m_AnimationRefs.clear();
+	m_BGMPaths.clear();
+	m_SFXPaths.clear();
 }
 
 void AssetLoader::SetActive(AssetLoader* loader)
@@ -607,6 +609,9 @@ AssetLoader* AssetLoader::GetActive()
 
 void AssetLoader::LoadAll()
 {
+	m_BGMPaths.clear();
+	m_SFXPaths.clear();
+
 	const fs::path assetRoot = "../ResourceOutput";
 	if (fs::exists(assetRoot) && fs::is_directory(assetRoot))
 	{
@@ -648,6 +653,9 @@ void AssetLoader::LoadAll()
 
 	const fs::path uiTextureRoot = "../Resources/UI";
 	LoadLooseTextures(uiTextureRoot, true, "UI");
+
+	LoadSoundResources("../Resources/Sound/BGM", "../Resources/Sound/SFX");
+
 }
 
 void AssetLoader::LoadLooseTextures(const fs::path& rootDir, bool sRGB, const std::string& displayPrefix)
@@ -704,6 +712,46 @@ void AssetLoader::LoadLooseTextures(const fs::path& rootDir, bool sRGB, const st
 		}
 		m_Textures.SetDisplayName(textureHandle, displayName);
 	}
+}
+
+void AssetLoader::LoadSoundResources(const fs::path& bgmDir, const fs::path& sfxDir)
+{
+	auto isAudioFile = [](const fs::path& path)
+		{
+			std::string ext = path.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+			return ext == ".wav" || ext == ".ogg" || ext == ".mp3";
+		};
+
+	auto loadGroup = [&](const fs::path& directory, std::unordered_map<std::wstring, fs::path>& outMap)
+		{
+			if (!fs::exists(directory) || !fs::is_directory(directory))
+			{
+				return;
+			}
+
+			for (const auto& entry : fs::directory_iterator(directory))
+			{
+				if (!entry.is_regular_file())
+				{
+					continue;
+				}
+
+				const fs::path filePath = entry.path();
+				if (!isAudioFile(filePath))
+				{
+					continue;
+				}
+
+				outMap[filePath.stem().wstring()] = filePath;
+			}
+		};
+
+	loadGroup(bgmDir, m_BGMPaths);
+	loadGroup(sfxDir, m_SFXPaths);
 }
 
 void AssetLoader::LoadShaderSources(const fs::path& shaderDir)
