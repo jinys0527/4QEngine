@@ -37,6 +37,11 @@ UIManager* UIComponent::GetUIManager() const
 		return nullptr;
 	}
 
+	if (m_UIManager && m_UIScene == scene)
+	{
+		return m_UIManager;
+	}
+
 	auto& services = scene->GetServices();
 	if (!services.Has<UIManager>())
 	{

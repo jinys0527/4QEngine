@@ -67,6 +67,8 @@ namespace Events
 		int diceCount = 0;
 		int diceSides = 0;
 		std::vector<int> faces;
+		std::vector<std::vector<int>> facesHistory;
+		std::vector<int> totalsHistory;
 		int total = 0;
 		int initiativeBonus = 0;
 		int initiativeTotal = 0;

@@ -13,6 +13,7 @@ REGISTER_PROPERTY(UIDicePanelComponent, Enabled)
 REGISTER_PROPERTY(UIDicePanelComponent, Slots)
 REGISTER_PROPERTY(UIDicePanelComponent, ActiveDiceType)
 REGISTER_PROPERTY(UIDicePanelComponent, AutoVisibility)
+REGISTER_PROPERTY(UIDicePanelComponent, ApplyDecisionD20OnRequest)
 
 void UIDicePanelComponent::Start()
 {
@@ -26,6 +27,7 @@ void UIDicePanelComponent::Start()
 	}
 
 	m_Dispatcher = &GetEventDispatcher();
+	m_Dispatcher->AddListener(EventType::PlayerDiceDecisionRequested, this);
 	m_Dispatcher->AddListener(EventType::PlayerDiceStatRollRequested, this);
 	m_Dispatcher->AddListener(EventType::PlayerDiceTypeDetermined, this);
 	m_Dispatcher->AddListener(EventType::PlayerDiceDecisionFaceRolled, this);
@@ -34,6 +36,10 @@ void UIDicePanelComponent::Start()
 
 UIDicePanelComponent::~UIDicePanelComponent()
 {
+	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceDecisionRequested))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceDecisionRequested, this);
+	}
 	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceStatRollRequested))
 	{
 		m_Dispatcher->RemoveListener(EventType::PlayerDiceStatRollRequested, this);
@@ -63,6 +69,11 @@ void UIDicePanelComponent::Update(float deltaTime)
 		return;
 	}
 
+	if (!CanApplySlotsImmediately())
+	{
+		return;
+	}
+
 	for (const auto& slot : m_Slots)
 	{
 		if (slot.objectName.empty())
@@ -88,9 +99,22 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
+	const auto hasDecisionContext = [&]()
+		{
+			for (const auto& slot : m_Slots)
+			{
+				if (slot.diceContext.find("InitiativeDecisionRoll_") != std::string::npos)
+				{
+					return true;
+				}
+			}
+			return false;
+		};
+
+
 	if (type == EventType::PlayerDiceDecisionRequested)
 	{
-		if (m_ActiveDiceType != "D20")
+		if (m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
 		{
 			SetActiveDiceType("D20");
 		}
@@ -151,6 +175,11 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 		}
 
 		m_PendingDiceType = "D" + std::to_string(diceSides);
+
+		if (!m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
+		{
+			SetActiveDiceType("D20");
+		}
 		return;
 	}
 
@@ -158,18 +187,6 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 	{
 		return;
 	}
-
-	const auto hasDecisionContext = [&]()
-		{
-			for (const auto& slot : m_Slots)
-			{
-				if (slot.diceContext.find("InitiativeDecisionRoll_") != std::string::npos)
-				{
-					return true;
-				}
-			}
-			return false;
-		};
 
 	if (hasDecisionContext())
 	{
@@ -206,7 +223,10 @@ void UIDicePanelComponent::SetSlots(std::vector<UIDicePanelSlot> slots)
 {
 	m_Slots = std::move(slots);
 	m_BindingsDirty = true;
-	ApplySlotsImmediate();
+	if (CanApplySlotsImmediately())
+	{
+		ApplySlotsImmediate();
+	}
 }
 
 void UIDicePanelComponent::SetActiveDiceType(const std::string& type)
@@ -218,8 +238,11 @@ void UIDicePanelComponent::SetActiveDiceType(const std::string& type)
 
 	m_ActiveDiceType = type;
 	m_BindingsDirty = true;
-	ResetActiveSlotValues();
-	ApplySlotsImmediate();
+	if (CanApplySlotsImmediately())
+	{
+		ResetActiveSlotValues();
+		ApplySlotsImmediate();
+	}
 }
 
 void UIDicePanelComponent::SetAutoVisibility(const bool& enabled)
@@ -231,13 +254,29 @@ void UIDicePanelComponent::SetAutoVisibility(const bool& enabled)
 
 	m_AutoVisibility = enabled;
 	m_BindingsDirty = true;
-	ApplySlotsImmediate();
+	if (CanApplySlotsImmediately())
+	{
+		ApplySlotsImmediate();
+	}
+}
+
+void UIDicePanelComponent::SetApplyDecisionD20OnRequest(const bool& enabled)
+{
+	if (m_ApplyDecisionD20OnRequest == enabled)
+	{
+		return;
+	}
+
+	m_ApplyDecisionD20OnRequest = enabled;
 }
 
 void UIDicePanelComponent::RefreshBindings()
 {
 	m_BindingsDirty = true;
-	ApplySlotsImmediate();
+	if (CanApplySlotsImmediately())
+	{
+		ApplySlotsImmediate();
+	}
 }
 
 UIObject* UIDicePanelComponent::FindUIObject(const std::string& name) const
@@ -247,16 +286,43 @@ UIObject* UIDicePanelComponent::FindUIObject(const std::string& name) const
 		return nullptr;
 	}
 
-	auto* scene = GetScene();
-	auto* uiManager = GetUIManager();
-	if (!scene || !uiManager)
+	if (!m_UIScene)
 	{
 		return nullptr;
 	}
 
-	auto uiObject = uiManager->FindUIObject(scene->GetName(), name);
-	return uiObject ? uiObject.get() : nullptr;
+
+	auto* uiManager = GetUIManager();
+	if (!uiManager)
+	{
+		return nullptr;
+	}
+
+	const auto* scene = GetScene();
+	const std::string sceneName = scene ? scene->GetName() : std::string{};
+	const std::string currentScene = uiManager->GetCurrentScene();
+
+	if (!sceneName.empty())
+	{
+		auto uiObject = uiManager->FindUIObject(sceneName, name);
+		if (uiObject)
+		{
+			return uiObject.get();
+		}
+	}
+
+	if (!currentScene.empty() && currentScene != sceneName)
+	{
+		auto uiObject = uiManager->FindUIObject(currentScene, name);
+		if (uiObject)
+		{
+			return uiObject.get();
+		}
+	}
+
+	return nullptr;
 }
+
 
 void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const
 {
@@ -316,9 +382,43 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 	}
 }
 
-void UIDicePanelComponent::ApplySlotsImmediate() const
+bool UIDicePanelComponent::CanApplySlotsImmediately() const
 {
 	if (!m_Enabled)
+	{
+		return false;
+	}
+
+	if (!m_Dispatcher)
+	{
+		// Scene load/deserialize 단계에서는 Start 이전이라 즉시 적용을 건너뛴다.
+		return false;
+	}
+
+	if (!GetOwner())
+	{
+		return false;
+	}
+
+	auto* scene = GetScene();
+	auto* uiManager = GetUIManager();
+	if (!scene || !uiManager)
+	{
+		return false;
+	}
+
+	const auto& currentScene = uiManager->GetCurrentScene();
+	if (!currentScene.empty() && currentScene != scene->GetName())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void UIDicePanelComponent::ApplySlotsImmediate() const
+{
+	if (!CanApplySlotsImmediately())
 	{
 		return;
 	}

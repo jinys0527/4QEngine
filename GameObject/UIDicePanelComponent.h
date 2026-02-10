@@ -35,11 +35,15 @@ public:
 	void		SetAutoVisibility(const bool& enabled);
 	const bool& GetAutoVisibility() const { return m_AutoVisibility; }
 
+	void		SetApplyDecisionD20OnRequest(const bool& enabled);
+	const bool& GetApplyDecisionD20OnRequest() const { return m_ApplyDecisionD20OnRequest; }
+
 	void RefreshBindings();
 
 private:
 	UIObject*  FindUIObject(const std::string& name) const;
 	void ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const;
+	bool CanApplySlotsImmediately() const;
 	void ApplySlotsImmediate() const;
 	void ResetActiveSlotValues() const;
 
@@ -48,6 +52,7 @@ private:
 	std::string m_PendingDiceType;
 	bool m_Enabled = true;
 	bool m_AutoVisibility = true;
+	bool m_ApplyDecisionD20OnRequest = true;
 	bool m_BindingsDirty = true;
 	EventDispatcher* m_Dispatcher = nullptr;
 };

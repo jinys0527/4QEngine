@@ -80,6 +80,9 @@ void CombatManager::EnterBattle(int initiatorId, int targetId)
 	m_PlayerDecisionD20 = 0;
 	m_PlayerInitiativeDiceBonus = 0;
 	m_PlayerInitiativeTotal = 0;
+	m_PlayerDecisionFaces.clear();
+	m_PlayerStatRollFacesHistory.clear();
+	m_PlayerStatRollTotalsHistory.clear();
 	m_PendingInitiativeEntries.clear();
 
 	std::cout << "[Combat] Enter battle: initiator=" << initiatorId
@@ -105,6 +108,9 @@ void CombatManager::ExitBattle()
 	m_PlayerDecisionD20 = 0;
 	m_PlayerInitiativeDiceBonus = 0;
 	m_PlayerInitiativeTotal = 0;
+	m_PlayerDecisionFaces.clear();
+	m_PlayerStatRollFacesHistory.clear();
+	m_PlayerStatRollTotalsHistory.clear();
 	m_PendingInitiativeEntries.clear();
 
     std::cout << "[Combat] Exit battle" << std::endl;
@@ -195,6 +201,9 @@ void CombatManager::ResetSessionState()
 	m_PlayerDecisionD20 = 0;
 	m_PlayerInitiativeDiceBonus = 0;
 	m_PlayerInitiativeTotal = 0;
+	m_PlayerDecisionFaces.clear();
+	m_PlayerStatRollFacesHistory.clear();
+	m_PlayerStatRollTotalsHistory.clear();
 	m_PendingInitiativeEntries.clear();
 }
 
@@ -255,6 +264,7 @@ void CombatManager::BuildInitiativeOrder()
 		m_PlayerDecisionReady = false;
 		m_PlayerDecisionD20 = 0;
 		m_PlayerInitiativeTotal = 0;
+
 		if (m_EventDispatcher)
 		{
 			m_EventDispatcher->Dispatch(EventType::PlayerDiceUIOpen, nullptr);
@@ -347,6 +357,7 @@ void CombatManager::FinalizeBattleStart()
 	m_DiceFlowActive = false;
 	m_PlayerDecisionReady = false;
 	m_PlayerDecisionD20 = 0;
+	m_PlayerDecisionFaces.clear();
 	m_PlayerInitiativeTotal = 0;
 	m_PendingInitiativeEntries.clear();
 }
@@ -370,6 +381,9 @@ void CombatManager::HandlePlayerDiceDecisionRequested()
 
 	m_PlayerDecisionReady = false;
 	m_PlayerInitiativeTotal = 0;
+	m_PlayerDecisionFaces = roll.faces;
+	m_PlayerStatRollFacesHistory.clear();
+	m_PlayerStatRollTotalsHistory.clear();
 	m_PlayerDecisionD20 = *std::max_element(roll.faces.begin(), roll.faces.end());
 	std::cout << "[Combat] Decision roll faces=";
 	for (size_t i = 0; i < roll.faces.size(); ++i)
@@ -416,44 +430,92 @@ void CombatManager::HandlePlayerDiceStatRollRequested()
 		return;
 	}
 
-	DiceConfig statConfig = BuildStatConfigFromDecisionD20(m_PlayerDecisionD20);
+	const std::vector<int> decisionFaces = m_PlayerDecisionFaces.empty()
+		? std::vector<int>{ m_PlayerDecisionD20 }
+	: m_PlayerDecisionFaces;
 
-	const DiceRoll statRoll = m_DiceSystem.Roll(statConfig, RandomDomain::Combat);
-	m_PlayerInitiativeTotal = statRoll.total + m_PlayerInitiativeDiceBonus;
+	m_PlayerStatRollFacesHistory.clear();
+	m_PlayerStatRollTotalsHistory.clear();
+
+	int selectedHistoryIndex = -1;
+	for (size_t historyIdx = 0; historyIdx < decisionFaces.size(); ++historyIdx)
+	{
+		const int decisionFace = decisionFaces[historyIdx];
+		const DiceConfig statConfig = BuildStatConfigFromDecisionD20(decisionFace);
+		const DiceRoll statRoll = m_DiceSystem.Roll(statConfig, RandomDomain::Combat);
+
+		m_PlayerStatRollFacesHistory.push_back(statRoll.faces);
+		m_PlayerStatRollTotalsHistory.push_back(statRoll.total);
+
+		if (selectedHistoryIndex < 0 && decisionFace == m_PlayerDecisionD20)
+		{
+			selectedHistoryIndex = static_cast<int>(historyIdx);
+		}
+	}
+
+	if (selectedHistoryIndex < 0)
+	{
+		selectedHistoryIndex = 0;
+	}
+
+	const DiceConfig selectedConfig = BuildStatConfigFromDecisionD20(decisionFaces[static_cast<size_t>(selectedHistoryIndex)]);
+	const auto& selectedFaces = m_PlayerStatRollFacesHistory[static_cast<size_t>(selectedHistoryIndex)];
+	const int selectedTotal = m_PlayerStatRollTotalsHistory[static_cast<size_t>(selectedHistoryIndex)];
+	m_PlayerInitiativeTotal = selectedTotal + m_PlayerInitiativeDiceBonus;
 	m_PlayerDecisionReady = true;
-	std::cout << "[Combat] Stat roll count=" << statConfig.count
-		<< " sides=" << statConfig.sides
-		<< " total=" << statRoll.total
+
+	std::cout << "[Combat] Stat roll groups=" << decisionFaces.size()
+		<< " selectedIndex=" << selectedHistoryIndex
+		<< " selectedCount=" << selectedConfig.count
+		<< " selectedSides=" << selectedConfig.sides
+		<< " selectedTotal=" << selectedTotal
 		<< " bonus=" << m_PlayerInitiativeDiceBonus
 		<< " initiativeTotal=" << m_PlayerInitiativeTotal << std::endl;
 
 	if (m_EventDispatcher)
 	{
-		const Events::DiceRollEvent diceTypeEvent{ statConfig.sides, 1, statConfig.sides, 0, "InitiativeDiceType", true, { statConfig.sides } };
-		m_EventDispatcher->Dispatch(EventType::PlayerDiceTypeDetermined, &diceTypeEvent);
-
-		for (size_t i = 0; i < statRoll.faces.size(); ++i)
+		for (size_t historyIdx = 0; historyIdx < m_PlayerStatRollFacesHistory.size(); ++historyIdx)
 		{
-			const std::string context = "InitiativeStatRoll_" + std::to_string(i + 1);
-			const Events::DiceRollEvent oneDieEvent{ statRoll.faces[i], 1, statConfig.sides, 0, context, false, { statRoll.faces[i] } };
-			std::cout << "[Combat] Dispatch DiceRolled context=" << context << " value=" << statRoll.faces[i] << std::endl;
-			m_EventDispatcher->Dispatch(EventType::DiceRolled, &oneDieEvent);
-		}
+			const int decisionFace = decisionFaces[historyIdx];
+			const DiceConfig statConfig = BuildStatConfigFromDecisionD20(decisionFace);
+			const auto& faces = m_PlayerStatRollFacesHistory[historyIdx];
+			const int total = m_PlayerStatRollTotalsHistory[historyIdx];
+			const std::string rollContext = "InitiativeStatRoll_" + std::to_string(historyIdx + 1);
 
-		const Events::DiceRollEvent statRollEvent{ statRoll.total, statConfig.count, statConfig.sides, 0, "InitiativeStatRoll", true, statRoll.faces };
-		std::cout << "[Combat] Dispatch DiceRolled context=InitiativeStatRoll value=" << statRoll.total << std::endl;
-		m_EventDispatcher->Dispatch(EventType::DiceRolled, &statRollEvent);
+			const Events::DiceRollEvent diceTypeEvent{ statConfig.sides, 1, statConfig.sides, 0, "InitiativeDiceType", true, { statConfig.sides } };
+
+			m_EventDispatcher->Dispatch(EventType::PlayerDiceTypeDetermined, &diceTypeEvent);
+
+			for (size_t faceIdx = 0; faceIdx < faces.size(); ++faceIdx)
+			{
+				const std::string context = rollContext + "_" + std::to_string(faceIdx + 1);
+				const Events::DiceRollEvent oneDieEvent{ faces[faceIdx], 1, statConfig.sides, 0, context, false, { faces[faceIdx] } };
+				std::cout << "[Combat] Dispatch DiceRolled context=" << context << " value=" << faces[faceIdx] << std::endl;
+				m_EventDispatcher->Dispatch(EventType::DiceRolled, &oneDieEvent);
+			}
+
+			const Events::DiceRollEvent statRollEvent{ total, statConfig.count, statConfig.sides, 0, rollContext, true, faces };
+			std::cout << "[Combat] Dispatch DiceRolled context=" << rollContext << " value=" << total << std::endl;
+			m_EventDispatcher->Dispatch(EventType::DiceRolled, &statRollEvent);
+		}
 
 		const Events::DiceStatResolvedEvent resultEvent{
 			m_PlayerDecisionD20,
-			statConfig.count,
-			statConfig.sides,
-			statRoll.faces,
-			statRoll.total,
+				selectedConfig.count,
+			selectedConfig.sides,
+			selectedFaces,
+			m_PlayerStatRollFacesHistory,
+			m_PlayerStatRollTotalsHistory,
+			selectedTotal,
 			m_PlayerInitiativeDiceBonus,
 			m_PlayerInitiativeTotal };
 		m_EventDispatcher->Dispatch(EventType::PlayerDiceStatResolved, &resultEvent);
-		std::cout << "[Combat] Dispatch PlayerDiceStatResolved" << std::endl;
+
+		std::cout << "[Combat] Dispatch PlayerDiceStatResolved"
+			<< " currentFaces=" << selectedFaces.size()
+			<< " historyCount=" << m_PlayerStatRollFacesHistory.size()
+			<< " totalsCount=" << m_PlayerStatRollTotalsHistory.size()
+			<< std::endl;
 	}
 }
 

@@ -37,6 +37,10 @@ UIDiceDisplayComponent::~UIDiceDisplayComponent()
 	{
 		m_Dispatcher->RemoveListener(EventType::PlayerDiceUIReset, this);
 	}
+	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceStatResolved))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceStatResolved, this);
+	}
 }
 
 void UIDiceDisplayComponent::Start()
@@ -53,6 +57,7 @@ void UIDiceDisplayComponent::Start()
 	m_Dispatcher  = &GetEventDispatcher();
 	m_Dispatcher->AddListener(EventType::DiceRolled, this);
 	m_Dispatcher->AddListener(EventType::PlayerDiceUIReset, this);
+	m_Dispatcher->AddListener(EventType::PlayerDiceStatResolved, this);
 	m_LayoutDirty = true;
 	m_ValueDirty  = true;
 }
@@ -116,6 +121,19 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
+	if (type == EventType::PlayerDiceStatResolved)
+	{
+		const auto* payload = static_cast<const Events::DiceStatResolvedEvent*>(data);
+		if (!payload)
+		{
+			return;
+		}
+
+		ApplyDiceStatResolvedEvent(*payload);
+		return;
+	}
+
+
 	if (type != EventType::DiceRolled)
 	{
 		return;
@@ -131,45 +149,25 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 	{
 		const auto hasNumericSuffix = [](const std::string& context) -> bool
 			{
-				const auto pos = context.find_last_of('_');
-				if (pos == std::string::npos)
-				{
-					return false;
-				}
-				const auto suffix = context.substr(pos + 1);
-				if (suffix.empty())
-				{
-					return false;
-				}
-				return std::all_of(suffix.begin(), suffix.end(), ::isdigit);
-			};
-
-		const auto resolveBaseContext = [](const std::string& context) -> std::string
-			{
-				const auto pos = context.find_last_of('_');
-				if (pos == std::string::npos)
-				{
-					return context;
-				}
-				const auto suffix = context.substr(pos + 1);
-				if (suffix.empty())
-				{
-					return context;
-				}
-				if (std::all_of(suffix.begin(), suffix.end(), ::isdigit))
-				{
-					return context.substr(0, pos);
-				}
-				return context;
+				return ResolveNumericSuffix(context) >= 0;
 			};
 
 		const bool slotHasSuffix = hasNumericSuffix(m_DiceContext);
-		const std::string baseSlotContext = resolveBaseContext(m_DiceContext);
-		const std::string basePayloadContext = resolveBaseContext(payload->context);
+		const std::string baseSlotContext = ResolveBaseContext(m_DiceContext);
+		const std::string basePayloadContext = ResolveBaseContext(payload->context);
 
 		if (payload->isTotal)
 		{
-			if (basePayloadContext != baseSlotContext)
+			if(slotHasSuffix)
+			{
+				if (payload->context != m_DiceContext)
+				{
+					std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
+						<< " payload=" << payload->context << std::endl;
+					return;
+				}
+			}
+			else if (basePayloadContext != baseSlotContext)
 			{
 				std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
 					<< " payload=" << payload->context << std::endl;
@@ -350,15 +348,36 @@ UIObject* UIDiceDisplayComponent::FindUIObject(const std::string& name) const
 		return nullptr;
 	}
 
-	auto* scene = GetScene();
 	auto* uiManager = GetUIManager();
-	if (!scene || !uiManager)
+	if (!uiManager)
 	{
 		return nullptr;
 	}
 
-	auto uiObject = uiManager->FindUIObject(scene->GetName(), name);
-	return uiObject ? uiObject.get() : nullptr;
+	const auto* scene = GetScene();
+	const std::string sceneName = scene ? scene->GetName() : std::string{};
+	const std::string currentScene = uiManager->GetCurrentScene();
+
+	if (!sceneName.empty())
+	{
+		auto uiObject = uiManager->FindUIObject(sceneName, name);
+		if (uiObject)
+		{
+			return uiObject.get();
+		}
+	}
+
+	if (!currentScene.empty() && currentScene != sceneName)
+	{
+		auto uiObject = uiManager->FindUIObject(currentScene, name);
+		if (uiObject)
+		{
+			return uiObject.get();
+		}
+	}
+
+	return nullptr;
+
 }
 
 void UIDiceDisplayComponent::SetDigitTextures(const std::array<TextureHandle, 10>& textures)
@@ -580,6 +599,171 @@ void UIDiceDisplayComponent::ApplyDiceEvent(const Events::DiceRollEvent& payload
 		{
 			SetValue(payload.value);
 		}
+	}
+
+	if (m_AutoShow)
+	{
+		if (auto* owner = dynamic_cast<UIObject*>(GetOwner()))
+		{
+			owner->SetIsVisibleFromComponent(true);
+		}
+	}
+}
+
+int UIDiceDisplayComponent::ResolveNumericSuffix(const std::string& context)
+{
+	const auto pos = context.find_last_of('_');
+	if (pos == std::string::npos)
+	{
+		return -1;
+	}
+
+	const auto suffix = context.substr(pos + 1);
+	if (suffix.empty() || !std::all_of(suffix.begin(), suffix.end(), ::isdigit))
+	{
+		return -1;
+	}
+
+	return std::stoi(suffix);
+}
+
+std::string UIDiceDisplayComponent::ResolveBaseContext(const std::string& context)
+{
+	const auto suffix = ResolveNumericSuffix(context);
+	if (suffix < 0)
+	{
+		return context;
+	}
+
+	const auto pos = context.find_last_of('_');
+	if (pos == std::string::npos)
+	{
+		return context;
+	}
+
+	return context.substr(0, pos);
+}
+
+void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatResolvedEvent& payload)
+{
+	if (m_DiceContext.empty())
+	{
+		return;
+	}
+
+	const std::string baseSlotContext = ResolveBaseContext(m_DiceContext);
+	if (baseSlotContext != "InitiativeStatRoll")
+	{
+		return;
+	}
+
+	if (payload.facesHistory.empty())
+	{
+		return;
+	}
+
+	const int suffixIndex = ResolveNumericSuffix(m_DiceContext);
+	const int faceIndex = max(0, m_RollIndex);
+
+	const auto parseSidesFromDiceType = [](const std::string& type) -> int
+		{
+			if (type.size() < 2 || (type[0] != 'D' && type[0] != 'd'))
+			{
+				return -1;
+			}
+			const std::string number = type.substr(1);
+			if (number.empty() || !std::all_of(number.begin(), number.end(), ::isdigit))
+			{
+				return -1;
+			}
+			return std::stoi(number);
+		};
+
+	const auto expectedCountForSides = [](const int sides) -> int
+		{
+			switch (sides)
+			{
+			case 12: return 2;
+			case 8: return 3;
+			case 6: return 4;
+			case 4: return 6;
+			default: return -1;
+			}
+		};
+
+	int historyIndex = -1;
+
+	// 1) 컨텍스트 suffix(_1/_2/_3)가 유효하면 우선 해당 history를 사용
+	if (suffixIndex > 0)
+	{
+		const int requested = suffixIndex - 1;
+		if (requested >= 0 && requested < static_cast<int>(payload.facesHistory.size()))
+		{
+			historyIndex = requested;
+		}
+	}
+
+	// 2) suffix가 범위를 벗어나면 DiceType 기반으로 history를 매칭
+	if (historyIndex < 0)
+	{
+		const int parsedSides = parseSidesFromDiceType(m_DiceType);
+		const int expectedCount = expectedCountForSides(parsedSides);
+		if (expectedCount > 0)
+		{
+			for (int i = 0; i < static_cast<int>(payload.facesHistory.size()); ++i)
+			{
+				if (static_cast<int>(payload.facesHistory[static_cast<size_t>(i)].size()) == expectedCount)
+				{
+					historyIndex = i;
+					break;
+				}
+			}
+		}
+	}
+
+	// 3) 그래도 못 찾으면 최신 history를 기본값으로 사용
+	if (historyIndex < 0)
+	{
+		historyIndex = static_cast<int>(payload.facesHistory.size()) - 1;
+	}
+
+	if (historyIndex < 0 || historyIndex >= static_cast<int>(payload.facesHistory.size()))
+	{
+		std::cout << "[UIDiceDisplay] skip stat history context=" << m_DiceContext
+			<< " historyIndex=" << historyIndex
+			<< " historyCount=" << payload.facesHistory.size() << std::endl;
+		return;
+	}
+
+	const auto& rollFaces = payload.facesHistory[static_cast<size_t>(historyIndex)];
+	const int rollTotal = (historyIndex >= 0 && historyIndex < static_cast<int>(payload.totalsHistory.size()))
+		? payload.totalsHistory[static_cast<size_t>(historyIndex)]
+		: 0;
+
+	std::cout << "[UIDiceDisplay] apply stat history context=" << m_DiceContext
+		<< " historyIndex=" << historyIndex
+		<< " faceIndex=" << faceIndex
+		<< " rollIndex=" << m_RollIndex
+		<< " useRollFaces=" << m_UseRollFaces
+		<< " facesCount=" << rollFaces.size()
+		<< " rollTotal=" << rollTotal << std::endl;
+
+	if (m_UseRollFaces)
+	{
+		if (faceIndex >= 0 && faceIndex < static_cast<int>(rollFaces.size()))
+		{
+			SetValue(rollFaces[static_cast<size_t>(faceIndex)]);
+		}
+		else
+		{
+			std::cout << "[UIDiceDisplay] skip face apply context=" << m_DiceContext
+				<< " faceIndex=" << faceIndex
+				<< " facesCount=" << rollFaces.size() << std::endl;
+		}
+	}
+	else
+	{
+		SetValue(rollTotal);
 	}
 
 	if (m_AutoShow)

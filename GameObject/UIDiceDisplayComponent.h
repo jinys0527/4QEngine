@@ -13,6 +13,7 @@ class Scene;
 namespace Events
 {
 	struct DiceRollEvent;
+	struct DiceStatResolvedEvent;
 }
 
 class UIDiceDisplayComponent : public UIComponent
@@ -84,6 +85,10 @@ private:
 	void ApplyLayout(const UIDiceLayout& layout, UIObject& owner, UIObject* tens, UIObject* ones);
 	void ApplyValue(UIObject* tens, UIObject* ones);
 	void ApplyDiceEvent(const Events::DiceRollEvent& payload);
+	void ApplyDiceStatResolvedEvent(const Events::DiceStatResolvedEvent& payload);
+	static int ResolveNumericSuffix(const std::string& context);
+	static std::string ResolveBaseContext(const std::string& context);
+
 
 	std::array<TextureHandle, 10> m_DigitTextures{};
 	std::vector<UIDiceLayout> m_Layouts;

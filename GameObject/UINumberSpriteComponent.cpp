@@ -285,15 +285,35 @@ UIObject* UINumberSpriteComponent::FindUIObject(const std::string& name) const
 		return nullptr;
 	}
 
-	auto* scene = GetScene();
 	auto* uiManager = GetUIManager();
-	if (!scene || !uiManager)
+	if (!uiManager)
 	{
 		return nullptr;
 	}
 
-	auto uiObject = uiManager->FindUIObject(scene->GetName(), name);
-	return uiObject ? uiObject.get() : nullptr;
+	const auto* scene = GetScene();
+	const std::string sceneName = scene ? scene->GetName() : std::string{};
+	const std::string currentScene = uiManager->GetCurrentScene();
+
+	if (!sceneName.empty())
+	{
+		auto uiObject = uiManager->FindUIObject(sceneName, name);
+		if (uiObject)
+		{
+			return uiObject.get();
+		}
+	}
+
+	if (!currentScene.empty() && currentScene != sceneName)
+	{
+		auto uiObject = uiManager->FindUIObject(currentScene, name);
+		if (uiObject)
+		{
+			return uiObject.get();
+		}
+	}
+
+	return nullptr;
 }
 
 void UINumberSpriteComponent::ApplyValue()

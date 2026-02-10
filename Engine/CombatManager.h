@@ -96,6 +96,9 @@ private:
 	int m_PlayerDecisionD20 = 0;
 	int m_PlayerInitiativeDiceBonus = 0;
 	int m_PlayerInitiativeTotal = 0;
+	std::vector<int> m_PlayerDecisionFaces;
+	std::vector<std::vector<int>> m_PlayerStatRollFacesHistory;
+	std::vector<int> m_PlayerStatRollTotalsHistory;
 	int m_PlayerActorId = 1;
 	std::vector<InitiativeEntry> m_PendingInitiativeEntries;
 
