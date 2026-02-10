@@ -120,6 +120,7 @@ bool GameDataRepository::LoadItemsFromFile(const std::string& path, std::string*
 		item.name					= GetField(row, header, "한글 이름");
 		item.description			= GetField(row, header, "description");			//아이템 설명
 		item.iconPath				= GetField(row, header, "IconPath");
+		item.infoPath				= GetField(row, header, "InfoPath");
 		item.meshPath				= GetField(row, header, "MeshPath");
 		item.equipMeshPath			= GetField(row, header, "EquipMeshPath");
 		item.basePrice				= ParseInt(GetField(row, header, "Price"), 0);

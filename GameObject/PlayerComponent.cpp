@@ -38,6 +38,7 @@
 #include "UIManager.h"
 #include "UIProgressBarComponent.h"
 #include "UIImageComponent.h"
+#include "UIFSMComponent.h"
 #include "PlayerVisualPresetComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
@@ -225,7 +226,104 @@ namespace
 		return kMeleeSlotIconNames;
 	}
 
+	const std::array<std::vector<std::string>, 3>& GetThrowSlotButtonNameCandidates()
+	{
+		static const std::array<std::vector<std::string>, 3> kThrowSlotButtonNames =
+		{
+			std::vector<std::string>{ "Player_Throw1", "Player_Throw_1", "SubWeapon1" },
+			std::vector<std::string>{ "Player_Throw2", "Player_Throw_2", "SubWeapon2" },
+			std::vector<std::string>{ "Player_Throw3", "Player_Throw_3", "SubWeapon3" }
+		};
+		return kThrowSlotButtonNames;
+	}
 
+	const std::vector<std::string>& GetInventoryInfoPanelNameCandidates()
+	{
+		static const std::vector<std::string> kInventoryInfoPanelNames =
+		{
+			"MainWeaponInfo",
+			"SubWeapon1Info",
+			"SubWeapon2Info",
+			"SubWeapon3Info",
+
+			"InventoryInfo",
+			"Player_InventoryInfo",
+			"ItemInfo",
+			"Player_ItemInfo",
+			"InventoryInfoPanel"
+		};
+		return kInventoryInfoPanelNames;
+	}
+
+	void BindInventoryInfoHoverEvents(const std::shared_ptr<UIObject>& buttonObject,
+		const std::shared_ptr<UIObject>& infoPanel,
+		const std::string& showEventName,
+		const std::string& hideEventName,
+		const std::string& showCallbackId,
+		const std::string& hideCallbackId)
+	{
+		if (!buttonObject || !infoPanel || showEventName.empty() || hideEventName.empty())
+		{
+			return;
+		}
+
+		auto* fsm = buttonObject->GetComponent<UIFSMComponent>();
+		if (!fsm)
+		{
+			return;
+		}
+
+		auto callbacks = fsm->GetEventCallbacks();
+		auto ensureCallback = [&callbacks](const std::string& eventName, const std::string& callbackId)
+			{
+				auto found = std::find_if(callbacks.begin(), callbacks.end(),
+					[&](const UIFSMEventCallback& entry)
+					{
+						return entry.eventName == eventName && entry.callbackId == callbackId;
+					});
+
+				if (found == callbacks.end())
+				{
+					callbacks.push_back(UIFSMEventCallback{ eventName, callbackId });
+				}
+			};
+
+		ensureCallback(showEventName, showCallbackId);
+		ensureCallback(hideEventName, hideCallbackId);
+		fsm->SetEventCallbacks(callbacks);
+
+		auto* infoPanelFsm = infoPanel->GetComponent<UIFSMComponent>();
+		std::weak_ptr<UIObject> weakInfoPanel = infoPanel;
+		fsm->RegisterCallback(showCallbackId, [weakInfoPanel, infoPanelFsm, showEventName](const std::string&, const void*)
+			{
+				auto panel = weakInfoPanel.lock();
+				if (!panel)
+				{
+					return;
+				}
+
+				if (infoPanelFsm)
+				{
+					infoPanelFsm->TriggerEventByName(showEventName);
+				}
+			});
+
+		fsm->RegisterCallback(hideCallbackId, [weakInfoPanel, infoPanelFsm, hideEventName](const std::string&, const void*)
+			{
+				auto panel = weakInfoPanel.lock();
+				if (!panel)
+				{
+					return;
+				}
+
+				if (infoPanelFsm)
+				{
+					infoPanelFsm->TriggerEventByName(hideEventName);
+				}
+			});
+	}
+
+	//---
 	const std::vector<std::string>& GetThrowSlotIconNameCandidates(int slotIndex)
 	{
 		static const std::vector<std::string> kEmpty{};
@@ -685,7 +783,6 @@ void PlayerComponent::Start()
 	}
 
 	m_DebugEquipItem = false;
-
 }
 
 void PlayerComponent::Update(float deltaTime) {
@@ -2013,7 +2110,6 @@ void PlayerComponent::UpdateInventorySlotUI()
 		}
 	}
 }
-
 
 void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEventName)
 {

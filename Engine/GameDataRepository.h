@@ -20,6 +20,7 @@ struct ItemDefinition
 	std::string  name;
 	std::string  description;
 	std::string  iconPath;
+	std::string  infoPath;
 	std::string  meshPath;
 	std::string  equipMeshPath;
 				 
