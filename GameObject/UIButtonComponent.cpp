@@ -25,7 +25,32 @@ REGISTER_PROPERTY_HANDLE(UIButtonComponent, PixelShaderHandle)
 namespace
 {
 
-	std::shared_ptr<UIObject> FindInventoryInfoPanelObject(Scene* scene)
+	std::vector<std::string> ResolveInventoryInfoPanelCandidates(const std::string& objectName)
+	{
+		if (objectName == "Player_Melee" || objectName == "Player_MeleeButton" || objectName == "MeleeButton" || objectName == "MainWeaponButton" || objectName == "MainWeapon")
+		{
+			return { "MainWeaponInfo" };
+		}
+
+		if (objectName == "Player_Throw1" || objectName == "Player_Throw_1" || objectName == "SubWeapon1")
+		{
+			return { "SubWeapon1Info" };
+		}
+
+		if (objectName == "Player_Throw2" || objectName == "Player_Throw_2" || objectName == "SubWeapon2")
+		{
+			return { "SubWeapon2Info" };
+		}
+
+		if (objectName == "Player_Throw3" || objectName == "Player_Throw_3" || objectName == "SubWeapon3")
+		{
+			return { "SubWeapon3Info" };
+		}
+
+		return {};
+	}
+
+	std::shared_ptr<UIObject> FindInventoryInfoPanelObject(Scene* scene, const std::string& ownerName) 
 	{
 		if (!scene)
 		{
@@ -40,12 +65,14 @@ namespace
 
 		auto& uiManager = services.Get<UIManager>();
 		const std::string sceneName = scene->GetName();
-		static const std::vector<std::string> kCandidates =
+
+		std::vector<std::string> candidates = ResolveInventoryInfoPanelCandidates(ownerName);
+		if (candidates.empty())
 		{
-			"MainWeaponInfo",
-			"SubWeapon1Info",
-			"SubWeapon2Info",
-			"SubWeapon3Info",
+			return nullptr;
+		}
+
+		static const std::vector<std::string> kFallbackCandidates = {
 			"InventoryInfo",
 			"Player_InventoryInfo",
 			"ItemInfo",
@@ -53,7 +80,9 @@ namespace
 			"InventoryInfoPanel"
 		};
 
-		for (const auto& candidate : kCandidates)
+		candidates.insert(candidates.end(), kFallbackCandidates.begin(), kFallbackCandidates.end());
+
+		for (const auto& candidate : candidates) 
 		{
 			auto uiObject = uiManager.FindUIObject(sceneName, candidate);
 			if (uiObject)
@@ -254,7 +283,7 @@ void UIButtonComponent::HandleHover(bool isHovered)
 			if (!eventName.empty())
 			{
 				auto* scene = owner->GetScene();
-				auto infoPanel = FindInventoryInfoPanelObject(scene);
+				auto infoPanel = FindInventoryInfoPanelObject(scene, owner->GetName());
 				if (infoPanel && infoPanel.get() != owner)
 				{
 					if (auto* infoPanelFsm = infoPanel->GetComponent<UIFSMComponent>())
