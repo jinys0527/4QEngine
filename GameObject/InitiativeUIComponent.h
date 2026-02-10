@@ -44,8 +44,6 @@ private:
 		int  typeIndex = 0;
 	};
 
-	UIManager* GetUIManager() const;
-	Scene*	   GetScene() const;
 	void	   RebuildInitiativeOrder();
 	std::shared_ptr<UIObject> FindUI(UIManager& uiManager, Scene& scene, const std::string& name) const;
 	ActorIconInfo ResolveActorInfo(int actorId) const;
@@ -74,6 +72,5 @@ private:
 
 	TextureHandle m_DeadIconTexture   = TextureHandle::Invalid();
 	EventDispatcher* m_Dispatcher = nullptr;
-	UIManager* m_UIManager = nullptr;
 };
 

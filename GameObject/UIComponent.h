@@ -3,8 +3,8 @@
 #include <vector>
 #include "IEventListener.h"
 
-
-class RectTransformComponent;
+class Scene;
+class UIManager;
 
 class UIComponent : public Component, public IEventListener
 {
@@ -27,9 +27,13 @@ public:
 	const int&	GetZOrder()	const { return m_ZOrder; }
 	const float& GetOpacity()const { return m_Opacity; }
 protected:
+	Scene* GetScene() const;
+	UIManager* GetUIManager() const;
 
 	bool  m_Visible = true;
 	int   m_ZOrder = 0;
 	float m_Opacity = 1.0f;
+	mutable UIManager* m_UIManager = nullptr;
+	mutable Scene* m_UIScene = nullptr;
 };
 

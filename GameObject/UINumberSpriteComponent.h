@@ -84,8 +84,6 @@ private:
 		UIRect baseBounds{};
 	};
 
-	UIManager* GetUIManager() const;
-	Scene*     GetScene() const;
 	UIObject*  FindUIObject(const std::string& name) const;
 	void       ApplyValue();
 	void       UpdatePopupPool();
@@ -116,7 +114,6 @@ private:
 	DirectX::XMFLOAT4 m_MissTint{ 0.75f, 0.75f, 0.75f, 1.0f };
 	std::vector<PopupState> m_PopupStates;
 	std::vector<UIRect>     m_BaseDigitBounds;
-	mutable UIManager*      m_UIManager = nullptr;
 	EventDispatcher*        m_Dispatcher = nullptr;
 };
 

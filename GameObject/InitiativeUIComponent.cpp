@@ -231,29 +231,6 @@ void InitiativeUIComponent::RemoveUI()
 	ResetIconPools();
 }
 
-UIManager* InitiativeUIComponent::GetUIManager() const
-{
-	if (m_UIManager)
-	{
-		return m_UIManager;
-	}
-
-	auto* scene = GetScene();
-	if (!scene)
-		return nullptr;
-
-	auto& services = scene->GetServices();
-	if (!services.Has<UIManager>())
-		return nullptr;
-
-	return &services.Get<UIManager>();
-}
-
-Scene* InitiativeUIComponent::GetScene() const
-{
-	auto* owner = GetOwner();
-	return owner ? owner->GetScene() : nullptr;
-}
 
 void InitiativeUIComponent::DetachFromDispatcher()
 {

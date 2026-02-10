@@ -79,8 +79,6 @@ public:
 	const int& GetRollIndex() const { return m_RollIndex; }
 
 private:
-	UIManager* GetUIManager() const;
-	Scene*     GetScene() const;
 	UIObject*  FindUIObject(const std::string& name) const;
 	const UIDiceLayout* FindLayout() const;
 	void ApplyLayout(const UIDiceLayout& layout, UIObject& owner, UIObject* tens, UIObject* ones);
@@ -107,8 +105,6 @@ private:
 	int  m_RollIndex       = 0;
 	UIDiceDigitSlot m_TensSlot{};
 	UIDiceDigitSlot m_OnesSlot{};
-	mutable UIManager* m_UIManager = nullptr;
-	mutable Scene* m_UIScene = nullptr;
 	EventDispatcher* m_Dispatcher = nullptr;
 };
 

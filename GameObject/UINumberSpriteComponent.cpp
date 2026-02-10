@@ -278,31 +278,6 @@ void UINumberSpriteComponent::RefreshVisuals()
 	m_ValueDirty = true;
 }
 
-UIManager* UINumberSpriteComponent::GetUIManager() const
-{
-	if (m_UIManager)
-	{
-		return m_UIManager;
-	}
-
-	if (auto* scene = GetScene())
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<UIManager>())
-		{
-			m_UIManager = &services.Get<UIManager>();
-		}
-	}
-
-	return m_UIManager;
-}
-
-Scene* UINumberSpriteComponent::GetScene() const
-{
-	auto* owner = GetOwner();
-	return owner ? owner->GetScene() : nullptr;
-}
-
 UIObject* UINumberSpriteComponent::FindUIObject(const std::string& name) const
 {
 	if (name.empty())

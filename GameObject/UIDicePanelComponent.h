@@ -38,8 +38,6 @@ public:
 	void RefreshBindings();
 
 private:
-	UIManager* GetUIManager() const;
-	Scene*     GetScene() const;
 	UIObject*  FindUIObject(const std::string& name) const;
 	void ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const;
 	void ApplySlotsImmediate() const;
@@ -51,7 +49,6 @@ private:
 	bool m_Enabled = true;
 	bool m_AutoVisibility = true;
 	bool m_BindingsDirty = true;
-	mutable UIManager* m_UIManager = nullptr;
 	EventDispatcher* m_Dispatcher = nullptr;
 };
 

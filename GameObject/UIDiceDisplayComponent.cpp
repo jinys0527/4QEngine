@@ -129,6 +129,21 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	if (!m_DiceContext.empty() && payload->context != m_DiceContext)
 	{
+		const auto hasNumericSuffix = [](const std::string& context) -> bool
+			{
+				const auto pos = context.find_last_of('_');
+				if (pos == std::string::npos)
+				{
+					return false;
+				}
+				const auto suffix = context.substr(pos + 1);
+				if (suffix.empty())
+				{
+					return false;
+				}
+				return std::all_of(suffix.begin(), suffix.end(), ::isdigit);
+			};
+
 		const auto resolveBaseContext = [](const std::string& context) -> std::string
 			{
 				const auto pos = context.find_last_of('_');
@@ -148,8 +163,26 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 				return context;
 			};
 
-		const std::string baseContext = resolveBaseContext(m_DiceContext);
-		if (payload->context != baseContext)
+		const bool slotHasSuffix = hasNumericSuffix(m_DiceContext);
+		const std::string baseSlotContext = resolveBaseContext(m_DiceContext);
+		const std::string basePayloadContext = resolveBaseContext(payload->context);
+
+		if (payload->isTotal)
+		{
+			if (basePayloadContext != baseSlotContext)
+			{
+				std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
+					<< " payload=" << payload->context << std::endl;
+				return;
+			}
+		}
+		else if (slotHasSuffix)
+		{
+			std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
+				<< " payload=" << payload->context << std::endl;
+			return;
+		}
+		else if (basePayloadContext != baseSlotContext)
 		{
 			std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
 				<< " payload=" << payload->context << std::endl;
@@ -308,31 +341,6 @@ void UIDiceDisplayComponent::RefreshVisuals()
 {
 	m_LayoutDirty = true;
 	m_ValueDirty  = true;
-}
-
-UIManager* UIDiceDisplayComponent::GetUIManager() const
-{
-	if (m_UIManager)
-	{
-		return m_UIManager;
-	}
-
-	if (auto* scene = GetScene())
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<UIManager>())
-		{
-			m_UIManager = &services.Get<UIManager>();
-		}
-	}
-
-	return m_UIManager;
-}
-
-Scene* UIDiceDisplayComponent::GetScene() const
-{
-	auto* owner = GetOwner();
-	return owner ? owner->GetScene() : nullptr;
 }
 
 UIObject* UIDiceDisplayComponent::FindUIObject(const std::string& name) const
@@ -541,7 +549,14 @@ void UIDiceDisplayComponent::ApplyDiceEvent(const Events::DiceRollEvent& payload
 			return;
 		}
 
-		SetValue(payload.value);
+		if (m_UseRollFaces && !payload.faces.empty() && m_RollIndex >= 0)
+		{
+			SetValueFromRollFaces(payload.faces, m_RollIndex);
+		}
+		else
+		{
+			SetValue(payload.value);
+		}
 	}
 	else
 	{

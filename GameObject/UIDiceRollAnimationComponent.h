@@ -70,8 +70,6 @@ private:
 		UIRect	  bounds{};
 	};
 
-	UIManager* GetUIManager() const;
-	Scene*     GetScene() const;
 	UIObject*  FindUIObject(const std::string& name) const;
 
 	void  BeginAnimation();
@@ -98,7 +96,6 @@ private:
 	bool  m_Waiting            = false;
 	bool  m_Animating          = false;
 	bool  m_AnimateIndividuals = true;
-	mutable UIManager* m_UIManager  = nullptr;
 	EventDispatcher*   m_Dispatcher = nullptr;
 };
 
