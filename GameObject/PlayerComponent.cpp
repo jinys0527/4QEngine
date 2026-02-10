@@ -2455,12 +2455,13 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 	}
 	else
 	{
-		m_CombatMode = ResolveBaseCombatMode();
 		if (m_CombatMode == CombatMode::Throw && m_GridSystem)
 		{
 			m_ThrowPreviewRange = 0;
 			m_GridSystem->SetThrowRangePreview(false, 0);
 		}
+		m_CombatMode = ResolveBaseCombatMode();
+
 	}
 }
 

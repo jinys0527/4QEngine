@@ -568,6 +568,7 @@ void PlayerFSMComponent::DispatchEvent(const std::string& eventName)
 		return;
 	}
 	player->HandleCombatModeButtonState(eventName);
+	FSMComponent::DispatchEvent(eventName);
 }
 
 std::optional<std::string> PlayerFSMComponent::TranslateEvent(EventType type, const void* data)
