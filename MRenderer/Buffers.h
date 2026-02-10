@@ -57,19 +57,19 @@ struct Light
 	float      Range = 0;
 
 	XMFLOAT3   worldDir{ 0,-1,0 };
-	float      padding0 = 0.0f;
+	float      Contrast = 1.0f;
 
 	XMFLOAT3   viewDir{ 0,-1,0 };
 	float      Intensity = 1.0f;
 
-	float		SpotInnerAngle = 0.0f;
-	float		SpotOutterAngle = 0.0f;
-	float		AttenuationRadius = 0.0f;
-	float		padding1 = 0.0f;
+	float	   SpotInnerAngle = 0.0f;
+	float	   SpotOutterAngle = 0.0f;
+	float	   AttenuationRadius = 0.0f;
+	float	   Saturation = 0.0f;
 
 	UINT       CastShadow = TRUE;
 	UINT	   type = static_cast<UINT>(RenderData::LightType::None);
-	float      padding[2]{ 0,0 };
+	float		padding[2]{ 0,0 };
 };
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer

@@ -33,7 +33,9 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
-
+    SetDirLight(frame);
+    dxdc->VSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+    dxdc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
 
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자

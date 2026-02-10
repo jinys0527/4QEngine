@@ -1,4 +1,5 @@
 #include "BaseBuffer.hlsl"
+#include "Lights.hlsl"
 
 //tilt shift를 위한 화면 위 아래를 늘이는 함수
 float2 WarpTopExpand(float2 uv, float amount, float power)
@@ -178,8 +179,26 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     //emissive.rgb *= 1.5;
 
     //return finalBlur + emissive;
+    //float4 scene = finalBlur + emissive;
+    float4 scene = RTView;
     
-    return RTView;
+    scene.rgb = ToneMap_ACES(scene.rgb);
+    
+    
+// Contrast (추천 1.05~1.2)
+    float contrast = lights[0].Contrast; // 없으면 1.15f
+    float saturation = lights[0].Saturation;
+    
+    scene.rgb = AdjustSaturation(scene.rgb, saturation);
+
+    
+    scene.rgb = AdjustContrast_Luma(scene.rgb, contrast);
+    
+    
+    
+    
+    scene.a = 1.0f;
+    return scene;
     
     //return tilt + emissive;
 
