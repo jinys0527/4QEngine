@@ -453,6 +453,133 @@ namespace
 		target->SetIsVisible(infoTexture.IsValid());
 	}
 
+	const std::vector<std::string>& GetEnemyHoverInfoPanelNameCandidates()
+	{
+		static const std::vector<std::string> kEnemyHoverInfoPanelNames =
+		{
+			"EnemyInfo",
+		};
+		return kEnemyHoverInfoPanelNames;
+	}
+
+	const std::vector<std::string>& GetEnemyHoverHpBarNameCandidates()
+	{
+		static const std::vector<std::string> kEnemyHoverHpBarNames =
+		{
+			"EnemyHPBar",
+		};
+		return kEnemyHoverHpBarNames;
+	}
+
+	UIProgressBarComponent* FindFirstProgressBarOrFirstChild(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::string& objectName,
+		std::shared_ptr<UIObject>& outTarget)
+	{
+		outTarget = uiManager.FindUIObject(sceneName, objectName);
+		if (!outTarget)
+		{
+			return nullptr;
+		}
+
+		if (auto* progress = outTarget->GetComponent<UIProgressBarComponent>())
+		{
+			return progress;
+		}
+
+		auto& allScenes = uiManager.GetUIObjects();
+		auto sceneIt = allScenes.find(sceneName);
+		if (sceneIt == allScenes.end())
+		{
+			return nullptr;
+		}
+
+		for (auto& [childName, childObject] : sceneIt->second)
+		{
+			(void)childName;
+			if (!childObject)
+			{
+				continue;
+			}
+
+			if (childObject->GetParentName() != objectName)
+			{
+				continue;
+			}
+
+			if (auto* progress = childObject->GetComponent<UIProgressBarComponent>())
+			{
+				outTarget = childObject;
+				return progress;
+			}
+		}
+
+		return nullptr;
+	}
+
+	TextureHandle ResolveEnemyHoverTexture(GameObject* enemyObject)
+	{
+		if (!enemyObject)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		auto* material = enemyObject->GetComponent<MaterialComponent>();
+		if (!material)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		const auto& textures = material->GetOverrides().textures;
+		const size_t albedoIndex = static_cast<size_t>(RenderData::MaterialTextureSlot::Albedo);
+		if (albedoIndex >= textures.size())
+		{
+			return TextureHandle::Invalid();
+		}
+
+		return textures[albedoIndex];
+	}
+
+	void UpdateEnemyHoverInfoPanel(UIManager& uiManager,
+		const std::string& sceneName,
+		const TextureHandle& enemyTexture,
+		float hpPercent,
+		bool hasEnemy)
+	{
+		auto infoPanel = FindFirstInfoPanelObject(uiManager, sceneName, GetEnemyHoverInfoPanelNameCandidates());
+		if (!infoPanel)
+		{
+			return;
+		}
+
+		std::shared_ptr<UIObject> imageTarget;
+		auto* image = FindImageComponentOrFirstChildImage(uiManager, sceneName, infoPanel->GetName(), imageTarget);
+		if (image)
+		{
+			image->SetTextureHandle(enemyTexture);
+		}
+
+		for (const auto& barName : GetEnemyHoverHpBarNameCandidates())
+		{
+			std::shared_ptr<UIObject> hpBarTarget;
+			auto* hpBar = FindFirstProgressBarOrFirstChild(uiManager, sceneName, barName, hpBarTarget);
+			if (!hpBar)
+			{
+				continue;
+			}
+
+			const float percent = (std::max)(0.0f, (std::min)(1.0f, hpPercent));
+			hpBar->SetPercent(hasEnemy ? percent : 0.0f);
+			if (hpBarTarget)
+			{
+				hpBarTarget->SetIsVisible(hasEnemy);
+			}
+			break;
+		}
+
+		infoPanel->SetIsVisible(hasEnemy);
+	}
+
 	void BindInventoryInfoHoverEvents(const std::shared_ptr<UIObject>& buttonObject,
 		const std::shared_ptr<UIObject>& infoPanel,
 		const std::string& showEventName,
@@ -811,6 +938,64 @@ namespace
 
 		outT = closestT;
 		return closestItem;
+	}
+
+	EnemyComponent* FindClosestEnemyHit(Scene* scene, const Ray& ray, float& outT)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		float closestT = FLT_MAX;
+		EnemyComponent* closestEnemy = nullptr;
+
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			auto* enemy = object->GetComponent<EnemyComponent>();
+			if (!enemy)
+			{
+				continue;
+			}
+
+			auto* enemyStat = object->GetComponent<EnemyStatComponent>();
+			if (enemyStat && enemyStat->IsDead())
+			{
+				continue;
+			}
+
+			auto* collider = object->GetComponent<BoxColliderComponent>();
+			if (!collider || !collider->HasBounds())
+			{
+				continue;
+			}
+
+			float hitT = 0.0f;
+			if (!collider->IntersectsRay(ray.m_Pos, ray.m_Dir, hitT))
+			{
+				continue;
+			}
+
+			if (hitT >= 0.0f && hitT < closestT)
+			{
+				closestT = hitT;
+				closestEnemy = enemy;
+			}
+		}
+
+		if (!closestEnemy)
+		{
+			return nullptr;
+		}
+
+		outT = closestT;
+		return closestEnemy;
 	}
 
 	void DispatchPlayerStateEvent(Object* owner, const char* eventName)
@@ -1636,6 +1821,9 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		auto& assetLoader = services.Get<AssetLoader>();
 
 		TextureHandle hoverInfo = TextureHandle::Invalid();
+		TextureHandle hoverEnemyTexture = TextureHandle::Invalid();
+		float hoverEnemyHpPercent = 0.0f;
+		bool hasHoveredEnemy = false;
 		if (input.IsPointInViewport(mouseData->pos))
 		{
 			auto camera = scene->GetGameCamera();
@@ -1650,10 +1838,26 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 						hoverInfo = ResolveInfoTextureFromItemObject(scene, dynamic_cast<GameObject*>(hoveredItem->GetOwner()), assetLoader);
 					}
 				}
+
+				float enemyHitT = 0.0f;
+				if (auto* hoveredEnemy = FindClosestEnemyHit(scene, pickRay, enemyHitT))
+				{
+					auto* enemyOwner = dynamic_cast<GameObject*>(hoveredEnemy->GetOwner());
+					auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
+					hoverEnemyTexture = ResolveEnemyHoverTexture(enemyOwner);
+					if (enemyStat)
+					{
+						const float currentHp = static_cast<float>(enemyStat->GetCurrentHP());
+						const float maxHp = static_cast<float>((std::max)(1, enemyStat->GetInitialHP()));
+						hoverEnemyHpPercent = currentHp / maxHp;
+					}
+					hasHoveredEnemy = true;
+				}
 			}
 		}
 
 		UpdateGroundItemInfoPanel(uiManager, scene->GetName(), hoverInfo);
+		UpdateEnemyHoverInfoPanel(uiManager, scene->GetName(), hoverEnemyTexture, hoverEnemyHpPercent, hasHoveredEnemy);
 		return;
 	}
 
