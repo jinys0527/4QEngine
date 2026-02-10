@@ -31,6 +31,7 @@ bool GameApplication::Initialize()
 	m_SoundManager->Init();
 	m_SoundManager->CreateBGMSource(m_AssetLoader->GetBGMPaths());
 	m_SoundManager->CreateSFXSource(m_AssetLoader->GetSFXPaths());
+
 	m_SceneBGMMap.clear();
 
 	// Scene별 곡 등록

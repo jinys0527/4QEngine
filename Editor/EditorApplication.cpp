@@ -80,6 +80,8 @@ bool EditorApplication::Initialize()
 	m_AssetLoader->LoadAll();
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
+	m_SoundManager->CreateBGMSource(m_AssetLoader->GetBGMPaths());
+	m_SoundManager->CreateSFXSource(m_AssetLoader->GetSFXPaths());
 	m_InputManager = &m_Services.Get<InputManager>();
 	m_GameManager = &m_Services.Get<GameManager>();
 	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());  // Device 생성
