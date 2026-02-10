@@ -5,7 +5,8 @@
 #include "RenderData.h"
 #include "Engine.h"
 #include "RenderTargetContext.h"
-
+#include <string>
+#include <unordered_map>
 
 class ServiceRegistry;
 class Engine;
@@ -35,6 +36,7 @@ private:
 	//void UpdateInput();
 	void UpdateLogic();
 	void Update();
+	void ApplySceneBGM();
 
 	void Render();
 	
@@ -58,5 +60,10 @@ private:
 
 	AssetLoader* m_AssetLoader;
 	SoundManager* m_SoundManager;
+	std::wstring m_InitialBGMName = L"Renai";
+	float m_InitialBGMFadeTime = 1.0f;
+	float m_SceneChangeBGMFadeTime = 1.0f;
+	std::unordered_map<std::string, std::wstring> m_SceneBGMMap;
+	std::string m_LastSceneName;
 };
 

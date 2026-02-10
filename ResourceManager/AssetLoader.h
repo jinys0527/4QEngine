@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <filesystem>
 
 #include "RenderData.h"
 #include "ResourceStore.h"
@@ -37,6 +38,8 @@ public:
 	};
 
 	void LoadAll();
+	const std::unordered_map<std::wstring, std::filesystem::path>& GetBGMPaths() const { return m_BGMPaths; }
+	const std::unordered_map<std::wstring, std::filesystem::path>& GetSFXPaths() const { return m_SFXPaths; }
 	
 
 	const AssetLoadResult* GetAsset		  (const std::string& assetMetaPath) const;
@@ -101,6 +104,7 @@ private:
 	AssetLoadResult	  LoadAsset		 (const std::string& assetMetaPath);
 	void LoadShaderSources(const fs::path& shaderDir);
 	void LoadLooseTextures(const fs::path& rootDir, bool sRGB, const std::string& displayPrefix);
+	void LoadSoundResources(const fs::path& bgmDir, const fs::path& sfxDir);
 	
 	ResourceStore<RenderData::MeshData,			MeshHandle>         m_Meshes;
 	ResourceStore<RenderData::MaterialData,		MaterialHandle>     m_Materials;
@@ -121,6 +125,8 @@ private:
 	std::unordered_map<uint64_t,    PixelShaderRef>  m_PixelShaderRefs;
 	std::unordered_map<uint64_t,    SkeletonRef>	 m_SkeletonRefs;
 	std::unordered_map<uint64_t,    AnimationRef>	 m_AnimationRefs;
+	std::unordered_map<std::wstring, std::filesystem::path> m_BGMPaths;
+	std::unordered_map<std::wstring, std::filesystem::path> m_SFXPaths;
 
 	inline static AssetLoader* s_ActiveLoader = nullptr;
 };
