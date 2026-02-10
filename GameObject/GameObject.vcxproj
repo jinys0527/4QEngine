@@ -387,6 +387,7 @@
     <ClInclude Include="UIProgressBarComponent.h" />
     <ClInclude Include="UISliderComponent.h" />
     <ClInclude Include="UITextComponent.h" />
+    <ClInclude Include="VendingComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
@@ -466,6 +467,7 @@
     <ClCompile Include="UIProgressBarComponent.cpp" />
     <ClCompile Include="UISliderComponent.cpp" />
     <ClCompile Include="UITextComponent.cpp" />
+    <ClCompile Include="VendingComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AI\AI.vcxproj">
