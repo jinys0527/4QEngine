@@ -348,6 +348,11 @@ UIObject* UIDiceDisplayComponent::FindUIObject(const std::string& name) const
 		return nullptr;
 	}
 
+	if (!m_UIScene)
+	{
+		return nullptr;
+	}
+
 	auto* uiManager = GetUIManager();
 	if (!uiManager)
 	{

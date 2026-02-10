@@ -61,6 +61,12 @@ namespace Events
 		int initiativeTotal = 0;
 	};
 
+	struct DiceAnimationEvent
+	{
+		std::string context;
+		bool isTotal = false;
+	};
+
 	struct DiceStatResolvedEvent
 	{
 		int selectedD20 = 0;

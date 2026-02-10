@@ -320,6 +320,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_DiceTypeDetermined", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceStatResolved", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceAnimationStarted", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceAnimationCompleted", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceContinueRequested", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
@@ -618,6 +619,8 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatResolved, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationStarted))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationStarted, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationCompleted))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceContinueRequested))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceContinueRequested, this);
 }
@@ -654,6 +657,7 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::PlayerDiceTypeDetermined, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceStatResolved, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationStarted, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationCompleted, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceContinueRequested, this);
 
 	auto* owner = GetOwner();
@@ -715,6 +719,7 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		|| type == EventType::PlayerDiceStatRollRequested
 		|| type == EventType::PlayerDiceTypeDetermined
 		|| type == EventType::PlayerDiceStatResolved
+		|| type == EventType::PlayerDiceAnimationCompleted
 		|| type == EventType::PlayerDiceContinueRequested
 		|| type == EventType::PlayerDiceUIClose)
 	{
@@ -842,6 +847,8 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("Player_DiceStatResolved");
 	case EventType::PlayerDiceAnimationStarted:
 		return std::string("Player_DiceAnimationStarted");
+	case EventType::PlayerDiceAnimationCompleted:
+		return std::string("Player_DiceAnimationCompleted");
 	case EventType::PlayerDiceContinueRequested:
 		return std::string("Player_DiceContinueRequested");
 	case EventType::Pressed:

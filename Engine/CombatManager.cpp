@@ -360,6 +360,11 @@ void CombatManager::FinalizeBattleStart()
 	m_PlayerDecisionFaces.clear();
 	m_PlayerInitiativeTotal = 0;
 	m_PendingInitiativeEntries.clear();
+	m_WaitingForDecisionAnimations = false;
+	m_DecisionAnimationsPending = 0;
+	m_WaitingForStatAnimations = false;
+	m_StatAnimationsInFlight = 0;
+	m_SelectedStatHistoryIndex = -1;
 }
 
 void CombatManager::HandlePlayerDiceDecisionRequested()
@@ -392,6 +397,10 @@ void CombatManager::HandlePlayerDiceDecisionRequested()
 	}
 	std::cout << " selectedD20=" << m_PlayerDecisionD20 << std::endl;
 
+	m_WaitingForDecisionAnimations = true;
+	m_DecisionAnimationsPending = static_cast<int>(roll.faces.size());
+
+
 	if (m_EventDispatcher)
 	{
 		for (size_t i = 0; i < roll.faces.size(); ++i)
@@ -406,17 +415,16 @@ void CombatManager::HandlePlayerDiceDecisionRequested()
 			m_EventDispatcher->Dispatch(EventType::DiceRolled, &oneDieEvent);
 		}
 
-		const Events::DiceRollEvent rollEvent{ m_PlayerDecisionD20, d20x3.count, d20x3.sides, 0, "InitiativeDecisionRoll", false, roll.faces };
-		std::cout << "[Combat] Dispatch DiceRolled context=InitiativeDecisionRoll value=" << m_PlayerDecisionD20 << std::endl;
-		m_EventDispatcher->Dispatch(EventType::DiceRolled, &rollEvent);
-
-		const DiceConfig mappedStatConfig = BuildStatConfigFromDecisionD20(m_PlayerDecisionD20);
-		const Events::DiceInitiativeResolvedEvent resultEvent{ roll.faces, m_PlayerDecisionD20, m_PlayerInitiativeDiceBonus, 0 };
-		const Events::DiceRollEvent diceTypeEvent{ mappedStatConfig.sides, 1, mappedStatConfig.sides, 0, "InitiativeDiceType", true, { mappedStatConfig.sides } };
-		m_EventDispatcher->Dispatch(EventType::PlayerDiceTypeDetermined, &diceTypeEvent);
-		std::cout << "[Combat] Dispatch PlayerDiceDecisionResult selectedD20=" << m_PlayerDecisionD20 << std::endl;
-		m_EventDispatcher->Dispatch(EventType::PlayerDiceInitiativeResolved, &resultEvent);
-		m_EventDispatcher->Dispatch(EventType::PlayerDiceDecisionResult, &resultEvent);
+		if (m_StatAnimationsInFlight <= 0)
+		{
+			std::cout << "[Combat] No active dice animation. Resolve stat immediately." << std::endl;
+			DispatchPlayerDiceStatResolved();
+		}
+		else
+		{
+			std::cout << "[Combat] Waiting dice animations before stat resolve. inFlight="
+				<< m_StatAnimationsInFlight << std::endl;
+		}
 	}
 }
 
@@ -457,6 +465,10 @@ void CombatManager::HandlePlayerDiceStatRollRequested()
 	{
 		selectedHistoryIndex = 0;
 	}
+
+	m_SelectedStatHistoryIndex = selectedHistoryIndex;
+	m_WaitingForStatAnimations = true;
+	m_StatAnimationsInFlight = 0;
 
 	const DiceConfig selectedConfig = BuildStatConfigFromDecisionD20(decisionFaces[static_cast<size_t>(selectedHistoryIndex)]);
 	const auto& selectedFaces = m_PlayerStatRollFacesHistory[static_cast<size_t>(selectedHistoryIndex)];
@@ -499,24 +511,159 @@ void CombatManager::HandlePlayerDiceStatRollRequested()
 			m_EventDispatcher->Dispatch(EventType::DiceRolled, &statRollEvent);
 		}
 
-		const Events::DiceStatResolvedEvent resultEvent{
-			m_PlayerDecisionD20,
-				selectedConfig.count,
-			selectedConfig.sides,
-			selectedFaces,
-			m_PlayerStatRollFacesHistory,
-			m_PlayerStatRollTotalsHistory,
-			selectedTotal,
-			m_PlayerInitiativeDiceBonus,
-			m_PlayerInitiativeTotal };
-		m_EventDispatcher->Dispatch(EventType::PlayerDiceStatResolved, &resultEvent);
-
-		std::cout << "[Combat] Dispatch PlayerDiceStatResolved"
-			<< " currentFaces=" << selectedFaces.size()
-			<< " historyCount=" << m_PlayerStatRollFacesHistory.size()
-			<< " totalsCount=" << m_PlayerStatRollTotalsHistory.size()
-			<< std::endl;
+		// 전이 지연 흐름 (3~5):
+		// 3) CombatManager가 in-flight 애니메이션 수를 관리하고
+		// 4) 카운트가 0이 되는 시점에 DispatchPlayerDiceStatResolved()를 호출한다.
+		// 5) 그때 PlayerDiceStatResolved가 발행되어 UI FSM이 StatDone으로 전이한다.
+		if (m_StatAnimationsInFlight <= 0)
+		{
+			std::cout << "[Combat] No active dice animation. Resolve stat immediately." << std::endl;
+			DispatchPlayerDiceStatResolved();
+		}
+		else
+		{
+			std::cout << "[Combat] Waiting dice animations before stat resolve. inFlight="
+				<< m_StatAnimationsInFlight << std::endl;
+		}
 	}
+}
+
+
+void CombatManager::HandlePlayerDiceAnimationStarted(const Events::DiceAnimationEvent& payload)
+{
+	if (!m_DiceFlowActive || !m_WaitingForStatAnimations)
+	{
+		return;
+	}
+
+	if (!payload.isTotal)
+	{
+		return;
+	}
+
+	if (payload.context.find("InitiativeStatRoll") != 0)
+	{
+		return;
+	}
+
+	++m_StatAnimationsInFlight;
+	std::cout << "[Combat] Dice animation started. context=" << payload.context
+		<< " inFlight=" << m_StatAnimationsInFlight << std::endl;
+}
+
+void CombatManager::HandlePlayerDiceAnimationCompleted(const Events::DiceAnimationEvent& payload)
+{
+	if (!m_DiceFlowActive)
+	{
+		return;
+	}
+
+	if (m_WaitingForDecisionAnimations
+		&& payload.context.find("InitiativeDecisionRoll_") == 0)
+	{
+		m_DecisionAnimationsPending = std::max(0, m_DecisionAnimationsPending - 1);
+		std::cout << "[Combat] Decision dice animation completed. context=" << payload.context
+			<< " pending=" << m_DecisionAnimationsPending << std::endl;
+
+		if (m_DecisionAnimationsPending == 0)
+		{
+			DispatchPlayerDiceDecisionResolved();
+		}
+	}
+
+	if (!m_WaitingForStatAnimations)
+	{
+		return;
+	}
+
+	if (!payload.isTotal)
+	{
+		return;
+	}
+
+	if (payload.context.find("InitiativeStatRoll") != 0)
+	{
+		return;
+	}
+
+	m_StatAnimationsInFlight = std::max(0, m_StatAnimationsInFlight - 1);
+	std::cout << "[Combat] Dice animation completed. context=" << payload.context
+		<< " inFlight=" << m_StatAnimationsInFlight << std::endl;
+
+	if (m_StatAnimationsInFlight == 0)
+	{
+		DispatchPlayerDiceStatResolved();
+	}
+}
+
+void CombatManager::DispatchPlayerDiceDecisionResolved()
+{
+	if (!m_EventDispatcher)
+	{
+		return;
+	}
+
+	const Events::DiceInitiativeResolvedEvent resultEvent{
+		m_PlayerDecisionFaces,
+		m_PlayerDecisionD20,
+		m_PlayerInitiativeDiceBonus,
+		0
+	};
+
+	std::cout << "[Combat] Dispatch PlayerDiceDecisionResult selectedD20=" << m_PlayerDecisionD20 << std::endl;
+	m_EventDispatcher->Dispatch(EventType::PlayerDiceInitiativeResolved, &resultEvent);
+	m_EventDispatcher->Dispatch(EventType::PlayerDiceDecisionResult, &resultEvent);
+
+	m_WaitingForDecisionAnimations = false;
+	m_DecisionAnimationsPending = 0;
+}
+
+
+void CombatManager::DispatchPlayerDiceStatResolved()
+{
+	if (!m_EventDispatcher)
+	{
+		return;
+	}
+
+	if (m_SelectedStatHistoryIndex < 0
+		|| m_SelectedStatHistoryIndex >= static_cast<int>(m_PlayerStatRollFacesHistory.size())
+		|| m_SelectedStatHistoryIndex >= static_cast<int>(m_PlayerStatRollTotalsHistory.size()))
+	{
+		std::cout << "[Combat] Skip PlayerDiceStatResolved. invalid selected history index="
+			<< m_SelectedStatHistoryIndex << std::endl;
+		m_WaitingForStatAnimations = false;
+		m_StatAnimationsInFlight = 0;
+		return;
+	}
+
+	const int selectedDecisionFace = (m_SelectedStatHistoryIndex < static_cast<int>(m_PlayerDecisionFaces.size()))
+		? m_PlayerDecisionFaces[static_cast<size_t>(m_SelectedStatHistoryIndex)]
+		: m_PlayerDecisionD20;
+	const DiceConfig selectedConfig = BuildStatConfigFromDecisionD20(selectedDecisionFace);
+	const auto& selectedFaces = m_PlayerStatRollFacesHistory[static_cast<size_t>(m_SelectedStatHistoryIndex)];
+	const int selectedTotal = m_PlayerStatRollTotalsHistory[static_cast<size_t>(m_SelectedStatHistoryIndex)];
+
+	const Events::DiceStatResolvedEvent resultEvent{
+		m_PlayerDecisionD20,
+		selectedConfig.count,
+		selectedConfig.sides,
+		selectedFaces,
+		m_PlayerStatRollFacesHistory,
+		m_PlayerStatRollTotalsHistory,
+		selectedTotal,
+		m_PlayerInitiativeDiceBonus,
+		m_PlayerInitiativeTotal };
+	m_EventDispatcher->Dispatch(EventType::PlayerDiceStatResolved, &resultEvent);
+
+	std::cout << "[Combat] Dispatch PlayerDiceStatResolved"
+		<< " currentFaces=" << selectedFaces.size()
+		<< " historyCount=" << m_PlayerStatRollFacesHistory.size()
+		<< " totalsCount=" << m_PlayerStatRollTotalsHistory.size()
+		<< std::endl;
+
+	m_WaitingForStatAnimations = false;
+	m_StatAnimationsInFlight = 0;
 }
 
 void CombatManager::HandlePlayerDiceContinueRequested()

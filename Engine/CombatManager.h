@@ -12,6 +12,11 @@ class LogSystem;
 class CombatResolver;
 class AIController;
 
+namespace Events
+{
+	struct DiceAnimationEvent;
+}
+
 enum class AttackAreaType
 {
 	SingleTarget,
@@ -77,9 +82,14 @@ public:
 	void HandlePlayerDiceDecisionRequested();
 	void HandlePlayerDiceStatRollRequested();
 	void HandlePlayerDiceContinueRequested();
+	void HandlePlayerDiceAnimationStarted(const Events::DiceAnimationEvent& payload);
+	void HandlePlayerDiceAnimationCompleted(const Events::DiceAnimationEvent& payload);
 	bool IsDiceFlowActive() const { return m_DiceFlowActive; }
 
 private:
+	void DispatchPlayerDiceDecisionResolved();
+	void DispatchPlayerDiceStatResolved();
+
 	void BuildInitiativeOrder();
 	void FinalizeBattleStart();
 	bool IsPlayerActorId(int actorId) const;
@@ -101,6 +111,11 @@ private:
 	std::vector<int> m_PlayerStatRollTotalsHistory;
 	int m_PlayerActorId = 1;
 	std::vector<InitiativeEntry> m_PendingInitiativeEntries;
+	bool m_WaitingForDecisionAnimations = false;
+	int m_DecisionAnimationsPending = 0;
+	bool m_WaitingForStatAnimations = false;
+	int m_StatAnimationsInFlight = 0;
+	int m_SelectedStatHistoryIndex = -1;
 
 	CombatResolver&  m_Resolver;
 	DiceSystem&      m_DiceSystem;

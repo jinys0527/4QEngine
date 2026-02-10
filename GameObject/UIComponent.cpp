@@ -1,6 +1,10 @@
 ﻿#include "UIComponent.h"
 #include "ReflectionMacro.h"
 #include "UIObject.h"
+#include "Scene.h"
+#include "ServiceRegistry.h"
+#include "UIManager.h"
+
 REGISTER_UI_COMPONENT(UIComponent);
 REGISTER_PROPERTY(UIComponent, Visible)
 REGISTER_PROPERTY(UIComponent, ZOrder)
@@ -53,3 +57,41 @@ void UIComponent::Deserialize(const nlohmann::json& j)
 	Component::Deserialize(j);
 }
 
+Scene* UIComponent::GetScene() const
+{
+	auto* owner = GetOwner();
+	return owner ? owner->GetScene() : nullptr;
+}
+
+UIManager* UIComponent::GetUIManager() const
+{
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		m_UIManager = nullptr;
+		m_UIScene = nullptr;
+		return nullptr;
+	}
+
+	if (m_UIManager && m_UIScene == scene)
+	{
+		return m_UIManager;
+	}
+
+	if (!m_UIScene)
+	{
+		return nullptr;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<UIManager>())
+	{
+		m_UIManager = nullptr;
+		m_UIScene = scene;
+		return nullptr;
+	}
+
+	m_UIManager = &services.Get<UIManager>();
+	m_UIScene = scene;
+	return m_UIManager;
+}

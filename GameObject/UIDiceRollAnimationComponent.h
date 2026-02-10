@@ -72,7 +72,7 @@ private:
 
 	UIObject*  FindUIObject(const std::string& name) const;
 
-	void  BeginAnimation();
+	void  BeginAnimation(bool isTotal);
 	void  CacheBounds	();
 	void  ApplyScale	(float scale);
 	void  RestoreBounds ();
@@ -96,6 +96,8 @@ private:
 	bool  m_Waiting            = false;
 	bool  m_Animating          = false;
 	bool  m_AnimateIndividuals = true;
+	bool  m_CurrentAnimationIsTotal = false;
+	bool  m_AnimationStartDispatched = false;
 	EventDispatcher*   m_Dispatcher = nullptr;
 };
 
