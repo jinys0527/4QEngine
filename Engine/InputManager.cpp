@@ -255,9 +255,10 @@ void InputManager::Update()
 	}
 
 
-	if (!m_Mouse.handled && allowGameplayInput)
+	if (allowGameplayInput) 
 	{
-		m_Mouse.handled = false;
+		// Hover는 UI 처리 여부와 무관하게 매 프레임 게임플레이 레이어에도 전달한다.
+		// (월드 오브젝트 hover 판정/툴팁 갱신 용도)
 		m_EventDispatcher->Dispatch(EventType::Hovered, &m_Mouse);
 	}
 

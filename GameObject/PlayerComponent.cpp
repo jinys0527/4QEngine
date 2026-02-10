@@ -341,6 +341,57 @@ namespace
 		}
 	}
 
+	const std::vector<std::string>& GetGroundItemInfoPanelNameCandidates()
+	{
+		// 바닥 아이템 hover 정보 전용 패널 후보 이름.
+		// 프로젝트 UI에서 아래 이름 중 하나로 패널을 배치하면 자동으로 연결된다.
+		static const std::vector<std::string> kGroundItemInfoPanelNames =
+		{
+			"GroundItemInfo",
+			"Player_GroundItemInfo",
+			"WorldItemInfo",
+			"HoverItemInfo"
+		};
+		return kGroundItemInfoPanelNames;
+	}
+
+	std::shared_ptr<UIObject> FindFirstInfoPanelObject(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::vector<std::string>& panelNames)
+	{
+		for (const auto& panelName : panelNames)
+		{
+			auto panel = uiManager.FindUIObject(sceneName, panelName);
+			if (panel)
+			{
+				return panel;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void UpdateGroundItemInfoPanel(UIManager& uiManager,
+		const std::string& sceneName,
+		const TextureHandle& infoTexture)
+	{
+		auto infoPanel = FindFirstInfoPanelObject(uiManager, sceneName, GetGroundItemInfoPanelNameCandidates());
+		if (!infoPanel)
+		{
+			return;
+		}
+
+		std::shared_ptr<UIObject> target;
+		auto* image = FindImageComponentOrFirstChildImage(uiManager, sceneName, infoPanel->GetName(), target);
+		if (!image || !target)
+		{
+			return;
+		}
+
+		image->SetTextureHandle(infoTexture);
+		target->SetIsVisible(infoTexture.IsValid());
+	}
+
 	void BindInventoryInfoHoverEvents(const std::shared_ptr<UIObject>& buttonObject,
 		const std::shared_ptr<UIObject>& infoPanel,
 		const std::string& showEventName,
@@ -843,6 +894,7 @@ PlayerComponent::~PlayerComponent() {
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().RemoveListener(EventType::MouseRightClick, this);
+	GetEventDispatcher().RemoveListener(EventType::Hovered, this);
 }
 
 void PlayerComponent::Start()
@@ -857,6 +909,7 @@ void PlayerComponent::Start()
 	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::MouseLeftDoubleClick, this);
 	GetEventDispatcher().AddListener(EventType::MouseRightClick, this);
+	GetEventDispatcher().AddListener(EventType::Hovered, this);
 	const auto& objects = scene->GetGameObjects();
 
 	for (const auto& [name, object] : objects) {
@@ -1457,6 +1510,54 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		return;
 	}
+
+	if (type == EventType::Hovered)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		if (!mouseData)
+		{
+			return;
+		}
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		if (!scene)
+		{
+			return;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>() || !services.Has<InputManager>() || !services.Has<AssetLoader>())
+		{
+			return;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		auto& input = services.Get<InputManager>();
+		auto& assetLoader = services.Get<AssetLoader>();
+
+		TextureHandle hoverInfo = TextureHandle::Invalid();
+		if (input.IsPointInViewport(mouseData->pos))
+		{
+			auto camera = scene->GetGameCamera();
+			if (camera)
+			{
+				Ray pickRay{};
+				if (input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
+				{
+					float hitT = 0.0f;
+					if (auto* hoveredItem = FindClosestItemHit(scene, pickRay, hitT))
+					{
+						hoverInfo = ResolveInfoTextureFromItemObject(scene, dynamic_cast<GameObject*>(hoveredItem->GetOwner()), assetLoader);
+					}
+				}
+			}
+		}
+
+		UpdateGroundItemInfoPanel(uiManager, scene->GetName(), hoverInfo);
+		return;
+	}
+
 
 	if (type == EventType::MouseRightClick)
 	{
