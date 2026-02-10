@@ -519,25 +519,158 @@ namespace
 
 	TextureHandle ResolveEnemyHoverTexture(GameObject* enemyObject)
 	{
+		auto toLowerCopy = [](std::string value)
+			{
+				std::transform(value.begin(), value.end(), value.begin(),
+					[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+				return value;
+			};
+
+		auto resolveFromMaterial = [](GameObject* object)
+			{
+				if (!object)
+				{
+					return TextureHandle::Invalid();
+				}
+
+				auto* material = object->GetComponent<MaterialComponent>();
+				if (!material)
+				{
+					return TextureHandle::Invalid();
+				}
+
+				const auto& textures = material->GetOverrides().textures;
+				const size_t albedoIndex = static_cast<size_t>(RenderData::MaterialTextureSlot::Albedo);
+				if (albedoIndex >= textures.size())
+				{
+					return TextureHandle::Invalid();
+				}
+
+				return textures[albedoIndex];
+			};
+
+		auto resolveByTextureFileName = [](AssetLoader& assetLoader, const char* fileName)
+			{
+				if (!fileName || *fileName == '\0')
+				{
+					return TextureHandle::Invalid();
+				}
+
+				const std::string normalizedFileName = NormalizePath(fileName);
+				const auto& keyToHandle = assetLoader.GetTextures().GetKeyToHandle();
+				for (const auto& [key, handle] : keyToHandle)
+				{
+					const std::string normalizedKey = NormalizePath(key);
+					if (EndsWithPath(normalizedKey, normalizedFileName))
+					{
+						return handle;
+					}
+				}
+
+				return TextureHandle::Invalid();
+			};
+
+		auto resolveByMaterialName = [&](AssetLoader& assetLoader, GameObject* object)
+			{
+				auto* material = object ? object->GetComponent<MaterialComponent>() : nullptr;
+				if (!material)
+				{
+					return TextureHandle::Invalid();
+				}
+
+				const MaterialHandle materialHandle = material->GetMaterialHandle();
+				if (!materialHandle.IsValid())
+				{
+					return TextureHandle::Invalid();
+				}
+
+				const std::string* materialKey = assetLoader.GetMaterials().GetKey(materialHandle);
+				const std::string* materialDisplayName = assetLoader.GetMaterials().GetDisplayName(materialHandle);
+				const std::string keyLower = materialKey ? toLowerCopy(*materialKey) : std::string{};
+				const std::string displayLower = materialDisplayName ? toLowerCopy(*materialDisplayName) : std::string{};
+
+				auto containsToken = [&](const char* token)
+					{
+						if (!token || *token == '\0')
+						{
+							return false;
+						}
+
+						return keyLower.find(token) != std::string::npos ||
+							displayLower.find(token) != std::string::npos;
+					};
+
+				const char* fileName = nullptr;
+				if (containsToken("boss_"))
+				{
+					fileName = "top_boss.png";
+				}
+				else if (containsToken("e2_"))
+				{
+					fileName = "top_e02.png";
+				}
+				else if (containsToken("e1_"))
+				{
+					fileName = "top_e01.png";
+				}
+
+				if (!fileName)
+				{
+					return TextureHandle::Invalid();
+				}
+
+				return resolveByTextureFileName(assetLoader, fileName);
+			};
+
 		if (!enemyObject)
 		{
 			return TextureHandle::Invalid();
 		}
 
-		auto* material = enemyObject->GetComponent<MaterialComponent>();
-		if (!material)
+		auto* scene = enemyObject->GetScene();
+		if (!scene)
 		{
-			return TextureHandle::Invalid();
+			return resolveFromMaterial(enemyObject);
 		}
 
-		const auto& textures = material->GetOverrides().textures;
-		const size_t albedoIndex = static_cast<size_t>(RenderData::MaterialTextureSlot::Albedo);
-		if (albedoIndex >= textures.size())
+		auto& services = scene->GetServices();
+		if (!services.Has<AssetLoader>())
 		{
-			return TextureHandle::Invalid();
+			return resolveFromMaterial(enemyObject);
 		}
 
-		return textures[albedoIndex];
+		auto& assetLoader = services.Get<AssetLoader>();
+		if (TextureHandle byMaterialName = resolveByMaterialName(assetLoader, enemyObject); byMaterialName.IsValid())
+		{
+			return byMaterialName;
+		}
+
+		static constexpr std::array<const char*, 3> kEnemyHoverFileNames =
+		{
+			"top_E01.png",
+			"top_E02.png",
+			"top_boss.png",
+		};
+
+		auto* enemyStat = enemyObject->GetComponent<EnemyStatComponent>();
+		if (enemyStat)
+		{
+			const int enemyType = enemyStat->GetEnemyType();
+			if (enemyType > 0)
+			{
+				const size_t textureIndex = static_cast<size_t>(enemyType - 1);
+				if (textureIndex < kEnemyHoverFileNames.size())
+				{
+					TextureHandle byFileName = resolveByTextureFileName(assetLoader, kEnemyHoverFileNames[textureIndex]);
+					if (byFileName.IsValid())
+					{
+						return byFileName;
+					}
+				}
+			}
+		}
+
+		return resolveFromMaterial(enemyObject);
 	}
 
 	void UpdateEnemyHoverInfoPanel(UIManager& uiManager,
