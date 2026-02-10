@@ -1,6 +1,10 @@
 ﻿#include "UIButtonComponent.h"
 #include "ReflectionMacro.h"
 #include "UIFSMComponent.h"
+#include "Scene.h"
+#include "ServiceRegistry.h"
+#include "UIManager.h"
+
 
 REGISTER_UI_COMPONENT(UIButtonComponent)
 REGISTER_PROPERTY(UIButtonComponent, IsEnabled)
@@ -17,6 +21,104 @@ REGISTER_PROPERTY(UIButtonComponent, DisabledColor)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, ShaderAssetHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, VertexShaderHandle)
 REGISTER_PROPERTY_HANDLE(UIButtonComponent, PixelShaderHandle)
+
+namespace
+{
+
+	std::vector<std::string> ResolveInventoryInfoPanelCandidates(const std::string& objectName)
+	{
+		if (objectName == "Player_Melee" || objectName == "Player_MeleeButton" || objectName == "MeleeButton" || objectName == "MainWeaponButton" || objectName == "MainWeapon")
+		{
+			return { "MainWeaponInfo" };
+		}
+
+		if (objectName == "Player_Throw1" || objectName == "Player_Throw_1" || objectName == "SubWeapon1")
+		{
+			return { "SubWeapon1Info" };
+		}
+
+		if (objectName == "Player_Throw2" || objectName == "Player_Throw_2" || objectName == "SubWeapon2")
+		{
+			return { "SubWeapon2Info" };
+		}
+
+		if (objectName == "Player_Throw3" || objectName == "Player_Throw_3" || objectName == "SubWeapon3")
+		{
+			return { "SubWeapon3Info" };
+		}
+
+		return {};
+	}
+
+	std::shared_ptr<UIObject> FindInventoryInfoPanelObject(Scene* scene, const std::string& ownerName) 
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return nullptr;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		const std::string sceneName = scene->GetName();
+
+		std::vector<std::string> candidates = ResolveInventoryInfoPanelCandidates(ownerName);
+		if (candidates.empty())
+		{
+			return nullptr;
+		}
+
+		static const std::vector<std::string> kFallbackCandidates = {
+			"InventoryInfo",
+			"Player_InventoryInfo",
+			"ItemInfo",
+			"Player_ItemInfo",
+			"InventoryInfoPanel"
+		};
+
+		candidates.insert(candidates.end(), kFallbackCandidates.begin(), kFallbackCandidates.end());
+
+		for (const auto& candidate : candidates) 
+		{
+			auto uiObject = uiManager.FindUIObject(sceneName, candidate);
+			if (uiObject)
+			{
+				return uiObject;
+			}
+		}
+
+		return nullptr;
+	}
+	std::string ResolveInventoryHoverEventName(const std::string& objectName, bool isHovered)
+	{
+		const std::string prefix = isHovered ? "UI_RequestInventoryInfoShow_" : "UI_RequestInventoryInfoHide_";
+		if (objectName == "Player_Melee" || objectName == "Player_MeleeButton" || objectName == "MeleeButton" || objectName == "MainWeaponButton" || objectName == "MainWeapon")
+		{
+			return prefix + "Melee";
+		}
+
+		if (objectName == "Player_Throw1" || objectName == "Player_Throw_1" || objectName == "SubWeapon1")
+		{
+			return prefix + "Throw1";
+		}
+
+		if (objectName == "Player_Throw2" || objectName == "Player_Throw_2" || objectName == "SubWeapon2")
+		{
+			return prefix + "Throw2";
+		}
+
+		if (objectName == "Player_Throw3" || objectName == "Player_Throw_3" || objectName == "SubWeapon3")
+		{
+			return prefix + "Throw3";
+		}
+
+		return {};
+	}
+}
 
 void UIButtonComponent::Update(float deltaTime)
 {
@@ -171,6 +273,28 @@ void UIButtonComponent::HandleHover(bool isHovered)
 	}
 
 	m_IsHovered = isHovered;
+	if (auto* owner = GetOwner())
+	{
+		if (auto* fsm = owner->GetComponent<UIFSMComponent>())
+		{
+			fsm->TriggerEventByName(isHovered ? "UI_HoverEnter" : "UI_HoverExit");
+
+			const std::string eventName = ResolveInventoryHoverEventName(owner->GetName(), isHovered);
+			if (!eventName.empty())
+			{
+				auto* scene = owner->GetScene();
+				auto infoPanel = FindInventoryInfoPanelObject(scene, owner->GetName());
+				if (infoPanel && infoPanel.get() != owner)
+				{
+					if (auto* infoPanelFsm = infoPanel->GetComponent<UIFSMComponent>())
+					{
+						infoPanelFsm->TriggerEventByName(eventName);
+					}
+				}
+			}
+		}
+	}
+
 	if (m_OnHovered)
 	{
 		m_OnHovered(isHovered);

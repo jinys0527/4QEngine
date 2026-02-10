@@ -28,7 +28,7 @@ void SceneManager::Initialize()
 		dataPaths.enemiesPath = "Data/enemies.csv";
 		dataPaths.dropTablesPath = "Data/drop_tables.csv";
 		m_GameManager->SetDataSheetPaths(dataPaths);
-		m_GameManager->SetFloorSceneNames({ "Stage1_Test ", "Stage2_Test ", "Stage3 ", "Ending " });
+		m_GameManager->SetFloorSceneNames({ "Stage1 ", "Stage2_Test ", "Stage3 ", "Ending " });
 	}
 	if (m_InputManager)
 	{
@@ -41,6 +41,7 @@ void SceneManager::Initialize()
 
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
+
 		//"Title",
 		"Stage1_Test",
 		"Stage2_Test"

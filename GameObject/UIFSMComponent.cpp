@@ -288,10 +288,20 @@ void RegisterUIFSMDefinitions()
 		{}
 		});
 
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Melee", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Melee", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw3", "UI", {} });
+
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "UI_Pressed", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Hovered", "UI" });
+	eventRegistry.RegisterEvent({ "UI_HoverExit", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Released", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Dragged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Clicked", "UI" });
@@ -325,6 +335,14 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_2", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw3", "UI" });
 }
 
 
@@ -564,6 +582,28 @@ UIFSMComponent::UIFSMComponent()
 			DispatchPlayerEvent(scene, "Player_Throw_3");
 		});
 
+	auto bindInventoryInfoHandler = [this](const std::string& actionId, bool visible)
+		{
+			BindActionHandler(actionId, [this, visible](const FSMAction&)
+				{
+					auto* ui = GetOwner() ? GetOwner()->GetComponent<UIComponent>() : nullptr;
+					if (!ui)
+					{
+						return;
+					}
+
+					ui->SetVisible(visible);
+				});
+		};
+
+	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Melee", true);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Melee", false);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw1", true);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw1", false);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw2", true);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw2", false);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw3", true);
+	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw3", false); 
 }
 
 UIFSMComponent::~UIFSMComponent()

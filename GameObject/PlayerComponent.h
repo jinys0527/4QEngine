@@ -121,6 +121,7 @@ private:
 	void UpdateResourceUI();
 	void ApplyAnimation();
 	void ApplyVisualPresetByCombatMode();
+	void UpdateInventorySlotUI();
 	bool TryGetConsumableThrowItemBySlot(int slotIndex, ItemComponent*& outItem) const;
 
 	// 외부지정 가능
