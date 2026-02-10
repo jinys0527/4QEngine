@@ -15,6 +15,43 @@ REGISTER_PROPERTY(UIDicePanelComponent, ActiveDiceType)
 REGISTER_PROPERTY(UIDicePanelComponent, AutoVisibility)
 REGISTER_PROPERTY(UIDicePanelComponent, ApplyDecisionD20OnRequest)
 
+namespace
+{
+	std::string ResolveStatContextAlias(const std::string& context)
+	{
+		if (context.rfind("InitiativeDecisionRoll_", 0) != 0)
+		{
+			return std::string{};
+		}
+
+		const std::string suffix = context.substr(std::string("InitiativeDecisionRoll_").size());
+		if (suffix.empty())
+		{
+			return std::string{};
+		}
+
+		for (const char c : suffix)
+		{
+			if (c < '0' || c > '9')
+			{
+				return std::string{};
+			}
+		}
+
+		return "InitiativeStatRoll_" + suffix;
+	}
+
+	bool IsStatContext(const std::string& context)
+	{
+		return !context.empty() && context.rfind("InitiativeStatRoll_", 0) == 0;
+	}
+
+	bool IsDecisionContext(const std::string& context)
+	{
+		return !context.empty() && context.rfind("InitiativeDecisionRoll_", 0) == 0;
+	}
+}
+
 void UIDicePanelComponent::Start()
 {
 	m_RuntimeBindingsReady = false;
@@ -124,6 +161,23 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 			return false;
 		};
 
+	const auto hasStatCandidateContext = [&]()
+		{
+			for (const auto& slot : m_Slots)
+			{
+				if (slot.diceContext.find("InitiativeStatRoll_") != std::string::npos)
+				{
+					return true;
+				}
+
+				if (slot.diceContext.find("InitiativeDecisionRoll_") != std::string::npos && slot.diceType != "D20")
+				{
+					return true;
+				}
+			}
+			return false;
+		};
+
 	if (type == EventType::PlayerDiceDecisionRequested)
 	{
 		if (m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
@@ -136,7 +190,7 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 	if (type == EventType::PlayerDiceStatRollRequested)
 	{
 		// decision 전용 패널은 pending 타입으로 전환.
-		if (hasDecisionContext() && !hasStatContext())
+		if (hasDecisionContext() && !hasStatCandidateContext())
 		{
 			if (!m_PendingDiceType.empty())
 			{
@@ -145,7 +199,7 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 		}
 		// stat 컨텍스트 패널은 슬롯별(PlayerDiceTypeDetermined) 타입을 사용해야 하므로
 		// 글로벌 active 필터를 비워 각 context 슬롯이 개별 diceType을 반영하도록 한다.
-		else if (hasStatContext())
+		else if (hasStatCandidateContext())
 		{
 			if (!m_ActiveDiceType.empty())
 			{
@@ -203,7 +257,7 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
-	if (hasDecisionContext())
+	if (hasDecisionContext() && !hasStatCandidateContext())
 	{
 		return;
 	}
@@ -403,7 +457,6 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 
 	if (m_AutoVisibility)
 	{
-		const bool shouldShow = m_ActiveDiceType.empty() || slot.diceType == m_ActiveDiceType;
 		object.SetIsVisibleFromComponent(shouldShow);
 	}
 
@@ -419,7 +472,7 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 			diceDisplay->SetDiceType(resolvedDiceType);
 		}
 
-		if (!slot.diceType.empty())
+		if (resolvedDiceType.empty() && !slot.diceType.empty())
 		{
 			diceDisplay->SetDiceType(slot.diceType);
 		}
@@ -457,6 +510,49 @@ std::string UIDicePanelComponent::ResolveSlotDiceType(const UIDicePanelSlot& slo
 		{
 			return it->second;
 		}
+
+		std::string reduced = slot.diceContext;
+		while (true)
+		{
+			const size_t underscore = reduced.find_last_of('_');
+			if (underscore == std::string::npos || underscore + 1 >= reduced.size())
+			{
+				break;
+			}
+
+			bool numericSuffix = true;
+			for (size_t i = underscore + 1; i < reduced.size(); ++i)
+			{
+				const char c = reduced[i];
+				if (c < '0' || c > '9')
+				{
+					numericSuffix = false;
+					break;
+				}
+			}
+
+			if (!numericSuffix)
+			{
+				break;
+			}
+
+			reduced.resize(underscore);
+			it = m_ContextDiceTypes.find(reduced);
+			if (it != m_ContextDiceTypes.end() && !it->second.empty())
+			{
+				return it->second;
+			}
+		}
+
+		const std::string statAlias = ResolveStatContextAlias(slot.diceContext);
+		if (!statAlias.empty())
+		{
+			it = m_ContextDiceTypes.find(statAlias);
+			if (it != m_ContextDiceTypes.end() && !it->second.empty())
+			{
+				return it->second;
+			}
+		}
 	}
 
 	return slot.diceType;
@@ -465,15 +561,37 @@ std::string UIDicePanelComponent::ResolveSlotDiceType(const UIDicePanelSlot& slo
 bool UIDicePanelComponent::ShouldShowSlot(const UIDicePanelSlot& slot) const
 {
 	const std::string resolvedDiceType = ResolveSlotDiceType(slot);
+	const bool isStatSlot = IsStatContext(slot.diceContext)
+		|| (IsDecisionContext(slot.diceContext) && slot.diceType != "D20");
+	const bool isDecisionD20Slot = IsDecisionContext(slot.diceContext) && slot.diceType == "D20";
+
 	if (m_ActiveDiceType.empty())
 	{
-		if (!slot.diceContext.empty() && slot.diceContext.rfind("InitiativeStatRoll_", 0) == 0)
+
+		if (isStatSlot)
 		{
-			if (!resolvedDiceType.empty())
+			if (resolvedDiceType.empty())
 			{
-				return slot.diceType == resolvedDiceType;
+				return false;
+			}
+			return slot.diceType == resolvedDiceType;
+		}
+
+		if (isDecisionD20Slot)
+		{
+			for (const auto& [context, type] : m_ContextDiceTypes)
+			{
+				if (type.empty())
+				{
+					continue;
+				}
+				if (IsStatContext(context))
+				{
+					return false;
+				}
 			}
 		}
+
 		return true;
 	}
 
