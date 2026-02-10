@@ -23,6 +23,7 @@
 #include "PushNodeComponent.h"
 #include <algorithm>
 #include <array>
+#include <unordered_map>
 #include <cfloat>
 #include "SkinningAnimationComponent.h"
 #include "MathHelper.h"
@@ -38,6 +39,7 @@
 #include "UIManager.h"
 #include "UIProgressBarComponent.h"
 #include "UIImageComponent.h"
+#include "UIButtonComponent.h"
 #include "UIFSMComponent.h"
 #include "PlayerVisualPresetComponent.h"
 
@@ -180,6 +182,8 @@ namespace
 		const std::vector<std::string>& objectNames,
 		const TextureHandle& iconTexture)
 	{
+		static std::unordered_map<std::string, TextureHandle> s_DefaultSlotTextures;
+
 		for (const auto& objectName : objectNames)
 		{
 			std::shared_ptr<UIObject> target;
@@ -189,8 +193,48 @@ namespace
 				continue;
 			}
 
-			image->SetTextureHandle(iconTexture);
-			target->SetIsVisible(iconTexture.IsValid());
+			const std::string cacheKey = sceneName + "::" + target->GetName();
+			auto cacheIt = s_DefaultSlotTextures.find(cacheKey);
+			if (cacheIt == s_DefaultSlotTextures.end())
+			{
+				const TextureHandle currentTexture = image->GetTextureHandle();
+				if (currentTexture.IsValid())
+				{
+					s_DefaultSlotTextures.emplace(cacheKey, currentTexture);
+					cacheIt = s_DefaultSlotTextures.find(cacheKey);
+				}
+			}
+
+			if (iconTexture.IsValid())
+			{
+				image->SetTextureHandle(iconTexture);
+				target->SetIsVisible(true);
+				return;
+			}
+
+			if (cacheIt != s_DefaultSlotTextures.end() && cacheIt->second.IsValid())
+			{
+				image->SetTextureHandle(cacheIt->second);
+				target->SetIsVisible(true);
+				return;
+			}
+
+			auto buttonObject = uiManager.FindUIObject(sceneName, objectName);
+			if (buttonObject)
+			{
+				if (auto* button = buttonObject->GetComponent<UIButtonComponent>())
+				{
+					const TextureHandle buttonTexture = button->GetCurrentTextureHandle();
+					if (buttonTexture.IsValid())
+					{
+						image->SetTextureHandle(buttonTexture);
+						target->SetIsVisible(true);
+						return;
+					}
+				}
+			}
+
+			target->SetIsVisible(false);
 			return;
 		}
 	}
@@ -323,6 +367,8 @@ namespace
 	{
 		for (const auto& panelName : panelNames)
 		{
+			static std::unordered_map<std::string, TextureHandle> s_DefaultInfoPanelTextures;
+
 			std::shared_ptr<UIObject> target;
 			auto* image = FindImageComponentOrFirstChildImage(uiManager, sceneName, panelName, target);
 			if (!image || !target)
@@ -330,12 +376,27 @@ namespace
 				continue;
 			}
 
-			image->SetTextureHandle(infoTexture);
-			// 정보창 표시/숨김은 hover FSM 이벤트에서 제어한다.
-			// 여기서는 텍스처만 갱신하고, 비어있는 슬롯일 때만 강제로 숨겨 잔상만 방지한다.
-			if (!infoTexture.IsValid())
+			const std::string cacheKey = sceneName + "::" + target->GetName();
+			auto cacheIt = s_DefaultInfoPanelTextures.find(cacheKey);
+			if (cacheIt == s_DefaultInfoPanelTextures.end())
 			{
-				target->SetIsVisible(false);
+				const TextureHandle currentTexture = image->GetTextureHandle();
+				if (currentTexture.IsValid())
+				{
+					s_DefaultInfoPanelTextures.emplace(cacheKey, currentTexture);
+					cacheIt = s_DefaultInfoPanelTextures.find(cacheKey);
+				}
+			}
+
+			if (infoTexture.IsValid())
+			{
+				image->SetTextureHandle(infoTexture);
+				return;
+			}
+
+			if (cacheIt != s_DefaultInfoPanelTextures.end() && cacheIt->second.IsValid()) 
+			{
+				image->SetTextureHandle(cacheIt->second);
 			}
 			return;
 		}
