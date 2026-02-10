@@ -118,6 +118,7 @@ extern "C" {
 	void Link_BoatComponent();
 	void Link_BoatEndComponent();
 	void Link_VendingComponent();
+	void Link_ExitComponent();
 }
 
 
@@ -198,4 +199,5 @@ void LinkEngineComponents() {
 	Link_BoatComponent();
 	Link_BoatEndComponent();
 	Link_VendingComponent();
+	Link_ExitComponent();
 }
