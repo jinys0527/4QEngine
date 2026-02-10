@@ -34,20 +34,19 @@ struct Light
     float Range; 
 
     float3 worldDir; 
-    float  padding0; 
+    float Contrast;
 
     float3 viewDir; 
     float Intensity; 
 
-    float Contrast;
     float SpotInnerAngle;
     float SpotOutterAngle;
     float AttenuationRadius;
-    float padding1;
+    float Saturation;
 
     uint CastShadow;
     uint type;
-    float2 padding; 
+    float2 padding2;
 };
 
 cbuffer LightBuffer : register(b2)

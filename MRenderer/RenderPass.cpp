@@ -276,6 +276,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 			dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
 			dirlight.Intensity = light.intensity;
 			dirlight.Contrast = light.contrast;
+			dirlight.Saturation = light.saturation;
 			dirlight.mLightViewProj = light.lightViewProj;
 			dirlight.CastShadow = light.castShadow;
 			dirlight.Range = light.range;

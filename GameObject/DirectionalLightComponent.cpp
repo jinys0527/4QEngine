@@ -6,6 +6,7 @@ using namespace MathUtils;
 REGISTER_COMPONENT_DERIVED(DirectionalLightComponent, LightComponent)
 REGISTER_PROPERTY(DirectionalLightComponent, Direction)
 REGISTER_PROPERTY(DirectionalLightComponent, Contrast)
+REGISTER_PROPERTY(DirectionalLightComponent, Saturation)
 
 DirectionalLightComponent::DirectionalLightComponent()
 {
@@ -26,4 +27,5 @@ void DirectionalLightComponent::FillLightData(RenderData::LightData& data) const
 	LightComponent::FillLightData(data);
 	data.direction = m_Direction;
 	data.contrast = m_Contrast;
+	data.saturation = m_Saturation;
 }
