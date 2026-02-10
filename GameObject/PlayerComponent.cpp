@@ -22,6 +22,7 @@
 #include "NodeComponent.h"
 #include "PushNodeComponent.h"
 #include <algorithm>
+#include <array>
 #include <cfloat>
 #include "SkinningAnimationComponent.h"
 #include "MathHelper.h"
@@ -36,6 +37,7 @@
 #include "GameDataRepository.h"
 #include "UIManager.h"
 #include "UIProgressBarComponent.h"
+#include "UIImageComponent.h"
 #include "PlayerVisualPresetComponent.h"
 
 REGISTER_COMPONENT(PlayerComponent)
@@ -64,6 +66,184 @@ static int AxialDistance(int q1, int r1, int q2, int r2)
 
 namespace
 {
+	std::string NormalizePath(std::string value)
+	{
+		std::replace(value.begin(), value.end(), '\\', '/');
+		return value;
+	}
+
+	bool EndsWithPath(const std::string& value, const std::string& suffix)
+	{
+		if (suffix.empty() || value.size() < suffix.size())
+		{
+			return false;
+		}
+
+		return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+	}
+
+	TextureHandle ResolveTextureByIconPath(AssetLoader& assetLoader, const std::string& iconPath)
+	{
+		if (iconPath.empty())
+		{
+			return TextureHandle::Invalid();
+		}
+
+		const std::string normalizedPath = NormalizePath(iconPath);
+		const auto& keyToHandle = assetLoader.GetTextures().GetKeyToHandle();
+		auto direct = keyToHandle.find(normalizedPath);
+		if (direct != keyToHandle.end())
+		{
+			return direct->second;
+		}
+
+		std::string trimmedPath = normalizedPath;
+		while (trimmedPath.rfind("../", 0) == 0)
+		{
+			trimmedPath.erase(0, 3);
+			auto trimmed = keyToHandle.find(trimmedPath);
+			if (trimmed != keyToHandle.end())
+			{
+				return trimmed->second;
+			}
+		}
+
+		const size_t filenameStart = normalizedPath.find_last_of('/');
+		const std::string filename = (filenameStart == std::string::npos)
+			? normalizedPath
+			: normalizedPath.substr(filenameStart + 1);
+		if (filename.empty())
+		{
+			return TextureHandle::Invalid();
+		}
+
+		for (const auto& [key, handle] : keyToHandle)
+		{
+			const std::string normalizedKey = NormalizePath(key);
+			if (normalizedKey == normalizedPath || EndsWithPath(normalizedKey, normalizedPath) || EndsWithPath(normalizedKey, filename))
+			{
+				return handle;
+			}
+		}
+
+		return TextureHandle::Invalid();
+	}
+
+	UIImageComponent* FindImageComponentOrFirstChildImage(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::string& objectName,
+		std::shared_ptr<UIObject>& outTarget)
+	{
+		outTarget = uiManager.FindUIObject(sceneName, objectName);
+		if (!outTarget)
+		{
+			return nullptr;
+		}
+
+		if (auto* image = outTarget->GetComponent<UIImageComponent>())
+		{
+			return image;
+		}
+
+		auto& allScenes = uiManager.GetUIObjects();
+		auto sceneIt = allScenes.find(sceneName);
+		if (sceneIt == allScenes.end())
+		{
+			return nullptr;
+		}
+
+		for (auto& [childName, childObject] : sceneIt->second)
+		{
+			if (!childObject)
+			{
+				continue;
+			}
+
+			if (childObject->GetParentName() != objectName)
+			{
+				continue;
+			}
+
+			if (auto* image = childObject->GetComponent<UIImageComponent>())
+			{
+				outTarget = childObject;
+				return image;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void UpdateSlotIcon(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::vector<std::string>& objectNames,
+		const TextureHandle& iconTexture)
+	{
+		for (const auto& objectName : objectNames)
+		{
+			std::shared_ptr<UIObject> target;
+			auto* image = FindImageComponentOrFirstChildImage(uiManager, sceneName, objectName, target);
+			if (!image || !target)
+			{
+				continue;
+			}
+
+			image->SetTextureHandle(iconTexture);
+			target->SetIsVisible(iconTexture.IsValid());
+			return;
+		}
+	}
+
+	TextureHandle ResolveIconTextureFromItemObject(GameObject* itemObject, AssetLoader& assetLoader)
+	{
+		if (!itemObject)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		auto* itemComponent = itemObject->GetComponent<ItemComponent>();
+		if (!itemComponent)
+		{
+			return TextureHandle::Invalid();
+		}
+
+		return ResolveTextureByIconPath(assetLoader, itemComponent->GetIconPath());
+	}
+
+
+	const std::vector<std::string>& GetMeleeSlotIconNameCandidates()
+	{
+		static const std::vector<std::string> kMeleeSlotIconNames =
+		{
+			"MainWeapon",
+			"Player_MeleeIcon",
+			"Player_Melee_Icon",
+			"MeleeIcon",
+			"MeleeItemIcon",
+			"UI_Player_MeleeIcon"
+		};
+		return kMeleeSlotIconNames;
+	}
+
+
+	const std::vector<std::string>& GetThrowSlotIconNameCandidates(int slotIndex)
+	{
+		static const std::vector<std::string> kEmpty{};
+		static const std::array<std::vector<std::string>, 3> kThrowSlotIconNames =
+		{
+			std::vector<std::string>{ "SubWeapon1" },
+			std::vector<std::string>{ "SubWeapon2" },
+			std::vector<std::string>{ "SubWeapon3" }
+		};
+
+		if (slotIndex < 0 || slotIndex >= static_cast<int>(kThrowSlotIconNames.size()))
+		{
+			return kEmpty;
+		}
+
+		return kThrowSlotIconNames[slotIndex];
+	}
+
 	float DistanceSq2D(const XMFLOAT3& a, const XMFLOAT3& b)
 	{
 		const float dx = a.x - b.x;
@@ -1680,6 +1860,8 @@ void PlayerComponent::ConsumeThrowItem(ItemComponent* throwItem)
 	{
 		m_GridSystem->SetThrowRangePreview(false, 0);
 	}
+
+	UpdateInventorySlotUI();
 }
 
 void PlayerComponent::BeginThrowPreview()
@@ -1796,6 +1978,42 @@ void PlayerComponent::UpdateResourceUI()
 	m_LastMoveResource = m_MoveResource;
 	m_LastActResource = m_ActResource;
 }
+
+void PlayerComponent::UpdateInventorySlotUI()
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<UIManager>() || !services.Has<AssetLoader>())
+	{
+		return;
+	}
+
+	auto& uiManager = services.Get<UIManager>();
+	auto& assetLoader = services.Get<AssetLoader>();
+	const std::string sceneName = scene->GetName();
+
+	const TextureHandle meleeIcon = ResolveIconTextureFromItemObject(m_MeleeItem, assetLoader);
+	UpdateSlotIcon(uiManager, sceneName, GetMeleeSlotIconNameCandidates(), meleeIcon);
+
+	for (int i = 0; i < 3; ++i)
+	{
+		// 인벤토리 인덱스 0/1/2 -> UI의 1/2/3번 슬롯
+		auto* itemObject = FindGameObjectByName(scene, m_ConsumableItemNames[i]);
+		const TextureHandle throwIcon = ResolveIconTextureFromItemObject(itemObject, assetLoader);
+		const auto& slotNames = GetThrowSlotIconNameCandidates(i);
+		if (!slotNames.empty())
+		{
+			UpdateSlotIcon(uiManager, sceneName, slotNames, throwIcon);
+		}
+	}
+}
+
 
 void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEventName)
 {
@@ -2060,6 +2278,8 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	{
 		scene->QueueGameObjectRemoval(itemObject->GetName());
 	}
+
+	UpdateInventorySlotUI();
 	return true;
 }
 void PlayerComponent::AddToInventory(ItemComponent* item)
