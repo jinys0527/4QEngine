@@ -122,7 +122,7 @@ PlayerMoveFSMComponent::PlayerMoveFSMComponent()
 					auto& services = scene->GetServices();
 					if (services.Has<SoundManager>())
 					{
-						services.Get<SoundManager>().SFX_Shot(L"Dice_Success");
+						services.Get<SoundManager>().SFX_Shot(L"Move_Player");
 					}
 				}
 
