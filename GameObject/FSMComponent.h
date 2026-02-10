@@ -1,7 +1,11 @@
 ﻿#pragma once
 #include "Component.h"
 #include "FSM.h"
+#include <functional>
 #include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 struct FSMAction
 {

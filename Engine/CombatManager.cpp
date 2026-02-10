@@ -482,23 +482,22 @@ void CombatManager::HandlePlayerDiceStatRollRequested()
 			const int total = m_PlayerStatRollTotalsHistory[historyIdx];
 			const std::string rollContext = "InitiativeStatRoll_" + std::to_string(historyIdx + 1);
 
-			const Events::DiceRollEvent diceTypeEvent{ statConfig.sides, 1, statConfig.sides, 0, "InitiativeDiceType", true, { statConfig.sides } };
+			const Events::DiceRollEvent diceTypeEvent{ statConfig.sides, 1, statConfig.sides, 0, rollContext, true, { statConfig.sides } };
 
 			m_EventDispatcher->Dispatch(EventType::PlayerDiceTypeDetermined, &diceTypeEvent);
 
 			for (size_t faceIdx = 0; faceIdx < faces.size(); ++faceIdx)
 			{
 				const std::string context = rollContext + "_" + std::to_string(faceIdx + 1);
-				const Events::DiceRollEvent oneDieEvent{ faces[faceIdx], 1, statConfig.sides, 0, context, false, { faces[faceIdx] } };
+				const Events::DiceRollEvent oneDieEvent{ faces[faceIdx], 1, selectedConfig.sides, 0, context, false, { faces[faceIdx] } };
 				std::cout << "[Combat] Dispatch DiceRolled context=" << context << " value=" << faces[faceIdx] << std::endl;
 				m_EventDispatcher->Dispatch(EventType::DiceRolled, &oneDieEvent);
 			}
 
-			const Events::DiceRollEvent statRollEvent{ total, statConfig.count, statConfig.sides, 0, rollContext, true, faces };
+			const Events::DiceRollEvent statRollEvent{ total, selectedConfig.count, selectedConfig.sides, 0, rollContext, true, faces };
 			std::cout << "[Combat] Dispatch DiceRolled context=" << rollContext << " value=" << total << std::endl;
 			m_EventDispatcher->Dispatch(EventType::DiceRolled, &statRollEvent);
 		}
-
 		const Events::DiceStatResolvedEvent resultEvent{
 			m_PlayerDecisionD20,
 				selectedConfig.count,

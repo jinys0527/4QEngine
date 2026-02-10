@@ -78,6 +78,7 @@ private:
 	void  RestoreBounds();
 	float GetRandomDelay();
 	float EvaluateScale(float t) const;
+	bool  TryPrepareRuntimeBindings();
 
 	std::vector<BoundsSnapshot> m_Targets;
 	std::string m_DiceContext;
@@ -97,4 +98,6 @@ private:
 	bool  m_Animating = false;
 	bool  m_AnimateIndividuals = true;
 	EventDispatcher* m_Dispatcher = nullptr;
+	bool m_RuntimeBindingsReady = false;
+	bool m_ListenerRegistered = false;
 };

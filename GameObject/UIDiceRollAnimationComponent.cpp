@@ -26,7 +26,7 @@ REGISTER_PROPERTY(UIDiceRollAnimationComponent, OnesDigitObjectName)
 
 UIDiceRollAnimationComponent::~UIDiceRollAnimationComponent()
 {
-	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::DiceRolled))
+	if (m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::DiceRolled))
 	{
 		m_Dispatcher->RemoveListener(EventType::DiceRolled, this);
 	}
@@ -34,17 +34,8 @@ UIDiceRollAnimationComponent::~UIDiceRollAnimationComponent()
 
 void UIDiceRollAnimationComponent::Start()
 {
-	if (auto* scene = GetScene())
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<UIManager>())
-		{
-			m_UIManager = &services.Get<UIManager>();
-		}
-	}
-
-	m_Dispatcher = &GetEventDispatcher();
-	m_Dispatcher->AddListener(EventType::DiceRolled, this);
+	m_RuntimeBindingsReady = false;
+	m_ListenerRegistered = false;
 }
 
 void UIDiceRollAnimationComponent::Update(float deltaTime)
@@ -52,6 +43,11 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 	UIComponent::Update(deltaTime);
 
 	if (!m_Enabled)
+	{
+		return;
+	}
+
+	if (!TryPrepareRuntimeBindings())
 	{
 		return;
 	}
@@ -93,6 +89,11 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
+	if (!TryPrepareRuntimeBindings())
+	{
+		return;
+	}
+
 	const auto* payload = static_cast<const Events::DiceRollEvent*>(data);
 	if (!payload)
 	{
@@ -101,23 +102,46 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 
 	if (!m_DiceContext.empty() && payload->context != m_DiceContext)
 	{
-		std::cout << "[UIDiceAnim] skip context mismatch slot=" << m_DiceContext
-			<< " payload=" << payload->context << std::endl;
 		return;
 	}
 
 	if (!payload->isTotal && !m_AnimateIndividuals)
 	{
-		std::cout << "[UIDiceAnim] skip individual roll. slot=" << m_DiceContext
-			<< " payloadContext=" << payload->context << std::endl;
 		return;
 	}
 
-	std::cout << "[UIDiceAnim] begin animation context=" << payload->context
-		<< " value=" << payload->value
-		<< " isTotal=" << payload->isTotal << std::endl;
-
 	BeginAnimation();
+}
+
+bool UIDiceRollAnimationComponent::TryPrepareRuntimeBindings()
+{
+	if (m_RuntimeBindingsReady)
+	{
+		return true;
+	}
+
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* uiManager = GetUIManager();
+	if (!uiManager)
+	{
+		return false;
+	}
+
+	m_UIManager = uiManager;
+	m_Dispatcher = &GetEventDispatcher();
+	if (!m_ListenerRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::DiceRolled, this);
+		m_ListenerRegistered = true;
+	}
+
+	m_RuntimeBindingsReady = true;
+	return true;
 }
 
 void UIDiceRollAnimationComponent::SetEnabled(const bool& enabled)

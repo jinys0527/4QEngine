@@ -718,9 +718,6 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		|| type == EventType::PlayerDiceContinueRequested
 		|| type == EventType::PlayerDiceUIClose)
 	{
-		std::cout << "[UIFSM] OnEvent type=" << static_cast<int>(type)
-			<< " translated=" << *eventName
-			<< " currentState=" << GetCurrentStateName() << std::endl;
 	}
 
 	HandleEventByName(*eventName, data);

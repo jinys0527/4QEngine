@@ -14,28 +14,31 @@ REGISTER_PROPERTY_READONLY(FloodUIComponent, DisplayedGameOver)
 
 void FloodUIComponent::Start()
 {
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-
-	if (!scene)
-		return;
-
-	for (const auto& [name, object] : scene->GetGameObjects())
-	{
-		if (!object)
-			continue;
-
-		m_FloodSystem = object->GetComponent<FloodSystemComponent>();
-		if (m_FloodSystem)
-			break;
-	}
+	m_FloodSystem = nullptr;
 }
 
 void FloodUIComponent::Update(float deltaTime)
 {
 	(void)deltaTime;
 	if (!m_FloodSystem)
-		return;
+	{
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		if (!scene)
+			return;
+
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			if (!object)
+				continue;
+
+			m_FloodSystem = object->GetComponent<FloodSystemComponent>();
+			if (m_FloodSystem)
+				break;
+		}
+		if (!m_FloodSystem)
+			return;
+	}
 
 	m_DisplayedWaterLevel	 = m_FloodSystem->GetWaterLevel();
 	m_DisplayedTimeRemaining = m_FloodSystem->GetTurnRemaining();

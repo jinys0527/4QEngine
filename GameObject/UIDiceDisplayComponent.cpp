@@ -29,15 +29,15 @@ REGISTER_PROPERTY(UIDiceDisplayComponent, RollIndex)
 
 UIDiceDisplayComponent::~UIDiceDisplayComponent()
 {
-	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::DiceRolled))
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::DiceRolled))
 	{
 		m_Dispatcher->RemoveListener(EventType::DiceRolled, this);
 	}
-	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceUIReset))
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceUIReset))
 	{
 		m_Dispatcher->RemoveListener(EventType::PlayerDiceUIReset, this);
 	}
-	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceStatResolved))
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceStatResolved))
 	{
 		m_Dispatcher->RemoveListener(EventType::PlayerDiceStatResolved, this);
 	}
@@ -45,21 +45,11 @@ UIDiceDisplayComponent::~UIDiceDisplayComponent()
 
 void UIDiceDisplayComponent::Start()
 {
-	if (auto* scene = GetScene())
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<UIManager>())
-		{
-			m_UIManager = &services.Get<UIManager>();
-		}
-	}
-
-	m_Dispatcher = &GetEventDispatcher();
-	m_Dispatcher->AddListener(EventType::DiceRolled, this);
-	m_Dispatcher->AddListener(EventType::PlayerDiceUIReset, this);
-	m_Dispatcher->AddListener(EventType::PlayerDiceStatResolved, this);
+	m_RuntimeBindingsReady = false;
+	m_ListenersRegistered = false;
 	m_LayoutDirty = true;
 	m_ValueDirty = true;
+	m_DisabledVisibilityPending = !m_Enabled;
 }
 
 void UIDiceDisplayComponent::Update(float deltaTime)
@@ -68,6 +58,15 @@ void UIDiceDisplayComponent::Update(float deltaTime)
 	(void)deltaTime;
 
 	if (!m_Enabled)
+	{
+		if (m_DisabledVisibilityPending && TryPrepareRuntimeBindings())
+		{
+			ApplyDisabledVisibility();
+		}
+		return;
+	}
+
+	if (!TryPrepareRuntimeBindings())
 	{
 		return;
 	}
@@ -110,6 +109,11 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 	UIComponent::OnEvent(type, data);
 
 	if (!m_Enabled)
+	{
+		return;
+	}
+
+	if (!TryPrepareRuntimeBindings())
 	{
 		return;
 	}
@@ -162,28 +166,20 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 			{
 				if (payload->context != m_DiceContext)
 				{
-					std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
-						<< " payload=" << payload->context << std::endl;
 					return;
 				}
 			}
 			else if (basePayloadContext != baseSlotContext)
 			{
-				std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
-					<< " payload=" << payload->context << std::endl;
 				return;
 			}
 		}
 		else if (slotHasSuffix)
 		{
-			std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
-				<< " payload=" << payload->context << std::endl;
 			return;
 		}
 		else if (basePayloadContext != baseSlotContext)
 		{
-			std::cout << "[UIDiceDisplay] skip context mismatch slot=" << m_DiceContext
-				<< " payload=" << payload->context << std::endl;
 			return;
 		}
 	}
@@ -194,6 +190,55 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	ApplyDiceEvent(*payload);
 }
+
+bool UIDiceDisplayComponent::TryPrepareRuntimeBindings()
+{
+	if (m_RuntimeBindingsReady)
+	{
+		return true;
+	}
+
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* uiManager = GetUIManager();
+	if (!uiManager)
+	{
+		return false;
+	}
+
+	m_UIManager = uiManager;
+	m_Dispatcher = &GetEventDispatcher();
+	if (!m_ListenersRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::DiceRolled, this);
+		m_Dispatcher->AddListener(EventType::PlayerDiceUIReset, this);
+		m_Dispatcher->AddListener(EventType::PlayerDiceStatResolved, this);
+		m_ListenersRegistered = true;
+	}
+
+	m_RuntimeBindingsReady = true;
+	return true;
+}
+
+void UIDiceDisplayComponent::ApplyDisabledVisibility()
+{
+	auto* tens = FindUIObject(m_TensDigitObjectName);
+	auto* ones = FindUIObject(m_OnesDigitObjectName);
+	if (tens)
+	{
+		tens->SetIsVisibleFromComponent(false);
+	}
+	if (ones)
+	{
+		ones->SetIsVisibleFromComponent(false);
+	}
+	m_DisabledVisibilityPending = false;
+}
+
 
 void UIDiceDisplayComponent::SetEnabled(const bool& enabled)
 {
@@ -206,19 +251,7 @@ void UIDiceDisplayComponent::SetEnabled(const bool& enabled)
 	m_LayoutDirty = true;
 	m_ValueDirty = true;
 
-	if (!m_Enabled)
-	{
-		auto* tens = FindUIObject(m_TensDigitObjectName);
-		auto* ones = FindUIObject(m_OnesDigitObjectName);
-		if (tens)
-		{
-			tens->SetIsVisibleFromComponent(false);
-		}
-		if (ones)
-		{
-			ones->SetIsVisibleFromComponent(false);
-		}
-	}
+	m_DisabledVisibilityPending = !m_Enabled;
 }
 
 void UIDiceDisplayComponent::SetDiceType(const std::string& type)
@@ -568,9 +601,17 @@ void UIDiceDisplayComponent::ApplyDiceEvent(const Events::DiceRollEvent& payload
 			return;
 		}
 
-		if (m_UseRollFaces && !payload.faces.empty() && m_RollIndex >= 0)
+		if (m_UseRollFaces)
 		{
-			SetValueFromRollFaces(payload.faces, m_RollIndex);
+			if (!payload.faces.empty() && m_RollIndex >= 0)
+			{
+				SetValueFromRollFaces(payload.faces, m_RollIndex);
+			}
+			else
+			{
+				// 롤 페이스 기반 슬롯은 PlayerDiceStatResolvedEvent에서 최종 face history를 반영한다.
+				return;
+			}
 		}
 		else
 		{
@@ -735,10 +776,67 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 		return;
 	}
 
-	const auto& rollFaces = payload.facesHistory[static_cast<size_t>(historyIndex)];
-	const int rollTotal = (historyIndex >= 0 && historyIndex < static_cast<int>(payload.totalsHistory.size()))
+	const auto* chosenFaces = &payload.facesHistory[static_cast<size_t>(historyIndex)];
+	int chosenTotal = (historyIndex >= 0 && historyIndex < static_cast<int>(payload.totalsHistory.size()))
 		? payload.totalsHistory[static_cast<size_t>(historyIndex)]
 		: 0;
+
+	const int slotSides = parseSidesFromDiceType(m_DiceType);
+	const int expectedFacesCount = expectedCountForSides(slotSides > 0 ? slotSides : payload.diceSides);
+	const int expectedSides = (slotSides > 0) ? slotSides : payload.diceSides;
+
+	const auto isFacesCompatible = [&](const std::vector<int>& faces) -> bool
+		{
+			if (expectedFacesCount > 0 && static_cast<int>(faces.size()) != expectedFacesCount)
+			{
+				return false;
+			}
+			if (expectedSides > 0)
+			{
+				for (const int face : faces)
+				{
+					if (face < 1 || face > expectedSides)
+					{
+						return false;
+					}
+				}
+			}
+			return true;
+		};
+
+	if (!isFacesCompatible(*chosenFaces))
+	{
+		for (int i = 0; i < static_cast<int>(payload.facesHistory.size()); ++i)
+		{
+			if (!isFacesCompatible(payload.facesHistory[static_cast<size_t>(i)]))
+			{
+				continue;
+			}
+			chosenFaces = &payload.facesHistory[static_cast<size_t>(i)];
+			chosenTotal = (i >= 0 && i < static_cast<int>(payload.totalsHistory.size()))
+				? payload.totalsHistory[static_cast<size_t>(i)]
+				: 0;
+			historyIndex = i;
+			std::cout << "[UIDiceDisplay] remap compatible history context=" << m_DiceContext
+				<< " historyIndex=" << historyIndex
+				<< " expectedCount=" << expectedFacesCount
+				<< " expectedSides=" << expectedSides << std::endl;
+			break;
+		}
+	}
+
+	if (!isFacesCompatible(*chosenFaces) && !payload.faces.empty())
+	{
+		std::cout << "[UIDiceDisplay] fallback selected faces context=" << m_DiceContext
+			<< " historyIndex=" << historyIndex
+			<< " selectedCount=" << payload.faces.size()
+			<< " selectedSides=" << payload.diceSides << std::endl;
+		chosenFaces = &payload.faces;
+		chosenTotal = payload.total;
+	}
+
+	const auto& rollFaces = *chosenFaces;
+	const int rollTotal = chosenTotal;
 
 	std::cout << "[UIDiceDisplay] apply stat history context=" << m_DiceContext
 		<< " historyIndex=" << historyIndex
@@ -747,6 +845,7 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 		<< " useRollFaces=" << m_UseRollFaces
 		<< " facesCount=" << rollFaces.size()
 		<< " rollTotal=" << rollTotal << std::endl;
+
 
 	if (m_UseRollFaces)
 	{
@@ -759,6 +858,7 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 			std::cout << "[UIDiceDisplay] skip face apply context=" << m_DiceContext
 				<< " faceIndex=" << faceIndex
 				<< " facesCount=" << rollFaces.size() << std::endl;
+			SetValue(0);
 		}
 	}
 	else

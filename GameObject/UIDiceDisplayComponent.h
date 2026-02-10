@@ -86,6 +86,8 @@ private:
 	void ApplyValue(UIObject* tens, UIObject* ones);
 	void ApplyDiceEvent(const Events::DiceRollEvent& payload);
 	void ApplyDiceStatResolvedEvent(const Events::DiceStatResolvedEvent& payload);
+	void ApplyDisabledVisibility();
+	bool TryPrepareRuntimeBindings();
 	static int ResolveNumericSuffix(const std::string& context);
 	static std::string ResolveBaseContext(const std::string& context);
 
@@ -96,6 +98,7 @@ private:
 	std::string m_DiceContext;
 	std::string m_TensDigitObjectName = "DiceTens";
 	std::string m_OnesDigitObjectName = "DiceOnes";
+
 	int  m_Value = 0;
 	bool m_LeadingZero = true;
 	bool m_Enabled = true;
@@ -111,5 +114,8 @@ private:
 	UIDiceDigitSlot m_TensSlot{};
 	UIDiceDigitSlot m_OnesSlot{};
 	EventDispatcher* m_Dispatcher = nullptr;
+	bool m_RuntimeBindingsReady = false;
+	bool m_ListenersRegistered = false;
+	bool m_DisabledVisibilityPending = false;
 };
 

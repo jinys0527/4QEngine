@@ -34,7 +34,7 @@ REGISTER_PROPERTY(UINumberSpriteComponent, MissTint)
 
 UINumberSpriteComponent::~UINumberSpriteComponent()
 {
-	if (m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
+	if (m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
 	{
 		m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
 	}
@@ -42,20 +42,9 @@ UINumberSpriteComponent::~UINumberSpriteComponent()
 
 void UINumberSpriteComponent::Start()
 {
-	if (auto* scene = GetScene())
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<UIManager>())
-		{
-			m_UIManager = &services.Get<UIManager>();
-		}
-	}
-
-	m_Dispatcher = &GetEventDispatcher();
-	m_Dispatcher->AddListener(EventType::CombatNumberPopup, this);
-
-	UpdatePopupPool();
-
+	m_RuntimeBindingsReady = false;
+	m_ListenerRegistered = false;
+	m_PopupPoolDirty = true;
 	m_ValueDirty = true;
 }
 
@@ -68,6 +57,13 @@ void UINumberSpriteComponent::Update(float deltaTime)
 	{
 		return;
 	}
+
+	if (!TryPrepareRuntimeBindings())
+	{
+		return;
+	}
+
+	TryInitializePopupPool();
 
 	TickPopups(deltaTime);
 
@@ -85,6 +81,11 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 	UIComponent::OnEvent(type, data);
 
 	if (!m_Enabled || !m_UseAsCombatPopup || type != EventType::CombatNumberPopup || !data)
+	{
+		return;
+	}
+
+	if (!TryPrepareRuntimeBindings())
 	{
 		return;
 	}
@@ -229,7 +230,7 @@ void UINumberSpriteComponent::SetUseAsCombatPopup(const bool& useAsPopup)
 void UINumberSpriteComponent::SetPopupObjectNames(std::vector<std::string> names)
 {
 	m_PopupObjectNames = std::move(names);
-	UpdatePopupPool();
+	m_PopupPoolDirty = true;
 }
 
 void UINumberSpriteComponent::SetPopupTrackActorId(const int& actorId)
@@ -401,6 +402,84 @@ void UINumberSpriteComponent::ApplyValue()
 	}
 }
 
+bool UINumberSpriteComponent::TryPrepareRuntimeBindings()
+{
+	if (m_RuntimeBindingsReady)
+	{
+		return true;
+	}
+
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* uiManager = GetUIManager();
+	if (!uiManager)
+	{
+		return false;
+	}
+
+	if (!ArePopupTargetsReady())
+	{
+		return false;
+	}
+
+	m_UIManager = uiManager;
+	m_Dispatcher = &GetEventDispatcher();
+	if (!m_ListenerRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::CombatNumberPopup, this);
+		m_ListenerRegistered = true;
+	}
+
+	m_RuntimeBindingsReady = true;
+	m_PopupPoolDirty = true;
+	return true;
+}
+
+bool UINumberSpriteComponent::ArePopupTargetsReady() const
+{
+	if (m_PopupObjectNames.empty())
+	{
+		return true;
+	}
+
+	for (const auto& name : m_PopupObjectNames)
+	{
+		if (name.empty())
+		{
+			continue;
+		}
+
+		if (!FindUIObject(name))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void UINumberSpriteComponent::TryInitializePopupPool()
+{
+	if (!m_PopupPoolDirty)
+	{
+		return;
+	}
+
+	auto* uiManager = GetUIManager();
+	if (!uiManager)
+	{
+		return;
+	}
+
+	UpdatePopupPool();
+	m_PopupPoolDirty = false;
+}
+
+
 void UINumberSpriteComponent::UpdatePopupPool()
 {
 	m_PopupStates.clear();
@@ -465,10 +544,7 @@ void UINumberSpriteComponent::TickPopups(float deltaTime)
 
 void UINumberSpriteComponent::ShowPopup(int value, const DirectX::XMFLOAT4& tint)
 {
-	if (m_PopupStates.empty())
-	{
-		UpdatePopupPool();
-	}
+	TryInitializePopupPool();
 
 	auto pick = std::find_if(m_PopupStates.begin(), m_PopupStates.end(), [](const PopupState& state) { return !state.active; });
 	if (pick == m_PopupStates.end() && !m_PopupStates.empty())

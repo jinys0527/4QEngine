@@ -89,6 +89,9 @@ private:
 	void       UpdatePopupPool();
 	void       TickPopups(float deltaTime);
 	void       ShowPopup(int value, const DirectX::XMFLOAT4& tint);
+	void       TryInitializePopupPool();
+	bool       TryPrepareRuntimeBindings();
+	bool       ArePopupTargetsReady() const;
 
 	int  m_Value = 0;
 	bool m_Enabled = true;
@@ -113,7 +116,10 @@ private:
 	DirectX::XMFLOAT4 m_DealTint{ 1.0f, 0.9f, 0.25f, 1.0f };
 	DirectX::XMFLOAT4 m_MissTint{ 0.75f, 0.75f, 0.75f, 1.0f };
 	std::vector<PopupState> m_PopupStates;
+	bool m_PopupPoolDirty = true;
 	std::vector<UIRect>     m_BaseDigitBounds;
 	EventDispatcher*        m_Dispatcher = nullptr;
+	bool m_RuntimeBindingsReady = false;
+	bool m_ListenerRegistered = false;
 };
 

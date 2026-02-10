@@ -2,6 +2,7 @@
 #include "UIComponent.h"
 #include "UIDicePanelTypes.h"
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class UIManager;
@@ -43,17 +44,23 @@ public:
 private:
 	UIObject* FindUIObject(const std::string& name) const;
 	void ApplySlot(UIObject& object, const UIDicePanelSlot& slot) const;
+	bool TryPrepareRuntimeBindings();
 	bool CanApplySlotsImmediately() const;
 	void ApplySlotsImmediate() const;
 	void ResetActiveSlotValues() const;
+	std::string ResolveSlotDiceType(const UIDicePanelSlot& slot) const;
+	bool ShouldShowSlot(const UIDicePanelSlot& slot) const;
 
 	std::vector<UIDicePanelSlot> m_Slots;
 	std::string m_ActiveDiceType;
 	std::string m_PendingDiceType;
+	std::unordered_map<std::string, std::string> m_ContextDiceTypes;
 	bool m_Enabled = true;
 	bool m_AutoVisibility = true;
 	bool m_ApplyDecisionD20OnRequest = true;
 	bool m_BindingsDirty = true;
 	EventDispatcher* m_Dispatcher = nullptr;
+	bool m_RuntimeBindingsReady = false;
+	bool m_ListenersRegistered = false;
 };
 
