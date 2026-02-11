@@ -261,7 +261,14 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 {
-	m_RenderContext.LightCBuffer.blurOn = 1;
+	if (frame.currScene == 0 || frame.currScene == 3)
+	{
+		m_RenderContext.LightCBuffer.blurOn = 0;
+	}
+	else
+	{
+		m_RenderContext.LightCBuffer.blurOn = 1;
+	}
 
 	if (!frame.lights.empty())
 	{
