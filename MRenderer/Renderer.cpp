@@ -136,7 +136,7 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 
 	}
 
-	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	filename = L"../MRenderer/fx/SunSet.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT, 
@@ -149,7 +149,7 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 	}
 
 	//HDRISET
-	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	filename = L"../MRenderer/fx/BlueStudio.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
@@ -161,7 +161,7 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 
 	}
 	//HDRISET
-	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	filename = L"../MRenderer/fx/BlueStudio.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
@@ -293,7 +293,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	filename = L"../MRenderer/fx/provence_studio.dds";			//★★★★★★★★★★★★★★★★★★★★★★
+	filename = L"../MRenderer/fx/SunSet.dds";			//★★★★★★★★★★★★★★★★★★★★★★
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT, 
@@ -316,7 +316,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	}
 
 	//HDRISET
-	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	filename = L"../MRenderer/fx/BlueStudio.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
@@ -328,7 +328,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 	//HDRISET
-	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	filename = L"../MRenderer/fx/BlueStudio.dds";
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
 		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
