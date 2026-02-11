@@ -309,7 +309,11 @@ void UINumberSpriteComponent::SetValue(const int& value)
 
 	m_Value = value;
 	m_ValueDirty = true;
-	RefreshVisuals();
+
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
 }
 
 void UINumberSpriteComponent::SetLeadingZero(const bool& leadingZero)

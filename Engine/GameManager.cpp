@@ -79,6 +79,10 @@ void GameManager::SetServices(ServiceRegistry* services)
 void GameManager::SetActiveScene(Scene* scene)
 {
 	m_ActiveScene = scene;
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->SetActiveScene(scene);
+	}
 	if (m_WaitingForFloorScene && m_ActiveScene)
 	{
 		RefreshGridSystem();

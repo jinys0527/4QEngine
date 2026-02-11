@@ -670,7 +670,9 @@ void UIFSMComponent::Start()
 	FSMComponent::Start();
 
 	m_HasTurnEndRequestAction = GraphHasAction(GetGraph(), "UI_RequestTurnEnd");
-
+	m_PendingDiceStatRollRequest = false;
+	m_PendingDiceStatResolved = false;
+	m_ActiveDiceAnimationCount = 0;
 
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
 	GetEventDispatcher().AddListener(EventType::UIHovered, this);
@@ -711,6 +713,36 @@ void UIFSMComponent::Start()
 			: std::string("Player_TurnEnd");
 
 		HandleEventByName(turnEvent, nullptr);
+	}
+}
+
+void UIFSMComponent::Update(float deltaTime)
+{
+	FSMComponent::Update(deltaTime);
+
+	// 안전장치: 어떤 이유로 마지막 PlayerDiceAnimationCompleted가 누락돼도
+	// pending 상태가 남아 버튼/전이가 막히지 않도록 업데이트 단계에서 복구한다.
+	if (!m_PendingDiceStatResolved)
+	{
+		return;
+	}
+
+	if (m_ActiveDiceAnimationCount > 0)
+	{
+		return;
+	}
+
+	if (GetCurrentStateName() != "StatRolling")
+	{
+		m_PendingDiceStatResolved = false;
+		return;
+	}
+
+	m_PendingDiceStatResolved = false;
+	HandleEventByName("Player_DiceStatResolved", nullptr);
+	if (GetCurrentStateName() == "StatResolved")
+	{
+		HandleEventByName("Player_DiceAnimationCompleted", nullptr);
 	}
 }
 
@@ -755,9 +787,77 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 	{
 		m_PendingDiceStatRollRequest = true;
 	}
+	else if (type == EventType::PlayerDiceDecisionResult)
+	{
+		// 일부 UI FSM 데이터는 DecisionReady 상태에서
+		// DecisionResult를 먼저 받거나, DecisionReady->Rolling 전이를
+		// Player_DiceDecisionRequested에만 걸어둔다.
+		// (예: DicisionRolling 전이만 존재하는 구형 데이터)
+		// 이 경우 흐름이 멈추지 않도록 보조 이벤트를 재발행한다.
+		if (GetCurrentStateName() == "DecisionReady")
+		{
+			HandleEventByName("Player_DiceDecisionRequested", nullptr);
+			HandleEventByName("Player_DiceRollRequested", nullptr);
+		}
+	}
 	else if (type == EventType::PlayerDiceUIReset || type == EventType::PlayerDiceUIClose)
 	{
 		m_PendingDiceStatRollRequest = false;
+		m_PendingDiceStatResolved = false;
+		m_ActiveDiceAnimationCount = 0;
+	}
+
+	if (type == EventType::PlayerDiceStatResolved && m_ActiveDiceAnimationCount > 0)
+	{
+		// StatResolved가 롤링 애니메이션 종료 전에 들어오면
+		// 마지막 애니메이션만 보이는 것처럼 보일 수 있어
+		// 남은 애니메이션 종료 후 전이를 지연 처리한다.
+		m_PendingDiceStatResolved = true;
+		return;
+	}
+
+	if (type == EventType::PlayerDiceAnimationStarted)
+	{
+		++m_ActiveDiceAnimationCount;
+	}
+	else if (type == EventType::PlayerDiceAnimationCompleted)
+	{
+		if (m_ActiveDiceAnimationCount > 0)
+		{
+			--m_ActiveDiceAnimationCount;
+			if (m_ActiveDiceAnimationCount > 0)
+			{
+				return;
+			}
+		}
+
+		if (m_PendingDiceStatResolved)
+		{
+			m_PendingDiceStatResolved = false;
+			HandleEventByName("Player_DiceStatResolved", nullptr);
+
+			// 마지막 완료 이벤트를 StatResolved 전이에 소비하면
+			// StatResolved -> StatDone( Player_DiceAnimationCompleted )이
+			// 더 이상 들어오지 않아 버튼이 비활성으로 멈출 수 있다.
+			// 방금 완료 이벤트를 동일 프레임에 다시 전달해 후속 전이를 보장한다.
+			if (GetCurrentStateName() == "StatResolved")
+			{
+				HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+			}
+			return;
+		}
+	}
+
+	if (m_PendingDiceStatResolved
+		&& m_ActiveDiceAnimationCount <= 0
+		&& GetCurrentStateName() == "StatRolling")
+	{
+		m_PendingDiceStatResolved = false;
+		HandleEventByName("Player_DiceStatResolved", nullptr);
+		if (GetCurrentStateName() == "StatResolved")
+		{
+			HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+		}
 	}
 
 	if (type == EventType::PlayerDiceUIOpen
@@ -791,6 +891,10 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		|| currentStateName == "Hidden")
 	{
 		m_PendingDiceStatRollRequest = false;
+		if (currentStateName != "StatRolling")
+		{
+			m_PendingDiceStatResolved = false;
+		}
 	}
 }
 

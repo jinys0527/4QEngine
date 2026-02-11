@@ -7,6 +7,10 @@
 #include "LogSystem.h"
 #include "EventDispatcher.h"
 #include "CombatEvents.h"
+#include "GameObject.h"
+#include "PlayerStatComponent.h"
+#include "PlayerComponent.h"
+#include "Scene.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -14,6 +18,25 @@
 
 namespace
 {
+	GameObject* FindPlayerObjectFromScene(Scene* scene)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (object && object->GetComponent<PlayerComponent>())
+			{
+				return object.get();
+			}
+		}
+
+		return nullptr;
+	}
+
 	DiceConfig BuildStatConfigFromDecisionD20(const int decisionD20)
 	{
 		if (decisionD20 <= 5)
@@ -463,6 +486,30 @@ void CombatManager::HandlePlayerDiceStatRollRequested()
 	const int selectedTotal = m_PlayerStatRollTotalsHistory[static_cast<size_t>(selectedHistoryIndex)];
 	m_PlayerInitiativeTotal = selectedTotal + m_PlayerInitiativeDiceBonus;
 	m_PlayerDecisionReady = true;
+
+	if (auto* playerObject = FindPlayerObjectFromScene(m_ActiveScene))
+	{
+		if (auto* playerStat = playerObject->GetComponent<PlayerStatComponent>())
+		{
+			const int strengthTotal = m_PlayerStatRollTotalsHistory.size() > 0
+				? m_PlayerStatRollTotalsHistory[0]
+				: playerStat->GetStrength();
+			const int agilityTotal = m_PlayerStatRollTotalsHistory.size() > 1
+				? m_PlayerStatRollTotalsHistory[1]
+				: playerStat->GetAgility();
+			const int senseTotal = m_PlayerStatRollTotalsHistory.size() > 2
+				? m_PlayerStatRollTotalsHistory[2]
+				: playerStat->GetSense();
+
+			playerStat->SetStrength(strengthTotal);
+			playerStat->SetAgility(agilityTotal);
+			playerStat->SetSense(senseTotal);
+
+			std::cout << "[Combat] Apply dice totals -> STR=" << strengthTotal
+				<< " AGI=" << agilityTotal
+				<< " SEN=" << senseTotal << std::endl;
+		}
+	}
 
 	std::cout << "[Combat] Stat roll groups=" << decisionFaces.size()
 		<< " selectedIndex=" << selectedHistoryIndex

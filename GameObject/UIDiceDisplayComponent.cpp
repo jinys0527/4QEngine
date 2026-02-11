@@ -120,7 +120,7 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::PlayerDiceUIReset)
 	{
-		std::cout << "[UIDiceDisplay] reset context=" << m_DiceContext << " -> value=0" << std::endl;
+		//std::cout << "[UIDiceDisplay] reset context=" << m_DiceContext << " -> value=0" << std::endl;
 		SetValue(0);
 		return;
 	}
@@ -184,9 +184,9 @@ void UIDiceDisplayComponent::OnEvent(EventType type, const void* data)
 		}
 	}
 
-	std::cout << "[UIDiceDisplay] apply context=" << payload->context
-		<< " value=" << payload->value
-		<< " diceType=" << m_DiceType << std::endl;
+// 	std::cout << "[UIDiceDisplay] apply context=" << payload->context
+// 		<< " value=" << payload->value
+// 		<< " diceType=" << m_DiceType << std::endl;
 
 	ApplyDiceEvent(*payload);
 }
@@ -770,9 +770,9 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 
 	if (historyIndex < 0 || historyIndex >= static_cast<int>(payload.facesHistory.size()))
 	{
-		std::cout << "[UIDiceDisplay] skip stat history context=" << m_DiceContext
-			<< " historyIndex=" << historyIndex
-			<< " historyCount=" << payload.facesHistory.size() << std::endl;
+// 		std::cout << "[UIDiceDisplay] skip stat history context=" << m_DiceContext
+// 			<< " historyIndex=" << historyIndex
+// 			<< " historyCount=" << payload.facesHistory.size() << std::endl;
 		return;
 	}
 
@@ -817,20 +817,20 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 				? payload.totalsHistory[static_cast<size_t>(i)]
 				: 0;
 			historyIndex = i;
-			std::cout << "[UIDiceDisplay] remap compatible history context=" << m_DiceContext
-				<< " historyIndex=" << historyIndex
-				<< " expectedCount=" << expectedFacesCount
-				<< " expectedSides=" << expectedSides << std::endl;
+// 			std::cout << "[UIDiceDisplay] remap compatible history context=" << m_DiceContext
+// 				<< " historyIndex=" << historyIndex
+// 				<< " expectedCount=" << expectedFacesCount
+// 				<< " expectedSides=" << expectedSides << std::endl;
 			break;
 		}
 	}
 
 	if (!isFacesCompatible(*chosenFaces) && !payload.faces.empty())
 	{
-		std::cout << "[UIDiceDisplay] fallback selected faces context=" << m_DiceContext
-			<< " historyIndex=" << historyIndex
-			<< " selectedCount=" << payload.faces.size()
-			<< " selectedSides=" << payload.diceSides << std::endl;
+// 		std::cout << "[UIDiceDisplay] fallback selected faces context=" << m_DiceContext
+// 			<< " historyIndex=" << historyIndex
+// 			<< " selectedCount=" << payload.faces.size()
+// 			<< " selectedSides=" << payload.diceSides << std::endl;
 		chosenFaces = &payload.faces;
 		chosenTotal = payload.total;
 	}
@@ -838,13 +838,13 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 	const auto& rollFaces = *chosenFaces;
 	const int rollTotal = chosenTotal;
 
-	std::cout << "[UIDiceDisplay] apply stat history context=" << m_DiceContext
-		<< " historyIndex=" << historyIndex
-		<< " faceIndex=" << faceIndex
-		<< " rollIndex=" << m_RollIndex
-		<< " useRollFaces=" << m_UseRollFaces
-		<< " facesCount=" << rollFaces.size()
-		<< " rollTotal=" << rollTotal << std::endl;
+// 	std::cout << "[UIDiceDisplay] apply stat history context=" << m_DiceContext
+// 		<< " historyIndex=" << historyIndex
+// 		<< " faceIndex=" << faceIndex
+// 		<< " rollIndex=" << m_RollIndex
+// 		<< " useRollFaces=" << m_UseRollFaces
+// 		<< " facesCount=" << rollFaces.size()
+// 		<< " rollTotal=" << rollTotal << std::endl;
 
 
 	if (m_UseRollFaces)
@@ -855,10 +855,10 @@ void UIDiceDisplayComponent::ApplyDiceStatResolvedEvent(const Events::DiceStatRe
 		}
 		else
 		{
-			std::cout << "[UIDiceDisplay] skip face apply context=" << m_DiceContext
-				<< " faceIndex=" << faceIndex
-				<< " facesCount=" << rollFaces.size() << std::endl;
-			SetValue(0);
+// 			std::cout << "[UIDiceDisplay] skip face apply context=" << m_DiceContext
+// 				<< " faceIndex=" << faceIndex
+// 				<< " facesCount=" << rollFaces.size() << std::endl;
+ 			SetValue(0);
 		}
 	}
 	else
