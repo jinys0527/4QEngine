@@ -16,6 +16,7 @@
 #include "CombatManager.h"
 #include <algorithm>
 #include "GameManager.h"
+#include "SoundManager.h"
 #include <cmath>
 #include "CombatResolver.h"
 #include "DiceSystem.h"
@@ -488,6 +489,11 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 				{
 					const int nextHp = max(0, prevHp - result.damage);
 					enemyStat->SetCurrentHP(nextHp);
+
+					if (services.Has<SoundManager>()) {
+						services.Get<SoundManager>().SFX_Shot(L"Damage_Enemy");
+					}
+
 					std::cout << "[Combat] Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
 					if (enemyStat->IsDead() && m_CombatManager)
 					{

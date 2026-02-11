@@ -9,6 +9,7 @@
 #include "EnemyComponent.h"
 #include "ServiceRegistry.h"
 #include "GameManager.h"
+#include "SoundManager.h"
 #include "CombatManager.h"
 #include <algorithm>
 #include <cmath>
@@ -634,6 +635,17 @@ bool EnemyMovementComponent::MoveToNode(const AxialKey& previous, const AxialKey
 		m_GridSystem->UpdateActorNodeState(previous, current, NodeState::HasEnemy);
 	}
 	enemy->SetQR(current.q, current.r);
+	//Sound
+	auto* scene = owner->GetScene();
+	if (scene)
+	{
+		auto& services = scene->GetServices();
+		if (services.Has<SoundManager>())
+		{
+			services.Get<SoundManager>().SFX_Shot(L"Move_Player");
+		}
+	}
+
 	return true;
 }
 

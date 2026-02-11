@@ -118,7 +118,10 @@ extern "C" {
 	void Link_PlayerVisualPresetComponent();
 	void Link_BoatComponent();
 	void Link_BoatEndComponent();
+	void Link_VendingComponent();
+	void Link_ExitComponent();
 	void Link_WaterRiseComponent();
+
 }
 
 
@@ -198,5 +201,7 @@ void LinkEngineComponents() {
 	Link_PlayerVisualPresetComponent();
 	Link_BoatComponent();
 	Link_BoatEndComponent();
+	Link_VendingComponent();
+	Link_ExitComponent();
 	Link_WaterRiseComponent();
 }

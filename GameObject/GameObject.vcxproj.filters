@@ -211,6 +211,12 @@
     <ClCompile Include="BoatEndComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VendingComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExitComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="WaterRiseComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
@@ -442,6 +448,12 @@
     </ClInclude>
     <ClInclude Include="BoatEndComponent.h">
       <Filter>Components\Default\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VendingComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExitComponent.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WaterRiseComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>

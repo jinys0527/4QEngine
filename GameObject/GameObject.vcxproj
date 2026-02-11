@@ -326,6 +326,7 @@
     <ClInclude Include="EnemyControllerComponent.h" />
     <ClInclude Include="EnemyMovementComponent.h" />
     <ClInclude Include="EnemyStatComponent.h" />
+    <ClInclude Include="ExitComponent.h" />
     <ClInclude Include="FloodSystemComponent.h" />
     <ClInclude Include="FloodUIComponent.h" />
     <ClInclude Include="GridSystemComponent.h" />
@@ -387,6 +388,7 @@
     <ClInclude Include="UIProgressBarComponent.h" />
     <ClInclude Include="UISliderComponent.h" />
     <ClInclude Include="UITextComponent.h" />
+    <ClInclude Include="VendingComponent.h" />
     <ClInclude Include="WaterRiseComponent.h" />
   </ItemGroup>
   <ItemGroup>
@@ -411,6 +413,7 @@
     <ClCompile Include="EnemyControllerComponent.cpp" />
     <ClCompile Include="EnemyMovementComponent.cpp" />
     <ClCompile Include="EnemyStatComponent.cpp" />
+    <ClCompile Include="ExitComponent.cpp" />
     <ClCompile Include="FloodSystemComponent.cpp" />
     <ClCompile Include="FloodUIComponent.cpp" />
     <ClCompile Include="GridSystemComponent.cpp" />
@@ -467,6 +470,7 @@
     <ClCompile Include="UIProgressBarComponent.cpp" />
     <ClCompile Include="UISliderComponent.cpp" />
     <ClCompile Include="UITextComponent.cpp" />
+    <ClCompile Include="VendingComponent.cpp" />
     <ClCompile Include="WaterRiseComponent.cpp" />
   </ItemGroup>
   <ItemGroup>

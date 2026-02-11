@@ -9,7 +9,7 @@ class AnimationComponent;
 class DoorComponent : public Component, public IEventListener
 {
 public:
-	static constexpr const char* StaticTypeName = "EnemyComponent";
+	static constexpr const char* StaticTypeName = "DoorComponent";
 	const char* GetTypeName() const override;
 
 	DoorComponent();
