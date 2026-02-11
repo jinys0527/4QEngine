@@ -253,6 +253,26 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_RequestCloseMenu",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestGoToTitle",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestSceneChange",
+		"UI",
+		{
+			{"scene", "string", "", true}
+		}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestShopClose",
 		"UI",
 		{}
@@ -306,6 +326,9 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "UI_Dragged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Clicked", "UI" });
 	eventRegistry.RegisterEvent({ "UI_DoubleClicked", "UI" });
+	eventRegistry.RegisterEvent({ "UI_EscapePressed", "UI" });
+	eventRegistry.RegisterEvent({ "UI_CloseRequested", "UI" });
+	eventRegistry.RegisterEvent({ "UI_GoToTitleRequested", "UI" });
 	eventRegistry.RegisterEvent({ "UI_SliderValueChanged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_ProgressChanged", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "UI" });
@@ -545,6 +568,39 @@ UIFSMComponent::UIFSMComponent()
 			}
 		});
 
+	BindActionHandler("UI_RequestCloseMenu", [this](const FSMAction&)
+		{
+			GetEventDispatcher().Dispatch(EventType::UICloseRequested, nullptr);
+			DispatchEvent("UI_CloseRequested");
+		});
+
+	BindActionHandler("UI_RequestGoToTitle", [this](const FSMAction&)
+		{
+			Events::SceneChangeRequest request;
+			request.name = "Title";
+			GetEventDispatcher().Dispatch(EventType::SceneChangeRequested, &request);
+			GetEventDispatcher().Dispatch(EventType::UIGoToTitleRequested, nullptr);
+			DispatchEvent("UI_GoToTitleRequested");
+		});
+
+	BindActionHandler("UI_RequestSceneChange", [this](const FSMAction& action)
+		{
+			const std::string sceneName = action.params.value("scene", "");
+			if (sceneName.empty())
+			{
+				return;
+			}
+
+			Events::SceneChangeRequest request;
+			request.name = sceneName;
+			GetEventDispatcher().Dispatch(EventType::SceneChangeRequested, &request);
+			if (sceneName == "Title")
+			{
+				GetEventDispatcher().Dispatch(EventType::UIGoToTitleRequested, nullptr);
+				DispatchEvent("UI_GoToTitleRequested");
+			}
+		});
+
 	BindActionHandler("UI_RequestShopClose", [this](const FSMAction& action)
 		{
 			GetEventDispatcher().Dispatch(EventType::PlayerShopClose, nullptr);
@@ -613,6 +669,12 @@ UIFSMComponent::~UIFSMComponent()
 {
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
 		GetEventDispatcher().RemoveListener(EventType::Pressed, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::KeyDown))
+		GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UICloseRequested))
+		GetEventDispatcher().RemoveListener(EventType::UICloseRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIGoToTitleRequested))
+		GetEventDispatcher().RemoveListener(EventType::UIGoToTitleRequested, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
 		GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Released))
@@ -681,6 +743,9 @@ void UIFSMComponent::Start()
 	m_ActiveDiceAnimationCount = 0;
 
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
+	GetEventDispatcher().AddListener(EventType::KeyDown, this);
+	GetEventDispatcher().AddListener(EventType::UICloseRequested, this);
+	GetEventDispatcher().AddListener(EventType::UIGoToTitleRequested, this);
 	GetEventDispatcher().AddListener(EventType::UIHovered, this);
 	GetEventDispatcher().AddListener(EventType::Released, this);
 	GetEventDispatcher().AddListener(EventType::UIDragged, this);
@@ -1040,6 +1105,19 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("UI_Dragged");
 	case EventType::UIDoubleClicked:
 		return std::string("UI_DoubleClicked");
+	case EventType::UICloseRequested:
+		return std::string("UI_CloseRequested");
+	case EventType::UIGoToTitleRequested:
+		return std::string("UI_GoToTitleRequested");
+	case EventType::KeyDown:
+	{
+		const auto* keyData = static_cast<const Events::KeyEvent*>(data);
+		if (!keyData || keyData->key != VK_ESCAPE)
+		{
+			return std::nullopt;
+		}
+		return std::string("UI_EscapePressed");
+	}
 	case EventType::TurnChanged:
 	{
 		if (!data)

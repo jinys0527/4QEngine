@@ -24,6 +24,9 @@ enum class EventType
 	UIHovered,
 	UIDragged,
 	UIDoubleClicked,
+	UICloseRequested,
+	UIGoToTitleRequested,
+
 
 	//Combat
 	CombatEnter,
