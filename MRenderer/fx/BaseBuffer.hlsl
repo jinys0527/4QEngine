@@ -125,7 +125,7 @@ struct VSOutput_PUVW
 struct VSOutput_Shadow
 {
     float4 pos : SV_POSITION;
-    float4 uvshadow : TEXCOORD0;
+    float2 uv : TEXCOORD0;
 };
 
 //벽 테스트
@@ -192,6 +192,7 @@ Texture2D g_Roughness           : register(t14);
 Texture2D g_AO                  : register(t15);
 Texture2D g_Emissive            : register(t16);
 Texture2D g_Env                 : register(t17);
+Texture2D g_Terrain             : register(t18);
 
 Texture2D g_UI_01               : register(t21);
 Texture2D g_UI_02               : register(t22);

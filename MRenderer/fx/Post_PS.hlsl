@@ -73,11 +73,11 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
     float2 uvW = WarpTopExpand(i.uv, warpAmount, warpPower);
     uvW = saturate(uvW); // 범위 밖 방지
-    uvW = i.uv;
+    //uvW = i.uv;
 // ====== 워프된 UV로 샘플링 ======
     float4 RTView = g_RTView.Sample(smpClamp, uvW);
 
-       
+    RTView.rgb = SRGBToLinear(RTView.rgb);
 // 2D 방향 노이즈
 
     float DepthMap = g_DepthMap.Sample(smpClamp, uvW).r;
@@ -117,6 +117,12 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 Blur3 = g_BlurHalf3.Sample(smpClamp, uvW);
     float4 Blur4 = g_BlurHalf4.Sample(smpClamp, uvW);
     
+    Blur1.rgb  = SRGBToLinear(Blur1.rgb);
+    Blur2.rgb  = SRGBToLinear(Blur2.rgb);
+    Blur3.rgb  = SRGBToLinear(Blur3.rgb);
+    Blur4.rgb  = SRGBToLinear(Blur4.rgb);
+    
+    
     //float diff = (viewZ - camParams.z) / camParams.w;
     //if (diff > 0)
     //    return float4(1, 0, 0, 1); // 타겟보다 뒤에 있으면 빨간색
@@ -124,21 +130,19 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     //    return float4(0, 1, 0, 1);
     
     float4 blurCombined =
-            Blur1 * 0.2f
-            + Blur2 * 0.3f
-            + Blur3 * 0.3f
-            + Blur4 * 0.2f;
+            Blur1 * 0.5f
+            + Blur2 * 0.2f
+            + Blur3 * 0.2f
+            + Blur4 * 0.1f;
     
-
+    
     float4 dofColor = lerp(RTView, blurCombined, coc);
-
 // CoC가 클수록 radial 영향 증가
     float radialWeight = saturate(coc * 1.2);
 
 
     float4 finalBlur = lerp(dofColor, radialBlur, radialWeight);
-     
-    
+         
     
     // ================= Emissive Core Mask =================
   
@@ -179,8 +183,8 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     //emissive.rgb *= 1.5;
 
     //return finalBlur + emissive;
-    //float4 scene = finalBlur + emissive;
-    float4 scene = RTView;
+    float4 scene = finalBlur + emissive;
+    //float4 scene = RTView;
     
     scene.rgb = ToneMap_ACES(scene.rgb);
     
@@ -195,7 +199,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     scene.rgb = AdjustContrast_Luma(scene.rgb, contrast);
     
     
-    
+    scene.rgb = LinearToSRGB(scene.rgb);
     
     scene.a = 1.0f;
     return scene;

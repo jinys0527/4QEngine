@@ -5,6 +5,7 @@
 #include "Event.h"
 #include "Scene.h"
 #include "GameObject.h"
+#include "SoundManager.h"
 #include "PlayerComponent.h"
 #include "PlayerStatComponent.h"
 #include "PlayerFSMComponent.h"
@@ -1377,6 +1378,9 @@ void GameManager::ResolveEnemyAttack(int actorId)
 	{
 		const int nextHp = std::max(0, prevHp - result.damage);
 		playerStat->SetCurrentHP(nextHp);
+		
+		m_Services->Get<SoundManager>().SFX_Shot(L"Damage_Player");
+
 		std::cout << "[Combat] Player HP: " << prevHp << " -> " << nextHp << std::endl;
 
 		if (m_EventDispatcher)

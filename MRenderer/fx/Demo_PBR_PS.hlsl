@@ -112,7 +112,7 @@ float4 PS_Main(VSOutput_PBR input) : SV_Target
 // Fake Specular Light (강화 버전)
 
 
-    float3 fakeL_ws = normalize(float3(0.3f, 0.6f, 0.7f));
+    float3 fakeL_ws = normalize(float3(0.3f, 0.6f, -0.7f));
     float3 fakeL = normalize(mul(fakeL_ws, (float3x3) mView));
 
     float ndotl_fake = saturate(dot(eN, fakeL));
