@@ -36,9 +36,9 @@ bool GameApplication::Initialize()
 
 	// Scene별 곡 등록
 	// 별도 등록하지 않으면 직전 Scene의 BGM 계속 Loop
-	m_SceneBGMMap.emplace("Title", L"Renai");
-	/*m_SceneBGMMap.emplace("Stage1_Test", L"Renai");
-	m_SceneBGMMap.emplace("Stage2_Test", L"Main");*/
+	m_SceneBGMMap.emplace("Title", L"Title");
+	m_SceneBGMMap.emplace("Stage1_Test", L"Renai");
+	m_SceneBGMMap.emplace("Stage2_Test", L"Title");
 	//m_SceneBGMMap.emplace("Stage1", L"GameBGM");
 
 

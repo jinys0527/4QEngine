@@ -16,6 +16,8 @@ class GameObject;
 class InputManager;
 class AssetLoader;
 class SoundManager;
+enum class Phase;
+
 
 class GameApplication : public NzWndBase
 {
@@ -37,7 +39,7 @@ private:
 	void UpdateLogic();
 	void Update();
 	void ApplySceneBGM();
-
+	bool IsCombatPhase(Phase phase) const;
 	void Render();
 	
 	void OnResize(int width, int height) override;
@@ -63,7 +65,11 @@ private:
 	std::wstring m_InitialBGMName = L"Renai";
 	float m_InitialBGMFadeTime = 1.0f;
 	float m_SceneChangeBGMFadeTime = 1.0f;
+	std::wstring m_CombatBGMName = L"Combat";
+	float m_CombatBGMFadeTime = 0.5f;
 	std::unordered_map<std::string, std::wstring> m_SceneBGMMap;
 	std::string m_LastSceneName;
+	std::wstring m_LastSceneBGMName;
+	bool m_IsCombatBGMPlaying = false;
 };
 
