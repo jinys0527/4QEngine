@@ -114,6 +114,11 @@ public:
 	// 16: Player agility modifier
 	// 17: Player sense modifier
 	// 18: Player skill modifier
+	// 19: Player equipment health bonus
+	// 20: Player equipment strength bonus
+	// 21: Player equipment agility bonus
+	// 22: Player equipment sense bonus
+	// 23: Player equipment skill bonus
 
 	void RefreshVisuals();
 

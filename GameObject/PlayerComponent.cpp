@@ -1411,13 +1411,18 @@ void PlayerComponent::Update(float deltaTime) {
 			int idefense = itemcomponent->GetDEF();
 			int irange = itemcomponent->GetMeleeAttackRange();
 
-			playerstatcomponent->SetHealth(health + ihealth);
-			playerstatcomponent->SetStrength(strength + istrength);
-			playerstatcomponent->SetAgility(agility + iagility);
-			playerstatcomponent->SetSense(sense + isense);
-			playerstatcomponent->SetSkill(skill + iskill);
+			playerstatcomponent->SetHealth(health);
+			playerstatcomponent->SetStrength(strength);
+			playerstatcomponent->SetAgility(agility);
+			playerstatcomponent->SetSense(sense);
+			playerstatcomponent->SetSkill(skill);
 			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
 			playerstatcomponent->SetRange(static_cast<int>(irange));
+			playerstatcomponent->SetEquipmentHealthBonus(ihealth);
+			playerstatcomponent->SetEquipmentStrengthBonus(istrength);
+			playerstatcomponent->SetEquipmentAgilityBonus(iagility);
+			playerstatcomponent->SetEquipmentSenseBonus(isense);
+			playerstatcomponent->SetEquipmentSkillBonus(iskill);
 
 			m_IsApplyMeleeStat = true;
 		}

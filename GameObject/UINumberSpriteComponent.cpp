@@ -301,14 +301,20 @@ void UINumberSpriteComponent::SetPositiveSignObjectName(const std::string& name)
 {
 	m_PositiveSignObjectName = name;
 	m_ValueDirty = true;
-	RefreshVisuals();
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
 }
 
 void UINumberSpriteComponent::SetNegativeSignObjectName(const std::string& name)
 {
 	m_NegativeSignObjectName = name;
 	m_ValueDirty = true;
-	RefreshVisuals();
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
 }
 
 void UINumberSpriteComponent::SetAutoValueSource(const int& source)
@@ -316,6 +322,13 @@ void UINumberSpriteComponent::SetAutoValueSource(const int& source)
 	m_AutoValueSource = source;
 	m_RuntimeBindingsReady = false;
 	m_ValueDirty = true;
+
+	auto* owner = GetOwner();
+	if (!owner)
+	{
+		RefreshVisuals();
+		return;
+	}
 
 	m_Dispatcher = &GetEventDispatcher();
 	if (m_Dispatcher && m_Dispatcher->IsAlive())
@@ -764,6 +777,66 @@ bool UINumberSpriteComponent::TryUpdateValueFromAutoSource()
 		}
 		break;
 	}
+	case 19: // Player equipment health bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetEquipmentHealthBonus();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 20: // Player equipment strength bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetEquipmentStrengthBonus();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 21: // Player equipment agility bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetEquipmentAgilityBonus();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 22: // Player equipment sense bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetEquipmentSenseBonus();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 23: // Player equipment skill bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetEquipmentSkillBonus();
+				valid = true;
+			}
+		}
+		break;
+	}
 	default:
 		break;
 	}
@@ -1044,7 +1117,7 @@ void UINumberSpriteComponent::ApplySignObjectVisibility()
 	{
 		if (auto* positive = FindUIObject(m_PositiveSignObjectName))
 		{
-			positive->SetIsVisibleFromComponent(m_Value > 0);
+			positive->SetIsVisibleFromComponent(m_Value >= 0);
 		}
 	}
 

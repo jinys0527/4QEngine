@@ -97,6 +97,11 @@ namespace Events
 		int agility = 0;
 		int sense = 0;
 		int skill = 0;
+		int equipmentHealthBonus = 0;
+		int equipmentStrengthBonus = 0;
+		int equipmentAgilityBonus = 0;
+		int equipmentSenseBonus = 0;
+		int equipmentSkillBonus = 0;
 		int equipmentDefenseBonus = 0;
 		int defense = 0;
 	};
