@@ -314,7 +314,15 @@ bool InputManager::OnHandleMessage(const MSG& msg)
 		m_PendingWheelDelta += GET_WHEEL_DELTA_WPARAM(msg.wParam);
 	}
 	break;
-
+	case WM_KILLFOCUS:
+	case WM_ACTIVATEAPP:
+	{
+		if (msg.message == WM_KILLFOCUS || msg.wParam == FALSE)
+		{
+			ResetState();
+		}
+	}
+	break;
 	default:
 		return false; // Unhandled message
 	}
