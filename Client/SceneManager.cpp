@@ -24,9 +24,9 @@ void SceneManager::Initialize()
 	{
 		m_GameManager->SetServices(&m_Services);
 		DataSheetPaths dataPaths{};
-		dataPaths.itemsPath = "Data/items.csv";
+		dataPaths.itemsPath = "../Resources/CSV/ItemDataTable.csv";
 		dataPaths.enemiesPath = "Data/enemies.csv";
-		dataPaths.dropTablesPath = "Data/drop_tables.csv";
+		dataPaths.dropTablesPath = "../Resources/CSV/DropTable.csv";
 		m_GameManager->SetDataSheetPaths(dataPaths);
 		m_GameManager->SetFloorSceneNames({ "Stage1 ", "Stage2_Test ", "Stage3 ", "Ending " });
 	}

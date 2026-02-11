@@ -603,15 +603,15 @@ namespace
 				const char* fileName = nullptr;
 				if (containsToken("boss_"))
 				{
-					fileName = "top_boss.png";
+					fileName = "enemyStatus_frameBoss.png";
 				}
 				else if (containsToken("e2_"))
 				{
-					fileName = "top_e02.png";
+					fileName = "enemyStatus_frame100002Simhyung.png";
 				}
 				else if (containsToken("e1_"))
 				{
-					fileName = "top_e01.png";
+					fileName = "enemyStatus_frame100001Umjinsik.png";
 				}
 
 				if (!fileName)
@@ -2947,7 +2947,10 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	bool shouldRemovePickedObject = false;
 	if (isGoldBar)
 	{
-		m_Money += max(0, item->GetPrice());
+		const int gainedGold = max(0, item->GetPrice());
+		m_Money += gainedGold;
+		const Events::GoldAcquiredEvent goldEvent{ gainedGold, m_Money };
+		GetEventDispatcher().Dispatch(EventType::GoldAcquired, &goldEvent);
 		shouldRemovePickedObject = true;
 	}
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT)

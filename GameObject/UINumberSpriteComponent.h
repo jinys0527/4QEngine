@@ -32,9 +32,6 @@ public:
 	void		SetLeadingZero(const bool& leadingZero);
 	const bool& GetLeadingZero() const { return m_LeadingZero; }
 
-	void SetDigitObjectNames(std::vector<std::string> names);
-	const std::vector<std::string>& GetDigitObjectNames() const { return m_DigitObjectNames; }
-
 	void SetDigitTextureHandle(int digit, const TextureHandle& handle);
 	const TextureHandle& GetDigitTextureHandle(int digit) const;
 	void SetDigitTextures(const std::array<TextureHandle, 10>& textures);
@@ -50,6 +47,11 @@ public:
 	const int& GetFixedDigitCount() const { return m_FixedDigitCount; }
 	void SetDigitTintColor(const DirectX::XMFLOAT4& color);
 	const DirectX::XMFLOAT4& GetDigitTintColor() const { return m_DigitTintColor; }
+
+	void SetAutoValueSource(const int& source);
+	const int& GetAutoValueSource() const { return m_AutoValueSource; }
+	void SetAutoValueActorId(const int& actorId);
+	const int& GetAutoValueActorId() const { return m_AutoValueActorId; }
 
 	void SetUseAsCombatPopup(const bool& useAsPopup);
 	const bool& GetUseAsCombatPopup() const { return m_UseAsCombatPopup; }
@@ -69,9 +71,10 @@ public:
 	const DirectX::XMFLOAT4& GetHealTint() const { return m_HealTint; }
 	void SetDealTint(const DirectX::XMFLOAT4& color);
 	const DirectX::XMFLOAT4& GetDealTint() const { return m_DealTint; }
-	void SetMissTint(const DirectX::XMFLOAT4& color);
-	const DirectX::XMFLOAT4& GetMissTint() const { return m_MissTint; }
-
+	void SetCriticalTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetCriticalTint() const { return m_CriticalTint; }
+	void SetGoldTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetGoldTint() const { return m_GoldTint; }
 
 	void RefreshVisuals();
 
@@ -85,6 +88,7 @@ private:
 	};
 
 	UIObject*  FindUIObject(const std::string& name) const;
+	bool       EnsureDigitTargetsResolved();
 	void       ApplyValue();
 	void       UpdatePopupPool();
 	void       TickPopups(float deltaTime);
@@ -92,34 +96,38 @@ private:
 	void       TryInitializePopupPool();
 	bool       TryPrepareRuntimeBindings();
 	bool       ArePopupTargetsReady() const;
+	bool       TryUpdateValueFromAutoSource();
 
-	int  m_Value = 0;
-	bool m_Enabled = true;
-	bool m_LeadingZero = false;
-	bool m_ValueDirty = true;
-	std::vector<std::string>	  m_DigitObjectNames;
+	int   m_Value = 0;
+	bool  m_Enabled = true;
+	bool  m_LeadingZero = false;
+	bool  m_ValueDirty = true;
+	std::vector<UIObject*>        m_DigitTargets;
 	std::array<TextureHandle, 10> m_DigitTextures{};
 	float m_DigitSpacing = 0.0f;
 	std::vector<UIAnchor> m_DigitOffsets;
 	std::array<float, 10> m_PerDigitAdvance{};
-	int m_FixedDigitCount = 0;
+	int   m_FixedDigitCount = 0;
 	DirectX::XMFLOAT4 m_DigitTintColor{ 1, 1, 1, 1 };
+	int m_AutoValueSource = 0;
+	int m_AutoValueActorId = 0;
 
-	bool m_UseAsCombatPopup = false;
+	bool  m_UseAsCombatPopup = false;
 	std::vector<std::string> m_PopupObjectNames;
-	int m_PopupTrackActorId = 0;
+	int   m_PopupTrackActorId = 0;
 	float m_PopupRiseDistance = 40.0f;
 	float m_PopupLifetime = 0.6f;
 	float m_PopupFadeOutTime = 0.25f;
-	DirectX::XMFLOAT4 m_DamageTint{ 1.0f, 0.3f, 0.3f, 1.0f };
-	DirectX::XMFLOAT4 m_HealTint{ 0.3f, 1.0f, 0.3f, 1.0f };
-	DirectX::XMFLOAT4 m_DealTint{ 1.0f, 0.9f, 0.25f, 1.0f };
-	DirectX::XMFLOAT4 m_MissTint{ 0.75f, 0.75f, 0.75f, 1.0f };
+	DirectX::XMFLOAT4 m_DamageTint  { 1.0f,  0.3f,  0.3f,  1.0f };
+	DirectX::XMFLOAT4 m_HealTint    { 0.3f,  1.0f,  0.3f,  1.0f };
+	DirectX::XMFLOAT4 m_DealTint    { 1.0f,  0.9f,  0.25f, 1.0f };
+	DirectX::XMFLOAT4 m_CriticalTint{ 0.75f, 0.75f, 0.75f, 1.0f };
+	DirectX::XMFLOAT4 m_GoldTint	{ 1.0f,  0.85f, 0.2f,  1.0f };
 	std::vector<PopupState> m_PopupStates;
-	bool m_PopupPoolDirty = true;
+	bool  m_PopupPoolDirty = true;
 	std::vector<UIRect>     m_BaseDigitBounds;
 	EventDispatcher*        m_Dispatcher = nullptr;
-	bool m_RuntimeBindingsReady = false;
-	bool m_ListenerRegistered = false;
+	bool  m_RuntimeBindingsReady = false;
+	bool  m_ListenerRegistered = false;
 };
 

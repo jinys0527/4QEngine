@@ -81,5 +81,12 @@ namespace Events
 		int targetActorId = 0;
 		int hpDelta = 0;
 		bool isMiss = false;
+		bool isCritical = false;
+	};
+
+	struct GoldAcquiredEvent
+	{
+		int amount = 0;
+		int total = 0;
 	};
 }

@@ -91,10 +91,12 @@ enum class EventType
 	PlayerDiceTypeDetermined,
 	PlayerDiceStatResolved,
 	PlayerDiceAnimationStarted,
+	PlayerDiceAnimationCompleted,
 	PlayerDiceContinueRequested,
 
 	DiceRolled,
 	CombatNumberPopup,
+	GoldAcquired,
 
 	//Enemy
 	EnemyAttack,

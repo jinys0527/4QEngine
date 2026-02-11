@@ -14,6 +14,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     
     tex.rgb = LinearToSRGB(tex.rgb);
     tex.a = tint.a * alpha;
+    clip(tex.a < 0.001f ? -1 : 1);
     
     return tex;
 }

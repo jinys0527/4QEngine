@@ -58,6 +58,7 @@ private:
 	bool m_Enabled = true;
 	bool m_AutoVisibility = true;
 	bool m_ApplyDecisionD20OnRequest = true;
+	bool m_StatRollRequested = false;
 	bool m_BindingsDirty = true;
 	EventDispatcher* m_Dispatcher = nullptr;
 	bool m_RuntimeBindingsReady = false;

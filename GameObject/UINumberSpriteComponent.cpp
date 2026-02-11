@@ -7,6 +7,11 @@
 #include "UIManager.h"
 #include "UIObject.h"
 #include "UIImageComponent.h"
+#include "PlayerComponent.h"
+#include "EnemyComponent.h"
+#include "PlayerStatComponent.h"
+#include "EnemyStatComponent.h"
+#include "GameManager.h"
 #include <algorithm>
 #include <cmath>
 
@@ -14,13 +19,14 @@ REGISTER_UI_COMPONENT(UINumberSpriteComponent)
 REGISTER_PROPERTY(UINumberSpriteComponent, Enabled)
 REGISTER_PROPERTY(UINumberSpriteComponent, Value)
 REGISTER_PROPERTY(UINumberSpriteComponent, LeadingZero)
-REGISTER_PROPERTY(UINumberSpriteComponent, DigitObjectNames)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitTextures)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitSpacing)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitOffsets)
 REGISTER_PROPERTY(UINumberSpriteComponent, PerDigitAdvance)
 REGISTER_PROPERTY(UINumberSpriteComponent, FixedDigitCount)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitTintColor)
+REGISTER_PROPERTY(UINumberSpriteComponent, AutoValueSource)
+REGISTER_PROPERTY(UINumberSpriteComponent, AutoValueActorId)
 REGISTER_PROPERTY(UINumberSpriteComponent, UseAsCombatPopup)
 REGISTER_PROPERTY(UINumberSpriteComponent, PopupObjectNames)
 REGISTER_PROPERTY(UINumberSpriteComponent, PopupTrackActorId)
@@ -30,13 +36,21 @@ REGISTER_PROPERTY(UINumberSpriteComponent, PopupFadeOutTime)
 REGISTER_PROPERTY(UINumberSpriteComponent, DamageTint)
 REGISTER_PROPERTY(UINumberSpriteComponent, HealTint)
 REGISTER_PROPERTY(UINumberSpriteComponent, DealTint)
-REGISTER_PROPERTY(UINumberSpriteComponent, MissTint)
+REGISTER_PROPERTY(UINumberSpriteComponent, CriticalTint)
+REGISTER_PROPERTY(UINumberSpriteComponent, GoldTint)
 
 UINumberSpriteComponent::~UINumberSpriteComponent()
 {
-	if (m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
+	if (m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive())
 	{
-		m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
+		if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
+		{
+			m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
+		}
+		if (m_Dispatcher->FindListeners(EventType::GoldAcquired))
+		{
+			m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
+		}
 	}
 }
 
@@ -46,6 +60,8 @@ void UINumberSpriteComponent::Start()
 	m_ListenerRegistered = false;
 	m_PopupPoolDirty = true;
 	m_ValueDirty = true;
+	m_DigitTargets.clear();
+	m_BaseDigitBounds.clear();
 }
 
 void UINumberSpriteComponent::Update(float deltaTime)
@@ -63,9 +79,14 @@ void UINumberSpriteComponent::Update(float deltaTime)
 		return;
 	}
 
+	if (m_DigitTargets.empty())
+	{
+		EnsureDigitTargetsResolved();
+	}
 	TryInitializePopupPool();
 
 	TickPopups(deltaTime);
+	TryUpdateValueFromAutoSource();
 
 	if (!m_ValueDirty)
 	{
@@ -80,12 +101,22 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 {
 	UIComponent::OnEvent(type, data);
 
-	if (!m_Enabled || !m_UseAsCombatPopup || type != EventType::CombatNumberPopup || !data)
+	if (!m_Enabled)
 	{
 		return;
 	}
 
-	if (!TryPrepareRuntimeBindings())
+	if (m_UseAsCombatPopup && type == EventType::GoldAcquired && data)
+	{
+		const auto* payload = static_cast<const Events::GoldAcquiredEvent*>(data);
+		if (payload && payload->amount > 0)
+		{
+			ShowPopup(payload->amount, m_GoldTint);
+		}
+		return;
+	}
+
+	if (!m_UseAsCombatPopup || type != EventType::CombatNumberPopup || !data)
 	{
 		return;
 	}
@@ -108,9 +139,9 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 	}
 
 	DirectX::XMFLOAT4 tint = m_DamageTint;
-	if (payload->isMiss)
+	if (payload->isCritical)
 	{
-		tint = m_MissTint;
+		tint = m_CriticalTint;
 	}
 	else if (payload->hpDelta > 0)
 	{
@@ -155,13 +186,6 @@ void UINumberSpriteComponent::SetLeadingZero(const bool& leadingZero)
 	}
 
 	m_LeadingZero = leadingZero;
-	m_ValueDirty = true;
-}
-
-void UINumberSpriteComponent::SetDigitObjectNames(std::vector<std::string> names)
-{
-	m_DigitObjectNames = std::move(names);
-	m_BaseDigitBounds.clear();
 	m_ValueDirty = true;
 }
 
@@ -222,6 +246,18 @@ void UINumberSpriteComponent::SetDigitTintColor(const DirectX::XMFLOAT4& color)
 	m_ValueDirty = true;
 }
 
+void UINumberSpriteComponent::SetAutoValueSource(const int& source)
+{
+	m_AutoValueSource = source;
+	m_ValueDirty = true;
+}
+
+void UINumberSpriteComponent::SetAutoValueActorId(const int& actorId)
+{
+	m_AutoValueActorId = actorId;
+	m_ValueDirty = true;
+}
+
 void UINumberSpriteComponent::SetUseAsCombatPopup(const bool& useAsPopup)
 {
 	m_UseAsCombatPopup = useAsPopup;
@@ -268,11 +304,15 @@ void UINumberSpriteComponent::SetDealTint(const DirectX::XMFLOAT4& color)
 	m_DealTint = color;
 }
 
-void UINumberSpriteComponent::SetMissTint(const DirectX::XMFLOAT4& color)
+void UINumberSpriteComponent::SetCriticalTint(const DirectX::XMFLOAT4& color)
 {
-	m_MissTint = color;
+	m_CriticalTint = color;
 }
 
+void UINumberSpriteComponent::SetGoldTint(const DirectX::XMFLOAT4& color)
+{
+	m_GoldTint = color;
+}
 
 void UINumberSpriteComponent::RefreshVisuals()
 {
@@ -317,19 +357,219 @@ UIObject* UINumberSpriteComponent::FindUIObject(const std::string& name) const
 	return nullptr;
 }
 
+bool UINumberSpriteComponent::TryUpdateValueFromAutoSource()
+{
+	if (m_AutoValueSource == 0)
+	{
+		return false;
+	}
+
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto resolvePlayer = [scene]() -> PlayerComponent*
+		{
+			for (const auto& [name, object] : scene->GetGameObjects())
+			{
+				(void)name;
+				if (!object)
+				{
+					continue;
+				}
+				if (auto* player = object->GetComponent<PlayerComponent>())
+				{
+					return player;
+				}
+			}
+			return nullptr;
+		};
+
+	auto resolveEnemyStat = [scene, this]() -> EnemyStatComponent*
+		{
+			if (m_AutoValueActorId == 0)
+			{
+				return nullptr;
+			}
+			for (const auto& [name, object] : scene->GetGameObjects())
+			{
+				(void)name;
+				if (!object)
+				{
+					continue;
+				}
+				auto* enemy = object->GetComponent<EnemyComponent>();
+				if (!enemy || enemy->GetActorId() != m_AutoValueActorId)
+				{
+					continue;
+				}
+				return object->GetComponent<EnemyStatComponent>();
+			}
+			return nullptr;
+		};
+
+	int nextValue = m_Value;
+	bool valid = false;
+	switch (m_AutoValueSource)
+	{
+	case 1: // Player current HP
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCurrentHP();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 2: // Player max HP
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				int floor = 1;
+				if (scene->GetServices().Has<GameManager>())
+				{
+					floor = scene->GetServices().Get<GameManager>().GetCurrentFloor();
+				}
+				nextValue = stat->GetMaxHealthForFloor((std::max)(1, floor));
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 3: // Enemy current HP
+	{
+		if (auto* stat = resolveEnemyStat())
+		{
+			nextValue = stat->GetCurrentHP();
+			valid = true;
+		}
+		break;
+	}
+	case 4: // Enemy max HP
+	{
+		if (auto* stat = resolveEnemyStat())
+		{
+			nextValue = stat->GetInitialHP();
+			valid = true;
+		}
+		break;
+	}
+	case 5: // Player gold
+	{
+		if (auto* player = resolvePlayer())
+		{
+			nextValue = player->GetMoney();
+			valid = true;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	if (!valid)
+	{
+		return false;
+	}
+
+	SetValue(nextValue);
+	return true;
+}
+
+bool UINumberSpriteComponent::EnsureDigitTargetsResolved()
+{
+	std::vector<UIObject*> resolvedTargets;
+
+	auto* owner = dynamic_cast<UIObject*>(GetOwner());
+	auto* scene = GetScene();
+	auto* uiManager = GetUIManager();
+	if (!owner || !scene || !uiManager)
+	{
+		return !m_DigitTargets.empty();
+	}
+
+	const std::string& ownerName = owner->GetName();
+	if (ownerName.empty())
+	{
+		return !m_DigitTargets.empty();
+	}
+
+	auto& allScenes = uiManager->GetUIObjects();
+	auto sceneIt = allScenes.find(scene->GetName());
+	if (sceneIt == allScenes.end())
+	{
+		return !m_DigitTargets.empty();
+	}
+
+	auto& sceneObjects = sceneIt->second;
+	std::vector<std::pair<std::string, UIObject*>> candidates;
+	candidates.reserve(sceneObjects.size());
+	for (const auto& [name, object] : sceneObjects)
+	{
+		if (!object || object->GetParentName() != ownerName)
+		{
+			continue;
+		}
+
+		auto* target = object.get();
+		if (!target->GetComponent<UIImageComponent>())
+		{
+			continue;
+		}
+
+		candidates.emplace_back(name, target);
+	}
+
+	std::sort(candidates.begin(), candidates.end(),
+		[](const auto& lhs, const auto& rhs)
+		{
+			const int lhsZ = lhs.second ? lhs.second->GetZOrder() : 0;
+			const int rhsZ = rhs.second ? rhs.second->GetZOrder() : 0;
+			if (lhsZ != rhsZ)
+			{
+				return lhsZ < rhsZ;
+			}
+
+			return lhs.first < rhs.first;
+		});
+
+	resolvedTargets.reserve(candidates.size());
+	for (const auto& [name, target] : candidates)
+	{
+		(void)name;
+		resolvedTargets.push_back(target);
+	}
+
+	if (m_DigitTargets != resolvedTargets)
+	{
+		m_DigitTargets = std::move(resolvedTargets);
+		m_BaseDigitBounds.clear();
+		m_ValueDirty = true;
+	}
+
+	return !m_DigitTargets.empty();
+}
+
 void UINumberSpriteComponent::ApplyValue()
 {
-	if (m_DigitObjectNames.empty())
+	if (m_DigitTargets.empty())
 	{
 		return;
 	}
 
-	if (m_BaseDigitBounds.size() != m_DigitObjectNames.size())
+	if (m_BaseDigitBounds.size() != m_DigitTargets.size())
 	{
-		m_BaseDigitBounds.resize(m_DigitObjectNames.size());
-		for (size_t i = 0; i < m_DigitObjectNames.size(); ++i)
+		m_BaseDigitBounds.resize(m_DigitTargets.size());
+		for (size_t i = 0; i < m_DigitTargets.size(); ++i)
 		{
-			auto* target = FindUIObject(m_DigitObjectNames[i]);
+			auto* target = m_DigitTargets[i];
 			if (target && target->HasBounds())
 			{
 				m_BaseDigitBounds[i] = target->GetBounds();
@@ -338,7 +578,7 @@ void UINumberSpriteComponent::ApplyValue()
 	}
 
 	std::string valueText = std::to_string(m_Value);
-	const int configuredDigits = (m_FixedDigitCount > 0) ? m_FixedDigitCount : static_cast<int>(m_DigitObjectNames.size());
+	const int configuredDigits = (m_FixedDigitCount > 0) ? m_FixedDigitCount : static_cast<int>(m_DigitTargets.size());
 	if (static_cast<int>(valueText.size()) < configuredDigits)
 	{
 		valueText = std::string(static_cast<size_t>(configuredDigits - valueText.size()), '0') + valueText;
@@ -346,19 +586,14 @@ void UINumberSpriteComponent::ApplyValue()
 
 
 	const int digitCount = static_cast<int>(valueText.size());
-	const int slotCount = static_cast<int>(m_DigitObjectNames.size());
+	const int slotCount = static_cast<int>(m_DigitTargets.size());
 	const int leadingSlots = max(0, slotCount - digitCount);
 	float accumulatedOffset = 0.0f;
 
 	for (int index = 0; index < slotCount; ++index)
 	{
-		const std::string& name = m_DigitObjectNames[static_cast<size_t>(index)];
-		if (name.empty())
-		{
-			continue;
-		}
+		auto* target = m_DigitTargets[static_cast<size_t>(index)];
 
-		auto* target = FindUIObject(name);
 		if (!target)
 		{
 			continue;
@@ -431,6 +666,7 @@ bool UINumberSpriteComponent::TryPrepareRuntimeBindings()
 	if (!m_ListenerRegistered)
 	{
 		m_Dispatcher->AddListener(EventType::CombatNumberPopup, this);
+		m_Dispatcher->AddListener(EventType::GoldAcquired, this);
 		m_ListenerRegistered = true;
 	}
 

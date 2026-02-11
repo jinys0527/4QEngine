@@ -7,6 +7,7 @@
 #include "UIObject.h"
 #include "UIDiceDisplayComponent.h"
 #include "UIDiceRollAnimationComponent.h"
+#include "UINumberSpriteComponent.h"
 
 REGISTER_UI_COMPONENT(UIDicePanelComponent)
 REGISTER_PROPERTY(UIDicePanelComponent, Enabled)
@@ -50,6 +51,55 @@ namespace
 	{
 		return !context.empty() && context.rfind("InitiativeDecisionRoll_", 0) == 0;
 	}
+
+	int ResolveDiceCountFromType(const std::string& diceType)
+	{
+		if (diceType == "D12")
+		{
+			return 2;
+		}
+		if (diceType == "D8")
+		{
+			return 3;
+		}
+		if (diceType == "D6")
+		{
+			return 4;
+		}
+		if (diceType == "D4")
+		{
+			return 6;
+		}
+
+		return 0;
+	}
+
+	int ResolveStatHistoryIndex(const std::string& context)
+	{
+		if (context.rfind("InitiativeStatRoll_", 0) != 0)
+		{
+			return -1;
+		}
+
+		const size_t underscore = context.find_last_of('_');
+		if (underscore == std::string::npos || underscore + 1 >= context.size())
+		{
+			return -1;
+		}
+
+		int value = 0;
+		for (size_t i = underscore + 1; i < context.size(); ++i)
+		{
+			const char c = context[i];
+			if (c < '0' || c > '9')
+			{
+				return -1;
+			}
+			value = value * 10 + (c - '0');
+		}
+
+		return value > 0 ? value - 1 : -1;
+	}
 }
 
 void UIDicePanelComponent::Start()
@@ -57,6 +107,7 @@ void UIDicePanelComponent::Start()
 	m_RuntimeBindingsReady = false;
 	m_ListenersRegistered = false;
 	m_BindingsDirty = true;
+	m_StatRollRequested = false;
 	m_ContextDiceTypes.clear();
 }
 
@@ -74,8 +125,21 @@ UIDicePanelComponent::~UIDicePanelComponent()
 	{
 		m_Dispatcher->RemoveListener(EventType::PlayerDiceTypeDetermined, this);
 	}
-	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceDecisionFaceRolled)) {
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceStatResolved))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceStatResolved, this);
+	}
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceDecisionFaceRolled)) 
+	{	
 		m_Dispatcher->RemoveListener(EventType::PlayerDiceDecisionFaceRolled, this);
+	}
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceUIReset))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceUIReset, this);
+	}
+	if (m_ListenersRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::PlayerDiceUIClose))
+	{
+		m_Dispatcher->RemoveListener(EventType::PlayerDiceUIClose, this);
 	}
 }
 
@@ -180,6 +244,7 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::PlayerDiceDecisionRequested)
 	{
+		m_StatRollRequested = false;
 		if (m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
 		{
 			SetActiveDiceType("D20");
@@ -189,6 +254,7 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 
 	if (type == EventType::PlayerDiceStatRollRequested)
 	{
+		m_StatRollRequested = true;
 		// decision 전용 패널은 pending 타입으로 전환.
 		if (hasDecisionContext() && !hasStatCandidateContext())
 		{
@@ -217,40 +283,124 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 			return;
 		}
 
-		if(!hasDecisionContext())
+		if (!hasDecisionContext() && !hasStatCandidateContext())
 		{
 			return;
 		}
 
-		// UI 슬롯 컨텍스트가 _1/_2/_3 중 하나만 구성되어 있어도
-		// 최종 선택 결과(selectedD20) 기준으로 다음 스탯 주사위 타입을 결정한다.
-		const int d20 = payload->selectedD20 > 0 ? payload->selectedD20 : payload->value;
-		int diceSides = 0;
-		if (d20 <= 5)
+		const auto resolveSidesFromD20 = [](int d20)
+			{
+				if (d20 <= 5)
+				{
+					return 12;
+				}
+				if (d20 <= 10)
+				{
+					return 8;
+				}
+				if (d20 <= 15)
+				{
+					return 6;
+				}
+				return 4;
+			};
+
+		// 선택 결과 기반 pending 타입(기존 흐름 유지)
+		const int selectedD20 = payload->selectedD20 > 0 ? payload->selectedD20 : payload->value;
+		m_PendingDiceType = "D" + std::to_string(resolveSidesFromD20(selectedD20));
+
+		// 개별 face 기준으로 각 컨텍스트(_1/_2/_3)의 스탯 타입을 즉시 반영
+		const int perFaceSides = resolveSidesFromD20(payload->value);
+		const std::string perFaceDiceType = "D" + std::to_string(perFaceSides);
+		if (!payload->context.empty())
 		{
-			diceSides = 12;
-		}
-		else if (d20 <= 10)
-		{
-			diceSides = 8;
-		}
-		else if (d20 <= 15)
-		{
-			diceSides = 6;
-		}
-		else
-		{
-			diceSides = 4;
+			m_ContextDiceTypes[payload->context] = perFaceDiceType;
+
+			const std::string statAlias = ResolveStatContextAlias(payload->context);
+			if (!statAlias.empty())
+			{
+				m_ContextDiceTypes[statAlias] = perFaceDiceType;
+			}
 		}
 
-		m_PendingDiceType = "D" + std::to_string(diceSides);
+		m_BindingsDirty = true;
+		if (m_RuntimeBindingsReady && CanApplySlotsImmediately())
+		{
+			ApplySlotsImmediate();
+		}
 
-		if (!m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
+		if (!m_StatRollRequested && !m_ApplyDecisionD20OnRequest && hasDecisionContext() && m_ActiveDiceType != "D20")
 		{
 			SetActiveDiceType("D20");
 		}
 		return;
 	}
+
+	if (type == EventType::PlayerDiceUIReset || type == EventType::PlayerDiceUIClose)
+	{
+		m_StatRollRequested = false;
+		for (const auto& slot : m_Slots)
+		{
+			if (slot.objectName.empty())
+			{
+				continue;
+			}
+
+			auto* target = FindUIObject(slot.objectName);
+			if (!target)
+			{
+				continue;
+			}
+
+			if (auto* number = target->GetComponent<UINumberSpriteComponent>())
+			{
+				number->SetValue(0);
+			}
+		}
+		return;
+	}
+
+	if (type == EventType::PlayerDiceStatResolved)
+	{
+		const auto* payload = static_cast<const Events::DiceStatResolvedEvent*>(data);
+		if (!payload)
+		{
+			return;
+		}
+
+		for (const auto& slot : m_Slots)
+		{
+			const int historyIndex = ResolveStatHistoryIndex(slot.diceContext);
+			if (historyIndex < 0 || historyIndex >= static_cast<int>(payload->totalsHistory.size()))
+			{
+				continue;
+			}
+
+			if (slot.objectName.empty())
+			{
+				continue;
+			}
+
+			auto* target = FindUIObject(slot.objectName);
+			if (!target)
+			{
+				continue;
+			}
+
+			if (auto* number = target->GetComponent<UINumberSpriteComponent>())
+			{
+				number->SetValue(payload->totalsHistory[static_cast<size_t>(historyIndex)]);
+			}
+		}
+
+		m_BindingsDirty = true;
+		if (m_RuntimeBindingsReady && CanApplySlotsImmediately())
+		{
+			ApplySlotsImmediate();
+		}
+		return;
+	}
+
 
 	if (type != EventType::PlayerDiceTypeDetermined)
 	{
@@ -326,6 +476,10 @@ bool UIDicePanelComponent::TryPrepareRuntimeBindings()
 		m_Dispatcher->AddListener(EventType::PlayerDiceStatRollRequested, this);
 		m_Dispatcher->AddListener(EventType::PlayerDiceTypeDetermined, this);
 		m_Dispatcher->AddListener(EventType::PlayerDiceDecisionFaceRolled, this);
+		m_Dispatcher->AddListener(EventType::PlayerDiceStatResolved, this);
+		m_Dispatcher->AddListener(EventType::PlayerDiceDecisionFaceRolled, this);
+		m_Dispatcher->AddListener(EventType::PlayerDiceUIReset, this);
+		m_Dispatcher->AddListener(EventType::PlayerDiceUIClose, this);
 		m_ListenersRegistered = true;
 	}
 
@@ -561,9 +715,18 @@ std::string UIDicePanelComponent::ResolveSlotDiceType(const UIDicePanelSlot& slo
 bool UIDicePanelComponent::ShouldShowSlot(const UIDicePanelSlot& slot) const
 {
 	const std::string resolvedDiceType = ResolveSlotDiceType(slot);
+	const int resolvedDiceCount = ResolveDiceCountFromType(resolvedDiceType);
 	const bool isStatSlot = IsStatContext(slot.diceContext)
 		|| (IsDecisionContext(slot.diceContext) && slot.diceType != "D20");
 	const bool isDecisionD20Slot = IsDecisionContext(slot.diceContext) && slot.diceType == "D20";
+
+	if (slot.requiredDiceCount > 0)
+	{
+		if (resolvedDiceCount <= 0 || resolvedDiceCount != slot.requiredDiceCount)
+		{
+			return false;
+		}
+	}
 
 	if (m_ActiveDiceType.empty())
 	{

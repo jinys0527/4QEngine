@@ -77,6 +77,10 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 	{
 		RestoreBounds();
 		m_Animating = false;
+		if (m_Dispatcher)
+		{
+			m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationCompleted, nullptr);
+		}
 	}
 }
 
@@ -262,6 +266,10 @@ void UIDiceRollAnimationComponent::BeginAnimation()
 	m_DelayTimer = GetRandomDelay();
 	m_Waiting = true;
 	m_Animating = false;
+	if (m_Dispatcher)
+	{
+		m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationStarted, nullptr);
+	}
 }
 
 void UIDiceRollAnimationComponent::CacheBounds()

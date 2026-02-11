@@ -564,6 +564,7 @@ struct Serializer<UIDicePanelSlot> {
 		j["objectName"] = v.objectName;
 		j["diceType"] = v.diceType;
 		j["diceContext"] = v.diceContext;
+		j["requiredDiceCount"] = v.requiredDiceCount;
 		j["applyAnimation"] = v.applyAnimation;
 	}
 
@@ -574,6 +575,8 @@ struct Serializer<UIDicePanelSlot> {
 			j.at("diceType").get_to(v.diceType);
 		if (j.contains("diceContext"))
 			j.at("diceContext").get_to(v.diceContext);
+		if (j.contains("requiredDiceCount"))
+			j.at("requiredDiceCount").get_to(v.requiredDiceCount);
 		if (j.contains("applyAnimation"))
 			j.at("applyAnimation").get_to(v.applyAnimation);
 	}

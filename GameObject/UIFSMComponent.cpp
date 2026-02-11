@@ -330,6 +330,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_DiceTypeDetermined", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceStatResolved", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceAnimationStarted", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DiceAnimationCompleted", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceContinueRequested", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
@@ -658,6 +659,8 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatResolved, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationStarted))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationStarted, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationCompleted))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceContinueRequested))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceContinueRequested, this);
 }
@@ -694,6 +697,7 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::PlayerDiceTypeDetermined, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceStatResolved, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationStarted, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationCompleted, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceContinueRequested, this);
 
 	auto* owner = GetOwner();
@@ -745,6 +749,16 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 	{
 		return;
 	}
+		
+
+	if (type == EventType::PlayerDiceStatRollRequested)
+	{
+		m_PendingDiceStatRollRequest = true;
+	}
+	else if (type == EventType::PlayerDiceUIReset || type == EventType::PlayerDiceUIClose)
+	{
+		m_PendingDiceStatRollRequest = false;
+	}
 
 	if (type == EventType::PlayerDiceUIOpen
 		|| type == EventType::PlayerDiceUIReset
@@ -761,6 +775,23 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 	}
 
 	HandleEventByName(*eventName, data);
+
+	// Dice UI recovery: if stat-roll request arrived too early (before root reached
+	// DecisionDone), re-dispatch once root is ready so flow can proceed to StatRolling.
+	if (m_PendingDiceStatRollRequest && GetCurrentStateName() == "DecisionDone")
+	{
+		HandleEventByName("Player_DiceStatRollRequested", nullptr);
+	}
+
+	const std::string& currentStateName = GetCurrentStateName();
+	if (currentStateName == "StatRolling"
+		|| currentStateName == "StatResolved"
+		|| currentStateName == "StatDone"
+		|| currentStateName == "ClosePending"
+		|| currentStateName == "Hidden")
+	{
+		m_PendingDiceStatRollRequest = false;
+	}
 }
 
 bool UIFSMComponent::ShouldHandleEvent(EventType type, const void* data)
@@ -879,6 +910,8 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("Player_DiceStatResolved");
 	case EventType::PlayerDiceAnimationStarted:
 		return std::string("Player_DiceAnimationStarted");
+	case EventType::PlayerDiceAnimationCompleted:
+		return std::string("Player_DiceAnimationCompleted");
 	case EventType::PlayerDiceContinueRequested:
 		return std::string("Player_DiceContinueRequested");
 	case EventType::Pressed:
