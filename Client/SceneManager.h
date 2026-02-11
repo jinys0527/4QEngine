@@ -50,10 +50,23 @@ public:
 	void OnEvent(EventType type, const void* data) override;
 
 private:
+	enum class SceneTransitionPhase
+	{
+		None,
+		FadeOut,
+		FadeIn,
+	};
+
 	ServiceRegistry& m_Services;
 	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames);
 	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
 	void RestoreSceneUI(const std::shared_ptr<Scene>& scene);
+	void StartSceneTransition(const std::string& name);
+	void UpdateSceneTransition(float deltaTime);
+	float GetTransitionOverlayY(float overlayHeight, float viewportHeight) const;
+	float GetTransitionOverlayHeight(float viewportWidth, float viewportHeight) const;
+	float GetTransitionOverlayRotation() const;
+	void ResolveTransitionTextureHandle();
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::unordered_map<std::string, nlohmann::json> m_SceneUIData;
@@ -67,5 +80,16 @@ private:
 	bool m_ShouldQuit = false;
 
 	std::string m_ChangeSceneName = "";
+	SceneTransitionPhase m_TransitionPhase = SceneTransitionPhase::None;
+	float m_TransitionTimer = 0.0f;
+	float m_FadeOutDuration = 0.25f;
+	float m_FadeInDuration = 0.75f;
+	float m_FadeOutStartOffsetY = 800.0f; // FadeOut 시작 Y 오프셋 (+면 더 아래에서 시작)
+	float m_FadeOutEndOffsetY = 1600.0f;   // FadeOut 종료 Y 오프셋 (+면 더 아래에서 종료)
+	float m_FadeInStartOffsetY = 0.0f; // FadeIn 시작 Y 오프셋 (+면 더 아래에서 시작)
+	float m_FadeInEndOffsetY = -800.0f;   // FadeIn 종료 Y 오프셋 (+면 덜 올라감)
+	TextureHandle m_TransitionTextureHandle = TextureHandle::Invalid();
+	bool m_TransitionTextureResolved = false;
+	bool m_SceneSwapPending = false;
 };
 
