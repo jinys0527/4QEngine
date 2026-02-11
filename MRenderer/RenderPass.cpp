@@ -209,26 +209,36 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 
 	//초점
-	XMVECTOR playerPos = XMLoadFloat3(&frame.playerPosition);
-	playerPos = XMVectorSetY(playerPos, XMVectorGetY(playerPos) + 1.8f);
-	XMMATRIX mWorld = XMMatrixTranslationFromVector(playerPos);
+	float focusY = frame.playerPosition.y + 1.8f;
+
+	// 카메라 위치 가져오기
+	XMFLOAT3 camPos = m_RenderContext.CameraCBuffer.camPos;
+
+	// 새로운 초점 위치 생성
+	XMVECTOR focusPos = XMVectorSet(
+		camPos.x,      // X → 카메라 기준
+		focusY,        // Y → 플레이어 기준
+		camPos.z,      // Z → 카메라 기준
+		1.0f
+	);
+
+	// 월드 행렬
+	XMMATRIX mWorld = XMMatrixTranslationFromVector(focusPos);
+
+	// VP
 	mVP = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mVP);
 	XMMATRIX WVP = mWorld * mVP;
 
-	XMVECTOR localPos = XMVectorSet(0.f, 1.8f, 0.f, 1.f);
+	// 로컬 기준점
+	XMVECTOR localPos = XMVectorSet(0.f, 0.f, 0.f, 1.f);
+
+	// 클립 좌표
 	XMVECTOR clipPos = XMVector4Transform(localPos, WVP);
 
 	XMFLOAT4 clip;
 	XMStoreFloat4(&clip, clipPos);
-	//if (clip.w <= 0.0f)							//방어 코드를 추가하자. // 카메라 뒤 → DoF 비활성화 or 무시
-	//{
-	//	m_RenderContext.enableDoF = false;
-	//	return;
-	//}
-	//else
-	//{
-	//	m_RenderContext.enableDoF = true;
-	//}
+
+	// NDC
 	float ndcX = clip.x / clip.w;
 	float ndcY = clip.y / clip.w;
 
@@ -236,12 +246,15 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 	float playerV = -ndcY * 0.5f + 0.5f;
 
 
+	// View Space Z 계산 (DoF 초점용)
 	XMMATRIX mView = XMLoadFloat4x4(&m_RenderContext.CameraCBuffer.mView);
 	XMMATRIX mWV = mWorld * mView;
+
 	XMVECTOR viewPos = XMVector3TransformCoord(localPos, mWV);
 	float focusZ = XMVectorGetZ(viewPos);
-	m_RenderContext.camParams.z = focusZ;
 
+	// 최종 초점 거리
+	m_RenderContext.camParams.z = focusZ;
 
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 }
