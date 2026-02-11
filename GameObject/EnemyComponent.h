@@ -50,6 +50,8 @@ public:
 	bool IsTargetVisible() const { return m_TargetVisible; }
 	const AnimationHandle& GetDeathAnimationHandle() const { return m_DeathAnimationHandle; }
 	void SetDeathAnimationHandle(const AnimationHandle& value);
+	const TextureHandle& GetHoverInfoTextureHandle() const { return m_HoverInfoTextureHandle; }
+	void SetHoverInfoTextureHandle(const TextureHandle& value) { m_HoverInfoTextureHandle = value; }
 	const AnimationRef& GetDeathAnimation() const { return m_DeathAnimation; }
 	void SetDeathAnimation(const AnimationRef& value) { m_DeathAnimation = value; }
 	const float& GetDeathAnimationBlendTime() const { return m_DeathAnimationBlendTime; }
@@ -91,6 +93,7 @@ private:
 	bool  m_PendingExploreEnd = false;
 	bool  m_ExploreMoveIssued = false;
 	AnimationHandle m_DeathAnimationHandle = AnimationHandle::Invalid();
+	TextureHandle m_HoverInfoTextureHandle = TextureHandle::Invalid();
 	AnimationRef m_DeathAnimation;
 	float m_DeathAnimationBlendTime = 0.15f;
 	bool m_UseDeathAnimationBlend = true;

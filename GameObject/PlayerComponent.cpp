@@ -627,6 +627,15 @@ namespace
 			return TextureHandle::Invalid();
 		}
 
+		if (auto* enemy = enemyObject->GetComponent<EnemyComponent>())
+		{
+			const TextureHandle& hoverInfoTexture = enemy->GetHoverInfoTextureHandle();
+			if (hoverInfoTexture.IsValid())
+			{
+				return hoverInfoTexture;
+			}
+		}
+
 		auto* scene = enemyObject->GetScene();
 		if (!scene)
 		{
