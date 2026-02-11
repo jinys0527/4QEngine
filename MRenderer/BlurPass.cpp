@@ -66,7 +66,7 @@ void BlurPass::Execute(const RenderData::FrameData& frame)
             0,
             m_RenderContext.pRTScene_BlurOriginMSAA.Get(),
             0,
-            DXGI_FORMAT_R8G8B8A8_UNORM);
+            DXGI_FORMAT_R16G16B16A16_FLOAT);
     }
 
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_BlurOrigin.GetAddressOf());
