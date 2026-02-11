@@ -7,6 +7,7 @@
 #include "Object.h"
 #include "Scene.h"
 #include "ServiceRegistry.h"
+#include "SoundManager.h"
 #include "DiceSystem.h"
 #include "Event.h"
 
@@ -119,6 +120,16 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 				{
 					playerFsm->DispatchEvent("Door_Complete");
 				}
+
+				auto* scene = owner->GetScene();
+				if (scene)
+				{
+					auto& services = scene->GetServices();
+					if (services.Has<SoundManager>())
+					{
+						services.Get<SoundManager>().SFX_Shot(L"Dice_Success");
+					}
+				}
 			}
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			//DispatchEvent("Door_Complete");
@@ -139,6 +150,16 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 				{
 					playerFsm->DispatchEvent("Door_Complete");
 				}
+
+				auto* scene = owner->GetScene();
+				if (scene)
+				{
+					auto& services = scene->GetServices();
+					if (services.Has<SoundManager>())
+					{
+						services.Get<SoundManager>().SFX_Shot(L"Dice_Fail");
+					}
+				}
 			}
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			//DispatchEvent("Door_Complete");
@@ -158,7 +179,9 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 				{
 					playerFsm->DispatchEvent("Door_Complete");
 				}
+
 			}
+
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			DispatchEvent("None");
 		});

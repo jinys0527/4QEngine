@@ -195,6 +195,55 @@ bool IsTargetVisibleOnHexLine(
 
 //-----------------------------------
 
+void EnemyComponent::SyncFacingFromTransform()
+{
+	auto* owner = GetOwner();
+	auto* transform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+	if (!transform)
+	{
+		return;
+	}
+
+	const XMFLOAT3 forward = transform->GetForward();
+	const XMFLOAT2 flatForward{ forward.x, forward.z };
+	const float flatLengthSq = flatForward.x * flatForward.x + flatForward.y * flatForward.y;
+	if (flatLengthSq <= 1e-6f)
+	{
+		return;
+	}
+
+	const float invLen = 1.0f / std::sqrt(flatLengthSq);
+	const XMFLOAT2 normalizedForward{ flatForward.x * invLen, flatForward.y * invLen };
+
+	constexpr std::array<std::pair<ERotationOffset, float>, 6> kYawCandidates{ {
+		{ ERotationOffset::clock_1, -150.0f },
+		{ ERotationOffset::clock_3, -90.0f },
+		{ ERotationOffset::clock_5, -30.0f },
+		{ ERotationOffset::clock_7, 30.0f },
+		{ ERotationOffset::clock_9, 90.0f },
+		{ ERotationOffset::clock_11, 150.0f }
+	} };
+
+	ERotationOffset bestFacing = m_Facing;
+	float bestDot = -std::numeric_limits<float>::infinity();
+
+	for (const auto& [candidateFacing, yawDeg] : kYawCandidates)
+	{
+		const float yawRad = XMConvertToRadians(yawDeg);
+		const XMFLOAT2 candidateForward{ std::sin(yawRad), std::cos(yawRad) };
+		const float dot = normalizedForward.x * candidateForward.x
+			+ normalizedForward.y * candidateForward.y;
+		if (dot > bestDot)
+		{
+			bestDot = dot;
+			bestFacing = candidateFacing;
+		}
+	}
+
+	m_Facing = bestFacing;
+}
+
+
 void EnemyComponent::RefreshSightDebugLines()
 {
 	if (!m_DebugSightLines)
@@ -306,6 +355,8 @@ void EnemyComponent::Update(float deltaTime) {
 
 	auto* scene = owner->GetScene();
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+	SyncFacingFromTransform();
 	
 	if (gameManager && gameManager->GetPhase() == Phase::GameOver)
 	{
@@ -708,6 +759,7 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 		{
 			m_ExploreTurnFinished = false;
 			m_ExploreDelayRemaining = 0.0f;
+			m_ExploreMoveIssued = false;
 		}
 	}
 
@@ -717,10 +769,12 @@ void EnemyComponent::OnEvent(EventType type, const void* data)
 		m_ExploreTurnFinished = false;
 		m_ExploreDelayRemaining = 0.0f;
 		m_MoveRequested = false;
+		m_ExploreMoveIssued = false;
 	}
 	else
 	{
 		m_MoveRequested = false;
+		m_ExploreMoveIssued = false;
 	}
 }
 

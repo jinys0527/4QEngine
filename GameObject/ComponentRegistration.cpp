@@ -113,6 +113,7 @@ extern "C" {
 	void Link_PlayerDoorFSMComponent();
 	void Link_ItemComponent();
 	void Link_CameraLogicComponent();
+	void Link_CameraLogicComponent2();
 	void Link_FloodSystemComponent();
 	void Link_FloodUIComponent();
 	void Link_PushNodeComponent();
@@ -199,6 +200,7 @@ void LinkEngineComponents() {
 	Link_PlayerDoorFSMComponent();
 	Link_ItemComponent();
 	Link_CameraLogicComponent();
+	Link_CameraLogicComponent2();
 	Link_FloodSystemComponent();
 	Link_FloodUIComponent();
 	Link_PushNodeComponent();

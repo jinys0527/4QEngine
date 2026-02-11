@@ -136,7 +136,7 @@ namespace
 		}
 		if (meshRenderer)
 		{
-			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::TransparentItems));
 			meshRenderer->SetVisible(true);
 		}
 

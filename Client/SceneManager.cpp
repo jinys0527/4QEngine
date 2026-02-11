@@ -13,6 +13,9 @@
 #include "CameraObject.h"
 #include "GameDataRepository.h"
 #include "InitiativeUIComponent.h"
+#include "AssetLoader.h"
+#include <cctype>
+#include <algorithm>
 
 void SceneManager::Initialize()
 {
@@ -28,7 +31,7 @@ void SceneManager::Initialize()
 		dataPaths.enemiesPath = "Data/enemies.csv";
 		dataPaths.dropTablesPath = "../Resources/CSV/DropTable.csv";
 		m_GameManager->SetDataSheetPaths(dataPaths);
-		m_GameManager->SetFloorSceneNames({ "Stage1 ", "Stage2_Test ", "Stage3 ", "Ending " });
+		m_GameManager->SetFloorSceneNames({ "Stage1 ", "Stage2_Test ", "Stage3 ", "Ending ", "PlayerTest"});
 	}
 	if (m_InputManager)
 	{
@@ -43,6 +46,8 @@ void SceneManager::Initialize()
 	LoadGameScenesFromDirectory(scenesPath,{
 
 		//"Title",
+		"Stage1",
+		"PlayerTest",
 		"Stage1_Test",
 		"Stage2_Test"
 		//"BossStage"
@@ -62,6 +67,8 @@ void SceneManager::Update(float deltaTime)
 
 	if (m_CurrentScene->GetIsPause())
 		deltaTime = 0.0f;
+
+	UpdateSceneTransition(deltaTime);
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
@@ -100,6 +107,11 @@ void SceneManager::Reset()
 	SetEventDispatcher(nullptr);
 	m_Scenes.clear();
 	m_CurrentScene.reset();
+	m_ChangeSceneName.clear();
+	m_TransitionPhase = SceneTransitionPhase::None;
+	m_TransitionTimer = 0.0f;
+	m_TransitionTextureHandle = TextureHandle::Invalid();
+	m_TransitionTextureResolved = false;
 }
 
 void SceneManager::Render(RenderData::FrameData& frameData)
@@ -115,6 +127,27 @@ void SceneManager::Render(RenderData::FrameData& frameData)
 		m_UIManager->BuildUIFrameData(frameData);
 	}
 
+	ResolveTransitionTextureHandle();
+
+	const float viewportWidth = static_cast<float>(frameData.context.gameCamera.width);
+	const float viewportHeight = static_cast<float>(frameData.context.gameCamera.height);
+	if (m_TransitionPhase != SceneTransitionPhase::None && viewportWidth > 0.0f && viewportHeight > 0.0f)
+	{
+		const float overlayHeight = GetTransitionOverlayHeight(viewportWidth, viewportHeight);
+		RenderData::UIElement overlay{};
+		overlay.position = { 0.0f, GetTransitionOverlayY(overlayHeight, viewportHeight) };
+		overlay.size = { viewportWidth, overlayHeight };
+		overlay.rotation = GetTransitionOverlayRotation();
+		overlay.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		overlay.opacity = 1.0f;
+		overlay.zOrder = 1000000;
+		if (m_TransitionTextureHandle.IsValid())
+		{
+			overlay.useMaterialOverrides = true;
+			overlay.materialOverrides.textureHandle = m_TransitionTextureHandle;
+		}
+		frameData.uiElements.push_back(overlay);
+	}
 }
 
 
@@ -260,14 +293,18 @@ void SceneManager::ChangeScene(const std::string& name)
 
 void SceneManager::ChangeScene()
 {
-	// 현재 이름과 다르면 Change 
-	if (m_ChangeSceneName.empty() || !m_CurrentScene || m_ChangeSceneName == m_CurrentScene->GetName()) {
+	if (m_ChangeSceneName.empty() || !m_CurrentScene)
+	{
 		return;
 	}
-	if (m_ChangeSceneName != m_CurrentScene->GetName()) {
-		ChangeScene(m_ChangeSceneName);
+
+	if (m_ChangeSceneName == m_CurrentScene->GetName())
+	{
 		m_ChangeSceneName.clear();
+		return;
 	}
+
+	StartSceneTransition(m_ChangeSceneName);
 }
 
 void SceneManager::SetChangeScene(const std::string& name)
@@ -312,7 +349,195 @@ void SceneManager::OnEvent(EventType type, const void* data)
 	ChangeScene();
 }
 
+void SceneManager::StartSceneTransition(const std::string& name)
+{
+	if (name.empty() || m_TransitionPhase != SceneTransitionPhase::None)
+	{
+		return;
+	}
 
+	m_ChangeSceneName = name;
+	m_TransitionPhase = SceneTransitionPhase::FadeOut;
+	m_TransitionTimer = 0.0f;
+	m_SceneSwapPending = false;
+}
+
+void SceneManager::UpdateSceneTransition(float deltaTime)
+{
+	if (m_TransitionPhase == SceneTransitionPhase::None)
+	{
+		return;
+	}
+
+	m_TransitionTimer += std::max(0.0f, deltaTime);
+
+	if (m_TransitionPhase == SceneTransitionPhase::FadeOut)
+	{
+		if (m_FadeOutDuration <= 0.0f)
+		{
+			std::string nextScene = m_ChangeSceneName;
+			m_TransitionPhase = SceneTransitionPhase::FadeIn;
+			m_TransitionTimer = 0.0f;
+			m_SceneSwapPending = false;
+			ChangeScene(nextScene);
+			m_ChangeSceneName.clear();
+			return;
+		}
+
+		if (m_SceneSwapPending)
+		{
+			std::string nextScene = m_ChangeSceneName;
+			m_TransitionPhase = SceneTransitionPhase::FadeIn;
+			m_TransitionTimer = 0.0f;
+			m_SceneSwapPending = false;
+			ChangeScene(nextScene);
+			m_ChangeSceneName.clear();
+			return;
+		}
+
+		if (m_TransitionTimer >= m_FadeOutDuration)
+		{
+			m_TransitionTimer = m_FadeOutDuration;
+			m_SceneSwapPending = true;
+		}
+		return;
+	}
+
+	if (m_TransitionPhase == SceneTransitionPhase::FadeIn)
+	{
+		if (m_TransitionTimer >= m_FadeInDuration)
+		{
+			m_TransitionPhase = SceneTransitionPhase::None;
+			m_TransitionTimer = 0.0f;
+		}
+	}
+}
+
+void SceneManager::ResolveTransitionTextureHandle()
+{
+	if (m_TransitionTextureResolved)
+	{
+		return;
+	}
+
+	m_TransitionTextureResolved = true;
+	m_TransitionTextureHandle = TextureHandle::Invalid();
+
+	auto equalsIgnoreCase = [](const std::string& a, const std::string& b)
+		{
+			if (a.size() != b.size())
+			{
+				return false;
+			}
+			for (size_t i = 0; i < a.size(); ++i)
+			{
+				if (std::tolower(static_cast<unsigned char>(a[i])) != std::tolower(static_cast<unsigned char>(b[i])))
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+
+	auto endsWithIgnoreCase = [&](const std::string& value, const std::string& suffix)
+		{
+			if (suffix.size() > value.size())
+			{
+				return false;
+			}
+			const std::string tail = value.substr(value.size() - suffix.size());
+			return equalsIgnoreCase(tail, suffix);
+		};
+
+	auto& loader = m_Services.Get<AssetLoader>();
+	const auto& keyToHandle = loader.GetTextures().GetKeyToHandle();
+	for (const auto& [key, handle] : keyToHandle)
+	{
+		if (!handle.IsValid())
+		{
+			continue;
+		}
+
+		const std::string* displayName = loader.GetTextures().GetDisplayName(handle);
+		if (displayName && equalsIgnoreCase(*displayName, "UI/fadeBlack"))
+		{
+			m_TransitionTextureHandle = handle;
+			return;
+		}
+
+		if (endsWithIgnoreCase(key, "/fadeBlack.png") || endsWithIgnoreCase(key, "\\fadeBlack.png"))
+		{
+			m_TransitionTextureHandle = handle;
+			return;
+		}
+	}
+}
+
+
+float SceneManager::GetTransitionOverlayHeight(float viewportWidth, float viewportHeight) const
+{
+	if (viewportWidth <= 0.0f || viewportHeight <= 0.0f)
+	{
+		return viewportHeight;
+	}
+
+	if (!m_TransitionTextureHandle.IsValid())
+	{
+		return viewportHeight;
+	}
+
+	constexpr float kFadeTextureWidth = 2560.0f;
+	constexpr float kFadeTextureHeight = 3200.0f;
+	constexpr float kMinTextureWidth = 1.0f;
+	const float scaledHeight = viewportWidth * (kFadeTextureHeight / std::max(kFadeTextureWidth, kMinTextureWidth));
+	return std::max(viewportHeight, scaledHeight);
+}
+
+float SceneManager::GetTransitionOverlayY(float overlayHeight, float viewportHeight) const
+{
+	if (overlayHeight <= 0.0f || viewportHeight <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const float coveredY = -(overlayHeight - viewportHeight);
+	const float fadeOutStartY = -overlayHeight + m_FadeOutStartOffsetY;
+	const float fadeOutEndY = coveredY + m_FadeOutEndOffsetY;
+	const float fadeInStartY = coveredY + m_FadeInStartOffsetY;
+	const float fadeInEndY = -overlayHeight + m_FadeInEndOffsetY;
+
+	if (m_TransitionPhase == SceneTransitionPhase::FadeOut)
+	{
+		if (m_FadeOutDuration <= 0.0f)
+		{
+			return fadeOutEndY;
+		}
+		const float t = std::clamp(m_TransitionTimer / m_FadeOutDuration, 0.0f, 1.0f);
+		return fadeOutStartY + (fadeOutEndY - fadeOutStartY) * t;
+	}
+
+	if (m_TransitionPhase == SceneTransitionPhase::FadeIn)
+	{
+		if (m_FadeInDuration <= 0.0f)
+		{
+			return fadeInEndY;
+		}
+		const float t = std::clamp(m_TransitionTimer / m_FadeInDuration, 0.0f, 1.0f);
+		return fadeInStartY - (fadeInEndY - fadeInStartY) * t;
+	}
+
+	return fadeInEndY;
+}
+
+float SceneManager::GetTransitionOverlayRotation() const
+{
+	if (m_TransitionPhase == SceneTransitionPhase::FadeIn)
+	{
+		return 180.0f;
+	}
+
+	return 0.0f;
+}
 void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames)
 {
 

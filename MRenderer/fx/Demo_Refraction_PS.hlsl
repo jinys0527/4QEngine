@@ -24,7 +24,7 @@ float4 PS_Main(VSOutput_Refraction input) : SV_Target
     uv += noise * noiseStrength;
 
 
-    float3 tint = float3(0.6f, 0.9f, 0.9f);
+    float3 tint = float3(0.4f, 0.6f, 0.6f);
     float alpha = 1.f;
 
 
