@@ -4,9 +4,15 @@
 // tilt shift를 위한 화면 위 아래를 늘이는 함수
 float2 WarpTopExpand(float2 uv, float amount, float power)
 {
-    float t = pow(saturate(uv.y), power);
+    // uv.y가 0(상단)일 때 t=1, uv.y가 1(하단)일 때 t=0이 되도록 반전
+    float t = pow(1.0 - saturate(uv.y), power);
+    
+    // t가 클수록(화면 위쪽일수록) scale이 커져서 화면이 양옆으로 확장됨
     float scale = 1.0 + t * amount;
+    
+    // 중앙(0.5)을 기준으로 가로축 확장
     uv.x = (uv.x - 0.5) / scale + 0.5;
+    
     return uv;
 }
 
@@ -58,13 +64,14 @@ float4 SampleEmissiveDisk(Texture2D tex, float2 uv, float2 r)
     }
 
     return c / 7.0;
+    
 }
 
 float4 PS_Main(VSOutput_PU i) : SV_TARGET
 {
     // ====== 1. UV Warp (Tilt-Shift) ======
-    float warpAmount = 0.15f;
-    float warpPower = 3.0f;
+    float warpAmount = 0.1f;
+    float warpPower = 1.3f;
     float2 uvW = WarpTopExpand(i.uv, warpAmount, warpPower);
     uvW = saturate(uvW);
 
