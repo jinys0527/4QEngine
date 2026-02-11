@@ -89,4 +89,15 @@ namespace Events
 		int amount = 0;
 		int total = 0;
 	};
+
+	struct PlayerStatChangedEvent
+	{
+		int health = 0;
+		int strength = 0;
+		int agility = 0;
+		int sense = 0;
+		int skill = 0;
+		int equipmentDefenseBonus = 0;
+		int defense = 0;
+	};
 }

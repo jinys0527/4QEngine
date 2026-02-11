@@ -93,6 +93,8 @@ enum class EventType
 	PlayerDiceAnimationStarted,
 	PlayerDiceAnimationCompleted,
 	PlayerDiceContinueRequested,
+	PlayerStatChanged,
+
 
 	DiceRolled,
 	CombatNumberPopup,

@@ -23,8 +23,12 @@ REGISTER_PROPERTY(UINumberSpriteComponent, DigitTextures)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitSpacing)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitOffsets)
 REGISTER_PROPERTY(UINumberSpriteComponent, PerDigitAdvance)
+REGISTER_PROPERTY(UINumberSpriteComponent, DigitObjectNames)
+REGISTER_PROPERTY(UINumberSpriteComponent, UseOwnerAsSingleTarget)
 REGISTER_PROPERTY(UINumberSpriteComponent, FixedDigitCount)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitTintColor)
+REGISTER_PROPERTY(UINumberSpriteComponent, PositiveSignObjectName)
+REGISTER_PROPERTY(UINumberSpriteComponent, NegativeSignObjectName)
 REGISTER_PROPERTY(UINumberSpriteComponent, AutoValueSource)
 REGISTER_PROPERTY(UINumberSpriteComponent, AutoValueActorId)
 REGISTER_PROPERTY(UINumberSpriteComponent, UseAsCombatPopup)
@@ -38,10 +42,13 @@ REGISTER_PROPERTY(UINumberSpriteComponent, HealTint)
 REGISTER_PROPERTY(UINumberSpriteComponent, DealTint)
 REGISTER_PROPERTY(UINumberSpriteComponent, CriticalTint)
 REGISTER_PROPERTY(UINumberSpriteComponent, GoldTint)
+REGISTER_PROPERTY(UINumberSpriteComponent, MissTint)
+REGISTER_PROPERTY(UINumberSpriteComponent, UseMissTexture)
+REGISTER_PROPERTY(UINumberSpriteComponent, MissTexture)
 
 UINumberSpriteComponent::~UINumberSpriteComponent()
 {
-	if (m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive())
+	if ((m_ListenerRegistered || m_StatListenerRegistered) && m_Dispatcher && m_Dispatcher->IsAlive())
 	{
 		if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
 		{
@@ -51,6 +58,12 @@ UINumberSpriteComponent::~UINumberSpriteComponent()
 		{
 			m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
 		}
+		if (m_Dispatcher->FindListeners(EventType::PlayerStatChanged))
+		{
+			m_Dispatcher->RemoveListener(EventType::PlayerStatChanged, this);
+		}
+		m_ListenerRegistered = false;
+		m_StatListenerRegistered = false;
 	}
 }
 
@@ -58,10 +71,12 @@ void UINumberSpriteComponent::Start()
 {
 	m_RuntimeBindingsReady = false;
 	m_ListenerRegistered = false;
+	m_StatListenerRegistered = false;
 	m_PopupPoolDirty = true;
 	m_ValueDirty = true;
 	m_DigitTargets.clear();
 	m_BaseDigitBounds.clear();
+	m_DisplayMissVisual = false;
 }
 
 void UINumberSpriteComponent::Update(float deltaTime)
@@ -111,7 +126,17 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 		const auto* payload = static_cast<const Events::GoldAcquiredEvent*>(data);
 		if (payload && payload->amount > 0)
 		{
-			ShowPopup(payload->amount, m_GoldTint);
+			ShowPopup(payload->amount, m_GoldTint, false);
+		}
+		return;
+	}
+
+	if (type == EventType::PlayerStatChanged)
+	{
+		if (m_AutoValueSource != 0)
+		{
+			TryUpdateValueFromAutoSource();
+			RefreshVisuals();
 		}
 		return;
 	}
@@ -139,7 +164,11 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 	}
 
 	DirectX::XMFLOAT4 tint = m_DamageTint;
-	if (payload->isCritical)
+	if (payload->isMiss)
+	{
+		tint = m_MissTint;
+	}
+	else if (payload->isCritical)
 	{
 		tint = m_CriticalTint;
 	}
@@ -152,7 +181,7 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 		tint = m_DealTint;
 	}
 
-	ShowPopup(payload->isMiss ? 0 : value, tint);
+	ShowPopup(payload->isMiss ? 0 : value, tint, payload->isMiss);
 }
 
 void UINumberSpriteComponent::SetEnabled(const bool& enabled)
@@ -168,14 +197,14 @@ void UINumberSpriteComponent::SetEnabled(const bool& enabled)
 
 void UINumberSpriteComponent::SetValue(const int& value)
 {
-	const int clamped = max(0, value);
-	if (m_Value == clamped)
+	if (m_Value == value)
 	{
 		return;
 	}
 
-	m_Value = clamped;
+	m_Value = value;
 	m_ValueDirty = true;
+	RefreshVisuals();
 }
 
 void UINumberSpriteComponent::SetLeadingZero(const bool& leadingZero)
@@ -228,6 +257,28 @@ void UINumberSpriteComponent::SetDigitOffsets(std::vector<UIAnchor> offsets)
 	m_ValueDirty = true;
 }
 
+void UINumberSpriteComponent::SetDigitObjectNames(std::vector<std::string> names)
+{
+	m_DigitObjectNames = std::move(names);
+	m_DigitTargets.clear();
+	m_BaseDigitBounds.clear();
+	m_ValueDirty = true;
+}
+
+void UINumberSpriteComponent::SetUseOwnerAsSingleTarget(const bool& useOwnerTarget)
+{
+	if (m_UseOwnerAsSingleTarget == useOwnerTarget)
+	{
+		return;
+	}
+
+	m_UseOwnerAsSingleTarget = useOwnerTarget;
+	m_DigitTargets.clear();
+	m_BaseDigitBounds.clear();
+	m_ValueDirty = true;
+}
+
+
 void UINumberSpriteComponent::SetPerDigitAdvance(const std::array<float, 10>& offsets)
 {
 	m_PerDigitAdvance = offsets;
@@ -246,21 +297,77 @@ void UINumberSpriteComponent::SetDigitTintColor(const DirectX::XMFLOAT4& color)
 	m_ValueDirty = true;
 }
 
+void UINumberSpriteComponent::SetPositiveSignObjectName(const std::string& name)
+{
+	m_PositiveSignObjectName = name;
+	m_ValueDirty = true;
+	RefreshVisuals();
+}
+
+void UINumberSpriteComponent::SetNegativeSignObjectName(const std::string& name)
+{
+	m_NegativeSignObjectName = name;
+	m_ValueDirty = true;
+	RefreshVisuals();
+}
+
 void UINumberSpriteComponent::SetAutoValueSource(const int& source)
 {
 	m_AutoValueSource = source;
+	m_RuntimeBindingsReady = false;
 	m_ValueDirty = true;
+
+	m_Dispatcher = &GetEventDispatcher();
+	if (m_Dispatcher && m_Dispatcher->IsAlive())
+	{
+		if (m_AutoValueSource != 0 && !m_StatListenerRegistered)
+		{
+			m_Dispatcher->AddListener(EventType::PlayerStatChanged, this);
+			m_StatListenerRegistered = true;
+		}
+		else if (m_AutoValueSource == 0 && m_StatListenerRegistered)
+		{
+			if (m_Dispatcher->FindListeners(EventType::PlayerStatChanged))
+			{
+				m_Dispatcher->RemoveListener(EventType::PlayerStatChanged, this);
+			}
+			m_StatListenerRegistered = false;
+		}
+	}
+
+	RefreshVisuals();
 }
 
 void UINumberSpriteComponent::SetAutoValueActorId(const int& actorId)
 {
 	m_AutoValueActorId = actorId;
 	m_ValueDirty = true;
+	RefreshVisuals();
 }
 
 void UINumberSpriteComponent::SetUseAsCombatPopup(const bool& useAsPopup)
 {
+	if (m_UseAsCombatPopup == useAsPopup)
+	{
+		return;
+	}
+
 	m_UseAsCombatPopup = useAsPopup;
+	m_RuntimeBindingsReady = false;
+	m_PopupPoolDirty = true;
+
+	if (!m_UseAsCombatPopup && m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive())
+	{
+		if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
+		{
+			m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
+		}
+		if (m_Dispatcher->FindListeners(EventType::GoldAcquired))
+		{
+			m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
+		}
+		m_ListenerRegistered = false;
+	}
 }
 
 void UINumberSpriteComponent::SetPopupObjectNames(std::vector<std::string> names)
@@ -314,9 +421,40 @@ void UINumberSpriteComponent::SetGoldTint(const DirectX::XMFLOAT4& color)
 	m_GoldTint = color;
 }
 
+void UINumberSpriteComponent::SetMissTint(const DirectX::XMFLOAT4& color)
+{
+	m_MissTint = color;
+}
+
+void UINumberSpriteComponent::SetUseMissTexture(const bool& useMissTexture)
+{
+	m_UseMissTexture = useMissTexture;
+	m_ValueDirty = true;
+}
+
+void UINumberSpriteComponent::SetMissTexture(const TextureHandle& texture)
+{
+	m_MissTexture = texture;
+	m_ValueDirty = true;
+}
+
 void UINumberSpriteComponent::RefreshVisuals()
 {
 	m_ValueDirty = true;
+
+	if (!m_Enabled)
+	{
+		return;
+	}
+
+	EnsureDigitTargetsResolved();
+	if (m_DigitTargets.empty())
+	{
+		return;
+	}
+
+	ApplyValue();
+	m_ValueDirty = false;
 }
 
 UIObject* UINumberSpriteComponent::FindUIObject(const std::string& name) const
@@ -470,6 +608,162 @@ bool UINumberSpriteComponent::TryUpdateValueFromAutoSource()
 		}
 		break;
 	}
+	case 6: // Player health stat
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetHealth();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 7: // Player strength stat
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetStrength();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 8: // Player agility stat
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetAgility();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 9: // Player sense stat
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetSense();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 10: // Player skill stat
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetSkill();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 11: // Player defense
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetDefense();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 12: // Player initiative bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCalculatedAgilityModifier();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 13: // Player equipment defense bonus
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetEquipmentDefenseBonus();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 14: // Player health modifier
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCalculatedHealthModifier();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 15: // Player strength modifier
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCalculatedStrengthModifier();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 16: // Player agility modifier
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCalculatedAgilityModifier();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 17: // Player sense modifier
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCalculatedSenseModifier();
+				valid = true;
+			}
+		}
+		break;
+	}
+	case 18: // Player skill modifier
+	{
+		if (auto* player = resolvePlayer())
+		{
+			if (auto* stat = player->GetOwner()->GetComponent<PlayerStatComponent>())
+			{
+				nextValue = stat->GetCalculatedSkillModifier();
+				valid = true;
+			}
+		}
+		break;
+	}
 	default:
 		break;
 	}
@@ -483,6 +777,18 @@ bool UINumberSpriteComponent::TryUpdateValueFromAutoSource()
 	return true;
 }
 
+void UINumberSpriteComponent::SetDisplayMissVisual(bool displayMiss)
+{
+	if (m_DisplayMissVisual == displayMiss)
+	{
+		return;
+	}
+
+	m_DisplayMissVisual = displayMiss;
+	m_ValueDirty = true;
+}
+
+
 bool UINumberSpriteComponent::EnsureDigitTargetsResolved()
 {
 	std::vector<UIObject*> resolvedTargets;
@@ -495,9 +801,67 @@ bool UINumberSpriteComponent::EnsureDigitTargetsResolved()
 		return !m_DigitTargets.empty();
 	}
 
+	const std::vector<std::string>* digitNameSource = nullptr;
+	if (!m_DigitObjectNames.empty())
+	{
+		digitNameSource = &m_DigitObjectNames;
+	}
+	else if (!m_UseAsCombatPopup && !m_PopupObjectNames.empty())
+	{
+		// Backward compatibility/editor safety:
+		// If users accidentally filled PopupObjectNames while not using popup mode,
+		// treat those names as digit targets so Value changes still render.
+		digitNameSource = &m_PopupObjectNames;
+	}
+
+	if (digitNameSource)
+	{
+		resolvedTargets.reserve(digitNameSource->size());
+		for (const auto& name : *digitNameSource)
+		{
+			auto* target = FindUIObject(name);
+			if (!target || !target->GetComponent<UIImageComponent>())
+			{
+				continue;
+			}
+			resolvedTargets.push_back(target);
+		}
+
+		if (m_DigitTargets != resolvedTargets)
+		{
+			m_DigitTargets = std::move(resolvedTargets);
+			m_BaseDigitBounds.clear();
+			m_ValueDirty = true;
+		}
+
+		return !m_DigitTargets.empty();
+	}
+
+	if (m_UseOwnerAsSingleTarget && owner->GetComponent<UIImageComponent>())
+	{
+		if (m_DigitTargets.size() != 1 || m_DigitTargets.front() != owner)
+		{
+			m_DigitTargets = { owner };
+			m_BaseDigitBounds.clear();
+			m_ValueDirty = true;
+		}
+		return true;
+	}
+
+
 	const std::string& ownerName = owner->GetName();
 	if (ownerName.empty())
 	{
+		if (owner->GetComponent<UIImageComponent>())
+		{
+			if (m_DigitTargets.size() != 1 || m_DigitTargets.front() != owner)
+			{
+				m_DigitTargets = { owner };
+				m_BaseDigitBounds.clear();
+				m_ValueDirty = true;
+			}
+			return true;
+		}
 		return !m_DigitTargets.empty();
 	}
 
@@ -547,6 +911,11 @@ bool UINumberSpriteComponent::EnsureDigitTargetsResolved()
 		resolvedTargets.push_back(target);
 	}
 
+	if (resolvedTargets.empty() && owner->GetComponent<UIImageComponent>())
+	{
+		resolvedTargets.push_back(owner);
+	}
+
 	if (m_DigitTargets != resolvedTargets)
 	{
 		m_DigitTargets = std::move(resolvedTargets);
@@ -561,6 +930,36 @@ void UINumberSpriteComponent::ApplyValue()
 {
 	if (m_DigitTargets.empty())
 	{
+		ApplySignObjectVisibility();
+		return;
+	}
+
+	if (m_DisplayMissVisual)
+	{
+		for (size_t i = 0; i < m_DigitTargets.size(); ++i)
+		{
+			auto* target = m_DigitTargets[i];
+			if (!target)
+			{
+				continue;
+			}
+
+			const bool visible = (i == 0);
+			target->SetIsVisibleFromComponent(visible);
+			if (!visible)
+			{
+				continue;
+			}
+
+			if (auto* image = target->GetComponent<UIImageComponent>())
+			{
+				if (m_UseMissTexture && m_MissTexture.IsValid())
+				{
+					image->SetTextureHandle(m_MissTexture);
+				}
+				image->SetTintColor(m_MissTint);
+			}
+		}
 		return;
 	}
 
@@ -577,7 +976,8 @@ void UINumberSpriteComponent::ApplyValue()
 		}
 	}
 
-	std::string valueText = std::to_string(m_Value);
+	const int absValue = std::abs(m_Value);
+	std::string valueText = std::to_string(absValue);
 	const int configuredDigits = (m_FixedDigitCount > 0) ? m_FixedDigitCount : static_cast<int>(m_DigitTargets.size());
 	if (static_cast<int>(valueText.size()) < configuredDigits)
 	{
@@ -635,6 +1035,26 @@ void UINumberSpriteComponent::ApplyValue()
 
 		accumulatedOffset += m_DigitSpacing + m_PerDigitAdvance[static_cast<size_t>(digitValue)];
 	}
+	ApplySignObjectVisibility();
+}
+
+void UINumberSpriteComponent::ApplySignObjectVisibility()
+{
+	if (!m_PositiveSignObjectName.empty())
+	{
+		if (auto* positive = FindUIObject(m_PositiveSignObjectName))
+		{
+			positive->SetIsVisibleFromComponent(m_Value > 0);
+		}
+	}
+
+	if (!m_NegativeSignObjectName.empty())
+	{
+		if (auto* negative = FindUIObject(m_NegativeSignObjectName))
+		{
+			negative->SetIsVisibleFromComponent(m_Value < 0);
+		}
+	}
 }
 
 bool UINumberSpriteComponent::TryPrepareRuntimeBindings()
@@ -656,18 +1076,32 @@ bool UINumberSpriteComponent::TryPrepareRuntimeBindings()
 		return false;
 	}
 
-	if (!ArePopupTargetsReady())
+	if (m_UseAsCombatPopup && !ArePopupTargetsReady())
 	{
 		return false;
 	}
 
 	m_UIManager = uiManager;
 	m_Dispatcher = &GetEventDispatcher();
-	if (!m_ListenerRegistered)
+	if (m_UseAsCombatPopup && !m_ListenerRegistered)
 	{
 		m_Dispatcher->AddListener(EventType::CombatNumberPopup, this);
 		m_Dispatcher->AddListener(EventType::GoldAcquired, this);
 		m_ListenerRegistered = true;
+	}
+
+	if (m_AutoValueSource != 0 && !m_StatListenerRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::PlayerStatChanged, this);
+		m_StatListenerRegistered = true;
+	}
+	else if (m_AutoValueSource == 0 && m_StatListenerRegistered)
+	{
+		if (m_Dispatcher->FindListeners(EventType::PlayerStatChanged))
+		{
+			m_Dispatcher->RemoveListener(EventType::PlayerStatChanged, this);
+		}
+		m_StatListenerRegistered = false;
 	}
 
 	m_RuntimeBindingsReady = true;
@@ -778,7 +1212,7 @@ void UINumberSpriteComponent::TickPopups(float deltaTime)
 	}
 }
 
-void UINumberSpriteComponent::ShowPopup(int value, const DirectX::XMFLOAT4& tint)
+void UINumberSpriteComponent::ShowPopup(int value, const DirectX::XMFLOAT4& tint, bool isMiss)
 {
 	TryInitializePopupPool();
 
@@ -809,6 +1243,7 @@ void UINumberSpriteComponent::ShowPopup(int value, const DirectX::XMFLOAT4& tint
 
 	if (auto* popupNumber = target->GetComponent<UINumberSpriteComponent>())
 	{
+		popupNumber->SetDisplayMissVisual(isMiss);
 		popupNumber->SetDigitTintColor(tint);
 		popupNumber->SetValue(value);
 		popupNumber->RefreshVisuals();

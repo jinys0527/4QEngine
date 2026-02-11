@@ -1395,7 +1395,7 @@ void GameManager::ResolveEnemyAttack(int actorId)
 
 		if (m_EventDispatcher)
 		{
-			const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), nextHp - prevHp, false };
+			const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), nextHp - prevHp, false, result.hit == HitResult::Critical };
 			m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
 		}
 
@@ -1411,11 +1411,11 @@ void GameManager::ResolveEnemyAttack(int actorId)
 				m_EventDispatcher->Dispatch(EventType::GameOver, nullptr);
 			}
 		}
-		else if (m_EventDispatcher)
-		{
-			const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), 0, true };
-			m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
-		}
+	}
+	else if (m_EventDispatcher)
+	{
+		const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), 0, true, false };
+		m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
 	}
 }
 

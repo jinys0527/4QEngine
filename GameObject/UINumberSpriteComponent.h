@@ -43,10 +43,21 @@ public:
 	const std::vector<UIAnchor>& GetDigitOffsets() const { return m_DigitOffsets; }
 	void SetPerDigitAdvance(const std::array<float, 10>& offsets);
 	const std::array<float, 10>& GetPerDigitAdvance() const { return m_PerDigitAdvance; }
+
+	void SetDigitObjectNames(std::vector<std::string> names);
+	const std::vector<std::string>& GetDigitObjectNames() const { return m_DigitObjectNames; }
+	void SetUseOwnerAsSingleTarget(const bool& useOwnerTarget);
+	const bool& GetUseOwnerAsSingleTarget() const { return m_UseOwnerAsSingleTarget; }
+
 	void SetFixedDigitCount(const int& count);
 	const int& GetFixedDigitCount() const { return m_FixedDigitCount; }
 	void SetDigitTintColor(const DirectX::XMFLOAT4& color);
 	const DirectX::XMFLOAT4& GetDigitTintColor() const { return m_DigitTintColor; }
+
+	void SetPositiveSignObjectName(const std::string& name);
+	const std::string& GetPositiveSignObjectName() const { return m_PositiveSignObjectName; }
+	void SetNegativeSignObjectName(const std::string& name);
+	const std::string& GetNegativeSignObjectName() const { return m_NegativeSignObjectName; }
 
 	void SetAutoValueSource(const int& source);
 	const int& GetAutoValueSource() const { return m_AutoValueSource; }
@@ -76,6 +87,34 @@ public:
 	void SetGoldTint(const DirectX::XMFLOAT4& color);
 	const DirectX::XMFLOAT4& GetGoldTint() const { return m_GoldTint; }
 
+	void SetMissTint(const DirectX::XMFLOAT4& color);
+	const DirectX::XMFLOAT4& GetMissTint() const { return m_MissTint; }
+	void SetUseMissTexture(const bool& useMissTexture);
+	const bool& GetUseMissTexture() const { return m_UseMissTexture; }
+	void SetMissTexture(const TextureHandle& texture);
+	const TextureHandle& GetMissTexture() const { return m_MissTexture; }
+
+	// AutoValueSource mapping (Editor int value)
+	// 0: None
+	// 1: Player current HP
+	// 2: Player max HP
+	// 3: Enemy current HP (requires AutoValueActorId)
+	// 4: Enemy max HP (requires AutoValueActorId)
+	// 5: Player gold
+	// 6: Player health stat
+	// 7: Player strength stat
+	// 8: Player agility stat
+	// 9: Player sense stat
+	// 10: Player skill stat
+	// 11: Player defense
+	// 12: Player initiative bonus
+	// 13: Player equipment defense bonus
+	// 14: Player health modifier
+	// 15: Player strength modifier
+	// 16: Player agility modifier
+	// 17: Player sense modifier
+	// 18: Player skill modifier
+
 	void RefreshVisuals();
 
 private:
@@ -92,11 +131,13 @@ private:
 	void       ApplyValue();
 	void       UpdatePopupPool();
 	void       TickPopups(float deltaTime);
-	void       ShowPopup(int value, const DirectX::XMFLOAT4& tint);
+	void       ShowPopup(int value, const DirectX::XMFLOAT4& tint, bool isMiss);
 	void       TryInitializePopupPool();
 	bool       TryPrepareRuntimeBindings();
 	bool       ArePopupTargetsReady() const;
 	bool       TryUpdateValueFromAutoSource();
+	void       SetDisplayMissVisual(bool displayMiss);
+	void       ApplySignObjectVisibility();
 
 	int   m_Value = 0;
 	bool  m_Enabled = true;
@@ -106,9 +147,13 @@ private:
 	std::array<TextureHandle, 10> m_DigitTextures{};
 	float m_DigitSpacing = 0.0f;
 	std::vector<UIAnchor> m_DigitOffsets;
+	std::vector<std::string> m_DigitObjectNames;
+	bool m_UseOwnerAsSingleTarget = true;
 	std::array<float, 10> m_PerDigitAdvance{};
 	int   m_FixedDigitCount = 0;
 	DirectX::XMFLOAT4 m_DigitTintColor{ 1, 1, 1, 1 };
+	std::string m_PositiveSignObjectName;
+	std::string m_NegativeSignObjectName;
 	int m_AutoValueSource = 0;
 	int m_AutoValueActorId = 0;
 
@@ -123,11 +168,16 @@ private:
 	DirectX::XMFLOAT4 m_DealTint    { 1.0f,  0.9f,  0.25f, 1.0f };
 	DirectX::XMFLOAT4 m_CriticalTint{ 0.75f, 0.75f, 0.75f, 1.0f };
 	DirectX::XMFLOAT4 m_GoldTint	{ 1.0f,  0.85f, 0.2f,  1.0f };
+	DirectX::XMFLOAT4 m_MissTint{ 0.65f, 0.65f, 0.65f, 1.0f };
+	bool m_UseMissTexture = true;
+	TextureHandle m_MissTexture = TextureHandle::Invalid();
+	bool m_DisplayMissVisual = false;
 	std::vector<PopupState> m_PopupStates;
 	bool  m_PopupPoolDirty = true;
 	std::vector<UIRect>     m_BaseDigitBounds;
 	EventDispatcher*        m_Dispatcher = nullptr;
 	bool  m_RuntimeBindingsReady = false;
 	bool  m_ListenerRegistered = false;
+	bool  m_StatListenerRegistered = false;
 };
 

@@ -1438,6 +1438,8 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 
 	if (typeInfo == typeid(std::vector<std::string>))
 	{
+		ImGui::PushID(property.GetName().c_str());
+
 		std::vector<std::string> value;
 		property.GetValue(component, &value);
 		bool updated = false;
@@ -1476,6 +1478,8 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			property.SetValue(component, &value);
 			result.updated = true;
 		}
+
+		ImGui::PopID();
 		return result;
 	}
 
