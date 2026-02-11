@@ -53,7 +53,8 @@ cbuffer LightBuffer : register(b2)
 {
     Light lights[16];
     uint lightcount;
-    float3 lightpadding;
+    uint blurOn;
+    float2 lightpadding;
 };
 
 cbuffer SkinningBuffer : register(b3)
@@ -191,7 +192,7 @@ Texture2D g_Metalic             : register(t13);
 Texture2D g_Roughness           : register(t14);
 Texture2D g_AO                  : register(t15);
 Texture2D g_Emissive            : register(t16);
-Texture2D g_Env                 : register(t17);
+TextureCube g_Env               : register(t17);
 Texture2D g_Terrain             : register(t18);
 
 Texture2D g_UI_01               : register(t21);

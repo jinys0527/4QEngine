@@ -209,6 +209,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 				m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
 			}
+			m_RenderContext.pDXDC->PSSetShaderResources(17, 1, m_RenderContext.pHDRI_1.GetAddressOf());
 		}
 
 #pragma endregion

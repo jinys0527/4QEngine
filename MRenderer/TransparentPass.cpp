@@ -115,6 +115,8 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                 ID3D11ShaderResourceView* srv = tIt->second.Get();
                 m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
             }
+            m_RenderContext.pDXDC->PSSetShaderResources(17, 1, m_RenderContext.pHDRI_1.GetAddressOf());
+
         }
 
 

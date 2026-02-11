@@ -123,6 +123,10 @@ private:
 	ComPtr<ID3D11ShaderResourceView>     m_pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
 	ComPtr<ID3D11RenderTargetView>       m_pRTView_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
 
+	//HDRIImage
+	ComPtr<ID3D11ShaderResourceView>	m_pHDRI_1;
+	ComPtr<ID3D11ShaderResourceView>	m_pHDRI_2;
+
 
 
 	EnumArray<ComPtr<ID3D11DepthStencilState>, static_cast<size_t>(DS::MAX_)>	m_DSState;		//깊이 스텐실 상태

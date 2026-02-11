@@ -148,6 +148,31 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 
 	}
 
+	//HDRISET
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_1.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+	//HDRISET
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_2.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
 	filename = L"../MRenderer/fx/WaterNoise.jpg";
 	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
@@ -290,7 +315,30 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 		ERROR_MSG_HR(hr);
 	}
 
-	
+	//HDRISET
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_1.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+	//HDRISET
+	filename = L"../MRenderer/fx/wooden_studio_02_4k.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_2.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
 
 	//그리드
 	CreateGridVB();
@@ -772,8 +820,8 @@ void Renderer::CreateContext()
 	m_RenderContext.pTexRvScene_Emissive		= m_pTexRvScene_Emissive;
 	m_RenderContext.pRTView_Emissive			= m_pRTView_Emissive;
 
-
-
+	m_RenderContext.pHDRI_1						= m_pHDRI_1;
+	m_RenderContext.pHDRI_2						= m_pHDRI_2;
 
 
 	m_RenderContext.Vignetting				= m_Vignetting;
