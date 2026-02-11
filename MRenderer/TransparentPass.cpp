@@ -23,7 +23,6 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
     //임시 벽뚫 이미지 바인딩
-    m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());
 
     for (const auto& queueItem : GetQueue())
     {
@@ -99,6 +98,9 @@ void TransparentPass::Execute(const RenderData::FrameData& frame)
                     pixelShader = shaderIt->second.pixelShader.Get();
                 }
             }
+            ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
+            dxdc->PSSetShaderResources(0, 40, nullSRV);
+
 
             for (UINT slot = 0; slot < static_cast<UINT>(RenderData::MaterialTextureSlot::TEX_MAX); ++slot)
             {

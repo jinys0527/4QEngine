@@ -389,6 +389,7 @@
     <ClInclude Include="UISliderComponent.h" />
     <ClInclude Include="UITextComponent.h" />
     <ClInclude Include="VendingComponent.h" />
+    <ClInclude Include="WaterRiseComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
@@ -470,6 +471,7 @@
     <ClCompile Include="UISliderComponent.cpp" />
     <ClCompile Include="UITextComponent.cpp" />
     <ClCompile Include="VendingComponent.cpp" />
+    <ClCompile Include="WaterRiseComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AI\AI.vcxproj">

@@ -20,9 +20,13 @@ RenderData::LightData LightComponent::BuildLightData() const
 void LightComponent::LightComponent::Update(float deltaTime)
 {
 	auto owner = GetOwner();
+	if (owner == nullptr)
+	{
+		return;
+	}
 	if (auto* trans = owner->GetComponent<TransformComponent>())
 	{
-		m_Position = trans->GetPosition();
+		m_Position = trans->GetWorldPos();
 	}
 }
 
@@ -32,8 +36,17 @@ void LightComponent::LightComponent::OnEvent(EventType type, const void* data)
 
 void LightComponent::FillLightData(RenderData::LightData& data) const
 {
+	XMFLOAT3 resolvedPosition = m_Position;
+	if (auto* owner = GetOwner())
+	{
+		if (auto* trans = owner->GetComponent<TransformComponent>())
+		{
+			resolvedPosition = trans->GetWorldPos();
+		}
+	}
+
 	data.type = m_Type;
-	data.posiiton = m_Position;
+	data.posiiton = resolvedPosition;
 	data.color = m_Color;
 	data.intensity = m_Intensity;
 	data.lightViewProj = m_LightViewProj;
