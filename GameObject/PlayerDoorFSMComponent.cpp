@@ -16,7 +16,7 @@ REGISTER_COMPONENT_DERIVED(PlayerDoorFSMComponent, FSMComponent)
 namespace
 {
 	constexpr int DoorCost = 1;
-	constexpr int DoorRollThreshold = 12; // 문 성공 값(이상)
+	constexpr int DoorRollThreshold = 7; // 문 성공 값(이상)
 }
 
 PlayerDoorFSMComponent::PlayerDoorFSMComponent()
@@ -70,13 +70,11 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 						int bonus = playerStat->GetCalculatedSkillModifier();
 						const DiceConfig rollConfig{ 1, 20, bonus };
 
-						const Events::DiceRollEvent difficultyEvent{ DoorRollThreshold, 1, 20, 0, "DoorDifficulty" };
-						GetEventDispatcher().Dispatch(EventType::DiceRolled, &difficultyEvent);
-
-						const auto roll = diceSystem.Roll(rollConfig, RandomDomain::World);
-
-						const Events::DiceRollEvent totalEvent{ roll.total, rollConfig.count, rollConfig.sides, rollConfig.bonus, "DoorRollTotal", true };
-						GetEventDispatcher().Dispatch(EventType::DiceRolled, &totalEvent);
+						const auto roll = diceSystem.Roll(rollConfig, RandomDomain::World);		// Door UI는 슬롯 설정에 따라 total/individual 중 하나만 표시하도록 구성될 수 있어
+						// 1d20 결과를 두 형태 모두 브로드캐스트한다.
+						const int rolledFace = !roll.faces.empty() ? roll.faces.front() : roll.total;
+						const Events::DiceRollEvent individualEvent{ rolledFace, rollConfig.count, rollConfig.sides, rollConfig.bonus, "DoorRoll", false, { rolledFace } };
+						GetEventDispatcher().Dispatch(EventType::DiceRolled, &individualEvent);
 
 						player->SetDoorSuccess(roll.total >= DoorRollThreshold);
 					}
@@ -91,6 +89,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 			//const bool confirmed = player ? player->ConsumeDoorConfirmed() : false;
 			//DispatchEvent(confirmed ? "Door_Confirm" : "Door_Revoke");'
+			GetEventDispatcher().Dispatch(EventType::PlayerDiceUIReset, nullptr);
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorInteract, nullptr);
 		});
 	BindActionHandler("Door_Verdict", [this](const FSMAction& action)
@@ -131,7 +130,8 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 					}
 				}
 			}
-			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorSuccess, nullptr);
+
 			//DispatchEvent("Door_Complete");
 			DispatchEvent("None");
 		});
@@ -161,7 +161,8 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 					}
 				}
 			}
-			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+			GetEventDispatcher().Dispatch(EventType::PlayerDoorFail, nullptr);
+
 			//DispatchEvent("Door_Complete");
 			DispatchEvent("None");
 		});

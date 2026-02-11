@@ -71,10 +71,15 @@ enum class EventType
 	PlayerMove,
 	PlayerAttack,
 	PlayerEquipFailed,
+
 	PlayerDoorInteract,
+	PlayerDoorSuccess,
+	PlayerDoorFail,
 	PlayerDoorCancel,
+
 	PlayerShopOpen,
 	PlayerShopClose,
+
 	PlayerDiceRoll, 
 	PlayerDiceUIOpen,
 	PlayerDiceUIReset,
@@ -93,6 +98,7 @@ enum class EventType
 	PlayerDiceAnimationStarted,
 	PlayerDiceAnimationCompleted,
 	PlayerDiceContinueRequested,
+
 	PlayerStatChanged,
 
 

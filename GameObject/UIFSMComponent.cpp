@@ -314,6 +314,8 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_ShopClose", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorInteract", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorCancel", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DoorSuccess", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DoorFail", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceRoll", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceUIOpen", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceUIReset", "UI" });
@@ -625,6 +627,10 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::PlayerDoorInteract, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorCancel))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDoorCancel, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorSuccess))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorSuccess, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorFail))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorFail, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopOpen))
 		GetEventDispatcher().RemoveListener(EventType::PlayerShopOpen, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopClose))
@@ -682,6 +688,8 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDoorInteract, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDoorCancel, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDoorSuccess, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDoorFail, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopOpen, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopClose, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceRoll, this);
@@ -980,6 +988,10 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 	{
 	case EventType::PlayerDoorCancel:
 		return std::string("Player_DoorCancel");
+	case EventType::PlayerDoorSuccess:
+		return std::string("Player_DoorSuccess");
+	case EventType::PlayerDoorFail:
+		return std::string("Player_DoorFail");
 	case EventType::PlayerShopOpen:
 		return std::string("Player_ShopOpen");
 	case EventType::PlayerShopClose:
