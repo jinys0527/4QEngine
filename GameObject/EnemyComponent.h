@@ -65,6 +65,7 @@ private:
 
 	void ClearSightDebug();
 	void UpdateSightDebugLines(int sightRange);
+	void SyncFacingFromTransform();
 
 	int m_Q;
 	int m_R;
@@ -88,6 +89,7 @@ private:
 	bool  m_ExploreTurnFinished = false;
 	float m_ExploreDelayRemaining = 0.0f;
 	bool  m_PendingExploreEnd = false;
+	bool  m_ExploreMoveIssued = false;
 	AnimationHandle m_DeathAnimationHandle = AnimationHandle::Invalid();
 	AnimationRef m_DeathAnimation;
 	float m_DeathAnimationBlendTime = 0.15f;

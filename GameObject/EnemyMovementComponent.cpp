@@ -16,7 +16,7 @@
 #include <limits>
 
 #undef max
-
+#undef min
 REGISTER_COMPONENT(EnemyMovementComponent)
 REGISTER_PROPERTY(EnemyMovementComponent, PatrolPoints)
 
@@ -42,6 +42,41 @@ static bool TryGetRotationFromStep(const AxialKey& previous, const AxialKey& cur
 	}
 
 	return false;
+}
+
+static bool TryGetRotationTowardTargetApprox(const AxialKey& start, const AxialKey& target, ERotationOffset& outDir)
+{
+	const int dq = target.q - start.q;
+	const int dr = target.r - start.r;
+	if (dq == 0 && dr == 0)
+	{
+		return false;
+	}
+
+	constexpr std::array<std::pair<AxialKey, ERotationOffset>, 6> kDirections{ {
+		{ { 1, 0 }, ERotationOffset::clock_3 },
+		{ { 1, -1 }, ERotationOffset::clock_5 },
+		{ { 0, -1 }, ERotationOffset::clock_7 },
+		{ { -1, 0 }, ERotationOffset::clock_9 },
+		{ { -1, 1 }, ERotationOffset::clock_11 },
+		{ { 0, 1 }, ERotationOffset::clock_1 }
+	} };
+
+	ERotationOffset best = ERotationOffset::clock_3;
+	int bestScore = std::numeric_limits<int>::min();
+
+	for (const auto& [dir, rotation] : kDirections)
+	{
+		const int score = dq * dir.q + dr * dir.r;
+		if (score > bestScore)
+		{
+			bestScore = score;
+			best = rotation;
+		}
+	}
+
+	outDir = best;
+	return true;
 }
 
 EnemyMovementComponent::~EnemyMovementComponent()
@@ -92,6 +127,11 @@ void EnemyMovementComponent::Update(float deltaTime)
 	
 	if (explorationEnemyStep
 		&& gameManager->GetExplorationActiveEnemyActorId() != enemy->GetActorId())
+	{
+		return;
+	}
+
+	if (explorationEnemyStep && m_IsMoveComplete)
 	{
 		return;
 	}
@@ -429,16 +469,23 @@ void EnemyMovementComponent::RotateTowardTarget(int targetQ, int targetR)
 	}
 
 	const auto path = m_GridSystem->GetShortestPath(startKey, targetKey);
-	if (path.size() < 2)
+	
+	ERotationOffset rotation{};
+	bool hasRotation = false;
+	if (path.size() >= 2)
 	{
-		return;
+		hasRotation = TryGetRotationFromStep(startKey, path[1], rotation);
+	}
+	if (!hasRotation)
+	{
+		hasRotation = TryGetRotationTowardTargetApprox(startKey, targetKey, rotation);
 	}
 
-	ERotationOffset rotation{};
-	if (TryGetRotationFromStep(startKey, path[1], rotation))
+	if (hasRotation)
 	{
 		SetEnemyRotation(enemyTransform, rotation);
 		enemy->SetFacing(rotation);
+		enemy->RefreshSightDebugLines();
 	}
 }
 

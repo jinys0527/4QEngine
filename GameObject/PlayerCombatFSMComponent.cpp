@@ -491,9 +491,10 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 					enemyStat->SetCurrentHP(nextHp);
 
 					if (services.Has<SoundManager>()) {
+						services.Get<SoundManager>().SFX_Shot(L"Melee_Attack_Equipped");
 						services.Get<SoundManager>().SFX_Shot(L"Damage_Enemy");
 					}
-
+					
 					std::cout << "[Combat] Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
 					if (enemyStat->IsDead() && m_CombatManager)
 					{
