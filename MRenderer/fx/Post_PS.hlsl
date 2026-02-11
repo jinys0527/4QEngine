@@ -183,7 +183,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     //emissive.rgb *= 1.5;
 
     //return finalBlur + emissive;
-    float4 scene = finalBlur + emissive;
+    float4 scene = /*finalBlur*/RTView + emissive;
     //float4 scene = RTView;
     
     scene.rgb = ToneMap_ACES(scene.rgb);

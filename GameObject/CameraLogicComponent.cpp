@@ -12,8 +12,8 @@ REGISTER_COMPONENT(CameraLogicComponent)
 REGISTER_PROPERTY(CameraLogicComponent, MaxZoom)
 REGISTER_PROPERTY(CameraLogicComponent, MinZoom)
 REGISTER_PROPERTY(CameraLogicComponent, XOffset)
+REGISTER_PROPERTY(CameraLogicComponent, ZOffset)
 REGISTER_PROPERTY(CameraLogicComponent, Threshold)
-
 
 CameraLogicComponent::~CameraLogicComponent()
 {
@@ -50,6 +50,8 @@ void CameraLogicComponent::Start()
 			if (auto* playerTransform = gameObject->GetComponent<TransformComponent>())
 			{
 				m_PlayerTransform = playerTransform;
+				m_PreviousPlayerPos = playerTransform->GetWorldPos();
+				m_HasPreviousPlayerPos = true;
 				break;
 			}
 		}
@@ -63,7 +65,7 @@ void CameraLogicComponent::Update(float deltaTime)
 	if (!m_PlayerTransform)
 		return;
 	CamZoom();
-	CamFollowX(deltaTime);
+	CamFollow(deltaTime);
 
 
 }
@@ -128,17 +130,40 @@ void CameraLogicComponent::CamZoom()
 
 }
 
-void CameraLogicComponent::CamFollowX(float deltaTime)
+void CameraLogicComponent::CamFollow(float deltaTime)
+{
+	const XMFLOAT3 playerPos = m_PlayerTransform->GetWorldPos();
+
+	if (!m_HasPreviousPlayerPos)
+	{
+		m_PreviousPlayerPos = playerPos;
+		m_HasPreviousPlayerPos = true;
+	}
+
+	const float playerMoveDeltaX = playerPos.x - m_PreviousPlayerPos.x;
+	const float playerMoveDeltaZ = playerPos.z - m_PreviousPlayerPos.z;
+	const bool isMovingNegativeX = (playerMoveDeltaX < 0.0f);
+	const bool isMovingNegativeZ = (playerMoveDeltaZ < 0.0f);
+
+	CamFollowX(deltaTime, isMovingNegativeX);
+	CamFollowZ(deltaTime, isMovingNegativeZ);
+
+	m_PreviousPlayerPos = playerPos;
+}
+
+void CameraLogicComponent::CamFollowX(float deltaTime, bool isMovingNegativeX)
 {
 	const XMFLOAT3 currentEye = m_Camera->GetEye();
 	const XMFLOAT3 currentLook = m_Camera->GetLook();
 	const XMFLOAT3 playerPos = m_PlayerTransform->GetWorldPos();
 
-	const float playerDeltaFromLook = playerPos.x - currentLook.x;
-	const float directionalOffset = (playerDeltaFromLook >= 0.0f) ? m_XOffset : -m_XOffset;
-	const float targetLookX = playerPos.x + directionalOffset;
+	
+	const float playerDeltaFromLookX = playerPos.x - currentLook.x;
+	const float directionalOffsetX = (playerDeltaFromLookX >= 0.0f) ? m_XOffset : -m_XOffset;
+	const float targetLookX = playerPos.x + directionalOffsetX;
 	const float deltaX = targetLookX - currentLook.x;
-	if (std::abs(deltaX) < m_FollowThreshold)
+
+	if (!isMovingNegativeX && std::abs(deltaX) < m_FollowThreshold)
 	{
 		return;
 	}
@@ -153,3 +178,31 @@ void CameraLogicComponent::CamFollowX(float deltaTime)
 
 	m_Camera->SetEyeLookUp(newEye, newLook, m_Camera->GetUp());
 }
+
+void CameraLogicComponent::CamFollowZ(float deltaTime, bool isMovingNegativeZ)
+{
+	const XMFLOAT3 currentEye = m_Camera->GetEye();
+	const XMFLOAT3 currentLook = m_Camera->GetLook();
+	const XMFLOAT3 playerPos = m_PlayerTransform->GetWorldPos();
+
+	const float playerDeltaFromLookZ = playerPos.z - currentLook.z;
+	const float directionalOffsetZ = (playerDeltaFromLookZ >= 0.0f) ? m_ZOffset : -m_ZOffset;
+	const float targetLookZ = playerPos.z + directionalOffsetZ;
+	const float deltaZ = targetLookZ - currentLook.z;
+
+	if (!isMovingNegativeZ && std::abs(deltaZ) < m_FollowThreshold)
+	{
+		return;
+	}
+
+	const float maxStep = 2.0f * deltaTime;
+	const float stepZ = std::clamp(deltaZ, -maxStep, maxStep);
+
+	XMFLOAT3 newEye = currentEye;
+	XMFLOAT3 newLook = currentLook;
+	newEye.z += stepZ;
+	newLook.z += stepZ;
+
+	m_Camera->SetEyeLookUp(newEye, newLook, m_Camera->GetUp());
+}
+
