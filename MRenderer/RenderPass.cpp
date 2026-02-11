@@ -216,9 +216,9 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 
 	// 새로운 초점 위치 생성
 	XMVECTOR focusPos = XMVectorSet(
-		camPos.x,      // X → 카메라 기준
+		camPos.x + 0.5f,      // X → 카메라 기준
 		focusY,        // Y → 플레이어 기준
-		camPos.z,      // Z → 카메라 기준
+		camPos.z + 3.0f,      // Z → 카메라 기준
 		1.0f
 	);
 
