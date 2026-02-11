@@ -177,7 +177,7 @@ Texture2D g_RTView              : register(t0);
 Texture2D g_WallDepth           : register(t1);
 Texture2D g_ShadowMap           : register(t2);
 TextureCube g_SkyBox            : register(t3);
-Texture2D g_DepthMap            : register(t4);
+Texture2DMS<float> g_DepthMap   : register(t4);
 Texture2D g_Mask_Wall           : register(t5);
 Texture2D g_WaterNoise          : register(t6);
 Texture2D g_RTEmissive          : register(t7);
