@@ -966,6 +966,27 @@ void BuildCameraData(const std::shared_ptr<CameraObject>& camera, RenderData::Fr
 
 void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 {
+	if (m_Name == "Title")
+	{
+		frameData.currScene = 0;
+	}
+	else if (m_Name == "Stage1")
+	{
+		frameData.currScene = 1;
+	}
+	else if (m_Name == "Stage2")
+	{
+		frameData.currScene = 2;
+	}
+	else if (m_Name == "Ending")
+	{
+		frameData.currScene = 3;
+	}
+	else
+	{
+		frameData.currScene = 0;
+	}
+
 	frameData.renderItems.clear();
 	frameData.lights.clear();
 	frameData.skinningPalettes.clear();

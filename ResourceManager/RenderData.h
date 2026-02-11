@@ -266,5 +266,6 @@ namespace RenderData
 		XMFLOAT3                   playerPosition{ 0.0f, 0.0f, 0.0f };
 		bool                       hasPlayerPosition = false;
 		std::vector<XMFLOAT3>      combatEnemyPositions;
+		UINT						currScene = 0;
 	};
 }

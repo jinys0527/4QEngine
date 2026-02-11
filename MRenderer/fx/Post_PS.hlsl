@@ -137,7 +137,17 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 emissive = (e0 * 1.5) + (e1 * 0.8) + (e2 * 0.5) + (e3 * 0.3);
 
     // ====== 7. Final Composition & Post-Process ======
-    float4 scene = finalBlur + emissive;
+    float4 scene;
+    
+    if(blurOn)
+    {
+        scene = finalBlur + emissive;
+
+    }
+    else
+    {
+        scene = RTView + emissive;
+    }
 
     
     // Saturation 조절 (ToneMap 전 수행)

@@ -76,7 +76,8 @@ struct LightConstBuffer
 {
 	Light	lights[MAX_LIGHTS];
 	UINT	lightCount = 0;
-	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
+	UINT	blurOn = 1;
+	FLOAT   padding[2]{ 0.0f, 0.0f };
 };
 
 constexpr size_t kMaxSkinningBones = 256;
@@ -268,6 +269,9 @@ struct RenderContext
 	ComPtr<ID3D11ShaderResourceView>*     pTexRvScene_Emissive = nullptr;
 	ComPtr<ID3D11RenderTargetView>*       pRTView_Emissive = nullptr;
 
+	//HDRIImage
+	ComPtr<ID3D11ShaderResourceView>	pHDRI_1;
+	ComPtr<ID3D11ShaderResourceView>	pHDRI_2;
 
 
 	std::function<void()> DrawFullscreenQuad;

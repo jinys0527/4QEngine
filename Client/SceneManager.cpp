@@ -45,9 +45,7 @@ void SceneManager::Initialize()
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
 
-		//"Title",
-		"Stage1",
-		"PlayerTest",
+		"Title",
 		"Stage1_Test",
 		"Stage2_Test"
 		//"BossStage"
@@ -551,7 +549,6 @@ void SceneManager::LoadGameScenesFromDirectory(const std::filesystem::path& dire
 	{
 		std::filesystem::path scenePath =
 			directoryPath / (sceneName + ".json");
-
 		if (!std::filesystem::exists(scenePath))
 		{
 			std::cout << "Scene not found: " << sceneName << std::endl;

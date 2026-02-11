@@ -31,7 +31,16 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	}
 
 	//임시 스카이박스 테스트
-	m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+	if (frame.currScene == 1 || frame.currScene == 2)
+	{
+		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.pHDRI_1.GetAddressOf());
+	}
+	else
+	{
+		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+
+	}
+
 	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
 	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
 	SetDepthStencilState(DS::DEPTH_OFF);
@@ -208,6 +217,14 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 
 				m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
+			}
+			if (frame.currScene == 1)
+			{
+				m_RenderContext.pDXDC->PSSetShaderResources(17, 1, m_RenderContext.pHDRI_1.GetAddressOf());
+			}
+			else if (frame.currScene == 2)
+			{
+				m_RenderContext.pDXDC->PSSetShaderResources(17, 1, m_RenderContext.pHDRI_2.GetAddressOf());
 			}
 		}
 

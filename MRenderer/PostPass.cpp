@@ -45,10 +45,8 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
 
-    ID3D11ShaderResourceView* srv = m_RenderContext.pDepthMSAARV
-        ? m_RenderContext.pDepthMSAARV.Get()
-        : m_RenderContext.pDepthRV.Get();
-    dxdc->PSSetShaderResources(4, 1, &srv);
+    ID3D11ShaderResourceView* depthSrv = m_RenderContext.pDepthRV.Get();
+    dxdc->PSSetShaderResources(4, 1, &depthSrv);
 
 
     dxdc->PSSetShaderResources(6, 1, m_RenderContext.WaterNoise.GetAddressOf());

@@ -121,9 +121,8 @@ float4 PS_Main(VSOutput_Wall input) : SV_Target
     float4 specOcc = lerp(1.0f, texAO, texRough);
     float4 envStrength = pow(saturate(1.0 - texRough), 2.0f);
     float mipLevel = texRough.r * 6.0f;
-    float3 envColor = g_SkyBox.SampleLevel(smpClamp, eR, mipLevel).rgb;
+    float3 envColor = g_Env.SampleLevel(smpClamp, eR, mipLevel).rgb;
     
-    envColor = 1;
     
     //envColor = float3(0.125f, 0.125f, 0.125f);
     //envColor = float3(1, 1, 1);
