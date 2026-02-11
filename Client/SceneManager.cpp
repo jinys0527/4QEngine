@@ -46,8 +46,11 @@ void SceneManager::Initialize()
 	LoadGameScenesFromDirectory(scenesPath,{
 
 		"Title",
-		"Stage1_Test",
-		"Stage2_Test"
+		"Stage1",
+		//"Stage2"
+		"Ending",
+		"DeadScene"
+
 		//"BossStage"
 		});
 

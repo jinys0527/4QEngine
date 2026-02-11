@@ -128,6 +128,7 @@ extern "C" {
 	void Link_VendingComponent();
 	void Link_ExitComponent();
 	void Link_WaterRiseComponent();
+	void Link_SceneDelayComponent();
 
 }
 
@@ -215,4 +216,5 @@ void LinkEngineComponents() {
 	Link_VendingComponent();
 	Link_ExitComponent();
 	Link_WaterRiseComponent();
+	Link_SceneDelayComponent();
 }

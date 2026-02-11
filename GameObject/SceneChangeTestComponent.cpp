@@ -49,6 +49,7 @@ void SceneChangeTestComponent::OnEvent(EventType type, const void* data)
 
 	if (keyData->key == VK_SPACE)
 	{
+		std::cout << "Space Request : " << std::endl;
 		SceneChange();
 		
 	}
