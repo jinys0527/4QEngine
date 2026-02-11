@@ -382,8 +382,14 @@
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIButtonComponent.h" />
     <ClInclude Include="UIComponent.h" />
+    <ClInclude Include="UIDiceDisplayComponent.h" />
+    <ClInclude Include="UIDiceDisplayTypes.h" />
+    <ClInclude Include="UIDicePanelComponent.h" />
+    <ClInclude Include="UIDicePanelTypes.h" />
+    <ClInclude Include="UIDiceRollAnimationComponent.h" />
     <ClInclude Include="UIFSMComponent.h" />
     <ClInclude Include="UIImageComponent.h" />
+    <ClInclude Include="UINumberSpriteComponent.h" />
     <ClInclude Include="UIObject.h" />
     <ClInclude Include="UIPrimitives.h" />
     <ClInclude Include="UIProgressBarComponent.h" />
@@ -466,8 +472,12 @@
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIButtonComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
+    <ClCompile Include="UIDiceDisplayComponent.cpp" />
+    <ClCompile Include="UIDicePanelComponent.cpp" />
+    <ClCompile Include="UIDiceRollAnimationComponent.cpp" />
     <ClCompile Include="UIFSMComponent.cpp" />
     <ClCompile Include="UIImageComponent.cpp" />
+    <ClCompile Include="UINumberSpriteComponent.cpp" />
     <ClCompile Include="UIObject.cpp" />
     <ClCompile Include="UIProgressBarComponent.cpp" />
     <ClCompile Include="UISliderComponent.cpp" />

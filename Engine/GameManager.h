@@ -125,6 +125,10 @@ private:
 	bool  m_ResolveEnemyTurn = false;
 	bool  m_PlayerActionInputLocked = false;
 	bool  m_WaitingEnemyTurnDelay = false;
+	bool  m_PendingPlayerDiceDecisionRequest = false;
+	bool  m_PendingPlayerDiceStatRollRequest = false;
+	bool  m_PendingPlayerDiceContinueRequest = false;
+	int   m_PendingDiceAnimations = 0;
 	int   m_RemainingEnemyTurns = 0;
 	int   m_ExplorationActiveEnemyActorId = 0;
 

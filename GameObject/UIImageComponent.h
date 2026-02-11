@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "UIComponent.h"
 #include "ResourceHandle.h"
+#include <DirectXMath.h>
 
 class UIImageComponent : public UIComponent
 {
@@ -22,10 +23,15 @@ public:
 
 	void SetPixelShaderHandle(const PixelShaderHandle& handle) { m_PixelShaderHandle = handle; }
 	const PixelShaderHandle& GetPixelShaderHandle() const { return m_PixelShaderHandle; }
+
+	void SetTintColor(const DirectX::XMFLOAT4& color) { m_TintColor = color; }
+	const DirectX::XMFLOAT4& GetTintColor() const { return m_TintColor; }
+
 private:
 	TextureHandle m_Texture = TextureHandle::Invalid();
 	ShaderAssetHandle m_ShaderAssetHandle = ShaderAssetHandle::Invalid();
 	VertexShaderHandle m_VertexShaderHandle = VertexShaderHandle::Invalid();
 	PixelShaderHandle m_PixelShaderHandle = PixelShaderHandle::Invalid();
+	DirectX::XMFLOAT4 m_TintColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 };
 

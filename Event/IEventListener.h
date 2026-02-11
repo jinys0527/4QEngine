@@ -75,10 +75,34 @@ enum class EventType
 	PlayerDoorCancel,
 	PlayerShopOpen,
 	PlayerShopClose,
-	PlayerDiceRoll,
+	PlayerDiceRoll, 
+	PlayerDiceUIOpen,
+	PlayerDiceUIReset,
+	PlayerDiceRollRequested,
+	PlayerDiceRollApplied,
+	PlayerDiceTotalsApplied,
+	PlayerDiceResultShown,
+	PlayerDiceUIClose,
+	PlayerDiceDecisionRequested,
+	PlayerDiceDecisionFaceRolled,
+	PlayerDiceDecisionResult,
+	PlayerDiceInitiativeResolved,
+	PlayerDiceStatRollRequested,
+	PlayerDiceTypeDetermined,
+	PlayerDiceStatResolved,
+	PlayerDiceAnimationStarted,
+	PlayerDiceAnimationCompleted,
+	PlayerDiceContinueRequested,
+	PlayerStatChanged,
+
+
+	DiceRolled,
+	CombatNumberPopup,
+	GoldAcquired,
 
 	//Enemy
 	EnemyAttack,
+	EnemyHovered,
 
 };
 

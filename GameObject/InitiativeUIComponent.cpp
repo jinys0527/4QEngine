@@ -28,28 +28,21 @@ InitiativeUIComponent::~InitiativeUIComponent()
 
 void InitiativeUIComponent::Start()
 {
-	m_Dispatcher = &GetEventDispatcher();
-	m_Dispatcher->AddListener(EventType::CombatEnter, this);
-	m_Dispatcher->AddListener(EventType::CombatInitiativeBuilt, this);
-	m_Dispatcher->AddListener(EventType::CombatTurnAdvanced, this);
-	m_Dispatcher->AddListener(EventType::CombatExit, this);
-	m_Dispatcher->AddListener(EventType::CombatEnded, this);
-
-	if (auto* scene = GetScene())
-	{
-		auto& services = scene->GetServices();
-		if (services.Has<UIManager>())
-		{
-			m_UIManager = &services.Get<UIManager>();
-		}
-	}
+	m_RuntimeBindingsReady = false;
+	m_ListenersRegistered = false;
 }
 
 void InitiativeUIComponent::Update(float deltaTime)
 {
 	(void)deltaTime;
 
-	if (!m_Enabled || m_InitiativeOrder.empty())
+	if (!m_Enabled)
+		return;
+
+	if (!TryPrepareRuntimeBindings())
+		return;
+
+	if (m_InitiativeOrder.empty())
 		return;
 
 	auto* scene = GetScene();
@@ -145,7 +138,12 @@ void InitiativeUIComponent::Update(float deltaTime)
 
 void InitiativeUIComponent::OnEvent(EventType type, const void* data)
 {
+	UIComponent::OnEvent(type, data);
+
 	if (!m_Enabled)
+		return;
+
+	if (!TryPrepareRuntimeBindings())
 		return;
 
 	switch (type)
@@ -191,6 +189,42 @@ void InitiativeUIComponent::OnEvent(EventType type, const void* data)
 	}
 }
 
+bool InitiativeUIComponent::TryPrepareRuntimeBindings()
+{
+	if (m_RuntimeBindingsReady)
+	{
+		return true;
+	}
+
+	auto* scene = GetScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* uiManager = GetUIManager();
+	if (!uiManager)
+	{
+		return false;
+	}
+
+	m_UIManager = uiManager;
+	m_Dispatcher = &GetEventDispatcher();
+	if (!m_ListenersRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::CombatEnter, this);
+		m_Dispatcher->AddListener(EventType::CombatInitiativeBuilt, this);
+		m_Dispatcher->AddListener(EventType::CombatTurnAdvanced, this);
+		m_Dispatcher->AddListener(EventType::CombatExit, this);
+		m_Dispatcher->AddListener(EventType::CombatEnded, this);
+		m_ListenersRegistered = true;
+	}
+
+	m_RuntimeBindingsReady = true;
+	return true;
+}
+
+
 void InitiativeUIComponent::SetEnabled(const bool& enable)
 {
 	if (m_Enabled == enable)
@@ -231,34 +265,11 @@ void InitiativeUIComponent::RemoveUI()
 	ResetIconPools();
 }
 
-UIManager* InitiativeUIComponent::GetUIManager() const
-{
-	if (m_UIManager)
-	{
-		return m_UIManager;
-	}
-
-	auto* scene = GetScene();
-	if (!scene)
-		return nullptr;
-
-	auto& services = scene->GetServices();
-	if (!services.Has<UIManager>())
-		return nullptr;
-
-	return &services.Get<UIManager>();
-}
-
-Scene* InitiativeUIComponent::GetScene() const
-{
-	auto* owner = GetOwner();
-	return owner ? owner->GetScene() : nullptr;
-}
 
 void InitiativeUIComponent::DetachFromDispatcher()
 {
 	auto* scene = GetScene();
-	if (m_Dispatcher && scene)
+	if (m_ListenersRegistered && m_Dispatcher && scene)
 	{
 		auto& dispatcher = scene->GetEventDispatcher();
 		if (&dispatcher == m_Dispatcher)
@@ -273,6 +284,8 @@ void InitiativeUIComponent::DetachFromDispatcher()
 
 	m_Dispatcher = nullptr;
 	m_UIManager = nullptr;
+	m_RuntimeBindingsReady = false;
+	m_ListenersRegistered = false;
 }
 
 void InitiativeUIComponent::RebuildInitiativeOrder()

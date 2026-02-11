@@ -603,15 +603,15 @@ namespace
 				const char* fileName = nullptr;
 				if (containsToken("boss_"))
 				{
-					fileName = "top_boss.png";
+					fileName = "enemyStatus_frameBoss.png";
 				}
 				else if (containsToken("e2_"))
 				{
-					fileName = "top_e02.png";
+					fileName = "enemyStatus_frame100002Simhyung.png";
 				}
 				else if (containsToken("e1_"))
 				{
-					fileName = "top_e01.png";
+					fileName = "enemyStatus_frame100001Umjinsik.png";
 				}
 
 				if (!fileName)
@@ -647,9 +647,9 @@ namespace
 
 		static constexpr std::array<const char*, 3> kEnemyHoverFileNames =
 		{
-			"top_E01.png",
-			"top_E02.png",
-			"top_boss.png",
+			"enemyStatus_frame100001Umjinsik.png",
+			"enemyStatus_frame100002Simhyung.png",
+			"enemyStatus_frameBoss.png",
 		};
 
 		auto* enemyStat = enemyObject->GetComponent<EnemyStatComponent>();
@@ -1411,13 +1411,18 @@ void PlayerComponent::Update(float deltaTime) {
 			int idefense = itemcomponent->GetDEF();
 			int irange = itemcomponent->GetMeleeAttackRange();
 
-			playerstatcomponent->SetHealth(health + ihealth);
-			playerstatcomponent->SetStrength(strength + istrength);
-			playerstatcomponent->SetAgility(agility + iagility);
-			playerstatcomponent->SetSense(sense + isense);
-			playerstatcomponent->SetSkill(skill + iskill);
+			playerstatcomponent->SetHealth(health);
+			playerstatcomponent->SetStrength(strength);
+			playerstatcomponent->SetAgility(agility);
+			playerstatcomponent->SetSense(sense);
+			playerstatcomponent->SetSkill(skill);
 			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
 			playerstatcomponent->SetRange(static_cast<int>(irange));
+			playerstatcomponent->SetEquipmentHealthBonus(ihealth);
+			playerstatcomponent->SetEquipmentStrengthBonus(istrength);
+			playerstatcomponent->SetEquipmentAgilityBonus(iagility);
+			playerstatcomponent->SetEquipmentSenseBonus(isense);
+			playerstatcomponent->SetEquipmentSkillBonus(iskill);
 
 			m_IsApplyMeleeStat = true;
 		}
@@ -1957,6 +1962,9 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		TextureHandle hoverEnemyTexture = TextureHandle::Invalid();
 		float hoverEnemyHpPercent = 0.0f;
 		bool hasHoveredEnemy = false;
+		int hoveredEnemyActorId = 0;
+		int hoveredEnemyCurrentHp = 0;
+		int hoveredEnemyMaxHp = 0;
 		if (input.IsPointInViewport(mouseData->pos))
 		{
 			auto camera = scene->GetGameCamera();
@@ -1978,16 +1986,26 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 					auto* enemyOwner = dynamic_cast<GameObject*>(hoveredEnemy->GetOwner());
 					auto* enemyStat = enemyOwner ? enemyOwner->GetComponent<EnemyStatComponent>() : nullptr;
 					hoverEnemyTexture = ResolveEnemyHoverTexture(enemyOwner);
+					hoveredEnemyActorId = hoveredEnemy->GetActorId();
 					if (enemyStat)
 					{
-						const float currentHp = static_cast<float>(enemyStat->GetCurrentHP());
-						const float maxHp = static_cast<float>((std::max)(1, enemyStat->GetInitialHP()));
+						hoveredEnemyCurrentHp = enemyStat->GetCurrentHP();
+						hoveredEnemyMaxHp = (std::max)(1, enemyStat->GetInitialHP());
+						const float currentHp = static_cast<float>(hoveredEnemyCurrentHp);
+						const float maxHp = static_cast<float>(hoveredEnemyMaxHp); 
 						hoverEnemyHpPercent = currentHp / maxHp;
 					}
 					hasHoveredEnemy = true;
 				}
 			}
 		}
+
+		Events::EnemyHoveredEvent enemyHoveredEvent{};
+		enemyHoveredEvent.actorId = hasHoveredEnemy ? hoveredEnemyActorId : 0;
+		enemyHoveredEvent.currentHp = hasHoveredEnemy ? hoveredEnemyCurrentHp : 0;
+		enemyHoveredEvent.maxHp = hasHoveredEnemy ? hoveredEnemyMaxHp : 0;
+		enemyHoveredEvent.hasEnemy = hasHoveredEnemy;
+		GetEventDispatcher().Dispatch(EventType::EnemyHovered, &enemyHoveredEvent);
 
 		UpdateGroundItemInfoPanel(uiManager, scene->GetName(), hoverInfo);
 		UpdateEnemyHoverInfoPanel(uiManager, scene->GetName(), hoverEnemyTexture, hoverEnemyHpPercent, hasHoveredEnemy);
@@ -2947,7 +2965,10 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 	bool shouldRemovePickedObject = false;
 	if (isGoldBar)
 	{
-		m_Money += max(0, item->GetPrice());
+		const int gainedGold = max(0, item->GetPrice());
+		m_Money += gainedGold;
+		const Events::GoldAcquiredEvent goldEvent{ gainedGold, m_Money };
+		GetEventDispatcher().Dispatch(EventType::GoldAcquired, &goldEvent);
 		shouldRemovePickedObject = true;
 	}
 	if (itemType == static_cast<int>(ItemType::EQUIPMENT)

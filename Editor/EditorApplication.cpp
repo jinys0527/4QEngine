@@ -3535,6 +3535,124 @@ void EditorApplication::DrawUIEditorPreview()
 				return children;
 			};
 
+		static std::unordered_map<std::string, std::unordered_map<std::string, UIRect>> lastUIBoundsByScene;
+		if (m_EditorState != EditorPlayState::Play && it != uiObjectsByScene.end())
+		{
+			auto& lastBounds = lastUIBoundsByScene[sceneName];
+			const auto children = buildUIChildIndex(it->second);
+			std::unordered_map<std::string, UIRect> movedDeltas;
+			std::unordered_set<std::string> currentNames;
+
+			for (const auto& [name, uiObject] : it->second)
+			{
+				if (!uiObject || !uiObject->HasBounds())
+				{
+					continue;
+				}
+
+				const UIRect bounds = uiObject->GetBounds();
+				currentNames.insert(name);
+				auto itLast = lastBounds.find(name);
+				if (itLast != lastBounds.end())
+				{
+					if (bounds.x != itLast->second.x || bounds.y != itLast->second.y)
+					{
+						UIRect delta{};
+						delta.x = bounds.x - itLast->second.x;
+						delta.y = bounds.y - itLast->second.y;
+						movedDeltas.emplace(name, delta);
+					}
+				}
+			}
+
+			std::unordered_set<std::string> movedRoots;
+			movedRoots.reserve(movedDeltas.size());
+			for (const auto& [name, delta] : movedDeltas)
+			{
+				auto itNode = it->second.find(name);
+				if (itNode == it->second.end() || !itNode->second)
+				{
+					continue;
+				}
+				std::string parentName = itNode->second->GetParentName();
+				bool hasMovedAncestor = false;
+				while (!parentName.empty())
+				{
+					if (movedDeltas.find(parentName) != movedDeltas.end())
+					{
+						hasMovedAncestor = true;
+						break;
+					}
+					auto itParent = it->second.find(parentName);
+					if (itParent == it->second.end() || !itParent->second)
+					{
+						break;
+					}
+					parentName = itParent->second->GetParentName();
+				}
+				if (!hasMovedAncestor)
+				{
+					movedRoots.insert(name);
+				}
+			}
+
+			auto applyDeltaToDescendants = [&](const std::string& rootName, const UIRect& delta, auto&& applyRef) -> void
+				{
+					auto itChildren = children.find(rootName);
+					if (itChildren == children.end())
+					{
+						return;
+					}
+					for (const auto& childName : itChildren->second)
+					{
+						auto itChild = it->second.find(childName);
+						if (itChild != it->second.end() && itChild->second && itChild->second->HasBounds())
+						{
+							UIRect childBounds = itChild->second->GetBounds();
+							childBounds.x += delta.x;
+							childBounds.y += delta.y;
+							itChild->second->SetBounds(childBounds);
+						}
+						applyRef(childName, delta, applyRef);
+					}
+				};
+
+			for (const auto& rootName : movedRoots)
+			{
+				auto itDelta = movedDeltas.find(rootName);
+				if (itDelta != movedDeltas.end())
+				{
+					applyDeltaToDescendants(rootName, itDelta->second, applyDeltaToDescendants);
+				}
+			}
+
+			for (auto& [name, uiObject] : it->second)
+			{
+				if (!uiObject || !uiObject->HasBounds())
+				{
+					continue;
+				}
+				lastBounds[name] = uiObject->GetBounds();
+			}
+
+			if (currentNames.size() != lastBounds.size())
+			{
+				std::vector<std::string> stale;
+				stale.reserve(lastBounds.size());
+				for (const auto& [name, bounds] : lastBounds)
+				{
+					if (currentNames.find(name) == currentNames.end())
+					{
+						stale.push_back(name);
+					}
+				}
+				for (const auto& name : stale)
+				{
+					lastBounds.erase(name);
+				}
+			}
+		}
+
 		auto hasSelectedUIAncestor = [&](const std::string& name) -> bool
 			{
 				auto itNode = it->second.find(name);
@@ -3631,6 +3749,8 @@ void EditorApplication::DrawUIEditorPreview()
 
 				std::unordered_map<std::string, std::string> nameRemap;
 				std::unordered_set<std::string> reservedNames;
+				std::unordered_set<std::string> clipboardNames;
+				std::vector<std::string> clipboardRootNames;
 				for (const auto& [name, uiObject] : itScene->second)
 				{
 					reservedNames.insert(name);
@@ -3655,12 +3775,28 @@ void EditorApplication::DrawUIEditorPreview()
 					{
 						continue;
 					}
+					clipboardNames.insert(originalName);
 					std::string baseName = originalName;
 					if (reservedNames.find(baseName) != reservedNames.end())
 					{
-						baseName = originalName + "_Copy";
+						baseName = originalName + "_Dex";
 					}
 					nameRemap[originalName] = makeUniqueName(baseName);
+				}
+
+				clipboardRootNames.reserve(clipboardNames.size());
+				for (const auto& entry : m_UIObjectClipboard["objects"])
+				{
+					const std::string originalName = entry.value("name", "");
+					if (originalName.empty())
+					{
+						continue;
+					}
+					const std::string parentName = entry.value("parent", "");
+					if (parentName.empty() || clipboardNames.find(parentName) == clipboardNames.end())
+					{
+						clipboardRootNames.push_back(originalName);
+					}
 				}
 
 				std::vector<std::shared_ptr<UIObject>> createdObjects;
@@ -3716,6 +3852,10 @@ void EditorApplication::DrawUIEditorPreview()
 					if (itParent != nameRemap.end())
 					{
 						objectJson["parent"] = itParent->second;
+					}
+					else if (!parentName.empty() && itScene->second.find(parentName) != itScene->second.end())
+					{
+						objectJson["parent"] = parentName;
 					}
 					else
 					{
@@ -3796,15 +3936,30 @@ void EditorApplication::DrawUIEditorPreview()
 
 				uiManager->RefreshUIListForCurrentScene();
 				m_SelectedUIObjectNames.clear();
+				m_SelectedUIObjectName.clear();
+				std::string focusName;
+
 				for (const auto& uiObject : createdObjects)
 				{
 					if (uiObject)
 					{
 						m_SelectedUIObjectNames.insert(uiObject->GetName());
-						m_SelectedUIObjectName = uiObject->GetName();
 					}
 				}
+				for (const auto& rootName : clipboardRootNames)
+				{
+					auto itName = nameRemap.find(rootName);
+					if (itName == nameRemap.end())
+					{
+						continue;
+					}
+					focusName = itName->second;
+				}
 
+				if (!focusName.empty())
+				{
+					m_SelectedUIObjectName = focusName;
+				}
 				if (!createdObjects.empty())
 				{
 					m_UndoManager.Push(UndoManager::Command{
@@ -4586,9 +4741,51 @@ void EditorApplication::DrawUIEditorPreview()
 			const bool positionChanged = ImGui::DragFloat2("Position", positionValues, 1.0f, -10000.0f, 10000.0f);
 			if (positionChanged)
 			{
+				const UIRect previousBounds = bounds;
 				bounds.x = positionValues[0];
 				bounds.y = positionValues[1];
 				selectedObject->SetBounds(bounds);
+
+				const float deltaX = bounds.x - previousBounds.x;
+				const float deltaY = bounds.y - previousBounds.y;
+				if ((deltaX != 0.0f || deltaY != 0.0f) && it != uiObjectsByScene.end())
+				{
+					const std::string selectedName = selectedObject->GetName();
+					for (auto& [name, uiObject] : it->second)
+					{
+						if (!uiObject || name == selectedName)
+						{
+							continue;
+						}
+
+						std::string parentName = uiObject->GetParentName();
+						bool isDescendant = false;
+						while (!parentName.empty())
+						{
+							if (parentName == selectedName)
+							{
+								isDescendant = true;
+								break;
+							}
+							auto itParent = it->second.find(parentName);
+							if (itParent == it->second.end() || !itParent->second)
+							{
+								break;
+							}
+							parentName = itParent->second->GetParentName();
+						}
+
+						if (!isDescendant)
+						{
+							continue;
+						}
+
+						UIRect childBounds = uiObject->GetBounds();
+						childBounds.x += deltaX;
+						childBounds.y += deltaY;
+						uiObject->SetBounds(childBounds);
+					}
+				}
 			}
 			recordUILongEdit(makeUILayoutKey("Position"), positionChanged, "Edit UI Position");
 
@@ -4667,19 +4864,99 @@ void EditorApplication::DrawUIEditorPreview()
 				const size_t groupPositionKey = makeUILayoutKey("GroupPosition") ^ selectionHash;
 				const size_t groupSizeKey = makeUILayoutKey("GroupSize") ^ selectionHash;
 
-				auto ensureGroupSnapshot = [&](size_t key, const UIRect& startBounds)
+				auto collectGroupTargets = [&]() -> std::unordered_set<std::string>
+					{
+						std::unordered_set<std::string> targets;
+						if (it == uiObjectsByScene.end())
+						{
+							return targets;
+						}
+
+						for (const auto& name : m_SelectedUIObjectNames)
+						{
+							auto itNode = it->second.find(name);
+							if (itNode == it->second.end() || !itNode->second)
+							{
+								continue;
+							}
+							std::string parentName = itNode->second->GetParentName();
+							bool hasSelectedAncestor = false;
+							while (!parentName.empty())
+							{
+								if (m_SelectedUIObjectNames.find(parentName) != m_SelectedUIObjectNames.end())
+								{
+									hasSelectedAncestor = true;
+									break;
+								}
+								auto itParent = it->second.find(parentName);
+								if (itParent == it->second.end() || !itParent->second)
+								{
+									break;
+								}
+								parentName = itParent->second->GetParentName();
+							}
+							if (!hasSelectedAncestor)
+							{
+								targets.insert(name);
+							}
+						}
+
+						return targets;
+					};
+
+				auto collectGroupMoveTargets = [&](const std::unordered_set<std::string>& roots) -> std::unordered_set<std::string>
+					{
+						std::unordered_set<std::string> targets;
+						if (it == uiObjectsByScene.end() || roots.empty())
+						{
+							return targets;
+						}
+
+						for (const auto& [name, uiObject] : it->second)
+						{
+							if (!uiObject)
+							{
+								continue;
+							}
+							if (roots.find(name) != roots.end())
+							{
+								targets.insert(name);
+								continue;
+							}
+
+							std::string parentName = uiObject->GetParentName();
+							while (!parentName.empty())
+							{
+								if (roots.find(parentName) != roots.end())
+								{
+									targets.insert(name);
+									break;
+								}
+								auto itParent = it->second.find(parentName);
+								if (itParent == it->second.end() || !itParent->second)
+								{
+									break;
+								}
+								parentName = itParent->second->GetParentName();
+							}
+						}
+
+						return targets;
+					};
+
+				auto ensureGroupSnapshot = [&](size_t key, const UIRect& startBounds, const std::unordered_set<std::string>& targets)
 					{
 						if (pendingGroupEdits.find(key) != pendingGroupEdits.end())
 						{
 							return;
 						}
 						GroupEditSnapshot snapshot;
-						captureUISnapshots(m_SelectedUIObjectNames, snapshot.beforeSnapshots);
+						captureUISnapshots(targets, snapshot.beforeSnapshots);
 						snapshot.startBounds = startBounds;
 						snapshot.startWorldBounds.clear();
 						if (it != uiObjectsByScene.end())
 						{
-							for (const auto& name : m_SelectedUIObjectNames)
+							for (const auto& name : targets)
 							{
 								std::unordered_map<std::string, UIRect> localCache;
 								std::unordered_set<std::string> localVisiting;
@@ -4689,10 +4966,12 @@ void EditorApplication::DrawUIEditorPreview()
 						pendingGroupEdits.emplace(key, std::move(snapshot));
 					};
 
+				const auto groupTargets = collectGroupTargets();
+				const auto groupMoveTargets = collectGroupMoveTargets(groupTargets);
 				const bool groupPositionChanged = ImGui::DragFloat2("Group Position", groupPosition, 1.0f, -10000.0f, 10000.0f);
 				if (ImGui::IsItemActivated())
 				{
-					ensureGroupSnapshot(groupPositionKey, combined);
+					ensureGroupSnapshot(groupPositionKey, combined, groupMoveTargets);
 				}
 				if (groupPositionChanged)
 				{
@@ -4700,7 +4979,8 @@ void EditorApplication::DrawUIEditorPreview()
 					UIRect baseBounds = (itPending != pendingGroupEdits.end()) ? itPending->second.startBounds : combined;
 					const float deltaX = groupPosition[0] - baseBounds.x;
 					const float deltaY = groupPosition[1] - baseBounds.y;
-					for (const auto& name : m_SelectedUIObjectNames)
+
+					for (const auto& name : groupMoveTargets)
 					{
 						auto itObj = it->second.find(name);
 						if (itObj == it->second.end() || !itObj->second)
@@ -4718,7 +4998,9 @@ void EditorApplication::DrawUIEditorPreview()
 						}
 						else
 						{
-							worldBounds = getWorldBoundsForLayout(name, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+							std::unordered_map<std::string, UIRect> localCache;
+							std::unordered_set<std::string> localVisiting;
+							worldBounds = getWorldBoundsForLayout(name, it->second, getWorldBoundsForLayout, localCache, localVisiting);
 						}
 						worldBounds.x += deltaX;
 						worldBounds.y += deltaY;
@@ -4727,7 +5009,28 @@ void EditorApplication::DrawUIEditorPreview()
 						const std::string parentName = itObj->second->GetParentName();
 						if (!parentName.empty() && it->second.find(parentName) != it->second.end())
 						{
-							parentBounds = getWorldBoundsForLayout(parentName, it->second, getWorldBoundsForLayout, boundsCache, visiting);
+							if (itPending != pendingGroupEdits.end())
+							{
+								auto itParent = itPending->second.startWorldBounds.find(parentName);
+								if (itParent != itPending->second.startWorldBounds.end())
+								{
+									parentBounds = itParent->second;
+									parentBounds.x += deltaX;
+									parentBounds.y += deltaY;
+								}
+								else
+								{
+									std::unordered_map<std::string, UIRect> localCache;
+									std::unordered_set<std::string> localVisiting;
+									parentBounds = getWorldBoundsForLayout(parentName, it->second, getWorldBoundsForLayout, localCache, localVisiting);
+								}
+							}
+							else
+							{
+								std::unordered_map<std::string, UIRect> localCache;
+								std::unordered_set<std::string> localVisiting;
+								parentBounds = getWorldBoundsForLayout(parentName, it->second, getWorldBoundsForLayout, localCache, localVisiting);
+							}
 						}
 						setLocalFromWorldForLayout(*itObj->second, worldBounds, parentBounds);
 					}
@@ -4744,7 +5047,7 @@ void EditorApplication::DrawUIEditorPreview()
 						if (itPending->second.updated)
 						{
 							std::unordered_map<std::string, nlohmann::json> afterSnapshots;
-							captureUISnapshots(m_SelectedUIObjectNames, afterSnapshots);
+							captureUISnapshots(groupMoveTargets, afterSnapshots);
 							pushUIGroupSnapshotUndo("Move UI Group", itPending->second.beforeSnapshots, afterSnapshots);
 						}
 						pendingGroupEdits.erase(itPending);
@@ -4754,7 +5057,7 @@ void EditorApplication::DrawUIEditorPreview()
 				const bool groupSizeChanged = ImGui::DragFloat2("Group Size", groupSize, 1.0f, 1.0f, 100000.0f);
 				if (ImGui::IsItemActivated())
 				{
-					ensureGroupSnapshot(groupSizeKey, combined);
+					ensureGroupSnapshot(groupSizeKey, combined, groupTargets);
 				}
 				if (groupSizeChanged)
 				{
@@ -4765,7 +5068,7 @@ void EditorApplication::DrawUIEditorPreview()
 					const float scaleX = groupSize[0] / safeWidth;
 					const float scaleY = groupSize[1] / safeHeight;
 
-					for (const auto& name : m_SelectedUIObjectNames)
+					for (const auto& name : groupTargets)
 					{
 						auto itObj = it->second.find(name);
 						if (itObj == it->second.end() || !itObj->second)
@@ -4813,7 +5116,7 @@ void EditorApplication::DrawUIEditorPreview()
 						if (itPending->second.updated)
 						{
 							std::unordered_map<std::string, nlohmann::json> afterSnapshots;
-							captureUISnapshots(m_SelectedUIObjectNames, afterSnapshots);
+							captureUISnapshots(groupTargets, afterSnapshots);
 							pushUIGroupSnapshotUndo("Resize UI Group", itPending->second.beforeSnapshots, afterSnapshots);
 						}
 						pendingGroupEdits.erase(itPending);

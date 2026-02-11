@@ -99,6 +99,34 @@ void GameManager::SetFloorSceneNames(const std::vector<std::string>& names)
 
 void GameManager::Update(float deltaTime)
 {
+	auto* combatManager = GetCombatManager();
+	if (combatManager)
+	{
+		if (m_PendingPlayerDiceDecisionRequest && m_PendingDiceAnimations <= 0)
+		{
+			m_PendingPlayerDiceDecisionRequest = false;
+			std::cout << "[GameManager] Process pending PlayerDiceDecisionRequested" << std::endl;
+			combatManager->HandlePlayerDiceDecisionRequested();
+		}
+		if (m_PendingPlayerDiceStatRollRequest && m_PendingDiceAnimations <= 0)
+		{
+			m_PendingPlayerDiceStatRollRequest = false;
+			std::cout << "[GameManager] Process pending PlayerDiceStatRollRequested" << std::endl;
+			combatManager->HandlePlayerDiceStatRollRequested();
+		}
+		if (m_PendingPlayerDiceContinueRequest && m_PendingDiceAnimations <= 0)
+		{
+			m_PendingPlayerDiceContinueRequest = false;
+			std::cout << "[GameManager] Process pending PlayerDiceContinueRequested" << std::endl;
+			combatManager->HandlePlayerDiceContinueRequested();
+		}
+	}
+
+	if (combatManager && combatManager->IsDiceFlowActive())
+	{
+		return;
+	}
+
 	if (m_Phase == Phase::ExplorationLoop
 		&& m_ExplorationTurnState == ExplorationTurnState::PlayerTurn
 		&& m_Turn == Turn::PlayerTurn)
@@ -320,11 +348,11 @@ void GameManager::OnEvent(EventType type, const void* data)
 				}
 
 				if (m_Phase == Phase::TurnBasedCombat && m_BattleCheck == Battle::InBattle)
-				if (m_Phase == Phase::TurnBasedCombat)
-				{
-					SetCombatTurnState(payload->actorId == 1 ? CombatTurnState::PlayerTurn
-						: CombatTurnState::EnemyTurn);
-				}
+					if (m_Phase == Phase::TurnBasedCombat)
+					{
+						SetCombatTurnState(payload->actorId == 1 ? CombatTurnState::PlayerTurn
+							: CombatTurnState::EnemyTurn);
+					}
 			}
 		}
 		break;
@@ -336,8 +364,44 @@ void GameManager::OnEvent(EventType type, const void* data)
 			m_PlayerActionInputLockElapsed = 0.0f;
 		}
 		break;
+	case EventType::PlayerDiceDecisionRequested:
+	{
+		std::cout << "[GameManager] Event PlayerDiceDecisionRequested -> CombatManager" << std::endl;
+		m_PendingPlayerDiceDecisionRequest = true;
+		break;
+	}
+	case EventType::PlayerDiceStatRollRequested:
+	{
+		std::cout << "[GameManager] Event PlayerDiceStatRollRequested -> CombatManager" << std::endl;
+		m_PendingPlayerDiceStatRollRequest = true;
+		break;
+	}
+	case EventType::PlayerDiceContinueRequested:
+	{
+		std::cout << "[GameManager] Event PlayerDiceContinueRequested -> CombatManager" << std::endl;
+		m_PendingPlayerDiceContinueRequest = true;
+		break;
+	}
+	case EventType::PlayerDiceAnimationStarted:
+	{
+		++m_PendingDiceAnimations;
+		break;
+	}
+	case EventType::PlayerDiceAnimationCompleted:
+	{
+		m_PendingDiceAnimations = max(0, m_PendingDiceAnimations - 1);
+		break;
+	}
 	case EventType::PlayerTurnEndRequested:
+	{
 		std::cout << "PlayerTurnEndRequested\n";
+		auto* combatManagerForDice = GetCombatManager();
+		if (combatManagerForDice && combatManagerForDice->IsDiceFlowActive())
+		{
+			break;
+		}
+
+
 		if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
 		{
 			SetExplorationTurnState(ExplorationTurnState::EnemyStep);
@@ -348,8 +412,16 @@ void GameManager::OnEvent(EventType type, const void* data)
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
+	}
 	case EventType::EnemyTurnEndRequested:
+	{
 		std::cout << "EnemyTurnEndRequested\n";
+		auto* combatManagerForDice = GetCombatManager();
+		if (combatManagerForDice && combatManagerForDice->IsDiceFlowActive())
+		{
+			break;
+		}
+
 		if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::EnemyStep)
 		{
 			SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
@@ -361,6 +433,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 			SetCombatTurnState(CombatTurnState::Resolve);
 		}
 		break;
+	}
 	case EventType::AIMeleeAttackRequested:
 	case EventType::AIRangedAttackRequested: {
 		std::cout << "AIAttackRequested\n";
@@ -1319,6 +1392,13 @@ void GameManager::ResolveEnemyAttack(int actorId)
 		m_Services->Get<SoundManager>().SFX_Shot(L"Damage_Player");
 
 		std::cout << "[Combat] Player HP: " << prevHp << " -> " << nextHp << std::endl;
+
+		if (m_EventDispatcher)
+		{
+			const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), nextHp - prevHp, false, result.hit == HitResult::Critical };
+			m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
+		}
+
 		if (nextHp <= 0)
 		{
 			m_BlockPostCombatShop = true;
@@ -1331,6 +1411,11 @@ void GameManager::ResolveEnemyAttack(int actorId)
 				m_EventDispatcher->Dispatch(EventType::GameOver, nullptr);
 			}
 		}
+	}
+	else if (m_EventDispatcher)
+	{
+		const Events::CombatNumberPopupEvent popupEvent{ actorId, player->GetActorId(), 0, true, false };
+		m_EventDispatcher->Dispatch(EventType::CombatNumberPopup, &popupEvent);
 	}
 }
 
@@ -1487,6 +1572,11 @@ void GameManager::RegisterEventListeners()
 	m_EventDispatcher->AddListener(EventType::PlayerAttack, this);
 	m_EventDispatcher->AddListener(EventType::PlayerMove, this);
 	m_EventDispatcher->AddListener(EventType::PlayerTurnEndRequested, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceDecisionRequested, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceStatRollRequested, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceContinueRequested, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceAnimationStarted, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceAnimationCompleted, this);
 	m_EventDispatcher->AddListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->AddListener(EventType::CombatEnter, this);
 	m_EventDispatcher->AddListener(EventType::CombatExit, this);
@@ -1520,6 +1610,11 @@ void GameManager::UnregisterEventListeners()
 	m_EventDispatcher->RemoveListener(EventType::PlayerAttack, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerMove, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerTurnEndRequested, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceDecisionRequested, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceStatRollRequested, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceContinueRequested, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceAnimationStarted, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
 	m_EventDispatcher->RemoveListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatEnter, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatExit, this);

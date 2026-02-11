@@ -989,7 +989,7 @@ void UIManager::BuildUIFrameData(RenderData::FrameData& frameData)
 				element.size = { rect.width, rect.height };
 				element.rotation = uiObject->GetRotationDegrees();
 				element.zOrder = zOrder;
-				element.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+				element.color = image ? image->GetTintColor() : DirectX::XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
 				element.opacity = opacity;
 				element.progress = progress;
 				element.progressDirection = progressDirection;

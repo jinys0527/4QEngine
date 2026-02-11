@@ -496,6 +496,10 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 					}
 					
 					std::cout << "[Combat] Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+
+					const Events::CombatNumberPopupEvent popupEvent{ player->GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, result.hit == HitResult::Critical };
+					GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
+
 					if (enemyStat->IsDead() && m_CombatManager)
 					{
 						bool enemiesRemaining = false;
@@ -528,6 +532,13 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 						m_CombatManager->UpdateBattleOutcome(playerAlive, enemiesRemaining);
 					}
 				}
+				else
+				{
+					const Events::CombatNumberPopupEvent popupEvent{ player->GetActorId(), enemy->GetActorId(), 0, true, false };
+					GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
+				}
+
+				GetEventDispatcher().Dispatch(EventType::PlayerDiceUIClose, nullptr);
 			}
 		}
 	}
@@ -711,6 +722,8 @@ bool PlayerCombatFSMComponent::ApplyThrowHealing(PlayerComponent& player, EnemyC
 		enemyStat->SetCurrentHP(nextHp);
 		std::cout << "[Throw-Heal] Heal=" << healAmount
 			<< " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+		const Events::CombatNumberPopupEvent popupEvent{ player.GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, false };
+		GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
 		return true;
 	}
 
@@ -727,6 +740,8 @@ bool PlayerCombatFSMComponent::ApplyThrowHealing(PlayerComponent& player, EnemyC
 
 	std::cout << "[Throw-Heal] Heal=" << healAmount
 		<< " Player HP: " << prevHp << " -> " << nextHp << std::endl;
+	const Events::CombatNumberPopupEvent popupEvent{ player.GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, false };
+	GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
 	return true;
 }
 bool PlayerCombatFSMComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyComponent* enemy) const
@@ -780,6 +795,12 @@ bool PlayerCombatFSMComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyC
 	enemyStat->SetCurrentHP(nextHp);
 	std::cout << "[Throw] Damage=" << damage << " (AGI mod=" << agilityModifier
 		<< ") Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+
+	if (auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr)
+	{
+		const Events::CombatNumberPopupEvent popupEvent{ player->GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, false };
+		GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
+	}
 	return true;
 }
 

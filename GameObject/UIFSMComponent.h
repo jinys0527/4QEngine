@@ -57,6 +57,7 @@ private:
 	std::optional<UIRect> m_CachedBounds;
 
 	bool m_HasTurnEndRequestAction = false;
+	bool m_PendingDiceStatRollRequest = false;
 
 	void UpdateTurnEndButtonState(Turn turn);
 };

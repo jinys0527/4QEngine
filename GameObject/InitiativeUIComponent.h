@@ -44,9 +44,8 @@ private:
 		int  typeIndex = 0;
 	};
 
-	UIManager* GetUIManager() const;
-	Scene*	   GetScene() const;
 	void	   RebuildInitiativeOrder();
+	bool       TryPrepareRuntimeBindings();
 	std::shared_ptr<UIObject> FindUI(UIManager& uiManager, Scene& scene, const std::string& name) const;
 	ActorIconInfo ResolveActorInfo(int actorId) const;
 	void ResetIconPools();
@@ -74,6 +73,7 @@ private:
 
 	TextureHandle m_DeadIconTexture   = TextureHandle::Invalid();
 	EventDispatcher* m_Dispatcher = nullptr;
-	UIManager* m_UIManager = nullptr;
+	bool m_RuntimeBindingsReady = false;
+	bool m_ListenersRegistered = false;
 };
 

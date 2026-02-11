@@ -50,6 +50,9 @@
 #include "FloodUIComponent.h"
 #include "InitiativeUIComponent.h"
 #include "PlayerVisualPresetComponent.h"
+#include "UIDiceDisplayComponent.h"
+#include "UIDiceRollAnimationComponent.h"
+#include "UIDicePanelComponent.h"
 #include "WaterRiseComponent.h"
 
 // 중앙 등록 .cpp
@@ -117,6 +120,9 @@ extern "C" {
 	void Link_ItemSpawnerComponent();
 	void Link_InitiativeUIComponent();
 	void Link_PlayerVisualPresetComponent();
+	void Link_UIDiceDisplayComponent();
+	void Link_UIDiceRollAnimationComponent();
+	void Link_UIDicePanelComponent();
 	void Link_BoatComponent();
 	void Link_BoatEndComponent();
 	void Link_VendingComponent();
@@ -201,6 +207,9 @@ void LinkEngineComponents() {
 	Link_ItemSpawnerComponent();
 	Link_InitiativeUIComponent();
 	Link_PlayerVisualPresetComponent();
+	Link_UIDiceDisplayComponent();
+	Link_UIDiceRollAnimationComponent();
+	Link_UIDicePanelComponent();
 	Link_BoatComponent();
 	Link_BoatEndComponent();
 	Link_VendingComponent();
