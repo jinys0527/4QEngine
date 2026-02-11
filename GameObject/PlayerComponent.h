@@ -145,7 +145,7 @@ private:
 	int m_LastMoveResource = -1;
 	int m_LastActResource = -1;
 	int m_ActorId = 1;
-	int m_Money = 0;		
+	int m_Money = 10;		
 	std::vector<std::string> m_InventoryItemIds;
 	int m_StartQ = 0; 
 	int m_StartR = 0; 

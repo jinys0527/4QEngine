@@ -48,13 +48,13 @@ REGISTER_PROPERTY(UINumberSpriteComponent, MissTexture)
 
 UINumberSpriteComponent::~UINumberSpriteComponent()
 {
-	if ((m_ListenerRegistered || m_StatListenerRegistered) && m_Dispatcher && m_Dispatcher->IsAlive())
+	if ((m_ListenerRegistered || m_GoldListenerRegistered || m_StatListenerRegistered || m_EnemyHoverListenerRegistered) && m_Dispatcher && m_Dispatcher->IsAlive())
 	{
 		if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
 		{
 			m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
 		}
-		if (m_Dispatcher->FindListeners(EventType::GoldAcquired))
+		if (m_GoldListenerRegistered && m_Dispatcher->FindListeners(EventType::GoldAcquired))
 		{
 			m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
 		}
@@ -62,8 +62,14 @@ UINumberSpriteComponent::~UINumberSpriteComponent()
 		{
 			m_Dispatcher->RemoveListener(EventType::PlayerStatChanged, this);
 		}
+		if (m_EnemyHoverListenerRegistered && m_Dispatcher->FindListeners(EventType::EnemyHovered))
+		{
+			m_Dispatcher->RemoveListener(EventType::EnemyHovered, this);
+		}
 		m_ListenerRegistered = false;
+		m_GoldListenerRegistered = false;
 		m_StatListenerRegistered = false;
+		m_EnemyHoverListenerRegistered = false;
 	}
 }
 
@@ -71,7 +77,9 @@ void UINumberSpriteComponent::Start()
 {
 	m_RuntimeBindingsReady = false;
 	m_ListenerRegistered = false;
+	m_GoldListenerRegistered = false;
 	m_StatListenerRegistered = false;
+	m_EnemyHoverListenerRegistered = false;
 	m_PopupPoolDirty = true;
 	m_ValueDirty = true;
 	m_DigitTargets.clear();
@@ -121,12 +129,17 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
-	if (m_UseAsCombatPopup && type == EventType::GoldAcquired && data)
+	if (type == EventType::GoldAcquired && data)
 	{
 		const auto* payload = static_cast<const Events::GoldAcquiredEvent*>(data);
-		if (payload && payload->amount > 0)
+		if (m_UseAsCombatPopup && payload && payload->amount > 0)
 		{
 			ShowPopup(payload->amount, m_GoldTint, false);
+		}
+
+		if (m_AutoValueSource == 5 && payload)
+		{
+			SetValue(payload->total);
 		}
 		return;
 	}
@@ -141,13 +154,105 @@ void UINumberSpriteComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
-	if (!m_UseAsCombatPopup || type != EventType::CombatNumberPopup || !data)
+	if (type == EventType::EnemyHovered)
+	{
+		if (m_AutoValueSource == 3 || m_AutoValueSource == 4)
+		{
+			const auto* payload = static_cast<const Events::EnemyHoveredEvent*>(data);
+			const int hoveredActorId = payload ? payload->actorId : 0;
+			const bool hasHoveredEnemy = payload ? payload->hasEnemy : (hoveredActorId != 0);
+			if (m_AutoValueActorId != hoveredActorId)
+			{
+				m_AutoValueActorId = hoveredActorId;
+				m_ValueDirty = true;
+			}
+
+			if (!hasHoveredEnemy)
+			{
+				SetValue(0);
+			}
+			else
+			{
+				if (payload)
+				{
+					if (m_AutoValueSource == 3)
+					{
+						SetValue(payload->currentHp);
+					}
+					else
+					{
+						SetValue((std::max)(1, payload->maxHp));
+					}
+				}
+				else
+				{
+					TryUpdateValueFromAutoSource();
+				}
+			}
+			RefreshVisuals();
+		}
+		return;
+	}
+
+	if (type != EventType::CombatNumberPopup || !data)
 	{
 		return;
 	}
 
 	const auto* payload = static_cast<const Events::CombatNumberPopupEvent*>(data);
 	if (!payload)
+	{
+		return;
+	}
+
+	if (m_AutoValueSource == 24 || m_AutoValueSource == 25)
+	{
+		auto resolvePlayerActorId = [this]() -> int
+			{
+				auto* scene = GetScene();
+				if (!scene)
+				{
+					return 0;
+				}
+
+				for (const auto& [name, object] : scene->GetGameObjects())
+				{
+					(void)name;
+					if (!object)
+					{
+						continue;
+					}
+
+					if (auto* player = object->GetComponent<PlayerComponent>())
+					{
+						return player->GetActorId();
+					}
+				}
+				return 0;
+			};
+
+		const int playerActorId = resolvePlayerActorId();
+		const int deltaAbs = std::abs(payload->hpDelta);
+		if (!payload->isMiss && deltaAbs > 0)
+		{
+			if (m_AutoValueSource == 24)
+			{
+				if (playerActorId != 0 && payload->instigatorActorId == playerActorId && payload->targetActorId != playerActorId)
+				{
+					SetValue(deltaAbs);
+				}
+			}
+			else
+			{
+				if (playerActorId != 0 && payload->targetActorId == playerActorId)
+				{
+					SetValue(deltaAbs);
+				}
+			}
+		}
+	}
+
+	if (!m_UseAsCombatPopup)
 	{
 		return;
 	}
@@ -319,6 +424,7 @@ void UINumberSpriteComponent::SetNegativeSignObjectName(const std::string& name)
 
 void UINumberSpriteComponent::SetAutoValueSource(const int& source)
 {
+	const bool wasRuntimeBindingsReady = m_RuntimeBindingsReady;
 	m_AutoValueSource = source;
 	m_RuntimeBindingsReady = false;
 	m_ValueDirty = true;
@@ -326,13 +432,42 @@ void UINumberSpriteComponent::SetAutoValueSource(const int& source)
 	auto* owner = GetOwner();
 	if (!owner)
 	{
-		RefreshVisuals();
 		return;
 	}
 
 	m_Dispatcher = &GetEventDispatcher();
 	if (m_Dispatcher && m_Dispatcher->IsAlive())
 	{
+		const bool shouldListenCombatPopup = (m_UseAsCombatPopup || m_AutoValueSource == 24 || m_AutoValueSource == 25);
+		if (shouldListenCombatPopup && !m_ListenerRegistered)
+		{
+			m_Dispatcher->AddListener(EventType::CombatNumberPopup, this);
+			m_ListenerRegistered = true;
+		}
+		else if (!shouldListenCombatPopup && m_ListenerRegistered)
+		{
+			if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
+			{
+				m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
+			}
+			m_ListenerRegistered = false;
+		}
+
+		const bool shouldListenGold = (m_UseAsCombatPopup || m_AutoValueSource == 5);
+		if (shouldListenGold && !m_GoldListenerRegistered)
+		{
+			m_Dispatcher->AddListener(EventType::GoldAcquired, this);
+			m_GoldListenerRegistered = true;
+		}
+		else if (!shouldListenGold && m_GoldListenerRegistered)
+		{
+			if (m_Dispatcher->FindListeners(EventType::GoldAcquired))
+			{
+				m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
+			}
+			m_GoldListenerRegistered = false;
+		}
+
 		if (m_AutoValueSource != 0 && !m_StatListenerRegistered)
 		{
 			m_Dispatcher->AddListener(EventType::PlayerStatChanged, this);
@@ -346,16 +481,43 @@ void UINumberSpriteComponent::SetAutoValueSource(const int& source)
 			}
 			m_StatListenerRegistered = false;
 		}
+
+		const bool shouldListenEnemyHover = (m_AutoValueSource == 3 || m_AutoValueSource == 4);
+		if (shouldListenEnemyHover && !m_EnemyHoverListenerRegistered)
+		{
+			m_Dispatcher->AddListener(EventType::EnemyHovered, this);
+			m_EnemyHoverListenerRegistered = true;
+		}
+		else if (!shouldListenEnemyHover && m_EnemyHoverListenerRegistered)
+		{
+			if (m_Dispatcher->FindListeners(EventType::EnemyHovered))
+			{
+				m_Dispatcher->RemoveListener(EventType::EnemyHovered, this);
+			}
+			m_EnemyHoverListenerRegistered = false;
+		}
 	}
 
-	RefreshVisuals();
+
+	if (m_AutoValueSource != 3 && m_AutoValueSource != 4)
+	{
+		SetVisible(true);
+	}
+
+	if (wasRuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
 }
 
 void UINumberSpriteComponent::SetAutoValueActorId(const int& actorId)
 {
 	m_AutoValueActorId = actorId;
 	m_ValueDirty = true;
-	RefreshVisuals();
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
 }
 
 void UINumberSpriteComponent::SetUseAsCombatPopup(const bool& useAsPopup)
@@ -369,17 +531,31 @@ void UINumberSpriteComponent::SetUseAsCombatPopup(const bool& useAsPopup)
 	m_RuntimeBindingsReady = false;
 	m_PopupPoolDirty = true;
 
-	if (!m_UseAsCombatPopup && m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive())
+	if (!m_UseAsCombatPopup && m_ListenerRegistered && m_AutoValueSource != 24 && m_AutoValueSource != 25 && m_Dispatcher && m_Dispatcher->IsAlive())
 	{
 		if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
 		{
 			m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
 		}
+		m_ListenerRegistered = false;
+	}
+
+	if (!m_UseAsCombatPopup && m_GoldListenerRegistered && m_AutoValueSource != 5 && m_Dispatcher && m_Dispatcher->IsAlive())
+	{
 		if (m_Dispatcher->FindListeners(EventType::GoldAcquired))
 		{
 			m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
 		}
-		m_ListenerRegistered = false;
+		m_GoldListenerRegistered = false;
+	}
+
+	if (m_AutoValueSource != 3 && m_AutoValueSource != 4 && m_EnemyHoverListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive())
+	{
+		if (m_Dispatcher->FindListeners(EventType::EnemyHovered))
+		{
+			m_Dispatcher->RemoveListener(EventType::EnemyHovered, this);
+		}
+		m_EnemyHoverListenerRegistered = false;
 	}
 }
 
@@ -456,6 +632,11 @@ void UINumberSpriteComponent::RefreshVisuals()
 	m_ValueDirty = true;
 
 	if (!m_Enabled)
+	{
+		return;
+	}
+
+	if (!TryPrepareRuntimeBindings())
 	{
 		return;
 	}
@@ -1156,11 +1337,34 @@ bool UINumberSpriteComponent::TryPrepareRuntimeBindings()
 
 	m_UIManager = uiManager;
 	m_Dispatcher = &GetEventDispatcher();
-	if (m_UseAsCombatPopup && !m_ListenerRegistered)
+	const bool shouldListenCombatPopup = (m_UseAsCombatPopup || m_AutoValueSource == 24 || m_AutoValueSource == 25);
+	if (shouldListenCombatPopup && !m_ListenerRegistered)
 	{
 		m_Dispatcher->AddListener(EventType::CombatNumberPopup, this);
-		m_Dispatcher->AddListener(EventType::GoldAcquired, this);
 		m_ListenerRegistered = true;
+	}
+	else if (!shouldListenCombatPopup && m_ListenerRegistered)
+	{
+		if (m_Dispatcher->FindListeners(EventType::CombatNumberPopup))
+		{
+			m_Dispatcher->RemoveListener(EventType::CombatNumberPopup, this);
+		}
+		m_ListenerRegistered = false;
+	}
+
+	const bool shouldListenGold = (m_UseAsCombatPopup || m_AutoValueSource == 5);
+	if (shouldListenGold && !m_GoldListenerRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::GoldAcquired, this);
+		m_GoldListenerRegistered = true;
+	}
+	else if (!shouldListenGold && m_GoldListenerRegistered)
+	{
+		if (m_Dispatcher->FindListeners(EventType::GoldAcquired))
+		{
+			m_Dispatcher->RemoveListener(EventType::GoldAcquired, this);
+		}
+		m_GoldListenerRegistered = false;
 	}
 
 	if (m_AutoValueSource != 0 && !m_StatListenerRegistered)
@@ -1175,6 +1379,22 @@ bool UINumberSpriteComponent::TryPrepareRuntimeBindings()
 			m_Dispatcher->RemoveListener(EventType::PlayerStatChanged, this);
 		}
 		m_StatListenerRegistered = false;
+	}
+
+
+	const bool shouldListenEnemyHover = (m_AutoValueSource == 3 || m_AutoValueSource == 4);
+	if (shouldListenEnemyHover && !m_EnemyHoverListenerRegistered)
+	{
+		m_Dispatcher->AddListener(EventType::EnemyHovered, this);
+		m_EnemyHoverListenerRegistered = true;
+	}
+	else if (!shouldListenEnemyHover && m_EnemyHoverListenerRegistered)
+	{
+		if (m_Dispatcher->FindListeners(EventType::EnemyHovered))
+		{
+			m_Dispatcher->RemoveListener(EventType::EnemyHovered, this);
+		}
+		m_EnemyHoverListenerRegistered = false;
 	}
 
 	m_RuntimeBindingsReady = true;

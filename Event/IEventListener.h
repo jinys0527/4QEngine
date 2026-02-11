@@ -102,6 +102,7 @@ enum class EventType
 
 	//Enemy
 	EnemyAttack,
+	EnemyHovered,
 
 };
 

@@ -105,4 +105,12 @@ namespace Events
 		int equipmentDefenseBonus = 0;
 		int defense = 0;
 	};
+
+	struct EnemyHoveredEvent
+	{
+		int actorId   = 0;
+		int currentHp = 0;
+		int maxHp     = 0;
+		bool hasEnemy = false;
+	};
 }

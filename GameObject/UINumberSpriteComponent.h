@@ -95,16 +95,16 @@ public:
 	const TextureHandle& GetMissTexture() const { return m_MissTexture; }
 
 	// AutoValueSource mapping (Editor int value)
-	// 0: None
-	// 1: Player current HP
-	// 2: Player max HP
-	// 3: Enemy current HP (requires AutoValueActorId)
-	// 4: Enemy max HP (requires AutoValueActorId)
-	// 5: Player gold
-	// 6: Player health stat
-	// 7: Player strength stat
-	// 8: Player agility stat
-	// 9: Player sense stat
+	//  0: None
+	//  1: Player current HP
+	//  2: Player max HP
+	//  3: Enemy current HP (requires AutoValueActorId)
+	//  4: Enemy max HP (requires AutoValueActorId)
+	//  5: Player gold
+	//  6: Player health stat
+	//  7: Player strength stat
+	//  8: Player agility stat
+	//  9: Player sense stat
 	// 10: Player skill stat
 	// 11: Player defense
 	// 12: Player initiative bonus
@@ -119,6 +119,8 @@ public:
 	// 21: Player equipment agility bonus
 	// 22: Player equipment sense bonus
 	// 23: Player equipment skill bonus
+	// 24: Last damage dealt by player (abs)
+	// 25: Last damage taken by player (abs)
 
 	void RefreshVisuals();
 
@@ -183,6 +185,8 @@ private:
 	EventDispatcher*        m_Dispatcher = nullptr;
 	bool  m_RuntimeBindingsReady = false;
 	bool  m_ListenerRegistered = false;
+	bool  m_GoldListenerRegistered = false;
 	bool  m_StatListenerRegistered = false;
+	bool  m_EnemyHoverListenerRegistered = false;
 };
 
