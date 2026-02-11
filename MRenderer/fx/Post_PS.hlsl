@@ -80,7 +80,19 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     RTView.rgb = SRGBToLinear(RTView.rgb);
 
     // ====== 3. Depth & CoC (Depth of Field) ======
-    float DepthMap = g_DepthMap.Sample(smpClamp, uvW).r;
+    uint depthW, depthH, depthSamples;
+    g_DepthMap.GetDimensions(depthW, depthH, depthSamples);
+
+    int2 depthPixel = int2(uvW * float2(depthW, depthH));
+    depthPixel = clamp(depthPixel, int2(0, 0), int2((int) depthW - 1, (int) depthH - 1));
+
+    float DepthMap = 0.0f;
+    [loop]
+    for (uint sampleIdx = 0; sampleIdx < depthSamples; ++sampleIdx)
+    {
+        DepthMap += g_DepthMap.Load(depthPixel, sampleIdx);
+    }
+    DepthMap /= max(1u, depthSamples);
     float viewZ = camParams.x * camParams.y / (camParams.y - DepthMap * (camParams.y - camParams.x));
     float coc = saturate(abs(viewZ - camParams.z) / camParams.w);
     
