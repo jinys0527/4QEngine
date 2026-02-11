@@ -50,10 +50,11 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	XMMATRIX mTM, mScale, mRotate, mTrans;
 	mScale = XMMatrixScaling(50, 50, 1);
 	mRotate = XMMatrixRotationX(XM_PI / 2);
-	mTrans = XMMatrixIdentity();
-	mTM = mScale * mRotate, mTrans;
+	mTrans = XMMatrixTranslation(0.0f, -10.0f, 0.0f);
+	mTM = mScale * mRotate * mTrans;
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
 	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+	dxdc->PSSetShaderResources(18, 1, m_RenderContext.WaterNoise.GetAddressOf());
 	dxdc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
 	dxdc->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
 	dxdc->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
@@ -63,10 +64,6 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 	//m_RenderContext.UpdateGrid(frame);
 	//m_RenderContext.DrawGrid();
-
-	//임시 벽뚫 이미지 바인딩
-	m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());
-
 
 
 	//현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자

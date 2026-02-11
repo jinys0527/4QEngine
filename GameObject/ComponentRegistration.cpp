@@ -50,6 +50,7 @@
 #include "FloodUIComponent.h"
 #include "InitiativeUIComponent.h"
 #include "PlayerVisualPresetComponent.h"
+#include "WaterRiseComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -117,6 +118,7 @@ extern "C" {
 	void Link_PlayerVisualPresetComponent();
 	void Link_BoatComponent();
 	void Link_BoatEndComponent();
+	void Link_WaterRiseComponent();
 }
 
 
@@ -196,5 +198,5 @@ void LinkEngineComponents() {
 	Link_PlayerVisualPresetComponent();
 	Link_BoatComponent();
 	Link_BoatEndComponent();
-
+	Link_WaterRiseComponent();
 }
