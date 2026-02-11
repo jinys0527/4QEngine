@@ -47,7 +47,7 @@ void SceneChangeTestComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
-	if (keyData->key == VK_F1)
+	if (keyData->key == VK_SPACE)
 	{
 		SceneChange();
 		

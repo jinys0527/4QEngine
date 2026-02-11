@@ -258,12 +258,14 @@ void TransformComponent::Update(float deltaTime)
 
 void TransformComponent::OnEvent(EventType type, const void* data)
 {
+
 }
 
 
 void TransformComponent::Deserialize(const nlohmann::json& j)
 {
 	Component::Deserialize(j);
+	SetDirty();
 	UpdateMatrices();
 }
 
