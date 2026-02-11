@@ -131,6 +131,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
 
     // ====== 7. Final Composition & Post-Process ======
     float4 scene = finalBlur + emissive;
+
     
     // Saturation 조절 (ToneMap 전 수행)
     scene.rgb = AdjustSaturation(scene.rgb, lights[0].Saturation);
