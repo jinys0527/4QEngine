@@ -884,10 +884,7 @@ namespace
 		{
 			item.SetDiceRoll(definition.diceRoll);
 		}
-		if (definition.baseModifier > 0)
-		{
-			item.SetBaseModifier(definition.baseModifier);
-		}
+		item.SetBaseModifier(definition.baseModifier);
 	}
 
 	std::string BuildEquipObjectName(Scene& scene, const std::string& base)
@@ -1649,6 +1646,18 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 			if (!input.BuildPickRay(camera->GetViewMatrix(), camera->GetProjMatrix(), *mouseData, pickRay))
 			{
 				return;
+			}
+
+			// 전투 중에도 아이템 획득 허용 (행동력/거리 조건은 TryPickup에서 처리)
+			float itemHitT = 0.0f;
+			if (auto* clickedItem = FindClosestItemHit(scene, pickRay, itemHitT))
+			{
+				if (TryPickup(clickedItem))
+				{
+					scene->GetServices().Get<SoundManager>().SFX_Shot(L"GetItem_Player");
+					mouseData->handled = true;
+					return;
+				}
 			}
 
 			float hitT = 0.0f;

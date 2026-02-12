@@ -87,10 +87,7 @@ namespace
 		{
 			item.SetDiceRoll(definition.diceRoll);
 		}
-		if (definition.baseModifier > 0)
-		{
-			item.SetBaseModifier(definition.baseModifier);
-		}
+		item.SetBaseModifier(definition.baseModifier);
 	}
 
 	PlayerComponent* FindPlayerComponent(Scene* scene)
