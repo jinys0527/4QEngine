@@ -308,15 +308,26 @@ void RegisterUIFSMDefinitions()
 		{}
 		});
 
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Melee", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Melee", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw1", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw1", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw2", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw2", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw3", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw3", "UI", {} });
-
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Melee", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Melee", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Throw1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Throw1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Throw2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Throw2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Throw3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Throw3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending4", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending4", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending5", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending5", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending6", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending6", "UI", {} });
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "UI_Pressed", "UI" });
@@ -335,6 +346,9 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_TurnEnd", "UI" });
 	eventRegistry.RegisterEvent({ "Player_ShopOpen", "UI" });
 	eventRegistry.RegisterEvent({ "Player_ShopClose", "UI" });
+	eventRegistry.RegisterEvent({ "UI_VendingOfferUpdated", "UI" });
+	eventRegistry.RegisterEvent({ "Shop_MoneyOk", "UI" });
+	eventRegistry.RegisterEvent({ "Shop_MoneyFail", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorInteract", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorCancel", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorSuccess", "UI" });
@@ -361,14 +375,26 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_2", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_3", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Melee", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Melee", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw1", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw1", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw2", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw2", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw3", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Throw1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Throw2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending4", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending4", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending5", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending5", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending6", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending6", "UI" });
 }
 
 
@@ -603,7 +629,9 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestShopClose", [this](const FSMAction& action)
 		{
-			GetEventDispatcher().Dispatch(EventType::PlayerShopClose, nullptr);
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Shop_Close");
 			DispatchEvent("None");
 		});
 
@@ -641,7 +669,7 @@ UIFSMComponent::UIFSMComponent()
 			DispatchPlayerEvent(scene, "Player_Throw_3");
 		});
 
-	auto bindInventoryInfoHandler = [this](const std::string& actionId, bool visible)
+	auto bindItemInfoHandler = [this](const std::string& actionId, bool visible)
 		{
 			BindActionHandler(actionId, [this, visible](const FSMAction&)
 				{
@@ -655,14 +683,27 @@ UIFSMComponent::UIFSMComponent()
 				});
 		};
 
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Melee", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Melee", false);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw1", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw1", false);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw2", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw2", false);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw3", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw3", false); 
+	bindItemInfoHandler("UI_RequestItemInfoShow_Melee", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Melee", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Throw1", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw1", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Throw2", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw2", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Throw3", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw3", false);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw3", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending1", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending1", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending2", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending2", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending3", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending3", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending4", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending4", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending5", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending5", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending6", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending6", false);
 }
 
 UIFSMComponent::~UIFSMComponent()
@@ -697,6 +738,12 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::PlayerShopOpen, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopClose))
 		GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::VendingOfferUpdated))
+		GetEventDispatcher().RemoveListener(EventType::VendingOfferUpdated, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyOk))
+		GetEventDispatcher().RemoveListener(EventType::ShopMoneyOk, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyFail))
+		GetEventDispatcher().RemoveListener(EventType::ShopMoneyFail, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRoll))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRoll, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIOpen))
@@ -757,6 +804,9 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::PlayerDoorFail, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopOpen, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopClose, this);
+	GetEventDispatcher().AddListener(EventType::VendingOfferUpdated, this);
+	GetEventDispatcher().AddListener(EventType::ShopMoneyOk, this);
+	GetEventDispatcher().AddListener(EventType::ShopMoneyFail, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceRoll, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceUIOpen, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceUIReset, this);
@@ -1061,6 +1111,12 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("Player_ShopOpen");
 	case EventType::PlayerShopClose:
 		return std::string("Player_ShopClose");
+	case EventType::VendingOfferUpdated:
+		return std::string("UI_VendingOfferUpdated");
+	case EventType::ShopMoneyOk:
+		return std::string("Shop_MoneyOk");
+	case EventType::ShopMoneyFail:
+		return std::string("Shop_MoneyFail");
 	case EventType::PlayerDiceRoll:
 		return std::string("Player_DiceRoll");
 	case EventType::PlayerDiceUIOpen:

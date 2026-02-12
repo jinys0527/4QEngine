@@ -1,9 +1,13 @@
 ﻿#pragma once
 #include "Component.h"
+#include "GridSystemComponent.h"
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 class GameObject;
 class GameDataRepository;
+class PlayerComponent;
 
 class ItemSpawnerComponent : public Component
 {
@@ -20,6 +24,11 @@ public:
 
 	void SpwanFixedItem();
 	void DropItem();
+
+	bool SpawnVendingRandomItem(PlayerComponent* player, const std::vector<int>& candidateItemIds);
+	std::vector<int> PrepareVendingRandomCandidates();
+	const std::vector<int>& GetPreparedVendingRandomCandidates() const { return m_PreparedVendingRandomCandidates; }
+	int  GetRemainingDropQuantity(int itemId) const;
 
 	const std::string& GetFixedItemTemplateName() const { return m_FixedItemTemplateName; }
 	void SetFixedItemTemplateName(const std::string& value) { m_FixedItemTemplateName = value; }
@@ -43,6 +52,10 @@ public:
 	void SetDropOnDeath(const bool& value) { m_DropOnDeath = value; }
 
 private:
+	void EnsureDropQuantityCache(int dropTableGroup, const GameDataRepository& repository);
+	bool ConsumeDropQuantity(int itemId);
+	int  ResolveVendingDropTableGroup() const;
+
 	GameObject* m_SpawnItem = nullptr;
 
 	std::string m_FixedItemTemplateName;
@@ -54,4 +67,10 @@ private:
 	bool m_DropOnDeath = true;
 	bool m_FixedItemSpawned = false;
 	bool m_DropTriggered = false;
+
+	bool m_HasLastVendingDropKey = false;
+	AxialKey m_LastVendingDropKey{};
+	std::vector<int> m_PreparedVendingRandomCandidates;
+	int m_ActiveDropTableGroup = -1;
+	std::unordered_map<int, int> m_RemainingDropQuantities;
 };

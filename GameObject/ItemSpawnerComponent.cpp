@@ -2,9 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <limits>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "AssetLoader.h"
@@ -381,6 +385,170 @@ namespace
 		return std::nullopt;
 	}
 
+	constexpr int kVendingSearchMaxDepth = 3;
+
+	AxialKey FindNearestNodeKey(const GridSystemComponent& grid, const XMFLOAT3& position)
+	{
+		const auto& nodes = grid.GetNodes();
+		float bestDistance = (std::numeric_limits<float>::max)();
+		AxialKey bestKey{};
+		bool found = false;
+
+		for (auto* node : nodes)
+		{
+			if (!node)
+			{
+				continue;
+			}
+			auto* owner = node->GetOwner();
+			auto* transform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+			if (!transform)
+			{
+				continue;
+			}
+
+			const float dist = DistanceSq2D(position, transform->GetWorldPos());
+			if (!found || dist < bestDistance)
+			{
+				found = true;
+				bestDistance = dist;
+				bestKey = AxialKey{ node->GetQ(), node->GetR() };
+			}
+		}
+
+		return bestKey;
+	}
+
+	bool IsSpawnableNode(const Scene& scene, GridSystemComponent& grid, const AxialKey& key, float itemOverlapThreshold)
+	{
+		auto* node = grid.GetNodeByKey(key);
+		if (!node || !node->GetIsMoveable() || node->GetState() != NodeState::Empty)
+		{
+			return false;
+		}
+
+		auto* nodeOwner = node->GetOwner();
+		auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+		if (!nodeTransform)
+		{
+			return false;
+		}
+
+		return !HasItemAtPosition(scene, nodeTransform->GetWorldPos(), itemOverlapThreshold);
+	}
+
+	std::optional<AxialKey> FindSpawnableKeyByExpansion(const Scene& scene,
+		GridSystemComponent& grid,
+		const AxialKey& start,
+		float itemOverlapThreshold,
+		int maxDepth)
+	{
+		std::queue<std::pair<AxialKey, int>> frontier;
+		std::unordered_set<long long> visited;
+
+		auto makeHash = [](const AxialKey& key)
+			{
+				return (static_cast<long long>(key.q) << 32) ^ static_cast<unsigned int>(key.r);
+			};
+
+		frontier.push({ start, 0 });
+		visited.insert(makeHash(start));
+
+		while (!frontier.empty())
+		{
+			auto [current, depth] = frontier.front();
+			frontier.pop();
+
+			if (IsSpawnableNode(scene, grid, current, itemOverlapThreshold))
+			{
+				return current;
+			}
+
+			if (depth >= maxDepth)
+			{
+				continue;
+			}
+
+			for (int i = 0; i < kNeighborCount; ++i)
+			{
+				AxialKey neighbor{ current.q + kNeighborOffsets[i][0], current.r + kNeighborOffsets[i][1] };
+				const long long hash = makeHash(neighbor);
+				if (visited.find(hash) != visited.end())
+				{
+					continue;
+				}
+				visited.insert(hash);
+				frontier.push({ neighbor, depth + 1 });
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<XMFLOAT3> FindVendingDropPosition(const Object& owner,
+		const Scene& scene,
+		const PlayerComponent& player,
+		bool& hasLastKey,
+		AxialKey& lastKey)
+	{
+		auto* ownerTransform = owner.GetComponent<TransformComponent>();
+		if (!ownerTransform)
+		{
+			return std::nullopt;
+		}
+
+		auto* grid = FindGridSystem(scene);
+		if (!grid)
+		{
+			return ownerTransform->GetWorldPos();
+		}
+
+		auto* playerObject = player.GetOwner();
+		auto* playerTransform = playerObject ? playerObject->GetComponent<TransformComponent>() : nullptr;
+		if (!playerTransform)
+		{
+			return std::nullopt;
+		}
+
+		const AxialKey playerKey{ player.GetQ(), player.GetR() };
+		const AxialKey vendingKey = FindNearestNodeKey(*grid, ownerTransform->GetWorldPos());
+		const AxialKey midpoint{ (playerKey.q + vendingKey.q) / 2, (playerKey.r + vendingKey.r) / 2 };
+
+		float innerRadius = 1.0f;
+		if (auto* midNode = grid->GetNodeByKey(midpoint))
+		{
+			innerRadius = EstimateInnerRadius(midNode);
+		}
+		const float outerRadius = innerRadius * 2.0f / std::sqrt(3.0f);
+		const float itemOverlapThreshold = outerRadius * kItemOverlapRatio;
+
+		std::optional<AxialKey> chosen;
+		if (hasLastKey)
+		{
+			chosen = FindSpawnableKeyByExpansion(scene, *grid, lastKey, itemOverlapThreshold, 1);
+		}
+		if (!chosen)
+		{
+			chosen = FindSpawnableKeyByExpansion(scene, *grid, midpoint, itemOverlapThreshold, kVendingSearchMaxDepth);
+		}
+		if (!chosen)
+		{
+			return std::nullopt;
+		}
+
+		auto* spawnNode = grid->GetNodeByKey(*chosen);
+		auto* spawnOwner = spawnNode ? spawnNode->GetOwner() : nullptr;
+		auto* spawnTransform = spawnOwner ? spawnOwner->GetComponent<TransformComponent>() : nullptr;
+		if (!spawnTransform)
+		{
+			return std::nullopt;
+		}
+
+		hasLastKey = true;
+		lastKey = *chosen;
+		return spawnTransform->GetWorldPos();
+	}
+
 	void FinalizeSpawn(
 		const Object& owner,
 		const std::shared_ptr<GameObject>& spawned,
@@ -445,10 +613,169 @@ void ItemSpawnerComponent::Update(float deltaTime)
 	DropItem();
 }
 
+
+void ItemSpawnerComponent::EnsureDropQuantityCache(int dropTableGroup, const GameDataRepository& repository)
+{
+	if (dropTableGroup <= 0)
+	{
+		dropTableGroup = 1;
+	}
+
+	if (m_ActiveDropTableGroup == dropTableGroup && !m_RemainingDropQuantities.empty())
+	{
+		return;
+	}
+
+	m_ActiveDropTableGroup = dropTableGroup;
+	m_RemainingDropQuantities.clear();
+
+	const auto* table = repository.GetDropTable(dropTableGroup);
+	if (!table)
+	{
+		return;
+	}
+
+	for (const auto& entry : table->entries)
+	{
+		if (entry.itemIndex <= 0)
+		{
+			continue;
+		}
+
+		const int quantity = (std::max)(0, static_cast<int>(std::round(entry.weight)));
+		if (quantity <= 0)
+		{
+			continue;
+		}
+
+		m_RemainingDropQuantities[entry.itemIndex] += quantity;
+	}
+}
+
+bool ItemSpawnerComponent::ConsumeDropQuantity(int itemId)
+{
+	auto it = m_RemainingDropQuantities.find(itemId);
+	if (it == m_RemainingDropQuantities.end())
+	{
+		return true;
+	}
+	if (it->second <= 0)
+	{
+		return false;
+	}
+
+	--(it->second);
+	return true;
+}
+
+int ItemSpawnerComponent::ResolveVendingDropTableGroup() const
+{
+	return m_DropTableGroupOverride > 0 ? m_DropTableGroupOverride : 1;
+}
+
+
 void ItemSpawnerComponent::OnEvent(EventType type, const void* data)
 {
 	(void)type;
 	(void)data;
+}
+
+std::vector<int> ItemSpawnerComponent::PrepareVendingRandomCandidates()
+{
+	m_PreparedVendingRandomCandidates.clear();
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return m_PreparedVendingRandomCandidates;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<GameDataRepository>() || !services.Has<DiceSystem>())
+	{
+		return m_PreparedVendingRandomCandidates;
+	}
+
+	auto& repository = services.Get<GameDataRepository>();
+	auto& diceSystem = services.Get<DiceSystem>();
+	const int dropTableGroup = ResolveVendingDropTableGroup();
+	EnsureDropQuantityCache(dropTableGroup, repository);
+
+	struct WeightedItem
+	{
+		int itemId = 0;
+		int quantity = 0;
+	};
+
+	std::vector<WeightedItem> weightedItems;
+	weightedItems.reserve(m_RemainingDropQuantities.size());
+	for (const auto& [itemId, remain] : m_RemainingDropQuantities)
+	{
+		if (remain <= 0)
+		{
+			continue;
+		}
+		const auto* definition = repository.GetItem(itemId);
+		if (!definition || definition->category == ItemCategory::Currency)
+		{
+			continue;
+		}
+		weightedItems.push_back(WeightedItem{ itemId, remain });
+	}
+
+	if (weightedItems.empty())
+	{
+		return m_PreparedVendingRandomCandidates;
+	}
+
+	const int slotCount = (std::min)(6, static_cast<int>(weightedItems.size()));
+	for (int i = 0; i < slotCount; ++i)
+	{
+		int totalWeight = 0;
+		for (const auto& item : weightedItems)
+		{
+			totalWeight += item.quantity;
+		}
+		if (totalWeight <= 0)
+		{
+			break;
+		}
+
+		DiceConfig rollConfig{ 1, totalWeight, 0 };
+		const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::Shop);
+		int cursor = 0;
+		size_t pickedIndex = weightedItems.size();
+		for (size_t index = 0; index < weightedItems.size(); ++index)
+		{
+			cursor += weightedItems[index].quantity;
+			if (roll <= cursor)
+			{
+				pickedIndex = index;
+				break;
+			}
+		}
+		if (pickedIndex >= weightedItems.size())
+		{
+			break;
+		}
+
+		m_PreparedVendingRandomCandidates.push_back(weightedItems[pickedIndex].itemId);
+		weightedItems.erase(weightedItems.begin() + static_cast<std::ptrdiff_t>(pickedIndex));
+	}
+
+	return m_PreparedVendingRandomCandidates;
+}
+
+int ItemSpawnerComponent::GetRemainingDropQuantity(int itemId) const
+{
+	auto it = m_RemainingDropQuantities.find(itemId);
+	if (it == m_RemainingDropQuantities.end())
+	{
+		return 0;
+	}
+
+	return (std::max)(0, it->second);
 }
 
 void ItemSpawnerComponent::SpwanFixedItem()
@@ -550,8 +877,7 @@ void ItemSpawnerComponent::DropItem()
 
 	auto& repository = services.Get<GameDataRepository>();
 	auto& diceSystem = services.Get<DiceSystem>();
-	LogSystem* logger = services.Has<LogSystem>() ? &services.Get<LogSystem>() : nullptr;
-
+	
 	const EnemyDefinition* enemyDefinition = nullptr;
 	EnemyDefinition fallbackDefinition{};
 	if (m_EnemyDefinitionId > 0)
@@ -590,17 +916,69 @@ void ItemSpawnerComponent::DropItem()
 		fallbackDefinition.dropTableGroup = m_DropTableGroupOverride;
 	}
 
-	LootRoller lootRoller;
-	const std::optional<LootRollResult> result =
-		lootRoller.RollDrop(*enemyDefinition, repository, diceSystem, logger);
-
-	if (!result)
+	const int dropTableGroup = enemyDefinition->dropTableGroup > 0 ? enemyDefinition->dropTableGroup : 1;
+	EnsureDropQuantityCache(dropTableGroup, repository);
+	const auto* table = repository.GetDropTable(dropTableGroup);
+	if (!table || table->entries.empty())
 	{
 		m_DropTriggered = true;
 		return;
 	}
 
-	const ItemDefinition* itemDefinition = repository.GetItem(result->itemIndex);
+	std::vector<const DropEntry*> selectableEntries;
+	selectableEntries.reserve(table->entries.size());
+	for (const auto& entry : table->entries)
+	{
+		if (entry.itemIndex <= 0)
+		{
+			continue;
+		}
+		auto it = m_RemainingDropQuantities.find(entry.itemIndex);
+		if (it == m_RemainingDropQuantities.end() || it->second <= 0)
+		{
+			continue;
+		}
+		selectableEntries.push_back(&entry);
+	}
+
+	if (selectableEntries.empty())
+	{
+		m_DropTriggered = true;
+		return;
+	}
+
+	int totalWeight = 0;
+	for (const auto* entry : selectableEntries)
+	{
+		totalWeight += (std::max)(1, static_cast<int>(std::round(entry->weight)));
+	}
+	if (totalWeight <= 0)
+	{
+		m_DropTriggered = true;
+		return;
+	}
+
+	DiceConfig rollConfig{ 1, totalWeight, 0 };
+	const int roll = diceSystem.RollTotal(rollConfig, RandomDomain::Loot);
+	int cursor = 0;
+	int selectedItemId = 0;
+	for (const auto* entry : selectableEntries)
+	{
+		cursor += (std::max)(1, static_cast<int>(std::round(entry->weight)));
+		if (roll <= cursor)
+		{
+			selectedItemId = entry->itemIndex;
+			break;
+		}
+	}
+
+	if (selectedItemId <= 0 || !ConsumeDropQuantity(selectedItemId))
+	{
+		m_DropTriggered = true;
+		return;
+	}
+
+	const ItemDefinition* itemDefinition = repository.GetItem(selectedItemId);
 	if (!itemDefinition)
 	{
 		m_DropTriggered = true;
@@ -665,4 +1043,114 @@ void ItemSpawnerComponent::DropItem()
 
 	FinalizeSpawn(*owner, spawned, dropPosition);
 	m_DropTriggered = true;
+}
+
+bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const std::vector<int>& candidateItemIds)
+{
+	if (!player)
+	{
+		return false;
+	}
+
+	const std::vector<int> resolvedCandidates = candidateItemIds.empty()
+		? PrepareVendingRandomCandidates()
+		: candidateItemIds;
+	if (resolvedCandidates.empty())
+	{
+		return false;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!owner || !scene)
+	{
+		return false;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<GameDataRepository>() || !services.Has<DiceSystem>())
+	{
+		return false;
+	}
+
+	auto& repository = services.Get<GameDataRepository>();
+	auto& diceSystem = services.Get<DiceSystem>();
+
+	DiceConfig rollConfig{ 1, static_cast<int>(resolvedCandidates.size()), 0 };
+	const int rolledIndex = diceSystem.RollTotal(rollConfig, RandomDomain::Shop) - 1;
+	if (rolledIndex < 0 || rolledIndex >= static_cast<int>(resolvedCandidates.size()))
+	{
+		return false;
+	}
+
+	const int rolledItemId = resolvedCandidates[static_cast<size_t>(rolledIndex)];
+	const ItemDefinition* itemDefinition = repository.GetItem(rolledItemId);
+	if (!itemDefinition || itemDefinition->category == ItemCategory::Currency)
+	{
+		return false;
+	}
+
+	const int dropTableGroup = ResolveVendingDropTableGroup();
+	EnsureDropQuantityCache(dropTableGroup, repository);
+	if (!ConsumeDropQuantity(rolledItemId))
+	{
+		return false;
+	}
+
+	const std::optional<XMFLOAT3> dropPosition =
+		FindVendingDropPosition(*owner, *scene, *player, m_HasLastVendingDropKey, m_LastVendingDropKey);
+	if (!dropPosition)
+	{
+		return false;
+	}
+
+	std::shared_ptr<GameObject> spawned;
+	const std::string templateName =
+		m_DropItemTemplateName.empty() ? m_FixedItemTemplateName : m_DropItemTemplateName;
+
+	if (!templateName.empty())
+	{
+		const auto& objects = scene->GetGameObjects();
+		auto it = objects.find(templateName);
+		if (it != objects.end() && it->second)
+		{
+			nlohmann::json templateJson;
+			it->second->Serialize(templateJson);
+			templateJson["name"] = BuildSpawnName(templateName);
+			spawned = scene->CreateGameObject(templateJson["name"].get<std::string>());
+			if (spawned)
+			{
+				spawned->Deserialize(templateJson);
+			}
+		}
+	}
+
+	if (!spawned)
+	{
+		const std::string spawnName = BuildSpawnName(itemDefinition->name);
+		spawned = scene->CreateGameObject(spawnName);
+		if (spawned)
+		{
+			if (auto* itemComponent = spawned->AddComponent<ItemComponent>())
+			{
+				ApplyItemDefinition(*itemComponent, *itemDefinition);
+			}
+			EnsureRenderComponents(*spawned, *itemDefinition);
+		}
+	}
+	else
+	{
+		if (auto* itemComponent = spawned->GetComponent<ItemComponent>())
+		{
+			ApplyItemDefinition(*itemComponent, *itemDefinition);
+		}
+		else if (auto* itemComponent = spawned->AddComponent<ItemComponent>())
+		{
+			ApplyItemDefinition(*itemComponent, *itemDefinition);
+		}
+		EnsureRenderComponents(*spawned, *itemDefinition);
+	}
+
+	FinalizeSpawn(*owner, spawned, dropPosition);
+	return spawned != nullptr;
 }

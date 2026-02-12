@@ -29,6 +29,13 @@ public:
 	void	   SetValue(const int& value);
 	const int& GetValue() const { return m_Value; }
 
+	void		SetUseValueClamp(const bool& useClamp);
+	const bool& GetUseValueClamp() const { return m_UseValueClamp; }
+	void		SetMinValueClamp(const int& minValue);
+	const int& GetMinValueClamp() const { return m_MinValueClamp; }
+	void		SetMaxValueClamp(const int& maxValue);
+	const int& GetMaxValueClamp() const { return m_MaxValueClamp; }
+
 	void		SetLeadingZero(const bool& leadingZero);
 	const bool& GetLeadingZero() const { return m_LeadingZero; }
 
@@ -147,6 +154,9 @@ private:
 	void       ApplySignObjectVisibility();
 
 	int   m_Value = 0;
+	bool  m_UseValueClamp = false;
+	int   m_MinValueClamp = 0;
+	int   m_MaxValueClamp = 6;
 	bool  m_Enabled = true;
 	bool  m_LeadingZero = false;
 	bool  m_ValueDirty = true;

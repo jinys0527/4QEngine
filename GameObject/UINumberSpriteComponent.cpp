@@ -18,6 +18,9 @@
 REGISTER_UI_COMPONENT(UINumberSpriteComponent)
 REGISTER_PROPERTY(UINumberSpriteComponent, Enabled)
 REGISTER_PROPERTY(UINumberSpriteComponent, Value)
+REGISTER_PROPERTY(UINumberSpriteComponent, UseValueClamp)
+REGISTER_PROPERTY(UINumberSpriteComponent, MinValueClamp)
+REGISTER_PROPERTY(UINumberSpriteComponent, MaxValueClamp)
 REGISTER_PROPERTY(UINumberSpriteComponent, LeadingZero)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitTextures)
 REGISTER_PROPERTY(UINumberSpriteComponent, DigitSpacing)
@@ -308,6 +311,62 @@ void UINumberSpriteComponent::SetValue(const int& value)
 	}
 
 	m_Value = value;
+	m_ValueDirty = true;
+
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
+}
+
+void UINumberSpriteComponent::SetUseValueClamp(const bool& useClamp)
+{
+	if (m_UseValueClamp == useClamp)
+	{
+		return;
+	}
+
+	m_UseValueClamp = useClamp;
+	m_ValueDirty = true;
+
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
+}
+
+void UINumberSpriteComponent::SetMinValueClamp(const int& minValue)
+{
+	if (m_MinValueClamp == minValue)
+	{
+		return;
+	}
+
+	m_MinValueClamp = minValue;
+	if (m_MinValueClamp > m_MaxValueClamp)
+	{
+		m_MaxValueClamp = m_MinValueClamp;
+	}
+	m_ValueDirty = true;
+
+	if (m_RuntimeBindingsReady)
+	{
+		RefreshVisuals();
+	}
+}
+
+void UINumberSpriteComponent::SetMaxValueClamp(const int& maxValue)
+{
+	if (m_MaxValueClamp == maxValue)
+	{
+		return;
+	}
+
+	m_MaxValueClamp = maxValue;
+	if (m_MaxValueClamp < m_MinValueClamp)
+	{
+		m_MinValueClamp = m_MaxValueClamp;
+	}
 	m_ValueDirty = true;
 
 	if (m_RuntimeBindingsReady)
@@ -1234,7 +1293,13 @@ void UINumberSpriteComponent::ApplyValue()
 		}
 	}
 
-	const int absValue = std::abs(m_Value);
+	int displayValue = m_Value;
+	if (m_UseValueClamp)
+	{
+		displayValue = std::clamp(displayValue, m_MinValueClamp, m_MaxValueClamp);
+	}
+
+	const int absValue = std::abs(displayValue);
 	std::string valueText = std::to_string(absValue);
 	const int configuredDigits = (m_FixedDigitCount > 0) ? m_FixedDigitCount : static_cast<int>(m_DigitTargets.size());
 	if (static_cast<int>(valueText.size()) < configuredDigits)
@@ -1298,11 +1363,17 @@ void UINumberSpriteComponent::ApplyValue()
 
 void UINumberSpriteComponent::ApplySignObjectVisibility()
 {
+	int displayValue = m_Value;
+	if (m_UseValueClamp)
+	{
+		displayValue = std::clamp(displayValue, m_MinValueClamp, m_MaxValueClamp);
+	}
+
 	if (!m_PositiveSignObjectName.empty())
 	{
 		if (auto* positive = FindUIObject(m_PositiveSignObjectName))
 		{
-			positive->SetIsVisibleFromComponent(m_Value >= 0);
+			positive->SetIsVisibleFromComponent(displayValue >= 0);
 		}
 	}
 
@@ -1310,7 +1381,7 @@ void UINumberSpriteComponent::ApplySignObjectVisibility()
 	{
 		if (auto* negative = FindUIObject(m_NegativeSignObjectName))
 		{
-			negative->SetIsVisibleFromComponent(m_Value < 0);
+			negative->SetIsVisibleFromComponent(displayValue < 0);
 		}
 	}
 }

@@ -95,7 +95,7 @@ namespace
 	}
 	std::string ResolveInventoryHoverEventName(const std::string& objectName, bool isHovered)
 	{
-		const std::string prefix = isHovered ? "UI_RequestInventoryInfoShow_" : "UI_RequestInventoryInfoHide_";
+		const std::string prefix = isHovered ? "UI_RequestItemInfoShow_" : "UI_RequestItemInfoHide_";
 		if (objectName == "Player_Melee" || objectName == "Player_MeleeButton" || objectName == "MeleeButton" || objectName == "MainWeaponButton" || objectName == "MainWeapon")
 		{
 			return prefix + "Melee";

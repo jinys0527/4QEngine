@@ -26,7 +26,9 @@ enum class EventType
 	UIDoubleClicked,
 	UICloseRequested,
 	UIGoToTitleRequested,
-
+	VendingOfferUpdated,
+	ShopMoneyOk,
+	ShopMoneyFail,
 
 	//Combat
 	CombatEnter,
