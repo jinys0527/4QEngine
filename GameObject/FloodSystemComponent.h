@@ -45,7 +45,6 @@ private:
 	void  MarkGameOver();
 	float ComputeCorrectionFactor() const;
 	bool  ShouldAdvance() const;
-	float GetPlayerFloodHeightThreshold() const;
 
 	float m_TurnElapsed				 = 0.0f;
 	float m_TurnTimeLimitSeconds	 = 30.0f;
