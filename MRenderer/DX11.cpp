@@ -31,6 +31,7 @@ int Flip(IDXGISwapChain* swapchain)
 
     const UINT syncInterval = g_bVSync ? 1u : 0u;
     UINT presentFlags = 0;
+    BOOL isFullscreen = FALSE;
     if (!g_bVSync && g_bAllowTearing)
     {
         presentFlags |= DXGI_PRESENT_ALLOW_TEARING;

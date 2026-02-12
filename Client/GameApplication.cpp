@@ -48,6 +48,7 @@ bool GameApplication::Initialize()
 	uiManager.SetUseAnchorLayout(false);
 	uiManager.SetUseResolutionScale(true);
 	m_Renderer.Initialize(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_RendererInitialized = true;
 	m_SceneManager.Initialize();
 	// GameManager에 SceneManager 등록
 
@@ -87,6 +88,10 @@ void GameApplication::Finalize()
 
 bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+	if (msg == WM_SYSKEYDOWN && wparam == VK_RETURN && (lparam & (1 << 29)))
+	{
+		return true;
+	}
 	return false;
 }
 
@@ -174,12 +179,16 @@ void GameApplication::Render()
 	Flip(m_Renderer.GetSwapChain().Get());
 }
 
-
 void GameApplication::OnResize(int width, int height)
 {
 	__super::OnResize(width, height);
 	m_InputManager.SetViewportRect({ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) });
 	m_Services.Get<UIManager>().SetViewportSize(UISize{ static_cast<float>(width), static_cast<float>(height) });
+
+	if (m_RendererInitialized && width > 0 && height > 0)
+	{
+		m_Renderer.ResetRenderTarget(width, height);
+	}
 }
 
 void GameApplication::OnClose()
