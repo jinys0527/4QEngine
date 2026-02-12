@@ -62,11 +62,13 @@ private:
 
 	AssetLoader* m_AssetLoader;
 	SoundManager* m_SoundManager;
-	std::wstring m_InitialBGMName = L"Renai";
+	std::wstring m_InitialBGMName = L"Main";
 	float m_InitialBGMFadeTime = 1.0f;
 	float m_SceneChangeBGMFadeTime = 1.0f;
 	std::wstring m_CombatBGMName = L"Combat";
 	float m_CombatBGMFadeTime = 0.5f;
+	float m_DefaultBGMVolume = 0.65f;
+	float m_DefaultSFXVolume = 1.2f;
 	std::unordered_map<std::string, std::wstring> m_SceneBGMMap;
 	std::string m_LastSceneName;
 	std::wstring m_LastSceneBGMName;

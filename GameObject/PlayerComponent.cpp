@@ -31,6 +31,7 @@
 #include "GameManager.h"
 #include "CombatManager.h"
 #include "DoorComponent.h"
+#include "SoundManager.h"
 #include "PlayerCombatFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerDoorFSMComponent.h"
@@ -1737,6 +1738,8 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (TryPickup(clickedItem))
 			{
+				scene->GetServices().Get<SoundManager>().SFX_Shot(L"GetItem_Player");
+
 				cout << "PickUp" << endl;
 				mouseData->handled = true;
 				return;
