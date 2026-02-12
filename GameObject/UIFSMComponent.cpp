@@ -13,6 +13,7 @@
 #include "Scene.h"
 #include "GameManager.h"
 #include "GameObject.h"
+#include "CombatManager.h"
 #include "PlayerDoorFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
@@ -92,6 +93,102 @@ namespace
 
 
 		return 0;
+	}
+
+	bool IsDiceActionButtonName(const std::string& ownerName)
+	{
+		return ownerName == "DiceRollBtn"
+			|| ownerName == "DiceStatBtn"
+			|| ownerName == "DiceContinueBtn";
+	}
+
+	using DiceClock = std::chrono::steady_clock;
+	constexpr auto kDiceClickDebounce = std::chrono::milliseconds(650);
+
+	std::unordered_map<std::string, DiceClock::time_point>& GetDiceLastClickByOwner()
+	{
+		static std::unordered_map<std::string, DiceClock::time_point> s_LastClickByOwner;
+		return s_LastClickByOwner;
+	}
+
+	std::unordered_map<std::string, DiceClock::time_point>& GetDicePendingReenableByOwner()
+	{
+		static std::unordered_map<std::string, DiceClock::time_point> s_PendingReenableByOwner;
+		return s_PendingReenableByOwner;
+	}
+
+	void MarkDicePendingReenable(const std::string& ownerName)
+	{
+		if (!IsDiceActionButtonName(ownerName))
+		{
+			return;
+		}
+
+		auto& lastClickByOwner = GetDiceLastClickByOwner();
+		auto it = lastClickByOwner.find(ownerName);
+		if (it == lastClickByOwner.end())
+		{
+			return;
+		}
+
+		GetDicePendingReenableByOwner()[ownerName] = it->second + kDiceClickDebounce;
+	}
+
+	bool IsDiceReenableReady(const std::string& ownerName)
+	{
+		auto& pendingReenableByOwner = GetDicePendingReenableByOwner();
+		auto it = pendingReenableByOwner.find(ownerName);
+		if (it == pendingReenableByOwner.end())
+		{
+			return false;
+		}
+
+		if (DiceClock::now() < it->second)
+		{
+			return false;
+		}
+
+		pendingReenableByOwner.erase(it);
+		return true;
+	}
+
+	bool HasDicePendingReenable(const std::string& ownerName)
+	{
+		return GetDicePendingReenableByOwner().find(ownerName) != GetDicePendingReenableByOwner().end();
+	}
+
+
+	bool ShouldThrottleDiceUIButtonClick(const std::string& ownerName)
+	{
+		if (!IsDiceActionButtonName(ownerName))
+		{
+			return false;
+		}
+
+		auto& lastClickByOwner = GetDiceLastClickByOwner();
+		const auto now = DiceClock::now();
+		auto it = lastClickByOwner.find(ownerName);
+		if (it != lastClickByOwner.end() && (now - it->second) < kDiceClickDebounce)
+		{
+			return true;
+		}
+
+		lastClickByOwner[ownerName] = now;
+		return false;
+	}
+
+	bool IsCombatDiceFlowActive(UIFSMComponent* component)
+	{
+		if (!component)
+		{
+			return false;
+		}
+
+		auto* owner = component->GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+		auto* combatManager = gameManager ? gameManager->GetCombatManager() : nullptr;
+		return combatManager && combatManager->IsDiceFlowActive();
 	}
 
 	bool IsAnyVendingHoverCandidateHit(Scene* scene, int slotIndex, const POINT& mousePos)
@@ -594,6 +691,12 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_RequestExplorationTurnStart",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestDiceDecision",
 		"UI",
 		{}
@@ -667,6 +770,12 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_RequestInventoryTrash",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestPlayerMelee",
 		"UI",
 		{}
@@ -722,6 +831,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "UI_EscapePressed", "UI" });
 	eventRegistry.RegisterEvent({ "UI_CloseRequested", "UI" });
 	eventRegistry.RegisterEvent({ "UI_GoToTitleRequested", "UI" });
+	eventRegistry.RegisterEvent({ "UI_ExplorePlayerTurnRequested", "UI" });
 	eventRegistry.RegisterEvent({ "UI_SliderValueChanged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_ProgressChanged", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "UI" });
@@ -757,6 +867,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_2", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_3", "UI" });
+	eventRegistry.RegisterEvent({ "Player_InventoryTrash", "UI" });
 	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw1", "UI" });
@@ -927,6 +1038,12 @@ UIFSMComponent::UIFSMComponent()
 			}
 		});
 
+	BindActionHandler("UI_RequestExplorationTurnStart", [this](const FSMAction&)
+		{
+			GetEventDispatcher().Dispatch(EventType::ExplorePlayerTurnRequested, nullptr);
+		});
+
+
 	BindActionHandler("UI_RequestDiceDecision", [this](const FSMAction&)
 		{
 			// Backward compatibility: 일부 에디터 FSM은 DecisionReady 전이에
@@ -944,7 +1061,8 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestDiceContinue", [this](const FSMAction&)
 		{
-			std::cout << "[UIFSM] Action UI_RequestDiceContinue -> dispatch PlayerDiceContinueRequested" << std::endl;
+			std::cout << "[UIFSM][Trace] Action UI_RequestDiceContinue -> dispatch PlayerDiceContinueRequested"
+				<< " currentState=" << GetCurrentStateName() << std::endl;
 			GetEventDispatcher().Dispatch(EventType::PlayerDiceContinueRequested, nullptr);
 		});
 
@@ -973,6 +1091,12 @@ UIFSMComponent::UIFSMComponent()
 			if (!eventName.empty())
 			{
 				DispatchEvent(eventName);
+			}
+			else
+			{
+				// 레거시 UI 데이터에서 `event: "None"` 대신 빈 문자열을 전달하는 경우가 있어
+				// Process -> Idle 전이를 위해 명시적으로 None 이벤트를 보낸다.
+				DispatchEvent("None");
 			}
 		});
 
@@ -1023,7 +1147,14 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestDoorCancel", [this](const FSMAction& action)
 		{
+			std::cout << "[UIFSM][Trace] Action UI_RequestDoorCancel -> dispatch PlayerDoorCancel + Door_Complete" << std::endl;
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+
+			// 닫기 버튼은 즉시 반응해야 하므로 UI 종료 이벤트를 바로 발행한다.
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+			// Player FSM을 Door 상태에서 확실히 복귀시켜 다음 Door_Interact 재진입을 보장한다.
+			DispatchPlayerEvent(scene, "Door_Complete");
 			DispatchEvent("None");
 		});
 
@@ -1054,6 +1185,14 @@ UIFSMComponent::UIFSMComponent()
 			auto* scene = owner ? owner->GetScene() : nullptr;
 			DispatchPlayerEvent(scene, "Player_Throw_3");
 		});
+
+	BindActionHandler("UI_RequestInventoryTrash", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Player_InventoryTrash");
+		});
+
 
 	auto bindItemInfoHandler = [this](const std::string& actionId, bool visible)
 		{
@@ -1093,6 +1232,78 @@ UIFSMComponent::UIFSMComponent()
 
 UIFSMComponent::~UIFSMComponent()
 {
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
+		GetEventDispatcher().RemoveListener(EventType::Pressed, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::KeyDown))
+		GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UICloseRequested))
+		GetEventDispatcher().RemoveListener(EventType::UICloseRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ExplorePlayerTurnRequested))
+		GetEventDispatcher().RemoveListener(EventType::ExplorePlayerTurnRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIGoToTitleRequested))
+		GetEventDispatcher().RemoveListener(EventType::UIGoToTitleRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
+		GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Released))
+		GetEventDispatcher().RemoveListener(EventType::Released, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIDragged))
+		GetEventDispatcher().RemoveListener(EventType::UIDragged, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIDoubleClicked))
+		GetEventDispatcher().RemoveListener(EventType::UIDoubleClicked, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::TurnChanged))
+		GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorInteract))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorInteract, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorCancel))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorCancel, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorSuccess))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorSuccess, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorFail))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorFail, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopOpen))
+		GetEventDispatcher().RemoveListener(EventType::PlayerShopOpen, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopClose))
+		GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::VendingOfferUpdated))
+		GetEventDispatcher().RemoveListener(EventType::VendingOfferUpdated, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyOk))
+		GetEventDispatcher().RemoveListener(EventType::ShopMoneyOk, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyFail))
+		GetEventDispatcher().RemoveListener(EventType::ShopMoneyFail, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRoll))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRoll, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIOpen))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIOpen, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIReset))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIReset, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRollRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRollRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRollApplied))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRollApplied, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceTotalsApplied))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceTotalsApplied, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceResultShown))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceResultShown, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIClose))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIClose, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceDecisionRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceDecisionRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceDecisionResult))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceDecisionResult, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceInitiativeResolved))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceInitiativeResolved, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceStatRollRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatRollRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceTypeDetermined))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceTypeDetermined, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceStatResolved))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatResolved, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationStarted))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationStarted, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationCompleted))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceContinueRequested))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDiceContinueRequested, this);
 }
 
 void UIFSMComponent::Start()
@@ -1107,6 +1318,7 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
 	GetEventDispatcher().AddListener(EventType::KeyDown, this);
 	GetEventDispatcher().AddListener(EventType::UICloseRequested, this);
+	GetEventDispatcher().AddListener(EventType::ExplorePlayerTurnRequested, this);
 	GetEventDispatcher().AddListener(EventType::UIGoToTitleRequested, this);
 	GetEventDispatcher().AddListener(EventType::UIHovered, this);
 	GetEventDispatcher().AddListener(EventType::Released, this);
@@ -1157,6 +1369,14 @@ void UIFSMComponent::Start()
 void UIFSMComponent::Update(float deltaTime)
 {
 	FSMComponent::Update(deltaTime);
+
+	const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+	if (GetCurrentStateName() == "Disabled"
+		&& HasDicePendingReenable(ownerName)
+		&& IsDiceReenableReady(ownerName))
+	{
+		HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+	}
 
 	// 안전장치: 어떤 이유로 마지막 PlayerDiceAnimationCompleted가 누락돼도
 	// pending 상태가 남아 버튼/전이가 막히지 않도록 업데이트 단계에서 복구한다.
@@ -1306,6 +1526,18 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 				return;
 			}
 		}
+
+		const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+		if (IsDiceActionButtonName(ownerName)
+			&& GetCurrentStateName() == "Disabled"
+			&& IsCombatDiceFlowActive(this))
+		{
+			// 전투 주사위 플로우 중에는 마지막 클릭 후 디바운스 시간(650ms)이
+			// 지나기 전까지는 조기 복귀를 막고, 시간이 지나면 Update에서 재활성화한다.
+			MarkDicePendingReenable(ownerName);
+			return;
+		}
+
 
 		if (m_PendingDiceStatResolved)
 		{
@@ -1523,6 +1755,8 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("UI_CloseRequested");
 	case EventType::UIGoToTitleRequested:
 		return std::string("UI_GoToTitleRequested");
+	case EventType::ExplorePlayerTurnRequested:
+		return std::string("UI_ExplorePlayerTurnRequested");
 	case EventType::KeyDown:
 	{
 		const auto* keyData = static_cast<const Events::KeyEvent*>(data);
@@ -1577,33 +1811,104 @@ std::optional<EventType> UIFSMComponent::EventTypeFromName(const std::string& ev
 
 void UIFSMComponent::HandleEventByName(const std::string& eventName, const void* data)
 {
-	DispatchEvent(eventName);
 
-	for (const auto& entry : m_EventCallbacks)
+	const std::string stateBeforeDispatch = GetCurrentStateName();
+
+	const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+	if (eventName == "UI_Clicked" && ShouldThrottleDiceUIButtonClick(ownerName))
 	{
-		if (entry.eventName != eventName)
-		{
-			continue;
-		}
+		std::cout << "[UIFSM][Trace] throttle rapid dice click owner=" << ownerName
+			<< " event=" << eventName << std::endl;
+		return;
+	}
 
-		auto it = m_Callbacks.find(entry.callbackId);
-		if (it != m_Callbacks.end())
-		{
-			it->second(eventName, data);
-			continue;
-		}
+	const bool isDiceDoorEvent = eventName == "UI_Released"
+		|| eventName == "UI_Clicked"
+		|| eventName == "Player_DoorInteract"
+		|| eventName == "Player_DoorCancel"
+		|| eventName == "Player_DoorSuccess"
+		|| eventName == "Player_DoorFail"
+		|| eventName == "Player_DiceUIOpen"
+		|| eventName == "Player_DiceUIReset"
+		|| eventName == "Player_DiceRollRequested"
+		|| eventName == "Player_DiceDecisionRequested"
+		|| eventName == "Player_DiceDecisionResult"
+		|| eventName == "Player_DiceStatRollRequested"
+		|| eventName == "Player_DiceStatResolved"
+		|| eventName == "Player_DiceAnimationStarted"
+		|| eventName == "Player_DiceAnimationCompleted"
+		|| eventName == "Player_DiceContinueRequested"
+		|| eventName == "Player_DiceUIClose";
+	
+	const bool isLikelyDoorDiceUI = ownerName.find("Door") != std::string::npos
+		|| ownerName.find("Dice") != std::string::npos;
 
-		for (const auto& actionEntry : m_CallbackActions)
+	auto dispatchEventAndCallbacks = [this, data](const std::string& dispatchEventName)
 		{
-			if (actionEntry.callbackId != entry.callbackId)
+			DispatchEvent(dispatchEventName);
+
+			for (const auto& entry : m_EventCallbacks)
 			{
-				continue;
+				if (entry.eventName != dispatchEventName)
+				{
+					continue;
+				}
+
+				auto it = m_Callbacks.find(entry.callbackId);
+				if (it != m_Callbacks.end())
+				{
+					it->second(dispatchEventName, data);
+					continue;
+				}
+
+				for (const auto& actionEntry : m_CallbackActions)
+				{
+					if (actionEntry.callbackId != entry.callbackId)
+					{
+						continue;
+					}
+					for (const auto& action : actionEntry.actions)
+					{
+						HandleAction(action);
+					}
+					break;
+				}
 			}
-			for (const auto& action : actionEntry.actions)
-			{
-				HandleAction(action);
-			}
-			break;
+		};
+
+	dispatchEventAndCallbacks(eventName);
+
+	// UI 버튼 FSM 데이터가 클릭 이벤트를 UI_Released 또는 UI_Clicked 중 하나로만
+	// 정의되어 있어도 동작하도록 클릭 이벤트를 상호 호환시킨다.
+	// 단, UI_Released 처리에서 이미 상태 전이가 발생했다면 같은 입력으로
+	// UI_Clicked까지 연속 발행되어 다음 상태 액션이 즉시 실행될 수 있으므로
+	// 이 경우에는 보조 이벤트를 생략한다.
+	const std::string stateAfterDispatch = GetCurrentStateName();
+	const bool stateChanged = stateAfterDispatch != stateBeforeDispatch;
+	if (isDiceDoorEvent && stateChanged)
+	{
+		std::cout << "[UIFSM][Trace] owner=" << ownerName
+			<< " event=" << eventName
+			<< " stateBefore=" << stateBeforeDispatch
+			<< " stateAfter=" << stateAfterDispatch << std::endl;
+	}
+
+	if (eventName == "UI_Released" && stateAfterDispatch == stateBeforeDispatch)
+	{
+		if (isLikelyDoorDiceUI)
+		{
+			std::cout << "[UIFSM][Trace] Skip synthetic UI_Clicked on Door/Dice UI. state="
+				<< stateAfterDispatch << " owner=" << ownerName << std::endl;
 		}
+		else
+		{
+			dispatchEventAndCallbacks("UI_Clicked");
+		}
+	}
+	else if (eventName == "UI_Released" && isDiceDoorEvent && isLikelyDoorDiceUI)
+	{
+		std::cout << "[UIFSM][Trace] Skip synthetic UI_Clicked because state changed on UI_Released."
+			<< " stateBefore=" << stateBeforeDispatch
+			<< " stateAfter=" << stateAfterDispatch << std::endl;
 	}
 }

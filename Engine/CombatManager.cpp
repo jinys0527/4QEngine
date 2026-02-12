@@ -394,6 +394,13 @@ void CombatManager::HandlePlayerDiceDecisionRequested()
 		return;
 	}
 
+	if (m_PlayerDecisionD20 > 0)
+	{
+		std::cout << "[Combat] Ignore duplicate PlayerDiceDecisionRequested. selectedD20="
+			<< m_PlayerDecisionD20 << std::endl;
+		return;
+	}
+
 	const DiceConfig d20x3{ 3, 20, 0 };
 	const DiceRoll roll = m_DiceSystem.Roll(d20x3, RandomDomain::Combat);
 	if (roll.faces.empty())
@@ -450,6 +457,13 @@ void CombatManager::HandlePlayerDiceStatRollRequested()
 		std::cout << "[Combat] Ignore PlayerDiceStatRollRequested. diceFlow=" << m_DiceFlowActive
 			<< " state=" << static_cast<int>(m_State)
 			<< " selectedD20=" << m_PlayerDecisionD20 << std::endl;
+		return;
+	}
+
+	if (m_PlayerDecisionReady)
+	{
+		std::cout << "[Combat] Ignore duplicate PlayerDiceStatRollRequested. initiativeTotal="
+			<< m_PlayerInitiativeTotal << std::endl;
 		return;
 	}
 

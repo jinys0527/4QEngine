@@ -59,6 +59,13 @@ public:
 	bool IsExplorationInputAllowed() const;
 	bool IsCombatInputAllowed() const;
 	bool IsShopInputAllowed() const;
+	float GetPlayerTurnRemainingSeconds() const;
+	float GetPlayerTurnRemainingRatio() const;
+	void SetExternalEventsBlockedByUI(bool blocked);
+	void SetTimePausedByUI(bool paused);
+	void SetUIModalControl(bool active);
+	bool IsExternalEventsBlockedByUI() const { return m_BlockExternalEventsByUI; }
+	bool IsTimePausedByUI() const { return m_PauseTimeByUI; }
 	int  GetCurrentFloor() const { return m_CurrentFloor; }
 	void SetTurn(Turn turn);
 	void SetPhase(Phase phase);
@@ -73,6 +80,7 @@ private:
 	void RegisterEventListeners();
 	void UnregisterEventListeners();
 	void DispatchTurnChanged();
+	void DispatchPlayerTurnTimerChanged() const;
 	void SyncTurnFromActorId(int actorId);
 	void OnPhaseEnter(Phase phase);
 	void OnPhaseExit(Phase phase);
@@ -119,6 +127,9 @@ private:
 	bool  m_InitCompletePending = false;
 	bool  m_FloorReadyPending = false;
 	bool  m_WaitingForFloorScene = false;
+	bool  m_WaitingForHowToPlayClose = true;
+	bool  m_BlockExternalEventsByUI = false;
+	bool  m_PauseTimeByUI = false;
 	bool  m_GameDataLoaded = false;
 	bool  m_BlockPostCombatShop = false;
 	int   m_CurrentFloor = 1;

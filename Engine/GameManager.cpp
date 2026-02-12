@@ -31,6 +31,7 @@
 #include "SkinningAnimationComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
+#include <algorithm>
 #include <chrono>
 #include <charconv>
 #include <system_error>
@@ -61,7 +62,7 @@ GameManager::GameManager() :
 	m_Turn(Turn::PlayerTurn)
 	, m_BattleCheck(Battle::NonBattle)
 	, m_Phase(Phase::None)
-	, m_ExplorationTurnState(ExplorationTurnState::PlayerTurn)
+	, m_ExplorationTurnState(ExplorationTurnState::WaitingStart)
 	, m_CombatTurnState(CombatTurnState::SelectActor)
 {
 }
@@ -263,6 +264,8 @@ void GameManager::Update(float deltaTime)
 			SetCombatTurnState(CombatTurnState::SelectActor);
 		}
 	}
+
+	DispatchPlayerTurnTimerChanged();
 
 	if (m_InitCompletePending)
 	{
@@ -506,6 +509,24 @@ void GameManager::OnEvent(EventType type, const void* data)
 			SetTurn(Turn::PlayerTurn);
 		}
 		break;
+	case EventType::ExplorePlayerTurnRequested:
+		if (m_Phase == Phase::ExplorationLoop)
+		{
+			// 튜토리얼/가이드 UI가 닫힌 뒤에는 현재 탐험 상태와 무관하게
+			// 입력/타이머가 재개될 수 있도록 대기 플래그와 pause를 해제한다.
+			m_WaitingForHowToPlayClose = false;
+			if (m_ActiveScene)
+			{
+				m_ActiveScene->SetIsPause(false);
+			}
+
+			if (m_ExplorationTurnState != ExplorationTurnState::PlayerTurn)
+			{
+				SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
+			}
+			SetTurn(Turn::PlayerTurn);
+		}
+		break;
 	case EventType::PhaseRequestEnterCombat:
 		std::cout << "PhaseRequestEnterCombat\n";
 		SetPhase(Phase::CombatTrigger);
@@ -586,12 +607,15 @@ void GameManager::TurnReset()
 	m_WaitingForFloorScene = false;
 	m_FloorReadyPending = false;
 	m_BlockPostCombatShop = false;	
+	m_WaitingForHowToPlayClose = true;
 	m_ResolveEnemyTurn = false;
 	m_PlayerActionInputLocked = false;
 	m_PlayerActionInputLockElapsed = 0.0f;
 	m_RemainingEnemyTurns = 0;
 	m_WaitingEnemyTurnDelay = false;
 	m_EnemyTurnDelayElapsed = 0.0f;
+	m_BlockExternalEventsByUI = false;
+	m_PauseTimeByUI = false;
 
 
 	// 적 Reset
@@ -643,19 +667,73 @@ bool GameManager::IsExplorationInputAllowed() const
 {
 	return m_Phase == Phase::ExplorationLoop
 		&& m_ExplorationTurnState == ExplorationTurnState::PlayerTurn
-		&& !m_PlayerActionInputLocked;
+		&& !m_PlayerActionInputLocked
+		&& !m_BlockExternalEventsByUI;
 }
 
 bool GameManager::IsCombatInputAllowed() const
 {
 	return m_Phase == Phase::TurnBasedCombat
 		&& m_CombatTurnState == CombatTurnState::PlayerTurn
-		&& !m_PlayerActionInputLocked;
+		&& !m_PlayerActionInputLocked
+		&& !m_BlockExternalEventsByUI;
 }
 
 bool GameManager::IsShopInputAllowed() const
 {
-	return m_Phase == Phase::Shop;
+	return m_Phase == Phase::Shop
+		&& !m_BlockExternalEventsByUI;
+}
+
+float GameManager::GetPlayerTurnRemainingSeconds() const
+{
+	if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
+	{
+		return (std::max)(0.0f, m_ExplorationTurnLimit - m_ExplorationTurnElapsed);
+	}
+	if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::PlayerTurn)
+	{
+		return (std::max)(0.0f, m_CombatTurnLimit - m_CombatTurnElapsed);
+	}
+	return 0.0f;
+}
+
+float GameManager::GetPlayerTurnRemainingRatio() const
+{
+	if (m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
+	{
+		if (m_ExplorationTurnLimit <= 0.0f)
+		{
+			return 0.0f;
+		}
+		return std::clamp(GetPlayerTurnRemainingSeconds() / m_ExplorationTurnLimit, 0.0f, 1.0f);
+	}
+	if (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::PlayerTurn)
+	{
+		if (m_CombatTurnLimit <= 0.0f)
+		{
+			return 0.0f;
+		}
+		return std::clamp(GetPlayerTurnRemainingSeconds() / m_CombatTurnLimit, 0.0f, 1.0f);
+	}
+	return 0.0f;
+}
+
+
+void GameManager::SetExternalEventsBlockedByUI(bool blocked)
+{
+	m_BlockExternalEventsByUI = blocked;
+}
+
+void GameManager::SetTimePausedByUI(bool paused)
+{
+	m_PauseTimeByUI = paused;
+}
+
+void GameManager::SetUIModalControl(bool active)
+{
+	SetExternalEventsBlockedByUI(active);
+	SetTimePausedByUI(active);
 }
 
 void GameManager::SetPhase(Phase phase)
@@ -729,8 +807,20 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		break;
 	case Phase::ExplorationLoop:
-		SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
-		SetTurn(Turn::PlayerTurn);
+		if (m_WaitingForHowToPlayClose)
+		{
+			SetExplorationTurnState(ExplorationTurnState::WaitingStart);
+			SetTurn(Turn::EnemyTurn);
+			if (m_ActiveScene)
+			{
+				m_ActiveScene->SetIsPause(true);
+			}
+		}
+		else
+		{
+			SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
+			SetTurn(Turn::PlayerTurn);
+		}
 		m_ExplorationTurnElapsed = 0.0f;
 		SetPlayerShopState(false);
 		SetFloodSystemActive(true);
@@ -878,6 +968,11 @@ void GameManager::OnExplorationTurnStateEnter(ExplorationTurnState state)
 {
 	switch (state)
 	{
+	case ExplorationTurnState::WaitingStart:
+		m_ExplorationTurnElapsed = 0.0f;
+		SetTurn(Turn::EnemyTurn);
+		SetExplorationActiveEnemyActorId(0);
+		break;
 	case ExplorationTurnState::PlayerTurn:
 		m_ExplorationTurnElapsed = 0.0f;
 		SetTurn(Turn::PlayerTurn);
@@ -1637,6 +1732,8 @@ void GameManager::RegisterEventListeners()
 	m_EventDispatcher->AddListener(EventType::PlayerDiceContinueRequested, this);
 	m_EventDispatcher->AddListener(EventType::PlayerDiceAnimationStarted, this);
 	m_EventDispatcher->AddListener(EventType::PlayerDiceAnimationCompleted, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceUIOpen, this);
+	m_EventDispatcher->AddListener(EventType::PlayerDiceUIClose, this);
 	m_EventDispatcher->AddListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->AddListener(EventType::CombatEnter, this);
 	m_EventDispatcher->AddListener(EventType::CombatExit, this);
@@ -1646,6 +1743,7 @@ void GameManager::RegisterEventListeners()
 	m_EventDispatcher->AddListener(EventType::CombatEnded, this);
 	m_EventDispatcher->AddListener(EventType::ExploreTurnEnded, this);
 	m_EventDispatcher->AddListener(EventType::ExploreEnemyStepEnded, this);
+	m_EventDispatcher->AddListener(EventType::ExplorePlayerTurnRequested, this);
 	m_EventDispatcher->AddListener(EventType::PhaseRequestEnterCombat, this);
 	m_EventDispatcher->AddListener(EventType::PostCombatToShop, this);
 	m_EventDispatcher->AddListener(EventType::PostCombatToExploration, this);
@@ -1675,6 +1773,8 @@ void GameManager::UnregisterEventListeners()
 	m_EventDispatcher->RemoveListener(EventType::PlayerDiceContinueRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerDiceAnimationStarted, this);
 	m_EventDispatcher->RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceUIOpen, this);
+	m_EventDispatcher->RemoveListener(EventType::PlayerDiceUIClose, this);
 	m_EventDispatcher->RemoveListener(EventType::EnemyTurnEndRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatEnter, this);
 	m_EventDispatcher->RemoveListener(EventType::CombatExit, this);
@@ -1684,6 +1784,7 @@ void GameManager::UnregisterEventListeners()
 	m_EventDispatcher->RemoveListener(EventType::CombatEnded, this);
 	m_EventDispatcher->RemoveListener(EventType::ExploreTurnEnded, this);
 	m_EventDispatcher->RemoveListener(EventType::ExploreEnemyStepEnded, this);
+	m_EventDispatcher->RemoveListener(EventType::ExplorePlayerTurnRequested, this);
 	m_EventDispatcher->RemoveListener(EventType::PhaseRequestEnterCombat, this);
 	m_EventDispatcher->RemoveListener(EventType::PostCombatToShop, this);
 	m_EventDispatcher->RemoveListener(EventType::PostCombatToExploration, this);
@@ -1705,6 +1806,25 @@ void GameManager::DispatchTurnChanged()
 	Events::TurnChanged payload{ static_cast<int>(m_Turn) };
 	m_EventDispatcher->Dispatch(EventType::TurnChanged, &payload);
 }
+
+void GameManager::DispatchPlayerTurnTimerChanged() const
+{
+	if (!m_EventDispatcher)
+	{
+		return;
+	}
+
+	const bool isPlayerTurnActive = m_Turn == Turn::PlayerTurn
+		&& ((m_Phase == Phase::ExplorationLoop && m_ExplorationTurnState == ExplorationTurnState::PlayerTurn)
+			|| (m_Phase == Phase::TurnBasedCombat && m_CombatTurnState == CombatTurnState::PlayerTurn));
+
+	Events::PlayerTurnTimerChangedEvent payload{};
+	payload.remainingSeconds = GetPlayerTurnRemainingSeconds();
+	payload.remainingRatio = GetPlayerTurnRemainingRatio();
+	payload.isPlayerTurnActive = isPlayerTurnActive;
+	m_EventDispatcher->Dispatch(EventType::PlayerTurnTimerChanged, &payload);
+}
+
 
 void GameManager::SyncTurnFromActorId(int actorId)
 {

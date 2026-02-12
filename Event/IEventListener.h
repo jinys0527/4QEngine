@@ -71,6 +71,7 @@ enum class EventType
 
 	//Scene
 	SceneChangeRequested,
+	ExplorePlayerTurnRequested,
 
 	//Player
 	PlayerMove,
@@ -105,7 +106,7 @@ enum class EventType
 	PlayerDiceContinueRequested,
 
 	PlayerStatChanged,
-
+	PlayerTurnTimerChanged,
 
 	DiceRolled,
 	CombatNumberPopup,
