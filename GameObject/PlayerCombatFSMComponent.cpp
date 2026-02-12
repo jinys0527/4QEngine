@@ -675,7 +675,7 @@ bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, Enemy
 		if (auto* renderer = throwOwner->GetComponent<MeshRenderer>())
 		{
 			renderer->SetVisible(true);
-			renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+			renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::TransparentItems));
 		}
 	}
 
