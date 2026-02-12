@@ -68,6 +68,7 @@ private:
 	void ClearSightDebug();
 	void UpdateSightDebugLines(int sightRange);
 	void SyncFacingFromTransform();
+	void SyncEquippedWeaponPose();
 
 	int m_Q;
 	int m_R;

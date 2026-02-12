@@ -763,7 +763,8 @@ bool PlayerCombatFSMComponent::ApplyThrowHealing(PlayerComponent& player, EnemyC
 	if (enemyStat)
 	{
 		const int prevHp = enemyStat->GetCurrentHP();
-		const int nextHp = prevHp + healAmount;
+		const int maxHp = max(0, enemyStat->GetInitialHP());
+		const int nextHp = min(maxHp, prevHp + healAmount);
 		enemyStat->SetCurrentHP(nextHp);
 
 		services.Get<SoundManager>().SFX_Shot(L"Heal_Drink");
