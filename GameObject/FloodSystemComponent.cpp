@@ -148,3 +148,4 @@ bool FloodSystemComponent::ShouldAdvance() const
 			|| gameManager->IsCombatInputAllowed()
 			|| gameManager->IsShopInputAllowed());
 }
+
