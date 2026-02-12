@@ -32,6 +32,6 @@ private:
 	MaterialComponent* m_Material = nullptr;
 	bool m_SceneChangeRequested = false;
 	bool m_HasBaseMaterial = false;
-	float m_HighlightTime = 0.0f;
+	float m_HighlightTime = 1.0f;
 	RenderData::MaterialData m_BaseMaterialOverrides{};
 };

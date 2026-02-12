@@ -39,7 +39,6 @@ private:
 	void UpdateLogic();
 	void Update();
 	void ApplySceneBGM();
-	bool IsCombatPhase(Phase phase) const;
 	void Render();
 	
 	void OnResize(int width, int height) override;

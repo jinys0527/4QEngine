@@ -769,7 +769,7 @@ void AssetLoader::LoadShaderSources(const fs::path& shaderDir)
 		}
 
 		const fs::path& path = fileEntry.path();
-		if (path.extension() != ".hlsl")
+		if (path.extension() != ".cso") 
 		{
 			continue;
 		}

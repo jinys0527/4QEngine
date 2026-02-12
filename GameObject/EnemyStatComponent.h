@@ -46,6 +46,7 @@ public:
 	const int&   GetDifficultyGroup() const			     { return m_DifficultyGroup;     }
 	void	     SetDifficultyGroup(const int& value)    { m_DifficultyGroup = value;    }
 
+	void	   SetInitialHP(const int& value) { m_InitialHP = value; }
 	const int& GetInitialHP() const { return m_InitialHP; }
 
 private:

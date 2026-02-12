@@ -4,15 +4,9 @@
 // tilt shift를 위한 화면 위 아래를 늘이는 함수
 float2 WarpTopExpand(float2 uv, float amount, float power)
 {
-    // uv.y가 0(상단)일 때 t=1, uv.y가 1(하단)일 때 t=0이 되도록 반전
-    float t = pow(1.0 - saturate(uv.y), power);
-    
-    // t가 클수록(화면 위쪽일수록) scale이 커져서 화면이 양옆으로 확장됨
+    float t = pow(saturate(uv.y), power);
     float scale = 1.0 + t * amount;
-    
-    // 중앙(0.5)을 기준으로 가로축 확장
     uv.x = (uv.x - 0.5) / scale + 0.5;
-    
     return uv;
 }
 
@@ -64,14 +58,13 @@ float4 SampleEmissiveDisk(Texture2D tex, float2 uv, float2 r)
     }
 
     return c / 7.0;
-    
 }
 
 float4 PS_Main(VSOutput_PU i) : SV_TARGET
 {
     // ====== 1. UV Warp (Tilt-Shift) ======
-    float warpAmount = 0.1f;
-    float warpPower = 1.3f;
+    float warpAmount = 0.15f;
+    float warpPower = 3.0f;
     float2 uvW = WarpTopExpand(i.uv, warpAmount, warpPower);
     uvW = saturate(uvW);
 
@@ -80,19 +73,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     RTView.rgb = SRGBToLinear(RTView.rgb);
 
     // ====== 3. Depth & CoC (Depth of Field) ======
-    uint depthW, depthH, depthSamples;
-    g_DepthMap.GetDimensions(depthW, depthH, depthSamples);
-
-    int2 depthPixel = int2(uvW * float2(depthW, depthH));
-    depthPixel = clamp(depthPixel, int2(0, 0), int2((int) depthW - 1, (int) depthH - 1));
-
-    float DepthMap = 0.0f;
-    [loop]
-    for (uint sampleIdx = 0; sampleIdx < depthSamples; ++sampleIdx)
-    {
-        DepthMap += g_DepthMap.Load(depthPixel, sampleIdx);
-    }
-    DepthMap /= max(1u, depthSamples);
+    float DepthMap = g_DepthMap.Sample(smpClamp, uvW).r;
     float viewZ = camParams.x * camParams.y / (camParams.y - DepthMap * (camParams.y - camParams.x));
     float coc = saturate(abs(viewZ - camParams.z) / camParams.w);
     
@@ -111,15 +92,17 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     // ====== 5. Gaussian Blur Layers (DoF) ======
     float4 Blur1 = g_BlurHalf.Sample(smpClamp, uvW);
     float4 Blur2 = g_BlurHalf2.Sample(smpClamp, uvW);
-    float4 Blur3 = g_BlurHalf3.Sample(smpClamp, uvW);
-    float4 Blur4 = g_BlurHalf4.Sample(smpClamp, uvW);
+    //float4 Blur3 = g_BlurHalf3.Sample(smpClamp, uvW);
+    //float4 Blur4 = g_BlurHalf4.Sample(smpClamp, uvW);
     
     Blur1.rgb = SRGBToLinear(Blur1.rgb);
     Blur2.rgb = SRGBToLinear(Blur2.rgb);
-    Blur3.rgb = SRGBToLinear(Blur3.rgb);
-    Blur4.rgb = SRGBToLinear(Blur4.rgb);
+   // Blur3.rgb = SRGBToLinear(Blur3.rgb);
+    //Blur4.rgb = SRGBToLinear(Blur4.rgb);
     
-    float4 blurCombined = Blur1 * 0.4 + Blur2 * 0.3 + Blur3 * 0.2 + Blur4 * 0.1;
+    float4 blurCombined =
+        Blur1 * 1.0 +
+        Blur2 * 0.0;
     float4 dofColor = lerp(RTView, blurCombined, coc);
 
     // Radial Blur와 DoF Blur 합성
@@ -149,18 +132,7 @@ float4 PS_Main(VSOutput_PU i) : SV_TARGET
     float4 emissive = (e0 * 1.5) + (e1 * 0.8) + (e2 * 0.5) + (e3 * 0.3);
 
     // ====== 7. Final Composition & Post-Process ======
-    float4 scene;
-    
-    if(blurOn)
-    {
-        scene = finalBlur + emissive;
-
-    }
-    else
-    {
-        scene = RTView + emissive;
-    }
-
+    float4 scene = finalBlur + emissive;
     
     // Saturation 조절 (ToneMap 전 수행)
     scene.rgb = AdjustSaturation(scene.rgb, lights[0].Saturation);

@@ -2,6 +2,7 @@
 #include "ReflectionMacro.h"
 
 REGISTER_COMPONENT_DERIVED(EnemyStatComponent, StatComponent)
+REGISTER_PROPERTY(EnemyStatComponent, InitialHP)
 REGISTER_PROPERTY(EnemyStatComponent, Defense)
 REGISTER_PROPERTY(EnemyStatComponent, InitiativeModifier)
 REGISTER_PROPERTY(EnemyStatComponent, AccuracyModifier)
@@ -17,7 +18,7 @@ void EnemyStatComponent::Start()
 {
 	if (!m_InitialHPCaptured)
 	{
-		m_InitialHP = GetCurrentHP();
+		//m_InitialHP = GetCurrentHP();
 		m_InitialHPCaptured = true;
 	}
 }
@@ -34,7 +35,7 @@ void EnemyStatComponent::ResetCurrentHPToInitial()
 {
 	if (!m_InitialHPCaptured)
 	{
-		m_InitialHP = GetCurrentHP();
+		//m_InitialHP = GetCurrentHP();
 		m_InitialHPCaptured = true;
 	}
 
