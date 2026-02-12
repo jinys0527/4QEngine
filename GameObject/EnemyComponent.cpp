@@ -42,6 +42,38 @@ REGISTER_PROPERTY(EnemyComponent, DeathAnimation)
 REGISTER_PROPERTY(EnemyComponent, DeathAnimationBlendTime)
 REGISTER_PROPERTY(EnemyComponent, UseDeathAnimationBlend)
 
+namespace
+{
+	void SetRenderAndCollisionVisibleRecursive(TransformComponent* transform, bool visible)
+	{
+		if (!transform)
+		{
+			return;
+		}
+
+		if (auto* owner = transform->GetOwner())
+		{
+			if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
+			{
+				meshRenderer->SetVisible(visible);
+			}
+			if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
+			{
+				skeletalRenderer->SetVisible(visible);
+			}
+			if (auto* collider = owner->GetComponent<BoxColliderComponent>())
+			{
+				collider->SetIsActive(visible);
+			}
+		}
+
+		for (auto* child : transform->GetChildrens())
+		{
+			SetRenderAndCollisionVisibleRecursive(child, visible);
+		}
+	}
+}
+
 EnemyComponent::EnemyComponent() {
 	m_Facing = ERotationOffset::clock_9;
 }
@@ -484,17 +516,9 @@ void EnemyComponent::Update(float deltaTime) {
 		}
 
 		const bool shouldHide = m_DeathAnimationCompleted;
-		if (auto* meshRenderer = owner->GetComponent<MeshRenderer>())
+		if (auto* transform = owner->GetComponent<TransformComponent>())
 		{
-			meshRenderer->SetVisible(!shouldHide);
-		}
-		if (auto* skeletalRenderer = owner->GetComponent<SkeletalMeshRenderer>())
-		{
-			skeletalRenderer->SetVisible(!shouldHide);
-		}
-		if (auto* collider = owner->GetComponent<BoxColliderComponent>())
-		{
-			collider->SetIsActive(!shouldHide);
+			SetRenderAndCollisionVisibleRecursive(transform, !shouldHide);
 		}
 
 

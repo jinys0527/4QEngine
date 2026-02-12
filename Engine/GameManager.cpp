@@ -34,6 +34,27 @@
 #include <charconv>
 #include <system_error>
 
+namespace
+{
+	void LogPlayerAdjustedStatsForCombat(const char* context, const PlayerStatComponent* stat)
+	{
+		if (!stat)
+		{
+			return;
+		}
+
+		std::cout << "[Combat][PlayerStats][" << context << "] "
+			<< "HP=" << stat->GetCurrentHP() << "/" << stat->GetTotalHealth()
+			<< " STR=" << stat->GetTotalStrength()
+			<< " AGI=" << stat->GetTotalAgility()
+			<< " SENSE=" << stat->GetTotalSense()
+			<< " SKILL=" << stat->GetTotalSkill()
+			<< " DEF=" << stat->GetDefense()
+			<< std::endl;
+	}
+}
+
+
 GameManager::GameManager() :
 
 	m_Turn(Turn::PlayerTurn)
@@ -721,6 +742,17 @@ void GameManager::OnPhaseEnter(Phase phase)
 	case Phase::TurnBasedCombat:
 		SetFloodSystemActive(false);
 		SetCombatTurnState(CombatTurnState::SelectActor);
+		if (m_ActiveScene)
+		{
+			if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+			{
+				if (auto* player = playerObject->GetComponent<PlayerComponent>())
+				{
+					// 전투 진입 시 선제권 여부와 무관하게 행동 포인트를 전부 회복한다.
+					player->ResetTurnResources();
+				}
+			}
+		}
 		DispatchPlayerFSMEvent("Combat_Start");
 		break;
 	case Phase::CombatEnd:
@@ -1373,6 +1405,7 @@ void GameManager::ResolveEnemyAttack(int actorId)
 
 	DefenseProfile defenseProfile{};
 	defenseProfile.defense = playerStat->GetDefense();
+	LogPlayerAdjustedStatsForCombat("EnemyAction", playerStat);
 
 	const int prevHp = playerStat->GetCurrentHP();
 	auto* logger = GetLogSystem();

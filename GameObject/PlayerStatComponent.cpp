@@ -16,6 +16,7 @@ REGISTER_PROPERTY_READONLY(PlayerStatComponent, EquipmentSkillBonus)
 REGISTER_PROPERTY_READONLY(PlayerStatComponent, EquipmentDefenseBonus)
 
 
+
 void PlayerStatComponent::Update(float deltaTime)
 {
 }
@@ -159,7 +160,7 @@ float PlayerStatComponent::GetShopDiscountRate() const
 
 const int PlayerStatComponent::GetMaxHealthForFloor(int currentFloor) const
 {
-	return m_Health + (GetCalculatedHealthModifier() * currentFloor);
+	return GetTotalHealth() + (GetCalculatedHealthModifier() * currentFloor);
 }
 
 void PlayerStatComponent::DispatchStatChangedEvent()
