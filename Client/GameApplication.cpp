@@ -141,10 +141,6 @@ void GameApplication::ApplySceneBGM()
 	m_SoundManager->BGM_Shot(it->second, m_SceneChangeBGMFadeTime);
 }
 
-bool GameApplication::IsCombatPhase(Phase phase) const
-{
-
-}
 
 void GameApplication::Render()
 {
