@@ -830,8 +830,8 @@ void EnemyComponent::Update(float deltaTime) {
 			{
 				if (auto* combatFsm = playerOwner->GetComponent<PlayerCombatFSMComponent>())
 				{
-					//combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
-					combatFsm->RequestCombatEnter(m_TargetPlayer->GetActorId(), GetActorId());
+					combatFsm->RequestCombatEnter(GetActorId(), m_TargetPlayer->GetActorId());
+//					combatFsm->RequestCombatEnter(m_TargetPlayer->GetActorId(), GetActorId());
 				}
 			}
 			return;

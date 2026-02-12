@@ -233,7 +233,10 @@ void SceneManager::SetCurrentScene(const std::string& name)
 				m_GameManager->ClearPlayerData();
 			}
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
-			m_GameManager->TurnReset();
+			if (name == "Stage1")
+			{
+				m_GameManager->TurnReset();
+			}
 		}
 		 
  		if (m_UIManager)
@@ -319,7 +322,10 @@ void SceneManager::ChangeScene(const std::string& name)
 				m_GameManager->ClearPlayerData();
 			}
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
-			m_GameManager->TurnReset();
+			if (name == "Stage1")
+			{
+				m_GameManager->TurnReset();
+			}
 		}
 
 		if (m_UIManager)

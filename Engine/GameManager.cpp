@@ -80,12 +80,27 @@ void GameManager::SetEventDispatcher(EventDispatcher& eventDispatcher)
 	}
 	//UnregisterEventListeners();
 	m_EventDispatcher = &eventDispatcher;
+
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->SetEventDispatcher(m_EventDispatcher);
+	}
+
 	RegisterEventListeners();
 }
 
 void GameManager::ClearEventDispatcher()
 {
-	UnregisterEventListeners();
+	if (m_EventDispatcher)
+	{
+		UnregisterEventListeners();
+	}
+
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->SetEventDispatcher(nullptr);
+	}
+
 	m_EventDispatcher = nullptr;
 }
 
