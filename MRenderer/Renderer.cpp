@@ -66,43 +66,46 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
 
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_VS.cso"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PS.cso"), m_pPS.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS_POS.hlsl"), m_pPS_P.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Frustum_PS.hlsl"), m_pPS_Frustum.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_POS_VS.cso"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_POS_PS.cso"), m_pPS_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Frustum_PS.cso"), m_pPS_Frustum.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Quad_VS.cso"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Quad_PS.cso"), m_pPS_Quad.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/UI_VS.hlsl"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/UI_PS.hlsl"), m_pPS_UI.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/UI_VS.cso"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/UI_PS.cso"), m_pPS_UI.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_PBR_VS.cso"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PBR_PS.cso"), m_pPS_PBR.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Post_VS.hlsl"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Post_PS.hlsl"), m_pPS_Post.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Post_VS.cso"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Post_PS.cso"), m_pPS_Post.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/SkyBox_VS.cso"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/SkyBox_PS.cso"), m_pPS_SkyBox.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Shadow_VS.cso"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Shadow_PS.cso"), m_pPS_Shadow.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_MakeShadow_VS.hlsl"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadow_PS.hlsl"), m_pPS_MakeShadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.hlsl"), m_pPS_MakeShadow_Transparent.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_VS.cso"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_PS.cso"), m_pPS_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.cso"), m_pPS_MakeShadow_Transparent.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Emissive_VS.cso"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Emissive_PS.cso"), m_pPS_Emissive.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
+
+	//LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	//LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
 
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.cso"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
 
 	CreateInputLayout();
@@ -218,46 +221,46 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
 
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_VS.cso"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PS.cso"), m_pPS.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS_POS.hlsl"), m_pPS_P.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Frustum_PS.hlsl"), m_pPS_Frustum.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_POS_VS.cso"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_POS_PS.cso"), m_pPS_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Frustum_PS.cso"), m_pPS_Frustum.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
-	
-	LoadVertexShader(_T("../MRenderer/fx/UI_VS.hlsl"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/UI_PS.hlsl"), m_pPS_UI.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Quad_VS.cso"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Quad_PS.cso"), m_pPS_Quad.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/UI_VS.cso"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/UI_PS.cso"), m_pPS_UI.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Post_VS.hlsl"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Post_PS.hlsl"), m_pPS_Post.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_PBR_VS.cso"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PBR_PS.cso"), m_pPS_PBR.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Post_VS.cso"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Post_PS.cso"), m_pPS_Post.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/SkyBox_VS.cso"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/SkyBox_PS.cso"), m_pPS_SkyBox.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_MakeShadow_VS.hlsl"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadow_PS.hlsl"), m_pPS_MakeShadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.hlsl"), m_pPS_MakeShadow_Transparent.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Shadow_VS.cso"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Shadow_PS.cso"), m_pPS_Shadow.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Emissive_VS.hlsl"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Emissive_PS.hlsl"), m_pPS_Emissive.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_VS.cso"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_PS.cso"), m_pPS_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.cso"), m_pPS_MakeShadow_Transparent.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Wall_VS.hlsl"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Wall_PS.hlsl"), m_pPS_Wall.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Emissive_VS.cso"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Emissive_PS.cso"), m_pPS_Emissive.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
 
 	//LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
 	//LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
 
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.cso"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
 
 	CreateInputLayout();
@@ -635,7 +638,21 @@ void Renderer::InitShaders()
 		if (!shaderData->path.empty())
 		{
 			std::wstring vsPath(shaderData->path.begin(), shaderData->path.end());
-			LoadVertexShader(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
+			std::filesystem::path sourcePath(shaderData->path);
+			std::string extension = sourcePath.extension().string();
+			std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+
+			if (extension == ".cso")
+			{
+				LoadVertexShaderCSO(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
+			}
+			else
+			{
+				LoadVertexShader(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
+			}
 		}
 
 		if (!resources.vertexShader)
@@ -678,7 +695,21 @@ void Renderer::InitShaders()
 		if (!shaderData->path.empty())
 		{
 			std::wstring psPath(shaderData->path.begin(), shaderData->path.end());
-			LoadPixelShader(psPath.c_str(), resources.pixelShader.GetAddressOf());
+			std::filesystem::path sourcePath(shaderData->path);
+			std::string extension = sourcePath.extension().string();
+			std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+
+			if (extension == ".cso")
+			{
+				LoadPixelShaderCSO(psPath.c_str(), resources.pixelShader.GetAddressOf());
+			}
+			else
+			{
+				LoadPixelShader(psPath.c_str(), resources.pixelShader.GetAddressOf());
+			}
 		}
 
 		if (!resources.pixelShader)
