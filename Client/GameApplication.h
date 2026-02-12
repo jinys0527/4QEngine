@@ -40,7 +40,6 @@ private:
 	void Update();
 	void ApplySceneBGM();
 	void Render();
-	
 	void OnResize(int width, int height) override;
 	void OnClose() override;
 
@@ -72,5 +71,7 @@ private:
 	std::string m_LastSceneName;
 	std::wstring m_LastSceneBGMName;
 	bool m_IsCombatBGMPlaying = false;
+	bool m_RendererInitialized = false;
+	
 };
 

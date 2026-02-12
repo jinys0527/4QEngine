@@ -1925,7 +1925,7 @@ HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
-
+	factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
 	return hr;
 }
 
