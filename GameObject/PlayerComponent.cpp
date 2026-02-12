@@ -601,7 +601,7 @@ namespace
 					};
 
 				const char* fileName = nullptr;
-				if (containsToken("boss_"))
+				/*if (containsToken("boss_"))
 				{
 					fileName = "enemyStatus_frameBoss.png";
 				}
@@ -612,7 +612,7 @@ namespace
 				else if (containsToken("e1_"))
 				{
 					fileName = "enemyStatus_frame100001Umjinsik.png";
-				}
+				}*/
 
 				if (!fileName)
 				{

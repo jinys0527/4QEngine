@@ -60,7 +60,7 @@ void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device
 	m_pDXDC = dxdc;
 
 	DXSetup(hWnd, width, height);
-	SetupText();
+	//SetupText();
 
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
 	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
@@ -212,7 +212,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_pDXDC = dxdc;
 
 	DXSetup(hWnd, width, 1600);
-	SetupText();
+	//SetupText();
 
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
 	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
