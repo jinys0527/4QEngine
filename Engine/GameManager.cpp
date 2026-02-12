@@ -28,6 +28,7 @@
 #include "EnemyStatComponent.h"
 #include "EnemyMovementComponent.h"
 #include "EnemyComponent.h"
+#include "SkinningAnimationComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
 #include <algorithm>
@@ -77,7 +78,7 @@ void GameManager::SetEventDispatcher(EventDispatcher& eventDispatcher)
 	{
 		return;
 	}
-	UnregisterEventListeners();
+	//UnregisterEventListeners();
 	m_EventDispatcher = &eventDispatcher;
 	RegisterEventListeners();
 }
@@ -1486,7 +1487,23 @@ void GameManager::ResolveEnemyAttack(int actorId)
 	{
 		return;
 	}
-
+	if (enemyOwner)
+	{
+		if (auto* skinningAnimation = enemyOwner->GetComponent<SkinningAnimationComponent>())
+		{
+			const AnimationHandle currentClip = skinningAnimation->GetClipHandle();
+			if (currentClip.IsValid())
+			{
+				// 블렌딩 상태를 포함해 재생 상태를 완전히 초기화하고 0초부터 다시 시작한다.
+				skinningAnimation->StartBlend(currentClip, 0.0f);
+			}
+			else
+			{
+				skinningAnimation->SeekTime(0.0f);
+				skinningAnimation->Play();
+			}
+		}
+	}
 	auto* diceSystem = GetDiceSystem();
 	auto* resolver = m_Services && m_Services->Has<CombatResolver>() ? &m_Services->Get<CombatResolver>() : nullptr;
 	if (!diceSystem || !resolver)
