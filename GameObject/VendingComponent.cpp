@@ -4,6 +4,7 @@
 #include "GameObject.h"
 #include "ReflectionMacro.h"
 #include "NodeComponent.h"
+#include "GridSystemComponent.h"
 #include "PlayerComponent.h"
 #include "PlayerShopFSMComponent.h"
 #include "ItemSpawnerComponent.h"
@@ -19,7 +20,9 @@
 #include "UIObject.h"
 #include "UIManager.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <limits>
 #include <iostream>
 #include "UINumberSpriteComponent.h"
 
@@ -300,6 +303,141 @@ namespace
 		}
 	}
 
+	GridSystemComponent* FindGridSystem(Scene* scene)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		for (const auto& [name, object] : scene->GetGameObjects())
+		{
+			(void)name;
+			if (!object)
+			{
+				continue;
+			}
+
+			if (auto* grid = object->GetComponent<GridSystemComponent>())
+			{
+				return grid;
+			}
+		}
+
+		return nullptr;
+	}
+
+	AxialKey FindNearestNodeKey(const GridSystemComponent& grid, const XMFLOAT3& position)
+	{
+		const auto& nodes = grid.GetNodes();
+		float bestDistanceSq = (std::numeric_limits<float>::max)();
+		AxialKey bestKey{};
+		bool found = false;
+
+		for (auto* node : nodes)
+		{
+			if (!node)
+			{
+				continue;
+			}
+
+			auto* nodeOwner = node->GetOwner();
+			auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+			if (!nodeTransform)
+			{
+				continue;
+			}
+
+			const XMFLOAT3 nodePos = nodeTransform->GetWorldPos();
+			const float dx = nodePos.x - position.x;
+			const float dz = nodePos.z - position.z;
+			const float distanceSq = dx * dx + dz * dz;
+			if (!found || distanceSq < bestDistanceSq)
+			{
+				found = true;
+				bestDistanceSq = distanceSq;
+				bestKey = AxialKey{ node->GetQ(), node->GetR() };
+			}
+		}
+
+		return bestKey;
+	}
+
+	bool TryResolveMovementYawFromDelta(const AxialKey& delta, float& outYaw)
+	{
+		if (delta.q == 1 && delta.r == 0)
+		{
+			outYaw = -90.0f;
+			return true;
+		}
+		if (delta.q == 1 && delta.r == -1)
+		{
+			outYaw = -30.0f;
+			return true;
+		}
+		if (delta.q == 0 && delta.r == -1)
+		{
+			outYaw = 30.0f;
+			return true;
+		}
+		if (delta.q == -1 && delta.r == 0)
+		{
+			outYaw = 90.0f;
+			return true;
+		}
+		if (delta.q == -1 && delta.r == 1)
+		{
+			outYaw = 150.0f;
+			return true;
+		}
+		if (delta.q == 0 && delta.r == 1)
+		{
+			outYaw = -150.0f;
+			return true;
+		}
+
+		return false;
+	}
+
+	void RotatePlayerToFaceTarget(PlayerComponent* player, const XMFLOAT3& targetPos)
+	{
+		if (!player)
+		{
+			return;
+		}
+
+		auto* playerObject = player->GetOwner();
+		auto* playerTransform = playerObject ? playerObject->GetComponent<TransformComponent>() : nullptr;
+		auto* scene = playerObject ? playerObject->GetScene() : nullptr;
+		if (!playerTransform || !scene)
+		{
+			return;
+		}
+
+		auto* grid = FindGridSystem(scene);
+		if (!grid)
+		{
+			return;
+		}
+
+		const AxialKey playerKey{ player->GetQ(), player->GetR() };
+		const AxialKey targetKey = FindNearestNodeKey(*grid, targetPos);
+		const auto path = grid->GetShortestPath(playerKey, targetKey);
+		if (path.size() < 2)
+		{
+			return;
+		}
+
+		const AxialKey delta{ path[1].q - path[0].q, path[1].r - path[0].r };
+		float snappedYaw = 0.0f;
+		if (!TryResolveMovementYawFromDelta(delta, snappedYaw))
+		{
+			return;
+		}
+
+		playerTransform->SetRotationEuler(XMFLOAT3{ 0.0f, snappedYaw, 0.0f });
+	}
+
 	//거리 계산용
 	float DistanceSquared(const XMFLOAT3& a, const XMFLOAT3& b)
 	{
@@ -428,8 +566,8 @@ bool VendingComponent::Clicked(const Events::MouseState* mouseData)
 		return false;
 	}
 
-	std::cout << "[Vending] Interacted. distance="
-		<< std::sqrt(distanceSq) << " threshold=" << m_Distance << std::endl;
+	RotatePlayerToFaceTarget(m_Player, vendingPos);
+
 	return OpenVendingUI();
 }
 

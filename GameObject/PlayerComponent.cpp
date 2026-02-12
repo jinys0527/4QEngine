@@ -472,6 +472,19 @@ namespace
 		return kEnemyHoverHpBarNames;
 	}
 
+	const std::vector<std::string>& GetPlayerHpBarNameCandidates()
+	{
+		static const std::vector<std::string> kPlayerHpBarNames =
+		{
+			"PlayerHPBar",
+			"PlayerHpBar",
+			"HPBar",
+			"HealthBar",
+		};
+		return kPlayerHpBarNames;
+	}
+
+
 	UIProgressBarComponent* FindFirstProgressBarOrFirstChild(UIManager& uiManager,
 		const std::string& sceneName,
 		const std::string& objectName,
@@ -815,6 +828,18 @@ namespace
 		const float dx = a.x - b.x;
 		const float dz = a.z - b.z;
 		return dx * dx + dz * dz;
+	}
+
+	int ResolvePlayerMaxHp(Scene* scene, PlayerStatComponent* playerStat)
+	{
+		if (!scene || !playerStat)
+		{
+			return 0;
+		}
+
+		auto* gameManager = scene->GetGameManager();
+		const int currentFloor = gameManager ? (std::max)(1, gameManager->GetCurrentFloor()) : 1;
+		return (std::max)(1, playerStat->GetMaxHealthForFloor(currentFloor));
 	}
 
 	int ToItemType(ItemCategory category)
@@ -1328,6 +1353,18 @@ void PlayerComponent::Update(float deltaTime) {
 
 	SyncCombatModeFromInventory();
 	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
+	const auto resolvePlayerMaxHp = [scene, playerStat]()
+		{
+			if (!playerStat)
+			{
+				return 0;
+			}
+
+			auto* gameManager = scene->GetGameManager();
+			const int currentFloor = gameManager ? (std::max)(1, gameManager->GetCurrentFloor()) : 1;
+			return (std::max)(1, playerStat->GetMaxHealthForFloor(currentFloor));
+		};
+
 	const bool isDead = playerStat && playerStat->IsDead();
 	if (!m_HasAppliedCombatVisual || m_LastVisualCombatMode != m_CombatMode || m_LastVisualIsDead != isDead) 
 	{
@@ -1340,7 +1377,8 @@ void PlayerComponent::Update(float deltaTime) {
 	if (m_LastRemainMoveResource != m_RemainMoveResource
 		|| m_LastRemainActResource != m_RemainActResource
 		|| m_LastMoveResource != m_MoveResource
-		|| m_LastActResource != m_ActResource)
+		|| m_LastActResource != m_ActResource
+		|| (playerStat && (m_LastPlayerCurrentHP != playerStat->GetCurrentHP() || m_LastPlayerMaxHP != resolvePlayerMaxHp())))
 	{
 		UpdateResourceUI();
 	}
@@ -2766,6 +2804,7 @@ void PlayerComponent::UpdateResourceUI()
 
 	auto& uiManager = services.Get<UIManager>();
 	const std::string sceneName = scene->GetName();
+	auto* playerStat = owner->GetComponent<PlayerStatComponent>();
 
 	auto updateProgress = [&](const std::string& uiName, int remain, int maxValue)
 		{
@@ -2792,8 +2831,42 @@ void PlayerComponent::UpdateResourceUI()
 			progress->SetPercent(percent);
 		};
 
+	auto updateProgressCandidates = [&](const std::vector<std::string>& uiNames, int remain, int maxValue)
+		{
+			for (const auto& uiName : uiNames)
+			{
+				std::shared_ptr<UIObject> progressTarget;
+				auto* progress = FindFirstProgressBarOrFirstChild(uiManager, sceneName, uiName, progressTarget);
+				if (!progress)
+				{
+					continue;
+				}
+
+				if (progressTarget && !progressTarget->GetScene())
+				{
+					progressTarget->SetScene(scene);
+				}
+
+				const float percent = (maxValue > 0)
+					? (static_cast<float>(remain) / static_cast<float>(maxValue))
+					: 0.0f;
+				progress->SetPercent(percent);
+				break;
+			}
+		};
+
 	updateProgress("ActionPoint", m_RemainActResource, m_ActResource);
 	updateProgress("MovePoint", m_RemainMoveResource, m_MoveResource);
+
+	if (playerStat)
+	{
+		const int maxHp = ResolvePlayerMaxHp(scene, playerStat);
+		updateProgressCandidates(GetPlayerHpBarNameCandidates(), playerStat->GetCurrentHP(), maxHp);
+
+		m_LastPlayerCurrentHP = playerStat->GetCurrentHP();
+		m_LastPlayerMaxHP = maxHp;
+	}
+
 
 	m_LastRemainMoveResource = m_RemainMoveResource;
 	m_LastRemainActResource = m_RemainActResource;

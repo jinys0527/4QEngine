@@ -618,16 +618,7 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 
 	if (shouldShow)
 	{
-		std::cout << "[UIDicePanel] apply slot object=" << object.GetName()
-			<< " context=" << slot.diceContext
-			<< " slotDiceType=" << slot.diceType
-			<< " resolvedDiceType=" << resolvedDiceType
-			<< " requiredCount=" << slot.requiredDiceCount
-			<< " applyAnimation=" << slot.applyAnimation
-			<< " autoVisibility=" << m_AutoVisibility
-			<< " shouldShow=" << shouldShow
-			<< " statRollRequested=" << m_StatRollRequested
-			<< std::endl;
+
 	}
 
 
@@ -678,18 +669,12 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 
 		if (shouldShow && slot.applyAnimation)
 		{
-			std::cout << "[UIDicePanel] anim-ready object=" << object.GetName()
-				<< " context=" << slot.diceContext
-				<< " objectVisible=" << object.IsVisible()
-				<< " animEnabled=" << diceAnim->GetEnabled()
-				<< std::endl;
+		
 		}
 	}
 	else if (shouldShow && slot.applyAnimation)
 	{
-		std::cout << "[UIDicePanel] anim-missing object=" << object.GetName()
-			<< " context=" << slot.diceContext
-			<< " reason=no_UIDiceRollAnimationComponent" << std::endl;
+	
 	}
 }
 

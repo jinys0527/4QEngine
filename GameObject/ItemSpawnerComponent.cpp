@@ -392,7 +392,9 @@ namespace
 		return FindValidVertexAroundNode(scene, *grid, centerKey, centerPos, playerPos);
 	}
 
-	constexpr int kVendingSearchMaxDepth = 3;
+	constexpr int kVendingVertexSearchMaxDepth = 6;
+	constexpr int kVendingRelaxedSearchMaxDepth = 8;
+	constexpr int kVendingMinSpawnRing = 2;
 
 	AxialKey FindNearestNodeKey(const GridSystemComponent& grid, const XMFLOAT3& position)
 	{
@@ -448,7 +450,8 @@ namespace
 		GridSystemComponent& grid,
 		const AxialKey& start,
 		float itemOverlapThreshold,
-		int maxDepth)
+		int maxDepth,
+		int minDepth = 0)
 	{
 		std::queue<std::pair<AxialKey, int>> frontier;
 		std::unordered_set<long long> visited;
@@ -466,7 +469,7 @@ namespace
 			auto [current, depth] = frontier.front();
 			frontier.pop();
 
-			if (IsSpawnableNode(scene, grid, current, itemOverlapThreshold))
+			if (depth >= minDepth && IsSpawnableNode(scene, grid, current, itemOverlapThreshold))
 			{
 				return current;
 			}
@@ -536,7 +539,7 @@ namespace
 		}
 		if (!chosen)
 		{
-			chosen = FindSpawnableKeyByExpansion(scene, *grid, midpoint, itemOverlapThreshold, kVendingSearchMaxDepth);
+			chosen = FindSpawnableKeyByExpansion(scene, *grid, midpoint, itemOverlapThreshold, kVendingVertexSearchMaxDepth, kVendingMinSpawnRing);
 		}
 		if (!chosen)
 		{
@@ -551,18 +554,133 @@ namespace
 			return std::nullopt;
 		}
 
-		const std::optional<XMFLOAT3> preferredPos = playerTransform ? std::optional<XMFLOAT3>(playerTransform->GetWorldPos()) : std::nullopt;
-		const std::optional<XMFLOAT3> vertexPos = FindValidVertexAroundNode(scene, *grid, *chosen, spawnTransform->GetWorldPos(), preferredPos);
+		const XMFLOAT3 playerPos = playerTransform->GetWorldPos();
+		const XMFLOAT3 vendingPos = ownerTransform->GetWorldPos();
+
+		XMFLOAT3 forwardDir = playerTransform->GetForward();
+		float forwardLen = std::sqrt(forwardDir.x * forwardDir.x + forwardDir.z * forwardDir.z);
+		if (forwardLen < 0.001f)
+		{
+			forwardDir = XMFLOAT3{ 0.0f, 0.0f, 1.0f };
+			forwardLen = 1.0f;
+		}
+		forwardDir.x /= forwardLen;
+		forwardDir.z /= forwardLen;
+
+		const XMFLOAT3 toVendingDir{
+			vendingPos.x - playerPos.x,
+			0.0f,
+			vendingPos.z - playerPos.z
+		};
+		const float frontDot = forwardDir.x * toVendingDir.x + forwardDir.z * toVendingDir.z;
+		if (frontDot < 0.0f)
+		{
+			forwardDir.x = -forwardDir.x;
+			forwardDir.z = -forwardDir.z;
+		}
+
+		const XMFLOAT3 backDir{ -forwardDir.x, 0.0f, -forwardDir.z };
+		const XMFLOAT3 rightDir{ -forwardDir.z, 0.0f, forwardDir.x };
+		const float preferredDist = outerRadius * 2.0f;
+
+		std::vector<XMFLOAT3> preferredPositions;
+		preferredPositions.reserve(3);
+		preferredPositions.push_back(XMFLOAT3{ playerPos.x + backDir.x * preferredDist, playerPos.y, playerPos.z + backDir.z * preferredDist });
+		preferredPositions.push_back(XMFLOAT3{
+			playerPos.x + backDir.x * preferredDist * 0.85f + rightDir.x * preferredDist * 0.9f,
+			playerPos.y,
+			playerPos.z + backDir.z * preferredDist * 0.85f + rightDir.z * preferredDist * 0.9f
+			});
+		preferredPositions.push_back(XMFLOAT3{
+			playerPos.x + backDir.x * preferredDist * 0.85f - rightDir.x * preferredDist * 0.9f,
+			playerPos.y,
+			playerPos.z + backDir.z * preferredDist * 0.85f - rightDir.z * preferredDist * 0.9f
+			});
+
+		const auto tryResolveVertexAtKey = [&](const AxialKey& key) -> std::optional<XMFLOAT3>
+			{
+				auto* node = grid->GetNodeByKey(key);
+				auto* nodeOwner = node ? node->GetOwner() : nullptr;
+				auto* nodeTransform = nodeOwner ? nodeOwner->GetComponent<TransformComponent>() : nullptr;
+				if (!nodeTransform)
+				{
+					return std::nullopt;
+				}
+
+				for (const auto& preferredPos : preferredPositions)
+				{
+					const std::optional<XMFLOAT3> vertexPos = FindValidVertexAroundNode(scene, *grid, key, nodeTransform->GetWorldPos(), preferredPos);
+					if (vertexPos)
+					{
+						return vertexPos;
+					}
+				}
+
+				return FindValidVertexAroundNode(scene, *grid, key, nodeTransform->GetWorldPos(), std::nullopt);
+			};
+
+		std::optional<XMFLOAT3> vertexPos = tryResolveVertexAtKey(*chosen);
+		if (!vertexPos)
+		{
+			if (const auto keyWithVertex = FindSpawnableKeyByExpansion(scene, *grid, *chosen, itemOverlapThreshold, 1))
+			{
+				vertexPos = tryResolveVertexAtKey(*keyWithVertex);
+				if (vertexPos)
+				{
+					chosen = keyWithVertex;
+				}
+			}
+		}
+		if (!vertexPos)
+		{
+			if (const auto keyWithVertex = FindSpawnableKeyByExpansion(scene, *grid, midpoint, itemOverlapThreshold, kVendingVertexSearchMaxDepth, kVendingMinSpawnRing))
+			{
+				vertexPos = tryResolveVertexAtKey(*keyWithVertex);
+				if (vertexPos)
+				{
+					chosen = keyWithVertex;
+				}
+			}
+		}
+
+		if (!vertexPos)
+		{
+			if (const auto relaxedKey = FindSpawnableKeyByExpansion(scene, *grid, midpoint, itemOverlapThreshold, kVendingRelaxedSearchMaxDepth, 0))
+			{
+				vertexPos = tryResolveVertexAtKey(*relaxedKey);
+				if (vertexPos)
+				{
+					chosen = relaxedKey;
+				}
+			}
+		}
+
+		if (!vertexPos)
+		{
+			if (const auto safeCenterKey = FindSpawnableKeyByExpansion(scene, *grid, midpoint, itemOverlapThreshold, kVendingRelaxedSearchMaxDepth, 1))
+			{
+				auto* centerNode = grid->GetNodeByKey(*safeCenterKey);
+				auto* centerOwner = centerNode ? centerNode->GetOwner() : nullptr;
+				auto* centerTransform = centerOwner ? centerOwner->GetComponent<TransformComponent>() : nullptr;
+				if (centerTransform)
+				{
+					const XMFLOAT3 centerPos = centerTransform->GetWorldPos();
+					const float minSafeDistance = outerRadius * 1.1f;
+					if (DistanceSq2D(centerPos, vendingPos) >= (minSafeDistance * minSafeDistance))
+					{
+						hasLastKey = true;
+						lastKey = *safeCenterKey;
+						return centerPos;
+					}
+				}
+			}
+
+			return std::nullopt;
+		}
 
 		hasLastKey = true;
 		lastKey = *chosen;
-
-		if (vertexPos)
-		{
-			return vertexPos;
-		}
-
-		return spawnTransform->GetWorldPos();
+		return vertexPos;
 	}
 
 	void FinalizeSpawn(

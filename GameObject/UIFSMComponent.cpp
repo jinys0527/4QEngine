@@ -65,32 +65,23 @@ namespace
 					return 0;
 				}
 
-				const std::string suffix = objectName.substr(prefix.size());
-				if (suffix.empty())
+				const size_t indexStart = prefix.size();
+				size_t indexEnd = indexStart;
+				while (indexEnd < objectName.size() && std::isdigit(static_cast<unsigned char>(objectName[indexEnd])))
+				{
+					++indexEnd;
+				}
+
+				if (indexEnd == indexStart || indexEnd != objectName.size())
 				{
 					return 0;
 				}
 
-				bool allDigits = true;
-				for (char ch : suffix)
-				{
-					if (!std::isdigit(static_cast<unsigned char>(ch)))
-					{
-						allDigits = false;
-						break;
-					}
-				}
-
-				if (!allDigits)
-				{
-					return 0;
-				}
-
-				const int parsed = std::stoi(suffix);
+				const int parsed = std::stoi(objectName.substr(indexStart, indexEnd - indexStart));
 				return (parsed >= 1 && parsed <= 6) ? parsed : 0;
 			};
 
-		for (const std::string prefix : { "Item", "VendingSlot", "VendingItem", "ItemImage", "ItemIcon" })
+		for (const std::string prefix : { "VendingSlot", "VendingItem", "ItemImage", "ItemIcon", "Vending" })
 		{
 			const int resolved = resolveByPrefix(prefix);
 			if (resolved > 0)
@@ -99,17 +90,50 @@ namespace
 			}
 		}
 
-		for (int i = 1; i <= 6; ++i)
+
+		return 0;
+	}
+
+	bool IsAnyVendingHoverCandidateHit(Scene* scene, int slotIndex, const POINT& mousePos)
+	{
+		if (!scene || slotIndex <= 0 || slotIndex > 6)
 		{
-			const std::string suffix = std::to_string(i);
-			if (objectName == ("Item" + suffix)
-				|| objectName == ("VendingSlot" + suffix)
-				|| objectName == ("VendingItem" + suffix))
+			return false;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return false;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		const std::string sceneName = scene->GetName();
+		const std::string suffix = std::to_string(slotIndex);
+		const std::array<std::string, 5> candidates =
+		{
+			"ItemImage" + suffix,
+			"VendingSlot" + suffix,
+			"VendingItem" + suffix,
+			"ItemIcon" + suffix,
+			"Vending" + suffix
+		};
+
+		for (const auto& candidate : candidates)
+		{
+			auto uiObject = uiManager.FindUIObject(sceneName, candidate);
+			if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
 			{
-				return i;
+				continue;
+			}
+
+			if (uiObject->HitCheck(mousePos))
+			{
+				return true;
 			}
 		}
-		return 0;
+
+		return false;
 	}
 
 	void TriggerVendingInfoHoverEvent(Scene* scene, int slotIndex, bool isHovered)
@@ -1246,17 +1270,26 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		auto* owner = GetOwner();
 		auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
 		const auto* mouseData = static_cast<const Events::MouseState*>(data);
-		const bool isHovered = (uiObject && mouseData && uiObject->HasBounds())
+		const bool isHovered = (uiObject && mouseData && uiObject->IsVisible() && uiObject->HasBounds())
 			? uiObject->HitCheck(mouseData->pos)
 			: false;
 
 		if (m_IsHovering != isHovered)
 		{
-			const int vendingIndex = owner ? ResolveVendingHoverIndex(owner->GetName()) : 0;
-			if (vendingIndex > 0)
 			{
-				auto* scene = owner ? owner->GetScene() : nullptr;
-				TriggerVendingInfoHoverEvent(scene, vendingIndex, isHovered);
+				const int vendingIndex = owner ? ResolveVendingHoverIndex(owner->GetName()) : 0;
+				if (vendingIndex > 0)
+				{
+					auto* scene = owner ? owner->GetScene() : nullptr;
+					if (isHovered)
+					{
+						TriggerVendingInfoHoverEvent(scene, vendingIndex, true);
+					}
+					else if (!mouseData || !IsAnyVendingHoverCandidateHit(scene, vendingIndex, mouseData->pos))
+					{
+						TriggerVendingInfoHoverEvent(scene, vendingIndex, false);
+					}
+				}
 			}
 			m_IsHovering = isHovered;
 		}
