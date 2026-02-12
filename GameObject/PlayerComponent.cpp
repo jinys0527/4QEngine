@@ -914,7 +914,7 @@ namespace
 		}
 		if (meshRenderer)
 		{
-			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::OpaqueItems));
+			meshRenderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::TransparentItems));
 			meshRenderer->SetVisible(true);
 		}
 
@@ -3059,6 +3059,11 @@ bool PlayerComponent::TryPickup(ItemComponent* item)
 		|| itemType == static_cast<int>(ItemType::HEAL)
 		|| itemType == static_cast<int>(ItemType::THROW)) 
 	{
+		if (auto* renderer = itemObject->GetComponent<MeshRenderer>())
+		{
+			renderer->SetRenderLayer(static_cast<UINT8>(RenderData::RenderLayer::TransparentItems));
+		}
+
 		auto* scene = owner->GetScene();
 		GameObject* equippedObject = nullptr;
 		if (scene)
