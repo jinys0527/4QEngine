@@ -311,9 +311,9 @@ void EnemyComponent::UpdateSightDebugLines(int sightRange)
 	// 원하는 형태: 위/가운데/아래 3줄이 "캐릭터 인접칸"에서 출발
 	std::array<std::pair<int, int>, 3> laneOrigins =
 	{
-		std::make_pair(m_Q + leftDir.q,  m_R + leftDir.r),   // 위줄 시작: 인접칸
-		std::make_pair(m_Q + forwardDir.q,   m_R+ forwardDir.r),               // 가운데 시작: 본인
-		std::make_pair(m_Q + rightDir.q, m_R + rightDir.r)   // 아래줄 시작: 인접칸
+		std::make_pair(m_Q + leftDir.q,  m_R + leftDir.r),       // 위줄 시작: 인접칸
+		std::make_pair(m_Q + forwardDir.q,   m_R+ forwardDir.r), // 가운데 시작: 본인
+		std::make_pair(m_Q + rightDir.q, m_R + rightDir.r)       // 아래줄 시작: 인접칸
 	};
 
 	std::array<bool, 3> blocked{ false, false, false };
