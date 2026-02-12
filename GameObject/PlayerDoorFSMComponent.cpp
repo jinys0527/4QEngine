@@ -183,6 +183,9 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 
 			}
 
+
+
+
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			DispatchEvent("None");
 		});
