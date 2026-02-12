@@ -56,19 +56,23 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 
 	//터레인 그리기
-	XMMATRIX mTM, mScale, mRotate, mTrans;
-	mScale = XMMatrixScaling(50, 50, 1);
-	mRotate = XMMatrixRotationX(XM_PI / 2);
-	mTrans = XMMatrixTranslation(0.0f, -10.0f, 0.0f);
-	mTM = mScale * mRotate * mTrans;
-	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
-	UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
-	dxdc->PSSetShaderResources(18, 1, m_RenderContext.WaterNoise.GetAddressOf());
-	dxdc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
-	dxdc->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
-	dxdc->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
-	dxdc->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
-	m_RenderContext.DrawFullscreenQuad();
+	if (frame.currScene != 3)
+	{
+		XMMATRIX mTM, mScale, mRotate, mTrans;
+		mScale = XMMatrixScaling(50, 50, 1);
+		mRotate = XMMatrixRotationX(XM_PI / 2);
+		mTrans = XMMatrixTranslation(0.0f, -10.0f, 0.0f);
+		mTM = mScale * mRotate * mTrans;
+		XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+		dxdc->PSSetShaderResources(18, 1, m_RenderContext.WaterNoise.GetAddressOf());
+		dxdc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+		dxdc->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
+		dxdc->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
+		dxdc->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
+		m_RenderContext.DrawFullscreenQuad();
+
+	}
 	//터레인 끝
 
 	//m_RenderContext.UpdateGrid(frame);

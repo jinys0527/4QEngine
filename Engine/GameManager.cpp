@@ -1561,6 +1561,11 @@ void GameManager::ApplyPlayerData(Scene* scene)
 	stat->SetEquipmentDefenseBonus(m_PlayerData.equipmentDefenseBonus);
 }
 
+void GameManager::ClearPlayerData()
+{
+	m_PlayerData = PlayerPersistentData{};
+}
+
 void GameManager::RegisterEventListeners()
 {
 	if (!m_EventDispatcher)

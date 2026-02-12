@@ -49,11 +49,11 @@ void InputManager::Update()
 	{
 		if (!m_KeysDownPrev.contains(key))
 		{
-			if (allowGameplayInput)
-			{
-				Events::KeyEvent e{ key };
-				m_EventDispatcher->Dispatch(EventType::KeyDown, &e);
-			}
+			//if (allowGameplayInput)
+			//{
+			Events::KeyEvent e{ key };
+			m_EventDispatcher->Dispatch(EventType::KeyDown, &e);
+			//}
 		}
 	}
 
@@ -61,11 +61,11 @@ void InputManager::Update()
 	{
 		if (!m_KeysDown.contains(key))
 		{
-			if (allowGameplayInput)
-			{
-				Events::KeyEvent e{ key };
-				m_EventDispatcher->Dispatch(EventType::KeyUp, &e);
-			}
+			//if (allowGameplayInput)
+			//{
+			Events::KeyEvent e{ key };
+			m_EventDispatcher->Dispatch(EventType::KeyUp, &e);
+			//}
 		}
 	}
 

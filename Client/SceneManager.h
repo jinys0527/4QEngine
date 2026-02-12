@@ -61,6 +61,7 @@ private:
 	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames);
 	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
 	void RestoreSceneUI(const std::shared_ptr<Scene>& scene);
+	void RecreateSceneFromTemplate(const std::string& name);
 	void StartSceneTransition(const std::string& name);
 	void UpdateSceneTransition(float deltaTime);
 	float GetTransitionOverlayY(float overlayHeight, float viewportHeight) const;
@@ -70,6 +71,7 @@ private:
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
 	std::unordered_map<std::string, nlohmann::json> m_SceneUIData;
+	std::unordered_map<std::string, nlohmann::json> m_SceneTemplateData;
 	std::shared_ptr<Scene> m_CurrentScene;
 	CameraObject*   m_Camera = nullptr;
 	GameManager*	m_GameManager;
