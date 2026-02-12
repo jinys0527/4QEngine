@@ -372,6 +372,7 @@
     <ClInclude Include="ScaleBox.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SceneChangeTestComponent.h" />
+    <ClInclude Include="SceneDelayComponent.h" />
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SizeBox.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
@@ -463,6 +464,7 @@
     <ClCompile Include="Reflection.cpp" />
     <ClCompile Include="ScaleBox.cpp" />
     <ClCompile Include="SceneChangeTestComponent.cpp" />
+    <ClCompile Include="SceneDelayComponent.cpp" />
     <ClCompile Include="SizeBox.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="SkeletalMeshRenderer.cpp" />
