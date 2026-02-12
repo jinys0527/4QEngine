@@ -60,7 +60,9 @@ private:
 	bool m_HasTurnEndRequestAction = false;
 	bool m_PendingDiceStatRollRequest = false;
 	bool m_PendingDiceStatResolved = false;
-	int m_ActiveDiceAnimationCount = 0;
+	int  m_ActiveDiceAnimationCount = 0;
+
+	bool m_IsHovering = false;
 
 	void UpdateTurnEndButtonState(Turn turn);
 };

@@ -56,6 +56,102 @@ namespace
 		return value;
 	}
 
+	int ResolveVendingHoverIndex(const std::string& objectName)
+	{
+		auto resolveByPrefix = [&](const std::string& prefix)
+			{
+				if (objectName.rfind(prefix, 0) != 0)
+				{
+					return 0;
+				}
+
+				const std::string suffix = objectName.substr(prefix.size());
+				if (suffix.empty())
+				{
+					return 0;
+				}
+
+				bool allDigits = true;
+				for (char ch : suffix)
+				{
+					if (!std::isdigit(static_cast<unsigned char>(ch)))
+					{
+						allDigits = false;
+						break;
+					}
+				}
+
+				if (!allDigits)
+				{
+					return 0;
+				}
+
+				const int parsed = std::stoi(suffix);
+				return (parsed >= 1 && parsed <= 6) ? parsed : 0;
+			};
+
+		for (const std::string prefix : { "Item", "VendingSlot", "VendingItem", "ItemImage", "ItemIcon" })
+		{
+			const int resolved = resolveByPrefix(prefix);
+			if (resolved > 0)
+			{
+				return resolved;
+			}
+		}
+
+		for (int i = 1; i <= 6; ++i)
+		{
+			const std::string suffix = std::to_string(i);
+			if (objectName == ("Item" + suffix)
+				|| objectName == ("VendingSlot" + suffix)
+				|| objectName == ("VendingItem" + suffix))
+			{
+				return i;
+			}
+		}
+		return 0;
+	}
+
+	void TriggerVendingInfoHoverEvent(Scene* scene, int slotIndex, bool isHovered)
+	{
+		if (!scene || slotIndex <= 0 || slotIndex > 6)
+		{
+			return;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		const std::string sceneName = scene->GetName();
+		const std::string suffix = std::to_string(slotIndex);
+		const std::string eventName = std::string(isHovered ? "UI_RequestItemInfoShow_Vending" : "UI_RequestItemInfoHide_Vending") + suffix;
+
+		const std::array<std::string, 2> infoCandidates =
+		{
+			"ItemInfo" + suffix,
+			"VendingSlot" + suffix + "Info"
+		};
+
+		for (const auto& infoName : infoCandidates)
+		{
+			auto infoObject = uiManager.FindUIObject(sceneName, infoName);
+			if (!infoObject)
+			{
+				continue;
+			}
+
+			if (auto* infoFsm = infoObject->GetComponent<UIFSMComponent>())
+			{
+				infoFsm->TriggerEventByName(eventName);
+				break;
+			}
+		}
+	}
+
 	GameObject* FindPlayerObject(Scene* scene)
 	{
 		if (!scene)
@@ -896,6 +992,8 @@ UIFSMComponent::UIFSMComponent()
 			auto* scene = owner ? owner->GetScene() : nullptr;
 			// Shop_Close는 Player 메인 FSM이 아니라 Shop 서브 FSM에서 처리된다.
 			DispatchPlayerSubEvent(scene, "Shop", "Shop_Close");
+			// 일부 UI 프리팹에서 Shop 서브 FSM 연결이 누락되어도 닫기 반응은 보장한다.
+			GetEventDispatcher().Dispatch(EventType::PlayerShopClose, nullptr);
 			DispatchEvent("None");
 		});
 
@@ -954,7 +1052,6 @@ UIFSMComponent::UIFSMComponent()
 	bindItemInfoHandler("UI_RequestItemInfoShow_Throw2", true);
 	bindItemInfoHandler("UI_RequestItemInfoHide_Throw2", false);
 	bindItemInfoHandler("UI_RequestItemInfoShow_Throw3", true);
-	bindItemInfoHandler("UI_RequestItemInfoHide_Throw3", false);
 	bindItemInfoHandler("UI_RequestItemInfoHide_Throw3", false);
 	bindItemInfoHandler("UI_RequestItemInfoShow_Vending1", true);
 	bindItemInfoHandler("UI_RequestItemInfoHide_Vending1", false);
@@ -1144,6 +1241,28 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		}
 	}
 
+	if (type == EventType::UIHovered)
+	{
+		auto* owner = GetOwner();
+		auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		const bool isHovered = (uiObject && mouseData && uiObject->HasBounds())
+			? uiObject->HitCheck(mouseData->pos)
+			: false;
+
+		if (m_IsHovering != isHovered)
+		{
+			const int vendingIndex = owner ? ResolveVendingHoverIndex(owner->GetName()) : 0;
+			if (vendingIndex > 0)
+			{
+				auto* scene = owner ? owner->GetScene() : nullptr;
+				TriggerVendingInfoHoverEvent(scene, vendingIndex, isHovered);
+			}
+			m_IsHovering = isHovered;
+		}
+	}
+
+
 	if (type == EventType::VendingOfferUpdated)
 	{
 		auto* owner = GetOwner();
@@ -1312,6 +1431,11 @@ bool UIFSMComponent::ShouldHandleEvent(EventType type, const void* data)
 
 	const auto* mouseData = static_cast<const Events::MouseState*>(data);
 	if (!mouseData || !uiObject->HasBounds())
+	{
+		return true;
+	}
+
+	if (type == EventType::UIHovered)
 	{
 		return true;
 	}

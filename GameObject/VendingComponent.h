@@ -39,4 +39,8 @@ private:
 	PlayerComponent* m_Player = nullptr;
 	float m_Distance = 2.0f;
 	int m_Cost = 10;
+	int m_DifficultyGroup = 100;
+
+	bool m_HasPreparedCandidates = false;
+	std::vector<int> m_PreparedCandidates;
 };

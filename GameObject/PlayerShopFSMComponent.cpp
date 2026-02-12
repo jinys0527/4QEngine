@@ -102,6 +102,24 @@ namespace
 	{
 		return owner ? owner->GetComponent<PlayerComponent>() : nullptr;
 	}
+
+	constexpr int kMaxVendingOfferSlots = 6;
+
+	std::vector<int> BuildVendingPurchasableCandidates(const std::vector<int>& itemIds, const std::vector<int>& offerCounts)
+	{
+		std::vector<int> candidates;
+		const size_t count = (std::min)(itemIds.size(), offerCounts.size());
+		candidates.reserve(count);
+		for (size_t i = 0; i < count; ++i)
+		{
+			if (itemIds[i] <= 0 || offerCounts[i] <= 0)
+			{
+				continue;
+			}
+			candidates.push_back(itemIds[i]);
+		}
+		return candidates;
+	}
 }
 
 PlayerShopFSMComponent::PlayerShopFSMComponent()
@@ -181,7 +199,26 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 
 			if (m_UseVendingOffer && m_VendingSpawner)
 			{
-				m_VendingSpawner->SpawnVendingRandomItem(player, m_VendingItemIds);
+				const auto purchaseCandidates = BuildVendingPurchasableCandidates(m_VendingItemIds, m_VendingOfferRemainingCounts);
+				if (purchaseCandidates.empty())
+				{
+					return;
+				}
+
+				const int purchasedItemId = m_VendingSpawner->SpawnVendingRandomItem(player, purchaseCandidates);
+				if (purchasedItemId <= 0)
+				{
+					return;
+				}
+
+				for (size_t i = 0; i < m_VendingItemIds.size() && i < m_VendingOfferRemainingCounts.size(); ++i)
+				{
+					if (m_VendingItemIds[i] == purchasedItemId)
+					{
+						m_VendingOfferRemainingCounts[i] = (std::max)(0, m_VendingOfferRemainingCounts[i] - 1);
+						break;
+					}
+				}
 
 				auto* sceneForUpdate = owner ? owner->GetScene() : nullptr;
 				if (sceneForUpdate)
@@ -189,11 +226,7 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 					Events::VendingOfferUpdatedEvent payload;
 					payload.vendingObjectName = m_VendingObjectName;
 					payload.itemIds = m_VendingItemIds;
-					payload.itemCounts.reserve(m_VendingItemIds.size());
-					for (const int itemId : m_VendingItemIds)
-					{
-						payload.itemCounts.push_back(m_VendingSpawner->GetRemainingDropQuantity(itemId));
-					}
+					payload.itemCounts = m_VendingOfferRemainingCounts;
 					GetEventDispatcher().Dispatch(EventType::VendingOfferUpdated, &payload);
 				}
 			}
@@ -258,7 +291,30 @@ void PlayerShopFSMComponent::ConfigureVendingOffer(int fixedPrice, const std::ve
 {
 	m_UseVendingOffer = true;
 	m_VendingFixedPrice = max(0, fixedPrice);
-	m_VendingItemIds = itemIds;
+	m_VendingItemIds.clear();
+	m_VendingOfferRemainingCounts.clear();
+	m_VendingItemIds.reserve((std::min)(kMaxVendingOfferSlots, static_cast<int>(itemIds.size())));
+	m_VendingOfferRemainingCounts.reserve((std::min)(kMaxVendingOfferSlots, static_cast<int>(itemIds.size())));
+	for (const int itemId : itemIds)
+	{
+		if (itemId <= 0)
+		{
+			continue;
+		}
+
+		m_VendingItemIds.push_back(itemId);
+		int cappedCount = 0;
+		if (spawner)
+		{
+			cappedCount = (std::min)(kMaxVendingOfferSlots, (std::max)(0, spawner->GetRemainingDropQuantity(itemId)));
+		}
+		m_VendingOfferRemainingCounts.push_back(cappedCount);
+
+		if (static_cast<int>(m_VendingItemIds.size()) >= kMaxVendingOfferSlots)
+		{
+			break;
+		}
+	}
 	m_VendingSpawner = spawner;
 	m_VendingObjectName = vendingObjectName;
 }
@@ -268,6 +324,7 @@ void PlayerShopFSMComponent::ClearVendingOffer()
 	m_UseVendingOffer = false;
 	m_VendingFixedPrice = 10;
 	m_VendingItemIds.clear();
+	m_VendingOfferRemainingCounts.clear();
 	m_VendingSpawner = nullptr;
 	m_VendingObjectName.clear();
 }

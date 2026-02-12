@@ -517,11 +517,27 @@ bool VendingComponent::OpenVendingUI()
 	}
 
 	auto* spawner = GetOwner() ? GetOwner()->GetComponent<ItemSpawnerComponent>() : nullptr;
-	std::vector<int> vendingCandidates;
-	if (spawner)
+	if (spawner && m_DifficultyGroup > 0)
 	{
-		vendingCandidates = spawner->PrepareVendingRandomCandidates();
+		spawner->SetDropTableGroupOverride(m_DifficultyGroup);
 	}
+
+
+	if (!m_HasPreparedCandidates)
+	{
+		m_PreparedCandidates.clear();
+		if (spawner)
+		{
+			m_PreparedCandidates = spawner->PrepareVendingRandomCandidates();
+			if (m_PreparedCandidates.size() > 6)
+			{
+				m_PreparedCandidates.resize(6);
+			}
+		}
+		m_HasPreparedCandidates = true;
+	}
+
+	const std::vector<int>& vendingCandidates = m_PreparedCandidates;
 
 	auto* vendingOwner = GetOwner();
 	shopFSM->ConfigureVendingOffer(m_Cost, vendingCandidates, spawner, vendingOwner ? vendingOwner->GetName() : "");
@@ -537,7 +553,8 @@ bool VendingComponent::OpenVendingUI()
 			{
 				for (const int itemId : vendingCandidates)
 				{
-					payload.itemCounts.push_back(spawner->GetRemainingDropQuantity(itemId));
+					const int remaining = (std::max)(0, spawner->GetRemainingDropQuantity(itemId));
+					payload.itemCounts.push_back((std::min)(6, remaining));
 				}
 			}
 			else

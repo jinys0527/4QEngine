@@ -25,7 +25,7 @@ public:
 	void SpwanFixedItem();
 	void DropItem();
 
-	bool SpawnVendingRandomItem(PlayerComponent* player, const std::vector<int>& candidateItemIds);
+	int  SpawnVendingRandomItem(PlayerComponent* player, const std::vector<int>& candidateItemIds);
 	std::vector<int> PrepareVendingRandomCandidates();
 	const std::vector<int>& GetPreparedVendingRandomCandidates() const { return m_PreparedVendingRandomCandidates; }
 	int  GetRemainingDropQuantity(int itemId) const;

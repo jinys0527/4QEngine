@@ -14,10 +14,55 @@
 #include "ScaleBox.h"
 #include "SizeBox.h"
 #include <algorithm>
+#include <cctype>
 #include <unordered_set>
 
 namespace
 {
+	int ResolveVendingHoverIndex(const std::string& objectName)
+	{
+		auto resolveByPrefix = [&](const std::string& prefix)
+			{
+				if (objectName.rfind(prefix, 0) != 0)
+				{
+					return 0;
+				}
+
+				const std::string suffix = objectName.substr(prefix.size());
+				if (suffix.empty())
+				{
+					return 0;
+				}
+
+				for (char ch : suffix)
+				{
+					if (!std::isdigit(static_cast<unsigned char>(ch)))
+					{
+						return 0;
+					}
+				}
+
+				const int parsed = std::stoi(suffix);
+				return (parsed >= 1 && parsed <= 6) ? parsed : 0;
+			};
+
+		for (const std::string prefix : { "Item", "VendingSlot", "VendingItem", "ItemImage", "ItemIcon" })
+		{
+			const int index = resolveByPrefix(prefix);
+			if (index > 0)
+			{
+				return index;
+			}
+		}
+
+		return 0;
+	}
+
+	bool IsVendingHoverUiName(const std::string& objectName)
+	{
+		return ResolveVendingHoverIndex(objectName) > 0;
+	}
+
 	void ApplySizeBoxOverrides(UIObject& uiObject)
 	{
 		auto* sizeBox = uiObject.GetComponent<SizeBox>();
@@ -540,7 +585,8 @@ void UIManager::OnEvent(EventType type, const void* data)
 				continue;
 			if (m_FullScreenUIActive && ui->GetZOrder() < m_FullScreenZ)
 				continue;
-			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM))
+			const bool isHoverFallbackTarget = (eventType == EventType::UIHovered) && IsVendingHoverUiName(ui->GetName());
+			if (!(ui->hasButton || ui->hasSlider || ui->hasUIFSM || isHoverFallbackTarget))
 				continue;
 			if (!mouseData || !ui->HitCheck(mouseData->pos))
 				continue;
@@ -617,6 +663,34 @@ bool UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 {
 	bool handled = false;
 
+	if (type == EventType::UIHovered)
+	{
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		const bool isHovered = (mouseData && ui->HasBounds()) ? ui->HitCheck(mouseData->pos) : false;
+
+		const int vendingIndex = ResolveVendingHoverIndex(ui->GetName());
+		if (vendingIndex > 0)
+		{
+			const std::string suffix = std::to_string(vendingIndex);
+			const std::string eventName = std::string(isHovered ? "UI_RequestItemInfoShow_Vending" : "UI_RequestItemInfoHide_Vending") + suffix;
+			for (const std::string infoName : { "ItemInfo" + suffix, "VendingSlot" + suffix + "Info" })
+			{
+				auto infoObject = FindUIObject(m_CurrentSceneName, infoName);
+				if (!infoObject)
+				{
+					continue;
+				}
+
+				if (auto* infoFsm = infoObject->GetComponent<UIFSMComponent>())
+				{
+					infoFsm->TriggerEventByName(eventName);
+					handled = true;
+					break;
+				}
+			}
+		}
+	}
+
 	if (ui->hasButton)
 	{
 		auto buttons = ui->GetComponents<UIButtonComponent>();
@@ -654,6 +728,7 @@ bool UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 				}
 			}
 		}
+
 		if (ui->hasSlider)
 		{
 			auto sliders = ui->GetComponents<UISliderComponent>();
@@ -703,6 +778,7 @@ bool UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 				}
 			}
 		}
+
 		if (ui->hasUIFSM)
 		{
 			auto* fsm = ui->GetComponent<UIFSMComponent>();
@@ -715,14 +791,6 @@ bool UIManager::SendEventToUI(UIObject* ui, EventType type, const void* data)
 				return handled;
 			}
 
-			if (type == EventType::UIHovered)
-			{
-				const auto mouseData = static_cast<const Events::MouseState*>(data);
-				if (!ui->HitCheck(mouseData->pos))
-				{
-					return handled;
-				}
-			}
 			fsm->OnEvent(type, data);
 			handled = true;
 		}

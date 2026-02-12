@@ -219,7 +219,20 @@ bool GameDataRepository::LoadDropTablesFromFile(const std::string& path, std::st
 
 	for (const auto& row : rows)
 	{
-		const int difficultyGroup = ParseInt(GetField(row, header, "difficultyGroup"), 1);
+		auto getFieldAny = [&](const std::initializer_list<const char*>& keys)
+			{
+				for (const char* key : keys)
+				{
+					const std::string value = GetField(row, header, key);
+					if (!value.empty())
+					{
+						return value;
+					}
+				}
+				return std::string{};
+			};
+
+		const int difficultyGroup = ParseInt(getFieldAny({ "difficultyGroup", "DifficultyGroup" }), 1);
 
 		auto& table = m_DropTables[difficultyGroup];
 		table.difficultyGroup = difficultyGroup;

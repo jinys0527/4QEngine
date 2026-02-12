@@ -47,6 +47,36 @@ namespace
 			return { "SubWeapon3Info" };
 		}
 
+		if (objectName == "Item1" || objectName == "VendingItem1")
+		{
+			return { "ItemInfo1" };
+		}
+
+		if (objectName == "Item2" || objectName == "VendingItem2")
+		{
+			return { "ItemInfo2" };
+		}
+
+		if (objectName == "Item3" || objectName == "VendingItem3")
+		{
+			return { "ItemInfo3" };
+		}
+
+		if (objectName == "Item4" || objectName == "VendingItem4")
+		{
+			return { "ItemInfo4" };
+		}
+
+		if (objectName == "Item5" || objectName == "VendingItem5")
+		{
+			return { "ItemInfo5" };
+		}
+
+		if (objectName == "Item6" || objectName == "VendingItem6")
+		{
+			return { "ItemInfo6" };
+		}
+
 		return {};
 	}
 
@@ -114,6 +144,36 @@ namespace
 		if (objectName == "Player_Throw3" || objectName == "Player_Throw_3" || objectName == "SubWeapon3")
 		{
 			return prefix + "Throw3";
+		}
+
+		if (objectName == "Item1" || objectName == "VendingItem1")
+		{
+			return prefix + "Vending1";
+		}
+
+		if (objectName == "Item2" || objectName == "VendingItem2")
+		{
+			return prefix + "Vending2";
+		}
+
+		if (objectName == "Item3" || objectName == "VendingItem3")
+		{
+			return prefix + "Vending3";
+		}
+
+		if (objectName == "Item4" || objectName == "VendingItem4")
+		{
+			return prefix + "Vending4";
+		}
+
+		if (objectName == "Item5" || objectName == "VendingItem5")
+		{
+			return prefix + "Vending5";
+		}
+
+		if (objectName == "Item6" || objectName == "VendingItem6")
+		{
+			return prefix + "Vending6";
 		}
 
 		return {};

@@ -29,6 +29,7 @@ private:
 	bool m_UseVendingOffer = false;
 	int m_VendingFixedPrice = 10;
 	std::vector<int> m_VendingItemIds;
+	std::vector<int> m_VendingOfferRemainingCounts;
 	ItemSpawnerComponent* m_VendingSpawner = nullptr;
 
 	std::string m_VendingObjectName;

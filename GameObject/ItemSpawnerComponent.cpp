@@ -286,6 +286,89 @@ namespace
 		return 1.0f;
 	}
 
+	std::optional<XMFLOAT3> FindValidVertexAroundNode(
+		const Scene& scene,
+		GridSystemComponent& grid,
+		const AxialKey& centerKey,
+		const XMFLOAT3& centerPos,
+		const std::optional<XMFLOAT3>& preferredPos)
+	{
+		auto* centerNode = grid.GetNodeByKey(centerKey);
+		const float innerRadius = EstimateInnerRadius(centerNode);
+		const float outerRadius = innerRadius * 2.0f / std::sqrt(3.0f);
+		const float itemOverlapThreshold = outerRadius * kItemOverlapRatio;
+		
+		std::vector<VertexCandidate> candidates;
+		candidates.reserve(kNeighborCount);
+
+		for (int i = 0; i < kNeighborCount; ++i)
+		{
+			const float angle = (60.0f * static_cast<float>(i) - 30.0f) * (3.1415926535f / 180.0f);
+			const XMFLOAT3 vertexPos{
+				centerPos.x + outerRadius * std::cos(angle),
+				centerPos.y,
+				centerPos.z + outerRadius * std::sin(angle)
+			};
+
+			const int prevIndex = (i + kNeighborCount - 1) % kNeighborCount;
+			const AxialKey neighborA{ centerKey.q + kNeighborOffsets[i][0], centerKey.r + kNeighborOffsets[i][1] };
+			const AxialKey neighborB{ centerKey.q + kNeighborOffsets[prevIndex][0], centerKey.r + kNeighborOffsets[prevIndex][1] };
+
+			NodeComponent* nodesToCheck[3] = {
+				centerNode,
+				grid.GetNodeByKey(neighborA),
+				grid.GetNodeByKey(neighborB)
+			};
+
+			bool valid = true;
+			for (auto* node : nodesToCheck)
+			{
+				if (!node || !node->GetIsMoveable())
+				{
+					valid = false;
+					break;
+				}
+			}
+			if (!valid)
+			{
+				continue;
+			}
+
+			float distanceSq = 0.0f;
+			if (preferredPos)
+			{
+				distanceSq = DistanceSq2D(*preferredPos, vertexPos);
+			}
+
+			candidates.push_back(VertexCandidate{ vertexPos, distanceSq, i });
+		}
+
+		if (candidates.empty())
+		{
+			return std::nullopt;
+		}
+
+		if (preferredPos)
+		{
+			std::sort(candidates.begin(), candidates.end(),
+				[](const VertexCandidate& a, const VertexCandidate& b)
+				{
+					return a.distanceSq < b.distanceSq;
+				});
+		}
+
+		for (const auto& candidate : candidates)
+		{
+			if (HasItemAtPosition(scene, candidate.position, itemOverlapThreshold))
+			{
+				continue;
+			}
+			return candidate.position;
+		}
+
+		return std::nullopt;
+	}
+
 	std::optional<XMFLOAT3> FindDropVertexPosition(const Object& owner, const Scene& scene)
 	{
 		auto* ownerTransform = owner.GetComponent<TransformComponent>();
@@ -307,82 +390,9 @@ namespace
 		}
 
 		const AxialKey centerKey{ enemy->GetQ(), enemy->GetR() };
-		auto* centerNode = grid->GetNodeByKey(centerKey);
-		const float innerRadius = EstimateInnerRadius(centerNode);
-		const float outerRadius = innerRadius * 2.0f / std::sqrt(3.0f);
-		const float itemOverlapThreshold = outerRadius * kItemOverlapRatio;
 		const XMFLOAT3 centerPos = ownerTransform->GetWorldPos();
 		const auto playerPos = FindPlayerPosition(scene);
-
-		std::vector<VertexCandidate> candidates;
-		candidates.reserve(kNeighborCount);
-
-		for (int i = 0; i < kNeighborCount; ++i)
-		{
-			const float angle = (60.0f * static_cast<float>(i) - 30.0f) * (3.1415926535f / 180.0f);
-			const XMFLOAT3 vertexPos{
-				centerPos.x + outerRadius * std::cos(angle),
-				centerPos.y,
-				centerPos.z + outerRadius * std::sin(angle)
-			};
-
-			const int prevIndex = (i + kNeighborCount - 1) % kNeighborCount;
-			const AxialKey neighborA{ centerKey.q + kNeighborOffsets[i][0], centerKey.r + kNeighborOffsets[i][1] };
-			const AxialKey neighborB{ centerKey.q + kNeighborOffsets[prevIndex][0], centerKey.r + kNeighborOffsets[prevIndex][1] };
-
-			NodeComponent* nodesToCheck[3] = {
-				centerNode,
-				grid->GetNodeByKey(neighborA),
-				grid->GetNodeByKey(neighborB)
-			};
-
-			bool valid = true;
-			for (auto* node : nodesToCheck)
-			{
-				if (!node || !node->GetIsMoveable())
-				{
-					valid = false;
-					break;
-				}
-			}
-			if (!valid)
-			{
-				continue;
-			}
-
-			float distanceSq = 0.0f;
-			if (playerPos)
-			{
-				distanceSq = DistanceSq2D(*playerPos, vertexPos);
-			}
-
-			candidates.push_back(VertexCandidate{ vertexPos, distanceSq, i });
-		}
-
-		if (candidates.empty())
-		{
-			return std::nullopt;
-		}
-
-		if (playerPos)
-		{
-			std::sort(candidates.begin(), candidates.end(),
-				[](const VertexCandidate& a, const VertexCandidate& b)
-				{
-					return a.distanceSq < b.distanceSq;
-				});
-		}
-
-		for (const auto& candidate : candidates)
-		{
-			if (HasItemAtPosition(scene, candidate.position, itemOverlapThreshold))
-			{
-				continue;
-			}
-			return candidate.position;
-		}
-
-		return std::nullopt;
+		return FindValidVertexAroundNode(scene, *grid, centerKey, centerPos, playerPos);
 	}
 
 	constexpr int kVendingSearchMaxDepth = 3;
@@ -544,8 +554,17 @@ namespace
 			return std::nullopt;
 		}
 
+		const std::optional<XMFLOAT3> preferredPos = playerTransform ? std::optional<XMFLOAT3>(playerTransform->GetWorldPos()) : std::nullopt;
+		const std::optional<XMFLOAT3> vertexPos = FindValidVertexAroundNode(scene, *grid, *chosen, spawnTransform->GetWorldPos(), preferredPos);
+
 		hasLastKey = true;
 		lastKey = *chosen;
+
+		if (vertexPos)
+		{
+			return vertexPos;
+		}
+
 		return spawnTransform->GetWorldPos();
 	}
 
@@ -1045,24 +1064,24 @@ void ItemSpawnerComponent::DropItem()
 	m_DropTriggered = true;
 }
 
-bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const std::vector<int>& candidateItemIds)
+int ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const std::vector<int>& candidateItemIds)
 {
 	if (!player)
 	{
-		return false;
+		return -1;
 	}
 
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	if (!owner || !scene)
 	{
-		return false;
+		return -1;
 	}
 
 	auto& services = scene->GetServices();
 	if (!services.Has<GameDataRepository>() || !services.Has<DiceSystem>())
 	{
-		return false;
+		return -1;
 	}
 
 	auto& repository = services.Get<GameDataRepository>();
@@ -1103,33 +1122,33 @@ bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const
 
 	if (resolvedCandidates.empty())
 	{
-		return false;
+		return -1;
 	}
 
 	DiceConfig rollConfig{ 1, static_cast<int>(resolvedCandidates.size()), 0 };
 	const int rolledIndex = diceSystem.RollTotal(rollConfig, RandomDomain::Shop) - 1;
 	if (rolledIndex < 0 || rolledIndex >= static_cast<int>(resolvedCandidates.size()))
 	{
-		return false;
+		return -1;
 	}
 
 	const int rolledItemId = resolvedCandidates[static_cast<size_t>(rolledIndex)];
 	const ItemDefinition* itemDefinition = repository.GetItem(rolledItemId);
 	if (!itemDefinition || itemDefinition->category == ItemCategory::Currency)
 	{
-		return false;
+		return -1;
 	}
 
 	if (!ConsumeDropQuantity(rolledItemId))
 	{
-		return false;
+		return -1;
 	}
 
 	const std::optional<XMFLOAT3> dropPosition =
 		FindVendingDropPosition(*owner, *scene, *player, m_HasLastVendingDropKey, m_LastVendingDropKey);
 	if (!dropPosition)
 	{
-		return false;
+		return -1;
 	}
 
 	std::shared_ptr<GameObject> spawned;
@@ -1180,5 +1199,5 @@ bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const
 	}
 
 	FinalizeSpawn(*owner, spawned, dropPosition);
-	return spawned != nullptr;
+	return spawned ? rolledItemId : -1;
 }
