@@ -31,6 +31,7 @@
 #include "SkinningAnimationComponent.h"
 #include "FloodSystemComponent.h"
 #include "FloodUIComponent.h"
+#include "ItemComponent.h"
 #include <algorithm>
 #include <chrono>
 #include <charconv>
@@ -867,6 +868,17 @@ void GameManager::OnPhaseEnter(Phase phase)
 			}
 		}
 		DispatchPlayerFSMEvent("Combat_Start");
+		if (auto* combatManager = GetCombatManager())
+		{
+			if (combatManager->IsDiceFlowActive() && m_EventDispatcher && m_CurrentFloor > 1)
+			{
+				// 씬 전환 직후 UI 리스너 초기화 타이밍에 의해
+				// 선제권 주사위 패널 오픈 이벤트가 유실될 수 있어
+				// 전투 단계 진입 시 한 번 더 보장 송신한다.
+				m_EventDispatcher->Dispatch(EventType::PlayerDiceUIOpen, nullptr);
+				m_EventDispatcher->Dispatch(EventType::PlayerDiceUIReset, nullptr);
+			}
+		}
 		break;
 	case Phase::CombatEnd:
 		SetCombatTurnState(CombatTurnState::SelectActor);
@@ -1695,7 +1707,38 @@ void GameManager::CapturePlayerData(Scene* scene)
 	m_PlayerData.attackRange = player->GetAttackRange();
 	m_PlayerData.actorId = player->GetActorId();
 	m_PlayerData.money = player->GetMoney();
-	m_PlayerData.inventoryItemIds = player->GetInventoryItemIds();
+	m_PlayerData.inventoryItemIds.clear();
+
+	for (const auto& itemName : player->GetInventoryItemIds())
+	{
+		int itemIndex = 0;
+		const char* begin = itemName.data();
+		const char* end = begin + itemName.size();
+		const auto parseResult = std::from_chars(begin, end, itemIndex);
+		if (parseResult.ec == std::errc() && parseResult.ptr == end && itemIndex > 0)
+		{
+			m_PlayerData.inventoryItemIds.push_back(std::to_string(itemIndex));
+			continue;
+		}
+
+		auto objectIt = scene->GetGameObjects().find(itemName);
+		if (objectIt == scene->GetGameObjects().end() || !objectIt->second)
+		{
+			continue;
+		}
+
+		auto* item = objectIt->second->GetComponent<ItemComponent>();
+		if (!item)
+		{
+			continue;
+		}
+
+		const int resolvedIndex = item->GetItemIndex();
+		if (resolvedIndex > 0)
+		{
+			m_PlayerData.inventoryItemIds.push_back(std::to_string(resolvedIndex));
+		}
+	}
 
 	m_PlayerData.currentHP = stat->GetCurrentHP();
 	m_PlayerData.health = stat->GetHealth();
@@ -1739,6 +1782,8 @@ void GameManager::ApplyPlayerData(Scene* scene)
 	stat->SetSense(m_PlayerData.sense);
 	stat->SetSkill(m_PlayerData.skill);
 	stat->SetEquipmentDefenseBonus(m_PlayerData.equipmentDefenseBonus);
+
+	player->RebuildInventoryFromItemIds();
 }
 
 void GameManager::ClearPlayerData()

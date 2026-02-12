@@ -174,6 +174,8 @@ void SceneManager::SetCurrentScene(const std::string& name)
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
+		bool deferApplyPlayerData = false;
+
 		const std::string previousSceneName = m_CurrentScene ? m_CurrentScene->GetName() : std::string{};
 		if (m_UIManager && m_CurrentScene)
 		{
@@ -232,7 +234,7 @@ void SceneManager::SetCurrentScene(const std::string& name)
 			{
 				m_GameManager->ClearPlayerData();
 			}
-			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
+			deferApplyPlayerData = true;
 			if (name == "Stage1")
 			{
 				m_GameManager->TurnReset();
@@ -244,6 +246,11 @@ void SceneManager::SetCurrentScene(const std::string& name)
  			m_UIManager->SetCurrentScene(name);
 			RestoreSceneUI(m_CurrentScene);
  		}
+
+		if (deferApplyPlayerData && m_GameManager)
+		{
+			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
+		}
 	}
 }
 
@@ -295,6 +302,8 @@ void SceneManager::ChangeScene(const std::string& name)
 
 	if (it != m_Scenes.end())
 	{
+		bool deferApplyPlayerData = false;
+
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
 		if (m_InputManager)
@@ -321,7 +330,7 @@ void SceneManager::ChangeScene(const std::string& name)
 			{
 				m_GameManager->ClearPlayerData();
 			}
-			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
+			deferApplyPlayerData = true;
 			if (name == "Stage1")
 			{
 				m_GameManager->TurnReset();
@@ -332,6 +341,11 @@ void SceneManager::ChangeScene(const std::string& name)
 		{
 			m_UIManager->SetCurrentScene(name);
 			RestoreSceneUI(m_CurrentScene);
+		}
+
+		if (deferApplyPlayerData && m_GameManager)
+		{
+			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 		}
 	}
 }

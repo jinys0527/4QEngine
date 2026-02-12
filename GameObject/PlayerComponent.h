@@ -109,6 +109,7 @@ public:
 	void SetMoney(const int& value) { m_Money = value; }
 	void SetInventoryItemIds(const std::vector<std::string>& value) { m_InventoryItemIds = value; }
 	void SetDebugEquipItem(bool value) { m_DebugEquipItem = value; }
+	void RebuildInventoryFromItemIds();
 	void HandleCombatModeButtonState(const std::string& buttonEventName);
 	bool RemoveSelectedInventoryEquipment();
 

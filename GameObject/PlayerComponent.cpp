@@ -29,6 +29,8 @@
 #include "SkinningAnimationComponent.h"
 #include "MathHelper.h"
 #include <cmath>
+#include <charconv>
+#include <system_error>
 #include "GameManager.h"
 #include "CombatManager.h"
 #include "DoorComponent.h"
@@ -3743,4 +3745,75 @@ void PlayerComponent::AddToInventory(ItemComponent* item)
 	}
 
 	m_InventoryItemIds.push_back(itemOwner->GetName());
+}
+
+void PlayerComponent::RebuildInventoryFromItemIds()
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<GameDataRepository>())
+	{
+		return;
+	}
+
+	auto& repository = services.Get<GameDataRepository>();
+
+	m_MeleeItem = nullptr;
+	m_IsApplyMeleeStat = false;
+	for (auto& name : m_ConsumableItemNames)
+	{
+		name.clear();
+	}
+
+	std::vector<std::string> rebuiltInventoryNames;
+	rebuiltInventoryNames.reserve(m_InventoryItemIds.size());
+
+	int consumableSlot = 0;
+	for (const auto& itemIdText : m_InventoryItemIds)
+	{
+		int itemIndex = 0;
+		const char* begin = itemIdText.data();
+		const char* end = begin + itemIdText.size();
+		const auto parseResult = std::from_chars(begin, end, itemIndex);
+		if (parseResult.ec != std::errc() || parseResult.ptr != end || itemIndex <= 0)
+		{
+			continue;
+		}
+
+		const ItemDefinition* definition = repository.GetItem(itemIndex);
+		if (!definition)
+		{
+			continue;
+		}
+
+		GameObject* equippedObject = SpawnEquippedItem(*scene, *definition);
+		if (!equippedObject)
+		{
+			continue;
+		}
+
+		rebuiltInventoryNames.push_back(equippedObject->GetName());
+
+		auto* itemComponent = equippedObject->GetComponent<ItemComponent>();
+		const int itemType = itemComponent ? itemComponent->GetType() : static_cast<int>(ItemType::GOLD);
+		if (itemType == static_cast<int>(ItemType::EQUIPMENT) && !m_MeleeItem)
+		{
+			m_MeleeItem = equippedObject;
+		}
+		else if ((itemType == static_cast<int>(ItemType::HEAL) || itemType == static_cast<int>(ItemType::THROW))
+			&& consumableSlot < 3)
+		{
+			m_ConsumableItemNames[consumableSlot++] = equippedObject->GetName();
+		}
+	}
+
+	m_InventoryItemIds = std::move(rebuiltInventoryNames);
+	SyncCombatModeFromInventory();
+	UpdateInventorySlotUI();
 }
