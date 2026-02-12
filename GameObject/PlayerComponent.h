@@ -68,6 +68,7 @@ public:
 	bool ConsumeActResource(int amount);
 
 	void RequestCombatConfirm();
+	bool HasCombatConfirmRequest() const { return m_CombatConfirmRequested; }
 	bool HandleCombatClick(EnemyComponent* enemy);
 	void ClearCombatSelection();
 	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;

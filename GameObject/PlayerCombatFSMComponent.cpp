@@ -51,6 +51,12 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 				return;
 			}
 		
+			if (!player->HasCombatConfirmRequest())
+			{
+				DispatchEvent("Combat_CostFail");
+				return;
+			}
+
 			int range = 0;
 			ItemComponent* throwItem = nullptr;
 			bool isThrowMode = false;
