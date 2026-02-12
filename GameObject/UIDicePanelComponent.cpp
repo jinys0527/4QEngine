@@ -8,6 +8,7 @@
 #include "UIDiceDisplayComponent.h"
 #include "UIDiceRollAnimationComponent.h"
 #include "UINumberSpriteComponent.h"
+#include <iostream>
 
 REGISTER_UI_COMPONENT(UIDicePanelComponent)
 REGISTER_PROPERTY(UIDicePanelComponent, Enabled)
@@ -180,6 +181,12 @@ void UIDicePanelComponent::Update(float deltaTime)
 		{
 			ApplySlot(*target, slot);
 		}
+// 		else
+// 		{
+// 			std::cout << "[UIDicePanel] missing slot target objectName=" << slot.objectName
+// 				<< " context=" << slot.diceContext
+// 				<< " slotDiceType=" << slot.diceType << std::endl;
+// 		}
 	}
 
 	m_BindingsDirty = false;
@@ -609,6 +616,12 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 	const std::string resolvedDiceType = ResolveSlotDiceType(slot);
 	const bool shouldShow = ShouldShowSlot(slot);
 
+	if (shouldShow)
+	{
+
+	}
+
+
 	if (m_AutoVisibility)
 	{
 		object.SetIsVisibleFromComponent(shouldShow);
@@ -637,7 +650,8 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 		}
 	}
 
-	if (auto* diceAnim = object.GetComponent<UIDiceRollAnimationComponent>())
+	auto* diceAnim = object.GetComponent<UIDiceRollAnimationComponent>();
+	if (diceAnim)
 	{
 		if (m_AutoVisibility)
 		{
@@ -652,11 +666,27 @@ void UIDicePanelComponent::ApplySlot(UIObject& object, const UIDicePanelSlot& sl
 		{
 			diceAnim->SetDiceContext(slot.diceContext);
 		}
+
+		if (shouldShow && slot.applyAnimation)
+		{
+		
+		}
+	}
+	else if (shouldShow && slot.applyAnimation)
+	{
+	
 	}
 }
 
 std::string UIDicePanelComponent::ResolveSlotDiceType(const UIDicePanelSlot& slot) const
 {
+	// 결정 단계에서는 decision 슬롯(D20)의 기본 타입을 유지해
+	// D20 연출이 stat alias 매핑으로 덮여 사라지지 않게 한다.
+	if (!m_StatRollRequested && IsDecisionContext(slot.diceContext) && slot.diceType == "D20")
+	{
+		return slot.diceType;
+	}
+
 	if (!slot.diceContext.empty())
 	{
 		auto it = m_ContextDiceTypes.find(slot.diceContext);
@@ -742,15 +772,24 @@ bool UIDicePanelComponent::ShouldShowSlot(const UIDicePanelSlot& slot) const
 
 		if (isDecisionD20Slot)
 		{
-			for (const auto& [context, type] : m_ContextDiceTypes)
+			// decision face 이벤트를 받는 즉시 m_ContextDiceTypes에
+			// InitiativeStatRoll_* alias가 채워진다.
+			// 따라서 단순히 stat context 존재 여부로 숨기면
+			// D20 연출 도중 슬롯이 즉시 사라질 수 있다.
+			// 실제 스탯 단계 진입(PlayerDiceStatRollRequested) 전까지는
+			// decision D20 슬롯을 유지한다.
+			if (m_StatRollRequested)
 			{
-				if (type.empty())
+				for (const auto& [context, type] : m_ContextDiceTypes)
 				{
-					continue;
-				}
-				if (IsStatContext(context))
-				{
-					return false;
+					if (type.empty())
+					{
+						continue;
+					}
+					if (IsStatContext(context))
+					{
+						return false;
+					}
 				}
 			}
 		}

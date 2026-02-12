@@ -24,6 +24,31 @@ REGISTER_PROPERTY(UIDiceRollAnimationComponent, AnimateIndividuals)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, TensDigitObjectName)
 REGISTER_PROPERTY(UIDiceRollAnimationComponent, OnesDigitObjectName)
 
+namespace
+{
+	std::string ResolveOwnerName(const UIDiceRollAnimationComponent* component)
+	{
+		if (!component)
+		{
+			return std::string{};
+		}
+
+		auto* owner = component->GetOwner();
+		return owner ? owner->GetName() : std::string{};
+	}
+
+	bool IsOwnerVisible(const UIDiceRollAnimationComponent* component)
+	{
+		if (!component)
+		{
+			return false;
+		}
+
+		auto* owner = dynamic_cast<UIObject*>(component->GetOwner());
+		return owner && owner->IsVisible();
+	}
+}
+
 UIDiceRollAnimationComponent::~UIDiceRollAnimationComponent()
 {
 	if (m_ListenerRegistered && m_Dispatcher && m_Dispatcher->IsAlive() && m_Dispatcher->FindListeners(EventType::DiceRolled))
@@ -42,12 +67,14 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 {
 	UIComponent::Update(deltaTime);
 
-	if (!m_Enabled)
+	// 비활성 슬롯도 DiceRolled 리스너는 미리 준비되어야
+	// 활성화 직후(같은 프레임) 들어오는 롤 이벤트를 놓치지 않는다.
+	if (!TryPrepareRuntimeBindings())
 	{
 		return;
 	}
 
-	if (!TryPrepareRuntimeBindings())
+	if (!m_Enabled)
 	{
 		return;
 	}
@@ -79,6 +106,11 @@ void UIDiceRollAnimationComponent::Update(float deltaTime)
 		m_Animating = false;
 		if (m_Dispatcher)
 		{
+			if (IsOwnerVisible(this))
+			{
+				std::cout << "[UIDiceAnim] completed owner=" << ResolveOwnerName(this)
+					<< " slotContext=" << m_DiceContext << std::endl;
+			}
 			m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationCompleted, nullptr);
 		}
 	}
@@ -104,9 +136,20 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
+	const std::string ownerName = ResolveOwnerName(this);
+
 	if (!m_DiceContext.empty() && payload->context != m_DiceContext)
 	{
-		return;
+		// 기본 규칙:
+	// - total 이벤트는 정확히 동일 컨텍스트에만 적용
+	// - individual 이벤트는 "<slotContext>_<idx>" 자식 컨텍스트도 허용
+	//   (예: slot=InitiativeStatRoll_2, event=InitiativeStatRoll_2_1)
+		const std::string childPrefix = m_DiceContext + "_";
+		const bool isChildContext = payload->context.rfind(childPrefix, 0) == 0;
+		if (payload->isTotal || !isChildContext)
+		{
+			return;
+		}
 	}
 
 	if (!payload->isTotal && !m_AnimateIndividuals)
@@ -114,6 +157,13 @@ void UIDiceRollAnimationComponent::OnEvent(EventType type, const void* data)
 		return;
 	}
 
+	if (IsOwnerVisible(this))
+	{
+		std::cout << "[UIDiceAnim] trigger owner=" << ownerName
+			<< " slotContext=" << m_DiceContext
+			<< " eventContext=" << payload->context
+			<< " isTotal=" << payload->isTotal << std::endl;
+	}
 	BeginAnimation();
 }
 
@@ -150,7 +200,37 @@ bool UIDiceRollAnimationComponent::TryPrepareRuntimeBindings()
 
 void UIDiceRollAnimationComponent::SetEnabled(const bool& enabled)
 {
+	if (m_Enabled == enabled)
+	{
+		return;
+	}
+
 	m_Enabled = enabled;
+	if (m_Enabled)
+	{
+		// 활성화 직후 수신 누락 방지를 위해 즉시 바인딩 시도.
+		TryPrepareRuntimeBindings();
+		return;
+	}
+
+	const bool wasActive = m_Waiting || m_Animating;
+	m_Waiting = false;
+	m_Animating = false;
+	m_DelayTimer = 0.0f;
+	m_AnimationTimer = 0.0f;
+	RestoreBounds();
+
+	// 활성 상태에서 비활성화되면 완료 이벤트를 보정 발행해
+	// 상위 FSM/매니저의 애니메이션 카운터가 고정되지 않게 한다.
+	if (wasActive && m_Dispatcher)
+	{
+		if (IsOwnerVisible(this))
+		{
+			std::cout << "[UIDiceAnim] cancel->complete owner=" << ResolveOwnerName(this)
+				<< " slotContext=" << m_DiceContext << std::endl;
+		}
+		m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationCompleted, nullptr);
+	}
 }
 
 void UIDiceRollAnimationComponent::SetDiceContext(const std::string& context)
@@ -260,14 +340,37 @@ UIObject* UIDiceRollAnimationComponent::FindUIObject(const std::string& name) co
 	return nullptr;
 }
 
+
+
 void UIDiceRollAnimationComponent::BeginAnimation()
 {
+	// 동일 슬롯에 대한 연속 DiceRolled 이벤트가 한 프레임 내 다수 들어오더라도
+	// start/completed 카운트 불일치가 생기지 않도록, 진행 중이면 중복 시작을 막는다.
+	if (m_Waiting || m_Animating)
+	{
+		if (IsOwnerVisible(this))
+		{
+			std::cout << "[UIDiceAnim] ignore duplicate start owner=" << ResolveOwnerName(this)
+				<< " slotContext=" << m_DiceContext
+				<< " waiting=" << m_Waiting
+				<< " animating=" << m_Animating << std::endl;
+		}
+		return;
+	}
+
 	CacheBounds();
 	m_DelayTimer = GetRandomDelay();
 	m_Waiting = true;
 	m_Animating = false;
 	if (m_Dispatcher)
 	{
+		if (IsOwnerVisible(this))
+		{
+			std::cout << "[UIDiceAnim] started owner=" << ResolveOwnerName(this)
+				<< " slotContext=" << m_DiceContext
+				<< " delay=" << m_DelayTimer
+				<< " duration=" << m_AnimationDuration << std::endl;
+		}
 		m_Dispatcher->Dispatch(EventType::PlayerDiceAnimationStarted, nullptr);
 	}
 }

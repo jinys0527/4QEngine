@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "ServiceRegistry.h"
 #include "UIManager.h"
+#include <cctype>
 
 
 REGISTER_UI_COMPONENT(UIButtonComponent)
@@ -24,6 +25,47 @@ REGISTER_PROPERTY_HANDLE(UIButtonComponent, PixelShaderHandle)
 
 namespace
 {
+	int ResolveVendingSlotIndex(const std::string& objectName)
+	{
+		auto resolveStrict = [&](const std::string& prefix) -> int
+			{
+				if (objectName.rfind(prefix, 0) != 0)
+				{
+					return 0;
+				}
+
+				const size_t indexStart = prefix.size();
+				size_t indexEnd = indexStart;
+				while (indexEnd < objectName.size() && std::isdigit(static_cast<unsigned char>(objectName[indexEnd])))
+				{
+					++indexEnd;
+				}
+
+				if (indexEnd == indexStart || indexEnd != objectName.size())
+				{
+					return 0;
+				}
+
+				const int parsed = std::stoi(objectName.substr(indexStart, indexEnd - indexStart));
+				if (parsed >= 1 && parsed <= 6)
+				{
+					return parsed;
+				}
+
+				return 0;
+			};
+
+		for (const std::string& prefix : { "VendingItem", "VendingSlot", "ItemImage", "ItemIcon", "Vending" })
+		{
+			const int parsed = resolveStrict(prefix);
+			if (parsed > 0)
+			{
+				return parsed;
+			}
+		}
+
+		return 0;
+	}
 
 	std::vector<std::string> ResolveInventoryInfoPanelCandidates(const std::string& objectName)
 	{
@@ -45,6 +87,12 @@ namespace
 		if (objectName == "Player_Throw3" || objectName == "Player_Throw_3" || objectName == "SubWeapon3")
 		{
 			return { "SubWeapon3Info" };
+		}
+
+		const int vendingIndex = ResolveVendingSlotIndex(objectName);
+		if (vendingIndex > 0)
+		{
+			return { "ItemInfo" + std::to_string(vendingIndex) };
 		}
 
 		return {};
@@ -95,7 +143,7 @@ namespace
 	}
 	std::string ResolveInventoryHoverEventName(const std::string& objectName, bool isHovered)
 	{
-		const std::string prefix = isHovered ? "UI_RequestInventoryInfoShow_" : "UI_RequestInventoryInfoHide_";
+		const std::string prefix = isHovered ? "UI_RequestItemInfoShow_" : "UI_RequestItemInfoHide_";
 		if (objectName == "Player_Melee" || objectName == "Player_MeleeButton" || objectName == "MeleeButton" || objectName == "MainWeaponButton" || objectName == "MainWeapon")
 		{
 			return prefix + "Melee";
@@ -114,6 +162,12 @@ namespace
 		if (objectName == "Player_Throw3" || objectName == "Player_Throw_3" || objectName == "SubWeapon3")
 		{
 			return prefix + "Throw3";
+		}
+
+		const int vendingIndex = ResolveVendingSlotIndex(objectName);
+		if (vendingIndex > 0)
+		{
+			return prefix + "Vending" + std::to_string(vendingIndex);
 		}
 
 		return {};

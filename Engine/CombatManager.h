@@ -11,6 +11,7 @@ class DiceSystem;
 class LogSystem;
 class CombatResolver;
 class AIController;
+class Scene;
 
 enum class AttackAreaType
 {
@@ -78,6 +79,7 @@ public:
 	void HandlePlayerDiceStatRollRequested();
 	void HandlePlayerDiceContinueRequested();
 	bool IsDiceFlowActive() const { return m_DiceFlowActive; }
+	void SetActiveScene(Scene* scene) { m_ActiveScene = scene; }
 
 private:
 	void BuildInitiativeOrder();
@@ -106,5 +108,6 @@ private:
 	DiceSystem& m_DiceSystem;
 	LogSystem* m_LogSystem = nullptr;
 	EventDispatcher* m_EventDispatcher = nullptr;
+	Scene* m_ActiveScene = nullptr;
 };
 

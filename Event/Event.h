@@ -113,4 +113,11 @@ namespace Events
 		int maxHp     = 0;
 		bool hasEnemy = false;
 	};
+
+	struct VendingOfferUpdatedEvent
+	{
+		std::string vendingObjectName;
+		std::vector<int> itemIds;
+		std::vector<int> itemCounts;
+	};
 }

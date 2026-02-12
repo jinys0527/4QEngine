@@ -10,6 +10,7 @@
 #include "MeshRenderer.h"
 #include "Scene.h"
 #include "ServiceRegistry.h"
+#include "ItemSpawnerComponent.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -98,6 +99,29 @@ namespace
 		return max(0, static_cast<int>(std::round(
 			static_cast<float>(basePrice) * (1.0f - clampedRate))));
 	}
+
+	PlayerComponent* FindOwnerPlayer(const Object* owner)
+	{
+		return owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+	}
+
+	constexpr int kMaxVendingOfferSlots = 6;
+
+	std::vector<int> BuildVendingPurchasableCandidates(const std::vector<int>& itemIds, const std::vector<int>& offerCounts)
+	{
+		std::vector<int> candidates;
+		const size_t count = (std::min)(itemIds.size(), offerCounts.size());
+		candidates.reserve(count);
+		for (size_t i = 0; i < count; ++i)
+		{
+			if (itemIds[i] <= 0 || offerCounts[i] <= 0)
+			{
+				continue;
+			}
+			candidates.push_back(itemIds[i]);
+		}
+		return candidates;
+	}
 }
 
 PlayerShopFSMComponent::PlayerShopFSMComponent()
@@ -130,7 +154,7 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 		});
 	BindActionHandler("Shop_Select", [this](const FSMAction&)
 		{
-			GetEventDispatcher().Dispatch(EventType::PlayerShopOpen, nullptr);
+			OnShopSelected();
 		});
 	BindActionHandler("Shop_SpaceCheck", [this](const FSMAction& action)
 		{
@@ -146,13 +170,13 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 			auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
 			if (!player)
 			{
-				DispatchEvent("Shop_MoneyFail");
+				DispatchMoneyStateEvent(false);
 				return;
 			}
 
-			const int price = ResolveDiscountedPrice(m_SelectedPrice, playerStat);
+			const int price = ResolveActivePrice();
 			const bool hasMoney = player->GetMoney() >= price;
-			DispatchEvent(hasMoney ? "Shop_MoneyOk" : "Shop_MoneyFail");
+			DispatchMoneyStateEvent(hasMoney);
 		});
 	BindActionHandler("Shop_Buy", [this](const FSMAction&)
 		{
@@ -165,29 +189,67 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 				return;
 			}
 
-			const int discountedPrice = ResolveDiscountedPrice(m_SelectedPrice, playerStat);
-
-			if (player->GetMoney() < discountedPrice)
+			//const int discountedPrice = ResolveDiscountedPrice(ResolveActivePrice(), playerStat);
+			const int price = ResolveActivePrice();
+			if (player->GetMoney() < price)
 			{
+				DispatchMoneyStateEvent(false);
 				return;
 			}
 
-			player->SetMoney(player->GetMoney() - discountedPrice);
+			player->SetMoney(player->GetMoney() - price);
 
-			if (scene && m_SelectedItemId >= 0)
+			if (m_UseVendingOffer && m_VendingSpawner)
 			{
-				auto& services = scene->GetServices();
-				if (services.Has<GameDataRepository>())
+				const auto purchaseCandidates = BuildVendingPurchasableCandidates(m_VendingItemIds, m_VendingOfferRemainingCounts);
+				if (purchaseCandidates.empty())
 				{
-					const auto* definition = services.Get<GameDataRepository>().GetItem(m_SelectedItemId);
-					if (definition)
+					return;
+				}
+
+				const int purchasedItemId = m_VendingSpawner->SpawnVendingRandomItem(player, purchaseCandidates);
+				if (purchasedItemId <= 0)
+				{
+					return;
+				}
+
+				for (size_t i = 0; i < m_VendingItemIds.size() && i < m_VendingOfferRemainingCounts.size(); ++i)
+				{
+					if (m_VendingItemIds[i] == purchasedItemId)
 					{
-						auto spawnedItem = SpawnPurchasedItem(*scene, *definition);
-						if (spawnedItem)
+						m_VendingOfferRemainingCounts[i] = (std::max)(0, m_VendingOfferRemainingCounts[i] - 1);
+						break;
+					}
+				}
+
+				auto* sceneForUpdate = owner ? owner->GetScene() : nullptr;
+				if (sceneForUpdate)
+				{
+					Events::VendingOfferUpdatedEvent payload;
+					payload.vendingObjectName = m_VendingObjectName;
+					payload.itemIds = m_VendingItemIds;
+					payload.itemCounts = m_VendingOfferRemainingCounts;
+					GetEventDispatcher().Dispatch(EventType::VendingOfferUpdated, &payload);
+				}
+			}
+			else
+			{
+				const int purchaseItemId = ResolvePurchaseItemId();
+				if (scene && purchaseItemId >= 0)
+				{
+					auto& services = scene->GetServices();
+					if (services.Has<GameDataRepository>())
+					{
+						const auto* definition = services.Get<GameDataRepository>().GetItem(purchaseItemId);
+						if (definition)
 						{
-							if (auto* itemComponent = spawnedItem->GetComponent<ItemComponent>())
+							auto spawnedItem = SpawnPurchasedItem(*scene, *definition);
+							if (spawnedItem)
 							{
-								player->AddToInventory(itemComponent);
+								if (auto* itemComponent = spawnedItem->GetComponent<ItemComponent>())
+								{
+									player->AddToInventory(itemComponent);
+								}
 							}
 						}
 					}
@@ -200,6 +262,7 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 		{
 			m_SelectedItemId = -1;
 			m_SelectedPrice = 0;
+			ClearVendingOffer();
 
 			auto* owner = GetOwner();
 			auto* scene = owner ? owner->GetScene() : nullptr;
@@ -218,4 +281,91 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 void PlayerShopFSMComponent::Start()
 {
 	FSMComponent::Start();
+}
+
+void PlayerShopFSMComponent::OnShopSelected()
+{
+	GetEventDispatcher().Dispatch(EventType::PlayerShopOpen, nullptr);
+	DispatchCurrentMoneyState();
+}
+
+void PlayerShopFSMComponent::ConfigureVendingOffer(int fixedPrice, const std::vector<int>& itemIds, ItemSpawnerComponent* spawner, const std::string& vendingObjectName)
+{
+	m_UseVendingOffer = true;
+	m_VendingFixedPrice = max(0, fixedPrice);
+	m_VendingItemIds.clear();
+	m_VendingOfferRemainingCounts.clear();
+	m_VendingItemIds.reserve((std::min)(kMaxVendingOfferSlots, static_cast<int>(itemIds.size())));
+	m_VendingOfferRemainingCounts.reserve((std::min)(kMaxVendingOfferSlots, static_cast<int>(itemIds.size())));
+	for (const int itemId : itemIds)
+	{
+		if (itemId <= 0)
+		{
+			continue;
+		}
+
+		m_VendingItemIds.push_back(itemId);
+		int cappedCount = 0;
+		if (spawner)
+		{
+			cappedCount = (std::min)(kMaxVendingOfferSlots, (std::max)(0, spawner->GetRemainingDropQuantity(itemId)));
+		}
+		m_VendingOfferRemainingCounts.push_back(cappedCount);
+
+		if (static_cast<int>(m_VendingItemIds.size()) >= kMaxVendingOfferSlots)
+		{
+			break;
+		}
+	}
+	m_VendingSpawner = spawner;
+	m_VendingObjectName = vendingObjectName;
+}
+
+void PlayerShopFSMComponent::ClearVendingOffer()
+{
+	m_UseVendingOffer = false;
+	m_VendingFixedPrice = 10;
+	m_VendingItemIds.clear();
+	m_VendingOfferRemainingCounts.clear();
+	m_VendingSpawner = nullptr;
+	m_VendingObjectName.clear();
+}
+
+int PlayerShopFSMComponent::ResolveActivePrice() const
+{
+	if (m_UseVendingOffer)
+	{
+		return max(0, m_VendingFixedPrice);
+	}
+	return max(0, m_SelectedPrice);
+}
+
+int PlayerShopFSMComponent::ResolvePurchaseItemId() const
+{
+	if (m_UseVendingOffer)
+	{
+		return -1;
+	}
+	return m_SelectedItemId;
+}
+
+void PlayerShopFSMComponent::DispatchCurrentMoneyState()
+{
+	auto* owner = GetOwner();
+	auto* player = FindOwnerPlayer(owner);
+	auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
+	if (!player)
+	{
+		DispatchEvent("Shop_MoneyFail");
+		return;
+	}
+
+	const int price = ResolveActivePrice();
+	DispatchEvent(player->GetMoney() >= price ? "Shop_MoneyOk" : "Shop_MoneyFail");
+}
+
+void PlayerShopFSMComponent::DispatchMoneyStateEvent(bool hasMoney)
+{
+	DispatchEvent(hasMoney ? "Shop_MoneyOk" : "Shop_MoneyFail");
+	GetEventDispatcher().Dispatch(hasMoney ? EventType::ShopMoneyOk : EventType::ShopMoneyFail, nullptr);
 }

@@ -3,6 +3,7 @@
 #include "IEventListener.h"
 #include <vector>
 #include <memory>
+#include <array>
 #include <windows.h>
 #include "RenderData.h"
 #include "UIObject.h"
@@ -70,6 +71,7 @@ public:
 	void SetCurrentScene(std::string currentSceneName)
 	{
 		m_CurrentSceneName = currentSceneName;
+		m_VendingInfoVisible.fill(false);
 	}
 
 	std::string GetCurrentScene() const
@@ -155,6 +157,7 @@ private:
 	bool m_HasResolutionScaleState = false;
 	bool m_UseAnchorLayout    = false;
 	bool m_UseResolutionScale = true;
+	std::array<bool, 7> m_VendingInfoVisible{};
 	void DispatchToTopUI(EventType type, const void* data);
 	void RemoveBindingsForObject(const std::string& sceneName, const std::string& objectName);
 	std::unordered_map <std::string, std::unordered_map<std::string, std::shared_ptr<UIObject>>> m_UIObjects;

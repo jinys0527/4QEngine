@@ -146,6 +146,8 @@ private:
 	int m_LastRemainActResource = -1;
 	int m_LastMoveResource = -1;
 	int m_LastActResource = -1;
+	int m_LastPlayerCurrentHP = -1;
+	int m_LastPlayerMaxHP = -1;
 	int m_ActorId = 1;
 	int m_Money = 10;		
 	std::vector<std::string> m_InventoryItemIds;

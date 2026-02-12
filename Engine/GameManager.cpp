@@ -100,6 +100,10 @@ void GameManager::SetServices(ServiceRegistry* services)
 void GameManager::SetActiveScene(Scene* scene)
 {
 	m_ActiveScene = scene;
+	if (auto* combatManager = GetCombatManager())
+	{
+		combatManager->SetActiveScene(scene);
+	}
 	if (m_WaitingForFloorScene && m_ActiveScene)
 	{
 		RefreshGridSystem();
@@ -772,7 +776,7 @@ void GameManager::OnPhaseEnter(Phase phase)
 	case Phase::Shop:
 		SetTurn(Turn::PlayerTurn);
 		SetPlayerShopState(true);
-		SetFloodSystemActive(false);
+		SetFloodSystemActive(true);
 		DispatchPlayerFSMEvent("Shop_Open");
 		{
 			auto* repository = GetGameDataRepository();

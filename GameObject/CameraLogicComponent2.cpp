@@ -21,8 +21,10 @@ REGISTER_PROPERTY(CameraLogicComponent2, MoveSpeed)
 
 CameraLogicComponent2::~CameraLogicComponent2()
 {
-	GetEventDispatcher().RemoveListener(EventType::MouseWheelUp, this);
-	GetEventDispatcher().RemoveListener(EventType::MouseWheelDown, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::MouseWheelUp))
+		GetEventDispatcher().RemoveListener(EventType::MouseWheelUp, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::MouseWheelDown))
+		GetEventDispatcher().RemoveListener(EventType::MouseWheelDown, this);
 }
 
 void CameraLogicComponent2::Start()

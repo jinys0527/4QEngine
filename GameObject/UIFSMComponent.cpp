@@ -16,6 +16,11 @@
 #include "PlayerDoorFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
+#include "AssetLoader.h"
+#include "GameDataRepository.h"
+#include "UIManager.h"
+#include "UIImageComponent.h"
+#include "ServiceRegistry.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -49,6 +54,126 @@ namespace
 		std::transform(value.begin(), value.end(), value.begin(),
 			[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
 		return value;
+	}
+
+	int ResolveVendingHoverIndex(const std::string& objectName)
+	{
+		auto resolveByPrefix = [&](const std::string& prefix)
+			{
+				if (objectName.rfind(prefix, 0) != 0)
+				{
+					return 0;
+				}
+
+				const size_t indexStart = prefix.size();
+				size_t indexEnd = indexStart;
+				while (indexEnd < objectName.size() && std::isdigit(static_cast<unsigned char>(objectName[indexEnd])))
+				{
+					++indexEnd;
+				}
+
+				if (indexEnd == indexStart || indexEnd != objectName.size())
+				{
+					return 0;
+				}
+
+				const int parsed = std::stoi(objectName.substr(indexStart, indexEnd - indexStart));
+				return (parsed >= 1 && parsed <= 6) ? parsed : 0;
+			};
+
+		for (const std::string prefix : { "VendingSlot", "VendingItem", "ItemImage", "ItemIcon", "Vending" })
+		{
+			const int resolved = resolveByPrefix(prefix);
+			if (resolved > 0)
+			{
+				return resolved;
+			}
+		}
+
+
+		return 0;
+	}
+
+	bool IsAnyVendingHoverCandidateHit(Scene* scene, int slotIndex, const POINT& mousePos)
+	{
+		if (!scene || slotIndex <= 0 || slotIndex > 6)
+		{
+			return false;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return false;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		const std::string sceneName = scene->GetName();
+		const std::string suffix = std::to_string(slotIndex);
+		const std::array<std::string, 5> candidates =
+		{
+			"ItemImage" + suffix,
+			"VendingSlot" + suffix,
+			"VendingItem" + suffix,
+			"ItemIcon" + suffix,
+			"Vending" + suffix
+		};
+
+		for (const auto& candidate : candidates)
+		{
+			auto uiObject = uiManager.FindUIObject(sceneName, candidate);
+			if (!uiObject || !uiObject->IsVisible() || !uiObject->HasBounds())
+			{
+				continue;
+			}
+
+			if (uiObject->HitCheck(mousePos))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void TriggerVendingInfoHoverEvent(Scene* scene, int slotIndex, bool isHovered)
+	{
+		if (!scene || slotIndex <= 0 || slotIndex > 6)
+		{
+			return;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		const std::string sceneName = scene->GetName();
+		const std::string suffix = std::to_string(slotIndex);
+		const std::string eventName = std::string(isHovered ? "UI_RequestItemInfoShow_Vending" : "UI_RequestItemInfoHide_Vending") + suffix;
+
+		const std::array<std::string, 2> infoCandidates =
+		{
+			"ItemInfo" + suffix,
+			"VendingSlot" + suffix + "Info"
+		};
+
+		for (const auto& infoName : infoCandidates)
+		{
+			auto infoObject = uiManager.FindUIObject(sceneName, infoName);
+			if (!infoObject)
+			{
+				continue;
+			}
+
+			if (auto* infoFsm = infoObject->GetComponent<UIFSMComponent>())
+			{
+				infoFsm->TriggerEventByName(eventName);
+				break;
+			}
+		}
 	}
 
 	GameObject* FindPlayerObject(Scene* scene)
@@ -125,6 +250,263 @@ namespace
 				fsm->DispatchEvent(eventName);
 			}
 			return;
+		}
+	}
+
+	std::string NormalizePath(std::string value)
+	{
+		std::replace(value.begin(), value.end(), '\\', '/');
+		return value;
+	}
+
+	bool EndsWithPath(const std::string& value, const std::string& suffix)
+	{
+		if (suffix.empty() || value.size() < suffix.size())
+		{
+			return false;
+		}
+		return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+	}
+
+	TextureHandle ResolveTextureByPath(AssetLoader& assetLoader, const std::string& iconPath)
+	{
+		if (iconPath.empty())
+		{
+			return TextureHandle::Invalid();
+		}
+
+		const std::string normalizedPath = NormalizePath(iconPath);
+		const auto& keyToHandle = assetLoader.GetTextures().GetKeyToHandle();
+		auto direct = keyToHandle.find(normalizedPath);
+		if (direct != keyToHandle.end())
+		{
+			return direct->second;
+		}
+
+		std::string trimmedPath = normalizedPath;
+		while (trimmedPath.rfind("../", 0) == 0)
+		{
+			trimmedPath.erase(0, 3);
+			auto trimmed = keyToHandle.find(trimmedPath);
+			if (trimmed != keyToHandle.end())
+			{
+				return trimmed->second;
+			}
+		}
+
+		const size_t filenameStart = normalizedPath.find_last_of('/');
+		const std::string filename = (filenameStart == std::string::npos)
+			? normalizedPath
+			: normalizedPath.substr(filenameStart + 1);
+
+		for (const auto& [key, handle] : keyToHandle)
+		{
+			const std::string normalizedKey = NormalizePath(key);
+			if (normalizedKey == normalizedPath || EndsWithPath(normalizedKey, normalizedPath) || EndsWithPath(normalizedKey, filename))
+			{
+				return handle;
+			}
+		}
+
+		return TextureHandle::Invalid();
+	}
+
+	UIImageComponent* FindImageOnObjectOrChildren(UIManager& uiManager, const std::string& sceneName, const std::string& objectName, std::shared_ptr<UIObject>& outTarget)
+	{
+		outTarget = uiManager.FindUIObject(sceneName, objectName);
+		if (!outTarget)
+		{
+			return nullptr;
+		}
+
+		if (auto* image = outTarget->GetComponent<UIImageComponent>())
+		{
+			return image;
+		}
+
+		auto& sceneObjects = uiManager.GetUIObjects()[sceneName];
+		for (auto& [name, obj] : sceneObjects)
+		{
+			if (!obj || obj->GetParentName() != objectName)
+			{
+				continue;
+			}
+			if (auto* image = obj->GetComponent<UIImageComponent>())
+			{
+				outTarget = obj;
+				return image;
+			}
+		}
+
+		return nullptr;
+	}
+
+	std::vector<std::string> GetVendingSlotNameCandidates(int index)
+	{
+		const int slot = index + 1;
+		return {
+			"ItemImage" + std::to_string(slot)
+		};
+	}
+
+
+	UIImageComponent* FindVendingSlotImageByParent(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::string& vendingObjectName,
+		int index,
+		std::shared_ptr<UIObject>& outTarget)
+	{
+		if (vendingObjectName.empty())
+		{
+			return nullptr;
+		}
+
+		auto sceneIt = uiManager.GetUIObjects().find(sceneName);
+		if (sceneIt == uiManager.GetUIObjects().end())
+		{
+			return nullptr;
+		}
+
+		std::vector<std::shared_ptr<UIObject>> slotCandidates;
+		for (auto& [name, object] : sceneIt->second)
+		{
+			if (!object || object->GetParentName() != vendingObjectName)
+			{
+				continue;
+			}
+
+			const std::string lower = ToLower(name);
+			if (lower.find("close") != std::string::npos || lower.find("xbutton") != std::string::npos)
+			{
+				continue;
+			}
+
+			if (object->GetComponent<UIImageComponent>() || object->GetComponent<UIButtonComponent>())
+			{
+				slotCandidates.push_back(object);
+			}
+		}
+
+		std::sort(slotCandidates.begin(), slotCandidates.end(),
+			[](const std::shared_ptr<UIObject>& a, const std::shared_ptr<UIObject>& b)
+			{
+				if (!a || !b)
+				{
+					return static_cast<bool>(a);
+				}
+				return a->GetName() < b->GetName();
+			});
+
+		if (index < 0 || index >= static_cast<int>(slotCandidates.size()))
+		{
+			return nullptr;
+		}
+
+		outTarget = slotCandidates[index];
+		if (!outTarget)
+		{
+			return nullptr;
+		}
+
+		if (auto* image = outTarget->GetComponent<UIImageComponent>())
+		{
+			return image;
+		}
+
+		for (auto& [name, object] : sceneIt->second)
+		{
+			if (!object || object->GetParentName() != outTarget->GetName())
+			{
+				continue;
+			}
+			if (auto* image = object->GetComponent<UIImageComponent>())
+			{
+				outTarget = object;
+				return image;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void UpdateVendingSlotIcon(Scene* scene, UIManager& uiManager, AssetLoader& assetLoader, GameDataRepository& repo, const Events::VendingOfferUpdatedEvent& payload, int index)
+	{
+		if (!scene)
+		{
+			return;
+		}
+
+		TextureHandle icon = TextureHandle::Invalid();
+		if (index < static_cast<int>(payload.itemIds.size()))
+		{
+			const int itemId = payload.itemIds[index];
+			if (const auto* item = repo.GetItem(itemId))
+			{
+				icon = ResolveTextureByPath(assetLoader, item->iconPath);
+			}
+		}
+
+		const auto candidates = GetVendingSlotNameCandidates(index);
+		const std::string sceneName = scene->GetName();
+		for (const auto& slotName : candidates)
+		{
+			std::shared_ptr<UIObject> target;
+			auto* image = FindImageOnObjectOrChildren(uiManager, sceneName, slotName, target);
+			if (!image || !target)
+			{
+				continue;
+			}
+
+			if (icon.IsValid())
+			{
+				image->SetTextureHandle(icon);
+				target->SetIsVisible(true);
+			}
+			else
+			{
+				target->SetIsVisible(false);
+			}
+			return;
+		}
+
+		std::shared_ptr<UIObject> fallbackTarget;
+		auto* fallbackImage = FindVendingSlotImageByParent(uiManager, sceneName, payload.vendingObjectName, index, fallbackTarget);
+		if (!fallbackImage || !fallbackTarget)
+		{
+			return;
+		}
+
+		if (icon.IsValid())
+		{
+			fallbackImage->SetTextureHandle(icon);
+			fallbackTarget->SetIsVisible(true);
+		}
+		else
+		{
+			fallbackTarget->SetIsVisible(false);
+		}
+	}
+
+	void UpdateVendingOfferUI(Scene* scene, const Events::VendingOfferUpdatedEvent* payload)
+	{
+		if (!scene || !payload)
+		{
+			return;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>() || !services.Has<AssetLoader>() || !services.Has<GameDataRepository>())
+		{
+			return;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		auto& assetLoader = services.Get<AssetLoader>();
+		auto& repo = services.Get<GameDataRepository>();
+
+		for (int i = 0; i < 6; ++i)
+		{
+			UpdateVendingSlotIcon(scene, uiManager, assetLoader, repo, *payload, i);
 		}
 	}
 }
@@ -253,6 +635,26 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_RequestCloseMenu",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestGoToTitle",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
+		"UI_RequestSceneChange",
+		"UI",
+		{
+			{"scene", "string", "", true}
+		}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestShopClose",
 		"UI",
 		{}
@@ -288,15 +690,26 @@ void RegisterUIFSMDefinitions()
 		{}
 		});
 
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Melee", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Melee", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw1", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw1", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw2", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw2", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoShow_Throw3", "UI", {} });
-	actionRegistry.RegisterAction({ "UI_RequestInventoryInfoHide_Throw3", "UI", {} });
-
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Melee", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Melee", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Throw1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Throw1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Throw2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Throw2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Throw3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Throw3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending1", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending2", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending3", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending4", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending4", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending5", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending5", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoShow_Vending6", "UI", {} });
+	actionRegistry.RegisterAction({ "UI_RequestItemInfoHide_Vending6", "UI", {} });
 
 	auto& eventRegistry = FSMEventRegistry::Instance();
 	eventRegistry.RegisterEvent({ "UI_Pressed", "UI" });
@@ -306,14 +719,22 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "UI_Dragged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_Clicked", "UI" });
 	eventRegistry.RegisterEvent({ "UI_DoubleClicked", "UI" });
+	eventRegistry.RegisterEvent({ "UI_EscapePressed", "UI" });
+	eventRegistry.RegisterEvent({ "UI_CloseRequested", "UI" });
+	eventRegistry.RegisterEvent({ "UI_GoToTitleRequested", "UI" });
 	eventRegistry.RegisterEvent({ "UI_SliderValueChanged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_ProgressChanged", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnEnd", "UI" });
 	eventRegistry.RegisterEvent({ "Player_ShopOpen", "UI" });
 	eventRegistry.RegisterEvent({ "Player_ShopClose", "UI" });
+	eventRegistry.RegisterEvent({ "UI_VendingOfferUpdated", "UI" });
+	eventRegistry.RegisterEvent({ "Shop_MoneyOk", "UI" });
+	eventRegistry.RegisterEvent({ "Shop_MoneyFail", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorInteract", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DoorCancel", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DoorSuccess", "UI" });
+	eventRegistry.RegisterEvent({ "Player_DoorFail", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceRoll", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceUIOpen", "UI" });
 	eventRegistry.RegisterEvent({ "Player_DiceUIReset", "UI" });
@@ -336,14 +757,26 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_2", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_3", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Melee", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Melee", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw1", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw1", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw2", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw2", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoShow_Throw3", "UI" });
-	eventRegistry.RegisterEvent({ "UI_RequestInventoryInfoHide_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Melee", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Throw1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Throw2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Throw3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending1", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending2", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending3", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending4", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending4", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending5", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending5", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Vending6", "UI" });
+	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Vending6", "UI" });
 }
 
 
@@ -543,8 +976,47 @@ UIFSMComponent::UIFSMComponent()
 			}
 		});
 
+	BindActionHandler("UI_RequestCloseMenu", [this](const FSMAction&)
+		{
+			GetEventDispatcher().Dispatch(EventType::UICloseRequested, nullptr);
+			DispatchEvent("UI_CloseRequested");
+		});
+
+	BindActionHandler("UI_RequestGoToTitle", [this](const FSMAction&)
+		{
+			Events::SceneChangeRequest request;
+			request.name = "Title";
+			GetEventDispatcher().Dispatch(EventType::SceneChangeRequested, &request);
+			GetEventDispatcher().Dispatch(EventType::UIGoToTitleRequested, nullptr);
+			DispatchEvent("UI_GoToTitleRequested");
+		});
+
+	BindActionHandler("UI_RequestSceneChange", [this](const FSMAction& action)
+		{
+			const std::string sceneName = action.params.value("scene", "");
+			if (sceneName.empty())
+			{
+				return;
+			}
+
+			Events::SceneChangeRequest request;
+			request.name = sceneName;
+			GetEventDispatcher().Dispatch(EventType::SceneChangeRequested, &request);
+			if (sceneName == "Title")
+			{
+				GetEventDispatcher().Dispatch(EventType::UIGoToTitleRequested, nullptr);
+				DispatchEvent("UI_GoToTitleRequested");
+			}
+		});
+
 	BindActionHandler("UI_RequestShopClose", [this](const FSMAction& action)
 		{
+			std::cout << "UI_RequestShopClose\n";
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			// Shop_Close는 Player 메인 FSM이 아니라 Shop 서브 FSM에서 처리된다.
+			DispatchPlayerSubEvent(scene, "Shop", "Shop_Close");
+			// 일부 UI 프리팹에서 Shop 서브 FSM 연결이 누락되어도 닫기 반응은 보장한다.
 			GetEventDispatcher().Dispatch(EventType::PlayerShopClose, nullptr);
 			DispatchEvent("None");
 		});
@@ -583,7 +1055,7 @@ UIFSMComponent::UIFSMComponent()
 			DispatchPlayerEvent(scene, "Player_Throw_3");
 		});
 
-	auto bindInventoryInfoHandler = [this](const std::string& actionId, bool visible)
+	auto bindItemInfoHandler = [this](const std::string& actionId, bool visible)
 		{
 			BindActionHandler(actionId, [this, visible](const FSMAction&)
 				{
@@ -597,20 +1069,38 @@ UIFSMComponent::UIFSMComponent()
 				});
 		};
 
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Melee", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Melee", false);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw1", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw1", false);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw2", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw2", false);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoShow_Throw3", true);
-	bindInventoryInfoHandler("UI_RequestInventoryInfoHide_Throw3", false); 
+	bindItemInfoHandler("UI_RequestItemInfoShow_Melee", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Melee", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Throw1", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw1", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Throw2", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw2", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Throw3", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Throw3", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending1", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending1", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending2", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending2", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending3", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending3", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending4", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending4", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending5", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending5", false);
+	bindItemInfoHandler("UI_RequestItemInfoShow_Vending6", true);
+	bindItemInfoHandler("UI_RequestItemInfoHide_Vending6", false);
 }
 
 UIFSMComponent::~UIFSMComponent()
 {
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
 		GetEventDispatcher().RemoveListener(EventType::Pressed, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::KeyDown))
+		GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UICloseRequested))
+		GetEventDispatcher().RemoveListener(EventType::UICloseRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIGoToTitleRequested))
+		GetEventDispatcher().RemoveListener(EventType::UIGoToTitleRequested, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
 		GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Released))
@@ -625,10 +1115,20 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::PlayerDoorInteract, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorCancel))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDoorCancel, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorSuccess))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorSuccess, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorFail))
+		GetEventDispatcher().RemoveListener(EventType::PlayerDoorFail, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopOpen))
 		GetEventDispatcher().RemoveListener(EventType::PlayerShopOpen, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopClose))
 		GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::VendingOfferUpdated))
+		GetEventDispatcher().RemoveListener(EventType::VendingOfferUpdated, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyOk))
+		GetEventDispatcher().RemoveListener(EventType::ShopMoneyOk, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyFail))
+		GetEventDispatcher().RemoveListener(EventType::ShopMoneyFail, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRoll))
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRoll, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIOpen))
@@ -670,9 +1170,14 @@ void UIFSMComponent::Start()
 	FSMComponent::Start();
 
 	m_HasTurnEndRequestAction = GraphHasAction(GetGraph(), "UI_RequestTurnEnd");
-
+	m_PendingDiceStatRollRequest = false;
+	m_PendingDiceStatResolved = false;
+	m_ActiveDiceAnimationCount = 0;
 
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
+	GetEventDispatcher().AddListener(EventType::KeyDown, this);
+	GetEventDispatcher().AddListener(EventType::UICloseRequested, this);
+	GetEventDispatcher().AddListener(EventType::UIGoToTitleRequested, this);
 	GetEventDispatcher().AddListener(EventType::UIHovered, this);
 	GetEventDispatcher().AddListener(EventType::Released, this);
 	GetEventDispatcher().AddListener(EventType::UIDragged, this);
@@ -680,8 +1185,13 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDoorInteract, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDoorCancel, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDoorSuccess, this);
+	GetEventDispatcher().AddListener(EventType::PlayerDoorFail, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopOpen, this);
 	GetEventDispatcher().AddListener(EventType::PlayerShopClose, this);
+	GetEventDispatcher().AddListener(EventType::VendingOfferUpdated, this);
+	GetEventDispatcher().AddListener(EventType::ShopMoneyOk, this);
+	GetEventDispatcher().AddListener(EventType::ShopMoneyFail, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceRoll, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceUIOpen, this);
 	GetEventDispatcher().AddListener(EventType::PlayerDiceUIReset, this);
@@ -714,6 +1224,36 @@ void UIFSMComponent::Start()
 	}
 }
 
+void UIFSMComponent::Update(float deltaTime)
+{
+	FSMComponent::Update(deltaTime);
+
+	// 안전장치: 어떤 이유로 마지막 PlayerDiceAnimationCompleted가 누락돼도
+	// pending 상태가 남아 버튼/전이가 막히지 않도록 업데이트 단계에서 복구한다.
+	if (!m_PendingDiceStatResolved)
+	{
+		return;
+	}
+
+	if (m_ActiveDiceAnimationCount > 0)
+	{
+		return;
+	}
+
+	if (GetCurrentStateName() != "StatRolling")
+	{
+		m_PendingDiceStatResolved = false;
+		return;
+	}
+
+	m_PendingDiceStatResolved = false;
+	HandleEventByName("Player_DiceStatResolved", nullptr);
+	if (GetCurrentStateName() == "StatResolved")
+	{
+		HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+	}
+}
+
 void UIFSMComponent::OnEvent(EventType type, const void* data)
 {
 	if (type == EventType::TurnChanged)
@@ -723,6 +1263,44 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		{
 			UpdateTurnEndButtonState(static_cast<Turn>(payload->turn));
 		}
+	}
+
+	if (type == EventType::UIHovered)
+	{
+		auto* owner = GetOwner();
+		auto* uiObject = owner ? dynamic_cast<UIObject*>(owner) : nullptr;
+		const auto* mouseData = static_cast<const Events::MouseState*>(data);
+		const bool isHovered = (uiObject && mouseData && uiObject->IsVisible() && uiObject->HasBounds())
+			? uiObject->HitCheck(mouseData->pos)
+			: false;
+
+		if (m_IsHovering != isHovered)
+		{
+			{
+				const int vendingIndex = owner ? ResolveVendingHoverIndex(owner->GetName()) : 0;
+				if (vendingIndex > 0)
+				{
+					auto* scene = owner ? owner->GetScene() : nullptr;
+					if (isHovered)
+					{
+						TriggerVendingInfoHoverEvent(scene, vendingIndex, true);
+					}
+					else if (!mouseData || !IsAnyVendingHoverCandidateHit(scene, vendingIndex, mouseData->pos))
+					{
+						TriggerVendingInfoHoverEvent(scene, vendingIndex, false);
+					}
+				}
+			}
+			m_IsHovering = isHovered;
+		}
+	}
+
+
+	if (type == EventType::VendingOfferUpdated)
+	{
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		UpdateVendingOfferUI(scene, static_cast<const Events::VendingOfferUpdatedEvent*>(data));
 	}
 
 	if (type == EventType::Pressed
@@ -755,9 +1333,77 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 	{
 		m_PendingDiceStatRollRequest = true;
 	}
+	else if (type == EventType::PlayerDiceDecisionResult)
+	{
+		// 일부 UI FSM 데이터는 DecisionReady 상태에서
+		// DecisionResult를 먼저 받거나, DecisionReady->Rolling 전이를
+		// Player_DiceDecisionRequested에만 걸어둔다.
+		// (예: DicisionRolling 전이만 존재하는 구형 데이터)
+		// 이 경우 흐름이 멈추지 않도록 보조 이벤트를 재발행한다.
+		if (GetCurrentStateName() == "DecisionReady")
+		{
+			HandleEventByName("Player_DiceDecisionRequested", nullptr);
+			HandleEventByName("Player_DiceRollRequested", nullptr);
+		}
+	}
 	else if (type == EventType::PlayerDiceUIReset || type == EventType::PlayerDiceUIClose)
 	{
 		m_PendingDiceStatRollRequest = false;
+		m_PendingDiceStatResolved = false;
+		m_ActiveDiceAnimationCount = 0;
+	}
+
+	if (type == EventType::PlayerDiceStatResolved && m_ActiveDiceAnimationCount > 0)
+	{
+		// StatResolved가 롤링 애니메이션 종료 전에 들어오면
+		// 마지막 애니메이션만 보이는 것처럼 보일 수 있어
+		// 남은 애니메이션 종료 후 전이를 지연 처리한다.
+		m_PendingDiceStatResolved = true;
+		return;
+	}
+
+	if (type == EventType::PlayerDiceAnimationStarted)
+	{
+		++m_ActiveDiceAnimationCount;
+	}
+	else if (type == EventType::PlayerDiceAnimationCompleted)
+	{
+		if (m_ActiveDiceAnimationCount > 0)
+		{
+			--m_ActiveDiceAnimationCount;
+			if (m_ActiveDiceAnimationCount > 0)
+			{
+				return;
+			}
+		}
+
+		if (m_PendingDiceStatResolved)
+		{
+			m_PendingDiceStatResolved = false;
+			HandleEventByName("Player_DiceStatResolved", nullptr);
+
+			// 마지막 완료 이벤트를 StatResolved 전이에 소비하면
+			// StatResolved -> StatDone( Player_DiceAnimationCompleted )이
+			// 더 이상 들어오지 않아 버튼이 비활성으로 멈출 수 있다.
+			// 방금 완료 이벤트를 동일 프레임에 다시 전달해 후속 전이를 보장한다.
+			if (GetCurrentStateName() == "StatResolved")
+			{
+				HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+			}
+			return;
+		}
+	}
+
+	if (m_PendingDiceStatResolved
+		&& m_ActiveDiceAnimationCount <= 0
+		&& GetCurrentStateName() == "StatRolling")
+	{
+		m_PendingDiceStatResolved = false;
+		HandleEventByName("Player_DiceStatResolved", nullptr);
+		if (GetCurrentStateName() == "StatResolved")
+		{
+			HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+		}
 	}
 
 	if (type == EventType::PlayerDiceUIOpen
@@ -791,6 +1437,10 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		|| currentStateName == "Hidden")
 	{
 		m_PendingDiceStatRollRequest = false;
+		if (currentStateName != "StatRolling")
+		{
+			m_PendingDiceStatResolved = false;
+		}
 	}
 }
 
@@ -814,6 +1464,11 @@ bool UIFSMComponent::ShouldHandleEvent(EventType type, const void* data)
 
 	const auto* mouseData = static_cast<const Events::MouseState*>(data);
 	if (!mouseData || !uiObject->HasBounds())
+	{
+		return true;
+	}
+
+	if (type == EventType::UIHovered)
 	{
 		return true;
 	}
@@ -876,10 +1531,20 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 	{
 	case EventType::PlayerDoorCancel:
 		return std::string("Player_DoorCancel");
+	case EventType::PlayerDoorSuccess:
+		return std::string("Player_DoorSuccess");
+	case EventType::PlayerDoorFail:
+		return std::string("Player_DoorFail");
 	case EventType::PlayerShopOpen:
 		return std::string("Player_ShopOpen");
 	case EventType::PlayerShopClose:
 		return std::string("Player_ShopClose");
+	case EventType::VendingOfferUpdated:
+		return std::string("UI_VendingOfferUpdated");
+	case EventType::ShopMoneyOk:
+		return std::string("Shop_MoneyOk");
+	case EventType::ShopMoneyFail:
+		return std::string("Shop_MoneyFail");
 	case EventType::PlayerDiceRoll:
 		return std::string("Player_DiceRoll");
 	case EventType::PlayerDiceUIOpen:
@@ -924,6 +1589,19 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("UI_Dragged");
 	case EventType::UIDoubleClicked:
 		return std::string("UI_DoubleClicked");
+	case EventType::UICloseRequested:
+		return std::string("UI_CloseRequested");
+	case EventType::UIGoToTitleRequested:
+		return std::string("UI_GoToTitleRequested");
+	case EventType::KeyDown:
+	{
+		const auto* keyData = static_cast<const Events::KeyEvent*>(data);
+		if (!keyData || keyData->key != VK_ESCAPE)
+		{
+			return std::nullopt;
+		}
+		return std::string("UI_EscapePressed");
+	}
 	case EventType::TurnChanged:
 	{
 		if (!data)
