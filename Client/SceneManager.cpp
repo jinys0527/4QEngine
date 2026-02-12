@@ -220,7 +220,10 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		if (m_GameManager)
 		{
 			m_CurrentScene->SetGameManager(m_GameManager);
-			m_InputManager->SetGameManager(m_GameManager);
+			if (m_InputManager)
+			{
+				m_InputManager->SetGameManager(m_GameManager);
+			}
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 			m_GameManager->SetActiveScene(m_CurrentScene.get());
 			if (name == "Stage1")
@@ -303,12 +306,18 @@ void SceneManager::ChangeScene(const std::string& name)
 		if (m_GameManager)
 		{
 			m_CurrentScene->SetGameManager(m_GameManager);
+			if (m_InputManager)
+			{
+				m_InputManager->SetGameManager(m_GameManager);
+			}
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+			m_GameManager->SetActiveScene(m_CurrentScene.get());
 			if (name == "Stage1")
 			{
 				m_GameManager->ClearPlayerData();
 			}
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
+			m_GameManager->TurnReset();
 		}
 
 		if (m_UIManager)
