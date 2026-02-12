@@ -466,27 +466,6 @@ UIManager::~UIManager()
 
 void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 {
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::Pressed))
-	{
-		m_EventDispatcher->RemoveListener(EventType::Pressed, this);
-	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIHovered))
-	{
-		m_EventDispatcher->RemoveListener(EventType::UIHovered, this);
-	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIDragged))
-	{
-		m_EventDispatcher->RemoveListener(EventType::UIDragged, this);
-	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::UIDoubleClicked))
-	{
-		m_EventDispatcher->RemoveListener(EventType::UIDoubleClicked, this);
-	}
-	if (m_EventDispatcher != nullptr && m_EventDispatcher->IsAlive() && m_EventDispatcher->FindListeners(EventType::Released))
-	{
-		m_EventDispatcher->RemoveListener(EventType::Released, this);
-	}
-
 	m_EventDispatcher = eventDispatcher;
 
 	if (!m_EventDispatcher)
