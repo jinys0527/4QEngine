@@ -152,7 +152,7 @@ protected:
 	std::string m_Name;
 	std::unordered_map<std::string, std::vector<std::unique_ptr<Component>>> m_Components;
 	EventDispatcher& m_EventDispatcher;
-	Scene*		m_Scene;
+	Scene*		m_Scene = nullptr;
 	RenderData::RenderLayer m_Layer = RenderData::RenderLayer::None;
 };
 
