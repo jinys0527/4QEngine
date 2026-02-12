@@ -8,9 +8,11 @@
 #include "MeshComponent.h"
 #include "MeshRenderer.h"
 #include "Object.h"
+#include "Scene.h"
 #include "SkeletalMeshComponent.h"
 #include "TransformComponent.h"
 #include "ServiceRegistry.h"
+#include "SoundManager.h"
 #include "PlayerComponent.h"
 #include <algorithm>
 #include <cmath>
@@ -255,6 +257,14 @@ void ItemComponent::Update(float deltaTime)
 		{
 			if (auto* scene = owner->GetScene())
 			{
+				
+				// Here
+				auto& services = scene->GetServices();
+				if (services.Has<SoundManager>())
+				{
+					services.Get<SoundManager>().SFX_Shot(L"Ranged_Attack_NonFragile");
+				}
+
 				scene->QueueGameObjectRemoval(owner->GetName());
 			}
 		}
