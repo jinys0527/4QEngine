@@ -2,6 +2,7 @@
 #include "Component.h"
 
 class TransformComponent;
+class FloodSystemComponent;
 
 class WaterRiseComponent : public Component
 {
@@ -34,6 +35,11 @@ public:
 	const float& GetElapsedSeconds() const { return m_ElapsedSeconds; }
 	const bool& GetFinished() const { return m_Finished; }
 
+	const float& GetFloodLevelMin() const { return m_FloodLevelMin; }
+	void SetFloodLevelMin(const float& value) { m_FloodLevelMin = value; }
+
+	const float& GetFloodLevelMax() const { return m_FloodLevelMax; }
+	void SetFloodLevelMax(const float& value) { m_FloodLevelMax = value; }
 	void ResetRise();
 
 private:
@@ -46,7 +52,10 @@ private:
 	bool  m_ApplyMinYOnStart = true;
 	bool  m_Loop = false;
 	bool  m_Enabled = true;
+	float m_FloodLevelMin = 0.0f;
+	float m_FloodLevelMax = 1.0f;
 
 	float m_ElapsedSeconds = 0.0f;
 	bool  m_Finished = false;
+	FloodSystemComponent* m_FloodSystem = nullptr;
 };
