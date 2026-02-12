@@ -7,6 +7,7 @@ set "OUTPUT_DIR=."
 
 if not exist "%FXC%" (
     echo [ERROR] fxc.exe not found: "%FXC%"
+    pause
     exit /b 1
 )
 
@@ -19,6 +20,7 @@ for %%f in (*_VS.hlsl) do (
     "%FXC%" /nologo /Zpr /T vs_5_0 /E VS_Main /I "%INCLUDE_DIR%" /Fo "%OUTPUT_DIR%\%%~nf.cso" "%%f"
     if errorlevel 1 (
         echo [ERROR] Failed: %%f
+        pause
         exit /b 1
     )
 )
@@ -28,10 +30,11 @@ for %%f in (*_PS.hlsl) do (
     "%FXC%" /nologo /Zpr /T ps_5_0 /E PS_Main /I "%INCLUDE_DIR%" /Fo "%OUTPUT_DIR%\%%~nf.cso" "%%f"
     if errorlevel 1 (
         echo [ERROR] Failed: %%f
+        pause
         exit /b 1
     )
 )
 
 echo ==============================
 echo Done.
-exit /b 0
+pause
