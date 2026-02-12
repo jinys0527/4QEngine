@@ -76,7 +76,7 @@ void GameManager::SetEventDispatcher(EventDispatcher& eventDispatcher)
 	{
 		return;
 	}
-	UnregisterEventListeners();
+	//UnregisterEventListeners();
 	m_EventDispatcher = &eventDispatcher;
 	RegisterEventListeners();
 }

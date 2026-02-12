@@ -347,11 +347,6 @@ void SceneManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
 		return;
 	}
 
-	if (m_EventDispatcher)
-	{
-		m_EventDispatcher->RemoveListener(EventType::SceneChangeRequested, this);
-	}
-
 	m_EventDispatcher = eventDispatcher;
 
 	if (m_EventDispatcher)
@@ -630,7 +625,6 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 	if (m_UIManager && j.contains("ui"))
 	{
 		m_SceneUIData[loadedScene->GetName()] = j.at("ui");
-		m_UIManager->SetEventDispatcher(&loadedScene->GetEventDispatcher());
 		m_UIManager->DeserializeSceneUI(loadedScene->GetName(), j.at("ui"));
 		auto& uiMap = m_UIManager->GetUIObjects();
 		auto itScene = uiMap.find(loadedScene->GetName());
