@@ -90,6 +90,7 @@ public:
 	bool ConsumeShopHasMoney();
 	bool TryPickup(ItemComponent* item);
 	void AddToInventory(ItemComponent* item);
+	void ForceIdleCombatMode();
 
 	void SetCurrentWeaponCost(const int& value) { m_CurrentWeaponCost = value; }
 	void SetAttackRange(const int& value) { m_AttackRange = value; }
@@ -109,6 +110,7 @@ public:
 	void SetInventoryItemIds(const std::vector<std::string>& value) { m_InventoryItemIds = value; }
 	void SetDebugEquipItem(bool value) { m_DebugEquipItem = value; }
 	void HandleCombatModeButtonState(const std::string& buttonEventName);
+	bool RemoveSelectedInventoryEquipment();
 
 private:
 	void ResetSubFSMFlags();
@@ -124,6 +126,7 @@ private:
 	void ApplyAnimation();
 	void ApplyVisualPresetByCombatMode();
 	void UpdateInventorySlotUI();
+	void SetInventoryTrashButtonActive(bool active);
 	bool TryGetConsumableThrowItemBySlot(int slotIndex, ItemComponent*& outItem) const;
 
 	// 외부지정 가능
@@ -182,12 +185,15 @@ private:
 	int m_ThrowPreviewRange = 0;
 	std::string m_DebugCombatMode = "IdleMode";
 	CombatMode m_LastVisualCombatMode = CombatMode::Idle;
+	bool m_KeepIdleCombatMode = false;
 	bool m_HasAppliedCombatVisual = false;
 	bool m_LastVisualIsDead = false;
 	GridSystemComponent* m_GridSystem = nullptr;
 
 	GameObject* m_MeleeItem = nullptr;		//임시로 게임오브젝트 1개만 멤버로 저장
 	std::string m_ConsumableItemNames[3] = {};
-	int m_SelectedConsumableSlot = 0;
-	bool m_IsApplyMeleeStat = false;
+	int   m_SelectedConsumableSlot = 0;
+	bool  m_IsApplyMeleeStat = false;
+	bool  m_InventoryTrashBindingReady = false;
+	float m_InventoryTrashRetryAccum = 0.0f;
 };

@@ -54,6 +54,7 @@
 #include "UIDiceRollAnimationComponent.h"
 #include "UIDicePanelComponent.h"
 #include "WaterRiseComponent.h"
+#include "TurnTimerUIComponent.h"
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -129,6 +130,7 @@ extern "C" {
 	void Link_ExitComponent();
 	void Link_WaterRiseComponent();
 	void Link_SceneDelayComponent();
+	void Link_TurnTimerUIComponent();
 
 }
 
@@ -217,4 +219,5 @@ void LinkEngineComponents() {
 	Link_ExitComponent();
 	Link_WaterRiseComponent();
 	Link_SceneDelayComponent();
+	Link_TurnTimerUIComponent();
 }

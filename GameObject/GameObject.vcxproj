@@ -381,6 +381,7 @@
     <ClInclude Include="SpotLightComponent.h" />
     <ClInclude Include="StatComponent.h" />
     <ClInclude Include="TransformComponent.h" />
+    <ClInclude Include="TurnTimerUIComponent.h" />
     <ClInclude Include="UIButtonComponent.h" />
     <ClInclude Include="UIComponent.h" />
     <ClInclude Include="UIDiceDisplayComponent.h" />
@@ -472,6 +473,7 @@
     <ClCompile Include="SpotLightComponent.cpp" />
     <ClCompile Include="StatComponent.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
+    <ClCompile Include="TurnTimerUIComponent.cpp" />
     <ClCompile Include="UIButtonComponent.cpp" />
     <ClCompile Include="UIComponent.cpp" />
     <ClCompile Include="UIDiceDisplayComponent.cpp" />

@@ -106,6 +106,13 @@ namespace Events
 		int defense = 0;
 	};
 
+	struct PlayerTurnTimerChangedEvent
+	{
+		float remainingSeconds = 0.0f;
+		float remainingRatio = 0.0f;
+		bool isPlayerTurnActive = false;
+	};
+
 	struct EnemyHoveredEvent
 	{
 		int actorId   = 0;

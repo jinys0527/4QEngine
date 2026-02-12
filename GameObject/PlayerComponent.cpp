@@ -25,6 +25,7 @@
 #include <array>
 #include <unordered_map>
 #include <cfloat>
+#include <cctype>
 #include "SkinningAnimationComponent.h"
 #include "MathHelper.h"
 #include <cmath>
@@ -402,6 +403,318 @@ namespace
 			return;
 		}
 	}
+
+	const std::vector<std::string>& GetInventoryTrashButtonNameCandidates()
+	{
+		static const std::vector<std::string> kTrashButtonNames =
+		{
+			"InventoryTrash",
+			"Inventory_Trash",
+			"Player_InventoryTrash",
+			"Player_Inventory_Trash",
+			"TrashCan",
+			"Trash",
+			"DeleteItem",
+			"DeleteButton",
+			"TrashButton",
+			"Player_Trash",
+			"Player_TrashButton",
+			"InventoryBin",
+			"Bin",
+			"Recycle",
+			"Discard"
+		};
+		return kTrashButtonNames;
+	}
+
+	std::shared_ptr<UIObject> FindInventoryTrashButtonObject(UIManager& uiManager, const std::string& sceneName)
+	{
+		for (const auto& name : GetInventoryTrashButtonNameCandidates())
+		{
+			auto obj = uiManager.FindUIObject(sceneName, name);
+			if (obj)
+			{
+				return obj;
+			}
+		}
+
+		auto& allScenes = uiManager.GetUIObjects();
+
+		// 현재 씬에 없다면 공용 UI 씬(혹은 다른 UI 씬)에 등록된 버튼도 찾는다.
+		for (const auto& name : GetInventoryTrashButtonNameCandidates())
+		{
+			for (const auto& [registeredSceneName, objects] : allScenes)
+			{
+				if (registeredSceneName == sceneName)
+				{
+					continue;
+				}
+
+				auto it = objects.find(name);
+				if (it != objects.end() && it->second)
+				{
+					return it->second;
+				}
+			}
+		}
+
+		auto findByNameToken = [](const auto& objects) -> std::shared_ptr<UIObject>
+			{
+				for (const auto& [name, obj] : objects)
+				{
+					if (!obj || !obj->GetComponent<UIButtonComponent>())
+					{
+						continue;
+					}
+
+					std::string lowered = name;
+					std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (lowered.find("trash") != std::string::npos
+						|| lowered.find("delete") != std::string::npos
+						|| lowered.find("bin") != std::string::npos
+						|| lowered.find("recycle") != std::string::npos
+						|| lowered.find("discard") != std::string::npos)
+					{
+						return obj;
+					}
+				}
+				return nullptr;
+			};
+
+		auto itScene = allScenes.find(sceneName);
+		if (itScene != allScenes.end())
+		{
+			if (auto obj = findByNameToken(itScene->second))
+			{
+				return obj;
+			}
+		}
+
+		for (const auto& [registeredSceneName, objects] : allScenes)
+		{
+			if (registeredSceneName == sceneName)
+			{
+				continue;
+			}
+			if (auto obj = findByNameToken(objects))
+			{
+				return obj;
+			}
+		}
+
+		return nullptr;
+	}
+
+
+	void LogInventoryTrashDiscoveryState(UIManager& uiManager, const std::string& sceneName)
+	{
+		auto& allScenes = uiManager.GetUIObjects();
+		std::cout << "[InventoryTrash] discovery failed. requestedScene=" << sceneName
+			<< " registeredUIScenes=" << allScenes.size() << std::endl;
+
+		for (const auto& [registeredSceneName, objects] : allScenes)
+		{
+			int reported = 0;
+			std::cout << "[InventoryTrash] uiScene=" << registeredSceneName
+				<< " objectCount=" << objects.size();
+
+			for (const auto& [name, obj] : objects)
+			{
+				if (!obj)
+				{
+					continue;
+				}
+
+				const bool hasButton = (obj->GetComponent<UIButtonComponent>() != nullptr);
+				const bool hasFSM = (obj->GetComponent<UIFSMComponent>() != nullptr);
+				if (!hasButton && !hasFSM)
+				{
+					continue;
+				}
+
+				if (reported == 0)
+				{
+					std::cout << " candidates=";
+				}
+				if (reported < 12)
+				{
+					std::cout << name << "(btn=" << hasButton << ",fsm=" << hasFSM << ") ";
+				}
+				++reported;
+			}
+
+			if (reported > 12)
+			{
+				std::cout << "...";
+			}
+			std::cout << std::endl;
+		}
+	}
+
+
+	void EnsureInventoryTrashButtonGraph(UIFSMComponent* fsm)
+	{
+		if (!fsm)
+		{
+			return;
+		}
+
+		auto graph = fsm->GetGraph();
+
+		auto ensureState = [&graph](const std::string& stateName) -> FSMState&
+			{
+				auto it = std::find_if(graph.states.begin(), graph.states.end(), [&](const FSMState& state)
+					{
+						return state.name == stateName;
+					});
+				if (it == graph.states.end())
+				{
+					FSMState state{};
+					state.name = stateName;
+					graph.states.push_back(std::move(state));
+					return graph.states.back();
+				}
+				return *it;
+			};
+
+		auto& hidden = ensureState("Hidden");
+		auto& show = ensureState("Show");
+
+		auto ensureAction = [](std::vector<FSMAction>& actions, const char* actionId)
+			{
+				auto it = std::find_if(actions.begin(), actions.end(), [&](const FSMAction& action)
+					{
+						return action.id == actionId;
+					});
+				if (it == actions.end())
+				{
+					actions.push_back(FSMAction{ actionId, nlohmann::json::object() });
+				}
+			};
+
+		auto ensureTransition = [](std::vector<FSMTransition>& transitions, const char* eventName, const char* targetState)
+			{
+				auto it = std::find_if(transitions.begin(), transitions.end(), [&](const FSMTransition& transition)
+					{
+						return transition.eventName == eventName && transition.targetState == targetState;
+					});
+				if (it == transitions.end())
+				{
+					FSMTransition transition{};
+					transition.eventName = eventName;
+					transition.targetState = targetState;
+					transition.priority = 0;
+					transitions.push_back(std::move(transition));
+				}
+			};
+
+		ensureAction(hidden.onEnter, "UI_Hide");
+		ensureAction(show.onEnter, "UI_Show");
+
+		ensureTransition(hidden.transitions, "Player_Melee", "Show");
+		ensureTransition(hidden.transitions, "Player_Throw_1", "Show");
+		ensureTransition(hidden.transitions, "Player_Throw_2", "Show");
+		ensureTransition(hidden.transitions, "Player_Throw_3", "Show");
+
+		ensureTransition(show.transitions, "Move_Cancel", "Hidden");
+		ensureTransition(show.transitions, "ExploreTurnEnded", "Hidden");
+		ensureTransition(show.transitions, "Player_InventoryTrash", "Hidden");
+
+		if (graph.initialState.empty())
+		{
+			graph.initialState = "Hidden";
+		}
+
+		fsm->SetGraph(graph);
+	}
+
+
+	bool ConfigureInventoryTrashButtonFSM(Scene* scene, PlayerComponent* player)
+	{
+		if (!scene)
+		{
+			return false;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return false;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		auto trashButton = FindInventoryTrashButtonObject(uiManager, scene->GetName());
+		if (!trashButton)
+		{
+			std::cout << "[InventoryTrash] warning: trash button UI not found in scene=" << scene->GetName() << std::endl;
+			LogInventoryTrashDiscoveryState(uiManager, scene->GetName());
+			return false;
+		}
+
+		std::cout << "[InventoryTrash] configure trash button FSM: " << trashButton->GetName() << std::endl;
+
+		if (auto* button = trashButton->GetComponent<UIButtonComponent>())
+		{
+			button->SetOnClicked([player]()
+				{
+					if (player)
+					{
+						player->HandleCombatModeButtonState("Player_InventoryTrash");
+					}
+				});
+		}
+
+		auto* fsm = trashButton->GetComponent<UIFSMComponent>();
+		if (!fsm)
+		{
+			std::cout << "[InventoryTrash] warning: trash button has no UIFSMComponent, using UIButton callback only" << std::endl;
+			return true;
+		}
+
+		EnsureInventoryTrashButtonGraph(fsm);
+
+		constexpr const char* kCallbackId = "InventoryTrash_Click";
+		auto eventCallbacks = fsm->GetEventCallbacks();
+		auto eventIt = std::find_if(eventCallbacks.begin(), eventCallbacks.end(), [](const UIFSMEventCallback& entry)
+			{
+				return entry.eventName == "UI_Clicked" && entry.callbackId == kCallbackId;
+			});
+		if (eventIt == eventCallbacks.end())
+		{
+			eventCallbacks.push_back(UIFSMEventCallback{ "UI_Clicked", kCallbackId });
+			fsm->SetEventCallbacks(eventCallbacks);
+		}
+
+		auto callbackActions = fsm->GetCallbackActions();
+		auto actionIt = std::find_if(callbackActions.begin(), callbackActions.end(), [](const UIFSMCallbackAction& entry)
+			{
+				return entry.callbackId == kCallbackId;
+			});
+
+		if (actionIt == callbackActions.end())
+		{
+			UIFSMCallbackAction entry{};
+			entry.callbackId = kCallbackId;
+			entry.actions.push_back(FSMAction{ "UI_RequestInventoryTrash", nlohmann::json::object() });
+			callbackActions.push_back(std::move(entry));
+			fsm->SetCallbackActions(callbackActions);
+		}
+		else
+		{
+			const bool hasAction = std::any_of(actionIt->actions.begin(), actionIt->actions.end(), [](const FSMAction& action)
+				{
+					return action.id == "UI_RequestInventoryTrash";
+				});
+			if (!hasAction)
+			{
+				actionIt->actions.push_back(FSMAction{ "UI_RequestInventoryTrash", nlohmann::json::object() });
+				fsm->SetCallbackActions(callbackActions);
+			}
+		}
+
+		return true;
+	}
+
 
 	const std::vector<std::string>& GetGroundItemInfoPanelNameCandidates()
 	{
@@ -1338,6 +1651,9 @@ void PlayerComponent::Start()
 	}
 
 	m_DebugEquipItem = false;
+	m_InventoryTrashBindingReady = ConfigureInventoryTrashButtonFSM(scene, this);
+	m_InventoryTrashRetryAccum = 0.0f;
+	SetInventoryTrashButtonActive(false);
 }
 
 void PlayerComponent::Update(float deltaTime) {
@@ -1349,6 +1665,16 @@ void PlayerComponent::Update(float deltaTime) {
 	if (!scene || scene->GetIsPause())
 	{
 		return;
+	}
+
+	if (!m_InventoryTrashBindingReady)
+	{
+		m_InventoryTrashRetryAccum += deltaTime;
+		if (m_InventoryTrashRetryAccum >= 0.25f)
+		{
+			m_InventoryTrashRetryAccum = 0.0f;
+			m_InventoryTrashBindingReady = ConfigureInventoryTrashButtonFSM(scene, this);
+		}
 	}
 
 	SyncCombatModeFromInventory();
@@ -2178,6 +2504,7 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 	m_CurrentTurn = static_cast<Turn>(payload->turn);
 	m_TurnEndRequested = false;
+	SetInventoryTrashButtonActive(false);
 	if (m_CurrentTurn == Turn::PlayerTurn)
 	{
 		ResetTurnResources();
@@ -2784,7 +3111,23 @@ void PlayerComponent::SyncCombatModeFromInventory()
 		return;
 	}
 
+	if (m_KeepIdleCombatMode)
+	{
+		return;
+	}
+
 	m_CombatMode = ResolveBaseCombatMode();
+}
+
+void PlayerComponent::ForceIdleCombatMode()
+{
+	m_KeepIdleCombatMode = true;
+	m_CombatMode = CombatMode::Idle;
+	m_ThrowPreviewRange = 0;
+	if (m_GridSystem)
+	{
+		m_GridSystem->SetThrowRangePreview(false, 0);
+	}
 }
 
 void PlayerComponent::UpdateResourceUI()
@@ -2918,9 +3261,197 @@ void PlayerComponent::UpdateInventorySlotUI()
 	}
 }
 
+void PlayerComponent::SetInventoryTrashButtonActive(bool active)
+{
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	if (!scene)
+	{
+		return;
+	}
+
+	auto& services = scene->GetServices();
+	if (!services.Has<UIManager>())
+	{
+		return;
+	}
+
+	auto& uiManager = services.Get<UIManager>();
+	auto trashButton = FindInventoryTrashButtonObject(uiManager, scene->GetName());
+	if (!trashButton)
+	{
+		// Scene 전환 직후에는 UI 오브젝트/콜백이 아직 준비되지 않을 수 있어 한 번 더 지연 구성한다.
+		m_InventoryTrashBindingReady = ConfigureInventoryTrashButtonFSM(scene, this);
+		trashButton = FindInventoryTrashButtonObject(uiManager, scene->GetName());
+		if (!trashButton)
+		{
+			std::cout << "[InventoryTrash] SetInventoryTrashButtonActive skipped: button not ready in scene="
+				<< scene->GetName() << std::endl;
+			return;
+		}
+	}
+
+	trashButton->SetIsVisible(active);
+	if (auto* button = trashButton->GetComponent<UIButtonComponent>())
+	{
+		button->SetIsEnabled(active);
+	}
+}
+
+bool PlayerComponent::RemoveSelectedInventoryEquipment()
+{
+	std::cout << "[InventoryTrash] Try remove. mode=" << static_cast<int>(m_CombatMode)
+		<< " selectedSlot=" << m_SelectedConsumableSlot << std::endl;
+
+	auto removeInventoryName = [this](const std::string& itemName)
+		{
+			if (itemName.empty())
+			{
+				std::cout << "[InventoryTrash] removeInventoryName skipped: empty item name" << std::endl;
+				return;
+			}
+
+			auto it = std::remove(m_InventoryItemIds.begin(), m_InventoryItemIds.end(), itemName);
+			if (it != m_InventoryItemIds.end())
+			{
+				m_InventoryItemIds.erase(it, m_InventoryItemIds.end());
+			}
+		};
+
+	if (m_CombatMode == CombatMode::Melee)
+	{
+		if (!m_MeleeItem)
+		{
+			std::cout << "[InventoryTrash] failed: melee mode but m_MeleeItem is null" << std::endl;
+			return false;
+		}
+
+		auto* itemComponent = m_MeleeItem->GetComponent<ItemComponent>();
+		if (!itemComponent || !itemComponent->GetIsEquiped())
+		{
+			std::cout << "[InventoryTrash] failed: melee item not equipped or component missing"
+				<< " hasComponent=" << (itemComponent != nullptr)
+				<< " isEquipped=" << (itemComponent ? itemComponent->GetIsEquiped() : false)
+				<< std::endl;
+			return false;
+		}
+
+		auto* removedMeleeObject = m_MeleeItem;
+		removeInventoryName(removedMeleeObject->GetName());
+		itemComponent->SetIsEquiped(false);
+		m_MeleeItem = nullptr;
+
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		if (scene && removedMeleeObject)
+		{
+			if (!scene->RemoveGameObjectByName(removedMeleeObject->GetName()))
+			{
+				std::cout << "[InventoryTrash] warning: failed to remove melee world object name="
+					<< removedMeleeObject->GetName() << std::endl;
+			}
+		}
+
+		m_CombatMode = ResolveBaseCombatMode();
+		UpdateInventorySlotUI();
+		std::cout << "[InventoryTrash] success: removed melee item and world object" << std::endl;
+		return true;
+	}
+
+	if (m_CombatMode == CombatMode::Throw)
+	{
+		ItemComponent* throwItem = nullptr;
+		if (!TryGetConsumableThrowItemBySlot(m_SelectedConsumableSlot, throwItem) || !throwItem)
+		{
+			std::cout << "[InventoryTrash] failed: throw mode but selected slot item missing"
+				<< " slot=" << m_SelectedConsumableSlot << std::endl;
+			return false;
+		}
+
+		auto* owner = throwItem->GetOwner();
+		const std::string itemName = owner ? owner->GetName() : std::string{};
+		for (int i = m_SelectedConsumableSlot; i < 2; ++i)
+		{
+			m_ConsumableItemNames[i] = std::move(m_ConsumableItemNames[i + 1]);
+		}
+		m_ConsumableItemNames[2].clear();
+
+		removeInventoryName(itemName);
+		throwItem->SetIsEquiped(false);
+
+		auto* playerOwner = GetOwner();
+		auto* scene = playerOwner ? playerOwner->GetScene() : nullptr;
+		if (scene && !itemName.empty())
+		{
+			if (!scene->RemoveGameObjectByName(itemName))
+			{
+				std::cout << "[InventoryTrash] warning: failed to remove throw world object name="
+					<< itemName << std::endl;
+			}
+		}
+
+		m_ThrowPreviewRange = 0;
+		if (m_GridSystem)
+		{
+			m_GridSystem->SetThrowRangePreview(false, 0);
+		}
+		m_CombatMode = ResolveBaseCombatMode();
+		UpdateInventorySlotUI();
+		std::cout << "[InventoryTrash] success: removed throw item and world object from slot="
+			<< m_SelectedConsumableSlot << std::endl;
+		return true;
+	}
+
+	std::cout << "[InventoryTrash] failed: unsupported combat mode for trash (mode="
+		<< static_cast<int>(m_CombatMode) << ")" << std::endl;
+	return false;
+}
+
 void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEventName)
 {
-	if (buttonEventName == "Player_Melee")
+	m_KeepIdleCombatMode = false;
+
+	const bool isTrashEvent = (buttonEventName == "Player_InventoryTrash" || buttonEventName == "Player_InventoryDelete");
+	const bool isMeleeEvent = (buttonEventName == "Player_Melee");
+	const bool isThrowEvent = (buttonEventName == "Player_Throw1"
+		|| buttonEventName == "Player_Throw_1"
+		|| buttonEventName == "Player_Throw2"
+		|| buttonEventName == "Player_Throw_2"
+		|| buttonEventName == "Player_Throw3"
+		|| buttonEventName == "Player_Throw_3");
+
+	if (!isTrashEvent && !isMeleeEvent && !isThrowEvent)
+	{
+		return;
+	}
+
+	auto* owner = GetOwner();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+
+	const bool allowModeInput = !gameManager
+		|| gameManager->IsExplorationInputAllowed()
+		|| gameManager->IsCombatInputAllowed();
+
+	if (!allowModeInput)
+	{
+		std::cout << "[InventoryTrash] ignore mode button event while input is not allowed: "
+			<< buttonEventName << std::endl;
+		SetInventoryTrashButtonActive(false);
+		return;
+	}
+
+	if (isTrashEvent)
+	{
+		const bool removed = RemoveSelectedInventoryEquipment();
+		if (removed)
+		{
+			SetInventoryTrashButtonActive(false);
+		}
+		return;
+	}
+
+	if (isMeleeEvent)
 	{
 		cout << "Melee" << endl;
 		if (m_CombatMode == CombatMode::Throw)
@@ -2930,7 +3461,8 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 		else
 		{
 			m_CombatMode = ResolveBaseCombatMode();
-		}
+		}	
+		SetInventoryTrashButtonActive(true);
 		return;
 	}
 
@@ -2975,6 +3507,8 @@ void PlayerComponent::HandleCombatModeButtonState(const std::string& buttonEvent
 		m_CombatMode = ResolveBaseCombatMode();
 
 	}
+
+	SetInventoryTrashButtonActive(true);
 }
 
 void PlayerComponent::ApplyVisualPresetByCombatMode()

@@ -14,6 +14,7 @@ enum class Battle {
 };
 
 enum class ExplorationTurnState {
+	WaitingStart,
 	PlayerTurn,
 	EnemyStep,
 };

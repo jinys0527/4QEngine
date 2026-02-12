@@ -2,6 +2,12 @@
 #include "PlayerComponent.h"
 #include "ReflectionMacro.h"
 #include "Object.h"
+#include "Scene.h"
+#include "UIManager.h"
+#include "ServiceRegistry.h"
+
+#include <algorithm>
+#include <cctype>
 
 REGISTER_COMPONENT_DERIVED(PlayerInventoryFSMComponent, FSMComponent)
 
@@ -21,6 +27,7 @@ PlayerInventoryFSMComponent::PlayerInventoryFSMComponent()
 			const bool canDrop = player ? player->ConsumeInventoryCanDrop() : false;
 			if (canDrop)
 			{
+				player->ForceIdleCombatMode();
 				DispatchEvent("Inventory_Complete");
 			}
 			// 버리기 가능한 곳 찾기 6개 모서리 랜덤 -> 시계방향 탐색

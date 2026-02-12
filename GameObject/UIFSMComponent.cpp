@@ -594,6 +594,12 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_RequestExplorationTurnStart",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestDiceDecision",
 		"UI",
 		{}
@@ -667,6 +673,12 @@ void RegisterUIFSMDefinitions()
 		});
 
 	actionRegistry.RegisterAction({
+		"UI_RequestInventoryTrash",
+		"UI",
+		{}
+		});
+
+	actionRegistry.RegisterAction({
 		"UI_RequestPlayerMelee",
 		"UI",
 		{}
@@ -722,6 +734,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "UI_EscapePressed", "UI" });
 	eventRegistry.RegisterEvent({ "UI_CloseRequested", "UI" });
 	eventRegistry.RegisterEvent({ "UI_GoToTitleRequested", "UI" });
+	eventRegistry.RegisterEvent({ "UI_ExplorePlayerTurnRequested", "UI" });
 	eventRegistry.RegisterEvent({ "UI_SliderValueChanged", "UI" });
 	eventRegistry.RegisterEvent({ "UI_ProgressChanged", "UI" });
 	eventRegistry.RegisterEvent({ "Player_TurnStart", "UI" });
@@ -757,6 +770,7 @@ void RegisterUIFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_Throw_1", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_2", "UI" });
 	eventRegistry.RegisterEvent({ "Player_Throw_3", "UI" });
+	eventRegistry.RegisterEvent({ "Player_InventoryTrash", "UI" });
 	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "UI_RequestItemInfoHide_Melee", "UI" });
 	eventRegistry.RegisterEvent({ "UI_RequestItemInfoShow_Throw1", "UI" });
@@ -927,6 +941,12 @@ UIFSMComponent::UIFSMComponent()
 			}
 		});
 
+	BindActionHandler("UI_RequestExplorationTurnStart", [this](const FSMAction&)
+		{
+			GetEventDispatcher().Dispatch(EventType::ExplorePlayerTurnRequested, nullptr);
+		});
+
+
 	BindActionHandler("UI_RequestDiceDecision", [this](const FSMAction&)
 		{
 			// Backward compatibility: 일부 에디터 FSM은 DecisionReady 전이에
@@ -1054,6 +1074,14 @@ UIFSMComponent::UIFSMComponent()
 			auto* scene = owner ? owner->GetScene() : nullptr;
 			DispatchPlayerEvent(scene, "Player_Throw_3");
 		});
+
+	BindActionHandler("UI_RequestInventoryTrash", [this](const FSMAction& action)
+		{
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+			DispatchPlayerEvent(scene, "Player_InventoryTrash");
+		});
+
 
 	auto bindItemInfoHandler = [this](const std::string& actionId, bool visible)
 		{
@@ -1593,6 +1621,8 @@ std::optional<std::string> UIFSMComponent::TranslateEvent(EventType type, const 
 		return std::string("UI_CloseRequested");
 	case EventType::UIGoToTitleRequested:
 		return std::string("UI_GoToTitleRequested");
+	case EventType::ExplorePlayerTurnRequested:
+		return std::string("UI_ExplorePlayerTurnRequested");
 	case EventType::KeyDown:
 	{
 		const auto* keyData = static_cast<const Events::KeyEvent*>(data);
