@@ -2,8 +2,10 @@
 
 #include "ReflectionMacro.h"
 #include "Object.h"
+#include "GameObject.h"
 #include "Scene.h"
 #include "GameManager.h"
+#include "FloodSystemComponent.h"
 #include "TransformComponent.h"
 
 #include <algorithm>
@@ -15,6 +17,8 @@ REGISTER_PROPERTY(WaterRiseComponent, RiseDurationSeconds)
 REGISTER_PROPERTY(WaterRiseComponent, ApplyMinYOnStart)
 REGISTER_PROPERTY(WaterRiseComponent, Loop)
 REGISTER_PROPERTY(WaterRiseComponent, Enabled)
+REGISTER_PROPERTY(WaterRiseComponent, FloodLevelMin)
+REGISTER_PROPERTY(WaterRiseComponent, FloodLevelMax)
 REGISTER_PROPERTY_READONLY(WaterRiseComponent, ElapsedSeconds)
 REGISTER_PROPERTY_READONLY(WaterRiseComponent, Finished)
 
@@ -22,6 +26,7 @@ void WaterRiseComponent::Start()
 {
 	m_ElapsedSeconds = 0.0f;
 	m_Finished = false;
+	m_FloodSystem = nullptr;
 
 	if (m_ApplyMinYOnStart)
 	{
@@ -31,50 +36,48 @@ void WaterRiseComponent::Start()
 
 void WaterRiseComponent::Update(float deltaTime)
 {
+	(void)deltaTime;
+
 	if (!m_Enabled)
 	{
 		return;
 	}
 
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
-	if (gameManager)
+	if (!m_FloodSystem)
 	{
-		const Phase phase = gameManager->GetPhase();
-		const bool pauseInCombat = (phase == Phase::TurnBasedCombat);
-		const bool pauseInExplorationBlocked = (phase == Phase::ExplorationLoop
-			&& !gameManager->IsExplorationInputAllowed());
-		if (pauseInCombat || pauseInExplorationBlocked)
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		if (scene)
 		{
-			return;
+			for (const auto& [name, object] : scene->GetGameObjects())
+			{
+				(void)name;
+				if (!object)
+				{
+					continue;
+				}
+
+				m_FloodSystem = object->GetComponent<FloodSystemComponent>();
+				if (m_FloodSystem)
+				{
+					break;
+				}
+			}
 		}
 	}
 
-	if (m_Finished && !m_Loop)
+	if (!m_FloodSystem)
 	{
 		return;
 	}
 
+	const float levelMin = min(m_FloodLevelMin, m_FloodLevelMax);
+	const float levelMax = max(m_FloodLevelMin, m_FloodLevelMax);
+	const float levelRange = max(0.001f, levelMax - levelMin);
+	const float normalized = std::clamp((m_FloodSystem->GetWaterLevel() - levelMin) / levelRange, 0.0f, 1.0f);
 	const float safeDuration = max(0.001f, m_RiseDurationSeconds);
-	m_ElapsedSeconds += deltaTime;
-
-	if (m_ElapsedSeconds >= safeDuration)
-	{
-		if (m_Loop)
-		{
-			while (m_ElapsedSeconds >= safeDuration)
-			{
-				m_ElapsedSeconds -= safeDuration;
-			}
-			m_Finished = false;
-		}
-		else
-		{
-			m_ElapsedSeconds = safeDuration;
-			m_Finished = true;
-		}
-	}
+	m_ElapsedSeconds = safeDuration * normalized;
+	m_Finished = (normalized >= 1.0f);
 
 	ApplyCurrentY();
 }
