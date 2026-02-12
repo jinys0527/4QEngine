@@ -37,6 +37,30 @@ namespace
 		const int ds = dq + dr;
 		return (std::abs(dq) + std::abs(dr) + std::abs(ds)) / 2;
 	}
+
+	void LogPlayerAdjustedStats(const char* context, const PlayerStatComponent* stat)
+	{
+		if (!stat)
+		{
+			return;
+		}
+
+		std::cout << "[Combat][PlayerStats][" << context << "] "
+			<< "HP=" << stat->GetCurrentHP() << "/" << stat->GetTotalHealth()
+			<< " STR=" << stat->GetTotalStrength()
+			<< " AGI=" << stat->GetTotalAgility()
+			<< " SENSE=" << stat->GetTotalSense()
+			<< " SKILL=" << stat->GetTotalSkill()
+			<< " DEF=" << stat->GetDefense()
+			<< " (equip HP/STR/AGI/SENSE/SKILL/DEF="
+			<< stat->GetEquipmentHealthBonus() << "/"
+			<< stat->GetEquipmentStrengthBonus() << "/"
+			<< stat->GetEquipmentAgilityBonus() << "/"
+			<< stat->GetEquipmentSenseBonus() << "/"
+			<< stat->GetEquipmentSkillBonus() << "/"
+			<< stat->GetEquipmentDefenseBonus() << ")"
+			<< std::endl;
+	}
 }
 
 PlayerCombatFSMComponent::PlayerCombatFSMComponent()
@@ -51,6 +75,12 @@ PlayerCombatFSMComponent::PlayerCombatFSMComponent()
 				return;
 			}
 		
+			if (!player->HasCombatConfirmRequest())
+			{
+				DispatchEvent("Combat_CostFail");
+				return;
+			}
+
 			int range = 0;
 			ItemComponent* throwItem = nullptr;
 			bool isThrowMode = false;
@@ -449,6 +479,9 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 
 	if (scene && (enemy || (isHealThrow && player))) 
 	{
+		auto* playerStat = owner ? owner->GetComponent<PlayerStatComponent>() : nullptr;
+		LogPlayerAdjustedStats("PlayerAction", playerStat);
+
 		auto& services = scene->GetServices();
 		if (player && isThrowMode)
 		{
@@ -472,6 +505,16 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 				attackProfile.autoFailOnOne = false;
 				attackProfile.attackerName = "Player";
 				attackProfile.targetName = "Enemy";
+
+				ItemComponent* meleeItem = nullptr;
+				if (player->TryGetEquippedMeleeItem(meleeItem) && meleeItem)
+				{
+					const int weaponDiceCount = max(1, meleeItem->GetDiceRoll());
+					const int weaponDiceSides = max(1, meleeItem->GetDiceType());
+					attackProfile.damageDiceCount = weaponDiceCount;
+					attackProfile.damageDiceSides = weaponDiceSides;
+					attackProfile.damageModifier = meleeItem->GetBaseModifier() + playerStat->GetCalculatedStrengthModifier();
+				}
 
 				DefenseProfile defenseProfile{};
 				defenseProfile.defense = enemyStat->GetDefense();

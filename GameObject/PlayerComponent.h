@@ -68,6 +68,7 @@ public:
 	bool ConsumeActResource(int amount);
 
 	void RequestCombatConfirm();
+	bool HasCombatConfirmRequest() const { return m_CombatConfirmRequested; }
 	bool HandleCombatClick(EnemyComponent* enemy);
 	void ClearCombatSelection();
 	EnemyComponent* ResolveCombatTarget(GameObject* obj) const;
@@ -75,6 +76,7 @@ public:
 	bool ConsumeCombatConfirmRequest();
 	bool TryGetConsumableThrowRange(int& outRange) const;
 	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
+	bool TryGetEquippedMeleeItem(ItemComponent*& outItem) const;
 	void ConsumeThrowItem(ItemComponent* throwItem);
 	void SelectConsumableThrowSlot(int slotIndex);
 	bool ConsumePushPossible();

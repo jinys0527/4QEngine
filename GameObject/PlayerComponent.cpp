@@ -602,7 +602,7 @@ namespace
 					};
 
 				const char* fileName = nullptr;
-				if (containsToken("boss_"))
+				/*if (containsToken("boss_"))
 				{
 					fileName = "enemyStatus_frameBoss.png";
 				}
@@ -613,7 +613,7 @@ namespace
 				else if (containsToken("e1_"))
 				{
 					fileName = "enemyStatus_frame100001Umjinsik.png";
-				}
+				}*/
 
 				if (!fileName)
 				{
@@ -866,6 +866,7 @@ namespace
 		item.SetIconPath(definition.iconPath);
 		item.SetMeshPath(meshPath);
 		item.SetPrice(definition.basePrice);
+		item.SetActionPointCost(definition.actionPointCost);
 		item.SetMeleeAttackRange(definition.range);
 		item.SetThrowRange(definition.throwRange);
 		item.SetDifficultyGroup(definition.difficultyGroup);
@@ -1400,46 +1401,85 @@ void PlayerComponent::Update(float deltaTime) {
 
 
 	//근접 무기 스탯 적용
+	auto resetMeleeCombatStats = [&]()
+		{
+			m_AttackRange = 1;
+			m_CurrentWeaponCost = 1;
+
+			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
+			if (!playerstatcomponent)
+			{
+				return;
+			}
+
+			playerstatcomponent->SetRange(1);
+			playerstatcomponent->SetEquipmentDefenseBonus(0);
+			playerstatcomponent->SetEquipmentHealthBonus(0);
+			playerstatcomponent->SetEquipmentStrengthBonus(0);
+			playerstatcomponent->SetEquipmentAgilityBonus(0);
+			playerstatcomponent->SetEquipmentSenseBonus(0);
+			playerstatcomponent->SetEquipmentSkillBonus(0);
+
+			m_IsApplyMeleeStat = false;
+		};
+
 	if (m_MeleeItem != nullptr)
 	{
 		auto* itemcomponent = m_MeleeItem->GetComponent<ItemComponent>();
-		if (!itemcomponent) return;
-
-		//근접 무기의 스탯 적용하기
-		if (!m_IsApplyMeleeStat)
+		if (!itemcomponent)
 		{
-			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
-			if (!playerstatcomponent) return;
-
-			int health = playerstatcomponent->GetHealth();
-			int strength = playerstatcomponent->GetStrength();
-			int agility = playerstatcomponent->GetAgility();
-			int sense = playerstatcomponent->GetSense();
-			int skill = playerstatcomponent->GetSkill();
-
-			int ihealth = itemcomponent->GetHealth();
-			int istrength = itemcomponent->GetStrength();
-			int iagility = itemcomponent->GetAgility();
-			int isense = itemcomponent->GetSense();
-			int iskill = itemcomponent->GetSkill();
-			int idefense = itemcomponent->GetDEF();
-			int irange = itemcomponent->GetMeleeAttackRange();
-
-			playerstatcomponent->SetHealth(health);
-			playerstatcomponent->SetStrength(strength);
-			playerstatcomponent->SetAgility(agility);
-			playerstatcomponent->SetSense(sense);
-			playerstatcomponent->SetSkill(skill);
-			playerstatcomponent->SetEquipmentDefenseBonus(idefense);
-			playerstatcomponent->SetRange(static_cast<int>(irange));
-			playerstatcomponent->SetEquipmentHealthBonus(ihealth);
-			playerstatcomponent->SetEquipmentStrengthBonus(istrength);
-			playerstatcomponent->SetEquipmentAgilityBonus(iagility);
-			playerstatcomponent->SetEquipmentSenseBonus(isense);
-			playerstatcomponent->SetEquipmentSkillBonus(iskill);
-
-			m_IsApplyMeleeStat = true;
+			resetMeleeCombatStats();
 		}
+		else if (itemcomponent->GetIsEquiped())
+		{
+			// 근접 무기 전투값 동기화 (사거리/AP 소모)
+			m_AttackRange = max(0, itemcomponent->GetMeleeAttackRange());
+			m_CurrentWeaponCost = max(0, itemcomponent->GetActionPointCost());
+
+			//근접 무기의 스탯 적용하기
+			if (!m_IsApplyMeleeStat)
+			{
+				auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
+				if (!playerstatcomponent) return;
+
+				int health = playerstatcomponent->GetHealth();
+				int strength = playerstatcomponent->GetStrength();
+				int agility = playerstatcomponent->GetAgility();
+				int sense = playerstatcomponent->GetSense();
+				int skill = playerstatcomponent->GetSkill();
+
+				int ihealth = itemcomponent->GetHealth();
+				int istrength = itemcomponent->GetStrength();
+				int iagility = itemcomponent->GetAgility();
+				int isense = itemcomponent->GetSense();
+				int iskill = itemcomponent->GetSkill();
+				int idefense = itemcomponent->GetDEF();
+				int irange = itemcomponent->GetMeleeAttackRange();
+
+				playerstatcomponent->SetHealth(health);
+				playerstatcomponent->SetStrength(strength);
+				playerstatcomponent->SetAgility(agility);
+				playerstatcomponent->SetSense(sense);
+				playerstatcomponent->SetSkill(skill);
+				playerstatcomponent->SetEquipmentDefenseBonus(idefense);
+				playerstatcomponent->SetRange(static_cast<int>(irange));
+				playerstatcomponent->SetEquipmentHealthBonus(ihealth);
+				playerstatcomponent->SetEquipmentStrengthBonus(istrength);
+				playerstatcomponent->SetEquipmentAgilityBonus(iagility);
+				playerstatcomponent->SetEquipmentSenseBonus(isense);
+				playerstatcomponent->SetEquipmentSkillBonus(iskill);
+
+				m_IsApplyMeleeStat = true;
+			}
+		}
+		else
+		{
+			resetMeleeCombatStats();
+		}
+	}
+	else
+	{
+		resetMeleeCombatStats();
 	}
 
 	// 장착 무기 표시/숨김: CombatMode에 따라 근접, 던지기, 없음(Idle)
@@ -1789,7 +1829,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				m_CombatConfirmRequested = true;
 				combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 			}
 		}
@@ -1942,7 +1981,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 		{
-			m_CombatConfirmRequested = true;
 			combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 		}
 
@@ -2216,7 +2254,10 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 
 	m_SelectedEnemy = enemy;
 	m_PendingAttackTarget = enemy;
-	DispatchPlayerStateEvent(owner, "Combat_Start");
+	if (auto* combatFsm = owner->GetComponent<PlayerCombatFSMComponent>())
+	{
+		combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
+	}
 	return true;
 }
 
@@ -2554,6 +2595,24 @@ bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 
 	outItem = nullptr;
 	return false;
+}
+
+bool PlayerComponent::TryGetEquippedMeleeItem(ItemComponent*& outItem) const
+{
+	outItem = nullptr;
+	if (!m_MeleeItem)
+	{
+		return false;
+	}
+
+	auto* meleeItemComponent = m_MeleeItem->GetComponent<ItemComponent>();
+	if (!meleeItemComponent || !meleeItemComponent->GetIsEquiped())
+	{
+		return false;
+	}
+
+	outItem = meleeItemComponent;
+	return true;
 }
 
 void PlayerComponent::SelectConsumableThrowSlot(int slotIndex)

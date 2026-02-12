@@ -18,6 +18,9 @@ struct AttackProfile
 	int minDamage      = 0;
 	int maxDamage      = 0;
 	int bonusDamage	   = 0;
+	int damageDiceCount = 0;
+	int damageDiceSides = 0;
+	int damageModifier = 0;
 	bool allowCritical = true;
 	bool autoFailOnOne = false;
 	std::string attackerName;
