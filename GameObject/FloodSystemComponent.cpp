@@ -54,8 +54,7 @@ void FloodSystemComponent::Update(float deltaTime)
 		m_TurnElapsed = 0.0f;
 	}
 
-	const float playerThreshold = GetPlayerFloodHeightThreshold();
-	if (playerThreshold > 0.0f && m_WaterLevel >= playerThreshold)
+	if (m_WaterLevel >= 1.0f) 
 	{
 		MarkGameOver();
 	}
@@ -148,35 +147,4 @@ bool FloodSystemComponent::ShouldAdvance() const
 		&& (gameManager->IsExplorationInputAllowed()
 			|| gameManager->IsCombatInputAllowed()
 			|| gameManager->IsShopInputAllowed());
-}
-
-float FloodSystemComponent::GetPlayerFloodHeightThreshold() const
-{
-	auto* owner = GetOwner();
-	auto* scene = owner ? owner->GetScene() : nullptr;
-	if (!scene)
-	{
-		return -1.0f;
-	}
-
-	Object* playerObject = nullptr;
-	for (const auto& [name, object] : scene->GetGameObjects())
-	{
-		(void)name;
-		if (object && object->GetComponent<PlayerComponent>())
-		{
-			playerObject = object.get();
-			break;
-		}
-	}
-
-	auto* playerTransform = playerObject ? playerObject->GetComponent<TransformComponent>() : nullptr;
-	if (!playerTransform)
-	{
-		return -1.0f;
-	}
-
-	constexpr float kPlayerHeight = 1.8f;
-	constexpr float kHeightScale = 1.1547f;
-	return playerTransform->GetPosition().y + (kPlayerHeight * kHeightScale);
 }
