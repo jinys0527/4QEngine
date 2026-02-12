@@ -187,16 +187,29 @@ bool CombatManager::AddCombatants(const std::vector<CombatantSnapshot>& combatan
 		return false;
 	}
 
-	const int currentActor = GetCurrentActorId();
-	BuildInitiativeOrder();
-
-	if (!m_DiceFlowActive && m_State == Battle::InBattle && currentActor != 0 && !m_InitiativeOrder.empty())
+	// 전투 도중 난입한 전투원은 기존 턴 흐름(특히 플레이어 턴/주사위 UI)을 깨지 않도록
+	// 현재 이니셔티브 순서 뒤쪽에 추가만 한다.
+	if (m_State == Battle::InBattle && !m_InitiativeOrder.empty())
 	{
-		const auto it = std::find(m_InitiativeOrder.begin(), m_InitiativeOrder.end(), currentActor);
-		if (it != m_InitiativeOrder.end())
+		for (const auto& combatant : combatants)
 		{
-			m_CurrentTurnIndex = static_cast<std::size_t>(std::distance(m_InitiativeOrder.begin(), it));
+			if (combatant.actorId == 0)
+			{
+				continue;
+			}
+
+			if (std::find(m_InitiativeOrder.begin(), m_InitiativeOrder.end(), combatant.actorId) != m_InitiativeOrder.end())
+			{
+				continue;
+			}
+
+			m_InitiativeOrder.push_back(combatant.actorId);
+			m_ActorIdsInBattle.insert(combatant.actorId);
 		}
+	}
+	else
+	{
+		BuildInitiativeOrder();
 	}
 
 	return true;

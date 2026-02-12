@@ -1022,13 +1022,19 @@ UIFSMComponent::UIFSMComponent()
 				return;
 			}
 
-			if (gameManager->GetTurn() != Turn::PlayerTurn)
+			const Phase phase = gameManager->GetPhase();
+			const bool canEndExplorationTurn = phase == Phase::ExplorationLoop
+				&& gameManager->GetExplorationTurnState() == ExplorationTurnState::PlayerTurn;
+			const bool canEndCombatTurn = phase == Phase::TurnBasedCombat
+				&& gameManager->GetCombatTurnState() == CombatTurnState::PlayerTurn;
+
+			if (!canEndExplorationTurn && !canEndCombatTurn)
 			{
 				UpdateTurnEndButtonState(Turn::EnemyTurn);
 				return;
 			}
 
-			if (gameManager->GetPhase() == Phase::ExplorationLoop)
+			if (canEndExplorationTurn)
 			{
 				GetEventDispatcher().Dispatch(EventType::ExploreTurnEnded, nullptr);
 			}
@@ -1232,78 +1238,7 @@ UIFSMComponent::UIFSMComponent()
 
 UIFSMComponent::~UIFSMComponent()
 {
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Pressed))
-		GetEventDispatcher().RemoveListener(EventType::Pressed, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::KeyDown))
-		GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UICloseRequested))
-		GetEventDispatcher().RemoveListener(EventType::UICloseRequested, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ExplorePlayerTurnRequested))
-		GetEventDispatcher().RemoveListener(EventType::ExplorePlayerTurnRequested, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIGoToTitleRequested))
-		GetEventDispatcher().RemoveListener(EventType::UIGoToTitleRequested, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
-		GetEventDispatcher().RemoveListener(EventType::UIHovered, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::Released))
-		GetEventDispatcher().RemoveListener(EventType::Released, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIDragged))
-		GetEventDispatcher().RemoveListener(EventType::UIDragged, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIDoubleClicked))
-		GetEventDispatcher().RemoveListener(EventType::UIDoubleClicked, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::TurnChanged))
-		GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorInteract))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDoorInteract, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorCancel))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDoorCancel, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorSuccess))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDoorSuccess, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDoorFail))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDoorFail, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopOpen))
-		GetEventDispatcher().RemoveListener(EventType::PlayerShopOpen, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerShopClose))
-		GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::VendingOfferUpdated))
-		GetEventDispatcher().RemoveListener(EventType::VendingOfferUpdated, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyOk))
-		GetEventDispatcher().RemoveListener(EventType::ShopMoneyOk, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ShopMoneyFail))
-		GetEventDispatcher().RemoveListener(EventType::ShopMoneyFail, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRoll))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRoll, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIOpen))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIOpen, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIReset))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIReset, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRollRequested))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRollRequested, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceRollApplied))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceRollApplied, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceTotalsApplied))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceTotalsApplied, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceResultShown))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceResultShown, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceUIClose))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceUIClose, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceDecisionRequested))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceDecisionRequested, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceDecisionResult))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceDecisionResult, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceInitiativeResolved))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceInitiativeResolved, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceStatRollRequested))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatRollRequested, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceTypeDetermined))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceTypeDetermined, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceStatResolved))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceStatResolved, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationStarted))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationStarted, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceAnimationCompleted))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
-	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::PlayerDiceContinueRequested))
-		GetEventDispatcher().RemoveListener(EventType::PlayerDiceContinueRequested, this);
+	
 }
 
 void UIFSMComponent::Start()

@@ -35,6 +35,10 @@ PlayerDoorFSMComponent::~PlayerDoorFSMComponent()
 	{
 		GetEventDispatcher().RemoveListener(EventType::PlayerDiceAnimationCompleted, this);
 	}
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::TurnChanged))
+	{
+		GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+	}
 }
 
 PlayerDoorFSMComponent::PlayerDoorFSMComponent()
@@ -271,6 +275,7 @@ void PlayerDoorFSMComponent::Start()
 	{
 		GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationStarted, this);
 		GetEventDispatcher().AddListener(EventType::PlayerDiceAnimationCompleted, this);
+		GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 		m_ListenersRegistered = true;
 	}
 }
@@ -328,7 +333,37 @@ void PlayerDoorFSMComponent::ResolveDoorVerdictNow()
 void PlayerDoorFSMComponent::OnEvent(EventType type, const void* data)
 {
 	FSMComponent::OnEvent(type, data);
-	(void)data;
+
+	if (type == EventType::TurnChanged)
+	{
+		const auto* payload = static_cast<const Events::TurnChanged*>(data);
+		if (payload && payload->turn != static_cast<int>(Turn::PlayerTurn))
+		{
+			auto* owner = GetOwner();
+			auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr;
+			const bool isDoorInteractionActive = m_RollPhaseLocked
+				|| m_WaitingForDoorRollConfirm
+				|| GetCurrentStateName() != "None";
+			if (isDoorInteractionActive)
+			{
+				m_RollPhaseLocked = false;
+				m_PendingDoorVerdict = false;
+				m_WaitingForDoorRollConfirm = false;
+				m_DoorRollAnimationObserved = false;
+				m_DoorRollWaitTimer = 0.0f;
+
+				if (player)
+				{
+					player->ConsumePendingDoor();
+				}
+
+				std::cout << "[DoorFSM][Trace] Turn changed to enemy: force cancel door interaction" << std::endl;
+				GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+				DispatchEvent("None");
+			}
+		}
+		return;
+	}
 
 	if (!m_WaitingForDoorRollConfirm)
 	{

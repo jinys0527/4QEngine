@@ -241,10 +241,6 @@ void GameManager::Update(float deltaTime)
 
 				if (m_RemainingEnemyTurns > 0)
 				{
-					--m_RemainingEnemyTurns;
-				}
-				if (m_RemainingEnemyTurns > 0)
-				{
 					combatManager->AdvanceTurnToNextEnemyOrPlayer();
 				}
 				else
@@ -807,6 +803,13 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		break;
 	case Phase::ExplorationLoop:
+		// HowToPlay는 1층 시작 시점에만 대기 상태로 진입한다.
+		// 다음 층에서는 가이드 UI가 없을 수 있으므로 자동으로 플레이어 턴을 시작한다.
+		if (m_CurrentFloor > 1)
+		{
+			m_WaitingForHowToPlayClose = false;
+		}
+
 		if (m_WaitingForHowToPlayClose)
 		{
 			SetExplorationTurnState(ExplorationTurnState::WaitingStart);
@@ -960,6 +963,11 @@ void GameManager::OnPhaseExit(Phase phase)
 	}
 	if (phase == Phase::ExplorationLoop)
 	{
+		m_WaitingForHowToPlayClose = false;
+		if (m_ActiveScene)
+		{
+			m_ActiveScene->SetIsPause(false);
+		}
 		SetFloodSystemActive(false);
 	}
 }
@@ -1058,6 +1066,13 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 				}
 				++m_RemainingEnemyTurns;
 			}
+		}
+
+		if (m_RemainingEnemyTurns <= 0)
+		{
+			m_SkipToPlayerTurn = true;
+			SetCombatTurnState(CombatTurnState::Resolve);
+			return;
 		}
 
 		if (combatManager)

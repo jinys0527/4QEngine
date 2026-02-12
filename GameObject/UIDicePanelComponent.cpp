@@ -346,6 +346,22 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 	if (type == EventType::PlayerDiceUIReset || type == EventType::PlayerDiceUIClose)
 	{
 		m_StatRollRequested = false;
+		m_PendingDiceType.clear();
+		m_ContextDiceTypes.clear();
+
+		if (hasDecisionContext())
+		{
+			if (m_ActiveDiceType != "D20")
+			{
+				m_ActiveDiceType = "D20";
+			}
+		}
+		else
+		{
+			m_ActiveDiceType.clear();
+		}
+
+
 		for (const auto& slot : m_Slots)
 		{
 			if (slot.objectName.empty())
@@ -363,7 +379,18 @@ void UIDicePanelComponent::OnEvent(EventType type, const void* data)
 			{
 				number->SetValue(0);
 			}
+			if (auto* diceDisplay = target->GetComponent<UIDiceDisplayComponent>())
+			{
+				diceDisplay->SetValue(0);
+			}
 		}
+
+		m_BindingsDirty = true;
+		if (m_RuntimeBindingsReady && CanApplySlotsImmediately())
+		{
+			ApplySlotsImmediate();
+		}
+
 		return;
 	}
 

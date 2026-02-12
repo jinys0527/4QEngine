@@ -31,7 +31,7 @@ void SceneManager::Initialize()
 		dataPaths.enemiesPath = "Data/enemies.csv";
 		dataPaths.dropTablesPath = "../Resources/CSV/DropTable.csv";
 		m_GameManager->SetDataSheetPaths(dataPaths);
-		m_GameManager->SetFloorSceneNames({ "Title", "Stage1", "Stage2_Test", "Ending", "PlayerTest"});
+		m_GameManager->SetFloorSceneNames({ "Title", "Stage1", "Stage2", "Ending", "DeadScene"});
 	}
 	if (m_InputManager)
 	{
@@ -48,7 +48,7 @@ void SceneManager::Initialize()
 
 		"Title",
 		"Stage1",
-		//"Stage2"
+		"Stage2",
 		"Ending",
 		"DeadScene"
 
@@ -67,10 +67,12 @@ void SceneManager::Update(float deltaTime)
 	if (!m_CurrentScene)
 		return;
 
+	const float unscaledDeltaTime = deltaTime;
+
 	if (m_CurrentScene->GetIsPause())
 		deltaTime = 0.0f;
 
-	UpdateSceneTransition(deltaTime);
+	UpdateSceneTransition(unscaledDeltaTime);
 
 	static float totalTime = 0;
 	totalTime += deltaTime;
