@@ -367,6 +367,7 @@ Engine/TestScene.cpp
 
 Resources/
 ResourceOutput/
+.svn/
 
 # 3D / textures
 # *.fbx

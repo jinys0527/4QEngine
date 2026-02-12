@@ -216,7 +216,7 @@
     </ClCompile>
     <ClCompile Include="UINumberSpriteComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
-	</ClCompile>
+    </ClCompile>
     <ClCompile Include="BoatComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
@@ -235,6 +235,9 @@
     <ClCompile Include="CameraLogicComponent2.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SceneDelayComponent.cpp">
+      <Filter>Components\UserDefine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -247,7 +250,7 @@
       <Filter>Objects\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CoreTypes.h">
-	  <Filter>Objects\Header Files</Filter>
+      <Filter>Objects\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CameraObject.h">
       <Filter>Objects\Header Files</Filter>
@@ -448,8 +451,8 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-	  <Filter>Components\UserDefine\Header Files</Filter>
-	</ClInclude>
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="InitiativeUIComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
@@ -493,6 +496,9 @@
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CameraLogicComponent2.h">
+      <Filter>Components\UserDefine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneDelayComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
