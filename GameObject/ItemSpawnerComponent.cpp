@@ -82,10 +82,7 @@ namespace
 		{
 			item.SetDiceRoll(definition.diceRoll);
 		}
-		if (definition.baseModifier > 0)
-		{
-			item.SetBaseModifier(definition.baseModifier);
-		}
+		item.SetBaseModifier(definition.baseModifier);
 	}
 
 	std::string BuildSpawnName(const std::string& base)

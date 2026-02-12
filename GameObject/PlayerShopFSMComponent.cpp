@@ -57,10 +57,12 @@ namespace
 		{
 			item.SetDiceType(definition.diceType);
 		}
-		if (definition.baseModifier > 0)
+		if (definition.diceRoll > 0)
 		{
-			item.SetBaseModifier(definition.baseModifier);
+			item.SetDiceRoll(definition.diceRoll);
 		}
+
+		item.SetBaseModifier(definition.baseModifier);
 	}
 
 	std::shared_ptr<GameObject> SpawnPurchasedItem(Scene& scene, const ItemDefinition& definition)
