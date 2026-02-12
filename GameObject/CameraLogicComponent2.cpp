@@ -87,31 +87,19 @@ void CameraLogicComponent2::CamZoom()
 	forwardVec = XMVector3Normalize(forwardVec);
 
 	const float requestedZoomDelta = m_PendingZoomInput * m_ZoomSpeed;
-	float appliedZoomDelta = requestedZoomDelta;
-	float clampedMin = m_MinZoom;
-	float clampedMax = m_MaxZoom;
-	if (clampedMin > 0.0f && clampedMax > 0.0f)
-	{
-		// 기존 CameraLogic의 양수 Min/Max 값을 그대로 넣는 경우를 위해
-		// dolly 오프셋 기준 최소값은 음수 방향으로 해석한다.
-		clampedMin = -clampedMin;
-	}
-	if (clampedMax < clampedMin)
-	{
-		std::swap(clampedMin, clampedMax);
-	}
+	float clampedMin = (std::min)(m_MinZoom, m_MaxZoom);
+	float clampedMax = (std::max)(m_MinZoom, m_MaxZoom);
 
+	float desiredZoomOffset = m_CurrentZoomOffset + requestedZoomDelta;
 	if (clampedMax > clampedMin)
 	{
-		const float desiredZoomOffset = std::clamp(m_CurrentZoomOffset + requestedZoomDelta, clampedMin, clampedMax);
-		appliedZoomDelta = desiredZoomOffset - m_CurrentZoomOffset;
-		m_CurrentZoomOffset = desiredZoomOffset;
+		desiredZoomOffset = std::clamp(desiredZoomOffset, clampedMin, clampedMax);
 	}
-	else
-	{
-		m_CurrentZoomOffset += requestedZoomDelta;
-	}
+	const float appliedZoomDelta = desiredZoomOffset - m_CurrentZoomOffset;
+	m_CurrentZoomOffset = desiredZoomOffset;
 
+	// EditorCamera와 동일하게 Eye/Look을 같은 dolly로 이동시키되,
+	// Min/Max는 누적 offset 범위를 clamp해 적용한다.
 	const XMVECTOR dolly = XMVectorScale(forwardVec, appliedZoomDelta);
 	const XMVECTOR newEyeVec = XMVectorAdd(eyeVec, dolly);
 	const XMVECTOR newLookVec = XMVectorAdd(lookVec, dolly);
