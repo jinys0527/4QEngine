@@ -30,11 +30,17 @@ public:
 
 	const int    CalculateStatModifier(int statValue) const;
 
-	const int    GetCalculatedHealthModifier  () const { return CalculateStatModifier(m_Health);   }
-	const int    GetCalculatedStrengthModifier() const { return CalculateStatModifier(m_Strength); }
-	const int    GetCalculatedAgilityModifier () const { return CalculateStatModifier(m_Agility);  }
-	const int    GetCalculatedSenseModifier   () const { return CalculateStatModifier(m_Sense);    }
-	const int    GetCalculatedSkillModifier   () const { return CalculateStatModifier(m_Skill);    }
+	const int    GetTotalHealth() const { return m_Health + m_EquipmentHealthBonus; }
+	const int    GetTotalStrength() const { return m_Strength + m_EquipmentStrengthBonus; }
+	const int    GetTotalAgility() const { return m_Agility + m_EquipmentAgilityBonus; }
+	const int    GetTotalSense() const { return m_Sense + m_EquipmentSenseBonus; }
+	const int    GetTotalSkill() const { return m_Skill + m_EquipmentSkillBonus; }
+
+	const int    GetCalculatedHealthModifier() const { return CalculateStatModifier(GetTotalHealth()); }
+	const int    GetCalculatedStrengthModifier() const { return CalculateStatModifier(GetTotalStrength()); }
+	const int    GetCalculatedAgilityModifier() const { return CalculateStatModifier(GetTotalAgility()); }
+	const int    GetCalculatedSenseModifier() const { return CalculateStatModifier(GetTotalSense()); }
+	const int    GetCalculatedSkillModifier() const { return CalculateStatModifier(GetTotalSkill()); }
 
 	float        GetShopDiscountRate          () const;
 	const int&   GetEquipmentHealthBonus() const { return m_EquipmentHealthBonus; }

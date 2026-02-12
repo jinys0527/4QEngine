@@ -1402,8 +1402,8 @@ void PlayerComponent::Update(float deltaTime) {
 	//근접 무기 스탯 적용
 	auto resetMeleeCombatStats = [&]()
 		{
-			m_AttackRange = 1;
-			m_CurrentWeaponCost = 1;
+			m_AttackRange = 0;
+			m_CurrentWeaponCost = 0;
 
 			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
 			if (!playerstatcomponent)
@@ -1411,7 +1411,7 @@ void PlayerComponent::Update(float deltaTime) {
 				return;
 			}
 
-			playerstatcomponent->SetRange(1);
+			playerstatcomponent->SetRange(0);
 			playerstatcomponent->SetEquipmentDefenseBonus(0);
 			playerstatcomponent->SetEquipmentHealthBonus(0);
 			playerstatcomponent->SetEquipmentStrengthBonus(0);
