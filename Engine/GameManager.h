@@ -14,7 +14,7 @@ class GameManager : public IEventListener
 public:
 	// Scene 넘어갈 때 가지고 가야할 Data
 	struct PlayerPersistentData
-	{
+	{ // 처음엔 초기셋팅
 		bool hasData = false;
 		int  weaponCost = 0;
 		int  attackRange = 0;
@@ -22,7 +22,7 @@ public:
 		int  money = 0;
 		std::vector<std::string> inventoryItemIds;
 
-		int  currentHP = 0;
+		int  currentHP = 100;
 		int  health = 0;
 		int  strength = 0;
 		int  agility = 0;
@@ -67,6 +67,7 @@ public:
 
 	void CapturePlayerData(class Scene* scene);
 	void ApplyPlayerData(class Scene* scene);
+	void ClearPlayerData();
 	class CombatManager* GetCombatManager() const;
 private:
 	void RegisterEventListeners();

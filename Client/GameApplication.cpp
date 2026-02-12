@@ -31,16 +31,16 @@ bool GameApplication::Initialize()
 	m_SoundManager->Init();
 	m_SoundManager->CreateBGMSource(m_AssetLoader->GetBGMPaths());
 	m_SoundManager->CreateSFXSource(m_AssetLoader->GetSFXPaths());
-
+	m_SoundManager->SetDirty();
+	m_SoundManager->SetVolume_BGM(m_DefaultBGMVolume);
+	m_SoundManager->SetVolume_SFX(m_DefaultSFXVolume);
 	m_SceneBGMMap.clear();
 
 	// Scene별 곡 등록
 	// 별도 등록하지 않으면 직전 Scene의 BGM 계속 Loop
 	m_SceneBGMMap.emplace("Title", L"Title");
-	m_SceneBGMMap.emplace("Stage1_Test", L"Idle");
-	//m_SceneBGMMap.emplace("Stage2_Test", L"Title");
-	//m_SceneBGMMap.emplace("Stage1", L"GameBGM");
-
+	m_SceneBGMMap.emplace("Stage1", L"Idle");
+	//m_SceneBGMMap.emplace("Stage2", L"Title");
 
 	OnResize(m_width, m_height);
 	auto& uiManager = m_Services.Get<UIManager>();
@@ -139,6 +139,11 @@ void GameApplication::ApplySceneBGM()
 	}
 
 	m_SoundManager->BGM_Shot(it->second, m_SceneChangeBGMFadeTime);
+}
+
+bool GameApplication::IsCombatPhase(Phase phase) const
+{
+
 }
 
 void GameApplication::Render()

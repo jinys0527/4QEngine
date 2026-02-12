@@ -45,8 +45,13 @@ void SceneManager::Initialize()
 	// Game에서 로드할 것 여기서 명시 
 	LoadGameScenesFromDirectory(scenesPath,{
 
+
+		"Title",
 		"Stage1",
-		"Stage2_Test"
+		//"Stage2"
+		"Ending",
+		"DeadScene"
+
 		//"BossStage"
 		});
 
@@ -105,6 +110,8 @@ void SceneManager::Reset()
 	m_Scenes.clear();
 	m_CurrentScene.reset();
 	m_ChangeSceneName.clear();
+	m_SceneUIData.clear();
+	m_SceneTemplateData.clear();
 	m_TransitionPhase = SceneTransitionPhase::None;
 	m_TransitionTimer = 0.0f;
 	m_TransitionTextureHandle = TextureHandle::Invalid();
@@ -160,10 +167,12 @@ std::shared_ptr<Scene> SceneManager::AddScene(const std::string& name, std::shar
 }
 
 void SceneManager::SetCurrentScene(const std::string& name)
-{
+{	
+	RecreateSceneFromTemplate(name);
 	auto it = m_Scenes.find(name);
 	if (it != m_Scenes.end())
 	{
+		const std::string previousSceneName = m_CurrentScene ? m_CurrentScene->GetName() : std::string{};
 		if (m_UIManager && m_CurrentScene)
 		{
 			auto& uiMap = m_UIManager->GetUIObjects();
@@ -190,6 +199,16 @@ void SceneManager::SetCurrentScene(const std::string& name)
 		{
 			m_GameManager->CapturePlayerData(m_CurrentScene.get());
 		}
+
+		if (m_CurrentScene)
+		{
+			m_CurrentScene->Leave();
+		}
+		if (!previousSceneName.empty() && previousSceneName != name)
+		{
+			RecreateSceneFromTemplate(previousSceneName);
+		}
+
 		m_CurrentScene = it->second;
 		m_CurrentScene->Enter();
 
@@ -204,6 +223,10 @@ void SceneManager::SetCurrentScene(const std::string& name)
 			m_InputManager->SetGameManager(m_GameManager);
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
 			m_GameManager->SetActiveScene(m_CurrentScene.get());
+			if (name == "Stage1")
+			{
+				m_GameManager->ClearPlayerData();
+			}
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 			m_GameManager->TurnReset();
 		}
@@ -223,7 +246,7 @@ std::shared_ptr<Scene> SceneManager::GetCurrentScene() const
 
 void SceneManager::ChangeScene(const std::string& name)
 {
-
+	const std::string previousSceneName = m_CurrentScene ? m_CurrentScene->GetName() : std::string{};
 	if (m_CurrentScene) {
 		if (m_UIManager)
 		{
@@ -253,9 +276,13 @@ void SceneManager::ChangeScene(const std::string& name)
 			m_GameManager->CapturePlayerData(m_CurrentScene.get());
 		}
 		m_CurrentScene->Leave();
+		if (!previousSceneName.empty() && previousSceneName != name)
+		{
+			RecreateSceneFromTemplate(previousSceneName);
+		}
 	}
 
-
+	RecreateSceneFromTemplate(name);
 	auto it = m_Scenes.find(name);
 
 	if (it != m_Scenes.end())
@@ -277,6 +304,10 @@ void SceneManager::ChangeScene(const std::string& name)
 		{
 			m_CurrentScene->SetGameManager(m_GameManager);
 			m_GameManager->SetEventDispatcher(m_CurrentScene->GetEventDispatcher());
+			if (name == "Stage1")
+			{
+				m_GameManager->ClearPlayerData();
+			}
 			m_GameManager->ApplyPlayerData(m_CurrentScene.get());
 		}
 
@@ -582,8 +613,11 @@ bool SceneManager::LoadGameSceneFromJson(const std::filesystem::path& filepath)
 	nlohmann::json j;
 	ifs >> j;
 
+	const std::string sceneName = filepath.stem().string();
+	m_SceneTemplateData[sceneName] = j;
 	auto loadedScene = std::make_shared<ClientScene>(m_Services);
-	loadedScene->SetName(filepath.stem().string());
+	//loadedScene->SetName(filepath.stem().string());
+	loadedScene->SetName(sceneName);
 	loadedScene->Initialize();
 	loadedScene->Deserialize(j);
 	loadedScene->SetIsPause(false);
@@ -645,4 +679,22 @@ void SceneManager::RestoreSceneUI(const std::shared_ptr<Scene>& scene)
 			}
 		}
 	}
+}
+
+void SceneManager::RecreateSceneFromTemplate(const std::string& name)
+{
+	auto itTemplate = m_SceneTemplateData.find(name);
+	if (itTemplate == m_SceneTemplateData.end())
+	{
+		return;
+	}
+
+	auto freshScene = std::make_shared<ClientScene>(m_Services);
+	freshScene->SetName(name);
+	freshScene->Initialize();
+	freshScene->Deserialize(itTemplate->second);
+	freshScene->SetIsPause(false);
+	freshScene->SetGameManager(&m_Services.Get<GameManager>());
+	freshScene->SetSceneManager(this);
+	m_Scenes[name] = freshScene;
 }
