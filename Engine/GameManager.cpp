@@ -845,8 +845,9 @@ void GameManager::OnPhaseEnter(Phase phase)
 			logger->Add(LogChannel::System, "NextFloor: floor advanced.");
 		}
 		break;
-	case Phase::GameOver:
+	case Phase::GameOver: // 게임 종료 지점
 		SetFloodSystemActive(false);
+		RequestSceneChange("DeadScene");
 		if (auto* logger = GetLogSystem())
 		{
 			logger->Add(LogChannel::System, "GameOver: session ended.");
