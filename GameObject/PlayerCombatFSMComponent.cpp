@@ -716,12 +716,15 @@ bool PlayerCombatFSMComponent::ApplyThrowHealing(PlayerComponent& player, EnemyC
 	{
 		return false;
 	}
-
+	
 	if (enemyStat)
 	{
 		const int prevHp = enemyStat->GetCurrentHP();
 		const int nextHp = prevHp + healAmount;
 		enemyStat->SetCurrentHP(nextHp);
+
+		services.Get<SoundManager>().SFX_Shot(L"Heal_Drink");
+
 		std::cout << "[Throw-Heal] Heal=" << healAmount
 			<< " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
 		const Events::CombatNumberPopupEvent popupEvent{ player.GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, false };
@@ -739,7 +742,7 @@ bool PlayerCombatFSMComponent::ApplyThrowHealing(PlayerComponent& player, EnemyC
 	const int maxHp = playerStat->GetMaxHealthForFloor(gameManager->GetCurrentFloor());
 	const int nextHp = min(maxHp, prevHp + healAmount);
 	playerStat->SetCurrentHP(nextHp);
-
+	services.Get<SoundManager>().SFX_Shot(L"Heal_Drug");
 	std::cout << "[Throw-Heal] Heal=" << healAmount
 		<< " Player HP: " << prevHp << " -> " << nextHp << std::endl;
 	const Events::CombatNumberPopupEvent popupEvent{ player.GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, false };
