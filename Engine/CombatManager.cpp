@@ -187,30 +187,9 @@ bool CombatManager::AddCombatants(const std::vector<CombatantSnapshot>& combatan
 		return false;
 	}
 
-	// 전투 도중 난입한 전투원은 기존 턴 흐름(특히 플레이어 턴/주사위 UI)을 깨지 않도록
-	// 현재 이니셔티브 순서 뒤쪽에 추가만 한다.
-	if (m_State == Battle::InBattle && !m_InitiativeOrder.empty())
-	{
-		for (const auto& combatant : combatants)
-		{
-			if (combatant.actorId == 0)
-			{
-				continue;
-			}
-
-			if (std::find(m_InitiativeOrder.begin(), m_InitiativeOrder.end(), combatant.actorId) != m_InitiativeOrder.end())
-			{
-				continue;
-			}
-
-			m_InitiativeOrder.push_back(combatant.actorId);
-			m_ActorIdsInBattle.insert(combatant.actorId);
-		}
-	}
-	else
-	{
-		BuildInitiativeOrder();
-	}
+	// 전투 도중 전투원이 난입하면 선제권을 다시 계산한다.
+	// 플레이어가 포함된 구성이면 주사위 UI 플로우부터 다시 시작한다.
+	BuildInitiativeOrder();
 
 	return true;
 }
