@@ -76,6 +76,7 @@ public:
 	bool ConsumeCombatConfirmRequest();
 	bool TryGetConsumableThrowRange(int& outRange) const;
 	bool TryGetConsumableThrowItem(ItemComponent*& outItem) const;
+	bool TryGetEquippedMeleeItem(ItemComponent*& outItem) const;
 	void ConsumeThrowItem(ItemComponent* throwItem);
 	void SelectConsumableThrowSlot(int slotIndex);
 	bool ConsumePushPossible();

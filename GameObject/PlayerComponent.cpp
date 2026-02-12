@@ -1402,8 +1402,8 @@ void PlayerComponent::Update(float deltaTime) {
 	//근접 무기 스탯 적용
 	auto resetMeleeCombatStats = [&]()
 		{
-			m_AttackRange = 0;
-			m_CurrentWeaponCost = 0;
+			m_AttackRange = 1;
+			m_CurrentWeaponCost = 1;
 
 			auto* playerstatcomponent = owner->GetComponent<PlayerStatComponent>();
 			if (!playerstatcomponent)
@@ -1411,7 +1411,7 @@ void PlayerComponent::Update(float deltaTime) {
 				return;
 			}
 
-			playerstatcomponent->SetRange(0);
+			playerstatcomponent->SetRange(1);
 			playerstatcomponent->SetEquipmentDefenseBonus(0);
 			playerstatcomponent->SetEquipmentHealthBonus(0);
 			playerstatcomponent->SetEquipmentStrengthBonus(0);
@@ -2592,6 +2592,24 @@ bool PlayerComponent::TryGetConsumableThrowItem(ItemComponent*& outItem) const
 
 	outItem = nullptr;
 	return false;
+}
+
+bool PlayerComponent::TryGetEquippedMeleeItem(ItemComponent*& outItem) const
+{
+	outItem = nullptr;
+	if (!m_MeleeItem)
+	{
+		return false;
+	}
+
+	auto* meleeItemComponent = m_MeleeItem->GetComponent<ItemComponent>();
+	if (!meleeItemComponent || !meleeItemComponent->GetIsEquiped())
+	{
+		return false;
+	}
+
+	outItem = meleeItemComponent;
+	return true;
 }
 
 void PlayerComponent::SelectConsumableThrowSlot(int slotIndex)

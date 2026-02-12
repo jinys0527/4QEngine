@@ -19,10 +19,14 @@ CombatRollResult CombatResolver::ResolveAttack(const AttackProfile& attack,
 
     const bool critical = attack.allowCritical && result.roll == 20;
     const bool autoFail = attack.autoFailOnOne && result.roll == 1;
+	const int profileDiceCount = (attack.damageDiceCount > 0) ? attack.damageDiceCount : 1;
+	const int profileDiceSides = (attack.damageDiceSides > 0)
+		? attack.damageDiceSides
+		: std::max(1, std::max(attack.minDamage, attack.maxDamage));
 
 	std::cout << "[Combat] Attack profile: modifier=" << attack.attackModifier
-		<< " minDamage=" << attack.minDamage
-		<< " maxDamage=" << attack.maxDamage
+		<< " diceRoll=" << profileDiceCount
+		<< " diceType=" << profileDiceSides 
 		<< " targetDefense=" << defense.defense << std::endl;
 
     if (autoFail)
@@ -33,15 +37,30 @@ CombatRollResult CombatResolver::ResolveAttack(const AttackProfile& attack,
     {
         result.hit = critical ? HitResult::Critical : HitResult::Hit;
 
-		int maxDamage = std::max(attack.minDamage, attack.maxDamage);
-		if (maxDamage <= 0)
+		DiceConfig config{};
+		int damageModifier = attack.damageModifier;
+		if (attack.damageDiceCount > 0 && attack.damageDiceSides > 0)
 		{
-			maxDamage = 4;
+			config = DiceConfig{ attack.damageDiceCount, attack.damageDiceSides, 0 };
+		}
+		else
+		{
+			int maxDamage = std::max(attack.minDamage, attack.maxDamage);
+			if (maxDamage <= 0)
+			{
+				maxDamage = 4;
+			}
+
+			config = DiceConfig{ 1, maxDamage, 0 };
+			if (damageModifier == 0)
+			{
+				damageModifier = attack.attackModifier;
+			}
 		}
 
-        DiceConfig config{ 1, maxDamage, 0 };
-        const int rolledDamage = diceSystem.RollTotal(config, RandomDomain::Combat);
-        result.damage = rolledDamage + attack.attackModifier;       // 장착 무기 + 힘 or 민첩 수정치
+		const int rolledDamage = diceSystem.RollTotal(config, RandomDomain::Combat);
+		result.damage = rolledDamage + damageModifier;
+
 
         if (critical)
         {

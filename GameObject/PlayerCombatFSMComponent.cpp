@@ -506,6 +506,16 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 				attackProfile.attackerName = "Player";
 				attackProfile.targetName = "Enemy";
 
+				ItemComponent* meleeItem = nullptr;
+				if (player->TryGetEquippedMeleeItem(meleeItem) && meleeItem)
+				{
+					const int weaponDiceCount = max(1, meleeItem->GetDiceRoll());
+					const int weaponDiceSides = max(1, meleeItem->GetDiceType());
+					attackProfile.damageDiceCount = weaponDiceCount;
+					attackProfile.damageDiceSides = weaponDiceSides;
+					attackProfile.damageModifier = meleeItem->GetBaseModifier() + playerStat->GetCalculatedStrengthModifier();
+				}
+
 				DefenseProfile defenseProfile{};
 				defenseProfile.defense = enemyStat->GetDefense();
 
