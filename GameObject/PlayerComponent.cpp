@@ -865,6 +865,7 @@ namespace
 		item.SetIconPath(definition.iconPath);
 		item.SetMeshPath(meshPath);
 		item.SetPrice(definition.basePrice);
+		item.SetActionPointCost(definition.actionPointCost);
 		item.SetMeleeAttackRange(definition.range);
 		item.SetThrowRange(definition.throwRange);
 		item.SetDifficultyGroup(definition.difficultyGroup);
@@ -1404,6 +1405,10 @@ void PlayerComponent::Update(float deltaTime) {
 		auto* itemcomponent = m_MeleeItem->GetComponent<ItemComponent>();
 		if (!itemcomponent) return;
 
+		// 근접 무기 전투값 동기화 (사거리/AP 소모)
+		m_AttackRange = max(0, itemcomponent->GetMeleeAttackRange());
+		m_CurrentWeaponCost = max(0, itemcomponent->GetActionPointCost());
+
 		//근접 무기의 스탯 적용하기
 		if (!m_IsApplyMeleeStat)
 		{
@@ -1786,7 +1791,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 		{
 			if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 			{
-				m_CombatConfirmRequested = true;
 				combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 			}
 		}
@@ -1939,7 +1943,6 @@ void PlayerComponent::OnEvent(EventType type, const void* data)
 
 		if (auto* combatFsm = owner ? owner->GetComponent<PlayerCombatFSMComponent>() : nullptr)
 		{
-			m_CombatConfirmRequested = true;
 			combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
 		}
 
@@ -2213,7 +2216,10 @@ bool PlayerComponent::HandleCombatClick(EnemyComponent* enemy)
 
 	m_SelectedEnemy = enemy;
 	m_PendingAttackTarget = enemy;
-	DispatchPlayerStateEvent(owner, "Combat_Start");
+	if (auto* combatFsm = owner->GetComponent<PlayerCombatFSMComponent>())
+	{
+		combatFsm->RequestCombatEnter(GetActorId(), enemy->GetActorId());
+	}
 	return true;
 }
 
