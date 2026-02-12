@@ -994,6 +994,12 @@ UIFSMComponent::UIFSMComponent()
 			{
 				DispatchEvent(eventName);
 			}
+			else
+			{
+				// 레거시 UI 데이터에서 `event: "None"` 대신 빈 문자열을 전달하는 경우가 있어
+				// Process -> Idle 전이를 위해 명시적으로 None 이벤트를 보낸다.
+				DispatchEvent("None");
+			}
 		});
 
 	BindActionHandler("UI_RequestCloseMenu", [this](const FSMAction&)
@@ -1127,6 +1133,8 @@ UIFSMComponent::~UIFSMComponent()
 		GetEventDispatcher().RemoveListener(EventType::KeyDown, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UICloseRequested))
 		GetEventDispatcher().RemoveListener(EventType::UICloseRequested, this);
+	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::ExplorePlayerTurnRequested))
+		GetEventDispatcher().RemoveListener(EventType::ExplorePlayerTurnRequested, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIGoToTitleRequested))
 		GetEventDispatcher().RemoveListener(EventType::UIGoToTitleRequested, this);
 	if (GetEventDispatcher().IsAlive() && GetEventDispatcher().FindListeners(EventType::UIHovered))
@@ -1205,6 +1213,7 @@ void UIFSMComponent::Start()
 	GetEventDispatcher().AddListener(EventType::Pressed, this);
 	GetEventDispatcher().AddListener(EventType::KeyDown, this);
 	GetEventDispatcher().AddListener(EventType::UICloseRequested, this);
+	GetEventDispatcher().AddListener(EventType::ExplorePlayerTurnRequested, this);
 	GetEventDispatcher().AddListener(EventType::UIGoToTitleRequested, this);
 	GetEventDispatcher().AddListener(EventType::UIHovered, this);
 	GetEventDispatcher().AddListener(EventType::Released, this);
@@ -1677,33 +1686,45 @@ std::optional<EventType> UIFSMComponent::EventTypeFromName(const std::string& ev
 
 void UIFSMComponent::HandleEventByName(const std::string& eventName, const void* data)
 {
-	DispatchEvent(eventName);
+	auto dispatchEventAndCallbacks = [this, data](const std::string& dispatchEventName)
+		{
+			DispatchEvent(dispatchEventName);
 
-	for (const auto& entry : m_EventCallbacks)
+			for (const auto& entry : m_EventCallbacks)
+			{
+				if (entry.eventName != dispatchEventName)
+				{
+					continue;
+				}
+
+				auto it = m_Callbacks.find(entry.callbackId);
+				if (it != m_Callbacks.end())
+				{
+					it->second(dispatchEventName, data);
+					continue;
+				}
+
+				for (const auto& actionEntry : m_CallbackActions)
+				{
+					if (actionEntry.callbackId != entry.callbackId)
+					{
+						continue;
+					}
+					for (const auto& action : actionEntry.actions)
+					{
+						HandleAction(action);
+					}
+					break;
+				}
+			}
+		};
+
+	dispatchEventAndCallbacks(eventName);
+
+	// UI 버튼 FSM 데이터가 클릭 이벤트를 UI_Released 또는 UI_Clicked 중 하나로만
+	// 정의되어 있어도 동작하도록 클릭 이벤트를 상호 호환시킨다.
+	if (eventName == "UI_Released")
 	{
-		if (entry.eventName != eventName)
-		{
-			continue;
-		}
-
-		auto it = m_Callbacks.find(entry.callbackId);
-		if (it != m_Callbacks.end())
-		{
-			it->second(eventName, data);
-			continue;
-		}
-
-		for (const auto& actionEntry : m_CallbackActions)
-		{
-			if (actionEntry.callbackId != entry.callbackId)
-			{
-				continue;
-			}
-			for (const auto& action : actionEntry.actions)
-			{
-				HandleAction(action);
-			}
-			break;
-		}
+		dispatchEventAndCallbacks("UI_Clicked");
 	}
 }

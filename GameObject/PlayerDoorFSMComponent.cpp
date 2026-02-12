@@ -10,6 +10,8 @@
 #include "SoundManager.h"
 #include "DiceSystem.h"
 #include "Event.h"
+#include "GameState.h"
+#include <algorithm>
 
 REGISTER_COMPONENT_DERIVED(PlayerDoorFSMComponent, FSMComponent)
 
@@ -184,20 +186,74 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			}
 
 
-
-
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			DispatchEvent("None");
 		});
-}
+	}
 
+PlayerDoorFSMComponent::~PlayerDoorFSMComponent()
+{
+	GetEventDispatcher().RemoveListener(EventType::TurnChanged, this);
+}
 
 void PlayerDoorFSMComponent::Start()
 {
+	FSMGraph updatedGraph = GetGraph();
+
+	auto addTransitionIfMissing = [](FSMState& state, const std::string& eventName, const std::string& targetState)
+		{
+			const bool exists = std::any_of(state.transitions.begin(), state.transitions.end(),
+				[&](const FSMTransition& transition)
+				{
+					return transition.eventName == eventName && transition.targetState == targetState;
+				});
+			if (!exists)
+			{
+				state.transitions.push_back({ eventName, targetState, 0 });
+			}
+		};
+
+	for (auto& state : updatedGraph.states)
+	{
+		if (state.name == "DoorUI" || state.name == "DoorAttempt" || state.name == "DoorResolve")
+		{
+			addTransitionIfMissing(state, "Player_TurnEnd", "Revoke");
+		}
+
+		if (state.name == "DoorResolve")
+		{
+			addTransitionIfMissing(state, "Door_Revoke", "Revoke");
+		}
+	}
+
+	SetGraph(updatedGraph);
 	FSMComponent::Start();
+	GetEventDispatcher().AddListener(EventType::TurnChanged, this);
 }
 
 void PlayerDoorFSMComponent::Update(float deltaTime)
 {
 	FSMComponent::Update(deltaTime);
+}
+
+std::optional<std::string> PlayerDoorFSMComponent::TranslateEvent(EventType type, const void* data)
+{
+	if (type != EventType::TurnChanged || !data)
+	{
+		return std::nullopt;
+	}
+
+	const auto* payload = static_cast<const Events::TurnChanged*>(data);
+	if (!payload)
+	{
+		return std::nullopt;
+	}
+
+	const auto turn = static_cast<Turn>(payload->turn);
+	if (turn != Turn::PlayerTurn)
+	{
+		return std::string("Player_TurnEnd");
+	}
+
+	return std::nullopt;
 }

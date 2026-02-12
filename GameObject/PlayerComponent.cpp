@@ -3352,7 +3352,7 @@ bool PlayerComponent::RemoveSelectedInventoryEquipment()
 			}
 		}
 
-		m_CombatMode = ResolveBaseCombatMode();
+		ForceIdleCombatMode();
 		UpdateInventorySlotUI();
 		std::cout << "[InventoryTrash] success: removed melee item and world object" << std::endl;
 		return true;
@@ -3390,12 +3390,7 @@ bool PlayerComponent::RemoveSelectedInventoryEquipment()
 			}
 		}
 
-		m_ThrowPreviewRange = 0;
-		if (m_GridSystem)
-		{
-			m_GridSystem->SetThrowRangePreview(false, 0);
-		}
-		m_CombatMode = ResolveBaseCombatMode();
+		ForceIdleCombatMode();
 		UpdateInventorySlotUI();
 		std::cout << "[InventoryTrash] success: removed throw item and world object from slot="
 			<< m_SelectedConsumableSlot << std::endl;

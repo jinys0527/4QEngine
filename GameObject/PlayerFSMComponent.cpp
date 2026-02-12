@@ -546,6 +546,16 @@ PlayerFSMComponent::PlayerFSMComponent()
 			const std::string eventName = action.params.value("event", "");
 			DispatchSubFSMEvent(owner, target, eventName);
 		});
+
+	BindActionHandler("Player_DispatchEvent", [this](const FSMAction& action)
+		{
+			const std::string eventName = action.params.value("event", "");
+			if (eventName.empty())
+			{
+				return;
+			}
+			DispatchEvent(eventName);
+		});
 }
 
 PlayerFSMComponent::~PlayerFSMComponent()

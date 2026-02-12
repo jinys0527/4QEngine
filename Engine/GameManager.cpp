@@ -509,15 +509,20 @@ void GameManager::OnEvent(EventType type, const void* data)
 		}
 		break;
 	case EventType::ExplorePlayerTurnRequested:
-		if (m_Phase == Phase::ExplorationLoop
-			&& m_ExplorationTurnState == ExplorationTurnState::WaitingStart)
+		if (m_Phase == Phase::ExplorationLoop)
 		{
+			// 튜토리얼/가이드 UI가 닫힌 뒤에는 현재 탐험 상태와 무관하게
+			// 입력/타이머가 재개될 수 있도록 대기 플래그와 pause를 해제한다.
 			m_WaitingForHowToPlayClose = false;
 			if (m_ActiveScene)
 			{
 				m_ActiveScene->SetIsPause(false);
 			}
-			SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
+
+			if (m_ExplorationTurnState != ExplorationTurnState::PlayerTurn)
+			{
+				SetExplorationTurnState(ExplorationTurnState::PlayerTurn);
+			}
 			SetTurn(Turn::PlayerTurn);
 		}
 		break;
