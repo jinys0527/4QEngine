@@ -141,7 +141,6 @@ void GameApplication::ApplySceneBGM()
 	m_SoundManager->BGM_Shot(it->second, m_SceneChangeBGMFadeTime);
 }
 
-
 void GameApplication::Render()
 {
 	if (!m_Engine.GetD3DDXDC()) return;
