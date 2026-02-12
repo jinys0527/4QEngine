@@ -744,7 +744,7 @@ void GameManager::OnPhaseEnter(Phase phase)
 	case Phase::Shop:
 		SetTurn(Turn::PlayerTurn);
 		SetPlayerShopState(true);
-		SetFloodSystemActive(false);
+		SetFloodSystemActive(true);
 		DispatchPlayerFSMEvent("Shop_Open");
 		{
 			auto* repository = GetGameDataRepository();

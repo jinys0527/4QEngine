@@ -14,7 +14,8 @@ public:
 	virtual ~PlayerShopFSMComponent() override = default;
 
 	void Start() override;
-	void ConfigureVendingOffer(int fixedPrice, const std::vector<int>& itemIds, ItemSpawnerComponent* spawner);
+	void OnShopSelected();
+	void ConfigureVendingOffer(int fixedPrice, const std::vector<int>& itemIds, ItemSpawnerComponent* spawner, const std::string& vendingObjectName = "");
 	void ClearVendingOffer();
 private:
 	int  ResolveActivePrice() const;
@@ -29,4 +30,6 @@ private:
 	int m_VendingFixedPrice = 10;
 	std::vector<int> m_VendingItemIds;
 	ItemSpawnerComponent* m_VendingSpawner = nullptr;
+
+	std::string m_VendingObjectName;
 };

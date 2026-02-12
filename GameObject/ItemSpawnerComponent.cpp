@@ -1052,14 +1052,6 @@ bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const
 		return false;
 	}
 
-	const std::vector<int> resolvedCandidates = candidateItemIds.empty()
-		? PrepareVendingRandomCandidates()
-		: candidateItemIds;
-	if (resolvedCandidates.empty())
-	{
-		return false;
-	}
-
 	auto* owner = GetOwner();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	if (!owner || !scene)
@@ -1076,6 +1068,44 @@ bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const
 	auto& repository = services.Get<GameDataRepository>();
 	auto& diceSystem = services.Get<DiceSystem>();
 
+	const int dropTableGroup = ResolveVendingDropTableGroup();
+	EnsureDropQuantityCache(dropTableGroup, repository);
+
+	std::vector<int> resolvedCandidates;
+	if (candidateItemIds.empty())
+	{
+		resolvedCandidates = PrepareVendingRandomCandidates();
+	}
+	else
+	{
+		resolvedCandidates.reserve(candidateItemIds.size());
+		for (const int itemId : candidateItemIds)
+		{
+			if (itemId <= 0)
+			{
+				continue;
+			}
+
+			const auto* itemDefinition = repository.GetItem(itemId);
+			if (!itemDefinition || itemDefinition->category == ItemCategory::Currency)
+			{
+				continue;
+			}
+
+			if (GetRemainingDropQuantity(itemId) <= 0)
+			{
+				continue;
+			}
+
+			resolvedCandidates.push_back(itemId);
+		}
+	}
+
+	if (resolvedCandidates.empty())
+	{
+		return false;
+	}
+
 	DiceConfig rollConfig{ 1, static_cast<int>(resolvedCandidates.size()), 0 };
 	const int rolledIndex = diceSystem.RollTotal(rollConfig, RandomDomain::Shop) - 1;
 	if (rolledIndex < 0 || rolledIndex >= static_cast<int>(resolvedCandidates.size()))
@@ -1090,8 +1120,6 @@ bool ItemSpawnerComponent::SpawnVendingRandomItem(PlayerComponent* player, const
 		return false;
 	}
 
-	const int dropTableGroup = ResolveVendingDropTableGroup();
-	EnsureDropQuantityCache(dropTableGroup, repository);
 	if (!ConsumeDropQuantity(rolledItemId))
 	{
 		return false;

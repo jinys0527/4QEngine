@@ -92,55 +92,43 @@ namespace
 	}
 
 
-	UIImageComponent* FindImageComponentOrFirstChildImage(UIObject& object)
+	UIImageComponent* FindImageComponentOrFirstChildImage(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::string& objectName,
+		std::shared_ptr<UIObject>& outTarget)
 	{
-		return object.GetComponent<UIImageComponent>();
-	}
-
-	void UpdateVendingSlotInfoUI(Scene& scene, const std::vector<int>& itemIds)
-	{
-		auto& services = scene.GetServices();
-		if (!services.Has<UIManager>() || !services.Has<AssetLoader>() || !services.Has<GameDataRepository>())
+		outTarget = uiManager.FindUIObject(sceneName, objectName);
+		if (!outTarget)
 		{
-			return;
+			return nullptr;
 		}
 
-		auto& uiManager = services.Get<UIManager>();
-		auto& loader = services.Get<AssetLoader>();
-		auto& repository = services.Get<GameDataRepository>();
-		const std::string& sceneName = scene.GetName();
-
-		for (int slot = 0; slot < 6; ++slot)
+		if (auto* image = outTarget->GetComponent<UIImageComponent>())
 		{
-			const int itemId = slot < static_cast<int>(itemIds.size()) ? itemIds[slot] : -1;
-			const ItemDefinition* definition = itemId > 0 ? repository.GetItem(itemId) : nullptr;
-			TextureHandle infoTexture = TextureHandle::Invalid();
-			if (definition && !definition->infoPath.empty())
+			return image;
+		}
+
+		auto sceneIt = uiManager.GetUIObjects().find(sceneName);
+		if (sceneIt == uiManager.GetUIObjects().end())
+		{
+			return nullptr;
+		}
+
+		for (auto& [name, child] : sceneIt->second)
+		{
+			if (!child || child->GetParentName() != outTarget->GetName())
 			{
-				infoTexture = ResolveTextureByPath(loader, definition->infoPath);
+				continue;
 			}
 
-			const std::string panelName = "VendingSlot" + std::to_string(slot + 1) + "Info";
-			auto panel = uiManager.FindUIObject(sceneName, panelName);
-			if (!panel)
+			if (auto* image = child->GetComponent<UIImageComponent>())
 			{
-				continue;
-			}
-			auto* panelObject = dynamic_cast<UIObject*>(panel.get());
-			if (!panelObject)
-			{
-				continue;
-			}
-			auto* image = FindImageComponentOrFirstChildImage(*panelObject);
-			if (!image)
-			{
-				continue;
-			}
-			if (infoTexture.IsValid())
-			{
-				image->SetTextureHandle(infoTexture);
+				outTarget = child;
+				return image;
 			}
 		}
+
+		return nullptr;
 	}
 
 	void UpdateVendingSlotInfoUI(Scene& scene, const std::vector<int>& itemIds, const std::vector<int>& itemCounts)
@@ -166,30 +154,43 @@ namespace
 				infoTexture = ResolveTextureByPath(loader, definition->infoPath);
 			}
 
-			const std::string panelName = "VendingSlot" + std::to_string(slot + 1) + "Info";
-			auto panel = uiManager.FindUIObject(sceneName, panelName);
-			if (!panel)
+			const std::array<std::string, 2> infoObjectNames =
 			{
-				continue;
-			}
-			auto* panelObject = dynamic_cast<UIObject*>(panel.get());
-			if (!panelObject)
+				"ItemInfo" + std::to_string(slot + 1),
+				"VendingSlot" + std::to_string(slot + 1) + "Info"
+			};
+
+			for (const auto& infoName : infoObjectNames)
 			{
-				continue;
-			}
-			auto* image = FindImageComponentOrFirstChildImage(*panelObject);
-			if (!image)
-			{
-				continue;
-			}
-			if (infoTexture.IsValid())
-			{
-				image->SetTextureHandle(infoTexture);
+				auto infoRoot = uiManager.FindUIObject(sceneName, infoName);
+				if (infoRoot)
+				{
+					// Info는 hover 액션(UIFSM)에서만 노출되어야 한다.
+					infoRoot->SetIsVisible(false);
+				}
+
+				std::shared_ptr<UIObject> panelTarget;
+				auto* image = FindImageComponentOrFirstChildImage(uiManager, sceneName, infoName, panelTarget);
+				if (!panelTarget || !image)
+				{
+					continue;
+				}
+
+				if (infoTexture.IsValid())
+				{
+					image->SetTextureHandle(infoTexture);
+				}
+
+				// 이미지가 자식 오브젝트인 경우도 있어 타겟도 기본 숨김을 강제한다.
+				panelTarget->SetIsVisible(false);
+				break;
 			}
 
 			const int itemCount = slot < static_cast<int>(itemCounts.size()) ? itemCounts[slot] : 0;
-			const std::array<std::string, 3> countObjectNames =
+			const std::array<std::string, 5> countObjectNames =
 			{
+				"Item" + std::to_string(slot + 1),
+				"ItemCount" + std::to_string(slot + 1),
 				"VendingSlot" + std::to_string(slot + 1) + "Count",
 				"VendingSlot" + std::to_string(slot + 1) + "Number",
 				"VendingSlot" + std::to_string(slot + 1) + "Amount"
@@ -218,6 +219,87 @@ namespace
 		}
 	}
 
+	void UpdateVendingSlotInfoUI(Scene& scene, const std::vector<int>& itemIds)
+	{
+		UpdateVendingSlotInfoUI(scene, itemIds, std::vector<int>{});
+	}
+
+	void ResetVendingSlotInfoUI(Scene& scene)
+	{
+		auto& services = scene.GetServices();
+		if (!services.Has<UIManager>())
+		{
+			return;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+
+		const std::string& sceneName = scene.GetName();
+
+		for (int slot = 0; slot < 6; ++slot)
+		{
+			const std::array<std::string, 2> infoObjectNames =
+			{
+				"VendingSlot" + std::to_string(slot + 1) + "Info",
+				"ItemInfo" + std::to_string(slot + 1)
+			};
+
+			for (const auto& infoName : infoObjectNames)
+			{
+				auto panel = uiManager.FindUIObject(sceneName, infoName);
+				if (panel)
+				{
+					panel->SetIsVisible(false);
+				}
+			}
+
+			const std::array<std::string, 2> imageObjectNames =
+			{
+				"VendingSlot" + std::to_string(slot + 1),
+				"ItemImage" + std::to_string(slot + 1)
+			};
+
+			for (const auto& imageName : imageObjectNames)
+			{
+				auto imageObject = uiManager.FindUIObject(sceneName, imageName);
+				if (imageObject)
+				{
+					imageObject->SetIsVisible(false);
+				}
+			}
+
+			const std::array<std::string, 5> countObjectNames =
+			{
+				"Item" + std::to_string(slot + 1),
+				"ItemCount" + std::to_string(slot + 1),
+				"VendingSlot" + std::to_string(slot + 1) + "Count",
+				"VendingSlot" + std::to_string(slot + 1) + "Number",
+				"VendingSlot" + std::to_string(slot + 1) + "Amount"
+			};
+
+			for (const auto& countName : countObjectNames)
+			{
+				auto countObject = uiManager.FindUIObject(sceneName, countName);
+				if (!countObject)
+				{
+					continue;
+				}
+
+				auto* uiCountObject = dynamic_cast<UIObject*>(countObject.get());
+				if (!uiCountObject)
+				{
+					continue;
+				}
+
+				if (auto* number = uiCountObject->GetComponent<UINumberSpriteComponent>())
+				{
+					number->SetValue(0);
+					break;
+				}
+			}
+		}
+	}
+
 	//거리 계산용
 	float DistanceSquared(const XMFLOAT3& a, const XMFLOAT3& b)
 	{
@@ -236,6 +318,7 @@ VendingComponent::~VendingComponent()
 {
 	GetEventDispatcher().RemoveListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().RemoveListener(EventType::VendingOfferUpdated, this);
+	GetEventDispatcher().RemoveListener(EventType::PlayerShopClose, this);
 }
 
 void VendingComponent::Start()
@@ -243,6 +326,7 @@ void VendingComponent::Start()
 	m_Player = FindPlayerComponent();
 	GetEventDispatcher().AddListener(EventType::MouseLeftClick, this);
 	GetEventDispatcher().AddListener(EventType::VendingOfferUpdated, this);
+	GetEventDispatcher().AddListener(EventType::PlayerShopClose, this);
 }
 
 void VendingComponent::Update(float deltaTime)
@@ -270,6 +354,18 @@ void VendingComponent::OnEvent(EventType type, const void* data)
 		UpdateVendingSlotInfoUI(*scene, payload->itemIds, payload->itemCounts);
 		return;
 	}
+
+	if (type == EventType::PlayerShopClose)
+	{
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		if (scene)
+		{
+			ResetVendingSlotInfoUI(*scene);
+		}
+		return;
+	}
+
 
 	if (type != EventType::MouseLeftClick)
 	{
@@ -426,8 +522,10 @@ bool VendingComponent::OpenVendingUI()
 	{
 		vendingCandidates = spawner->PrepareVendingRandomCandidates();
 	}
-	shopFSM->ConfigureVendingOffer(m_Cost, vendingCandidates, spawner);
-	if (auto* owner = GetOwner())
+
+	auto* vendingOwner = GetOwner();
+	shopFSM->ConfigureVendingOffer(m_Cost, vendingCandidates, spawner, vendingOwner ? vendingOwner->GetName() : "");
+	if (auto* owner = vendingOwner)
 	{
 		if (auto* scene = owner->GetScene())
 		{
@@ -449,7 +547,9 @@ bool VendingComponent::OpenVendingUI()
 
 			GetEventDispatcher().Dispatch(EventType::VendingOfferUpdated, &payload);
 		}
-	}
+	}	
+
+	shopFSM->OnShopSelected();
 	shopFSM->DispatchEvent("Shop_Select");
 	return true;
 }

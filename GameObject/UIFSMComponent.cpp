@@ -16,6 +16,11 @@
 #include "PlayerDoorFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
+#include "AssetLoader.h"
+#include "GameDataRepository.h"
+#include "UIManager.h"
+#include "UIImageComponent.h"
+#include "ServiceRegistry.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -125,6 +130,263 @@ namespace
 				fsm->DispatchEvent(eventName);
 			}
 			return;
+		}
+	}
+
+	std::string NormalizePath(std::string value)
+	{
+		std::replace(value.begin(), value.end(), '\\', '/');
+		return value;
+	}
+
+	bool EndsWithPath(const std::string& value, const std::string& suffix)
+	{
+		if (suffix.empty() || value.size() < suffix.size())
+		{
+			return false;
+		}
+		return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+	}
+
+	TextureHandle ResolveTextureByPath(AssetLoader& assetLoader, const std::string& iconPath)
+	{
+		if (iconPath.empty())
+		{
+			return TextureHandle::Invalid();
+		}
+
+		const std::string normalizedPath = NormalizePath(iconPath);
+		const auto& keyToHandle = assetLoader.GetTextures().GetKeyToHandle();
+		auto direct = keyToHandle.find(normalizedPath);
+		if (direct != keyToHandle.end())
+		{
+			return direct->second;
+		}
+
+		std::string trimmedPath = normalizedPath;
+		while (trimmedPath.rfind("../", 0) == 0)
+		{
+			trimmedPath.erase(0, 3);
+			auto trimmed = keyToHandle.find(trimmedPath);
+			if (trimmed != keyToHandle.end())
+			{
+				return trimmed->second;
+			}
+		}
+
+		const size_t filenameStart = normalizedPath.find_last_of('/');
+		const std::string filename = (filenameStart == std::string::npos)
+			? normalizedPath
+			: normalizedPath.substr(filenameStart + 1);
+
+		for (const auto& [key, handle] : keyToHandle)
+		{
+			const std::string normalizedKey = NormalizePath(key);
+			if (normalizedKey == normalizedPath || EndsWithPath(normalizedKey, normalizedPath) || EndsWithPath(normalizedKey, filename))
+			{
+				return handle;
+			}
+		}
+
+		return TextureHandle::Invalid();
+	}
+
+	UIImageComponent* FindImageOnObjectOrChildren(UIManager& uiManager, const std::string& sceneName, const std::string& objectName, std::shared_ptr<UIObject>& outTarget)
+	{
+		outTarget = uiManager.FindUIObject(sceneName, objectName);
+		if (!outTarget)
+		{
+			return nullptr;
+		}
+
+		if (auto* image = outTarget->GetComponent<UIImageComponent>())
+		{
+			return image;
+		}
+
+		auto& sceneObjects = uiManager.GetUIObjects()[sceneName];
+		for (auto& [name, obj] : sceneObjects)
+		{
+			if (!obj || obj->GetParentName() != objectName)
+			{
+				continue;
+			}
+			if (auto* image = obj->GetComponent<UIImageComponent>())
+			{
+				outTarget = obj;
+				return image;
+			}
+		}
+
+		return nullptr;
+	}
+
+	std::vector<std::string> GetVendingSlotNameCandidates(int index)
+	{
+		const int slot = index + 1;
+		return {
+			"ItemImage" + std::to_string(slot)
+		};
+	}
+
+
+	UIImageComponent* FindVendingSlotImageByParent(UIManager& uiManager,
+		const std::string& sceneName,
+		const std::string& vendingObjectName,
+		int index,
+		std::shared_ptr<UIObject>& outTarget)
+	{
+		if (vendingObjectName.empty())
+		{
+			return nullptr;
+		}
+
+		auto sceneIt = uiManager.GetUIObjects().find(sceneName);
+		if (sceneIt == uiManager.GetUIObjects().end())
+		{
+			return nullptr;
+		}
+
+		std::vector<std::shared_ptr<UIObject>> slotCandidates;
+		for (auto& [name, object] : sceneIt->second)
+		{
+			if (!object || object->GetParentName() != vendingObjectName)
+			{
+				continue;
+			}
+
+			const std::string lower = ToLower(name);
+			if (lower.find("close") != std::string::npos || lower.find("xbutton") != std::string::npos)
+			{
+				continue;
+			}
+
+			if (object->GetComponent<UIImageComponent>() || object->GetComponent<UIButtonComponent>())
+			{
+				slotCandidates.push_back(object);
+			}
+		}
+
+		std::sort(slotCandidates.begin(), slotCandidates.end(),
+			[](const std::shared_ptr<UIObject>& a, const std::shared_ptr<UIObject>& b)
+			{
+				if (!a || !b)
+				{
+					return static_cast<bool>(a);
+				}
+				return a->GetName() < b->GetName();
+			});
+
+		if (index < 0 || index >= static_cast<int>(slotCandidates.size()))
+		{
+			return nullptr;
+		}
+
+		outTarget = slotCandidates[index];
+		if (!outTarget)
+		{
+			return nullptr;
+		}
+
+		if (auto* image = outTarget->GetComponent<UIImageComponent>())
+		{
+			return image;
+		}
+
+		for (auto& [name, object] : sceneIt->second)
+		{
+			if (!object || object->GetParentName() != outTarget->GetName())
+			{
+				continue;
+			}
+			if (auto* image = object->GetComponent<UIImageComponent>())
+			{
+				outTarget = object;
+				return image;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void UpdateVendingSlotIcon(Scene* scene, UIManager& uiManager, AssetLoader& assetLoader, GameDataRepository& repo, const Events::VendingOfferUpdatedEvent& payload, int index)
+	{
+		if (!scene)
+		{
+			return;
+		}
+
+		TextureHandle icon = TextureHandle::Invalid();
+		if (index < static_cast<int>(payload.itemIds.size()))
+		{
+			const int itemId = payload.itemIds[index];
+			if (const auto* item = repo.GetItem(itemId))
+			{
+				icon = ResolveTextureByPath(assetLoader, item->iconPath);
+			}
+		}
+
+		const auto candidates = GetVendingSlotNameCandidates(index);
+		const std::string sceneName = scene->GetName();
+		for (const auto& slotName : candidates)
+		{
+			std::shared_ptr<UIObject> target;
+			auto* image = FindImageOnObjectOrChildren(uiManager, sceneName, slotName, target);
+			if (!image || !target)
+			{
+				continue;
+			}
+
+			if (icon.IsValid())
+			{
+				image->SetTextureHandle(icon);
+				target->SetIsVisible(true);
+			}
+			else
+			{
+				target->SetIsVisible(false);
+			}
+			return;
+		}
+
+		std::shared_ptr<UIObject> fallbackTarget;
+		auto* fallbackImage = FindVendingSlotImageByParent(uiManager, sceneName, payload.vendingObjectName, index, fallbackTarget);
+		if (!fallbackImage || !fallbackTarget)
+		{
+			return;
+		}
+
+		if (icon.IsValid())
+		{
+			fallbackImage->SetTextureHandle(icon);
+			fallbackTarget->SetIsVisible(true);
+		}
+		else
+		{
+			fallbackTarget->SetIsVisible(false);
+		}
+	}
+
+	void UpdateVendingOfferUI(Scene* scene, const Events::VendingOfferUpdatedEvent* payload)
+	{
+		if (!scene || !payload)
+		{
+			return;
+		}
+
+		auto& services = scene->GetServices();
+		if (!services.Has<UIManager>() || !services.Has<AssetLoader>() || !services.Has<GameDataRepository>())
+		{
+			return;
+		}
+
+		auto& uiManager = services.Get<UIManager>();
+		auto& assetLoader = services.Get<AssetLoader>();
+		auto& repo = services.Get<GameDataRepository>();
+
+		for (int i = 0; i < 6; ++i)
+		{
+			UpdateVendingSlotIcon(scene, uiManager, assetLoader, repo, *payload, i);
 		}
 	}
 }
@@ -629,9 +891,11 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestShopClose", [this](const FSMAction& action)
 		{
+			std::cout << "UI_RequestShopClose\n";
 			auto* owner = GetOwner();
 			auto* scene = owner ? owner->GetScene() : nullptr;
-			DispatchPlayerEvent(scene, "Shop_Close");
+			// Shop_Close는 Player 메인 FSM이 아니라 Shop 서브 FSM에서 처리된다.
+			DispatchPlayerSubEvent(scene, "Shop", "Shop_Close");
 			DispatchEvent("None");
 		});
 
@@ -878,6 +1142,13 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 		{
 			UpdateTurnEndButtonState(static_cast<Turn>(payload->turn));
 		}
+	}
+
+	if (type == EventType::VendingOfferUpdated)
+	{
+		auto* owner = GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		UpdateVendingOfferUI(scene, static_cast<const Events::VendingOfferUpdatedEvent*>(data));
 	}
 
 	if (type == EventType::Pressed

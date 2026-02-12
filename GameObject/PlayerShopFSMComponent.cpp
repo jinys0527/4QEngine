@@ -134,8 +134,7 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 		});
 	BindActionHandler("Shop_Select", [this](const FSMAction&)
 		{
-			GetEventDispatcher().Dispatch(EventType::PlayerShopOpen, nullptr);
-			DispatchCurrentMoneyState();
+			OnShopSelected();
 		});
 	BindActionHandler("Shop_SpaceCheck", [this](const FSMAction& action)
 		{
@@ -183,6 +182,20 @@ PlayerShopFSMComponent::PlayerShopFSMComponent()
 			if (m_UseVendingOffer && m_VendingSpawner)
 			{
 				m_VendingSpawner->SpawnVendingRandomItem(player, m_VendingItemIds);
+
+				auto* sceneForUpdate = owner ? owner->GetScene() : nullptr;
+				if (sceneForUpdate)
+				{
+					Events::VendingOfferUpdatedEvent payload;
+					payload.vendingObjectName = m_VendingObjectName;
+					payload.itemIds = m_VendingItemIds;
+					payload.itemCounts.reserve(m_VendingItemIds.size());
+					for (const int itemId : m_VendingItemIds)
+					{
+						payload.itemCounts.push_back(m_VendingSpawner->GetRemainingDropQuantity(itemId));
+					}
+					GetEventDispatcher().Dispatch(EventType::VendingOfferUpdated, &payload);
+				}
 			}
 			else
 			{
@@ -235,12 +248,19 @@ void PlayerShopFSMComponent::Start()
 	FSMComponent::Start();
 }
 
-void PlayerShopFSMComponent::ConfigureVendingOffer(int fixedPrice, const std::vector<int>& itemIds, ItemSpawnerComponent* spawner)
+void PlayerShopFSMComponent::OnShopSelected()
+{
+	GetEventDispatcher().Dispatch(EventType::PlayerShopOpen, nullptr);
+	DispatchCurrentMoneyState();
+}
+
+void PlayerShopFSMComponent::ConfigureVendingOffer(int fixedPrice, const std::vector<int>& itemIds, ItemSpawnerComponent* spawner, const std::string& vendingObjectName)
 {
 	m_UseVendingOffer = true;
 	m_VendingFixedPrice = max(0, fixedPrice);
 	m_VendingItemIds = itemIds;
 	m_VendingSpawner = spawner;
+	m_VendingObjectName = vendingObjectName;
 }
 
 void PlayerShopFSMComponent::ClearVendingOffer()
@@ -249,6 +269,7 @@ void PlayerShopFSMComponent::ClearVendingOffer()
 	m_VendingFixedPrice = 10;
 	m_VendingItemIds.clear();
 	m_VendingSpawner = nullptr;
+	m_VendingObjectName.clear();
 }
 
 int PlayerShopFSMComponent::ResolveActivePrice() const
@@ -280,7 +301,7 @@ void PlayerShopFSMComponent::DispatchCurrentMoneyState()
 		return;
 	}
 
-	const int price = ResolveDiscountedPrice(ResolveActivePrice(), playerStat);
+	const int price = ResolveActivePrice();
 	DispatchEvent(player->GetMoney() >= price ? "Shop_MoneyOk" : "Shop_MoneyFail");
 }
 
