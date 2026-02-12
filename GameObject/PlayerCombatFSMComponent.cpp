@@ -387,7 +387,7 @@ bool PlayerCombatFSMComponent::ExecutePlayerAttack()
 		EnemyComponent* pendingTarget = player->ConsumePendingAttackTarget();
 		const int playerQ = player->GetQ();
 		const int playerR = player->GetR();
-		range = max(0, player->GetAttackRange());
+		range = max(0, range);
 
 		if (pendingTarget && pendingTarget->GetActorId() != 0)
 		{
@@ -662,6 +662,8 @@ bool PlayerCombatFSMComponent::ExecuteThrowAttack(PlayerComponent& player, Enemy
 		return false;
 	}
 
+	throwItem->BeginThrow(startPos, targetPos, 2.0f);
+
 	if (!ApplyThrowDamage(throwItem, enemy))
 	{
 		return false;
@@ -773,33 +775,59 @@ bool PlayerCombatFSMComponent::ApplyThrowDamage(ItemComponent* throwItem, EnemyC
 	}
 
 	auto& diceSystem = services.Get<DiceSystem>();
+	const int agilityModifier = playerStat->GetCalculatedAgilityModifier();
+	const int defense = enemyStat->GetDefense();
+	const int attackRoll = diceSystem.RollTotal({ 1, 20, 0 }, RandomDomain::World) + agilityModifier;
+	const bool isHit = attackRoll >= defense;
+
+	if (!isHit)
+	{
+		std::cout << "[Throw] Miss (Roll=" << attackRoll
+			<< ", DEF=" << defense << ")" << std::endl;
+		std::cout << "[Throw-Debug] MissRoll=(1d20+AGI) => " << attackRoll
+			<< " [AGI=" << agilityModifier << ", DEF=" << defense << "]" << std::endl;
+
+		if (auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr)
+		{
+			const Events::CombatNumberPopupEvent popupEvent{ player->GetActorId(), enemy->GetActorId(), 0, true, false };
+			GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
+		}
+		return true;
+	}
+
 	const int diceCount = max(0, throwItem->GetDiceRoll());
 	const int diceSides = max(0, throwItem->GetDiceType());
 	const int bonus = throwItem->GetBaseModifier();
-	const int agilityModifier = playerStat->GetCalculatedAgilityModifier();
-	int damage = bonus + agilityModifier;
+	const int baseDamage = bonus + agilityModifier;
+
+	int diceDamage = 0;
 
 	if (diceCount > 0 && diceSides > 0)
 	{
 		const DiceConfig rollConfig{ diceCount, diceSides, 0 };
-		damage += diceSystem.RollTotal(rollConfig, RandomDomain::World);
+		diceDamage = diceSystem.RollTotal(rollConfig, RandomDomain::World);
 	}
 
-	if (damage <= 0)
-	{
-		return false;
-	}
+	const int rawDamage = baseDamage + diceDamage;
+	const int damage = max(0, rawDamage);
+
+	std::cout << "[Throw-Debug] HitRoll=(1d20+AGI) => " << attackRoll
+		<< " [AGI=" << agilityModifier << ", DEF=" << defense << "]" << std::endl;
+	std::cout << "[Throw-Debug] Damage=(BaseModifier+AGI+Dice) => ("
+		<< bonus << "+" << agilityModifier << "+" << diceDamage << ")"
+		<< " = raw " << rawDamage << " -> final " << damage
+		<< " [Dice=" << diceCount << "d" << diceSides << "]" << std::endl;
 
 	const int prevHp = enemyStat->GetCurrentHP();
 	const int nextHp = max(0, prevHp - damage);
 	enemyStat->SetCurrentHP(nextHp);
-	std::cout << "[Throw] Damage=" << damage << " (AGI mod=" << agilityModifier
-		<< ") Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
+	std::cout << "[Throw] Hit (Roll=" << attackRoll << ", DEF=" << defense << ") Damage=" << damage
+		<< " Enemy HP: " << prevHp << " -> " << nextHp << std::endl;
 
 	if (auto* player = owner ? owner->GetComponent<PlayerComponent>() : nullptr)
 	{
-		const Events::CombatNumberPopupEvent popupEvent{ player->GetActorId(), enemy->GetActorId(), nextHp - prevHp, false, false };
-		GetEventDispatcher().Dispatch(EventType::CombatNumberPopup, &popupEvent);
+		const bool isMiss = (damage == 0);
+		const Events::CombatNumberPopupEvent popupEvent{ player->GetActorId(), enemy->GetActorId(), nextHp - prevHp, isMiss, false };
 	}
 	return true;
 }
