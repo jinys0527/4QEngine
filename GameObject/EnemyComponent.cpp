@@ -20,10 +20,12 @@
 #include "MeshRenderer.h"
 #include "SkeletalMeshRenderer.h"
 #include "SkinningAnimationComponent.h"
+#include "SkeletalMeshComponent.h"
 #include "ServiceRegistry.h"
 #include "BoxColliderComponent.h"
 #include "CombatManager.h"
 #include "AssetLoader.h"
+#include "ItemComponent.h"
 #include <array>
 #include <cmath>
 #include <algorithm>
@@ -44,6 +46,32 @@ REGISTER_PROPERTY(EnemyComponent, UseDeathAnimationBlend)
 
 namespace
 {
+	void CollectEquippedItemTransformsRecursive(TransformComponent* root, std::vector<TransformComponent*>& outTransforms)
+	{
+		if (!root)
+		{
+			return;
+		}
+
+		for (auto* child : root->GetChildrens())
+		{
+			if (!child)
+			{
+				continue;
+			}
+
+			if (auto* childOwner = child->GetOwner())
+			{
+				if (childOwner->GetComponent<ItemComponent>())
+				{
+					outTransforms.push_back(child);
+				}
+			}
+
+			CollectEquippedItemTransformsRecursive(child, outTransforms);
+		}
+	}
+
 	void SetRenderAndCollisionVisibleRecursive(TransformComponent* transform, bool visible)
 	{
 		if (!transform)
@@ -71,6 +99,100 @@ namespace
 		{
 			SetRenderAndCollisionVisibleRecursive(child, visible);
 		}
+	}
+}
+
+void EnemyComponent::SyncEquippedWeaponPose()
+{
+	auto* owner = GetOwner();
+	auto* enemyTransform = owner ? owner->GetComponent<TransformComponent>() : nullptr;
+	if (!owner || !enemyTransform)
+	{
+		return;
+	}
+
+	std::vector<TransformComponent*> weaponTransforms;
+	CollectEquippedItemTransformsRecursive(enemyTransform, weaponTransforms);
+	if (weaponTransforms.empty())
+	{
+		return;
+	}
+
+	auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+	auto* loader = AssetLoader::GetActive();
+	if (!skeletal || !loader)
+	{
+		return;
+	}
+
+	const SkeletonHandle skeletonHandle = skeletal->GetSkeletonHandle();
+	if (!skeletonHandle.IsValid())
+	{
+		return;
+	}
+
+	RenderData::Skeleton* skeleton = loader->GetSkeletons().Get(skeletonHandle);
+	if (!skeleton)
+	{
+		return;
+	}
+
+	XMFLOAT4X4 equipmentPose = skeleton->equipmentBindPose;
+	const int equipmentBoneIndex = skeleton->equipmentBoneIndex;
+	if (equipmentBoneIndex >= 0)
+	{
+		auto* animComp = owner->GetComponent<SkinningAnimationComponent>();
+		if (animComp)
+		{
+			const auto& globalPose = animComp->GetGlobalPose();
+			if (static_cast<size_t>(equipmentBoneIndex) < globalPose.size())
+			{
+				equipmentPose = globalPose[static_cast<size_t>(equipmentBoneIndex)];
+			}
+		}
+	}
+
+	XMMATRIX localEquipmentM = XMMatrixMultiply(
+		XMMatrixScaling(0.01f, 0.01f, 0.01f),
+		XMLoadFloat4x4(&equipmentPose));
+
+	XMFLOAT4X4 localEquipmentPose{};
+	XMStoreFloat4x4(&localEquipmentPose, localEquipmentM);
+
+	for (auto* weaponTransform : weaponTransforms)
+	{
+		if (!weaponTransform)
+		{
+			continue;
+		}
+
+		auto* weaponOwner = weaponTransform->GetOwner();
+		auto* itemComponent = weaponOwner ? weaponOwner->GetComponent<ItemComponent>() : nullptr;
+		if (itemComponent)
+		{
+			itemComponent->SetIsEquiped(true);
+			itemComponent->SetEquipmentBindPose(localEquipmentPose);
+		}
+
+
+		XMVECTOR scale;
+		XMVECTOR rotQuat;
+		XMVECTOR translation;
+		if (!XMMatrixDecompose(&scale, &rotQuat, &translation, localEquipmentM))
+		{
+			continue;
+		}
+
+		XMFLOAT3 pos{};
+		XMFLOAT3 scl{};
+		XMFLOAT4 rot{};
+		XMStoreFloat3(&pos, translation);
+		XMStoreFloat3(&scl, scale);
+		XMStoreFloat4(&rot, rotQuat);
+
+		weaponTransform->SetPosition(pos);
+		weaponTransform->SetRotation(rot);
+		weaponTransform->SetScale(scl);
 	}
 }
 
@@ -390,6 +512,7 @@ void EnemyComponent::Update(float deltaTime) {
 	auto* gameManager = scene ? scene->GetGameManager() : nullptr;
 
 	SyncFacingFromTransform();
+	SyncEquippedWeaponPose();
 	
 	if (gameManager && gameManager->GetPhase() == Phase::GameOver)
 	{
