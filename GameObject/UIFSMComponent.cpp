@@ -13,6 +13,7 @@
 #include "Scene.h"
 #include "GameManager.h"
 #include "GameObject.h"
+#include "CombatManager.h"
 #include "PlayerDoorFSMComponent.h"
 #include "PlayerFSMComponent.h"
 #include "PlayerShopFSMComponent.h"
@@ -92,6 +93,102 @@ namespace
 
 
 		return 0;
+	}
+
+	bool IsDiceActionButtonName(const std::string& ownerName)
+	{
+		return ownerName == "DiceRollBtn"
+			|| ownerName == "DiceStatBtn"
+			|| ownerName == "DiceContinueBtn";
+	}
+
+	using DiceClock = std::chrono::steady_clock;
+	constexpr auto kDiceClickDebounce = std::chrono::milliseconds(650);
+
+	std::unordered_map<std::string, DiceClock::time_point>& GetDiceLastClickByOwner()
+	{
+		static std::unordered_map<std::string, DiceClock::time_point> s_LastClickByOwner;
+		return s_LastClickByOwner;
+	}
+
+	std::unordered_map<std::string, DiceClock::time_point>& GetDicePendingReenableByOwner()
+	{
+		static std::unordered_map<std::string, DiceClock::time_point> s_PendingReenableByOwner;
+		return s_PendingReenableByOwner;
+	}
+
+	void MarkDicePendingReenable(const std::string& ownerName)
+	{
+		if (!IsDiceActionButtonName(ownerName))
+		{
+			return;
+		}
+
+		auto& lastClickByOwner = GetDiceLastClickByOwner();
+		auto it = lastClickByOwner.find(ownerName);
+		if (it == lastClickByOwner.end())
+		{
+			return;
+		}
+
+		GetDicePendingReenableByOwner()[ownerName] = it->second + kDiceClickDebounce;
+	}
+
+	bool IsDiceReenableReady(const std::string& ownerName)
+	{
+		auto& pendingReenableByOwner = GetDicePendingReenableByOwner();
+		auto it = pendingReenableByOwner.find(ownerName);
+		if (it == pendingReenableByOwner.end())
+		{
+			return false;
+		}
+
+		if (DiceClock::now() < it->second)
+		{
+			return false;
+		}
+
+		pendingReenableByOwner.erase(it);
+		return true;
+	}
+
+	bool HasDicePendingReenable(const std::string& ownerName)
+	{
+		return GetDicePendingReenableByOwner().find(ownerName) != GetDicePendingReenableByOwner().end();
+	}
+
+
+	bool ShouldThrottleDiceUIButtonClick(const std::string& ownerName)
+	{
+		if (!IsDiceActionButtonName(ownerName))
+		{
+			return false;
+		}
+
+		auto& lastClickByOwner = GetDiceLastClickByOwner();
+		const auto now = DiceClock::now();
+		auto it = lastClickByOwner.find(ownerName);
+		if (it != lastClickByOwner.end() && (now - it->second) < kDiceClickDebounce)
+		{
+			return true;
+		}
+
+		lastClickByOwner[ownerName] = now;
+		return false;
+	}
+
+	bool IsCombatDiceFlowActive(UIFSMComponent* component)
+	{
+		if (!component)
+		{
+			return false;
+		}
+
+		auto* owner = component->GetOwner();
+		auto* scene = owner ? owner->GetScene() : nullptr;
+		auto* gameManager = scene ? scene->GetGameManager() : nullptr;
+		auto* combatManager = gameManager ? gameManager->GetCombatManager() : nullptr;
+		return combatManager && combatManager->IsDiceFlowActive();
 	}
 
 	bool IsAnyVendingHoverCandidateHit(Scene* scene, int slotIndex, const POINT& mousePos)
@@ -1050,8 +1147,14 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestDoorCancel", [this](const FSMAction& action)
 		{
-			std::cout << "[UIFSM][Trace] Action UI_RequestDoorCancel -> dispatch PlayerDoorCancel" << std::endl;
+			std::cout << "[UIFSM][Trace] Action UI_RequestDoorCancel -> dispatch PlayerDoorCancel + Door_Complete" << std::endl;
+			auto* owner = GetOwner();
+			auto* scene = owner ? owner->GetScene() : nullptr;
+
+			// 닫기 버튼은 즉시 반응해야 하므로 UI 종료 이벤트를 바로 발행한다.
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
+			// Player FSM을 Door 상태에서 확실히 복귀시켜 다음 Door_Interact 재진입을 보장한다.
+			DispatchPlayerEvent(scene, "Door_Complete");
 			DispatchEvent("None");
 		});
 
@@ -1267,6 +1370,14 @@ void UIFSMComponent::Update(float deltaTime)
 {
 	FSMComponent::Update(deltaTime);
 
+	const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+	if (GetCurrentStateName() == "Disabled"
+		&& HasDicePendingReenable(ownerName)
+		&& IsDiceReenableReady(ownerName))
+	{
+		HandleEventByName("Player_DiceAnimationCompleted", nullptr);
+	}
+
 	// 안전장치: 어떤 이유로 마지막 PlayerDiceAnimationCompleted가 누락돼도
 	// pending 상태가 남아 버튼/전이가 막히지 않도록 업데이트 단계에서 복구한다.
 	if (!m_PendingDiceStatResolved)
@@ -1415,6 +1526,18 @@ void UIFSMComponent::OnEvent(EventType type, const void* data)
 				return;
 			}
 		}
+
+		const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+		if (IsDiceActionButtonName(ownerName)
+			&& GetCurrentStateName() == "Disabled"
+			&& IsCombatDiceFlowActive(this))
+		{
+			// 전투 주사위 플로우 중에는 마지막 클릭 후 디바운스 시간(650ms)이
+			// 지나기 전까지는 조기 복귀를 막고, 시간이 지나면 Update에서 재활성화한다.
+			MarkDicePendingReenable(ownerName);
+			return;
+		}
+
 
 		if (m_PendingDiceStatResolved)
 		{
@@ -1690,6 +1813,15 @@ void UIFSMComponent::HandleEventByName(const std::string& eventName, const void*
 {
 
 	const std::string stateBeforeDispatch = GetCurrentStateName();
+
+	const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+	if (eventName == "UI_Clicked" && ShouldThrottleDiceUIButtonClick(ownerName))
+	{
+		std::cout << "[UIFSM][Trace] throttle rapid dice click owner=" << ownerName
+			<< " event=" << eventName << std::endl;
+		return;
+	}
+
 	const bool isDiceDoorEvent = eventName == "UI_Released"
 		|| eventName == "UI_Clicked"
 		|| eventName == "Player_DoorInteract"
@@ -1707,7 +1839,7 @@ void UIFSMComponent::HandleEventByName(const std::string& eventName, const void*
 		|| eventName == "Player_DiceAnimationCompleted"
 		|| eventName == "Player_DiceContinueRequested"
 		|| eventName == "Player_DiceUIClose";
-	const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+	
 	const bool isLikelyDoorDiceUI = ownerName.find("Door") != std::string::npos
 		|| ownerName.find("Dice") != std::string::npos;
 

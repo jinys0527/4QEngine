@@ -207,16 +207,7 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			auto* owner = GetOwner();
 			if (owner)
 			{
-				if (auto* player = owner->GetComponent<PlayerComponent>())
-				{
-					player->ConsumePendingDoor();
-				}
-
-// 				if (auto* playerFsm = owner->GetComponent<PlayerFSMComponent>())
-// 				{
-// 					playerFsm->DispatchEvent("Door_Complete");
-// 				}
-
+				// 실패 시에는 PendingDoor를 유지해 팝업 종료 후 같은 문에 재도전할 수 있게 한다.
 				auto* scene = owner->GetScene();
 				if (scene)
 				{
@@ -229,8 +220,9 @@ PlayerDoorFSMComponent::PlayerDoorFSMComponent()
 			}
 			std::cout << "[DoorFSM][Trace] Door_Fail dispatch PlayerDoorFail" << std::endl;
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorFail, nullptr);
-			//GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
-			//DispatchEvent("Door_Complete");
+
+			// 실패 시 즉시 재도전으로 돌아가지 않고,
+			// 팝업을 닫은 뒤 재진입 이벤트(Door_Select)로 다시 시작되게 한다.
 			DispatchEvent("None");
 		});
 
