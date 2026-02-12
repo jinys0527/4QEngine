@@ -424,7 +424,6 @@ void RegisterPlayerFSMDefinitions()
 	eventRegistry.RegisterEvent({ "Player_Throw_1",      "Player" });
 	eventRegistry.RegisterEvent({ "Player_Throw_2",      "Player" });
 	eventRegistry.RegisterEvent({ "Player_Throw_3",      "Player" });
-	eventRegistry.RegisterEvent({ "Player_InventoryTrash", "Player" });
 
 	eventRegistry.RegisterEvent({ "Inventory_Open",	  "Player" });
 	eventRegistry.RegisterEvent({ "Inventory_Close",  "Player" });
@@ -545,16 +544,6 @@ PlayerFSMComponent::PlayerFSMComponent()
 			const std::string target = action.params.value("target", "");
 			const std::string eventName = action.params.value("event", "");
 			DispatchSubFSMEvent(owner, target, eventName);
-		});
-
-	BindActionHandler("Player_DispatchEvent", [this](const FSMAction& action)
-		{
-			const std::string eventName = action.params.value("event", "");
-			if (eventName.empty())
-			{
-				return;
-			}
-			DispatchEvent(eventName);
 		});
 }
 
