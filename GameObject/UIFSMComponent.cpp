@@ -964,7 +964,8 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestDiceContinue", [this](const FSMAction&)
 		{
-			std::cout << "[UIFSM] Action UI_RequestDiceContinue -> dispatch PlayerDiceContinueRequested" << std::endl;
+			std::cout << "[UIFSM][Trace] Action UI_RequestDiceContinue -> dispatch PlayerDiceContinueRequested"
+				<< " currentState=" << GetCurrentStateName() << std::endl;
 			GetEventDispatcher().Dispatch(EventType::PlayerDiceContinueRequested, nullptr);
 		});
 
@@ -1049,6 +1050,7 @@ UIFSMComponent::UIFSMComponent()
 
 	BindActionHandler("UI_RequestDoorCancel", [this](const FSMAction& action)
 		{
+			std::cout << "[UIFSM][Trace] Action UI_RequestDoorCancel -> dispatch PlayerDoorCancel" << std::endl;
 			GetEventDispatcher().Dispatch(EventType::PlayerDoorCancel, nullptr);
 			DispatchEvent("None");
 		});
@@ -1686,6 +1688,29 @@ std::optional<EventType> UIFSMComponent::EventTypeFromName(const std::string& ev
 
 void UIFSMComponent::HandleEventByName(const std::string& eventName, const void* data)
 {
+
+	const std::string stateBeforeDispatch = GetCurrentStateName();
+	const bool isDiceDoorEvent = eventName == "UI_Released"
+		|| eventName == "UI_Clicked"
+		|| eventName == "Player_DoorInteract"
+		|| eventName == "Player_DoorCancel"
+		|| eventName == "Player_DoorSuccess"
+		|| eventName == "Player_DoorFail"
+		|| eventName == "Player_DiceUIOpen"
+		|| eventName == "Player_DiceUIReset"
+		|| eventName == "Player_DiceRollRequested"
+		|| eventName == "Player_DiceDecisionRequested"
+		|| eventName == "Player_DiceDecisionResult"
+		|| eventName == "Player_DiceStatRollRequested"
+		|| eventName == "Player_DiceStatResolved"
+		|| eventName == "Player_DiceAnimationStarted"
+		|| eventName == "Player_DiceAnimationCompleted"
+		|| eventName == "Player_DiceContinueRequested"
+		|| eventName == "Player_DiceUIClose";
+	const std::string ownerName = GetOwner() ? GetOwner()->GetName() : std::string{};
+	const bool isLikelyDoorDiceUI = ownerName.find("Door") != std::string::npos
+		|| ownerName.find("Dice") != std::string::npos;
+
 	auto dispatchEventAndCallbacks = [this, data](const std::string& dispatchEventName)
 		{
 			DispatchEvent(dispatchEventName);
@@ -1723,8 +1748,35 @@ void UIFSMComponent::HandleEventByName(const std::string& eventName, const void*
 
 	// UI 버튼 FSM 데이터가 클릭 이벤트를 UI_Released 또는 UI_Clicked 중 하나로만
 	// 정의되어 있어도 동작하도록 클릭 이벤트를 상호 호환시킨다.
-	if (eventName == "UI_Released")
+	// 단, UI_Released 처리에서 이미 상태 전이가 발생했다면 같은 입력으로
+	// UI_Clicked까지 연속 발행되어 다음 상태 액션이 즉시 실행될 수 있으므로
+	// 이 경우에는 보조 이벤트를 생략한다.
+	const std::string stateAfterDispatch = GetCurrentStateName();
+	const bool stateChanged = stateAfterDispatch != stateBeforeDispatch;
+	if (isDiceDoorEvent && stateChanged)
 	{
-		dispatchEventAndCallbacks("UI_Clicked");
+		std::cout << "[UIFSM][Trace] owner=" << ownerName
+			<< " event=" << eventName
+			<< " stateBefore=" << stateBeforeDispatch
+			<< " stateAfter=" << stateAfterDispatch << std::endl;
+	}
+
+	if (eventName == "UI_Released" && stateAfterDispatch == stateBeforeDispatch)
+	{
+		if (isLikelyDoorDiceUI)
+		{
+			std::cout << "[UIFSM][Trace] Skip synthetic UI_Clicked on Door/Dice UI. state="
+				<< stateAfterDispatch << " owner=" << ownerName << std::endl;
+		}
+		else
+		{
+			dispatchEventAndCallbacks("UI_Clicked");
+		}
+	}
+	else if (eventName == "UI_Released" && isDiceDoorEvent && isLikelyDoorDiceUI)
+	{
+		std::cout << "[UIFSM][Trace] Skip synthetic UI_Clicked because state changed on UI_Released."
+			<< " stateBefore=" << stateBeforeDispatch
+			<< " stateAfter=" << stateAfterDispatch << std::endl;
 	}
 }
