@@ -103,6 +103,7 @@ private:
 	void SetFloodSystemActive(bool active);
 	void RefreshGridSystem();
 	void DispatchPlayerFSMEvent(const std::string& eventName);
+	int ResolvePlayerActorId() const;
 	void ResolveEnemyAttack(int actorId = 0);
 	bool ResolveEnemyGroupTurn();
 	std::vector<int> CollectOwnedItemIndices() const;

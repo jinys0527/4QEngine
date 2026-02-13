@@ -118,9 +118,22 @@ void GameManager::SetServices(ServiceRegistry* services)
 void GameManager::SetActiveScene(Scene* scene)
 {
 	m_ActiveScene = scene;
-	if (auto* combatManager = GetCombatManager())
+	auto* combatManager = GetCombatManager();
+	if (combatManager)
 	{
 		combatManager->SetActiveScene(scene);
+
+		if (m_Phase == Phase::TurnBasedCombat && combatManager->GetState() != Battle::InBattle)
+		{
+			m_BattleCheck = Battle::NonBattle;
+			m_ResolveEnemyTurn = false;
+			m_SkipToPlayerTurn = false;
+			m_RemainingEnemyTurns = 0;
+			m_WaitingEnemyTurnDelay = false;
+			m_EnemyTurnDelayElapsed = 0.0f;
+			SetCombatTurnState(CombatTurnState::SelectActor);
+			SetPhase(Phase::ExplorationLoop);
+		}
 	}
 	if (m_WaitingForFloorScene && m_ActiveScene)
 	{
@@ -391,7 +404,7 @@ void GameManager::OnEvent(EventType type, const void* data)
 				if (m_Phase == Phase::TurnBasedCombat && m_BattleCheck == Battle::InBattle)
 					if (m_Phase == Phase::TurnBasedCombat)
 					{
-						SetCombatTurnState(payload->actorId == 1 ? CombatTurnState::PlayerTurn
+						SetCombatTurnState(payload->actorId == ResolvePlayerActorId() ? CombatTurnState::PlayerTurn
 							: CombatTurnState::EnemyTurn);
 					}
 			}
@@ -646,6 +659,24 @@ void GameManager::Initial()
 //Scene 변경 요청
 void GameManager::RequestSceneChange(const std::string& name)
 {
+	if (auto* combatManager = GetCombatManager())
+	{
+		if (m_BattleCheck == Battle::InBattle
+			|| m_Phase == Phase::TurnBasedCombat
+			|| combatManager->GetState() == Battle::InBattle)
+		{
+			combatManager->ResetSessionState();
+			m_BattleCheck = Battle::NonBattle;
+			m_ResolveEnemyTurn = false;
+			m_SkipToPlayerTurn = false;
+			m_RemainingEnemyTurns = 0;
+			m_WaitingEnemyTurnDelay = false;
+			m_EnemyTurnDelayElapsed = 0.0f;
+			SetCombatTurnState(CombatTurnState::SelectActor);
+		}
+	}
+
+
 	if (!m_EventDispatcher)
 	{
 		return;
@@ -819,6 +850,19 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		break;
 	case Phase::ExplorationLoop:
+		if (auto* combatManager = GetCombatManager())
+		{
+			if (combatManager->GetState() == Battle::InBattle)
+			{
+				combatManager->ResetSessionState();
+			}
+		}
+		m_BattleCheck = Battle::NonBattle;
+		m_ResolveEnemyTurn = false;
+		m_SkipToPlayerTurn = false;
+		m_RemainingEnemyTurns = 0;
+		m_WaitingEnemyTurnDelay = false;
+		m_EnemyTurnDelayElapsed = 0.0f;
 		// HowToPlay는 1층 시작 시점에만 대기 상태로 진입한다.
 		// 다음 층에서는 가이드 UI가 없을 수 있으므로 자동으로 플레이어 턴을 시작한다.
 		if (m_CurrentFloor > 1)
@@ -934,6 +978,17 @@ void GameManager::OnPhaseEnter(Phase phase)
 		}
 		break;
 	case Phase::NextFloor:
+		if (auto* combatManager = GetCombatManager())
+		{
+			combatManager->ResetSessionState();
+		}
+		m_BattleCheck = Battle::NonBattle;
+		m_ResolveEnemyTurn = false;
+		m_SkipToPlayerTurn = false;
+		m_RemainingEnemyTurns = 0;
+		m_WaitingEnemyTurnDelay = false;
+		m_EnemyTurnDelayElapsed = 0.0f;
+		SetCombatTurnState(CombatTurnState::SelectActor);
 		SetTurn(Turn::PlayerTurn);
 		AdvanceFloor();
 		{
@@ -1038,7 +1093,7 @@ void GameManager::OnCombatTurnStateEnter(CombatTurnState state)
 		}
 
 		const int actorId = combatManager->GetCurrentActorId();
-		if (actorId == 1)
+		if (actorId == ResolvePlayerActorId())
 		{
 			SetCombatTurnState(CombatTurnState::PlayerTurn);
 		}
@@ -1445,7 +1500,7 @@ void GameManager::ResolveEnemyAttack(int actorId)
 
 	
 	//const int actorId = combatManager->GetCurrentActorId();
-	if (actorId == 0 || actorId == 1)
+	if (actorId == 0 || actorId == ResolvePlayerActorId())
 	{
 		return;
 	}
@@ -1903,7 +1958,7 @@ void GameManager::DispatchPlayerTurnTimerChanged() const
 
 void GameManager::SyncTurnFromActorId(int actorId)
 {
-	if (actorId == 1)
+	if (actorId == ResolvePlayerActorId())
 	{
 		SetTurn(Turn::PlayerTurn);
 	}
@@ -1911,6 +1966,22 @@ void GameManager::SyncTurnFromActorId(int actorId)
 	{
 		SetTurn(Turn::EnemyTurn);
 	}
+}
+
+int GameManager::ResolvePlayerActorId() const
+{
+	if (m_ActiveScene)
+	{
+		if (auto* playerObject = FindPlayerObject(m_ActiveScene))
+		{
+			if (auto* player = playerObject->GetComponent<PlayerComponent>())
+			{
+				return player->GetActorId();
+			}
+		}
+	}
+
+	return m_PlayerData.actorId;
 }
 
 GameObject* GameManager::FindPlayerObject(Scene* scene) const

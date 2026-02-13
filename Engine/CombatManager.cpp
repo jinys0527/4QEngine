@@ -187,12 +187,77 @@ bool CombatManager::AddCombatants(const std::vector<CombatantSnapshot>& combatan
 		return false;
 	}
 
-	// 전투 도중 전투원이 난입하면 선제권을 다시 계산한다.
-	// 플레이어가 포함된 구성이면 주사위 UI 플로우부터 다시 시작한다.
-	BuildInitiativeOrder();
 
+	if (m_State != Battle::InBattle || m_InitiativeOrder.empty())
+	{
+		BuildInitiativeOrder();
+		return true;
+	}
+
+	const int currentActorId = GetCurrentActorId();
+	m_PendingInitiativeEntries.clear();
+	m_ActorIdsInBattle.clear();
+	m_InitiativeOrder.clear();
+
+	for (const CombatantSnapshot& combatant : m_Combatants)
+	{
+		if (combatant.actorId == 0)
+		{
+			continue;
+		}
+
+		if (combatant.isPlayer)
+		{
+			m_PlayerActorId = combatant.actorId;
+		}
+
+		const DiceConfig rollConfig{ 1, 20, 0 };
+		const int roll = m_DiceSystem.RollTotal(rollConfig, RandomDomain::Combat);
+		const int initiative = roll + combatant.initiativeBonus;
+		m_PendingInitiativeEntries.push_back({ combatant.actorId, initiative });
+	}
+
+	std::sort(m_PendingInitiativeEntries.begin(), m_PendingInitiativeEntries.end(),
+		[](const InitiativeEntry& left, const InitiativeEntry& right)
+		{
+			return left.initiative > right.initiative;
+		});
+
+	for (const InitiativeEntry& entry : m_PendingInitiativeEntries)
+	{
+		m_InitiativeOrder.push_back(entry.actorId);
+		m_ActorIdsInBattle.insert(entry.actorId);
+	}
+
+	m_CurrentTurnIndex = 0;
+	if (currentActorId != 0)
+	{
+		for (std::size_t i = 0; i < m_InitiativeOrder.size(); ++i)
+		{
+			if (m_InitiativeOrder[i] == currentActorId)
+			{
+				m_CurrentTurnIndex = i;
+				break;
+			}
+		}
+	}
+
+	if (m_EventDispatcher)
+	{
+		const CombatInitiativeBuiltEvent initiativeEvent{ &m_InitiativeOrder };
+		m_EventDispatcher->Dispatch(EventType::CombatInitiativeBuilt, &initiativeEvent);
+
+		if (!m_InitiativeOrder.empty())
+		{
+			const CombatTurnAdvancedEvent turnEvent{ m_InitiativeOrder[m_CurrentTurnIndex] };
+			m_EventDispatcher->Dispatch(EventType::CombatTurnAdvanced, &turnEvent);
+		}
+	}
+
+	m_PendingInitiativeEntries.clear();
 	return true;
 }
+
 
 
 void CombatManager::UpdateBattleOutcome(bool playerAlive, bool enemiesRemaining)
@@ -599,7 +664,7 @@ bool CombatManager::IsPlayerActorId(int actorId) const
 			return combatant.isPlayer;
 		}
 	}
-	return actorId == 1;
+	return actorId != 0 && actorId == m_PlayerActorId;
 }
 
 bool CombatManager::IsActorInBattle(int actorId) const
