@@ -37,6 +37,8 @@ public:
 	void AddGameObject      (std::shared_ptr<GameObject> gameObject);
 	void RemoveGameObject   (std::shared_ptr<GameObject> gameObject);
 	std::shared_ptr<GameObject> CreateGameObject(const std::string& name);
+	void QueueGameObjectRemoval(const std::string& name);
+	void ProcessPendingRemovals();
 
 
 	// For Editor map 자체 Getter( 수정 불가능 상태 )
@@ -57,12 +59,15 @@ public:
 	void Deserialize        (const nlohmann::json& j);
 	void BuildFrameData(RenderData::FrameData& frameData) const;
 
+	void EnsureAutoComponentsForSave();
+
 	EventDispatcher& GetEventDispatcher() { return m_EventDispatcher; }
 
 	void SetName            (std::string name) { m_Name = name; }
 	std::string GetName     () const     { return m_Name;   }
 
 	void SetGameManager     (GameManager* gameManager);
+	GameManager* GetGameManager() const { return m_GameManager; }
 	void SetSceneManager    (SceneManager* sceneManager);
 
 	ServiceRegistry& GetServices() const { return m_Services; }
@@ -81,6 +86,7 @@ protected:
 	std::string      m_Name;
 
 	bool		     m_Pause = false;
+	std::vector<std::string> m_PendingRemovalNames;
 	
 private:
 	AssetLoader*    m_AssetLoader;

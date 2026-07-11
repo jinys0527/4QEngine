@@ -21,6 +21,25 @@
 #include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
 #include <fstream>
+#include "EnemyComponent.h"
+#include "EnemyMovementComponent.h"
+#include "EnemyStatComponent.h"
+#include "EnemyControllerComponent.h"
+#include "MeshComponent.h"
+#include "PlayerCombatFSMComponent.h"
+#include "PlayerComponent.h"
+#include "PlayerDoorFSMComponent.h"
+#include "PlayerInventoryFSMComponent.h"
+#include "PlayerMoveFSMComponent.h"
+#include "PlayerMovementComponent.h"
+#include "PlayerPushFSMComponent.h"
+#include "PlayerShopFSMComponent.h"
+#include "PlayerFSMComponent.h"
+#include "PlayerStatComponent.h"
+#include "NodeComponent.h"
+#include "SkinningAnimationComponent.h"
+#include "AnimFSMComponent.h"
+#include <type_traits>
 
 #ifdef _DEBUG
 namespace
@@ -63,6 +82,16 @@ void Scene::StateUpdate(float deltaTime)
 {
 	// Camera는 BuildFromData를 하면서 자동으로 갱신이 되고있음
 	// Light의 경우 LightObject가 생기고 PointLight 같은 애의 위치가 바뀌면 만들수있을것같음?
+
+	if (!m_Pause)
+	{
+		return;
+	}
+
+	if (m_GameCamera)
+	{
+		m_GameCamera->Update(deltaTime);
+	}
 }
 
 void Scene::Enter()
@@ -93,6 +122,34 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
 
+<<<<<<< HEAD
+=======
+void Scene::QueueGameObjectRemoval(const std::string& name)
+{
+	if (name.empty())
+	{
+		return;
+	}
+
+	m_PendingRemovalNames.push_back(name);
+}
+
+void Scene::ProcessPendingRemovals()
+{
+	if (m_PendingRemovalNames.empty())
+	{
+		return;
+	}
+
+	std::vector<std::string> pending;
+	pending.swap(m_PendingRemovalNames);
+	for (const auto& name : pending)
+	{
+		RemoveGameObjectByName(name);
+	}
+}
+
+>>>>>>> UI
 void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
 	if (!gameObject) return;
@@ -137,7 +194,6 @@ std::shared_ptr<GameObject> Scene::CreateGameObject(const std::string& name)
 	AddGameObject(gameObject);
 	return gameObject;
 }
-
 
 bool Scene::RemoveGameObjectByName(const std::string& name)
 {
@@ -466,18 +522,21 @@ static void EmitSubMeshes(
 	if (!meshData.subMeshes.empty())
 	{
 		size_t subMeshIndex = 0;
-		for (const auto& sm : meshData.subMeshes)
+		for (const auto& subMesh : meshData.subMeshes)
 		{
 			RenderData::RenderItem item = baseItem;
 
-			item.useSubMesh = true;
-			item.indexStart = sm.indexStart;
-			item.indexCount = sm.indexCount;
-			item.localToWorld = sm.localToWorld;
+			item.useSubMesh   = true;
+			item.indexStart   = subMesh.indexStart;
+			item.indexCount   = subMesh.indexCount;
+			item.localToWorld = subMesh.localToWorld;
+			item.boundsMin    = subMesh.boundsMin;
+			item.boundsMax    = subMesh.boundsMax;
+			item.hasBounds    = true;
 
 			// submesh material override + 에디터에서 수정하면 갱신되도록
-			if (!item.material.IsValid() && sm.material.IsValid())
-				item.material = sm.material;
+			if (!item.material.IsValid() && subMesh.material.IsValid())
+				item.material = subMesh.material;
 
 			if (overrides && subMeshIndex < overrides->size())
 			{
@@ -542,10 +601,13 @@ static void EmitSubMeshes(
 	else
 	{
 		RenderData::RenderItem item = baseItem;
-		item.useSubMesh = false;
-		item.indexStart = 0;
-		item.indexCount = static_cast<UINT32>(meshData.indices.size());
+		item.useSubMesh   = false;
+		item.indexStart   = 0;
+		item.indexCount   = static_cast<UINT32>(meshData.indices.size());
 		item.localToWorld = Identity();
+		item.boundsMin    = meshData.boundsMin;
+		item.boundsMax    = meshData.boundsMax;
+		item.hasBounds    = true;
 		if (overrides && !overrides->empty())
 		{
 			const auto& overrideData = overrides->front();
@@ -692,6 +754,41 @@ static void AppendSkinningPaletteIfAny(
 	frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
 }
 
+<<<<<<< HEAD
+=======
+static void AppendGlobalPoseIfAny(
+	const AnimationComponent* animComp,
+	RenderData::FrameData& frameData,
+	UINT32& outOffset,
+	UINT32& outCount
+)
+{
+	outOffset = 0;
+	outCount = 0;
+
+	if (!animComp)
+	{
+		return;
+	}
+
+	const auto& globalPose = animComp->GetGlobalPose();
+	if (globalPose.empty())
+	{
+		return;
+	}
+
+	outOffset = static_cast<UINT32>(frameData.globalPoses.size());
+	outCount = static_cast<UINT32>(globalPose.size());
+	frameData.globalPoses.insert(frameData.globalPoses.end(), globalPose.begin(), globalPose.end());
+}
+
+static const AnimationComponent* FindAnimationComponent(const Object& obj)
+{
+	const auto anims = obj.GetComponentsDerived<AnimationComponent>();
+	return anims.empty() ? nullptr : anims.front();
+}
+
+>>>>>>> UI
 static bool BuildSkeletalBaseItem(
 	const Object& obj,
 	SkeletalMeshRenderer& renderer,
@@ -735,6 +832,16 @@ static bool BuildSkeletalBaseItem(
 	item.skinningPaletteOffset = paletteOffset;
 	item.skinningPaletteCount = paletteCount;
 
+<<<<<<< HEAD
+=======
+	UINT32 globalPoseOffset = 0, globalPoseCount = 0;
+	const auto* animComp = FindAnimationComponent(obj);
+	AppendGlobalPoseIfAny(animComp, frameData, globalPoseOffset, globalPoseCount);
+
+	item.globalPoseOffset = globalPoseOffset;
+	item.globalPoseCount = globalPoseCount;
+
+>>>>>>> UI
 	outItem = std::move(item);
 	outMeshComponent = skelComp;
 	return true;
@@ -839,6 +946,8 @@ void BuildCameraData(const std::shared_ptr<CameraObject>& camera, RenderData::Fr
 		context.gameCamera.width	 = static_cast<UINT32>(viewport.Width);
 		context.gameCamera.height	 = static_cast<UINT32>(viewport.Height);
 		context.gameCamera.cameraPos = camera->GetEye();
+		context.gameCamera.camNear = camera->GetNearZ();
+		context.gameCamera.camFar = camera->GetFarZ();
 	
 		const auto view = XMLoadFloat4x4(&context.gameCamera.view);
 		const auto proj = XMLoadFloat4x4(&context.gameCamera.proj);
@@ -863,18 +972,116 @@ void BuildCameraData(const std::shared_ptr<CameraObject>& camera, RenderData::Fr
 
 void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 {
+	if (m_Name == "Title")
+	{
+		frameData.currScene = 0;
+	}
+	else if (m_Name == "Stage1")
+	{
+		frameData.currScene = 1;
+	}
+	else if (m_Name == "Stage2")
+	{
+		frameData.currScene = 2;
+	}
+	else if (m_Name == "Ending")
+	{
+		frameData.currScene = 3;
+	}
+	else
+	{
+		frameData.currScene = 0;
+	}
+
 	frameData.renderItems.clear();
 	frameData.lights.clear();
 	frameData.skinningPalettes.clear();
+<<<<<<< HEAD
+=======
+	frameData.globalPoses.clear();
+	frameData.combatEnemyPositions.clear();
+	frameData.playerPosition = XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+	frameData.hasPlayerPosition = false;
+>>>>>>> UI
 
 	RenderData::FrameContext& context = frameData.context;
+	const UINT32 frameIndex = context.frameIndex;
+	const FLOAT deltaTime = context.deltaTime;
 	context = RenderData::FrameContext{};
+	context.frameIndex = frameIndex;
+	context.deltaTime = deltaTime;
 
 	// 게임 카메라
 	if (m_GameCamera)
 	{
 		BuildCameraData(m_GameCamera, frameData, true);
 	}
+
+	//적 위치 정보 및 플레이어 위치 정보
+	const bool isCombatPhase = m_GameManager && m_GameManager->GetPhase() == Phase::TurnBasedCombat;
+	bool playerPositionSet = false;
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		if (!playerPositionSet)
+		{
+			if (gameObject->GetComponent<PlayerComponent>())
+			{
+				if (auto* transform = gameObject->GetComponent<TransformComponent>())
+				{
+					frameData.playerPosition = transform->GetWorldPos();
+					frameData.hasPlayerPosition = true;
+					playerPositionSet = true;
+				}
+			}
+		}
+
+		if (isCombatPhase && gameObject->GetComponent<EnemyComponent>())
+		{
+			if (auto* transform = gameObject->GetComponent<TransformComponent>())
+			{
+				frameData.combatEnemyPositions.push_back(transform->GetWorldPos());
+			}
+		}
+	}
+
+	/*
+	const bool isCombatPhase = m_GameManager && m_GameManager->GetPhase() == Phase::TurnBasedCombat;
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		if (gameObject->GetComponent<PlayerComponent>())
+		{
+			if (auto* transform = gameObject->GetComponent<TransformComponent>())
+			{
+				frameData.playerPosition = transform->GetWorldPos();
+				frameData.hasPlayerPosition = true;
+				break;
+			}
+		}
+	}
+
+	if (isCombatPhase)
+	{
+		for (const auto& [name, gameObject] : m_GameObjects)
+		{
+			if (!gameObject)
+				continue;
+
+			if (gameObject->GetComponent<EnemyComponent>())
+			{
+				if (auto* transform = gameObject->GetComponent<TransformComponent>())
+				{
+					frameData.combatEnemyPositions.push_back(transform->GetWorldPos());
+				}
+			}
+		}
+	}*/
+
 
 	//에디터 nullptr
 	if (m_EditorCamera)
@@ -887,6 +1094,67 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	//UIManager에서 UI Data 가공예정
 }
 
+void Scene::EnsureAutoComponentsForSave()
+{
+	auto addIfMissing = [](GameObject& object, auto* tag) {
+		using ComponentType = std::remove_pointer_t<decltype(tag)>;
+		if (!object.HasComponent<ComponentType>())
+		{
+			object.AddComponent<ComponentType>();
+		}
+		};
+
+	for (const auto& [name, gameObject] : m_GameObjects)
+	{
+		if (!gameObject)
+			continue;
+
+		if (gameObject->GetComponent<MeshRenderer>())
+		{
+			addIfMissing(*gameObject, static_cast<MeshComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<MaterialComponent*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<SkeletalMeshRenderer>())
+		{
+			addIfMissing(*gameObject, static_cast<SkeletalMeshComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<MaterialComponent*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<SkinningAnimationComponent>())
+		{
+			addIfMissing(*gameObject, static_cast<SkeletalMeshComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<MaterialComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<AnimFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<SkeletalMeshRenderer*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<PlayerComponent>())
+		{
+			addIfMissing(*gameObject, static_cast<PlayerStatComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerMovementComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerMoveFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerPushFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerCombatFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerInventoryFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerShopFSMComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<PlayerDoorFSMComponent*>(nullptr));
+		}
+
+		if (gameObject->GetComponent<EnemyComponent>())
+		{
+			addIfMissing(*gameObject, static_cast<EnemyStatComponent*>(nullptr));
+			addIfMissing(*gameObject, static_cast<EnemyMovementComponent*>(nullptr));
+			//addIfMissing(*gameObject, static_cast<EnemyControllerComponent*>(nullptr));
+		}
+
+		if (auto* node = gameObject->GetComponent<NodeComponent>())
+		{
+			node->ClearHighlights();
+		}
+	}
+}
 void Scene::SetGameManager(GameManager* gameManager)
 {
 	m_GameManager = gameManager;

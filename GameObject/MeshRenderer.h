@@ -35,13 +35,13 @@ public:
 	void  SetRenderLayer(const UINT8& layer);
 	const UINT8& GetRenderLayer() const;
 
-	void		SetVisible(bool visible) { m_Visible = visible; }
+	void		SetVisible(const bool& visible) { m_Visible = visible; }
 	const bool& GetVisible() const		 { return m_Visible;    }
 
-	void		SetCastShadow(bool castShadow) { m_CastShadow = castShadow; }
+	void		SetCastShadow(const bool& castShadow) { m_CastShadow = castShadow; }
 	const bool& GetCastShadow() const		   { return m_CastShadow;	    }
 
-	void		SetReceiveShadow(bool receiveShadow) { m_ReceiveShadow = receiveShadow; }
+	void		SetReceiveShadow(const bool& receiveShadow) { m_ReceiveShadow = receiveShadow; }
 	const bool& GetReceiveShadow() const		     { return m_ReceiveShadow;	        }
 
 	virtual bool BuildRenderItem(RenderData::RenderItem& out);

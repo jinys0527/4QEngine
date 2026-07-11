@@ -3,8 +3,8 @@
 #include <vector>
 #include "IEventListener.h"
 
-
-class RectTransformComponent;
+class Scene;
+class UIManager;
 
 class UIComponent : public Component, public IEventListener
 {
@@ -18,18 +18,22 @@ public:
 	void Serialize(nlohmann::json& j) const override;
 	void Deserialize(const nlohmann::json& j) override;
 
-	void SetVisible	(const bool& is) { m_Visible = is; }
-	void SetZOrder	(const int& v)	 { m_ZOrder = v; }
-	void SetOpacity(const float& v)  { m_Opacity = v; }
+	void SetVisible(const bool& visible);
+	void SetZOrder(const int& value);
+	void SetOpacity(const float& value);
 
 	//참조변환
 	const bool&	GetVisible()const { return m_Visible; }
 	const int&	GetZOrder()	const { return m_ZOrder; }
 	const float& GetOpacity()const { return m_Opacity; }
 protected:
+	Scene* GetScene() const;
+	UIManager* GetUIManager() const;
 
 	bool  m_Visible = true;
 	int   m_ZOrder = 0;
 	float m_Opacity = 1.0f;
+	mutable UIManager* m_UIManager = nullptr;
+	mutable Scene* m_UIScene = nullptr;
 };
 

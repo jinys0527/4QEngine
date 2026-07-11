@@ -5,12 +5,35 @@
 #include <unordered_map>
 #include <functional>
 
+enum class EmissiveLevel
+{
+	HALF = 0,
+	HALF2,
+	HALF3,
+	COUNT
+};
+
+enum class BlurLevel
+{
+	HALF = 0,
+	HALF2,
+	HALF3,
+	HALF4,
+
+	COUNT
+};
+
 //기본 상수 버퍼
 struct BaseConstBuffer
 {
 	XMFLOAT4X4		mWorld = XMFLOAT4X4{};
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
+<<<<<<< HEAD
+=======
+	XMFLOAT2		ScreenSize{ 1920,1080 };
+	FLOAT			padding[2] = { 0, };
+>>>>>>> UI
 };
 
 struct CameraConstBuffer
@@ -22,7 +45,13 @@ struct CameraConstBuffer
 	XMFLOAT4X4  mShadow = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
+<<<<<<< HEAD
 	float		padding = 0.0f;
+=======
+	//float		padding = 0.0f;
+	float dTime = 0.0f;
+	XMFLOAT4	camParams = { 0,0,0,0 };
+>>>>>>> UI
 };
 
 struct Light
@@ -35,25 +64,31 @@ struct Light
 	float      Range = 0;
 
 	XMFLOAT3   worldDir{ 0,-1,0 };
-	float      padding0 = 0.0f;
+	float      Contrast = 1.0f;
 
 	XMFLOAT3   viewDir{ 0,-1,0 };
 	float      Intensity = 1.0f;
 
-	float		SpotInnerAngle = 0.0f;
-	float		SpotOutterAngle = 0.0f;
-	float		AttenuationRadius = 0.0f;
-	float		padding1 = 0.0f;
+	float	   SpotInnerAngle = 0.0f;
+	float	   SpotOutterAngle = 0.0f;
+	float	   AttenuationRadius = 0.0f;
+	float	   Saturation = 0.0f;
 
 	UINT       CastShadow = TRUE;
+<<<<<<< HEAD
 	float      padding[3]{ 0,0,0 };
+=======
+	UINT	   type = static_cast<UINT>(RenderData::LightType::None);
+	float		padding[2]{ 0,0 };
+>>>>>>> UI
 };
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
 {
 	Light	lights[MAX_LIGHTS];
 	UINT	lightCount = 0;
-	FLOAT   padding[3]{ 0.0f, 0.0f, 0.0f };
+	UINT	blurOn = 1;
+	FLOAT   padding[2]{ 0.0f, 0.0f };
 };
 
 constexpr size_t kMaxSkinningBones = 128;
@@ -65,6 +100,36 @@ struct SkinningConstBuffer
 	float padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
+<<<<<<< HEAD
+=======
+struct UIBuffer
+{
+	XMFLOAT4X4  TextPosition{};
+	XMFLOAT4	TextColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	XMFLOAT4	Color{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	FLOAT		Opacity;
+	float		padding[3] = { 0, 0 };
+};
+
+struct MaterialBuffer
+{
+	XMFLOAT4    Color{ 1.0f,1.0f,1.0f,1.0f };
+	FLOAT		saturation = 1.0f;
+	FLOAT		lightness = 1.0f;
+	float		padding[2] = { 0,0 };
+};
+
+constexpr size_t enemyMaskSize = 16;
+struct MaskingBuffer
+{
+	XMFLOAT4X4		PlayerMask;
+	XMFLOAT4X4		EnemyMask[enemyMaskSize]{};
+};
+
+
+>>>>>>> UI
 struct VertexShaderResources
 {
 	ComPtr<ID3D11VertexShader>	vertexShader;
@@ -99,6 +164,15 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pSkinCB;
 	LightConstBuffer			LightCBuffer;
 	ComPtr<ID3D11Buffer>		pLightCB;
+<<<<<<< HEAD
+=======
+	UIBuffer					UIBuffer;
+	ComPtr<ID3D11Buffer>		pUIB;
+	MaterialBuffer				MatBuffer;
+	ComPtr<ID3D11Buffer>		pMatB;
+	ComPtr<ID3D11Buffer>		pMaskB;
+	MaskingBuffer				MaskBuffer;
+>>>>>>> UI
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
@@ -107,33 +181,56 @@ struct RenderContext
 	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
+<<<<<<< HEAD
 	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
+=======
+	ComPtr<ID3D11InputLayout> InputLayout;
+	ComPtr<ID3D11InputLayout> InputLayout_P;
+>>>>>>> UI
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
-	ComPtr<ID3DBlob> VSCode;
 
 	ComPtr<ID3D11VertexShader> VS_P;
 	ComPtr<ID3D11PixelShader> PS_P;
 	ComPtr<ID3D11PixelShader> PS_Frustum;
-	ComPtr<ID3DBlob> VSCode_P;
 
 	ComPtr<ID3D11VertexShader> VS_PBR;
 	ComPtr<ID3D11PixelShader> PS_PBR;
-	ComPtr<ID3DBlob> VSCode_PBR;
+
+	ComPtr<ID3D11VertexShader>	VS_Wall;
+	ComPtr<ID3D11PixelShader>	PS_Wall;
 
 	ComPtr<ID3D11VertexShader> VS_Quad;
 	ComPtr<ID3D11PixelShader> PS_Quad;
-	ComPtr<ID3DBlob> VSCode_Quad;
 
 	ComPtr<ID3D11VertexShader> VS_Post;
 	ComPtr<ID3D11PixelShader> PS_Post;
-	ComPtr<ID3DBlob> VSCode_Post;
+
+	ComPtr<ID3D11VertexShader> VS_UI;
+	ComPtr<ID3D11PixelShader> PS_UI;
+
+	ComPtr<ID3D11Buffer> UIQuadVertexBuffer;
+	ComPtr<ID3D11Buffer> UIQuadIndexBuffer;
+	UINT UIQuadIndexCount = 0;
+	ComPtr<ID3D11ShaderResourceView> UIWhiteTexture;
+
+	//그림자 만들기
+	ComPtr<ID3D11VertexShader>	VS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	PS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	PS_MakeShadow_Transparent;
+	ComPtr<ID3DBlob>			VSCode_MakeShadow;
+
+	//Emissive용
+	ComPtr<ID3D11VertexShader>	VS_Emissive;
+	ComPtr<ID3D11PixelShader>	PS_Emissive;
+	ComPtr<ID3DBlob>			VSCode_Emissive;
 
 
 	//imgui용 == Scene Draw용
 	bool isEditCam = false;
 	ComPtr<ID3D11Texture2D>				pRTScene_Imgui;
+	ComPtr<ID3D11Texture2D>				pRTScene_ImguiMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Imgui;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Imgui;
 
@@ -141,6 +238,7 @@ struct RenderContext
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Imgui;
 
 	ComPtr<ID3D11Texture2D>				pRTScene_Imgui_edit;
+	ComPtr<ID3D11Texture2D>				pRTScene_Imgui_editMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Imgui_edit;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Imgui_edit;
 
@@ -157,6 +255,8 @@ struct RenderContext
 	ComPtr<ID3D11Texture2D>				pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	pDepthRV;
+	ComPtr<ID3D11DepthStencilView>		pDSViewScene_DepthMSAA;
+	ComPtr<ID3D11ShaderResourceView>    pDepthMSAARV;
 
 	//PostPass용
 	ComPtr<ID3D11Texture2D>				pRTScene_Post;
@@ -164,10 +264,38 @@ struct RenderContext
 	ComPtr<ID3D11RenderTargetView>		pRTView_Post;
 
 	//BlurPass용
-	ComPtr<ID3D11Texture2D>				pRTScene_Blur;
-	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Blur;
-	ComPtr<ID3D11RenderTargetView>		pRTView_Blur;
+	ComPtr<ID3D11Texture2D>				pRTScene_BlurOrigin;
+	ComPtr<ID3D11Texture2D>				pRTScene_BlurOriginMSAA;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_BlurOrigin;
+	ComPtr<ID3D11RenderTargetView>		pRTView_BlurOrigin;
 
+	ComPtr<ID3D11Texture2D>*				pRTScene_Blur = nullptr;
+	ComPtr<ID3D11ShaderResourceView>*		pTexRvScene_Blur = nullptr;
+	ComPtr<ID3D11RenderTargetView>*			pRTView_Blur = nullptr;
+
+
+<<<<<<< HEAD
+=======
+	//Refraction용
+	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
+	ComPtr<ID3D11Texture2D>				pRTScene_RefractionMSAA;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
+	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
+>>>>>>> UI
+
+	//Emissive용
+	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOriginMSAA;
+	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_EmissiveOrigin;
+	ComPtr<ID3D11RenderTargetView>		pRTView_EmissiveOrigin;
+
+	ComPtr<ID3D11Texture2D>*              pRTScene_Emissive = nullptr;
+	ComPtr<ID3D11ShaderResourceView>*     pTexRvScene_Emissive = nullptr;
+	ComPtr<ID3D11RenderTargetView>*       pRTView_Emissive = nullptr;
+
+	//HDRIImage
+	ComPtr<ID3D11ShaderResourceView>	pHDRI_1;
+	ComPtr<ID3D11ShaderResourceView>	pHDRI_2;
 
 
 	std::function<void()> DrawFullscreenQuad;
@@ -190,4 +318,16 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
 
+<<<<<<< HEAD
+=======
+	//물 노이즈
+	ComPtr<ID3D11ShaderResourceView>	WaterNoise;
+	float* dTime = nullptr;
+
+	//텍스트 그리기
+	std::function<void(float width, float height)> MyDrawText;
+
+	//플레이어 위치 테스트
+	XMFLOAT4 camParams{ 0,0,0,0 };
+>>>>>>> UI
 };

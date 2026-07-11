@@ -20,6 +20,12 @@
 #include "FSMActionRegistry.h"
 #include "FSMComponent.h"
 #include "FSMEventRegistry.h"
+#include "UIPrimitives.h"
+#include "HorizontalBox.h"
+#include "EnemyMovementComponent.h"
+#include "Canvas.h"
+#include "UIDiceDisplayTypes.h"
+#include "UIDicePanelTypes.h"
 
 #define DRAG_SPEED 0.01f
 bool SceneHasObjectName(const Scene& scene, const std::string& name)
@@ -84,7 +90,8 @@ std::string MakeUniqueObjectName(const Scene& scene, const std::string& baseName
 			return candidate;
 		}
 	}
-	//return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠
+
+	return baseName + "_Overflow"; // 같은 이름이 10000개 넘을 리는 없을 것으로 생각. 일단 막아둠  <- 기본 리턴값 없어서 다시 주석 해제함
 }
 
 float NormalizeDegrees(float degrees)
@@ -418,10 +425,20 @@ bool DrawSubMeshOverridesEditor(MeshComponent& meshComponent, AssetLoader& asset
 	return changed;
 }
 
-bool DrawFSMActionParams(FSMAction& action)
+bool DrawFSMActionParams(FSMAction& action, const std::vector<std::string>& categories)
 {
 	bool updated = false;
-	const auto* definition = FSMActionRegistry::Instance().FindAction(action.id);
+
+	const FSMActionDef* definition = nullptr;
+	for (const auto& category : categories)
+	{
+		definition = FSMActionRegistry::Instance().FindAction(category, action.id);
+		if (definition)
+		{
+			break;
+		}
+	}
+
 	if (!definition)
 	{
 		ImGui::TextDisabled("No Action Schema Available.");
@@ -539,7 +556,95 @@ bool DrawFSMActionParams(FSMAction& action)
 	return updated;
 }
 
-bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
+namespace
+{
+	std::string ResolveFSMCategory(const Component& component)
+	{
+		const std::string typeName = component.GetTypeName();
+		if (typeName == "PlayerFSMComponent")
+		{
+			return "Player";
+		}
+		if (typeName == "PlayerMoveFSMComponent")
+		{
+			return "Move";
+		}
+		if (typeName == "PlayerDoorFSMComponent")
+		{
+			return "Door";
+		}
+		if (typeName == "PlayerCombatFSMComponent")
+		{
+			return "Combat";
+		}
+		if (typeName == "PlayerInventoryFSMComponent")
+		{
+			return "Inventory";
+		}
+		if (typeName == "PlayerShopFSMComponent")
+		{
+			return "Shop";
+		}
+		if (typeName == "PlayerPushFSMComponent")
+		{
+			return "Push";
+		}
+		if (typeName == "AnimFSMComponent")
+		{
+			return "Animation";
+		}
+		if (typeName == "UIFSMComponent")
+		{
+			return "UI";
+		}
+		if (typeName == "CollisionFSMComponent")
+		{
+			return "Collision";
+		}
+
+		return "Common";
+	}
+
+	std::vector<FSMActionDef> CollectFSMActionDefs(const std::vector<std::string>& categories)
+	{
+		std::vector<FSMActionDef> results;
+		std::unordered_set<std::string> seen;
+		auto& registry = FSMActionRegistry::Instance();
+		for (const auto& category : categories)
+		{
+			const auto& actions = registry.GetActions(category);
+			for (const auto& action : actions)
+			{
+				if (seen.insert(action.id).second)
+				{
+					results.push_back(action);
+				}
+			}
+		}
+		return results;
+	}
+
+	std::vector<FSMEventDef> CollectFSMEventDefs(const std::vector<std::string>& categories)
+	{
+		std::vector<FSMEventDef> results;
+		std::unordered_set<std::string> seen;
+		auto& registry = FSMEventRegistry::Instance();
+		for (const auto& category : categories)
+		{
+			const auto& events = registry.GetEvents(category);
+			for (const auto& eventDef : events)
+			{
+				if (seen.insert(eventDef.name).second)
+				{
+					results.push_back(eventDef);
+				}
+			}
+		}
+		return results;
+	}
+}
+
+bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions, const std::vector<std::string>& categories)
 {
 	bool updated = false;
 	if (!ImGui::TreeNode(label))
@@ -547,7 +652,7 @@ bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
 		return false;
 	}
 
-	const auto& actionDefs = FSMActionRegistry::Instance().GetActions();
+	const auto& actionDefs = CollectFSMActionDefs(categories);
 
 	for (size_t i = 0; i < actions.size(); ++i)
 	{
@@ -582,7 +687,7 @@ bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
 			ImGui::TextDisabled("No Registered Actions");
 		}
 
-		updated |= DrawFSMActionParams(actions[i]);
+		updated |= DrawFSMActionParams(actions[i], categories);
 
 		if (ImGui::Button("Remove Action"))
 		{
@@ -611,7 +716,7 @@ bool DrawFSMActionList(const char* label, std::vector<FSMAction>& actions)
 	return updated;
 }
 
-bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vector<std::string>& stateNames)
+bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vector<std::string>& stateNames, const std::vector<std::string>& categories)
 {
 	bool updated = false;
 	if (!ImGui::TreeNode("Transitions"))
@@ -619,7 +724,7 @@ bool DrawFSMTransitions(std::vector<FSMTransition>& transitions, const std::vect
 		return false;
 	}
 
-	const auto& eventDefs = FSMEventRegistry::Instance().GetEvents();
+	const auto& eventDefs = CollectFSMEventDefs(categories);
 	std::vector<const char*> eventLabels;
 	eventLabels.reserve(eventDefs.size());
 	for (const auto& evt : eventDefs)
@@ -722,7 +827,7 @@ ImGui::PopID();
 }
 
 
-bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames)
+bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames, const std::vector<std::string>& actionCategories, const std::vector<std::string>& eventCategories)
 {
 	bool updated = false;
 	ImGui::Separator();
@@ -737,18 +842,33 @@ bool DrawFSMState(FSMState& state, const std::vector<std::string>& stateNames)
 		updated = true;
 	}
 
-	updated |= DrawFSMActionList("OnEnter", state.onEnter);
-	updated |= DrawFSMActionList("OnExit", state.onExit);
-	updated |= DrawFSMTransitions(state.transitions, stateNames);
+	updated |= DrawFSMActionList("OnEnter", state.onEnter, actionCategories);
+	updated |= DrawFSMActionList("OnExit", state.onExit, actionCategories);
+	updated |= DrawFSMTransitions(state.transitions, stateNames, eventCategories);
 
 	return updated;
 }
 
-bool DrawFSMGraphEditor(FSMGraph& graph)
+bool DrawFSMGraphEditor(FSMGraph& graph, const std::string& category)
 {
 	bool updated = false;
 	std::vector<std::string> stateNames;
 	stateNames.reserve(graph.states.size());
+
+	std::vector<std::string> actionCategories;
+	if (!category.empty())
+	{
+		actionCategories.push_back(category);
+	}
+	actionCategories.push_back("FSM");
+
+	std::vector<std::string> eventCategories;
+	if (!category.empty())
+	{
+		eventCategories.push_back(category);
+	}
+	eventCategories.push_back("Common");
+
 
 	for (const auto& state : graph.states)
 	{
@@ -791,7 +911,8 @@ bool DrawFSMGraphEditor(FSMGraph& graph)
 		ImGui::PushID(static_cast<int>(i));
 		if (ImGui::TreeNode("State Editor", "State %zu", i))
 		{
-			updated |= DrawFSMState(graph.states[i], stateNames);
+			updated |= DrawFSMState(graph.states[i], stateNames, actionCategories, eventCategories); 
+
 			if (ImGui::Button("Remove State"))
 			{
 				graph.states.erase(graph.states.begin() + static_cast<long>(i));
@@ -832,6 +953,95 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 	};
 
 	static std::unordered_map<const void*, RotationUIState> rotationUiState;
+
+	auto resolveTextureDisplay = [&assetLoader](const TextureHandle& handle) -> std::string
+		{
+			const std::string* key = assetLoader.GetTextures().GetKey(handle);
+			const std::string* displayName = assetLoader.GetTextures().GetDisplayName(handle);
+			if (displayName && !displayName->empty())
+			{
+				return *displayName;
+			}
+			if (key && !key->empty())
+			{
+				return *key;
+			}
+			return "<None>";
+		};
+
+	auto drawTextureHandle = [&](const char* label, TextureHandle& value) -> bool
+		{
+			bool updated = false;
+			const std::string display = resolveTextureDisplay(value);
+			const std::string buttonLabel = display + "##" + label;
+
+			ImGui::TextUnformatted(label);
+			ImGui::SameLine();
+			ImGui::Button(buttonLabel.c_str());
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_TEXTURE"))
+				{
+					const TextureHandle dropped = *static_cast<const TextureHandle*>(payload->Data);
+					value = dropped;
+					updated = true;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+			const std::string clearLabel = std::string("Clear##") + label;
+			if (ImGui::Button(clearLabel.c_str()))
+			{
+				value = TextureHandle::Invalid();
+				updated = true;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+			return updated;
+		};
+
+	auto drawAnchor = [&](const char* label, UIAnchor& value) -> bool
+		{
+			float data[2] = { value.x, value.y };
+			if (ImGui::DragFloat2(label, data, DRAG_SPEED, 0.0f, 1.0f))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				return true;
+			}
+			return false;
+		};
+
+	auto drawRect = [&](const char* label, UIRect& value) -> bool
+		{
+			float data[4] = { value.x, value.y, value.width, value.height };
+			if (ImGui::DragFloat4(label, data, DRAG_SPEED))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				value.width = data[2];
+				value.height = data[3];
+				return true;
+			}
+			return false;
+		};
+
+	auto drawOffset = [&](const char* label, UIAnchor& value) -> bool
+		{
+			float data[2] = { value.x, value.y };
+			if (ImGui::DragFloat2(label, data, DRAG_SPEED))
+			{
+				value.x = data[0];
+				value.y = data[1];
+				return true;
+			}
+			return false;
+		};
+
 
 	if (typeInfo == typeid(int))
 	{
@@ -1026,6 +1236,35 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+	if (typeInfo == typeid(UIAnchor))
+	{
+		UIAnchor value{};
+		property.GetValue(component, &value);
+		if (drawAnchor(property.GetName().c_str(), value))
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIRect))
+	{
+		UIRect value{};
+		property.GetValue(component, &value);
+		if (drawRect(property.GetName().c_str(), value))
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+
 	// 카메라
 	if (typeInfo == typeid(Viewport))
 	{
@@ -1134,7 +1373,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		property.GetValue(component, &value);
 		if (property.GetName() == "RenderLayer")
 		{
-			static constexpr const char* kLayers[] = { "None", "Opaque", "Transparent", "Wall", "UI" };
+			static constexpr const char* kLayers[] = { "None", "Opaque", "Transparent", "Wall", "Refraction",  "Emissive", "UI" };
 			int current = static_cast<int>(value);
 			if (ImGui::Combo(property.GetName().c_str(), &current, kLayers, IM_ARRAYSIZE(kLayers)))
 			{
@@ -1175,6 +1414,311 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 			label += "<None>";
 		}
 		ImGui::TextUnformatted(label.c_str());
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<std::string>))
+	{
+		ImGui::PushID(property.GetName().c_str());
+
+		std::vector<std::string> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			std::array<char, 256> buffer{};
+			CopyStringToBuffer(value[i], buffer);
+			if (ImGui::InputText("Item", buffer.data(), buffer.size()))
+			{
+				value[i] = buffer.data();
+				updated = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long>(i));
+				updated = true;
+				ImGui::PopID();
+				break;
+			}
+			ImGui::PopID();
+		}
+		if (ImGui::Button("Add Item"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+
+		ImGui::PopID();
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIAnchor>))
+	{
+		std::vector<UIAnchor> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string label = "Offset " + std::to_string(i);
+			updated |= drawOffset(label.c_str(), value[i]);
+			ImGui::SameLine();
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long>(i));
+				updated = true;
+				ImGui::PopID();
+				break;
+			}
+			ImGui::PopID();
+		}
+		if (ImGui::Button("Add Offset"))
+		{
+			value.push_back(UIAnchor{});
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::array<TextureHandle, 10>))
+	{
+		std::array<TextureHandle, 10> value{};
+		property.GetValue(component, &value);
+		bool updated = false;
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string label = "Digit " + std::to_string(i);
+			updated |= drawTextureHandle(label.c_str(), value[i]);
+			ImGui::PopID();
+		}
+		ImGui::Unindent();
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::array<float, 10>))
+	{
+		std::array<float, 10> value{};
+		property.GetValue(component, &value);
+		bool updated = false;
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			float item = value[i];
+			const std::string label = "Digit " + std::to_string(i);
+			if (ImGui::DragFloat(label.c_str(), &item, DRAG_SPEED))
+			{
+				value[i] = item;
+				updated = true;
+			}
+			ImGui::PopID();
+		}
+		ImGui::Unindent();
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIDiceLayout>))
+	{
+		std::vector<UIDiceLayout> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string header = value[i].type.empty() ? "Layout" : value[i].type;
+			if (ImGui::TreeNode("Layout", "%s %zu", header.c_str(), i))
+			{
+				std::array<char, 256> buffer{};
+				CopyStringToBuffer(value[i].type, buffer);
+				if (ImGui::InputText("Type", buffer.data(), buffer.size()))
+				{
+					value[i].type = buffer.data();
+					updated = true;
+				}
+				updated |= drawTextureHandle("DiceTexture", value[i].diceTexture);
+
+				if (ImGui::TreeNode("TensSlot"))
+				{
+					updated |= drawAnchor("Anchor", value[i].tens.anchor);
+					updated |= drawAnchor("Pivot", value[i].tens.pivot);
+					if (ImGui::Checkbox("UseParentOffset", &value[i].tens.useParentOffset))
+					{
+						updated = true;
+					}
+
+					updated |= drawRect("Bounds", value[i].tens.bounds);
+					if (ImGui::TreeNode("DigitOffsets"))
+					{
+						for (size_t digit = 0; digit < value[i].tens.digitOffsets.size(); ++digit)
+						{
+							ImGui::PushID(static_cast<int>(digit));
+							const std::string label = "Digit " + std::to_string(digit);
+							updated |= drawOffset(label.c_str(), value[i].tens.digitOffsets[digit]);
+							ImGui::PopID();
+						}
+						ImGui::TreePop();
+					}
+					ImGui::TreePop();
+				}
+				if (ImGui::TreeNode("OnesSlot"))
+				{
+					updated |= drawAnchor("Anchor", value[i].ones.anchor);
+					updated |= drawAnchor("Pivot", value[i].ones.pivot);
+					if (ImGui::Checkbox("UseParentOffset", &value[i].ones.useParentOffset))
+					{
+						updated = true;
+					}
+
+					updated |= drawRect("Bounds", value[i].ones.bounds);
+					if (ImGui::TreeNode("DigitOffsets"))
+					{
+						for (size_t digit = 0; digit < value[i].ones.digitOffsets.size(); ++digit)
+						{
+							ImGui::PushID(static_cast<int>(digit));
+							const std::string label = "Digit " + std::to_string(digit);
+							updated |= drawOffset(label.c_str(), value[i].ones.digitOffsets[digit]);
+							ImGui::PopID();
+						}
+						ImGui::TreePop();
+					}
+					ImGui::TreePop();
+				}
+
+				if (ImGui::Button("Remove Layout"))
+				{
+					value.erase(value.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::TreePop();
+					ImGui::PopID();
+					break;
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+
+		if (ImGui::Button("Add Layout"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIDicePanelSlot>))
+	{
+		std::vector<UIDicePanelSlot> value;
+		property.GetValue(component, &value);
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		for (size_t i = 0; i < value.size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+			const std::string header = value[i].objectName.empty() ? "Slot" : value[i].objectName;
+			if (ImGui::TreeNode("Slot", "%s %zu", header.c_str(), i))
+			{
+				std::array<char, 256> objectBuffer{};
+				CopyStringToBuffer(value[i].objectName, objectBuffer);
+				if (ImGui::InputText("ObjectName", objectBuffer.data(), objectBuffer.size()))
+				{
+					value[i].objectName = objectBuffer.data();
+					updated = true;
+				}
+
+				std::array<char, 256> typeBuffer{};
+				CopyStringToBuffer(value[i].diceType, typeBuffer);
+				if (ImGui::InputText("DiceType", typeBuffer.data(), typeBuffer.size()))
+				{
+					value[i].diceType = typeBuffer.data();
+					updated = true;
+				}
+
+				std::array<char, 256> contextBuffer{};
+				CopyStringToBuffer(value[i].diceContext, contextBuffer);
+				if (ImGui::InputText("DiceContext", contextBuffer.data(), contextBuffer.size()))
+				{
+					value[i].diceContext = contextBuffer.data();
+					updated = true;
+				}
+
+				if (ImGui::Checkbox("ApplyAnimation", &value[i].applyAnimation))
+				{
+					updated = true;
+				}
+
+				if (ImGui::Button("Remove Slot"))
+				{
+					value.erase(value.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::TreePop();
+					ImGui::PopID();
+					break;
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+
+		if (ImGui::Button("Add Slot"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
 		return result;
 	}
 
@@ -1311,6 +1855,146 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+
+	if (typeInfo == typeid(VertexShaderHandle))
+	{
+		VertexShaderHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetVertexShaders().GetKey(value);
+		const std::string* displayName = assetLoader.GetVertexShaders().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_VERTEX_SHADER"))
+			{
+				const VertexShaderHandle dropped = *static_cast<const VertexShaderHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				result.updated = true;
+			}
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Clear##VertexShader"))
+		{
+			value = VertexShaderHandle::Invalid();
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		return result;
+	}
+
+	if (typeInfo == typeid(PixelShaderHandle))
+	{
+		PixelShaderHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetPixelShaders().GetKey(value);
+		const std::string* displayName = assetLoader.GetPixelShaders().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_PIXEL_SHADER"))
+			{
+				const PixelShaderHandle dropped = *static_cast<const PixelShaderHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				result.updated = true;
+			}
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Clear##PixelShader"))
+		{
+			value = PixelShaderHandle::Invalid();
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		return result;
+	}
+
+	if (typeInfo == typeid(ShaderAssetHandle))
+	{
+		ShaderAssetHandle value{};
+		property.GetValue(component, &value);
+
+		const std::string* key = assetLoader.GetShaderAssets().GetKey(value);
+		const std::string* displayName = assetLoader.GetShaderAssets().GetDisplayName(value);
+
+		const char* name = (displayName && !displayName->empty()) ? displayName->c_str() : (key && !key->empty()) ? key->c_str() : "<None>";
+		const std::string buttonLabel = std::string(name) + "##" + property.GetName();
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::Button(buttonLabel.c_str());
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			bool updated = false;
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("RESOURCE_SHADER_ASSET"))
+			{
+				const ShaderAssetHandle dropped = *static_cast<const ShaderAssetHandle*>(payload->Data);
+				property.SetValue(component, &dropped);
+				updated = true;
+			}
+			ImGui::EndDragDropTarget();
+			if (updated)
+			{
+				result.updated = true;
+			}
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Clear##ShaderAsset"))
+		{
+			value = ShaderAssetHandle::Invalid();
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		return result;
+	}
+
+
 	if (typeInfo == typeid(AnimationHandle))
 	{
 		AnimationHandle value{};
@@ -1409,7 +2093,7 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
 
 		// Texture slots
-		static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Env" };
+		static constexpr const char* kTextureLabels[] = { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emissive"};
 		static_assert(std::size(kTextureLabels) == static_cast<size_t>(RenderData::MaterialTextureSlot::TEX_MAX));
 
 		for (size_t i = 0; i < value.textures.size(); ++i)
@@ -1632,6 +2316,175 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		return result;
 	}
 
+	if (typeInfo == typeid(std::vector<UIFSMEventCallback>))
+	{
+		std::vector<UIFSMEventCallback> value;
+		property.GetValue(component, &value);
+
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		ImGui::PushID(property.GetName().c_str());
+
+		const auto& eventDefs = FSMEventRegistry::Instance().GetEvents("UI");
+		std::vector<std::string> uiEventNames;
+		uiEventNames.reserve(eventDefs.size());
+		for (const auto& def : eventDefs)
+		{
+			uiEventNames.push_back(def.name);
+		}
+
+		size_t index = 0;
+		while (index < value.size())
+		{
+			ImGui::PushID(static_cast<int>(index));
+			ImGui::Separator();
+
+			const char* preview = value[index].eventName.empty() ? "<None>" : value[index].eventName.c_str();
+			if (ImGui::BeginCombo("Event", preview))
+			{
+				for (const auto& name : uiEventNames)
+				{
+					const bool isSelected = (value[index].eventName == name);
+					if (ImGui::Selectable(name.c_str(), isSelected))
+					{
+						value[index].eventName = name;
+						updated = true;
+					}
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			std::array<char, 256> callbackBuffer{};
+			CopyStringToBuffer(value[index].callbackId, callbackBuffer);
+			if (ImGui::InputText("Callback", callbackBuffer.data(), callbackBuffer.size()))
+			{
+				value[index].callbackId = callbackBuffer.data();
+				updated = true;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long long>(index));
+				updated = true;
+				ImGui::PopID();
+				continue;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::PopID();
+			++index;
+		}
+
+		if (ImGui::Button("Add Callback"))
+		{
+			UIFSMEventCallback entry{};
+			if (!uiEventNames.empty())
+			{
+				entry.eventName = uiEventNames.front();
+			}
+			value.push_back(std::move(entry));
+			updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		ImGui::PopID();
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<UIFSMCallbackAction>))
+	{
+		std::vector<UIFSMCallbackAction> value;
+		property.GetValue(component, &value);
+
+		bool updated = false;
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::Indent();
+		ImGui::PushID(property.GetName().c_str());
+
+		size_t index = 0;
+		while (index < value.size())
+		{
+			ImGui::PushID(static_cast<int>(index));
+			ImGui::Separator();
+
+			std::array<char, 256> callbackBuffer{};
+			CopyStringToBuffer(value[index].callbackId, callbackBuffer);
+			if (ImGui::InputText("Callback", callbackBuffer.data(), callbackBuffer.size()))
+			{
+				value[index].callbackId = callbackBuffer.data();
+				updated = true;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::TextUnformatted("Actions");
+			ImGui::Indent();
+			auto& registry = FSMActionRegistry::Instance();
+			
+			std::vector<std::string> category;
+			for (auto& action : registry.GetActions("UI"))
+			{
+				category.push_back(action.category);
+			}
+			updated |= DrawFSMActionList("##CallbackActions", value[index].actions, category);
+			ImGui::Unindent();
+
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			if (ImGui::Button("Remove"))
+			{
+				value.erase(value.begin() + static_cast<long long>(index));
+				updated = true;
+				ImGui::PopID();
+				continue;
+			}
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::PopID();
+			++index;
+		}
+
+		if (ImGui::Button("Add Callback Action"))
+		{
+			value.emplace_back();
+			updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+		ImGui::PopID();
+		ImGui::Unindent();
+
+		if (updated)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		return result;
+	}
+
 	if (typeInfo == typeid(FSMGraph))
 	{
 		FSMGraph graph;
@@ -1639,7 +2492,8 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		ImGui::TextUnformatted(property.GetName().c_str());
 		ImGui::Indent();
 		ImGui::PushID(property.GetName().c_str());
-		const bool updated = DrawFSMGraphEditor(graph);
+		const std::string category = component ? ResolveFSMCategory(*component) : std::string{};
+		const bool updated = DrawFSMGraphEditor(graph, category);
 
 		result.activated   = result.activated   || ImGui::IsItemActivated();
 		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
@@ -1658,12 +2512,23 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 	{
 		PlaybackStateType value{};
 		property.GetValue(component, &value);
-		ImGui::Text("%s: time %.3f, speed %.2f, looping %s, playing %s",
-			property.GetName().c_str(),
-			value.time,
-			value.speed,
-			value.looping ? "true" : "false",
-			value.playing ? "true" : "false");
+		ImGui::Text("%s", property.GetName().c_str());
+
+		bool changed = false;
+
+		changed |= ImGui::InputFloat("Time", &value.time, 0.01f, 0.1f, "%.3f");
+		changed |= ImGui::InputFloat("Speed", &value.speed, 0.01f, 0.1f, "%.2f");
+
+		changed |= ImGui::Checkbox("Looping", &value.looping);
+		changed |= ImGui::Checkbox("Playing", &value.playing);
+		changed |= ImGui::Checkbox("Reverse", &value.reverse);
+
+		if (changed)
+		{
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+
 		return result;
 	}
 
@@ -2002,6 +2867,382 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 		RetargetOffsetsType value;
 		property.GetValue(component, &value);
 		ImGui::Text("%s: %zu offsets", property.GetName().c_str(), value.size());
+		return result;
+	}
+
+	if (typeInfo == typeid(UISize))
+	{
+		UISize value{};
+		property.GetValue(component, &value);
+		float data[2] = { value.width, value.height };
+		if (ImGui::DragFloat2(property.GetName().c_str(), data, DRAG_SPEED))
+		{
+			value.width = data[0];
+			value.height = data[1];
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIPadding))
+	{
+		UIPadding value{};
+		property.GetValue(component, &value);
+		float data[4] = { value.left, value.top, value.right, value.bottom };
+		if (ImGui::DragFloat4(property.GetName().c_str(), data, DRAG_SPEED))
+		{
+			value.left = data[0];
+			value.top = data[1];
+			value.right = data[2];
+			value.bottom = data[3];
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<HorizontalBoxSlot>))
+	{
+		std::vector<HorizontalBoxSlot> slots;
+		property.GetValue(component, &slots);
+		bool updated = false;
+		bool activated = false;
+		bool deactivated = false;
+
+		auto alignmentLabel = [](UIHorizontalAlignment alignment)
+			{
+				switch (alignment)
+				{
+				case UIHorizontalAlignment::Left:
+					return "Left";
+				case UIHorizontalAlignment::Center:
+					return "Center";
+				case UIHorizontalAlignment::Right:
+					return "Right";
+				case UIHorizontalAlignment::Fill:
+					return "Fill";
+				default:
+					return "Left";
+				}
+			};
+
+		if (ImGui::TreeNode(property.GetName().c_str()))
+		{
+			for (size_t i = 0; i < slots.size(); ++i)
+			{
+				HorizontalBoxSlot& slot = slots[i];
+				ImGui::PushID(static_cast<int>(i));
+				ImGui::Separator();
+
+				std::string nameValue = slot.childName;
+				if (slot.child && nameValue.empty())
+				{
+					nameValue = slot.child->GetName();
+				}
+				std::array<char, 256> nameBuffer{};
+				CopyStringToBuffer(nameValue, nameBuffer);
+				if (ImGui::InputText("Child", nameBuffer.data(), nameBuffer.size()))
+				{
+					slot.childName = nameBuffer.data();
+					slot.child = nullptr;
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				float desiredValues[2] = { slot.desiredSize.width, slot.desiredSize.height };
+				if (ImGui::DragFloat2("Desired Size", desiredValues, DRAG_SPEED))
+				{
+					slot.desiredSize.width = desiredValues[0];
+					slot.desiredSize.height = desiredValues[1];
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				float paddingValues[4] = {
+					slot.padding.left,
+					slot.padding.right,
+					slot.padding.top,
+					slot.padding.bottom
+				};
+
+				if (ImGui::DragFloat4("Padding (L,R,T,B)", paddingValues, DRAG_SPEED))
+				{
+					slot.padding.left = paddingValues[0];
+					slot.padding.right = paddingValues[1];
+					slot.padding.top = paddingValues[2];
+					slot.padding.bottom = paddingValues[3];
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::DragFloat("Fill Weight", &slot.fillWeight, DRAG_SPEED))
+				{
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				const char* alignmentPreview = alignmentLabel(slot.alignment);
+				if (ImGui::BeginCombo("Alignment", alignmentPreview))
+				{
+					const UIHorizontalAlignment options[] = {
+						UIHorizontalAlignment::Left,
+						UIHorizontalAlignment::Center,
+						UIHorizontalAlignment::Right,
+						UIHorizontalAlignment::Fill
+					};
+					for (const auto& option : options)
+					{
+						const bool isSelected = (slot.alignment == option);
+						if (ImGui::Selectable(alignmentLabel(option), isSelected))
+						{
+							slot.alignment = option;
+							updated = true;
+						}
+						if (isSelected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+					ImGui::EndCombo();
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::Button("Remove Slot"))
+				{
+					slots.erase(slots.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::PopID();
+					break;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				ImGui::PopID();
+			}
+
+			if (ImGui::Button("Add Slot"))
+			{
+				slots.emplace_back();
+				updated = true;
+			}
+			activated = activated || ImGui::IsItemActivated();
+			deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::TreePop();
+		}
+
+		if (updated)
+		{
+			property.SetValue(component, &slots);
+			result.updated = true;
+		}
+		result.activated = result.activated || activated;
+		result.deactivated = result.deactivated || deactivated;
+		return result;
+	}
+
+	if (typeInfo == typeid(std::vector<CanvasSlot>))
+	{
+		std::vector<CanvasSlot> slots;
+		property.GetValue(component, &slots);
+		bool updated = false;
+		bool activated = false;
+		bool deactivated = false;
+
+		if (ImGui::TreeNode(property.GetName().c_str()))
+		{
+			for (size_t i = 0; i < slots.size(); ++i)
+			{
+				CanvasSlot& slot = slots[i];
+				ImGui::PushID(static_cast<int>(i));
+				ImGui::Separator();
+
+				std::string nameValue = slot.childName;
+				if (slot.child && nameValue.empty())
+				{
+					nameValue = slot.child->GetName();
+				}
+				std::array<char, 256> nameBuffer{};
+				CopyStringToBuffer(nameValue, nameBuffer);
+				if (ImGui::InputText("Child", nameBuffer.data(), nameBuffer.size()))
+				{
+					slot.childName = nameBuffer.data();
+					slot.child = nullptr;
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				float rectValues[4] = { slot.rect.x, slot.rect.y, slot.rect.width, slot.rect.height };
+				if (ImGui::DragFloat4("Rect", rectValues, DRAG_SPEED))
+				{
+					slot.rect.x = rectValues[0];
+					slot.rect.y = rectValues[1];
+					slot.rect.width = rectValues[2];
+					slot.rect.height = rectValues[3];
+					updated = true;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				if (ImGui::Button("Remove Slot"))
+				{
+					slots.erase(slots.begin() + static_cast<long>(i));
+					updated = true;
+					ImGui::PopID();
+					break;
+				}
+				activated = activated || ImGui::IsItemActivated();
+				deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+				ImGui::PopID();
+			}
+
+			if (ImGui::Button("Add Slot"))
+			{
+				slots.emplace_back();
+				updated = true;
+			}
+			activated = activated || ImGui::IsItemActivated();
+			deactivated = deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::TreePop();
+		}
+
+		if (updated)
+		{
+			property.SetValue(component, &slots);
+			result.updated = true;
+		}
+		result.activated = result.activated || activated;
+		result.deactivated = result.deactivated || deactivated;
+		return result;
+	}
+
+	if (typeInfo == typeid(UIStretch))
+	{
+		UIStretch value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kStretchLabels[] = { "None", "Scale To Fit", "Scale To Fill" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kStretchLabels, IM_ARRAYSIZE(kStretchLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kStretchLabels) - 1));
+			value = static_cast<UIStretch>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIStretchDirection))
+	{
+		UIStretchDirection value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kDirectionLabels[] = { "Both", "Down Only", "Up Only" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kDirectionLabels, IM_ARRAYSIZE(kDirectionLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kDirectionLabels) - 1));
+			value = static_cast<UIStretchDirection>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIFillDirection))
+	{
+		UIFillDirection value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kDirectionLabels[] = { "Left To Right", "Right To Left", "Top To Bottom", "Bottom To Top" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kDirectionLabels, IM_ARRAYSIZE(kDirectionLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kDirectionLabels) - 1));
+			value = static_cast<UIFillDirection>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+	if (typeInfo == typeid(UIProgressFillMode))
+	{
+		UIProgressFillMode value{};
+		property.GetValue(component, &value);
+		static constexpr const char* kFillModeLabels[] = { "Rect", "Mask" };
+		int current = static_cast<int>(value);
+		if (ImGui::Combo(property.GetName().c_str(), &current, kFillModeLabels, IM_ARRAYSIZE(kFillModeLabels)))
+		{
+			const int clamped = std::clamp(current, 0, static_cast<int>(IM_ARRAYSIZE(kFillModeLabels) - 1));
+			value = static_cast<UIProgressFillMode>(clamped);
+			property.SetValue(component, &value);
+			result.updated = true;
+		}
+		result.activated = result.activated || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		return result;
+	}
+
+
+	if (typeInfo == typeid(std::array<EnemyMovementComponent::PatrolPoint, 3>))
+	{
+		std::array<EnemyMovementComponent::PatrolPoint, 3> points{};
+		property.GetValue(component, &points);
+
+		bool changed = false;
+
+		ImGui::PushID(property.GetName().c_str());
+
+		for (int i = 0; i < 3; ++i)
+		{
+			ImGui::SeparatorText(("PatrolPoint " + std::to_string(i)).c_str());
+
+			ImGui::PushID(i);
+
+			int q = points[i].q;
+			int r = points[i].r;
+
+			changed |= ImGui::InputInt("Q", &q);
+			changed |= ImGui::InputInt("R", &r);
+
+			if (changed)
+			{
+				points[i].q = q;
+				points[i].r = r;
+			}
+
+			result.activated = result.activated || ImGui::IsItemActivated();
+			result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+
+			ImGui::PopID();
+		}
+
+		ImGui::PopID();
+
+		if (changed)
+		{
+			property.SetValue(component, &points);
+			result.updated = true;
+		}
+
 		return result;
 	}
 

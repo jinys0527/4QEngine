@@ -6,7 +6,13 @@
 
 #include <Windows.h>
 #include <d3d11.h>
+<<<<<<< HEAD
 #include <tchar.h>
+=======
+#include <d3dcompiler.h>
+#include <dxgi1_5.h>
+
+>>>>>>> UI
 #include <wrl/client.h>
 #include <memory>
 #include <d3dcompiler.h>
@@ -72,6 +78,7 @@ enum class RS
     WIREFRM,			//Wireframe, 컬링 없음
     CULLBACK,			//뒷면 컬링 
     WIRECULLBACK,		//Wireframe, 뒷면 컬링 
+    EMISSIVE,
 
     MAX_
 };
@@ -154,6 +161,7 @@ struct TextureSize { int width, height; };
 
 
 extern	BOOL 		g_bVSync;
+extern	BOOL 		g_bAllowTearing;
 extern int g_MonitorWidth;
 extern int g_MonitorHeight;
 
@@ -164,7 +172,6 @@ extern int g_MonitorHeight;
 int		ClearBackBuffer(COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview);
 int		ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11RenderTargetView* rtview, ID3D11DepthStencilView* dsview, float depth = 1.0f, UINT stencil = 0);
 int Flip(IDXGISwapChain* swapchain);
-
 
 
 #pragma region 버퍼 운용함수

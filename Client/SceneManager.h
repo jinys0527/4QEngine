@@ -1,8 +1,11 @@
-﻿#pragma once
+﻿// Game / Client 용
+#pragma once
 #include <memory>
 #include <unordered_map>
 #include <string>
 #include "Scene.h"
+#include "EventDispatcher.h"
+#include "IEventListener.h"
 
 class ServiceRegistry;
 class GameManager;
@@ -19,7 +22,7 @@ public:
 	void Initialize();
 	void Update(float deltaTime);
 	void StateUpdate(float deltaTime);
-	void Render();
+	void Render(RenderData::FrameData& frameData);
 
 	void SetCamera(CameraObject* camera) { m_Camera = camera; }
 	CameraObject* GetCamera() { return m_Camera; }
@@ -34,6 +37,7 @@ public:
 
 	void Reset()
 	{
+		SetEventDispatcher(nullptr);
 		m_Scenes.clear();
 		m_CurrentScene.reset();
 	}
@@ -44,9 +48,20 @@ public:
 	void SetChangeScene(std::string name);
 
 private:
+	enum class SceneTransitionPhase
+	{
+		None,
+		FadeOut,
+		FadeIn,
+	};
+
 	ServiceRegistry& m_Services;
+	void LoadGameScenesFromDirectory(const std::filesystem::path& directoryPath, const std::vector<std::string>& sceneNames);
+	bool LoadGameSceneFromJson(const std::filesystem::path& filepath);
 
 	std::unordered_map<std::string, std::shared_ptr<Scene>> m_Scenes;
+	std::unordered_map<std::string, nlohmann::json> m_SceneUIData;
+	std::unordered_map<std::string, nlohmann::json> m_SceneTemplateData;
 	std::shared_ptr<Scene> m_CurrentScene;
 	CameraObject*   m_Camera = nullptr;
 	GameManager*	m_GameManager;
@@ -54,6 +69,6 @@ private:
 	
 	bool m_ShouldQuit = false;
 
-	std::string m_ChangeSceneName;
+	std::string m_ChangeSceneName = "";
 };
 

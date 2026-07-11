@@ -244,6 +244,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+<<<<<<< HEAD
+=======
+    <ClInclude Include="ClientScene.h" />
+    <ClInclude Include="CombatManager.h" />
+    <ClInclude Include="CombatResolver.h" />
+    <ClInclude Include="CsvParser.h" />
+>>>>>>> UI
     <ClInclude Include="Device.h" />
     <ClInclude Include="Editor.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -253,12 +260,29 @@
     </ClInclude>
     <ClInclude Include="DefaultScene.h" />
     <ClInclude Include="Engine.h" />
+<<<<<<< HEAD
+=======
+    <ClInclude Include="GameDataRepository.h" />
+    <ClInclude Include="GameManager.h" />
+    <ClInclude Include="GameState.h" />
+>>>>>>> UI
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="LogLocalization.h" />
+    <ClInclude Include="LogSystem.h" />
+    <ClInclude Include="LootRoller.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ServiceRegistry.h" />
+    <ClInclude Include="ShopRoller.h" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< HEAD
+=======
+    <ClCompile Include="ClientScene.cpp" />
+    <ClCompile Include="CombatManager.cpp" />
+    <ClCompile Include="CombatResolver.cpp" />
+    <ClCompile Include="CsvParser.cpp" />
+>>>>>>> UI
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Editor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -268,7 +292,15 @@
     </ClCompile>
     <ClCompile Include="DefaultScene.cpp" />
     <ClCompile Include="Engine.cpp" />
+<<<<<<< HEAD
+=======
+    <ClCompile Include="GameDataRepository.cpp" />
+    <ClCompile Include="GameManager.cpp" />
+>>>>>>> UI
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="LogLocalization.cpp" />
+    <ClCompile Include="LogSystem.cpp" />
+    <ClCompile Include="LootRoller.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugEditor|x64'">Create</PrecompiledHeader>
@@ -277,6 +309,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="ShopRoller.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AI\AI.vcxproj">

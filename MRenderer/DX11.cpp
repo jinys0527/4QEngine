@@ -2,7 +2,8 @@
 
 #include "DX11.h"
 
-
+BOOL g_bVSync = FALSE;
+BOOL g_bAllowTearing = FALSE;
 
 
 
@@ -27,7 +28,15 @@ int ClearBackBuffer(UINT flag, COLOR col, ID3D11DeviceContext* dxdc, ID3D11Rende
 
 int Flip(IDXGISwapChain* swapchain)
 {
-    swapchain->Present(FALSE, 0);			//수직 동기화 0:끔, 1:켬
+
+    const UINT syncInterval = g_bVSync ? 1u : 0u;
+    UINT presentFlags = 0;
+    BOOL isFullscreen = FALSE;
+    if (!g_bVSync && g_bAllowTearing)
+    {
+        presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+    }
+    swapchain->Present(syncInterval, presentFlags);
 
     return 0;
 }

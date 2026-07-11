@@ -15,6 +15,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	SetSamplerState();
 
 #pragma endregion
+<<<<<<< HEAD
 
     SetCameraCB(frame);
     if (m_RenderContext.isEditCam)
@@ -33,6 +34,38 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		m_RenderContext.DrawFullscreenQuad();
 		SetDepthStencilState(DS::DEPTH_ON);
     }
+=======
+	FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+	ID3D11DepthStencilView* depthView = m_RenderContext.pDSViewScene_DepthMSAA
+		? m_RenderContext.pDSViewScene_DepthMSAA.Get()
+		: m_RenderContext.pDSViewScene_Depth.Get();
+	SetCameraCB(frame);
+	if (m_RenderContext.isEditCam)
+	{
+		SetRenderTarget(m_RenderContext.pRTView_Imgui_edit.Get(), depthView, backcolor);
+	}
+	else if (!m_RenderContext.isEditCam)
+	{
+		SetRenderTarget(m_RenderContext.pRTView_Imgui.Get(), depthView, backcolor);
+	}
+
+	//임시 스카이박스 테스트
+	if (frame.currScene == 1 || frame.currScene == 2)
+	{
+		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.pHDRI_1.GetAddressOf());
+	}
+	else
+	{
+		m_RenderContext.pDXDC->PSSetShaderResources(3, 1, m_RenderContext.SkyBox.GetAddressOf());
+
+	}
+
+	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_SkyBox.Get(), nullptr, 0);
+	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_SkyBox.Get(), nullptr, 0);
+	SetDepthStencilState(DS::DEPTH_OFF);
+	m_RenderContext.DrawFullscreenQuad();
+	SetDepthStencilState(DS::DEPTH_ON);
+>>>>>>> UI
 
 
     //빛 상수 버퍼 set
@@ -42,6 +75,7 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 
 	//터레인 그리기
+<<<<<<< HEAD
 	XMMATRIX mTM, mScale, mRotate, mTrans;
 	mScale = XMMatrixScaling(50, 50, 1);
 	mRotate = XMMatrixRotationX(XM_PI / 2);
@@ -53,14 +87,29 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	m_RenderContext.pDXDC->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
 	m_RenderContext.pDXDC->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
 	m_RenderContext.DrawFullscreenQuad();
+=======
+	if (frame.currScene != 3)
+	{
+		XMMATRIX mTM, mScale, mRotate, mTrans;
+		mScale = XMMatrixScaling(50, 50, 1);
+		mRotate = XMMatrixRotationX(XM_PI / 2);
+		mTrans = XMMatrixTranslation(0.0f, -10.0f, 0.0f);
+		mTM = mScale * mRotate * mTrans;
+		XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorld, mTM);
+		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pBCB.Get(), &(m_RenderContext.BCBuffer), sizeof(m_RenderContext.BCBuffer));
+		dxdc->PSSetShaderResources(18, 1, m_RenderContext.WaterNoise.GetAddressOf());
+		dxdc->VSSetConstantBuffers(0, 1, m_RenderContext.pBCB.GetAddressOf());
+		dxdc->PSSetShaderResources(2, 1, m_RenderContext.pShadowRV.GetAddressOf());
+		dxdc->VSSetShader(m_RenderContext.VS_Shadow.Get(), nullptr, 0);
+		dxdc->PSSetShader(m_RenderContext.PS_Shadow.Get(), nullptr, 0);
+		m_RenderContext.DrawFullscreenQuad();
+
+	}
+>>>>>>> UI
 	//터레인 끝
 
-	m_RenderContext.UpdateGrid(frame);
-	m_RenderContext.DrawGrid();
-
-	//임시 벽뚫 이미지 바인딩
-	m_RenderContext.pDXDC->PSSetShaderResources(5, 1, m_RenderContext.Vignetting.GetAddressOf());
-
+	//m_RenderContext.UpdateGrid(frame);
+	//m_RenderContext.DrawGrid();
 
 
 	//현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
@@ -70,7 +119,33 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 	{
 		const auto& item = *queueItem.item;
 		SetBaseCB(item);
+<<<<<<< HEAD
 		SetMaskingTM(item, frame.context.gameCamera.cameraPos);
+=======
+#ifdef _DEBUG
+// 		if (const auto* mesh = m_AssetLoader.GetMeshes().Get(item.mesh))
+// 		{
+// 			if (mesh->hasSkinning)
+// 			{
+// 				const UINT32 paletteCount = item.skinningPaletteCount;
+// 				if (paletteCount == 0 || mesh->maxBoneIndex >= paletteCount)
+// 				{
+// 					static std::unordered_set<UINT32> warnedMeshes;
+// 					if (warnedMeshes.insert(item.mesh.id).second)
+// 					{
+// 						std::cout << "[Skinning] meshId=" << item.mesh.id
+// 							<< " maxBoneIndex=" << mesh->maxBoneIndex
+// 							<< " paletteCount=" << paletteCount
+// 							<< " skeletonId=" << item.skeleton.id
+// 							<< "\n";
+// 					}
+// 				}
+// 			}
+// 		}
+
+		
+#endif
+>>>>>>> UI
 		if (m_RenderContext.pSkinCB && item.skinningPaletteCount > 0)
 		{
 			const size_t paletteStart = item.skinningPaletteOffset;
@@ -115,6 +190,13 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 		{
 			mat = m_AssetLoader.GetMaterials().Get(item.material);
 		}
+<<<<<<< HEAD
+=======
+		if (mat)
+		{
+			SetMaterialCB(*mat);
+		}
+>>>>>>> UI
 
 		if (textures && mat)
 		{
@@ -178,6 +260,14 @@ void OpaquePass::Execute(const RenderData::FrameData& frame)
 
 
 				m_RenderContext.pDXDC->PSSetShaderResources(11 + slot, 1, &srv);
+			}
+			if (frame.currScene == 1)
+			{
+				m_RenderContext.pDXDC->PSSetShaderResources(17, 1, m_RenderContext.pHDRI_1.GetAddressOf());
+			}
+			else if (frame.currScene == 2)
+			{
+				m_RenderContext.pDXDC->PSSetShaderResources(17, 1, m_RenderContext.pHDRI_2.GetAddressOf());
 			}
 		}
 

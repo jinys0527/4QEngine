@@ -5,9 +5,28 @@
 REGISTER_COMPONENT(TransformComponent)  //컴포넌트 등록
 // 컴포넌트 property 등록 **이름 주의**
 REGISTER_PROPERTY(TransformComponent, Position)
+REGISTER_PROPERTY_READONLY(TransformComponent, WorldPos)
 REGISTER_PROPERTY(TransformComponent, Rotation)
 REGISTER_PROPERTY(TransformComponent, Scale)
 
+
+TransformComponent::~TransformComponent()
+{
+	if (m_Parent)
+	{
+		m_Parent->RemoveChild(this);
+		m_Parent = nullptr;
+	}
+
+	for (auto* child : m_Children)
+	{
+		if (child)
+		{
+			child->m_Parent = nullptr;
+		}
+	}
+	m_Children.clear();
+}
 
 void TransformComponent::SetParent(TransformComponent* newParent)
 {
@@ -135,11 +154,30 @@ void TransformComponent::SetRotationEuler(const XMFLOAT3& rot)
 
 	XMFLOAT3 rotRad{ XMConvertToRadians(rot.x),XMConvertToRadians(rot.y),XMConvertToRadians(rot.z) };
 		
-
 	XMFLOAT4 result{};
 	XMStoreFloat4(&result, XMQuaternionRotationRollPitchYaw(rotRad.x, rotRad.y, rotRad.z));
 	m_Rotation = result;
 	SetDirty();
+}
+
+const XMFLOAT3& TransformComponent::GetWorldPos() 
+{
+	// 부모 밑에 있을 때 World Position을 외부에서 사용해야 할때, 부모 없으면 오류방지를 위해 부모기준 계산된 pos return
+	
+	if (m_Parent)
+	{
+		XMMATRIX local = CreateTRS(m_Position, m_Rotation, m_Scale);
+		XMMATRIX parentWorld = XMLoadFloat4x4(&m_Parent->GetWorldMatrix());
+		XMMATRIX world = XMMatrixMultiply(local, parentWorld);
+
+		XMFLOAT4X4 w;
+		XMStoreFloat4x4(&w, world);
+		m_WorldPos = XMFLOAT3{ w._41, w._42, w._43 };
+		return m_WorldPos;
+	}
+	// 부모 없으면 local == world
+	return m_Position;
+
 }
 
 void TransformComponent::Translate(const XMFLOAT3& delta)
@@ -220,12 +258,14 @@ void TransformComponent::Update(float deltaTime)
 
 void TransformComponent::OnEvent(EventType type, const void* data)
 {
+
 }
 
 
 void TransformComponent::Deserialize(const nlohmann::json& j)
 {
 	Component::Deserialize(j);
+	SetDirty();
 	UpdateMatrices();
 }
 

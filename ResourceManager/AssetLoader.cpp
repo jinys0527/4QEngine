@@ -103,6 +103,12 @@ namespace
 		uint32_t lowerCount		  = 0;
 	};
 
+	struct SkelBinEquipmentData
+	{
+		int32_t equipmentBoneIndex = -1;
+		float   equipmentBindPose[16] = {};
+	};
+
 	struct BoneBin
 	{
 		uint32_t nameOffset = 0;
@@ -115,6 +121,59 @@ namespace
 	constexpr uint32_t kMeshMagic = 0x4D455348; // "MESH"
 	constexpr uint32_t kMatMagic  = 0x4D41544C; // "MATL"
 	constexpr uint32_t kSkelMagic = 0x534B454C; // "SKEL"
+
+	void ExpandBounds(DirectX::XMFLOAT3& minOut, DirectX::XMFLOAT3& maxOut, const DirectX::XMFLOAT3& point)
+	{
+		minOut.x = min(minOut.x, point.x);
+		minOut.y = min(minOut.y, point.y);
+		minOut.z = min(minOut.z, point.z);
+
+		maxOut.x = max(maxOut.x, point.x);
+		maxOut.y = max(maxOut.y, point.y);
+		maxOut.z = max(maxOut.z, point.z);
+	}
+
+	void RebuildMeshBoundsFromSubMeshes(RenderData::MeshData& meshData)
+	{
+		if (meshData.subMeshes.empty())
+		{
+			return;
+		}
+
+		DirectX::XMFLOAT3 minOut{ FLT_MAX, FLT_MAX, FLT_MAX };
+		DirectX::XMFLOAT3 maxOut{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+		for (const auto& subMesh : meshData.subMeshes)
+		{
+			const DirectX::XMFLOAT3 min = subMesh.boundsMin;
+			const DirectX::XMFLOAT3 max = subMesh.boundsMax;
+
+			const DirectX::XMFLOAT3 corners[8] = {
+				{ min.x, min.y, min.z },
+				{ max.x, min.y, min.z },
+				{ max.x, max.y, min.z },
+				{ min.x, max.y, min.z },
+				{ min.x, min.y, max.z },
+				{ max.x, min.y, max.z },
+				{ max.x, max.y, max.z },
+				{ min.x, max.y, max.z }
+			};
+
+			const auto localToWorld = DirectX::XMLoadFloat4x4(&subMesh.localToWorld);
+			for (const auto& corner : corners)
+			{
+				const auto v = DirectX::XMLoadFloat3(&corner);
+				const auto transformed = DirectX::XMVector3TransformCoord(v, localToWorld);
+				DirectX::XMFLOAT3 worldCorner{};
+				DirectX::XMStoreFloat3(&worldCorner, transformed);
+				ExpandBounds(minOut, maxOut, worldCorner);
+			}
+		}
+
+		meshData.boundsMin = minOut;
+		meshData.boundsMax = maxOut;
+	}
+
 
 	std::string ReadStringAtOffset(const std::string& table, uint32_t offset)
 	{
@@ -210,8 +269,7 @@ namespace
 		case ETextureType::AO:
 			return RenderData::MaterialTextureSlot::AO;
 		case ETextureType::EMISSIVE:
-			outValid = false;
-			return RenderData::MaterialTextureSlot::Albedo;
+			return RenderData::MaterialTextureSlot::Emissive;
 		default:
 			outValid = false;
 			return RenderData::MaterialTextureSlot::Albedo;
@@ -462,6 +520,8 @@ AssetLoader::~AssetLoader()
 	m_TextureRefs.clear();
 	m_SkeletonRefs.clear();
 	m_AnimationRefs.clear();
+	m_BGMPaths.clear();
+	m_SFXPaths.clear();
 }
 
 void AssetLoader::SetActive(AssetLoader* loader)
@@ -476,6 +536,9 @@ AssetLoader* AssetLoader::GetActive()
 
 void AssetLoader::LoadAll()
 {
+	m_BGMPaths.clear();
+	m_SFXPaths.clear();
+
 	const fs::path assetRoot = "../ResourceOutput";
 	if (fs::exists(assetRoot) && fs::is_directory(assetRoot))
 	{
@@ -514,6 +577,108 @@ void AssetLoader::LoadAll()
 
 	const fs::path shaderRoot = "../MRenderer/fx";
 	LoadShaderSources(shaderRoot);
+
+	const fs::path uiTextureRoot = "../Resources/UI";
+	LoadLooseTextures(uiTextureRoot, true, "UI");
+
+	LoadSoundResources("../Resources/Sound/BGM", "../Resources/Sound/SFX");
+
+}
+
+void AssetLoader::LoadLooseTextures(const fs::path& rootDir, bool sRGB, const std::string& displayPrefix)
+{
+	if (!fs::exists(rootDir) || !fs::is_directory(rootDir))
+	{
+		return;
+	}
+
+	auto isTextureFile = [](const fs::path& path)
+		{
+			std::string ext = path.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+			return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".dds";
+		};
+
+	for (const auto& entry : fs::recursive_directory_iterator(rootDir))
+	{
+		if (!entry.is_regular_file())
+		{
+			continue;
+		}
+
+		const fs::path filePath = entry.path();
+		if (!isTextureFile(filePath))
+		{
+			continue;
+		}
+
+		const fs::path normalizedPath = filePath.lexically_normal();
+		const std::string textureKey = normalizedPath.generic_string();
+		TextureHandle textureHandle = m_Textures.Load(textureKey, [normalizedPath, sRGB]()
+			{
+				auto tex = std::make_unique<RenderData::TextureData>();
+				tex->path = normalizedPath.generic_string();
+				tex->sRGB = sRGB;
+				return tex;
+			});
+
+		AssetLoadResult result{};
+		result.textures.push_back(textureHandle);
+		m_AssetsByPath[textureKey] = result;
+		StoreReferenceIfMissing(m_TextureRefs, textureHandle, textureKey, 0u);
+
+		fs::path displayPath = fs::relative(normalizedPath, rootDir).lexically_normal();
+		displayPath.replace_extension();
+		std::string displayName = displayPath.generic_string();
+		if (!displayPrefix.empty())
+		{
+			displayName = displayPrefix + "/" + displayName;
+		}
+		m_Textures.SetDisplayName(textureHandle, displayName);
+	}
+}
+
+void AssetLoader::LoadSoundResources(const fs::path& bgmDir, const fs::path& sfxDir)
+{
+	auto isAudioFile = [](const fs::path& path)
+		{
+			std::string ext = path.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+			return ext == ".wav" || ext == ".ogg" || ext == ".mp3";
+		};
+
+	auto loadGroup = [&](const fs::path& directory, std::unordered_map<std::wstring, fs::path>& outMap)
+		{
+			if (!fs::exists(directory) || !fs::is_directory(directory))
+			{
+				return;
+			}
+
+			for (const auto& entry : fs::directory_iterator(directory))
+			{
+				if (!entry.is_regular_file())
+				{
+					continue;
+				}
+
+				const fs::path filePath = entry.path();
+				if (!isAudioFile(filePath))
+				{
+					continue;
+				}
+
+				outMap[filePath.stem().wstring()] = filePath;
+			}
+		};
+
+	loadGroup(bgmDir, m_BGMPaths);
+	loadGroup(sfxDir, m_SFXPaths);
 }
 
 void AssetLoader::LoadShaderSources(const fs::path& shaderDir)
@@ -531,7 +696,7 @@ void AssetLoader::LoadShaderSources(const fs::path& shaderDir)
 		}
 
 		const fs::path& path = fileEntry.path();
-		if (path.extension() != ".hlsl")
+		if (path.extension() != ".cso") 
 		{
 			continue;
 		}
@@ -1050,6 +1215,8 @@ void AssetLoader::LoadMeshes(
 
 			RenderData::MeshData meshData{};
 			meshData.hasSkinning = (header.flags & MESH_HAS_SKINNING) != 0;
+			meshData.boundsMin = { header.bounds.min[0], header.bounds.min[1], header.bounds.min[2] };
+			meshData.boundsMax = { header.bounds.max[0], header.bounds.max[1], header.bounds.max[2] };
 
 			meshData.vertices.reserve(header.vertexCount);
 			if (meshData.hasSkinning)
@@ -1136,6 +1303,8 @@ void AssetLoader::LoadMeshes(
 					out.indexCount = subMesh.indexCount;
 					out.material = mat;
 					out.name = subName;
+					out.boundsMin = { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] };
+					out.boundsMax = { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] };
 
 					DirectX::XMFLOAT4X4 id{};
 					id._11 = id._22 = id._33 = id._44 = 1.0f;
@@ -1159,6 +1328,8 @@ void AssetLoader::LoadMeshes(
 					out.indexCount = subMesh.indexCount;
 					out.material = mat;
 					out.name = subName;
+					out.boundsMin = { subMesh.bounds.min[0], subMesh.bounds.min[1], subMesh.bounds.min[2] };
+					out.boundsMax = { subMesh.bounds.max[0], subMesh.bounds.max[1], subMesh.bounds.max[2] };
 					out.localToWorld._11 = instanceTransforms[idx].m[0];
 					out.localToWorld._12 = instanceTransforms[idx].m[1];
 					out.localToWorld._13 = instanceTransforms[idx].m[2];
@@ -1179,6 +1350,8 @@ void AssetLoader::LoadMeshes(
 					meshData.subMeshes.push_back(std::move(out));
 				}
 			}
+
+			RebuildMeshBoundsFromSubMeshes(meshData);
 
 			MeshHandle handle = m_Meshes.Load(meshPath.generic_string(), [meshData]()
 				{
@@ -1226,7 +1399,7 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 				{
 					const MatData& mat = mats[i];
 					RenderData::MaterialData material{};
-					material.baseColor = { mat.baseColor[0], mat.baseColor[1], mat.baseColor[2], mat.baseColor[3] };
+					material.baseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 					material.metallic = mat.metallic;
 					material.roughness = mat.roughness;
 
@@ -1252,7 +1425,8 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 						}
 
 						const fs::path texPath = ResolvePath(textureDir, texPathRaw);
-						const bool isSRGB = (slot == RenderData::MaterialTextureSlot::Albedo);
+						const bool isSRGB = (slot == RenderData::MaterialTextureSlot::Albedo)
+							|| (slot == RenderData::MaterialTextureSlot::Emissive);
 
 						TextureHandle textureHandle = m_Textures.Load(
 							texPath.generic_string(),
@@ -1276,6 +1450,7 @@ void AssetLoader::LoadMaterials(json& meta, const fs::path& baseDir, const fs::p
 						{
 							return std::make_unique<RenderData::MaterialData>(material);
 						});
+
 
 					materialHandles.push_back(handle);
 					materialByName.emplace(materialName, handle);
@@ -1303,6 +1478,34 @@ void AssetLoader::LoadSkeletons(json& meta, const fs::path& baseDir, AssetLoadRe
 
 			if (header.magic == kSkelMagic && header.boneCount > 0)
 			{
+<<<<<<< HEAD
+=======
+				RenderData::Skeleton skeleton{};
+				if (header.version >= 4)
+				{
+					SkelBinEquipmentData equipmentData{};
+					skelStream.read(reinterpret_cast<char*>(&equipmentData), sizeof(equipmentData));
+					skeleton.equipmentBoneIndex = equipmentData.equipmentBoneIndex;
+					std::memcpy(&skeleton.equipmentBindPose, equipmentData.equipmentBindPose, sizeof(float) * 16);
+				}
+				else
+				{
+					skeleton.equipmentBoneIndex = -1;
+					DirectX::XMStoreFloat4x4(&skeleton.equipmentBindPose, DirectX::XMMatrixIdentity());
+				}
+
+				if (header.version >= 3)
+				{
+					float globalInverse[16]{};
+					skelStream.read(reinterpret_cast<char*>(globalInverse), sizeof(float) * 16);
+					std::memcpy(&skeleton.globalInverseTransform, globalInverse, sizeof(float) * 16);
+				}
+				else
+				{
+					DirectX::XMStoreFloat4x4(&skeleton.globalInverseTransform, DirectX::XMMatrixIdentity());
+				}
+
+>>>>>>> UI
 				std::vector<BoneBin> bones(header.boneCount);
 				skelStream.read(reinterpret_cast<char*>(bones.data()), sizeof(BoneBin) * bones.size());
 

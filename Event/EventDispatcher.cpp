@@ -1,8 +1,36 @@
 ﻿#include "EventDispatcher.h"
+#include <algorithm>
+
+bool IsMouseEvent(EventType type)
+{
+	switch (type)
+	{
+	case EventType::MouseLeftClick:
+	case EventType::MouseLeftClickHold:
+	case EventType::MouseLeftClickUp:
+	case EventType::MouseLeftDoubleClick:
+	case EventType::MouseRightClick:
+	case EventType::MouseRightClickHold:
+	case EventType::MouseRightClickUp:
+	case EventType::Dragged:
+	case EventType::Hovered:
+	case EventType::MouseWheelUp:
+	case EventType::MouseWheelDown:
+	case EventType::Pressed:
+	case EventType::Released:
+	case EventType::Moved:
+	case EventType::UIDragged:
+	case EventType::UIHovered:
+	case EventType::UIDoubleClicked:
+		return true;
+	default:
+		return false;
+	}
+}
 
 void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 {
-	if (!listener) return;
+	if (!m_IsAlive || !listener) return;
 
 	auto& vec = m_Listeners[type]; // 여기선 생성 OK(등록이니까)
 	if (std::find(vec.begin(), vec.end(), listener) != vec.end())
@@ -13,7 +41,7 @@ void EventDispatcher::AddListener(EventType type, IEventListener* listener)
 
 void EventDispatcher::RemoveListener(EventType type, IEventListener* listener)
 {
-	if (!listener) return;
+	if (!m_IsAlive || !listener) return;
 
 	auto it = m_Listeners.find(type);
 	if (it == m_Listeners.end())
@@ -38,6 +66,17 @@ void EventDispatcher::Dispatch(EventType type, const void* data)
 	for (auto* listener : listeners)
 	{
 		if (listener)
+		{
+			if (!listener->ShouldHandleEvent(type, data))
+				continue;
 			listener->OnEvent(type, data);
+		}
+
+		if (data && IsMouseEvent(type))
+		{
+			auto mouseData = static_cast<const Events::MouseState*>(data);
+			if (mouseData && mouseData->handled)
+				break;
+		}
 	}
 }

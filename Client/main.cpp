@@ -12,6 +12,14 @@
 #include "InputManager.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
+#include "RandomMachine.h"
+#include "DiceSystem.h"
+#include "CombatResolver.h"
+#include "CombatManager.h"
+#include "LogSystem.h"
+#include "LootRoller.h"
+#include "GameDataRepository.h"
+#include "ShopRoller.h"
 
 namespace
 {
@@ -35,12 +43,21 @@ int main()
 	auto& soundManager = services.Register<SoundManager>();
 	auto& uiManager = services.Register<UIManager>();
     auto& gameManager = services.Register<GameManager>();
+    auto& randomMachine = services.Register<RandomMachine>();
+    auto& diceSystem = services.Register<DiceSystem>(randomMachine);
+    auto& logSystem = services.Register<LogSystem>();
+    auto& combatResolver = services.Register<CombatResolver>();
+    services.Register<GameDataRepository>();
+    services.Register<LootRoller>();
+    services.Register<ShopRoller>();
+    services.Register<CombatManager>(combatResolver, diceSystem, &logSystem);
 
 	Renderer renderer(assetLoader);
 	Engine engine(services, renderer);
 	SceneManager sceneManager(services);
+  
 
-    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager);
+    g_pMainApp = new GameApplication(services, engine, renderer, sceneManager, inputManager); //service Rocation 있으니 생성자에 안받아도 되지않나
  
  	if (!g_pMainApp->Initialize())
  	{

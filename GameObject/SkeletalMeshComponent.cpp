@@ -27,9 +27,10 @@ void SkeletalMeshComponent::SetSkeletonHandle(const SkeletonHandle& handle)
 
 	if (auto* owner = GetOwner())
 	{
-		if (auto* anim = owner->GetComponent<AnimationComponent>())
+		const auto anims = owner->GetComponentsDerived<AnimationComponent>();
+		if (!anims.empty())
 		{
-			anim->RefreshDerivedAfterClipChanged();
+			anims.front()->RefreshDerivedAfterClipChanged();
 		}
 	}
 }

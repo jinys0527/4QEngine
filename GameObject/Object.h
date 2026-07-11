@@ -7,6 +7,7 @@
 #include "CoreTypes.h"
 #include "Component.h"
 #include "RenderData.h"
+#include "InitiativeUIComponent.h"
 
 class Scene;
 
@@ -115,6 +116,8 @@ public:
 	std::vector<Component*> GetComponentsByTypeName(const std::string& typeName) const;
 	bool RemoveComponentByTypeName(const std::string& typeName, int index = 0); // 삭제
 
+	Component* AddComponentByTypeName(const std::string& typeName);
+
 	virtual void Start();
 	virtual void Update(float deltaTime);
 
@@ -129,6 +132,9 @@ public:
 	{
 		return m_Name;
 	}
+
+	virtual void Serialize(nlohmann::json& j) const {}
+	virtual void Deserialize(const nlohmann::json& j) {}
 
 	void SetScene(Scene* scene) { m_Scene = scene; }
 	Scene* GetScene() const		{ return m_Scene;  }
@@ -146,7 +152,7 @@ protected:
 	std::string m_Name;
 	std::unordered_map<std::string, std::vector<std::unique_ptr<Component>>> m_Components;
 	EventDispatcher& m_EventDispatcher;
-	Scene*		m_Scene;
+	Scene*		m_Scene = nullptr;
 	RenderData::RenderLayer m_Layer = RenderData::RenderLayer::None;
 };
 

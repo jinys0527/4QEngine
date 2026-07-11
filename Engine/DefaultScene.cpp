@@ -57,7 +57,10 @@ void DefaultScene::Leave()
 
 void DefaultScene::FixedUpdate()
 {
-
+	if (GetIsPause())
+	{
+		return;
+	}
 	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)
@@ -65,15 +68,25 @@ void DefaultScene::FixedUpdate()
 			gameObject->FixedUpdate();
 		}
 	}
+	ProcessPendingRemovals();
 }
 
 void DefaultScene::Update(float deltaTime)
+<<<<<<< HEAD
 {	// ★★★★★★★★★★★★★★★★★★★★★★★★★
 	// Object Update를 따로 하면 문제 생길 수 있음 
 	// 투명 끝나고 -> 불투명 Update 하면. Logic에서 문제 생길 수 도 
 	// 문제 생기는 경우
 	// Upcasting 하던가, GameObject 자체에 멤버로 투명 불투병 bool 갖고, 이거 따라서 분류해서 Render 주던가
 
+=======
+{	
+
+	if (GetIsPause())
+	{
+		return;
+	}
+>>>>>>> UI
 	for (const auto& [name, gameObject] : m_GameObjects)
 	{
 		if (gameObject)
@@ -81,6 +94,7 @@ void DefaultScene::Update(float deltaTime)
 			gameObject->Update(deltaTime);
 		}
 	}
+	ProcessPendingRemovals();
 }
 
 void DefaultScene::StateUpdate(float deltaTime)
@@ -88,6 +102,11 @@ void DefaultScene::StateUpdate(float deltaTime)
 	if (m_EditorCamera)
 	{
 		m_EditorCamera->Update(deltaTime);
+	}
+	if (GetIsPause())
+	{
+		Scene::StateUpdate(deltaTime);
+		return;
 	}
 }
 

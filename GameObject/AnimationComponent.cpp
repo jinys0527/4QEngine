@@ -13,7 +13,7 @@
 REGISTER_COMPONENT(AnimationComponent);
 REGISTER_PROPERTY_HANDLE(AnimationComponent, ClipHandle)
 REGISTER_PROPERTY_READONLY(AnimationComponent, Animation)
-REGISTER_PROPERTY_READONLY(AnimationComponent, Playback)
+REGISTER_PROPERTY(AnimationComponent, Playback)
 REGISTER_PROPERTY_READONLY(AnimationComponent, Blend)
 REGISTER_PROPERTY(AnimationComponent, BlendConfig)
 REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeights)
@@ -182,6 +182,7 @@ void AnimationComponent::Stop()
 {
 	m_Playback.time    = 0.0f;
 	m_Playback.playing = false;
+	ApplyStaticPoseToSkeletal();
 }
 
 void AnimationComponent::Pause()
@@ -344,6 +345,7 @@ void AnimationComponent::ClearRetargetOffsets()
 void AnimationComponent::Start()
 {
 	EnsureResourceStores();
+	ApplyStaticPoseToSkeletal();
 }
 
 void AnimationComponent::EnsureResourceStores()
@@ -400,16 +402,54 @@ void AnimationComponent::RefreshDerivedAfterClipChanged()
 	if (!clip)
 	{
 		BuildBindPosePalette(*skel, m_SkinningPalette);
+<<<<<<< HEAD
 		skeletal->LoadSetSkinningPalette(m_SkinningPalette);
 		//AppendSkinningPaletteDebug(GetOwner(), *skel, nullptr, "bind_pose_fallback");
+=======
+		ApplyPoseToSkeletal(skeletal);
+>>>>>>> UI
 		return;
 	}
 
 	EnsureAutoBoneMask(*skel);
 	BuildPose(*skel, *clip, m_Playback.time);
+<<<<<<< HEAD
 
 	// 스켈레탈에 팔레트 반영
 	skeletal->LoadSetSkinningPalette(m_SkinningPalette);
+=======
+	ApplyPoseToSkeletal(skeletal);
+}
+
+void AnimationComponent::ApplyStaticPoseToSkeletal()
+{
+	Object* owner = GetOwner();
+	if (!owner)
+		return;
+
+	auto* skeletal = owner->GetComponent<SkeletalMeshComponent>();
+	if (!skeletal)
+		return;
+
+	const RenderData::Skeleton* skeleton = ResolveSkeleton(skeletal->GetSkeletonHandle());
+	if (!skeleton || skeleton->bones.empty())
+		return;
+
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip)
+	{
+		if (m_SkinningPalette.empty())
+			BuildBindPosePalette(*skeleton, m_SkinningPalette);
+	}
+	else
+	{
+		EnsureAutoBoneMask(*skeleton);
+		m_Playback.time = ClampTimeToClip(m_Playback.time, clip);
+		BuildPose(*skeleton, *clip, m_Playback.time);
+	}
+
+	ApplyPoseToSkeletal(skeletal);
+>>>>>>> UI
 }
 
 void AnimationComponent::SetRetargetFromBindPose(const std::vector<DirectX::XMFLOAT4X4>& sourceBind,
@@ -494,7 +534,10 @@ void AnimationComponent::Update(float deltaTime)
 {
 	EnsureResourceStores();
 	if (!m_Playback.playing)
+	{
+		ApplyStaticPoseToSkeletal();
 		return;
+	}
 
 	Object* owner = GetOwner();
 	if (!owner)
@@ -521,7 +564,8 @@ void AnimationComponent::Update(float deltaTime)
 		}
 		else
 		{
-			const float scaledDelta = deltaTime * m_Playback.speed;
+			const float dir = m_Playback.reverse ? -1.0f : 1.0f;
+			const float scaledDelta = deltaTime * m_Playback.speed * dir;
 			m_Blend.fromTime = UpdatePlaybackTime(m_Blend.fromTime, scaledDelta, fromClip, m_Playback.looping, nullptr);
 			m_Blend.toTime   = UpdatePlaybackTime(m_Blend.toTime, scaledDelta, toClip, m_Playback.looping, nullptr);
 			m_Blend.elapsed += deltaTime;
@@ -558,8 +602,14 @@ void AnimationComponent::Update(float deltaTime)
 			return;
 
 		bool stopped = false;
+<<<<<<< HEAD
 		const float scaledDelta = deltaTime * m_Playback.speed;
 		const float nextTime    = UpdatePlaybackTime(m_Playback.time, scaledDelta, clip, m_Playback.looping, &stopped);
+=======
+		const float dir = m_Playback.reverse ? -1.0f : 1.0f;
+		const float scaledDelta = deltaTime * m_Playback.speed * dir;
+		const float nextTime = UpdatePlaybackTime(m_Playback.time, scaledDelta, clip, m_Playback.looping, &stopped);
+>>>>>>> UI
 
 		m_Playback.time = nextTime;
 		if (stopped)
@@ -570,13 +620,73 @@ void AnimationComponent::Update(float deltaTime)
 		BuildPose(*skeleton, *clip, m_Playback.time);
 	}
 
-	skeletal->LoadSetSkinningPalette(m_SkinningPalette);
+	ApplyPoseToSkeletal(skeletal);
+}
+
+void AnimationComponent::ApplyPoseToSkeletal(SkeletalMeshComponent* skeletal)
+{
+	(void)skeletal;
 }
 
 void AnimationComponent::OnEvent(EventType type, const void* data)
 {
 }
 
+<<<<<<< HEAD
+=======
+bool AnimationComponent::AdvancePlayback(float deltaTime)
+{
+	if (!m_Playback.playing)
+		return false;
+
+	const RenderData::AnimationClip* clip = ResolveClip();
+	if (!clip)
+		return false;
+
+	bool stopped = false;
+	const float dir = m_Playback.reverse ? -1.0f : 1.0f;
+	const float scaledDelta = deltaTime * m_Playback.speed * dir;
+	const float nextTime = UpdatePlaybackTime(m_Playback.time, scaledDelta, clip, m_Playback.looping, &stopped);
+
+	m_Playback.time = nextTime;
+	if (stopped)
+		m_Playback.playing = false;
+
+	return true;
+}
+
+const RenderData::AnimationClip* AnimationComponent::GetActiveClip() const
+{
+	return ResolveClip();
+}
+
+bool AnimationComponent::SampleTrackForBone(const RenderData::AnimationClip& clip, int boneIndex, float timeSec, LocalPose& outPose)
+{
+	for (const auto& track : clip.tracks)
+	{
+		if (track.boneIndex != boneIndex || track.keyFrames.empty())
+			continue;
+
+		outPose = SampleTrack(track, timeSec);
+		return true;
+	}
+
+	return false;
+}
+
+bool AnimationComponent::SampleTrackByIndex(const RenderData::AnimationClip& clip, size_t trackIndex, float timeSec, LocalPose& outPose)
+{
+	if (trackIndex >= clip.tracks.size())
+		return false;
+
+	const auto& track = clip.tracks[trackIndex];
+	if (track.keyFrames.empty())
+		return false;
+
+	outPose = SampleTrack(track, timeSec);
+	return true;
+}
+>>>>>>> UI
 
 AnimationComponent::LocalPose AnimationComponent::ToLocalPose(const RetargetOffset& offset)
 {

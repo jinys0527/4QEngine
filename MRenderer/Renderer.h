@@ -16,7 +16,7 @@ public:
 	RenderPipeline& GetPipeline() { return m_Pipeline; }
 	const RenderPipeline& GetPipeline() const { return m_Pipeline; }
 
-	void Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height);
+	void Initialize(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc);
 	void InitializeTest(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc);		//Editor의 Renderer 초기화
 	void RenderFrame(const RenderData::FrameData& frame);
 	void RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2);
@@ -47,11 +47,11 @@ private:
 	HRESULT CreateBlendState();
 	HRESULT ReleaseScreenSizeResource();						//화면 크기 영향 받는 리소스 해제
 
-	DWORD m_dwAA = 1;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
+	DWORD m_dwAA = 4;				//안티에일리어싱, 1: 안함, 이후 수: 샘플 개수
 
 	ComPtr<ID3D11Device>				m_pDevice;
 	ComPtr<ID3D11DeviceContext>			m_pDXDC;
-	ComPtr<IDXGISwapChain>				m_pSwapChain;
+	ComPtr<IDXGISwapChain1>				m_pSwapChain;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView;
 	ComPtr<ID3D11Texture2D>				m_pDS;
 	ComPtr<ID3D11DepthStencilView>		m_pDSView;
@@ -61,6 +61,7 @@ private:
 	//imgui용 == Scene Draw용
 	bool m_IsEditCam = false;
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_ImguiMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Imgui;
 
@@ -68,6 +69,7 @@ private:
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Imgui;
 
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui_edit;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Imgui_editMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Imgui_edit;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Imgui_edit;
 
@@ -84,6 +86,10 @@ private:
 	ComPtr<ID3D11Texture2D>				m_pDSTex_Depth;
 	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_Depth;
 	ComPtr<ID3D11ShaderResourceView>	m_pDepthRV;
+	ComPtr<ID3D11Texture2D>				m_pDSTex_DepthMSAA;
+	ComPtr<ID3D11DepthStencilView>		m_pDSViewScene_DepthMSAA;
+	ComPtr<ID3D11ShaderResourceView>	m_pDepthMSAARV;
+
 
 	//PostPass용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Post;
@@ -91,9 +97,38 @@ private:
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Post;
 
 	//BlurPass용
-	ComPtr<ID3D11Texture2D>				m_pRTScene_Blur;
-	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Blur;
-	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_BlurOrigin;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_BlurOriginMSAA;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_BlurOrigin;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_BlurOrigin;
+
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Blur[static_cast<UINT>(BlurLevel::COUNT)];
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Blur[static_cast<UINT>(BlurLevel::COUNT)];
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur[static_cast<UINT>(BlurLevel::COUNT)];
+
+
+<<<<<<< HEAD
+=======
+	//Refraction용
+	ComPtr<ID3D11Texture2D>				m_pRTScene_Refraction;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_RefractionMSAA;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Refraction;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_Refraction;
+>>>>>>> UI
+
+	//Emissive용
+	ComPtr<ID3D11Texture2D>				m_pRTScene_EmissiveOrigin;
+	ComPtr<ID3D11Texture2D>				m_pRTScene_EmissiveOriginMSAA;
+	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_EmissiveOrigin;
+	ComPtr<ID3D11RenderTargetView>		m_pRTView_EmissiveOrigin;
+
+	ComPtr<ID3D11Texture2D>              m_pRTScene_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
+	ComPtr<ID3D11ShaderResourceView>     m_pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
+	ComPtr<ID3D11RenderTargetView>       m_pRTView_Emissive[static_cast<UINT>(EmissiveLevel::COUNT)];
+
+	//HDRIImage
+	ComPtr<ID3D11ShaderResourceView>	m_pHDRI_1;
+	ComPtr<ID3D11ShaderResourceView>	m_pHDRI_2;
 
 
 
@@ -104,11 +139,14 @@ private:
 
 private:
 	void CreateContext();
+	void ResolveImguiEditTargetIfNeeded();		//msaa로 그린 씬 결과를 외부에서 쓰도록 변환하는 함수
 
 	//DXHelper
 	HRESULT Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode);
 	HRESULT LoadVertexShader(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
 	HRESULT LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppPS);
+	HRESULT LoadVertexShaderCSO(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode);
+	HRESULT LoadPixelShaderCSO(const TCHAR* filename, ID3D11PixelShader** ppPS);
 	HRESULT TexturesLoad(const RenderData::TextureData* texData, const wchar_t* filename, ID3D11ShaderResourceView** textureRV);
 	HRESULT CreateInputLayout();			//일단 하나만, 나중에 레이아웃 추가되면 함수를 추가하든 여기서 추가하든 하면될듯
 	HRESULT CreateConstBuffer();
@@ -116,11 +154,13 @@ private:
 	HRESULT CreateIndexBuffer(ID3D11Device* pDev, LPVOID pData, UINT size, ID3D11Buffer** ppIB);
 	HRESULT CreateConstantBuffer(ID3D11Device* pDev, UINT size, ID3D11Buffer** ppCB);
 	HRESULT RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
+	HRESULT RTTexCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** ppTex);
 	HRESULT RTTexCreateMipMap(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT RTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView);
 	HRESULT RTSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
 	HRESULT DSCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView);				//일반 DS용
 	HRESULT DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pTexRV);		//쉐이더리소스뷰 생성 DS
+	HRESULT DSCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pSRV);
 	HRESULT RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex);
 	HRESULT CubeRTViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11RenderTargetView** ppRTView, UINT faceIndex);
 	HRESULT RTCubeSRViewCreate(DXGI_FORMAT fmt, ID3D11Texture2D* pTex, ID3D11ShaderResourceView** ppTexRV);
@@ -155,6 +195,15 @@ private:
 	SkinningConstBuffer			m_SkinCBuffer;
 	ComPtr<ID3D11Buffer>		m_pLightCB;
 	LightConstBuffer			m_LightCBuffer;
+<<<<<<< HEAD
+=======
+	ComPtr<ID3D11Buffer>		m_pUIB;
+	UIBuffer					m_UIBuffer;
+	ComPtr<ID3D11Buffer>		m_pMatB;
+	MaterialBuffer				m_MatBuffer;
+	ComPtr<ID3D11Buffer>		m_pMaskB;
+	MaskingBuffer				m_MaskBuffer;
+>>>>>>> UI
 
 
 	//임시
@@ -176,10 +225,33 @@ private:
 	ComPtr<ID3D11PixelShader>	m_pPS_PBR;
 	ComPtr<ID3DBlob> m_pVSCode_PBR;
 
+	//Wall
+	ComPtr<ID3D11VertexShader>	m_pVS_Wall;
+	ComPtr<ID3D11PixelShader>	m_pPS_Wall;
+	ComPtr<ID3DBlob> m_pVSCode_Wall;
+
+
 	//Post
 	ComPtr<ID3D11VertexShader> m_pVS_Post;
 	ComPtr<ID3D11PixelShader> m_pPS_Post;
 	ComPtr<ID3DBlob> m_pVSCode_Post;
+
+	//UI
+	ComPtr<ID3D11VertexShader> m_pVS_UI;
+	ComPtr<ID3D11PixelShader> m_pPS_UI;
+	ComPtr<ID3DBlob> m_pVSCode_UI;
+	ComPtr<ID3D11ShaderResourceView> m_UIWhiteTexture;
+
+	//그림자 만들기
+	ComPtr<ID3D11VertexShader>	m_pVS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	m_pPS_MakeShadow;
+	ComPtr<ID3D11PixelShader>	m_pPS_MakeShadow_Transparent;
+	ComPtr<ID3DBlob>			m_pVSCode_MakeShadow;
+
+	//Emissive용
+	ComPtr<ID3D11VertexShader>	m_pVS_Emissive;
+	ComPtr<ID3D11PixelShader>	m_pPS_Emissive;
+	ComPtr<ID3DBlob>			m_pVSCode_Emissive;
 
 //그리드
 private:
@@ -223,6 +295,7 @@ protected:
 
 	void CreateQuadVB();
 	void CreateQuadIB();
+	void CreateUIWhiteTexture();
 
 	//블러 테스트
 	ComPtr<ID3D11ShaderResourceView> m_Vignetting;
@@ -243,4 +316,82 @@ protected:
 	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
 	ComPtr<ID3DBlob> m_pVSCode_FSTriangle;
 
+<<<<<<< HEAD
+=======
+private:
+	std::unique_ptr<DirectX::SpriteBatch> m_SpriteBatch;
+	std::unique_ptr<DirectX::SpriteFont>  m_SpriteFont;
+
+	void SetupText();
+	//문자열 줄바꿈 처리
+	std::wstring WrapText(const std::wstring& text, float maxWidth)
+	{
+		std::wstring result;
+		std::wstring line;
+
+		for (wchar_t c : text)
+		{
+			if (c == L'\n')
+			{
+				result += line + L'\n';
+				line.clear();
+				continue;
+			}
+
+			line += c;
+
+			if (DirectX::XMVectorGetX(
+				m_SpriteFont->MeasureString(line.c_str())
+			) > maxWidth)
+			{
+				result += line.substr(0, line.size() - 1) + L'\n';
+				line = c;
+			}
+		}
+
+		result += line;
+		return result;
+	}
+	void RenderTextCenter(int screenW, int screenH)
+	{
+		/*const wchar_t* msg = L"황재하\n진영상\n홍한울\n정성우\n권윤정\n박지훈\n이지원";*/
+		const wchar_t* msg = L"나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나나";
+		float maxWidth = 300.f;
+
+		std::wstring wrapped = WrapText(msg, maxWidth);
+
+		// 1. 측정 및 계산
+		XMVECTOR size = m_SpriteFont->MeasureString(wrapped.c_str());
+		float x = (screenW - DirectX::XMVectorGetX(size)) * 0.5f;
+		float y = (screenH - DirectX::XMVectorGetY(size)) * 0.5f;
+
+		// 2. 파이프라인 정리 (핵심)
+		// 모든 셰이더 리소스를 해제하여 Hazard 방지
+		ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+		m_pDXDC->PSSetShaderResources(0, 128, nullSRVs);
+
+		// 깊이 버퍼 해제 (Hazard #9 방지)
+		// 현재 사용중인 렌더 타겟만 설정하고 DepthStencil은 nullptr로 설정
+		m_pDXDC->OMSetRenderTargets(1, m_pRTView_Post.GetAddressOf(), nullptr);
+
+		// 3. 뷰포트 설정
+		SetViewPort(m_WindowSize.width, m_WindowSize.height, m_pDXDC.Get());
+
+		// 4. SpriteBatch 실행
+		// SpriteBatch가 자체적으로 InputLayout, BlendState, DepthStencil 등을 설정하도록 둠
+		m_SpriteBatch->Begin();
+
+
+
+		m_SpriteFont->DrawString(
+			m_SpriteBatch.get(),
+			wrapped.c_str(),
+			DirectX::XMFLOAT2(x, y),
+			DirectX::Colors::Black
+		);
+
+		m_SpriteBatch->End();
+	}
+
+>>>>>>> UI
 };

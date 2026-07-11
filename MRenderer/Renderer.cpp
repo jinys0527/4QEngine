@@ -6,11 +6,21 @@
 #include "PostPass.h"
 #include "FrustumPass.h"
 #include "RenderTargetContext.h"
+<<<<<<< HEAD
 
+=======
+#include "DebugLinePass.h"
+#include "EmissivePass.h"
+#include "UIPass.h"
+>>>>>>> UI
 #include "Renderer.h"
 
-#include <algorithm>
+namespace
+{
+	constexpr DXGI_FORMAT kSceneColorFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+}
 
+#include <algorithm>
 //맵 순회하면서 지우거나 찾는 헬퍼 함수
 namespace
 {
@@ -41,46 +51,157 @@ namespace
 
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame);
 
-void Renderer::Initialize(HWND hWnd, const RenderData::FrameData& frame, int width, int height)
+void Renderer::Initialize(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc)
 {
 	if (m_bIsInitialized)
 		return;
 
-	m_RenderContext.vertexBuffers = &m_VertexBuffers;
-	m_RenderContext.indexBuffers = &m_IndexBuffers;
-	m_RenderContext.indexCounts = &m_IndexCounts;
+	m_WindowSize.width = width;		m_WindowSize.height = height;
 
-	// Device 생성을 여기서함 (원래는 engine에서 받는 거)
-	//DXSetup(hWnd, width, height, m_pDXDC.Get()); // 멤버함수로 교체
+	m_pDevice = device;
+	m_pDXDC = dxdc;
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
+	DXSetup(hWnd, width, height);
+	//SetupText();
 
-	//CreateInputLayout(m_pDevice.Get(), m_pVSCode.Get(), m_pInputLayout.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
+	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
 
 
-	InitVB(frame);// 멤버함수로 교체
-	InitIB(frame);// 멤버함수로 교체
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_VS.cso"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PS.cso"), m_pPS.GetAddressOf());
 
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_POS_VS.cso"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_POS_PS.cso"), m_pPS_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Frustum_PS.cso"), m_pPS_Frustum.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Quad_VS.cso"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Quad_PS.cso"), m_pPS_Quad.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/UI_VS.cso"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/UI_PS.cso"), m_pPS_UI.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_PBR_VS.cso"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PBR_PS.cso"), m_pPS_PBR.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Post_VS.cso"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Post_PS.cso"), m_pPS_Post.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/SkyBox_VS.cso"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/SkyBox_PS.cso"), m_pPS_SkyBox.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Shadow_VS.cso"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Shadow_PS.cso"), m_pPS_Shadow.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_VS.cso"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_PS.cso"), m_pPS_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.cso"), m_pPS_MakeShadow_Transparent.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Emissive_VS.cso"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Emissive_PS.cso"), m_pPS_Emissive.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
+
+	//LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	//LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
+
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.cso"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
+
+
+	CreateInputLayout();
+
+	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<WallPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<EmissivePass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<RefractionPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<UIPass>(m_RenderContext, m_AssetLoader));
+	CreateConstBuffer();
 
-	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(BaseConstBuffer), m_RenderContext.pBCB.GetAddressOf());
-	CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(SkinningConstBuffer), m_RenderContext.pSkinCB.GetAddressOf());
-	//이 아래는 확인용
-	//ClearBackBuffer(COLOR(0, 0, 1, 1));
 
-	//Flip();
-	m_RenderContext.VS = m_pVS;
-	m_RenderContext.PS = m_pPS;
-	m_RenderContext.VSCode = m_pVSCode;
-	m_RenderContext.InputLayout = m_pInputLayout;
+	InitTexture();
+	InitShaders();
+
+	//블러 테스트
+	const wchar_t* filename = L"../MRenderer/fx/Vignette.png";
+	hr = S_OK;
+	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+		nullptr, m_Vignetting.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
+	filename = L"../MRenderer/fx/SunSet.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT, 
+		nullptr, m_SkyBox.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
+	//HDRISET
+	filename = L"../MRenderer/fx/BlueStudio.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_1.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+	//HDRISET
+	filename = L"../MRenderer/fx/BlueStudio.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_2.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+
+	filename = L"../MRenderer/fx/WaterNoise.jpg";
+	hr = DirectX::CreateWICTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, WIC_LOADER_DEFAULT,
+		nullptr, m_WaterNoise.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+	}
+
+
 
 	//그리드
 	CreateGridVB();
 	const int gridSize = m_HalfCells * 2 + 1;
 	m_GridFlags.assign(gridSize, std::vector<int>(gridSize, 0));
 
+	//Quad
+	CreateQuadVB();
+	CreateQuadIB();
+	CreateUIWhiteTexture();
 
+
+	CreateContext();		//마지막에 실행
 
 	m_bIsInitialized = true;
 }
@@ -95,45 +216,74 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	m_pDevice = device;
 	m_pDXDC = dxdc;
 
+<<<<<<< HEAD
 	DXSetup(hWnd, width, height);
+=======
+	DXSetup(hWnd, width, 1600);
+	//SetupText();
+
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred;
+	HRESULT hr = m_pDevice->CreateDeferredContext(0, deferred.GetAddressOf());
+>>>>>>> UI
 
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS.hlsl"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS.hlsl"), m_pPS.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_VS.cso"), m_pVS.GetAddressOf(), m_pVSCode.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PS.cso"), m_pPS.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_VS_POS.hlsl"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PS_POS.hlsl"), m_pPS_P.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Frustum_PS.hlsl"), m_pPS_Frustum.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_POS_VS.cso"), m_pVS_P.GetAddressOf(), m_pVSCode_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_POS_PS.cso"), m_pPS_P.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Frustum_PS.cso"), m_pPS_Frustum.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Quad_VS.hlsl"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Quad_PS.hlsl"), m_pPS_Quad.GetAddressOf());
-	
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Quad_VS.cso"), m_pVS_Quad.GetAddressOf(), m_pVSCode_Quad.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Quad_PS.cso"), m_pPS_Quad.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_PBR_VS.hlsl"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_PBR_PS.hlsl"), m_pPS_PBR.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/UI_VS.cso"), m_pVS_UI.GetAddressOf(), m_pVSCode_UI.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/UI_PS.cso"), m_pPS_UI.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Post_VS.hlsl"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Post_PS.hlsl"), m_pPS_Post.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_PBR_VS.cso"), m_pVS_PBR.GetAddressOf(), m_pVSCode_PBR.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_PBR_PS.cso"), m_pPS_PBR.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/SkyBox_VS.hlsl"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/SkyBox_PS.hlsl"), m_pPS_SkyBox.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Post_VS.cso"), m_pVS_Post.GetAddressOf(), m_pVSCode_Post.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Post_PS.cso"), m_pPS_Post.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_Shadow_VS.hlsl"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
-	LoadPixelShader(_T("../MRenderer/fx/Demo_Shadow_PS.hlsl"), m_pPS_Shadow.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/SkyBox_VS.cso"), m_pVS_SkyBox.GetAddressOf(), m_pVSCode_SkyBox.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/SkyBox_PS.cso"), m_pPS_SkyBox.GetAddressOf());
 
-	LoadVertexShader(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.hlsl"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Shadow_VS.cso"), m_pVS_Shadow.GetAddressOf(), m_pVSCode_Shadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Shadow_PS.cso"), m_pPS_Shadow.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_VS.cso"), m_pVS_MakeShadow.GetAddressOf(), m_pVSCode_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadow_PS.cso"), m_pPS_MakeShadow.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_MakeShadowTransparent_PS.cso"), m_pPS_MakeShadow_Transparent.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Emissive_VS.cso"), m_pVS_Emissive.GetAddressOf(), m_pVSCode_Emissive.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Emissive_PS.cso"), m_pPS_Emissive.GetAddressOf());
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
+
+	//LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_Wall_VS.cso"), m_pVS_Wall.GetAddressOf(), m_pVSCode_Wall.GetAddressOf());
+	//LoadPixelShaderCSO(_T("../MRenderer/fx/Demo_Wall_PS.cso"), m_pPS_Wall.GetAddressOf());
+
+
+	LoadVertexShaderCSO(_T("../MRenderer/fx/Demo_FullScreen_Triangle_VS.cso"), m_pVS_FSTriangle.GetAddressOf(), m_pVSCode_FSTriangle.GetAddressOf());
 
 
 	CreateInputLayout();
 
 	m_Pipeline.AddPass(std::make_unique<ShadowPass>(m_RenderContext, m_AssetLoader));		
-	m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
+	//m_Pipeline.AddPass(std::make_unique<DepthPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<OpaquePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<TransparentPass>(m_RenderContext, m_AssetLoader));
+	m_Pipeline.AddPass(std::make_unique<EmissivePass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<FrustumPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<BlurPass>(m_RenderContext, m_AssetLoader));
 	m_Pipeline.AddPass(std::make_unique<PostPass>(m_RenderContext, m_AssetLoader));
+<<<<<<< HEAD
 
+=======
+	m_Pipeline.AddPass(std::make_unique<UIPass>(m_RenderContext, m_AssetLoader));
+>>>>>>> UI
 	CreateConstBuffer();
 
 
@@ -153,10 +303,10 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 	}
 
-	filename = L"../MRenderer/fx/YenaSky.dds";
+	filename = L"../MRenderer/fx/SunSet.dds";			//★★★★★★★★★★★★★★★★★★★★★★
 	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
 		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
-		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_FORCE_SRGB,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT, 
 		nullptr, m_SkyBox.GetAddressOf());
 
 	if (FAILED(hr))
@@ -166,7 +316,30 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	}
 
 
-	
+	//HDRISET
+	filename = L"../MRenderer/fx/BlueStudio.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_1.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
+	//HDRISET
+	filename = L"../MRenderer/fx/BlueStudio.dds";
+	hr = DirectX::CreateDDSTextureFromFileEx(m_pDevice.Get(), m_pDXDC.Get(), filename, 0,
+		D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,
+		0, D3D11_RESOURCE_MISC_GENERATE_MIPS, DDS_LOADER_DEFAULT,
+		nullptr, m_pHDRI_2.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+
+	}
 
 	//그리드
 	CreateGridVB();
@@ -176,7 +349,7 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 	//Quad
 	CreateQuadVB();
 	CreateQuadIB();
-
+	CreateUIWhiteTexture();
 
 
 	CreateContext();		//마지막에 실행
@@ -186,26 +359,48 @@ void Renderer::InitializeTest(HWND hWnd, int width, int height, ID3D11Device* de
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame)
 {
+	dTime += frame.context.deltaTime;
 	EnsureMeshBuffers(frame);
+<<<<<<< HEAD
 	m_Pipeline.Execute(frame);
 	Flip(m_pSwapChain.Get());
+=======
+	//메인 카메라로 draw
+	m_IsEditCam = false;
+	m_RenderContext.isEditCam = m_IsEditCam;
+
+	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
+	m_Pipeline.Execute(frame, m_pDXDC.Get());
+
+>>>>>>> UI
 }
 
 void Renderer::RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2)
 {
+<<<<<<< HEAD
+=======
+	dTime += frame.context.deltaTime;
+>>>>>>> UI
 	EnsureMeshBuffers(frame);
 	//메인 카메라로 draw
 	m_IsEditCam = false;
 	m_RenderContext.isEditCam = m_IsEditCam;
-	m_Pipeline.Execute(frame);
 
+	ID3D11ShaderResourceView* nullSRV[40] = { nullptr, };
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
+	m_Pipeline.Execute(frame, m_pDXDC.Get());
+
+	ResolveImguiEditTargetIfNeeded();
 	rendertargetcontext.SetShaderResourceView(m_pTexRvScene_Post.Get());
 
 
 	//edit카메라로 draw
 	m_IsEditCam = true;
 	m_RenderContext.isEditCam = m_IsEditCam;
-	m_Pipeline.Execute(frame);
+
+	m_pDXDC->PSSetShaderResources(0, 40, nullSRV);
+	m_Pipeline.Execute(frame, m_pDXDC.Get());
 
 	rendertargetcontext2.SetShaderResourceView(m_pTexRvScene_Imgui_edit.Get());
 }
@@ -414,7 +609,21 @@ void Renderer::InitShaders()
 		if (!shaderData->path.empty())
 		{
 			std::wstring vsPath(shaderData->path.begin(), shaderData->path.end());
-			LoadVertexShader(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
+			std::filesystem::path sourcePath(shaderData->path);
+			std::string extension = sourcePath.extension().string();
+			std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+
+			if (extension == ".cso")
+			{
+				LoadVertexShaderCSO(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
+			}
+			else
+			{
+				LoadVertexShader(vsPath.c_str(), resources.vertexShader.GetAddressOf(), resources.vertexShaderCode.GetAddressOf());
+			}
 		}
 
 		if (!resources.vertexShader)
@@ -457,7 +666,21 @@ void Renderer::InitShaders()
 		if (!shaderData->path.empty())
 		{
 			std::wstring psPath(shaderData->path.begin(), shaderData->path.end());
-			LoadPixelShader(psPath.c_str(), resources.pixelShader.GetAddressOf());
+			std::filesystem::path sourcePath(shaderData->path);
+			std::string extension = sourcePath.extension().string();
+			std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c)
+				{
+					return static_cast<char>(std::tolower(c));
+				});
+
+			if (extension == ".cso")
+			{
+				LoadPixelShaderCSO(psPath.c_str(), resources.pixelShader.GetAddressOf());
+			}
+			else
+			{
+				LoadPixelShader(psPath.c_str(), resources.pixelShader.GetAddressOf());
+			}
 		}
 
 		if (!resources.pixelShader)
@@ -493,30 +716,54 @@ void Renderer::CreateContext()
 	m_RenderContext.SkinCBuffer				= m_SkinCBuffer;
 	m_RenderContext.pLightCB				= m_pLightCB;		
 	m_RenderContext.LightCBuffer			= m_LightCBuffer;
+<<<<<<< HEAD
 
+=======
+	m_RenderContext.pUIB					= m_pUIB;
+	m_RenderContext.UIBuffer				= m_UIBuffer;
+	m_RenderContext.pMatB					= m_pMatB;
+	m_RenderContext.MatBuffer				= m_MatBuffer;
+	m_RenderContext.pMaskB					= m_pMaskB;
+	m_RenderContext.MaskBuffer				= m_MaskBuffer;
+>>>>>>> UI
 
 	m_RenderContext.VS						= m_pVS;
 	m_RenderContext.PS						= m_pPS;
-	m_RenderContext.VSCode					= m_pVSCode;
+
 	m_RenderContext.InputLayout				= m_pInputLayout;
 
 	m_RenderContext.VS_P					= m_pVS_P;
 	m_RenderContext.PS_P					= m_pPS_P;
 	m_RenderContext.PS_Frustum				= m_pPS_Frustum;
-	m_RenderContext.VSCode_P				= m_pVSCode_P;
 
 	m_RenderContext.VS_PBR					= m_pVS_PBR;
 	m_RenderContext.PS_PBR					= m_pPS_PBR;
-	m_RenderContext.VSCode_PBR				= m_pVSCode_PBR;
+
+	m_RenderContext.VS_Wall					= m_pVS_Wall;
+	m_RenderContext.PS_Wall					= m_pPS_Wall;
 
 	m_RenderContext.VS_Quad					= m_pVS_Quad;
 	m_RenderContext.PS_Quad					= m_pPS_Quad;
-	m_RenderContext.VSCode_Quad				= m_pVSCode_Quad;
 
 	m_RenderContext.VS_Post					= m_pVS_Post;
 	m_RenderContext.PS_Post					= m_pPS_Post;
-	m_RenderContext.VSCode_Post				= m_pVSCode_Post;
 
+	m_RenderContext.VS_UI = m_pVS_UI;
+	m_RenderContext.PS_UI = m_pPS_UI;
+
+	m_RenderContext.UIQuadVertexBuffer = m_QuadVertexBuffers;
+	m_RenderContext.UIQuadIndexBuffer = m_QuadIndexBuffers;
+	m_RenderContext.UIQuadIndexCount = m_QuadIndexCounts;
+	m_RenderContext.UIWhiteTexture = m_UIWhiteTexture;
+
+	m_RenderContext.VS_MakeShadow			= m_pVS_MakeShadow;
+	m_RenderContext.PS_MakeShadow			= m_pPS_MakeShadow;
+	m_RenderContext.PS_MakeShadow_Transparent = m_pPS_MakeShadow_Transparent;
+	m_RenderContext.VSCode_MakeShadow		= m_pVSCode_MakeShadow;
+
+	m_RenderContext.VS_Emissive				= m_pVS_Emissive;
+	m_RenderContext.PS_Emissive				= m_pPS_Emissive;
+	m_RenderContext.VSCode_Emissive			= m_pVSCode_Emissive;
 
 	m_RenderContext.RState					= m_RState;
 	m_RenderContext.DSState					= m_DSState;
@@ -524,6 +771,7 @@ void Renderer::CreateContext()
 	m_RenderContext.BState					= m_BState;
 
 	m_RenderContext.pRTScene_Imgui			= m_pRTScene_Imgui;
+	m_RenderContext.pRTScene_ImguiMSAA		= m_pRTScene_ImguiMSAA;
 	m_RenderContext.pTexRvScene_Imgui		= m_pTexRvScene_Imgui;
 	m_RenderContext.pRTView_Imgui			= m_pRTView_Imgui;
 
@@ -531,6 +779,7 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSViewScene_Imgui		= m_pDSViewScene_Imgui;
 
 	m_RenderContext.pRTScene_Imgui_edit		= m_pRTScene_Imgui_edit;
+	m_RenderContext.pRTScene_Imgui_editMSAA = m_pRTScene_Imgui_editMSAA;
 	m_RenderContext.pTexRvScene_Imgui_edit	= m_pTexRvScene_Imgui_edit;
 	m_RenderContext.pRTView_Imgui_edit		= m_pRTView_Imgui_edit;
 
@@ -545,15 +794,43 @@ void Renderer::CreateContext()
 	m_RenderContext.pDSTex_Depth			= m_pDSTex_Depth;
 	m_RenderContext.pDSViewScene_Depth		= m_pDSViewScene_Depth;
 	m_RenderContext.pDepthRV				= m_pDepthRV;
+	m_RenderContext.pDSViewScene_DepthMSAA	= m_pDSViewScene_DepthMSAA;
+	m_RenderContext.pDepthMSAARV			= m_pDepthMSAARV;
 
 	m_RenderContext.pRTScene_Post			= m_pRTScene_Post;
 	m_RenderContext.pTexRvScene_Post		= m_pTexRvScene_Post;
 	m_RenderContext.pRTView_Post			= m_pRTView_Post;
 
+	m_RenderContext.pRTScene_BlurOrigin			= m_pRTScene_BlurOrigin;
+	m_RenderContext.pRTScene_BlurOriginMSAA		= m_pRTScene_BlurOriginMSAA;
+	m_RenderContext.pTexRvScene_BlurOrigin		= m_pTexRvScene_BlurOrigin;
+	m_RenderContext.pRTView_BlurOrigin			= m_pRTView_BlurOrigin;
+
 	m_RenderContext.pRTScene_Blur			= m_pRTScene_Blur;
 	m_RenderContext.pTexRvScene_Blur		= m_pTexRvScene_Blur;
 	m_RenderContext.pRTView_Blur			= m_pRTView_Blur;
 
+<<<<<<< HEAD
+=======
+	m_RenderContext.pRTScene_Refraction			= m_pRTScene_Refraction;
+	m_RenderContext.pRTScene_RefractionMSAA		= m_pRTScene_RefractionMSAA;
+	m_RenderContext.pTexRvScene_Refraction		= m_pTexRvScene_Refraction;
+	m_RenderContext.pRTView_Refraction			= m_pRTView_Refraction;
+
+	m_RenderContext.pRTScene_EmissiveOrigin		= m_pRTScene_EmissiveOrigin;
+	m_RenderContext.pRTScene_EmissiveOriginMSAA = m_pRTScene_EmissiveOriginMSAA;
+	m_RenderContext.pTexRvScene_EmissiveOrigin	= m_pTexRvScene_EmissiveOrigin;
+	m_RenderContext.pRTView_EmissiveOrigin		= m_pRTView_EmissiveOrigin;
+
+	m_RenderContext.pRTScene_Emissive			= m_pRTScene_Emissive;
+	m_RenderContext.pTexRvScene_Emissive		= m_pTexRvScene_Emissive;
+	m_RenderContext.pRTView_Emissive			= m_pRTView_Emissive;
+
+	m_RenderContext.pHDRI_1						= m_pHDRI_1;
+	m_RenderContext.pHDRI_2						= m_pHDRI_2;
+
+
+>>>>>>> UI
 	m_RenderContext.Vignetting				= m_Vignetting;
 
 	m_RenderContext.SkyBox					= m_SkyBox;
@@ -581,6 +858,13 @@ void Renderer::CreateContext()
 			m_pDXDC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			// 딱 3개의 정점만 그리라고 명령 (셰이더에서 SV_VertexID로 처리)
+<<<<<<< HEAD
+=======
+			D3D11_VIEWPORT cur;
+			UINT n = 1;
+			m_pDXDC->RSGetViewports(&n, &cur);
+
+>>>>>>> UI
 			m_pDXDC->Draw(3, 0);
 		};
 
@@ -618,6 +902,17 @@ void Renderer::CreateContext()
 		};
 
 }
+
+void Renderer::ResolveImguiEditTargetIfNeeded()
+{
+	if (m_dwAA <= 1 || !m_pRTScene_Imgui_editMSAA || !m_pRTScene_Imgui_edit || !m_pDXDC)
+	{
+		return;
+	}
+
+	m_pDXDC->ResolveSubresource(m_pRTScene_Imgui_edit.Get(), 0, m_pRTScene_Imgui_editMSAA.Get(), 0, kSceneColorFormat);
+}
+
 HRESULT Renderer::Compile(const WCHAR* FileName, const char* EntryPoint, const char* ShaderModel, ID3DBlob** ppCode)
 {
 	HRESULT hr = S_OK;
@@ -715,6 +1010,47 @@ HRESULT Renderer::LoadPixelShader(const TCHAR* filename, ID3D11PixelShader** ppP
 		return hr;
 
 	*ppPS = pPS;
+	return hr;
+}
+
+HRESULT Renderer::LoadVertexShaderCSO(const TCHAR* filename, ID3D11VertexShader** ppVS, ID3DBlob** ppVSCode)
+{
+	HRESULT hr = D3DReadFileToBlob(filename, ppVSCode);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+
+	}
+
+	hr = m_pDevice->CreateVertexShader(
+		(*ppVSCode)->GetBufferPointer(),
+		(*ppVSCode)->GetBufferSize(),
+		nullptr,
+		ppVS);
+
+	return hr;
+}
+
+HRESULT Renderer::LoadPixelShaderCSO(const TCHAR* filename, ID3D11PixelShader** ppPS)
+{
+	ID3DBlob* pCode = nullptr;
+
+	HRESULT hr = D3DReadFileToBlob(filename, &pCode);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+
+	}
+
+	hr = m_pDevice->CreatePixelShader(
+		pCode->GetBufferPointer(),
+		pCode->GetBufferSize(),
+		nullptr,
+		ppPS);
+
+	SafeRelease(pCode);
 	return hr;
 }
 
@@ -834,6 +1170,30 @@ HRESULT Renderer::CreateConstBuffer()
 		return hr;
 	}
 
+<<<<<<< HEAD
+=======
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(UIBuffer), m_pUIB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(MaterialBuffer), m_pMatB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	hr = CreateDynamicConstantBuffer(m_pDevice.Get(), sizeof(MaskingBuffer), m_pMaskB.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+>>>>>>> UI
 
 	return hr;
 }
@@ -944,6 +1304,37 @@ HRESULT Renderer::RTTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Te
 
 	//성공후 외부로 리턴.
 	if (ppTex) *ppTex = pTex;
+
+	return hr;
+}
+
+HRESULT Renderer::RTTexCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality, ID3D11Texture2D** ppTex)
+{
+	D3D11_TEXTURE2D_DESC td = {};
+	td.Width = width;
+	td.Height = height;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+	td.Format = fmt;
+	td.SampleDesc.Count = sampleCount;
+	td.SampleDesc.Quality = sampleQuality;
+	td.Usage = D3D11_USAGE_DEFAULT;
+	td.BindFlags = D3D11_BIND_RENDER_TARGET;
+	td.CPUAccessFlags = 0;
+	td.MiscFlags = 0;
+
+	ID3D11Texture2D* pTex = NULL;
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, NULL, &pTex);
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
+
+	if (ppTex)
+	{
+		*ppTex = pTex;
+	}
 
 	return hr;
 }
@@ -1184,6 +1575,51 @@ HRESULT Renderer::DSCreate(UINT width, UINT height, ID3D11Texture2D** pDSTex, ID
 	return hr;
 }
 
+HRESULT Renderer::DSCreateMSAA(UINT width, UINT height, DXGI_FORMAT fmt, UINT sampleCount, UINT sampleQuality,
+	ID3D11Texture2D** pDSTex, ID3D11DepthStencilView** pDSView, ID3D11ShaderResourceView** pSRV)
+{
+	if (!pDSTex || !pDSView || !pSRV) return E_INVALIDARG;
+
+	// 1) MSAA Depth Texture: Typeless + SRV bind
+	D3D11_TEXTURE2D_DESC td = {};
+	td.Width = width;
+	td.Height = height;
+	td.MipLevels = 1;
+	td.ArraySize = 1;
+
+	// ★ fmt 인자는 무시하고, SRV 가능한 typeless로 강제 (Stencil 없이 depth만)
+	td.Format = DXGI_FORMAT_R32_TYPELESS;
+
+	td.SampleDesc.Count = sampleCount;
+	td.SampleDesc.Quality = sampleQuality;
+	td.Usage = D3D11_USAGE_DEFAULT;
+
+	// ★ SRV까지 필요
+	td.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+
+	HRESULT hr = m_pDevice->CreateTexture2D(&td, nullptr, pDSTex);
+	if (FAILED(hr)) { ERROR_MSG_HR(hr); return hr; }
+
+	// 2) DSV: D32_FLOAT (MSAA)
+	D3D11_DEPTH_STENCIL_VIEW_DESC dd = {};
+	dd.Format = DXGI_FORMAT_D32_FLOAT;
+	dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+
+	hr = m_pDevice->CreateDepthStencilView(*pDSTex, &dd, pDSView);
+	if (FAILED(hr)) { ERROR_MSG_HR(hr); return hr; }
+
+	// 3) SRV: R32_FLOAT (MSAA)
+	D3D11_SHADER_RESOURCE_VIEW_DESC sd = {};
+	sd.Format = DXGI_FORMAT_R32_FLOAT;
+	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+
+	hr = m_pDevice->CreateShaderResourceView(*pDSTex, &sd, pSRV);
+	if (FAILED(hr)) { ERROR_MSG_HR(hr); return hr; }
+
+	return S_OK;
+}
+
+
 HRESULT Renderer::RTCubeTexCreate(UINT width, UINT height, DXGI_FORMAT fmt, ID3D11Texture2D** ppTex)
 {
 	//텍스처 정보 구성.
@@ -1289,7 +1725,8 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 	ReleaseScreenSizeResource();
 
 	// 3.SwapChain ResizeBuffers 호출
-	hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	const UINT swapChainFlags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+	hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, swapChainFlags);
 	if (FAILED(hr))
 	{
 		ERROR_MSG_HR(hr);
@@ -1325,6 +1762,18 @@ HRESULT Renderer::ResetRenderTarget(int width, int height)
 
 void Renderer::DXSetup(HWND hWnd, int width, int height)
 {
+	if (m_dwAA > 1)
+	{
+		UINT colorQuality = 0;
+		UINT depthQuality = 0;
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, m_dwAA, &colorQuality);
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, m_dwAA, &depthQuality);
+		if (colorQuality == 0 || depthQuality == 0)
+		{
+			m_dwAA = 1;
+		}
+	}
+
 	CreateDeviceSwapChain(hWnd);
 	CreateRenderTarget();
 	CreateDepthStencil(width, height);
@@ -1382,23 +1831,52 @@ HRESULT Renderer::CreateDeviceSwapChain(HWND hWnd)
 	ComPtr<IDXGIFactory> factory;
 	adapter->GetParent(__uuidof(IDXGIFactory), &factory);
 
-	HRESULT hr = S_OK;
-	DXGI_SWAP_CHAIN_DESC sd = {};
-	sd.BufferCount = 1;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = hWnd;
-	sd.SampleDesc.Count = 1;
-	sd.Windowed = TRUE;
+	ComPtr<IDXGIFactory2> factory2;
+	factory.As(&factory2);
 
-	hr = factory->CreateSwapChain(m_pDevice.Get(), &sd, m_pSwapChain.GetAddressOf());
+
+	g_bAllowTearing = FALSE;
+	if (factory)
+	{
+		ComPtr<IDXGIFactory5> factory5;
+		if (SUCCEEDED(factory.As(&factory5)))
+		{
+			BOOL allowTearing = FALSE;
+			if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
+			{
+				g_bAllowTearing = allowTearing;
+			}
+		}
+	}
+
+	HRESULT hr = S_OK;
+	DXGI_SWAP_CHAIN_DESC1 sd = {};
+	sd.Width = 0;
+	sd.Height = 0;
+	sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferCount = 2;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.SampleDesc.Count = 1;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	sd.Scaling = DXGI_SCALING_STRETCH;
+	sd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+	sd.Flags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
+	hr = factory2->CreateSwapChainForHwnd(
+		m_pDevice.Get(),
+		hWnd,
+		&sd,
+		nullptr,
+		nullptr,
+		m_pSwapChain.GetAddressOf()
+	);
 
 	if (FAILED(hr))
 	{
 		ERROR_MSG_HR(hr);
 		return hr;
 	}
-
+	factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
 	return hr;
 }
 
@@ -1436,8 +1914,10 @@ HRESULT Renderer::CreateRenderTarget_Other()
 	ReCreateRenderTarget();
 
 #pragma region ShadowMap
-	m_ShadowTextureSize = { 16384, 16384 };
+	m_ShadowTextureSize = { 4096, 4096 };
 	DSCreate(m_ShadowTextureSize.width, m_ShadowTextureSize.height, m_pDSTex_Shadow.GetAddressOf(), m_pDSViewScene_Shadow.GetAddressOf(), m_pShadowRV.GetAddressOf());
+
+	//DSCreateShadowMSAA(m_ShadowTextureSize.width, m_ShadowTextureSize.height, m_pDSTex_ShadowMSAA.GetAddressOf(), m_pDSViewScene_ShadowMSAA.GetAddressOf());
 #pragma endregion
 
 
@@ -1448,15 +1928,33 @@ HRESULT Renderer::ReCreateRenderTarget()
 {
 	HRESULT hr = S_OK;
 #pragma region Imgui RenderTarget
-	DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT fmt = kSceneColorFormat;
 
 	//1. 렌더 타겟용 빈 텍스처로 만들기.	
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_ImguiMSAA.GetAddressOf());
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_Imgui_editMSAA.GetAddressOf());
+	}
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui.GetAddressOf());
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Imgui_edit.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
+<<<<<<< HEAD
 	RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
 	RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+=======
+	if (m_dwAA > 1)
+	{
+		RTViewCreate(fmt, m_pRTScene_ImguiMSAA.Get(), m_pRTView_Imgui.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_Imgui_editMSAA.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pRTView_Imgui.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_Imgui_edit.Get(), m_pRTView_Imgui_edit.GetAddressOf());
+	}
+>>>>>>> UI
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
 	RTSRViewCreate(fmt, m_pRTScene_Imgui.Get(), m_pTexRvScene_Imgui.GetAddressOf());
@@ -1471,11 +1969,20 @@ HRESULT Renderer::ReCreateRenderTarget()
 #pragma region Depth
 	DSCreate(m_WindowSize.width, m_WindowSize.height, m_pDSTex_Depth.GetAddressOf(), m_pDSViewScene_Depth.GetAddressOf(), m_pDepthRV.GetAddressOf());
 
+	if (m_dwAA > 1)
+	{
+		DSCreateMSAA(m_WindowSize.width, m_WindowSize.height,
+			DXGI_FORMAT_D32_FLOAT,   // 의미 없어도 맞춰두기
+			m_dwAA, 0,
+			m_pDSTex_DepthMSAA.GetAddressOf(),
+			m_pDSViewScene_DepthMSAA.GetAddressOf(),
+			m_pDepthMSAARV.GetAddressOf());
+	}
 #pragma endregion
 
 
 #pragma region Post
-	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+	fmt = kSceneColorFormat;
 	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Post.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
@@ -1487,22 +1994,127 @@ HRESULT Renderer::ReCreateRenderTarget()
 #pragma endregion
 
 #pragma region Blur
-	fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
-	RTTexCreateMipMap(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Blur.GetAddressOf());
+	fmt = kSceneColorFormat;
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_BlurOrigin.GetAddressOf());
 
 	//2. 렌더타겟뷰 생성.
-	RTViewCreate(fmt, m_pRTScene_Blur.Get(), m_pRTView_Blur.GetAddressOf());
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_BlurOriginMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_BlurOriginMSAA.Get(), m_pRTView_BlurOrigin.GetAddressOf());
+
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pRTView_BlurOrigin .GetAddressOf());
+
+	}
 
 	//3. 렌더타겟 셰이더 리소스뷰 생성 (멥핑용)
-	RTSRViewCreate(fmt, m_pRTScene_Blur.Get(), m_pTexRvScene_Blur.GetAddressOf());
+	RTSRViewCreate(fmt, m_pRTScene_BlurOrigin.Get(), m_pTexRvScene_BlurOrigin.GetAddressOf());
+
+	UINT width = m_WindowSize.width / 2;
+	UINT height = m_WindowSize.height / 2;
+
+	for (int i = 0; i < static_cast<int>(BlurLevel::COUNT); i++)
+	{
+		RTTexCreate(width, height, fmt, m_pRTScene_Blur[i].GetAddressOf());
+
+
+		RTViewCreate(fmt,
+			m_pRTScene_Blur[i].Get(),
+			m_pRTView_Blur[i].GetAddressOf());
+
+
+		RTSRViewCreate(fmt,
+			m_pRTScene_Blur[i].Get(),
+			m_pTexRvScene_Blur[i].GetAddressOf());
+
+
+		width /= 2;
+		height /= 2;
+	}
 
 #pragma endregion
+
+#pragma region Refraction
+	fmt = kSceneColorFormat;
+
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_Refraction.GetAddressOf());
+
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_RefractionMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_RefractionMSAA.Get(), m_pRTView_Refraction.GetAddressOf());
+
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pRTView_Refraction.GetAddressOf());
+
+	}
+	RTSRViewCreate(fmt, m_pRTScene_Refraction.Get(), m_pTexRvScene_Refraction.GetAddressOf());
+#pragma endregion
+
+#pragma region Emissive
+	fmt = kSceneColorFormat;
+
+	RTTexCreate(m_WindowSize.width, m_WindowSize.height, fmt, m_pRTScene_EmissiveOrigin.GetAddressOf());
+
+	if (m_dwAA > 1)
+	{
+		RTTexCreateMSAA(m_WindowSize.width, m_WindowSize.height, fmt, m_dwAA, 0, m_pRTScene_EmissiveOriginMSAA.GetAddressOf());
+		RTViewCreate(fmt, m_pRTScene_EmissiveOriginMSAA.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
+	}
+	else
+	{
+		RTViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pRTView_EmissiveOrigin.GetAddressOf());
+	}
+
+	RTSRViewCreate(fmt, m_pRTScene_EmissiveOrigin.Get(), m_pTexRvScene_EmissiveOrigin.GetAddressOf());
+
+
+	width = m_WindowSize.width / 2;
+	height = m_WindowSize.height / 2;
+	for (int i = 0; i < static_cast<int>(EmissiveLevel::COUNT); i++)
+	{
+		RTTexCreate(width, height, fmt, m_pRTScene_Emissive[i].GetAddressOf());
+
+
+		RTViewCreate(fmt,
+			m_pRTScene_Emissive[i].Get(),
+			m_pRTView_Emissive[i].GetAddressOf());
+
+
+		RTSRViewCreate(fmt,
+			m_pRTScene_Emissive[i].Get(),
+			m_pTexRvScene_Emissive[i].GetAddressOf());
+
+
+		width /= 2;
+		height /= 2;
+	}
+#pragma endregion
+
+
 
 	return hr;
 }
 
 void Renderer::RecreateForAASampleChange(int width, int height, DWORD sampleCount)
 {
+	if (sampleCount > 1)
+	{
+		UINT colorQuality = 0;
+		UINT depthQuality = 0;
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sampleCount, &colorQuality);
+		m_pDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_D32_FLOAT_S8X24_UINT, sampleCount, &depthQuality);
+		if (colorQuality == 0 || depthQuality == 0)
+		{
+			sampleCount = 1;
+		}
+	}
+
 	m_dwAA = sampleCount;
 
 	// 1. GPU 파이프라인 타겟 해제
@@ -1513,7 +2125,8 @@ void Renderer::RecreateForAASampleChange(int width, int height, DWORD sampleCoun
 	ReleaseScreenSizeResource();
 
 	// 3. SwapChain ResizeBuffers 호출 (샘플 수 변경 시 백버퍼 재생성)
-	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+	const UINT swapChainFlags = g_bAllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, swapChainFlags);
 
 	// 4. 새 BackBuffer 획득 & RTV 재생성
 	CreateRenderTarget();
@@ -1661,6 +2274,18 @@ HRESULT Renderer::CreateRasterState()
 		return hr;
 	}
 
+	rd.FillMode = D3D11_FILL_SOLID;
+	rd.CullMode = D3D11_CULL_BACK;
+	rd.DepthBias = -1;                 // 앞쪽으로
+	rd.SlopeScaledDepthBias = -1.0f;   // 기울기 보정
+	rd.DepthBiasClamp = 0.0f;
+
+	hr = m_pDevice->CreateRasterizerState(&rd, m_RState[RS::EMISSIVE].GetAddressOf());
+	if (FAILED(hr))
+	{
+		ERROR_MSG_HR(hr);
+		return hr;
+	}
 	
 	return hr;
 }
@@ -1865,15 +2490,28 @@ HRESULT Renderer::ReleaseScreenSizeResource()
 	m_pDS.Reset();
 	m_pDSView.Reset();
 	m_pRTScene_Imgui.Reset();
+	m_pRTScene_ImguiMSAA.Reset();
 	m_pTexRvScene_Imgui.Reset();
 	m_pRTView_Imgui.Reset();
 	m_pDSTex_Imgui.Reset();
 	m_pDSViewScene_Imgui.Reset();
+	m_pRTScene_Imgui_edit.Reset();
+	m_pRTScene_Imgui_editMSAA.Reset();
+	m_pTexRvScene_Imgui_edit.Reset();
+	m_pRTView_Imgui_edit.Reset();
+	m_pDSTex_Imgui_edit.Reset();
+	m_pDSViewScene_Imgui_edit.Reset();
 	m_pDSTex_Depth.Reset();
 	m_pDSViewScene_Depth.Reset();
+	m_pDSTex_DepthMSAA.Reset();
+	m_pDSViewScene_DepthMSAA.Reset();
 	m_pRTScene_Post.Reset();
 	m_pTexRvScene_Post.Reset();
 	m_pRTView_Post.Reset();
+	m_pRTScene_EmissiveOrigin.Reset();
+	m_pRTScene_EmissiveOriginMSAA.Reset();
+	m_pTexRvScene_EmissiveOrigin.Reset();
+	m_pRTView_EmissiveOrigin.Reset();
 
 	return hr;
 }
@@ -1988,6 +2626,49 @@ void Renderer::CreateQuadIB()
 	CreateIndexBuffer(m_pDevice.Get(), quadIndices.data(), static_cast<UINT>(quadIndices.size() * sizeof(UINT)), m_QuadIndexBuffers.GetAddressOf());
 }
 
+<<<<<<< HEAD
+=======
+void Renderer::CreateUIWhiteTexture()
+{
+	if (!m_pDevice)
+	{
+		return;
+	}
+
+	const UINT32 whitePixel = 0xFFFFFFFF;
+	D3D11_TEXTURE2D_DESC desc{};
+	desc.Width = 1;
+	desc.Height = 1;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_IMMUTABLE;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	D3D11_SUBRESOURCE_DATA data{};
+	data.pSysMem = &whitePixel;
+	data.SysMemPitch = sizeof(UINT32);
+
+	ComPtr<ID3D11Texture2D> texture;
+	if (FAILED(m_pDevice->CreateTexture2D(&desc, &data, texture.GetAddressOf())))
+	{
+		return;
+	}
+
+	m_pDevice->CreateShaderResourceView(texture.Get(), nullptr, m_UIWhiteTexture.GetAddressOf());
+}
+
+void Renderer::SetupText()
+{
+	ComPtr<ID3D11DeviceContext1> dc1;
+	m_pDXDC.As(&dc1);
+
+	m_SpriteBatch = std::make_unique<DirectX::SpriteBatch>(dc1.Get());
+	m_SpriteFont = std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), L"../Font/hangulfont.spritefont");
+}
+
+>>>>>>> UI
 //핸들 개수 최대값 가져오는 함수
 UINT32 GetMaxMeshHandleId(const RenderData::FrameData& frame)
 {

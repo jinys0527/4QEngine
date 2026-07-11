@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <functional>
 #include <typeinfo>
@@ -29,7 +30,7 @@ using namespace MathUtils;
 		virtual void GetValue(Component* c, void* outValue) const = 0;
 		virtual void SetValue(Component* c, const void* inValue) const = 0;
 		virtual void Serialize(Component* c, nlohmann::json& j) const = 0;
-		virtual void DeSerialize(Component* c, const nlohmann::json& j) const = 0;
+		virtual void Deserialize(Component* c, const nlohmann::json& j) const = 0;
 
 	private:
 		std::string m_Name;
@@ -58,7 +59,7 @@ using namespace MathUtils;
 	//		j[GetName()] = obj->*m_Member;
 	//	}
 	//
-	//	void DeSerialize(Component* c, const nlohmann::json& j) const override
+	//	void Deserialize(Component* c, const nlohmann::json& j) const override
 	//	{
 	//		if (!j.contains(GetName())) return;
 	//		T* obj = static_cast<T*>(c);
@@ -107,7 +108,7 @@ using namespace MathUtils;
 			}
 		}
 
-		void DeSerialize(Component* c, const nlohmann::json& j) const override {
+		void Deserialize(Component* c, const nlohmann::json& j) const override {
 			if (!j.contains(GetName())) return;
 			if constexpr (serializable) {
 				T* obj = static_cast<T*>(c);
@@ -158,7 +159,7 @@ using namespace MathUtils;
 			}
 		}
 
-		void DeSerialize(Component* c, const nlohmann::json& j) const override {
+		void Deserialize(Component* c, const nlohmann::json& j) const override {
 			if constexpr (serializable) {
 				if (!j.contains(GetName())) return;
 				T* obj = static_cast<T*>(c);
@@ -194,7 +195,7 @@ using namespace MathUtils;
 
 		void SetValue(Component*, const void*) const override {} // 수정 금지
 		void Serialize(Component*, nlohmann::json&) const override {} // 저장 안 함
-		void DeSerialize(Component*, const nlohmann::json&) const override {} // 로드 안 함
+		void Deserialize(Component*, const nlohmann::json&) const override {} // 로드 안 함
 
 	private:
 		Getter m_Get;
@@ -215,6 +216,8 @@ using namespace MathUtils;
 		static ComponentRegistry& Instance();
 
 		void Register(ComponentTypeInfo* info);
+		void RegisterUIType(const string& name) { m_UITypes.insert(name); }
+		bool IsUIType(const string& name) const { return m_UITypes.find(name) != m_UITypes.end(); }
 		vector<string> GetTypeNames() const; // 등론된 이름 전체 return
 		ComponentTypeInfo* Find(const string& name) const {
 			auto it = m_Types.find(name);
@@ -281,6 +284,7 @@ using namespace MathUtils;
 		}
 	private:
 		unordered_map<string, ComponentTypeInfo*> m_Types; //이름 : 컴포넌트
+		unordered_set<string> m_UITypes;
 	};
 	// 게임에서 정의된 컴포넌트 들과 프로퍼티 (사전) -> Component List
 

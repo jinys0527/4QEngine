@@ -1,6 +1,6 @@
 ﻿#include "CameraObject.h"
 #include "TransformComponent.h"
-CameraObject::CameraObject(EventDispatcher eventDispatcher, float width, float height)
+CameraObject::CameraObject(EventDispatcher& eventDispatcher, float width, float height)
 	: GameObject(eventDispatcher)
 {
 	//AddComponent<TransformComponent>();

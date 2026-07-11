@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <algorithm>
+#include <array>
 #include <string>
 #include <vector>
 #include "json.hpp"
@@ -9,7 +11,16 @@
 #include "ResourceHandle.h"
 #include "MeshComponent.h"
 #include "FSMComponent.h"
+#include "Canvas.h"
+#include "HorizontalBox.h"
+#include "UIObject.h"
+#include "UIFSMComponent.h"
 #include "AnimationComponent.h"
+#include "EnemyMovementComponent.h"
+#include "UIPrimitives.h"
+#include "UIDiceDisplayTypes.h"
+#include "UIDicePanelTypes.h"
+#include "UIDiceDisplayComponent.h"
 
 //using namespace std;  <<- 이거쓰면 byte가 모호하다는 에러 발생 이유는 모름.;
 using namespace MathUtils;
@@ -47,6 +58,34 @@ struct Serializer<std::string> {
 };
 
 template<>
+struct Serializer<std::vector<std::string>> {
+	static void ToJson(nlohmann::json& j, const std::vector<std::string>& v) {
+		j = nlohmann::json::array();
+		for (const auto& item : v)
+		{
+			nlohmann::json entry;
+			Serializer<std::string>::ToJson(entry, item);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<std::string>& v) {
+		v.clear();
+		if (!j.is_array())
+		{
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			std::string value;
+			Serializer<std::string>::FromJson(entry, value);
+			v.push_back(std::move(value));
+		}
+	}
+};
+
+template<>
 struct Serializer<XMFLOAT2> {
 	static void ToJson(nlohmann::json& j, const XMFLOAT2& v) {
 		j = { {"x", v.x}, {"y", v.y}};
@@ -81,78 +120,15 @@ struct Serializer<XMFLOAT2> {
 //	static void FromJson(const nlohmann::json& j, MyEnum& v) { v = static_cast<MyEnum>(j.get<int>()); }
 //};
 
-// Camera
-template<>
-struct Serializer<Viewport> {
-	static void ToJson(nlohmann::json& j, const Viewport& v) {
-		j["width"]  = v.Width;
-		j["height"] = v.Height;
-	}
-	static void FromJson(const nlohmann::json& j, Viewport& v) {
-		v.Width  = j.value("width",  0.0f);
-		v.Height = j.value("height", 0.0f);
-	}
-};
-
-template<>
-struct Serializer<PerspectiveParams> {
-	static void ToJson(nlohmann::json& j, const PerspectiveParams& v) {
-		j["fov"] = v.Fov;
-		j["aspect"] = v.Aspect;
-	}
-	static void FromJson(const nlohmann::json& j, PerspectiveParams& v) {
-		v.Fov    = j.value("fov", XM_PIDIV4);
-		v.Aspect = j.value("aspect", 1.0f);
-	}
-};
-
-template<>
-struct Serializer<OrthoParams> {
-	static void ToJson(nlohmann::json& j, const OrthoParams& v) {
-		j["width"]  = v.Width;
-		j["height"] = v.Height;
-	}
-	static void FromJson(const nlohmann::json& j, OrthoParams& v) {
-		v.Width  = j.value("width",  0.0f);
-		v.Height = j.value("height", 0.0f);
-	}
-};
-
-template<>
-struct Serializer<OrthoOffCenterParams> {
-	static void ToJson(nlohmann::json& j, const OrthoOffCenterParams& v) {
-		j["left"]   = v.Left;
-		j["right"]  = v.Right;
-		j["bottom"] = v.Bottom;
-		j["top"]	= v.Top;
-	}
-	static void FromJson(const nlohmann::json& j, OrthoOffCenterParams& v) {
-		v.Left   = j.value("left", 0.0f);
-		v.Right  = j.value("right", 0.0f);
-		v.Bottom = j.value("bottom", 0.0f);
-		v.Top	 = j.value("top", 0.0f);
-	}
-};
-
-template<>
-struct Serializer<ProjectionMode> {
-	static void ToJson(nlohmann::json& j, const ProjectionMode& v) {
-		j = static_cast<int>(v);
-	}
-	static void FromJson(const nlohmann::json& j, ProjectionMode& v) {
-		v = static_cast<ProjectionMode>(j.get<int>());
-	}
-};
-
 // AssetRef
-template<> 
+template<>
 struct Serializer<AssetRef> {
 	static void ToJson(nlohmann::json& j, const AssetRef& v) {
-		j["assetPath"]  = v.assetPath;
+		j["assetPath"] = v.assetPath;
 		j["assetIndex"] = v.assetIndex;
 	}
 	static void FromJson(const nlohmann::json& j, AssetRef& v) {
-		v.assetPath  = j.value("assetPath", std::string{});
+		v.assetPath = j.value("assetPath", std::string{});
 		v.assetIndex = j.value("assetIndex", 0u);
 	}
 };
@@ -401,6 +377,522 @@ struct Serializer<PixelShaderHandle> {
 	}
 };
 
+
+// UI
+
+template<>
+struct Serializer<UIAnchor> {
+	static void ToJson(nlohmann::json& j, const UIAnchor& v) {
+		j = { {"x", v.x}, {"y", v.y} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UIAnchor& v) {
+		v.x = j.value("x", 0.0f);
+		v.y = j.value("y", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UISize> {
+	static void ToJson(nlohmann::json& j, const UISize& v) {
+		j = { {"width", v.width}, {"height", v.height} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UISize& v) {
+		v.width = j.value("width", 0.0f);
+		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIRect> {
+	static void ToJson(nlohmann::json& j, const UIRect& v) {
+		j = { {"x", v.x}, {"y", v.y}, {"width", v.width}, {"height", v.height} };
+	}
+
+	static void FromJson(const nlohmann::json& j, UIRect& v) {
+		v.x = j.value("x", 0.0f);
+		v.y = j.value("y", 0.0f);
+		v.width = j.value("width", 0.0f);
+		v.height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<std::array<float, 10>> {
+	static void ToJson(nlohmann::json& j, const std::array<float, 10>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json valueJson;
+			Serializer<float>::ToJson(valueJson, entry);
+			j.push_back(std::move(valueJson));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::array<float, 10>& v) {
+		if (!j.is_array())
+		{
+			return;
+		}
+		const size_t count = (std::min)(j.size(), v.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			Serializer<float>::FromJson(j.at(i), v[i]);
+		}
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIAnchor>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIAnchor>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json anchorJson;
+			Serializer<UIAnchor>::ToJson(anchorJson, entry);
+			j.push_back(std::move(anchorJson));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<UIAnchor>& v) {
+		v.clear();
+		if (!j.is_array())
+		{
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			UIAnchor value{};
+			Serializer<UIAnchor>::FromJson(entry, value);
+			v.push_back(value);
+		}
+	}
+};
+
+template<>
+struct Serializer<std::array<UIAnchor, 10>> {
+	static void ToJson(nlohmann::json& j, const std::array<UIAnchor, 10>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json slotJson;
+			Serializer<UIAnchor>::ToJson(slotJson, entry);
+			j.push_back(std::move(slotJson));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::array<UIAnchor, 10>& v) {
+		if (!j.is_array())
+		{
+			return;
+		}
+		const size_t count = min(j.size(), v.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			Serializer<UIAnchor>::FromJson(j.at(i), v[i]);
+		}
+	}
+};
+
+template<>
+struct Serializer<UIDiceDigitSlot> {
+	static void ToJson(nlohmann::json& j, const UIDiceDigitSlot& v) {
+		Serializer<UIAnchor>::ToJson(j["anchor"], v.anchor);
+		Serializer<UIAnchor>::ToJson(j["pivot"], v.pivot);
+		Serializer<UIRect>::ToJson(j["bounds"], v.bounds);
+		Serializer<std::array<UIAnchor, 10>>::ToJson(j["digitOffsets"], v.digitOffsets);
+		Serializer<bool>::ToJson(j["useParentOffset"], v.useParentOffset);
+	}
+
+	static void FromJson(const nlohmann::json& j, UIDiceDigitSlot& v) {
+		if (j.contains("anchor"))
+		{
+			Serializer<UIAnchor>::FromJson(j.at("anchor"), v.anchor);
+		}
+		if (j.contains("pivot"))
+		{
+			Serializer<UIAnchor>::FromJson(j.at("pivot"), v.pivot);
+		}
+		if (j.contains("bounds"))
+		{
+			Serializer<UIRect>::FromJson(j.at("bounds"), v.bounds);
+		}
+		if (j.contains("digitOffsets"))
+		{
+			Serializer<std::array<UIAnchor, 10>>::FromJson(j.at("digitOffsets"), v.digitOffsets);
+		}
+		if (j.contains("useParentOffset"))
+		{
+			Serializer<bool>::FromJson(j.at("useParentOffset"), v.useParentOffset);
+		}
+	}
+};
+
+template<>
+struct Serializer<UIDiceLayout> {
+	static void ToJson(nlohmann::json& j, const UIDiceLayout& v) {
+		j["type"] = v.type;
+		Serializer<TextureHandle>::ToJson(j["diceTexture"], v.diceTexture);
+		Serializer<UIDiceDigitSlot>::ToJson(j["tens"], v.tens);
+		Serializer<UIDiceDigitSlot>::ToJson(j["ones"], v.ones);
+	}
+
+	static void FromJson(const nlohmann::json& j, UIDiceLayout& v) {
+		v.type = j.value("type", v.type);
+		if (j.contains("diceTexture"))
+		{
+			Serializer<TextureHandle>::FromJson(j.at("diceTexture"), v.diceTexture);
+		}
+		if (j.contains("tens"))
+		{
+			Serializer<UIDiceDigitSlot>::FromJson(j.at("tens"), v.tens);
+		}
+		if (j.contains("ones"))
+		{
+			Serializer<UIDiceDigitSlot>::FromJson(j.at("ones"), v.ones);
+		}
+	}
+};
+
+
+
+template <>
+struct Serializer<UIDicePanelSlot> {
+	static void ToJson(nlohmann::json& j, const UIDicePanelSlot& v) {
+		j["objectName"] = v.objectName;
+		j["diceType"] = v.diceType;
+		j["diceContext"] = v.diceContext;
+		j["requiredDiceCount"] = v.requiredDiceCount;
+		j["applyAnimation"] = v.applyAnimation;
+	}
+
+	static void FromJson(const nlohmann::json& j, UIDicePanelSlot& v) {
+		if (j.contains("objectName"))
+			j.at("objectName").get_to(v.objectName);
+		if (j.contains("diceType"))
+			j.at("diceType").get_to(v.diceType);
+		if (j.contains("diceContext"))
+			j.at("diceContext").get_to(v.diceContext);
+		if (j.contains("requiredDiceCount"))
+			j.at("requiredDiceCount").get_to(v.requiredDiceCount);
+		if (j.contains("applyAnimation"))
+			j.at("applyAnimation").get_to(v.applyAnimation);
+	}
+};
+
+template <>
+struct Serializer<std::vector<UIDicePanelSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIDicePanelSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json slotJson;
+			Serializer<UIDicePanelSlot>::ToJson(slotJson, entry);
+			j.push_back(slotJson);
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<UIDicePanelSlot>& v) {
+		v.clear();
+		if (!j.is_array())
+			return;
+		for (const auto& entry : j)
+		{
+			UIDicePanelSlot slot{};
+			Serializer<UIDicePanelSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+template<>
+struct Serializer<std::array<TextureHandle, 10>> {
+	static void ToJson(nlohmann::json& j, const std::array<TextureHandle, 10>& v) {
+		j = nlohmann::json::array();
+		for (const auto& handle : v)
+		{
+			nlohmann::json entry;
+			Serializer<TextureHandle>::ToJson(entry, handle);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::array<TextureHandle, 10>& v) {
+		if (!j.is_array())
+		{
+			return;
+		}
+		const size_t count = min(j.size(), v.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			Serializer<TextureHandle>::FromJson(j.at(i), v[i]);
+		}
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIDiceLayout>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIDiceLayout>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v)
+		{
+			nlohmann::json layoutJson;
+			Serializer<UIDiceLayout>::ToJson(layoutJson, entry);
+			j.push_back(std::move(layoutJson));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<UIDiceLayout>& v) {
+		v.clear();
+		if (!j.is_array())
+		{
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j)
+		{
+			UIDiceLayout layout{};
+			Serializer<UIDiceLayout>::FromJson(entry, layout);
+			v.push_back(std::move(layout));
+		}
+	}
+};
+
+
+template<>
+struct Serializer<UIPadding> {
+	static void ToJson(nlohmann::json& j, const UIPadding& v) {
+		j = { {"left", v.left}, {"top", v.top}, {"right", v.right}, {"bottom", v.bottom} };
+	}
+	static void FromJson(const nlohmann::json& j, UIPadding& v) {
+		if (j.is_number())
+		{
+			const float value = j.get<float>();
+			v.left = value;
+			v.top = value;
+			v.right = value;
+			v.bottom = value;
+			return;
+		}
+		if (!j.is_object())
+		{
+			v = UIPadding{};
+			return;
+		}
+		v.left = j.value("left", 0.0f);
+		v.top = j.value("top", 0.0f);
+		v.right = j.value("right", 0.0f);
+		v.bottom = j.value("bottom", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<UIStretch> {
+	static void ToJson(nlohmann::json& j, const UIStretch& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIStretch& v) {
+		v = static_cast<UIStretch>(j.get<int>());
+	}
+};
+
+template<>
+struct Serializer<UIStretchDirection> {
+	static void ToJson(nlohmann::json& j, const UIStretchDirection& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIStretchDirection& v) {
+		v = static_cast<UIStretchDirection>(j.get<int>());
+	}
+};
+
+template<>
+struct Serializer<UIFillDirection> {
+	static void ToJson(nlohmann::json& j, const UIFillDirection& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIFillDirection& v) {
+		v = static_cast<UIFillDirection>(j.get<int>());
+	}
+};
+
+template<>
+struct Serializer<UIProgressFillMode> {
+	static void ToJson(nlohmann::json& j, const UIProgressFillMode& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, UIProgressFillMode& v) {
+		v = static_cast<UIProgressFillMode>(j.get<int>());
+	}
+};
+
+template <>
+struct Serializer<CanvasSlot> {
+	static void ToJson(nlohmann::json& j, const CanvasSlot& v) {
+		const std::string childName = v.child ? v.child->GetName() : v.childName;
+		j["child"] = childName;
+		j["rect"] = { {"x", v.rect.x}, {"y", v.rect.y}, {"w", v.rect.width}, {"h", v.rect.height} };
+	}
+	static void FromJson(const nlohmann::json& j, CanvasSlot& v) {
+		v.child = nullptr;
+		v.childName = j.value("child", "");
+		if (j.contains("rect")) {
+			const auto& rect = j.at("rect");
+			v.rect.x = rect.value("x", v.rect.x);
+			v.rect.y = rect.value("y", v.rect.y);
+			v.rect.width = rect.value("w", v.rect.width);
+			v.rect.height = rect.value("h", v.rect.height);
+		}
+	}
+};
+
+template <>
+struct Serializer<std::vector<CanvasSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<CanvasSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& slot : v) {
+			nlohmann::json entry;
+			Serializer<CanvasSlot>::ToJson(entry, slot);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<CanvasSlot>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			CanvasSlot slot{};
+			Serializer<CanvasSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+template <>
+struct Serializer<HorizontalBoxSlot> {
+	static void ToJson(nlohmann::json& j, const HorizontalBoxSlot& v) {
+		const std::string childName = v.child ? v.child->GetName() : v.childName;
+		j["child"] = childName;
+		j["desiredSize"] = { {"w", v.desiredSize.width}, {"h", v.desiredSize.height} };
+		Serializer<UIPadding>::ToJson(j["padding"], v.padding);
+		j["fillWeight"] = v.fillWeight;
+		j["layoutScale"] = v.layoutScale;
+		j["alignment"] = static_cast<int>(v.alignment);
+	}
+	static void FromJson(const nlohmann::json& j, HorizontalBoxSlot& v) {
+		v.child = nullptr;
+		v.childName = j.value("child", "");
+		if (j.contains("desiredSize")) {
+			const auto& size = j.at("desiredSize");
+			v.desiredSize.width = size.value("w", v.desiredSize.width);
+			v.desiredSize.height = size.value("h", v.desiredSize.height);
+		}
+		Serializer<UIPadding>::FromJson(j.value("padding", nlohmann::json::object()), v.padding);
+		v.fillWeight = j.value("fillWeight", v.fillWeight);
+		v.layoutScale = j.value("layoutScale", v.layoutScale);
+		const int alignmentValue = j.value("alignment", static_cast<int>(v.alignment));
+		if (alignmentValue >= static_cast<int>(UIHorizontalAlignment::Left)
+			&& alignmentValue <= static_cast<int>(UIHorizontalAlignment::Fill)) {
+			v.alignment = static_cast<UIHorizontalAlignment>(alignmentValue);
+		}
+	}
+};
+
+template <>
+struct Serializer<std::vector<HorizontalBoxSlot>> {
+	static void ToJson(nlohmann::json& j, const std::vector<HorizontalBoxSlot>& v) {
+		j = nlohmann::json::array();
+		for (const auto& slot : v) {
+			nlohmann::json entry;
+			Serializer<HorizontalBoxSlot>::ToJson(entry, slot);
+			j.push_back(std::move(entry));
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::vector<HorizontalBoxSlot>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		v.reserve(j.size());
+		for (const auto& entry : j) {
+			HorizontalBoxSlot slot{};
+			Serializer<HorizontalBoxSlot>::FromJson(entry, slot);
+			v.push_back(std::move(slot));
+		}
+	}
+};
+
+
+
+
+// Camera
+template<>
+struct Serializer<Viewport> {
+	static void ToJson(nlohmann::json& j, const Viewport& v) {
+		j["width"]  = v.Width;
+		j["height"] = v.Height;
+	}
+	static void FromJson(const nlohmann::json& j, Viewport& v) {
+		v.Width  = j.value("width",  0.0f);
+		v.Height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<PerspectiveParams> {
+	static void ToJson(nlohmann::json& j, const PerspectiveParams& v) {
+		j["fov"] = v.Fov;
+		j["aspect"] = v.Aspect;
+	}
+	static void FromJson(const nlohmann::json& j, PerspectiveParams& v) {
+		v.Fov    = j.value("fov", XM_PIDIV4);
+		v.Aspect = j.value("aspect", 1.0f);
+	}
+};
+
+template<>
+struct Serializer<OrthoParams> {
+	static void ToJson(nlohmann::json& j, const OrthoParams& v) {
+		j["width"]  = v.Width;
+		j["height"] = v.Height;
+	}
+	static void FromJson(const nlohmann::json& j, OrthoParams& v) {
+		v.Width  = j.value("width",  0.0f);
+		v.Height = j.value("height", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<OrthoOffCenterParams> {
+	static void ToJson(nlohmann::json& j, const OrthoOffCenterParams& v) {
+		j["left"]   = v.Left;
+		j["right"]  = v.Right;
+		j["bottom"] = v.Bottom;
+		j["top"]	= v.Top;
+	}
+	static void FromJson(const nlohmann::json& j, OrthoOffCenterParams& v) {
+		v.Left   = j.value("left", 0.0f);
+		v.Right  = j.value("right", 0.0f);
+		v.Bottom = j.value("bottom", 0.0f);
+		v.Top	 = j.value("top", 0.0f);
+	}
+};
+
+template<>
+struct Serializer<ProjectionMode> {
+	static void ToJson(nlohmann::json& j, const ProjectionMode& v) {
+		j = static_cast<int>(v);
+	}
+	static void FromJson(const nlohmann::json& j, ProjectionMode& v) {
+		v = static_cast<ProjectionMode>(j.get<int>());
+	}
+};
 
 // MaterialData
 template<>
@@ -732,6 +1224,95 @@ struct Serializer<FSMGraph> {
 };
 
 template<>
+struct Serializer<UIFSMEventCallback> {
+	static void ToJson(nlohmann::json& j, const UIFSMEventCallback& v) {
+		j["eventName"] = v.eventName;
+		j["callbackId"] = v.callbackId;
+	}
+	static void FromJson(const nlohmann::json& j, UIFSMEventCallback& v) {
+		v.eventName = j.value("eventName", v.eventName);
+		v.callbackId = j.value("callbackId", v.callbackId);
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIFSMEventCallback>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIFSMEventCallback>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v) {
+			nlohmann::json item;
+			Serializer<UIFSMEventCallback>::ToJson(item, entry);
+			j.push_back(std::move(item));
+		}
+	}
+	static void FromJson(const nlohmann::json& j, std::vector<UIFSMEventCallback>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		for (const auto& entry : j) {
+			UIFSMEventCallback item{};
+			Serializer<UIFSMEventCallback>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<UIFSMCallbackAction> {
+	static void ToJson(nlohmann::json& j, const UIFSMCallbackAction& v) {
+		j["callbackId"] = v.callbackId;
+		Serializer<std::vector<FSMAction>>::ToJson(j["actions"], v.actions);
+	}
+	static void FromJson(const nlohmann::json& j, UIFSMCallbackAction& v) {
+		v.callbackId = j.value("callbackId", v.callbackId);
+		Serializer<std::vector<FSMAction>>::FromJson(j.value("actions", nlohmann::json::array()), v.actions);
+	}
+};
+
+template<>
+struct Serializer<std::vector<UIFSMCallbackAction>> {
+	static void ToJson(nlohmann::json& j, const std::vector<UIFSMCallbackAction>& v) {
+		j = nlohmann::json::array();
+		for (const auto& entry : v) {
+			nlohmann::json item;
+			Serializer<UIFSMCallbackAction>::ToJson(item, entry);
+			j.push_back(std::move(item));
+		}
+	}
+	static void FromJson(const nlohmann::json& j, std::vector<UIFSMCallbackAction>& v) {
+		v.clear();
+		if (!j.is_array()) {
+			return;
+		}
+		for (const auto& entry : j) {
+			UIFSMCallbackAction item{};
+			Serializer<UIFSMCallbackAction>::FromJson(entry, item);
+			v.push_back(std::move(item));
+		}
+	}
+};
+
+template<>
+struct Serializer<AnimationComponent::PlaybackState> {
+	static void ToJson(nlohmann::json& j, const AnimationComponent::PlaybackState& v) {
+		j["time"]    = v.time;
+		j["speed"]   = v.speed;
+		j["looping"] = v.looping;
+		j["playing"] = v.playing;
+		j["reverse"] = v.reverse;
+	}
+
+	static void FromJson(const nlohmann::json& j, AnimationComponent::PlaybackState& v) {
+		v.time = j.value("time", 0.2f);
+		v.speed = j.value("speed", 0.2f);
+		v.looping = j.value("looping", true);
+		v.playing = j.value("playing", true);
+		v.reverse = j.value("reverse", false);
+	}
+};
+
+template<>
 struct Serializer<AnimationComponent::BlendConfig> {
 	static void ToJson(nlohmann::json& j, const AnimationComponent::BlendConfig& v) {
 		Serializer<AnimationHandle>::ToJson(j["fromClip"], v.fromClip);
@@ -754,6 +1335,45 @@ struct Serializer<AnimationComponent::BlendConfig> {
 	}
 };
 
+// EnemyMovementComponent
+template<>
+struct Serializer<EnemyMovementComponent::PatrolPoint> {
+	static void ToJson(nlohmann::json& j, const EnemyMovementComponent::PatrolPoint& v) {
+		j = { {"q", v.q}, {"r", v.r} };
+	}
+
+	static void FromJson(const nlohmann::json& j, EnemyMovementComponent::PatrolPoint& v) {
+		v.q = j.value("q", 0);
+		v.r = j.value("r", 0);
+	}
+};
+
+template<>
+struct Serializer<std::array<EnemyMovementComponent::PatrolPoint, 3>> {
+	static void ToJson(nlohmann::json& j, const std::array<EnemyMovementComponent::PatrolPoint, 3>& v) {
+		j = nlohmann::json::array();
+		for (const auto& point : v)
+		{
+			nlohmann::json entry;
+			Serializer<EnemyMovementComponent::PatrolPoint>::ToJson(entry, point);
+			j.push_back(entry);
+		}
+	}
+
+	static void FromJson(const nlohmann::json& j, std::array<EnemyMovementComponent::PatrolPoint, 3>& v) {
+		if (!j.is_array())
+		{
+			return;
+		}
+
+		const size_t limit = min(j.size(), v.size());
+		for (size_t i = 0; i < limit; ++i)
+		{
+			Serializer<EnemyMovementComponent::PatrolPoint>::FromJson(j[i], v[i]);
+		}
+	}
+};
+
 template<>
 struct Serializer<UINT8> {
 	static void ToJson(nlohmann::json& j, const UINT8& v) {
@@ -764,7 +1384,6 @@ struct Serializer<UINT8> {
 		v = static_cast<UINT8>(j.get<int>());
 	}
 };
-
 
 template<>
 struct Serializer<XMFLOAT3> {

@@ -21,7 +21,7 @@ class Scene;
 class GameObject;
 class AssetLoader;
 class SoundManager;
-
+class GameManager;
 
 enum class EditorPlayState
 {
@@ -51,10 +51,11 @@ public:
 
 private:
 	void UpdateInput();
-	//void UpdateLogic();
+	void UpdateLogic();
 	void Update();
 	void UpdateSceneViewport();
 	void UpdateEditorCamera();
+	void HandleEditorViewportSelection();
 
 	//Render 관련
 	void Render();
@@ -68,6 +69,7 @@ private:
 	void DrawFolderView();
 	void DrawResourceBrowser();
 	void DrawGizmo();
+	void DrawUIEditorPreview();
 
 	void FocusEditorCameraOnObject(const std::shared_ptr<GameObject>& object);
 
@@ -92,6 +94,7 @@ private:
 	AssetLoader*		  m_AssetLoader;
 	SoundManager*		  m_SoundManager;
 	InputManager*	      m_InputManager;
+	GameManager*		  m_GameManager;
 	RenderData::FrameData m_FrameData;
 	RenderTargetContext   m_SceneRenderTarget;
 	RenderTargetContext   m_SceneRenderTarget_edit;
@@ -116,9 +119,19 @@ private:
 	std::unordered_map<size_t, PendingPropertySnapshot> m_PendingPropertySnapshots;
 	std::filesystem::path m_LastPendingSnapshotScenePath;
 
+	struct PendingUIPropertySnapshot
+	{
+		nlohmann::json beforeSnapshot;
+		bool updated = false;
+	};
+	std::unordered_map<size_t, PendingUIPropertySnapshot> m_PendingUIPropertySnapshots;
+
+
 	nlohmann::json m_ObjectClipboard;
 	bool m_ObjectClipboardHasData = false;
 	bool m_ObjectClipboardIsOpaque = true;
+	nlohmann::json m_UIObjectClipboard;
+	bool m_UIObjectClipboardHasData = false;
 
 	// Floder View 변수
 	// resource root 지정 // 추후 수정 필요 //작업 환경마다 다를 수 있음
@@ -134,4 +147,14 @@ private:
 	bool m_OpenDeleteConfirm = false;
 
 	UndoManager m_UndoManager;
+
+	std::string m_SelectedUIObjectName;
+	std::unordered_set<std::string> m_SelectedUIObjectNames;
+	std::string m_LastSelectedUIObjectName;
+	std::array<char, 256> m_UIObjectNameBuffer{};
+	std::string m_HorizontalSlotCandidate;
+	std::string m_CanvasSlotCandidate;
+
+	std::unordered_map<std::string, std::string> m_UIButtonBindingTargets;
+	std::unordered_map<std::string, std::string> m_UISliderBindingTargets;
 };

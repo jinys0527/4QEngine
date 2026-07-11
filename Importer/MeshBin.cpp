@@ -442,7 +442,9 @@ bool ImportFBXToMeshBin(
 		subMesh.indexStart = static_cast<uint32_t>(indices.size());
 
 		AABBf localBounds{};
-		AABBInit(localBounds);
+		AABBInit(localBounds); 
+		AABBf transformedBounds{};
+		AABBInit(transformedBounds);
 
 		const std::unordered_map<std::string, uint32_t>* mapPtr = anySkinned ? &boneNameToIndex : nullptr;
 		AppendMeshVertices(mesh, mapPtr, anySkinned, vertices, verticesSkinned, localBounds);
@@ -461,8 +463,19 @@ bool ImportFBXToMeshBin(
 
 		subMesh.indexCount = static_cast<uint32_t>(indices.size()) - subMesh.indexStart;
 
-		// subMesh.bounds <- 로컬 bounds 저장
-		subMesh.bounds = localBounds;
+		if (anySkinned)
+		{
+			for (const aiMatrix4x4& g : meshTransforms[m])
+			{
+				AABBExpandByTransformedLocalAABB(transformedBounds, localBounds, g);
+			}
+			subMesh.bounds = transformedBounds;
+		}
+		else
+		{
+			// subMesh.bounds <- 로컬 bounds 저장
+			subMesh.bounds = localBounds;
+		}
 
 		// ===== 인스턴스 리스트 저장 =====
 		subMesh.instanceStart = static_cast<uint32_t>(instanceTransforms.size());
@@ -476,9 +489,10 @@ bool ImportFBXToMeshBin(
 			it.localToWorld = id;
 			instanceTransforms.push_back(it);
 
-			// 스킨은 월드 bounds 확정 불가 → 로컬로만 확장(정책)
-			AABBExpand(sceneWorldBounds, localBounds.min[0], localBounds.min[1], localBounds.min[2]);
-			AABBExpand(sceneWorldBounds, localBounds.max[0], localBounds.max[1], localBounds.max[2]);
+			for (const aiMatrix4x4& g : meshTransforms[m])
+			{
+				AABBExpandByTransformedLocalAABB(sceneWorldBounds, localBounds, g);
+			}
 		}
 		else
 		{

@@ -9,7 +9,14 @@ void PostPass::Execute(const RenderData::FrameData& frame)
 
     ID3D11DeviceContext* dxdc = m_RenderContext.pDXDC.Get();
 #pragma region Init
+<<<<<<< HEAD
     SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr);
+=======
+    ID3D11ShaderResourceView* nullSRVs[128] = { nullptr };
+    dxdc->PSSetShaderResources(0, 128, nullSRVs);
+    FLOAT backcolor[4] = { 0.21f, 0.21f, 0.21f, 1.0f };
+    SetRenderTarget(m_RenderContext.pRTView_Post.Get(), nullptr, backcolor);
+>>>>>>> UI
     SetViewPort(m_RenderContext.WindowSize.width, m_RenderContext.WindowSize.height, m_RenderContext.pDXDC.Get());
     SetBlendState(BS::ALPHABLEND);
     SetRasterizerState(RS::SOLID);
@@ -31,15 +38,49 @@ void PostPass::Execute(const RenderData::FrameData& frame)
     XMStoreFloat4x4(&m_RenderContext.CameraCBuffer.mVP, mProj);
     UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pCameraCB.Get(), &(m_RenderContext.CameraCBuffer), sizeof(CameraConstBuffer));
 
+    SetDirLight(frame);
+    dxdc->VSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+    dxdc->PSSetConstantBuffers(2, 1, m_RenderContext.pLightCB.GetAddressOf());
+
 
     //현재는 depthpass에서 먼저 그려주기 때문에 여기서 지워버리면 안된다. 지울 위치를 잘 찾아보자
     //ClearBackBuffer(D3D11_CLEAR_DEPTH, COLOR(0.21f, 0.21f, 0.21f, 1), m_RenderContext.pDXDC.Get(), m_RenderContext.pRTView.Get(), m_RenderContext.pDSView.Get(), 1, 0);
 
     dxdc->VSSetShader(m_RenderContext.VS_FSTriangle.Get(), nullptr, 0);
     dxdc->PSSetShader(m_RenderContext.PS_Post.Get(), nullptr, 0);
+<<<<<<< HEAD
     dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Imgui.GetAddressOf());
     dxdc->PSSetShaderResources(1, 1, m_RenderContext.pTexRvScene_Blur.GetAddressOf());
     dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthRV.GetAddressOf());
+=======
+    dxdc->PSSetShaderResources(0, 1, m_RenderContext.pTexRvScene_Refraction.GetAddressOf());
+
+
+    //ID3D11ShaderResourceView* depthSrv = m_RenderContext.pDepthRV.Get();
+    //if (depthSrv)
+    //{
+    //    D3D11_SHADER_RESOURCE_VIEW_DESC depthSrvDesc = {};
+    //    depthSrv->GetDesc(&depthSrvDesc);
+    //    if (depthSrvDesc.ViewDimension != D3D11_SRV_DIMENSION_TEXTURE2D)
+    //    {
+    //        depthSrv = nullptr;
+    //    }
+    //}
+    //dxdc->PSSetShaderResources(4, 1, &depthSrv);
+    dxdc->PSSetShaderResources(4, 1, m_RenderContext.pDepthMSAARV.GetAddressOf());
+
+
+    dxdc->PSSetShaderResources(6, 1, m_RenderContext.WaterNoise.GetAddressOf());
+    dxdc->PSSetShaderResources(7, 1, m_RenderContext.pTexRvScene_EmissiveOrigin.GetAddressOf());
+    dxdc->PSSetShaderResources(8, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF)].GetAddressOf());
+    dxdc->PSSetShaderResources(9, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF2)].GetAddressOf());
+    dxdc->PSSetShaderResources(10, 1, m_RenderContext.pTexRvScene_Emissive[static_cast<UINT>(EmissiveLevel::HALF3)].GetAddressOf());
+    dxdc->PSSetShaderResources(31, 1, m_RenderContext.pTexRvScene_BlurOrigin.GetAddressOf());
+    dxdc->PSSetShaderResources(32, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF)].GetAddressOf());
+    dxdc->PSSetShaderResources(33, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF2)].GetAddressOf());
+    dxdc->PSSetShaderResources(34, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF3)].GetAddressOf());
+    dxdc->PSSetShaderResources(35, 1, m_RenderContext.pTexRvScene_Blur[static_cast<UINT>(BlurLevel::HALF4)].GetAddressOf());
+>>>>>>> UI
 
     m_RenderContext.DrawFSTriangle();
 

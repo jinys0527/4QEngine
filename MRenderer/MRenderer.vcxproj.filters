@@ -69,6 +69,21 @@
     <ClCompile Include="FrustumPass.cpp">
       <Filter>RenderPass\Source Files</Filter>
     </ClCompile>
+<<<<<<< HEAD
+=======
+    <ClCompile Include="DebugLinePass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WallPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RefractionPass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EmissivePass.cpp">
+      <Filter>RenderPass\Source Files</Filter>
+    </ClCompile>
+>>>>>>> UI
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffers.h">
@@ -116,6 +131,21 @@
     <ClInclude Include="FrustumPass.h">
       <Filter>RenderPass\Header Files</Filter>
     </ClInclude>
+<<<<<<< HEAD
+=======
+    <ClInclude Include="DebugLinePass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WallPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RefractionPass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EmissivePass.h">
+      <Filter>RenderPass\Header Files</Filter>
+    </ClInclude>
+>>>>>>> UI
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="fx\BaseBuffer.hlsl">
@@ -186,6 +216,36 @@
     </FxCompile>
     <FxCompile Include="fx\Demo_FullScreen_Triangle_VS.hlsl">
       <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Emissive_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_Emissive_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_MakeShadow_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_MakeShadow_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Demo_MakeShadowTransparent_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_VS.hlsl">
+      <Filter>HLSL\0_VS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_ProgressArc_Left_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_ProgressArc_Right_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\UI_ProgressRect_Mask_PS.hlsl">
+      <Filter>HLSL\1_PS</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

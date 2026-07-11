@@ -16,11 +16,11 @@ public:
 	static FSMEventRegistry& Instance();
 
 	void RegisterEvent(const FSMEventDef& def);
-	const FSMEventDef* FindEvent(const std::string& name) const;
-	const std::vector<FSMEventDef>& GetEvents() const;
+	const FSMEventDef* FindEvent(const std::string& category, const std::string& name) const;
+	const std::vector<FSMEventDef>& GetEvents(const std::string& category) const;
 
 private:
-	std::vector<FSMEventDef> m_Events;
-	std::unordered_map<std::string, size_t> m_EventIndex;
+	std::unordered_map<std::string, std::vector<FSMEventDef>> m_EventsByCategory;
+	std::unordered_map<std::string, std::unordered_map<std::string, size_t>> m_EventIndexByCategory;
 };
 

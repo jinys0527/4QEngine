@@ -4,6 +4,34 @@
 
 #include "BaseBuffer.hlsl"
 
+float3 ToneMap_ACES(float3 x)
+{
+    const float a = 2.51f;
+    const float b = 0.03f;
+    const float c = 2.43f;
+    const float d = 0.59f;
+    const float e = 0.14f;
+
+    return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+}
+
+float3 AdjustContrast(float3 color, float contrast)
+{
+    return saturate((color - 0.5f) * contrast + 0.5f);
+}
+
+float3 AdjustContrast_Luma(float3 color, float contrast)
+{
+    float luma = dot(color, float3(0.2126, 0.7152, 0.0722));
+
+    float newLuma = (luma - 0.5f) * contrast + 0.5f;
+
+    float scale = newLuma / max(luma, 0.0001f);
+
+    return saturate(color * scale);
+}
+
+
 float4 DirectLight(float4 nrm)
 {
     float4 diff = 0;   diff.a = 1;
@@ -146,8 +174,13 @@ void BuildTBN(
     N = normalize(inN);
 
     float3 n = texN.xyz * 2 - 1;
+<<<<<<< HEAD
     n.y = -n.y; // GL → DX
     
+=======
+    //n.y = -n.y; // GL → DX
+        
+>>>>>>> UI
     float3x3 mTBN = float3x3(T, B, N);
     n = normalize(mul(n, mTBN));
 
@@ -302,7 +335,44 @@ float4 UE_DirectionalLighting(float4 viewPos, float4 viewNrm, float4 viewLitDir,
 //    float dist = sqrt(max(dist2, 1e-8));
 //    float4 L = toL / dist;
 
+<<<<<<< HEAD
 //    float4 V = normalize(-P);
+=======
+    float3 L = toL / dist; // view space
+
+    // attenuation (range 기반)
+    float att = 1.0f / max(dist2, 1e-4);
+
+    float s = saturate(1.0f - dist / max(lit.Range, 1e-4));
+    att *= (s * s);
+    
+    roughness = max(roughness, 0.5f);
+
+    BRDFResult brdf = BRDF_UE_Direct(float4(N.xyz, 0), float4(P.xyz, 1), float4(L, 0),
+                                     base, metallic, roughness, ao, specularParam);
+
+    float4 radiance = lit.Color * max(lit.Intensity,0);
+
+    float ndotl = saturate(dot(N.xyz, L));
+
+    float4 color = (brdf.diffuse + brdf.specular) * radiance * ndotl * att;
+    
+    color.a = 1;
+    
+    return color;
+}
+
+//spotlight
+float4 UE_SpotLighting_FromLight(float4 viewPos, float4 viewNrm, Light lit,
+                                 float4 base, float4 ao, float4 metallic, float4 roughness,
+                                 float specularParam)
+{
+    float4 P = viewPos; // view space
+    float4 N = normalize(viewNrm);
+
+// light position: world -> view
+    float3 litPosV = mul(float4(lit.Pos, 1.0f), mView).xyz;
+>>>>>>> UI
 
 
 //    float att = rcp(max(dist2, 1e-4));

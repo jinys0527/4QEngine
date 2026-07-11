@@ -26,11 +26,11 @@ public:
 	static FSMActionRegistry& Instance();
 
 	void RegisterAction(const FSMActionDef& def);
-	const FSMActionDef* FindAction(const std::string& id) const;
-	const std::vector<FSMActionDef>& GetActions() const;
+	const FSMActionDef* FindAction(const std::string& category, const std::string& id) const;
+	const std::vector<FSMActionDef>& GetActions(const std::string& category) const;
 
 private:
-	std::vector<FSMActionDef>			    m_Actions;
-	std::unordered_map<std::string, size_t> m_ActionIndex;
+	std::unordered_map<std::string, std::vector<FSMActionDef>> m_ActionsByCategory;
+	std::unordered_map<std::string, std::unordered_map<std::string, size_t>> m_ActionIndexByCategory;
 };
 
