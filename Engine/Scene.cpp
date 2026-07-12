@@ -18,6 +18,7 @@
 #include "SpotLightComponent.h"
 #include "TransformComponent.h"
 #include "SkeletalMeshComponent.h"
+#include "AnimationComponent.h"
 #include "SkeletalMeshRenderer.h"
 #include "CameraObject.h"
 #include <fstream>
@@ -109,9 +110,9 @@ void Scene::Render(RenderData::FrameData& frameData) const
 
 void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
-	if (!gameObject)
+	if (!gameObject) {
 		return;
-
+	}
 	gameObject->SetScene(this);
 
 	if (gameObject->m_Name == "Main Camera")
@@ -122,8 +123,6 @@ void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 	m_GameObjects[gameObject->m_Name] = std::move(gameObject);
 }
 
-<<<<<<< HEAD
-=======
 void Scene::QueueGameObjectRemoval(const std::string& name)
 {
 	if (name.empty())
@@ -149,7 +148,6 @@ void Scene::ProcessPendingRemovals()
 	}
 }
 
->>>>>>> UI
 void Scene::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
 	if (!gameObject) return;
@@ -396,6 +394,8 @@ void Scene::Deserialize(const nlohmann::json& j)
 	}
 
 	const nlohmann::json* editorRoot = nullptr;
+
+
 	//editor 카메라 셋팅값 저장( 게임에서는 안씀)
 	if (j.contains("editor"))
 	{
@@ -754,8 +754,6 @@ static void AppendSkinningPaletteIfAny(
 	frameData.skinningPalettes.insert(frameData.skinningPalettes.end(), palette.begin(), palette.end());
 }
 
-<<<<<<< HEAD
-=======
 static void AppendGlobalPoseIfAny(
 	const AnimationComponent* animComp,
 	RenderData::FrameData& frameData,
@@ -788,7 +786,6 @@ static const AnimationComponent* FindAnimationComponent(const Object& obj)
 	return anims.empty() ? nullptr : anims.front();
 }
 
->>>>>>> UI
 static bool BuildSkeletalBaseItem(
 	const Object& obj,
 	SkeletalMeshRenderer& renderer,
@@ -832,8 +829,6 @@ static bool BuildSkeletalBaseItem(
 	item.skinningPaletteOffset = paletteOffset;
 	item.skinningPaletteCount = paletteCount;
 
-<<<<<<< HEAD
-=======
 	UINT32 globalPoseOffset = 0, globalPoseCount = 0;
 	const auto* animComp = FindAnimationComponent(obj);
 	AppendGlobalPoseIfAny(animComp, frameData, globalPoseOffset, globalPoseCount);
@@ -841,7 +836,6 @@ static bool BuildSkeletalBaseItem(
 	item.globalPoseOffset = globalPoseOffset;
 	item.globalPoseCount = globalPoseCount;
 
->>>>>>> UI
 	outItem = std::move(item);
 	outMeshComponent = skelComp;
 	return true;
@@ -996,13 +990,10 @@ void Scene::BuildFrameData(RenderData::FrameData& frameData) const
 	frameData.renderItems.clear();
 	frameData.lights.clear();
 	frameData.skinningPalettes.clear();
-<<<<<<< HEAD
-=======
 	frameData.globalPoses.clear();
 	frameData.combatEnemyPositions.clear();
 	frameData.playerPosition = XMFLOAT3{ 0.0f, 0.0f, 0.0f };
 	frameData.hasPlayerPosition = false;
->>>>>>> UI
 
 	RenderData::FrameContext& context = frameData.context;
 	const UINT32 frameIndex = context.frameIndex;

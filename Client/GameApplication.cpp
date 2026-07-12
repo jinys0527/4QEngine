@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿
+#include "pch.h"
 #include "GameApplication.h"
 #include "GameObject.h"
 //#include "Reflection.h"
@@ -15,23 +16,44 @@
 
 bool GameApplication::Initialize()
 {
-	const wchar_t* className = L"PDA";
-	const wchar_t* windowName = L"PDA";
+	const wchar_t* className = L"APT";
+	const wchar_t* windowName = L"APT";
 
-	if (false == Create(className, windowName, 1920, 1080)) // 해상도 변경
+	if (false == Create(className, windowName, 2560, 1600)) // 해상도 변경
 	{
 		return false;
 	}
+	m_Engine.CreateDevice(m_hwnd);
 
 	m_AssetLoader = &m_Services.Get<AssetLoader>();
 	m_AssetLoader->LoadAll();
 	m_SoundManager = &m_Services.Get<SoundManager>();
 	m_SoundManager->Init();
+	m_SoundManager->CreateBGMSource(m_AssetLoader->GetBGMPaths());
+	m_SoundManager->CreateSFXSource(m_AssetLoader->GetSFXPaths());
+	m_SoundManager->SetDirty();
+	m_SoundManager->SetVolume_BGM(m_DefaultBGMVolume);
+	m_SoundManager->SetVolume_SFX(m_DefaultSFXVolume);
+	m_SceneBGMMap.clear();
 
-	m_Services.Get<SoundManager>().Init();
-	m_Renderer.InitializeTest(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	// Scene별 곡 등록
+	// 별도 등록하지 않으면 직전 Scene의 BGM 계속 Loop
+	m_SceneBGMMap.emplace("Title", L"Title");
+	m_SceneBGMMap.emplace("Stage1", L"Idle");
+	//m_SceneBGMMap.emplace("Stage2", L"Title");
+
+	OnResize(m_width, m_height);
+	auto& uiManager = m_Services.Get<UIManager>();
+	uiManager.SetReferenceResolution(UISize{ 2560.0f, 1600.0f });
+	uiManager.SetUseAnchorLayout(false);
+	uiManager.SetUseResolutionScale(true);
+	m_Renderer.Initialize(m_hwnd, m_width, m_height, m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+	m_RendererInitialized = true;
 	m_SceneManager.Initialize();
-	m_InputManager = &m_Services.Get<InputManager>();
+	// GameManager에 SceneManager 등록
+
+	m_SceneRenderTarget.SetDevice(m_Engine.Get3DDevice(), m_Engine.GetD3DDXDC());
+
 	return true;
 }
 
@@ -43,9 +65,9 @@ void GameApplication::Run()
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			if (false == m_InputManager->OnHandleMessage(msg))
+			if (false == m_InputManager.OnHandleMessage(msg)) {
 				TranslateMessage(&msg);
-
+			}
 			DispatchMessage(&msg);
 		}
 		else
@@ -76,6 +98,7 @@ bool GameApplication::OnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 void GameApplication::UpdateLogic()
 {
 	m_SceneManager.ChangeScene();
+	ApplySceneBGM();
 }
 
 void GameApplication::Update()
@@ -106,7 +129,12 @@ void GameApplication::ApplySceneBGM()
 	{
 		return;
 	}
-}
+
+	const std::string sceneName = currentScene->GetName();
+	if (sceneName == m_LastSceneName)
+	{
+		return;
+	}
 
 	m_LastSceneName = sceneName;
 	auto it = m_SceneBGMMap.find(sceneName);
@@ -120,21 +148,32 @@ void GameApplication::ApplySceneBGM()
 
 void GameApplication::Render()
 {
-	//m_Engine.GetRenderer().SetTransform(D2D1::Matrix3x2F::Identity());
-
+	if (!m_Engine.GetD3DDXDC()) return;
 	//m_Engine.GetRenderer().RenderBegin();
 
-	m_SceneManager.Render();
+	ID3D11RenderTargetView* rtvs[] = { m_Renderer.GetRTView().Get() };
+	m_Engine.GetD3DDXDC()->OMSetRenderTargets(1, rtvs, nullptr);
+	SetViewPort(m_width, m_height, m_Engine.GetD3DDXDC());
 
-	//m_Engine.GetRenderer().RenderEnd(false);
+	ClearBackBuffer(COLOR(0.12f, 0.12f, 0.12f, 1.0f), m_Engine.GetD3DDXDC(), *rtvs);
 
-#ifdef _EDITOR
-	RenderImGUI();
-#endif
+	auto scene = m_SceneManager.GetCurrentScene();
+	if (!scene)
+	{
+		return;
+	}
+	// 현재 Scene의 Camera 받기
+	if (auto gameCamera = scene->GetGameCamera())
+	{
+		if (auto* cameraComponent = gameCamera->GetComponent<CameraComponent>())
+		{
+			cameraComponent->SetViewport({ static_cast<float>(m_width), static_cast<float>(m_height) });
+		}
+	}
 
-	scene->Render(m_FrameData);
 	m_FrameData.context.frameIndex = static_cast<UINT32>(m_FrameIndex++);
 	m_FrameData.context.deltaTime = m_Engine.GetTimer().DeltaTime();
+	m_SceneManager.Render(m_FrameData);
 	m_Renderer.RenderFrame(m_FrameData);
 	m_Renderer.RenderToBackBuffer();
 	Flip(m_Renderer.GetSwapChain().Get());

@@ -75,6 +75,9 @@ void RenderPass::SetBaseCB(const RenderData::RenderItem& item)
 
 	m_RenderContext.BCBuffer.mWorld = tm;
 
+	m_RenderContext.BCBuffer.ScreenSize.x = m_RenderContext.WindowSize.width;
+	m_RenderContext.BCBuffer.ScreenSize.y = m_RenderContext.WindowSize.height;
+
 	XMMATRIX world = XMLoadFloat4x4(&tm);
 	XMMATRIX worldInvTranspose = XMMatrixTranspose(XMMatrixInverse(nullptr, world));
 	XMStoreFloat4x4(&m_RenderContext.BCBuffer.mWorldInvTranspose, worldInvTranspose);
@@ -120,16 +123,10 @@ void RenderPass::SetMaskingTM(const RenderData::FrameData& frame, const XMFLOAT3
 		XMVECTOR maincampos = XMLoadFloat3(&campos); 
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-<<<<<<< HEAD
-		//if (XMVector4Equal(maincampos, look)) return;
-		mView = XMMatrixLookAtLH(maincampos, look, up);
-		mProj = XMMatrixOrthographicLH(8, 8, 0.1f, 200.f);
-=======
 		//전체 초기화
 		XMStoreFloat4x4(
 			&m_RenderContext.MaskBuffer.PlayerMask,
 			XMMatrixIdentity());
->>>>>>> UI
 
 		for (int i = 0; i < enemyMaskSize; ++i)
 		{
@@ -202,6 +199,7 @@ void RenderPass::SetCameraCB(const RenderData::FrameData& frame)
 	//스카이박스 행렬 끝
 
 #pragma endregion
+	m_RenderContext.CameraCBuffer.dTime = *m_RenderContext.dTime;
 
 	m_RenderContext.camParams.x = context.gameCamera.camNear;
 	m_RenderContext.camParams.y = context.gameCamera.camFar;
@@ -274,14 +272,8 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 
 	if (!frame.lights.empty())
 	{
-		const auto& light = frame.lights[0];
-
-		XMFLOAT4X4 view; 
-		if (m_RenderContext.isEditCam)
+		for (const auto& light : frame.lights)
 		{
-<<<<<<< HEAD
-			view = frame.context.editorCamera.view;
-=======
 			if (light.type != RenderData::LightType::Directional)
 				continue;
 			m_RenderContext.LightCBuffer.lightCount = 1;
@@ -317,31 +309,7 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 
 			m_RenderContext.LightCBuffer.lights[0] = dirlight;
 			break;
->>>>>>> UI
 		}
-		else if (!m_RenderContext.isEditCam)
-		{
-			view = frame.context.gameCamera.view;
-		}
-		XMMATRIX mView = XMLoadFloat4x4(&view);
-
-		Light dirlight{};
-		dirlight.worldDir = XMFLOAT3(-light.direction.x, -light.direction.y, -light.direction.z);
-
-		XMVECTOR dirW = XMLoadFloat3(&dirlight.worldDir); 
-		XMVECTOR dirV = XMVector3Normalize(XMVector3TransformNormal(dirW, mView));
-		XMStoreFloat3(&dirlight.viewDir, dirV);
-
-		dirlight.Color = XMFLOAT4(light.color.x, light.color.y, light.color.z, 1);
-		dirlight.Intensity = 3.14f;
-		dirlight.mLightViewProj = light.lightViewProj;
-		dirlight.CastShadow = light.castShadow;
-		dirlight.Range = light.range;
-		dirlight.SpotInnerAngle = light.spotInnerAngle;
-		dirlight.SpotOutterAngle = light.spotOutterAngle;
-		dirlight.AttenuationRadius = light.attenuationRadius;
-
-		m_RenderContext.LightCBuffer.lights[0] = dirlight;
 
 		UpdateDynamicBuffer(m_RenderContext.pDXDC.Get(), m_RenderContext.pLightCB.Get(), &m_RenderContext.LightCBuffer, sizeof(LightConstBuffer));
 
@@ -349,8 +317,6 @@ void RenderPass::SetDirLight(const RenderData::FrameData& frame)
 
 }
 
-<<<<<<< HEAD
-=======
 void RenderPass::SetOtherLights(const RenderData::FrameData& frame)
 {
 	if (!frame.lights.empty())
@@ -434,7 +400,6 @@ void RenderPass::SetMaterialCB(const RenderData::MaterialData& mat)
 
 }
 
->>>>>>> UI
 void RenderPass::SetVertex(const RenderData::RenderItem& item)
 {
 	const auto* vertexBuffers = m_RenderContext.vertexBuffers;
@@ -502,8 +467,6 @@ void RenderPass::DrawMesh(
 	{
 		dc->DrawIndexed(indexCount, 0, 0);
 	}
-<<<<<<< HEAD
-=======
 }
 
 void RenderPass::DrawBones(ID3D11VertexShader* vs, ID3D11PixelShader* ps, UINT boneCount)
@@ -532,7 +495,6 @@ void RenderPass::DrawBones(ID3D11VertexShader* vs, ID3D11PixelShader* ps, UINT b
 
 	// 본 N개 -> 라인 버텍스 2N개
 	dc->Draw(boneCount * 2, 0);
->>>>>>> UI
 }
 
 bool RenderPass::ShouldIncludeRenderItem(RenderData::RenderLayer /*layer*/, const RenderData::RenderItem& /*item*/) const 

@@ -5,19 +5,49 @@
 static void MatToRowMajor16(const aiMatrix4x4& m, float out16[16])
 {
 	// transpose (Assimp -> DX)
-	out16[0]  = m.a1; out16[1]  = m.b1; out16[2]  = m.c1; out16[3]  = m.d1;
-	out16[4]  = m.a2; out16[5]  = m.b2; out16[6]  = m.c2; out16[7]  = m.d2;
-	out16[8]  = m.a3; out16[9]  = m.b3; out16[10] = m.c3; out16[11] = m.d3;
+	out16[0] = m.a1; out16[1] = m.b1; out16[2] = m.c1; out16[3] = m.d1;
+	out16[4] = m.a2; out16[5] = m.b2; out16[6] = m.c2; out16[7] = m.d2;
+	out16[8] = m.a3; out16[9] = m.b3; out16[10] = m.c3; out16[11] = m.d3;
 	out16[12] = m.a4; out16[13] = m.b4; out16[14] = m.c4; out16[15] = m.d4;
 }
 
-#ifdef _DEBUG
 static std::string ReadStringAtOffset(const std::string& table, uint32_t offset)
 {
 	if (offset >= table.size())
 		return {};
 	return std::string(&table[offset]);
 }
+
+static const aiNode* FindNodeByName(const aiNode* node, const std::string& name)
+{
+	if (!node)
+		return nullptr;
+
+	if (name == node->mName.C_Str())
+		return node;
+
+	for (uint32_t i = 0; i < node->mNumChildren; ++i)
+	{
+		if (const aiNode* found = FindNodeByName(node->mChildren[i], name))
+		{
+			return found;
+		}
+	}
+
+	return nullptr;
+}
+
+static aiMatrix4x4 GetGlobalTransform(const aiNode* node)
+{
+	aiMatrix4x4 global = node ? node->mTransformation : aiMatrix4x4();
+	for (const aiNode* parent = node ? node->mParent : nullptr; parent; parent = parent->mParent)
+	{
+		global = parent->mTransformation * global;
+	}
+	return global;
+}
+
+#ifdef _DEBUG
 
 static void WriteSkeletonDebug(const std::string& outSkelBin, const SkeletonBuildResult& skel)
 {
@@ -77,8 +107,6 @@ static void CollectUsedBoneNames(const aiScene* scene, std::unordered_set<std::s
 	}
 }
 
-<<<<<<< HEAD
-=======
 static void CollectRequiredBoneNames(
 	const aiNode* node,
 	const std::unordered_set<std::string>& usedBoneNames,
@@ -124,7 +152,6 @@ static void CollectRequiredBoneNamesFromList(
 	}
 }
 
->>>>>>> UI
 static bool IsUsedBoneNode(const aiNode* node, const std::unordered_set<std::string>& usedBoneName)
 {
 	if (!node) return false;
@@ -174,7 +201,7 @@ static void TraverseAndRegisterBones(const aiNode* node,
 		// 중복 방지
 		if (outSkel.boneNameToIndex.find(name) == outSkel.boneNameToIndex.end())
 		{
-			BoneBin bb{}; 
+			BoneBin bb{};
 
 			bb.nameOffset = AddString(outSkel.stringTable, name);
 			bb.parentIndex = -1;
@@ -229,7 +256,7 @@ SkeletonBuildResult BuildSkeletonFromScene(
 {
 	SkeletonBuildResult out;
 	if (!scene || !scene->mRootNode) return out;
-	
+
 	std::unordered_set<std::string> usedBoneNames;
 	CollectUsedBoneNames(scene, usedBoneNames);
 
@@ -237,10 +264,6 @@ SkeletonBuildResult BuildSkeletonFromScene(
 	if (usedBoneNames.empty() && extraBoneNames.empty())
 		return out;
 
-<<<<<<< HEAD
-	// 1) aiNode 트리에서 used bone 노드만 등록(순서 고정)
-	TraverseAndRegisterBones(scene->mRootNode, usedBoneNames, out);
-=======
 	std::unordered_set<std::string> requiredBoneNames;
 	std::vector<std::string> ancestors;
 	ancestors.reserve(64);
@@ -252,7 +275,6 @@ SkeletonBuildResult BuildSkeletonFromScene(
 
 	// 1) aiNode 트리에서 used bone + 부모 노드 등록(순서 고정)
 	TraverseAndRegisterBones(scene->mRootNode, requiredBoneNames, out);
->>>>>>> UI
 
 	// 2) parentIndex 채우기(노드 기반)
 	FillParentIndicesFromNodes(scene->mRootNode, out);
@@ -265,7 +287,7 @@ SkeletonBuildResult BuildSkeletonFromScene(
 
 bool ImportFBXToSkelBin(
 	const aiScene* scene,
-	const std::string& outSkelBin, 
+	const std::string& outSkelBin,
 	std::unordered_map<std::string, uint32_t>& outBoneNameToIndex,
 	nlohmann::json& skeletonMeta)
 {
@@ -305,13 +327,8 @@ bool ImportFBXToSkelBin(
 		return true;
 
 	SkelBinHeader header{};
-<<<<<<< HEAD
-	header.version          = 2;
-	header.boneCount        = (uint16_t)skel.bones.size();
-=======
 	header.version = 4;
 	header.boneCount = (uint16_t)skel.bones.size();
->>>>>>> UI
 	header.stringTableBytes = (uint32_t)skel.stringTable.size();
 	std::vector<int32_t>		   upperBodyIndices;
 	std::vector<int32_t>		   lowerBodyIndices;
@@ -411,8 +428,8 @@ bool ImportFBXToSkelBin(
 		autoFillFromUnrealNames();
 	}
 
-	header.upperCount          = static_cast<uint32_t>(upperBodyIndices.size());
-	header.lowerCount          = static_cast<uint32_t>(lowerBodyIndices.size());
+	header.upperCount = static_cast<uint32_t>(upperBodyIndices.size());
+	header.lowerCount = static_cast<uint32_t>(lowerBodyIndices.size());
 
 	const auto setIdentity = [](float out[16])
 		{
@@ -442,7 +459,31 @@ bool ImportFBXToSkelBin(
 	std::ofstream ofs(outSkelBin, std::ios::binary);
 	if (!ofs) return false;
 
+	const aiNode* rootNode = scene->mRootNode;
+	for (const auto& bone : skel.bones)
+	{
+		if (bone.parentIndex >= 0)
+			continue;
+
+		const std::string rootName = ReadStringAtOffset(skel.stringTable, bone.nameOffset);
+		if (rootName.empty())
+			break;
+
+		if (const aiNode* node = FindNodeByName(scene->mRootNode, rootName))
+		{
+			rootNode = node;
+		}
+		break;
+	}
+
+	aiMatrix4x4 globalInverse = GetGlobalTransform(rootNode);
+	globalInverse.Inverse();
+	float globalInverseRowMajor[16]{};
+	MatToRowMajor16(globalInverse, globalInverseRowMajor);
+
 	ofs.write(reinterpret_cast<const char*>(&header), sizeof(header));
+	ofs.write(reinterpret_cast<const char*>(globalInverseRowMajor), sizeof(float) * 16);
+
 	if (!skel.bones.empty())
 		ofs.write(reinterpret_cast<const char*>(skel.bones.data()), sizeof(BoneBin) * skel.bones.size());
 	if (!skel.stringTable.empty())

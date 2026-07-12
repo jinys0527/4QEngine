@@ -16,9 +16,6 @@
 #include "CollisionFSMComponent.h"
 #include "AnimFSMComponent.h"
 #include "UIFSMComponent.h"
-<<<<<<< HEAD
-
-=======
 #include "UIButtonComponent.h"
 #include "UITextComponent.h"
 #include "UIProgressBarComponent.h"
@@ -58,7 +55,6 @@
 #include "UIDicePanelComponent.h"
 #include "WaterRiseComponent.h"
 #include "TurnTimerUIComponent.h"
->>>>>>> UI
 
 // 중앙 등록 .cpp
 // exe에서 .lib의 obj를 가져오기 위해 심볼을 연결하기 위한 것
@@ -84,8 +80,6 @@ extern "C" {
 	void Link_CollisionFSMComponent();
 	void Link_AnimFSMComponent();
 	void Link_UIFSMComponent();
-<<<<<<< HEAD
-=======
 	void Link_UIButtonComponent();
 	void Link_UITextComponent();
 	void Link_UIProgressBarComponent();
@@ -138,7 +132,6 @@ extern "C" {
 	void Link_SceneDelayComponent();
 	void Link_TurnTimerUIComponent();
 
->>>>>>> UI
 }
 
 
@@ -168,8 +161,6 @@ void LinkEngineComponents() {
 	Link_CollisionFSMComponent();
 	Link_AnimFSMComponent();
 	Link_UIFSMComponent();
-<<<<<<< HEAD
-=======
 	Link_UIButtonComponent();
 	Link_UITextComponent();
 	Link_UIProgressBarComponent();
@@ -183,7 +174,6 @@ void LinkEngineComponents() {
 	Link_SceneChangeTestComponent();
 	Link_BoxColliderComponent();
 
->>>>>>> UI
 
 	RegisterFSMBaseDefinitions();
 	RegisterUIFSMDefinitions();

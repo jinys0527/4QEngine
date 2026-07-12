@@ -1,10 +1,7 @@
 ﻿#pragma once
 #include "Windows.h"
-<<<<<<< HEAD
-=======
 #include <string>
 #include <vector>
->>>>>>> UI
 
 namespace Events
 {
@@ -21,8 +18,6 @@ namespace Events
 		bool   rightPressed{ false };
 		mutable bool   handled{ false };
 	};
-<<<<<<< HEAD
-=======
 
 	struct SceneChangeRequest
 	{
@@ -132,5 +127,4 @@ namespace Events
 		std::vector<int> itemIds;
 		std::vector<int> itemCounts;
 	};
->>>>>>> UI
 }

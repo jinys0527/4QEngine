@@ -20,7 +20,7 @@ public:
 	void InitializeTest(HWND hWnd, int width, int height, ID3D11Device* device, ID3D11DeviceContext* dxdc);		//Editor의 Renderer 초기화
 	void RenderFrame(const RenderData::FrameData& frame);
 	void RenderFrame(const RenderData::FrameData& frame, RenderTargetContext& rendertargetcontext, RenderTargetContext& rendertargetcontext2);
-
+	void RenderToBackBuffer();
 	void InitVB(const RenderData::FrameData& frame);
 	void InitIB(const RenderData::FrameData& frame);
 	void EnsureMeshBuffers(const RenderData::FrameData& frame);
@@ -107,14 +107,11 @@ private:
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Blur[static_cast<UINT>(BlurLevel::COUNT)];
 
 
-<<<<<<< HEAD
-=======
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_Refraction;
 	ComPtr<ID3D11Texture2D>				m_pRTScene_RefractionMSAA;
 	ComPtr<ID3D11ShaderResourceView>	m_pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		m_pRTView_Refraction;
->>>>>>> UI
 
 	//Emissive용
 	ComPtr<ID3D11Texture2D>				m_pRTScene_EmissiveOrigin;
@@ -195,19 +192,17 @@ private:
 	SkinningConstBuffer			m_SkinCBuffer;
 	ComPtr<ID3D11Buffer>		m_pLightCB;
 	LightConstBuffer			m_LightCBuffer;
-<<<<<<< HEAD
-=======
 	ComPtr<ID3D11Buffer>		m_pUIB;
 	UIBuffer					m_UIBuffer;
 	ComPtr<ID3D11Buffer>		m_pMatB;
 	MaterialBuffer				m_MatBuffer;
 	ComPtr<ID3D11Buffer>		m_pMaskB;
 	MaskingBuffer				m_MaskBuffer;
->>>>>>> UI
 
 
 	//임시
-	ComPtr<ID3D11InputLayout> m_pInputLayout;			
+	ComPtr<ID3D11InputLayout> m_pInputLayout;
+	ComPtr<ID3D11InputLayout> m_pInputLayout_P;
 	//임시 쉐이더코드
 	ComPtr<ID3D11VertexShader> m_pVS;
 	ComPtr<ID3D11PixelShader> m_pPS;
@@ -255,8 +250,6 @@ private:
 
 //그리드
 private:
-	struct VertexP { XMFLOAT3 pos;};
-
 	ComPtr<ID3D11Buffer> m_GridVB;
 	//ComPtr<ID3D11InputLayout> m_pInputLayoutGrid;
 
@@ -311,13 +304,16 @@ protected:
 	ComPtr<ID3D11PixelShader> m_pPS_Shadow;
 	ComPtr<ID3DBlob> m_pVSCode_Shadow;
 
+	//물 노이즈 
+	ComPtr<ID3D11ShaderResourceView> m_WaterNoise;
+	//임시
+	float dTime = 0.0f;
+
 	//FullScreenTriangle
 protected:
 	ComPtr<ID3D11VertexShader> m_pVS_FSTriangle;
 	ComPtr<ID3DBlob> m_pVSCode_FSTriangle;
 
-<<<<<<< HEAD
-=======
 private:
 	std::unique_ptr<DirectX::SpriteBatch> m_SpriteBatch;
 	std::unique_ptr<DirectX::SpriteFont>  m_SpriteFont;
@@ -393,5 +389,4 @@ private:
 		m_SpriteBatch->End();
 	}
 
->>>>>>> UI
 };

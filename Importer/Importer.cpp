@@ -592,11 +592,11 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	// DX11 / LH 기준
 	const aiScene* scene = importer.ReadFile(
 		FBXPath,
-		aiProcess_Triangulate			|			// 모든 면을 삼각형으로 반환
-		aiProcess_GenNormals			|			// 노멀 생성
-		aiProcess_CalcTangentSpace		|			// 탄젠트 공간 계산
-		aiProcess_GlobalScale			|			// CM화
-		aiProcess_JoinIdenticalVertices |			// 중복 정점 제거
+		aiProcess_Triangulate				|		// 모든 면을 삼각형으로 반환
+		aiProcess_GenNormals				|		// 노멀 생성
+		aiProcess_CalcTangentSpace			|		// 탄젠트 공간 계산
+		aiProcess_GlobalScale				|		// CM화
+		aiProcess_JoinIdenticalVertices		|       // 중복 정점 제거
 		aiProcess_ConvertToLeftHanded				// LH 변환
 	);
 	if (!scene) {

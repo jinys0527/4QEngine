@@ -220,8 +220,6 @@
     <ClCompile Include="BoatComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
-<<<<<<< HEAD
-=======
     <ClCompile Include="BoatEndComponent.cpp">
       <Filter>Components\Default\Source Files</Filter>
     </ClCompile>
@@ -243,7 +241,6 @@
     <ClCompile Include="TurnTimerUIComponent.cpp">
       <Filter>Components\UserDefine\Source Files</Filter>
     </ClCompile>
->>>>>>> UI
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h">
@@ -471,8 +468,6 @@
     <ClInclude Include="UIDiceDisplayTypes.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
-<<<<<<< HEAD
-=======
     <ClInclude Include="UIDicePanelTypes.h">
       <Filter>Components\Default\Header Files</Filter>
     </ClInclude>
@@ -512,7 +507,6 @@
     <ClInclude Include="TurnTimerUIComponent.h">
       <Filter>Components\UserDefine\Header Files</Filter>
     </ClInclude>
->>>>>>> UI
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Components">

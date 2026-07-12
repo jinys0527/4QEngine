@@ -44,8 +44,6 @@ enum class EventType
 	CollisionStay,
 	CollisionExit,
 	CollisionTrigger,
-<<<<<<< HEAD
-=======
 
 	//AI
 	AIMoveRequested,
@@ -118,7 +116,6 @@ enum class EventType
 	EnemyAttack,
 	EnemyHovered,
 
->>>>>>> UI
 };
 
 class IEventListener

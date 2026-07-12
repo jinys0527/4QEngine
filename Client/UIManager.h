@@ -1,4 +1,5 @@
 ﻿#pragma once
+//Client Game
 #include "IEventListener.h"
 #include <vector>
 #include <memory>
@@ -14,8 +15,10 @@ struct HorizontalBoxSlot;
 class UIManager : public IEventListener
 {
 public:
-	UIManager(EventDispatcher& eventDispatcher) : m_EventDispatcher(eventDispatcher) {}
+	UIManager() = default;
 	virtual ~UIManager();
+
+	void SetEventDispatcher(EventDispatcher* eventDispatcher);
 
 	void AddUI(std::string sceneName, std::shared_ptr<UIObject> uiObject)
 	{
@@ -124,7 +127,7 @@ private:
 	UIObject* m_LastHoveredUI = nullptr;
 	bool m_FullScreenUIActive = false;
 	int m_FullScreenZ = -1;
-	EventDispatcher& m_EventDispatcher; 
+	EventDispatcher* m_EventDispatcher; 
 	std::string m_CurrentSceneName;
 	UISize m_ViewportSize		{ 2560.0f, 1600.0f };
 	UISize m_ReferenceResolution{ 2560.0f, 1600.0f };

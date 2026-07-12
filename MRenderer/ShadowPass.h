@@ -7,7 +7,7 @@ class ShadowPass : public RenderPass
 {
 public:
 	ShadowPass(RenderContext& context, AssetLoader& assetloader) : RenderPass(context, assetloader) {}
-    std::string_view GetName() const override { return "Opaque"; }
+    std::string_view GetName() const override { return "Shadow"; }
 
     void Execute(const RenderData::FrameData& frame) override;
 protected:

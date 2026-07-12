@@ -29,11 +29,8 @@ struct BaseConstBuffer
 	XMFLOAT4X4		mWorld = XMFLOAT4X4{};
 	XMFLOAT4X4		mWorldInvTranspose = XMFLOAT4X4{};
 	XMFLOAT4X4		mTextureMask = XMFLOAT4X4{};
-<<<<<<< HEAD
-=======
 	XMFLOAT2		ScreenSize{ 1920,1080 };
 	FLOAT			padding[2] = { 0, };
->>>>>>> UI
 };
 
 struct CameraConstBuffer
@@ -45,20 +42,16 @@ struct CameraConstBuffer
 	XMFLOAT4X4  mShadow = XMFLOAT4X4{};
 	XMFLOAT3	camPos = XMFLOAT3{};
 	//XMFLOAT4X4 mWVP;		추후에 추가. 버텍스가 많아지면
-<<<<<<< HEAD
-	float		padding = 0.0f;
-=======
 	//float		padding = 0.0f;
 	float dTime = 0.0f;
 	XMFLOAT4	camParams = { 0,0,0,0 };
->>>>>>> UI
 };
 
 struct Light
 {
 	XMFLOAT4X4 mLightViewProj{};
 
-	XMFLOAT4   Color{ 1,1,1,0 };
+	XMFLOAT4   Color{ 1,1,1,1 };
 
 	XMFLOAT3   Pos{ 0,0,0 };
 	float      Range = 0;
@@ -75,12 +68,8 @@ struct Light
 	float	   Saturation = 0.0f;
 
 	UINT       CastShadow = TRUE;
-<<<<<<< HEAD
-	float      padding[3]{ 0,0,0 };
-=======
 	UINT	   type = static_cast<UINT>(RenderData::LightType::None);
 	float		padding[2]{ 0,0 };
->>>>>>> UI
 };
 constexpr int MAX_LIGHTS = 16;		//★빛 개수 정해지면 변경할 것
 struct LightConstBuffer
@@ -91,7 +80,7 @@ struct LightConstBuffer
 	FLOAT   padding[2]{ 0.0f, 0.0f };
 };
 
-constexpr size_t kMaxSkinningBones = 128;
+constexpr size_t kMaxSkinningBones = 256;
 
 struct SkinningConstBuffer
 {
@@ -100,8 +89,6 @@ struct SkinningConstBuffer
 	float padding[3]{ 0.0f, 0.0f, 0.0f };
 };
 
-<<<<<<< HEAD
-=======
 struct UIBuffer
 {
 	XMFLOAT4X4  TextPosition{};
@@ -129,7 +116,6 @@ struct MaskingBuffer
 };
 
 
->>>>>>> UI
 struct VertexShaderResources
 {
 	ComPtr<ID3D11VertexShader>	vertexShader;
@@ -164,15 +150,12 @@ struct RenderContext
 	ComPtr<ID3D11Buffer>		pSkinCB;
 	LightConstBuffer			LightCBuffer;
 	ComPtr<ID3D11Buffer>		pLightCB;
-<<<<<<< HEAD
-=======
 	UIBuffer					UIBuffer;
 	ComPtr<ID3D11Buffer>		pUIB;
 	MaterialBuffer				MatBuffer;
 	ComPtr<ID3D11Buffer>		pMatB;
 	ComPtr<ID3D11Buffer>		pMaskB;
 	MaskingBuffer				MaskBuffer;
->>>>>>> UI
 
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					vertexBuffers	= nullptr;
 	std::unordered_map<MeshHandle, ComPtr<ID3D11Buffer>>*					indexBuffers	= nullptr;
@@ -181,12 +164,8 @@ struct RenderContext
 	std::unordered_map<VertexShaderHandle, VertexShaderResources>*		    vertexShaders = nullptr;
 	std::unordered_map<PixelShaderHandle, PixelShaderResources>*		    pixelShaders = nullptr;
 
-<<<<<<< HEAD
-	ComPtr<ID3D11InputLayout> InputLayout = nullptr;
-=======
 	ComPtr<ID3D11InputLayout> InputLayout;
 	ComPtr<ID3D11InputLayout> InputLayout_P;
->>>>>>> UI
 
 	ComPtr<ID3D11VertexShader> VS;
 	ComPtr<ID3D11PixelShader> PS;
@@ -274,14 +253,11 @@ struct RenderContext
 	ComPtr<ID3D11RenderTargetView>*			pRTView_Blur = nullptr;
 
 
-<<<<<<< HEAD
-=======
 	//Refraction용
 	ComPtr<ID3D11Texture2D>				pRTScene_Refraction;
 	ComPtr<ID3D11Texture2D>				pRTScene_RefractionMSAA;
 	ComPtr<ID3D11ShaderResourceView>	pTexRvScene_Refraction;
 	ComPtr<ID3D11RenderTargetView>		pRTView_Refraction;
->>>>>>> UI
 
 	//Emissive용
 	ComPtr<ID3D11Texture2D>				pRTScene_EmissiveOrigin;
@@ -318,8 +294,6 @@ struct RenderContext
 	ComPtr<ID3D11VertexShader>			VS_FSTriangle;
 	std::function<void()>				DrawFSTriangle;
 
-<<<<<<< HEAD
-=======
 	//물 노이즈
 	ComPtr<ID3D11ShaderResourceView>	WaterNoise;
 	float* dTime = nullptr;
@@ -329,5 +303,4 @@ struct RenderContext
 
 	//플레이어 위치 테스트
 	XMFLOAT4 camParams{ 0,0,0,0 };
->>>>>>> UI
 };

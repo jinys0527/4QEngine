@@ -33,12 +33,9 @@ public:
 	virtual void SetMaskingTM(const RenderData::FrameData& frame, const XMFLOAT3& campos);
 	virtual void SetCameraCB(const RenderData::FrameData& frame);
 	virtual void SetDirLight(const RenderData::FrameData& frame);
-<<<<<<< HEAD
-=======
 	virtual void SetOtherLights(const RenderData::FrameData& frame);
 	virtual void SetMaterialCB(const RenderData::MaterialData& mat);
 
->>>>>>> UI
 	virtual void SetVertex(const RenderData::RenderItem& item);
 	virtual void DrawMesh(
 		ID3D11Buffer* vb,
@@ -49,11 +46,19 @@ public:
 		UINT indexCount,
 		UINT indexStart
 	);
+
+	void DrawBones(
+		ID3D11VertexShader* vs,
+		ID3D11PixelShader* ps,
+		UINT boneCount
+	);
 protected:
 	struct RenderQueueItem
 	{
 		RenderData::RenderLayer layer = RenderData::Layer_MAX_;
 		const RenderData::RenderItem* item = nullptr;
+		const RenderData::UIElement* uielement = nullptr;
+		const RenderData::UITextElement* uitextelement = nullptr;
 	};
 
 	virtual bool ShouldIncludeRenderItem(RenderData::RenderLayer layer, const RenderData::RenderItem& item) const;
@@ -61,6 +66,7 @@ protected:
 
 private:
 	void BuildQueue(const RenderData::FrameData& frame);
+
 
 	std::vector<RenderQueueItem> m_Queue;
 	bool m_Enabled = true;

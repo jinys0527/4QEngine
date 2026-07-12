@@ -11,6 +11,7 @@ PointLightComponent::PointLightComponent()
 
 void PointLightComponent::Update(float deltaTime)
 {
+	LightComponent::Update(deltaTime);
 }
 
 void PointLightComponent::OnEvent(EventType type, const void* data)

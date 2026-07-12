@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿//Client
+#include "pch.h"
 #include "Engine.h"
 #include "GameApplication.h"
 #include "SceneManager.h"

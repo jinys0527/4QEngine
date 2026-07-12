@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿//Client Game
+#include "pch.h"
 #include "UIManager.h"
 #include "Event.h"
 #include "UIButtonComponent.h"
@@ -80,20 +81,407 @@ namespace
 				continue;
 			}
 
+			if (auto* infoFsm = infoObject->GetComponent<UIFSMComponent>())
+			{
+				infoFsm->TriggerEventByName(eventName);
+				break;
+			}
+		}
+	}
+
+	void ApplySizeBoxOverrides(UIObject& uiObject)
+	{
+		auto* sizeBox = uiObject.GetComponent<SizeBox>();
+		if (!sizeBox || !uiObject.HasBounds())
+			return;
+
+		UIRect bounds = uiObject.GetBounds();
+		const UISize desired = sizeBox->GetDesiredSize(UISize{ bounds.width, bounds.height });
+		if (desired.width != bounds.width || desired.height != bounds.height)
+		{
+			bounds.width = desired.width;
+			bounds.height = desired.height;
+			uiObject.SetBounds(bounds);
+		}
+	}
+
+	void ApplyScaleBoxLayout(UIObject& uiObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		auto* scaleBox = uiObject.GetComponent<ScaleBox>();
+		if (!scaleBox || !uiObject.HasBounds())
+			return;
+
+		const std::string& parentName = uiObject.GetParentName();
+		if (parentName.empty())
+			return;
+
+		auto itParent = uiMap.find(parentName);
+		if (itParent == uiMap.end() || !itParent->second || !itParent->second->HasBounds())
+			return;
+
+		const UIRect parentBounds = itParent->second->GetBounds();
+		UIRect bounds = uiObject.GetBounds();
+
+		const UISize scaled = scaleBox->CalculateScaledSize(
+			UISize{ parentBounds.width, parentBounds.height },
+			UISize{ bounds.width, bounds.height });
+		bounds.width = scaled.width;
+		bounds.height = scaled.height;
+		bounds.x = parentBounds.x + (parentBounds.width - scaled.width) * 0.5f;
+		bounds.y = parentBounds.y + (parentBounds.height - scaled.height) * 0.5f;
+		uiObject.SetBounds(bounds);
+	}
+
+	// 	void ApplyBorderLayout(UIObject& borderObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	// 	{
+	// 		auto* border = borderObject.GetComponent<Border>();
+	// 		if (!border || !borderObject.HasBounds())
+	// 			return;
+	// 
+	// 		const std::string& parentName = borderObject.GetName();
+	// 		const UIRect contentBounds = border->GetContentRect(borderObject.GetBounds());
+	// 
+	// 		for (const auto& [name, child] : uiMap)
+	// 		{
+	// 			if (!child || !child->HasBounds())
+	// 			{
+	// 				continue;
+	// 			}
+	// 
+	// 			child->SetBounds(contentBounds);
+	// 		}
+	// 	} // 트리 구조도 아니고 시간 없어서 안쓸것같음
+
+	void ApplyHorizontalBoxLayout(UIObject& uiObject, const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		auto* horizontalBox = uiObject.GetComponent<HorizontalBox>();
+		if (!horizontalBox || !uiObject.HasBounds())
+			return;
+
+		auto& slots = horizontalBox->GetSlotsMutable();
+		for (auto& slot : slots)
+		{
+			if (slot.child || slot.childName.empty())
+			{
+				continue;
+			}
+
+			auto itChild = uiMap.find(slot.childName);
+			if (itChild != uiMap.end())
+			{
+				slot.child = itChild->second.get();
+			}
+		}
+
+		const UIRect parentBounds = uiObject.GetBounds();
+		const bool   parentVisible = uiObject.IsVisible();
+		const int    parentZOrder = uiObject.GetZOrder();
+		const UISize availableSize{ parentBounds.width, parentBounds.height };
+		const auto arranged = horizontalBox->ArrangeChildren(parentBounds.x, parentBounds.y, availableSize);
+		const size_t count = std::min(arranged.size(), slots.size());
+		for (size_t i = 0; i < count; ++i)
+		{
+			if (slots[i].child)
+			{
+				slots[i].child->SetBounds(arranged[i]);
+				slots[i].child->SetIsVisibleFromParent(parentVisible);
+				slots[i].child->SetZOrder(parentZOrder + static_cast<int>(i) + 1);
+			}
+		}
+	}
+
+	UIRect ResolveWorldBounds(const std::string& name,
+		const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+		std::unordered_map<std::string, UIRect>& cache,
+		std::unordered_set<std::string>& visiting)
+	{
+		auto cached = cache.find(name);
+		if (cached != cache.end())
+		{
+			return cached->second;
+		}
+
+		auto itObj = uiMap.find(name);
+		if (itObj == uiMap.end() || !itObj->second)
+		{
+			return UIRect{};
+		}
+
+		if (!visiting.insert(name).second)
+		{
+			return itObj->second->GetBounds();
+		}
+
+		auto& uiObject = *itObj->second;
+		UIRect local = uiObject.GetBounds();
+		const std::string& parentName = uiObject.GetParentName();
+		if (parentName.empty() || uiMap.find(parentName) == uiMap.end())
+		{
+			cache[name] = local;
+			visiting.erase(name);
+			return local;
+		}
+
+		UIRect parentBounds = ResolveWorldBounds(parentName, uiMap, cache, visiting);
+		const UIAnchor anchorMin = uiObject.GetAnchorMin();
+		const UIAnchor anchorMax = uiObject.GetAnchorMax();
+		const UIAnchor pivot = uiObject.GetPivot();
+
+		const float anchorLeft = parentBounds.x + parentBounds.width * anchorMin.x;
+		const float anchorTop = parentBounds.y + parentBounds.height * anchorMin.y;
+		const float anchorRight = parentBounds.x + parentBounds.width * anchorMax.x;
+		const float anchorBottom = parentBounds.y + parentBounds.height * anchorMax.y;
+
+		const bool stretchX = anchorMin.x != anchorMax.x;
+		const bool stretchY = anchorMin.y != anchorMax.y;
+		const float baseWidth = stretchX ? (anchorRight - anchorLeft) : 0.0f;
+		const float baseHeight = stretchY ? (anchorBottom - anchorTop) : 0.0f;
+
+		const float width = stretchX ? (baseWidth + local.width) : local.width;
+		const float height = stretchY ? (baseHeight + local.height) : local.height;
+
+		UIRect world;
+		world.width = width;
+		world.height = height;
+		world.x = anchorLeft + local.x - width * pivot.x;
+		world.y = anchorTop + local.y - height * pivot.y;
+
+		cache[name] = world;
+		visiting.erase(name);
+		return world;
+	}
+
+	bool ResolveInheritedVisibility(const std::string& name,
+								    const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+								    std::unordered_map<std::string, bool>& cache,
+								    std::unordered_set<std::string>& visiting)
+	{
+		auto cached = cache.find(name);
+		if (cached != cache.end())
+		{
+			return cached->second;
+		}
+
+		auto itObj = uiMap.find(name);
+		if (itObj == uiMap.end() || !itObj->second)
+		{
+			return true;
+		}
+
+		if (!visiting.insert(name).second)
+		{
+			const bool fallback = itObj->second->IsLocallyVisible();
+			cache[name] = fallback;
+			return fallback;
+		}
+
+		const UIObject& uiObject = *itObj->second;
+		bool visible = uiObject.IsLocallyVisible();
+		const std::string& parentName = uiObject.GetParentName();
+		if (!parentName.empty())
+		{
+			auto itParent = uiMap.find(parentName);
+			if (itParent != uiMap.end() && itParent->second)
+			{
+				visible = visible && ResolveInheritedVisibility(parentName, uiMap, cache, visiting);
+			}
+		}
+
+		cache[name] = visible;
+		visiting.erase(name);
+		return visible;
+	}
+
+	void ApplyAnchorLayout(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap)
+	{
+		std::unordered_map<std::string, UIRect> cache;
+		std::unordered_set<std::string> visiting;
+		cache.reserve(uiMap.size());
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject)
+			{
+				continue;
+			}
+			const UIRect world = ResolveWorldBounds(name, uiMap, cache, visiting);
+			uiObject->SetBounds(world);
+		}
+	}
+
+	void ApplyResolutionScale(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+		const UISize& viewportSize,
+		const UISize& referenceResolution,
+		float& lastScale,
+		UISize& lastOffset,
+		bool& hasScaleState)
+	{
+		constexpr float kMinScale = 0.001f;
+
+		if (referenceResolution.width <= 0.0f || referenceResolution.height <= 0.0f)
+		{
+			return;
+		}
+
+		if (viewportSize.width <= 0.0f || viewportSize.height <= 0.0f)
+		{
+			return;
+		}
+
+		const float scaleX = viewportSize.width / referenceResolution.width;
+		const float scaleY = viewportSize.height / referenceResolution.height;
+		const float uniformScale = std::min(scaleX, scaleY);
+		if (uniformScale < kMinScale)
+		{
+			return;
+		}
+
+		const float offsetX = (viewportSize.width - referenceResolution.width * uniformScale) * 0.5f;
+		const float offsetY = (viewportSize.height - referenceResolution.height * uniformScale) * 0.5f;
+
+		const float previousScale = hasScaleState ? lastScale : 1.0f;
+		const float previousOffsetX = hasScaleState ? lastOffset.width : 0.0f;
+		const float previousOffsetY = hasScaleState ? lastOffset.height : 0.0f;
+		const bool canUnscale = previousScale > 0.0f;
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject || !uiObject->HasBounds())
+			{
+				continue;
+			}
+
+			UIRect bounds = uiObject->GetBounds();
+			if (canUnscale)
+			{
+				bounds.x = (bounds.x - previousOffsetX) / previousScale;
+				bounds.y = (bounds.y - previousOffsetY) / previousScale;
+				bounds.width /= previousScale;
+				bounds.height /= previousScale;
+			}
+			bounds.x = bounds.x * uniformScale + offsetX;
+			bounds.y = bounds.y * uniformScale + offsetY;
+			bounds.width *= uniformScale;
+			bounds.height *= uniformScale;
+			uiObject->SetBounds(bounds);
+		}
+
+		lastScale = uniformScale;
+		lastOffset = UISize{ offsetX, offsetY };
+		hasScaleState = true;
+	}
+
+	void ApplyLayoutOverrides(const std::unordered_map<std::string, std::shared_ptr<UIObject>>& uiMap,
+		const UISize& viewportSize,
+		const UISize& referenceResolution,
+		float& lastScale,
+		UISize& lastOffset,
+		bool& hasScaleState,
+		const bool useAnchorLayout,
+		const bool useResolutionScale)
+	{
+// 		constexpr float kMinScale = 0.001f;
+// 		if (useResolutionScale && hasScaleState && lastScale >= kMinScale)
+// 		{
+// 			for (const auto& [name, uiObject] : uiMap)
+// 			{
+// 				if (!uiObject || !uiObject->HasBounds())
+// 				{
+// 					continue;
+// 				}
+// 
+// 				UIRect bounds = uiObject->GetBounds();
+// 				bounds.x = (bounds.x - lastOffset.width) / lastScale;
+// 				bounds.y = (bounds.y - lastOffset.height) / lastScale;
+// 				bounds.width /= lastScale;
+// 				bounds.height /= lastScale;
+// 				uiObject->SetBounds(bounds);
+// 			}
+// 		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplySizeBoxOverrides(*uiObject);
+			}
+		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplyScaleBoxLayout(*uiObject, uiMap);
+			}
+		}
+
+		if (useAnchorLayout)
+		{
+			ApplyAnchorLayout(uiMap);
+		}
+
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject)
+			{
+				ApplyHorizontalBoxLayout(*uiObject, uiMap);
+			}
+		}
+
+		std::unordered_map<std::string, bool> visibilityCache;
+		std::unordered_set<std::string> visibilityVisiting;
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (!uiObject)
+			{
+				continue;
+			}
+
+			bool parentVisible = true;
+			const std::string& parentName = uiObject->GetParentName();
+			if (!parentName.empty())
+			{
+				auto itParent = uiMap.find(parentName);
+				if (itParent != uiMap.end() && itParent->second)
+				{
+					parentVisible = ResolveInheritedVisibility(parentName, uiMap, visibilityCache, visibilityVisiting);
+				}
+			}
+			uiObject->SetIsVisibleFromParent(parentVisible);
+		}
+
+// 		if (useResolutionScale)
+// 		{
+// 			ApplyResolutionScale(uiMap, viewportSize, referenceResolution, lastScale, lastOffset, hasScaleState);
+// 		}
+	}
+}
+
+
+UIManager::~UIManager()
+{
+	Reset();
+}
+
+
+void UIManager::SetEventDispatcher(EventDispatcher* eventDispatcher)
+{
 	m_EventDispatcher = eventDispatcher;
+
+	if (!m_EventDispatcher)
+		return;
+
 	m_EventDispatcher->AddListener(EventType::Pressed, this);
-	m_EventDispatcher->AddListener(EventType::Hovered, this);
-	m_EventDispatcher->AddListener(EventType::Dragged, this);
+	m_EventDispatcher->AddListener(EventType::UIHovered, this);
+	m_EventDispatcher->AddListener(EventType::UIDragged, this);
+	m_EventDispatcher->AddListener(EventType::UIDoubleClicked, this);
 	m_EventDispatcher->AddListener(EventType::Released, this);
 }
 
 
 void UIManager::Start()
 {
-	m_EventDispatcher.AddListener(EventType::Pressed, this);
-	m_EventDispatcher.AddListener(EventType::Hovered, this);
-	m_EventDispatcher.AddListener(EventType::Dragged, this);
-	m_EventDispatcher.AddListener(EventType::Released, this);
+
 }
 
 
@@ -784,3 +1172,50 @@ void UIManager::DeserializeSceneUI(const std::string& sceneName, const nlohmann:
 //	}
 //}
 
+void UIManager::Reset()
+{
+	SetEventDispatcher(nullptr);
+	m_UIObjects.clear();
+	m_ActiveUI = nullptr;
+	m_VendingInfoVisible.fill(false);
+}
+
+void UIManager::ClearSceneUI(const std::string& sceneName)
+{
+	auto itScene = m_UIObjects.find(sceneName);
+	if (itScene == m_UIObjects.end())
+	{
+		return;
+	}
+
+	auto& uiMap = itScene->second;
+	if (m_ActiveUI)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject && uiObject.get() == m_ActiveUI)
+			{
+				m_ActiveUI = nullptr;
+				break;
+			}
+		}
+	}
+
+	if (m_LastHoveredUI)
+	{
+		for (const auto& [name, uiObject] : uiMap)
+		{
+			if (uiObject && uiObject.get() == m_LastHoveredUI)
+			{
+				m_LastHoveredUI = nullptr;
+				break;
+			}
+		}
+	}
+
+	m_UIObjects.erase(itScene);
+	if (sceneName == m_CurrentSceneName)
+	{
+		m_VendingInfoVisible.fill(false);
+	}
+}

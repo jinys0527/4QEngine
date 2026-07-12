@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿//Editor
+#pragma once
 #include "IEventListener.h"
 #include <vector>
 #include <memory>

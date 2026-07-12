@@ -39,8 +39,6 @@
     <ClInclude Include="ServiceRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-<<<<<<< HEAD
-=======
     <ClInclude Include="ClientScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -74,7 +72,6 @@
     <ClInclude Include="GameState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
->>>>>>> UI
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -98,8 +95,6 @@
     <ClCompile Include="DefaultScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-<<<<<<< HEAD
-=======
     <ClCompile Include="ClientScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -130,7 +125,6 @@
     <ClCompile Include="CombatManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
->>>>>>> UI
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -44,12 +44,9 @@ namespace RenderData
 		std::vector<UINT32>   indices;
 		std::vector<SubMesh>  subMeshes;
 		BOOL hasSkinning = false;
-<<<<<<< HEAD
-=======
 		UINT32 maxBoneIndex = 0;
 		XMFLOAT3 boundsMin{ 0.0f, 0.0f, 0.0f };
 		XMFLOAT3 boundsMax{ 0.0f, 0.0f, 0.0f };
->>>>>>> UI
 	};
 
 	enum class MaterialTextureSlot : uint8_t
@@ -69,7 +66,8 @@ namespace RenderData
 		XMFLOAT4 baseColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 		FLOAT    metallic = 0.0f;
 		FLOAT    roughness = 1.0f;
-		FLOAT    padding[2]{ 0.0f, 0.0f };
+		FLOAT	 saturation = 1.0f;
+		FLOAT	 lightness = 1.0f;
 		std::array<TextureHandle, static_cast<size_t>(MaterialTextureSlot::TEX_MAX)> textures{};
 		ShaderAssetHandle  shaderAsset  = ShaderAssetHandle::Invalid();
 		VertexShaderHandle vertexShader = VertexShaderHandle::Invalid();
@@ -148,12 +146,9 @@ namespace RenderData
 		std::vector<Bone>			bones;
 		std::vector<int>			upperBodyBones;
 		std::vector<int>			lowerBodyBones;
-<<<<<<< HEAD
-=======
 		int                         equipmentBoneIndex = -1;
 		XMFLOAT4X4                  equipmentBindPose{};
 		XMFLOAT4X4                  globalInverseTransform{};
->>>>>>> UI
 	};
 
 	struct AnimationKeyFrame
@@ -240,14 +235,11 @@ namespace RenderData
 		UINT32		   indexCount = 0;
 		bool		   useSubMesh = false;
 		XMFLOAT4X4     localToWorld{};
-<<<<<<< HEAD
-=======
 		UINT32		   globalPoseOffset = 0;
 		UINT32		   globalPoseCount = 0;
 		XMFLOAT3	   boundsMin{ 0.0f, 0.0f, 0.0f };
 		XMFLOAT3	   boundsMax{ 0.0f, 0.0f, 0.0f };
 		bool		   hasBounds = false;
->>>>>>> UI
 	};
 
 	enum RenderLayer
@@ -256,11 +248,8 @@ namespace RenderData
 		OpaqueItems,
 		TransparentItems,
 		WallItems,
-<<<<<<< HEAD
-=======
 		RefractionItems,
 		EmissiveItems,
->>>>>>> UI
 		UIItems,
 		Layer_MAX_
 	};
@@ -269,10 +258,6 @@ namespace RenderData
 	{
 		FrameContext			   context;
 		std::unordered_map<RenderLayer, std::vector<RenderItem>> renderItems;
-<<<<<<< HEAD
-		std::vector<LightData>  lights;
-		std::vector<XMFLOAT4X4> skinningPalettes;
-=======
 		std::vector<LightData>	   lights;
 		std::vector<XMFLOAT4X4>	   skinningPalettes;
 		std::vector<XMFLOAT4X4>	   globalPoses;
@@ -282,6 +267,5 @@ namespace RenderData
 		bool                       hasPlayerPosition = false;
 		std::vector<XMFLOAT3>      combatEnemyPositions;
 		UINT						currScene = 0;
->>>>>>> UI
 	};
 }

@@ -1,5 +1,7 @@
 ﻿#include "LightComponent.h"
 #include "ReflectionMacro.h"
+#include "Object.h"
+#include "TransformComponent.h"
 #include <cassert>
 
 REGISTER_COMPONENT(LightComponent);
@@ -17,8 +19,6 @@ RenderData::LightData LightComponent::BuildLightData() const
 
 void LightComponent::LightComponent::Update(float deltaTime)
 {
-<<<<<<< HEAD
-=======
 	auto owner = GetOwner();
 	if (owner == nullptr)
 	{
@@ -28,7 +28,6 @@ void LightComponent::LightComponent::Update(float deltaTime)
 	{
 		m_Position = trans->GetWorldPos();
 	}
->>>>>>> UI
 }
 
 void LightComponent::LightComponent::OnEvent(EventType type, const void* data)
