@@ -181,10 +181,27 @@ int main(int argc, char** argv) {
     printf("assimp dll : %s\n", (dll && aiImportFile) ? usedDll : "NOT LOADED");
     printf("flags      : 0x%08X   iters = %d\n\n", kFlags, iters);
 
-    const char* names[] = {
-        "Box", "shinchan", "hiroshi", "cycle",
-        "building", "all", "Unarmed Walk Forward", "SKM_Quinn_Simple",
-    };
+    // 원본 FBX와 .meshbin 이 모두 존재하는 에셋을 전부 수집한다.
+    // FBX 는 Resources/FBX 를 먼저 보고, 없으면 MRenderer/fx 를 본다.
+    std::vector<std::string> names;
+    {
+        const fs::path outRoot("ResourceOutput");
+        if (fs::exists(outRoot))
+        {
+            for (const auto& dir : fs::directory_iterator(outRoot))
+            {
+                if (!dir.is_directory()) continue;
+                const std::string name = dir.path().filename().string();
+                const fs::path bin = dir.path() / "Meshes" / (name + ".meshbin");
+                if (!fs::exists(bin)) continue;
+                if (!fs::exists(fs::path("Resources/FBX") / (name + ".fbx"))
+                 && !fs::exists(fs::path("MRenderer/fx") / (name + ".fbx"))) continue;
+                names.push_back(name);
+            }
+        }
+        std::sort(names.begin(), names.end());
+        printf("대상 에셋 : %zu개 (FBX 원본과 .meshbin 이 모두 있는 것)\n\n", names.size());
+    }
 
     printf("%-22s %9s %9s %9s %8s %5s %6s | %10s %9s %8s | %6s %8s\n",
         "asset", "fbx(KB)", "bin(KB)", "cpu(KB)", "verts", "subs", "skin",
@@ -192,11 +209,15 @@ int main(int argc, char** argv) {
     printf("%s\n", std::string(140, '-').c_str());
 
     double totFbx = 0, totBin = 0;
+    unsigned long long totVerts = 0, totSubs = 0, totFbxKB = 0, totBinKB = 0, totCpuKB = 0;
+    int totSkinned = 0;
 
-    for (const char* name : names) {
-        const fs::path fbx = fs::path("MRenderer/fx") / (std::string(name) + ".fbx");
-        const fs::path bin = fs::path("ResourceOutput") / name / "Meshes" / (std::string(name) + ".meshbin");
-        const fs::path skel = fs::path("ResourceOutput") / name / "Skels" / (std::string(name) + ".skelbin");
+    for (const std::string& nameStr : names) {
+        const char* name = nameStr.c_str();
+        fs::path fbx = fs::path("Resources/FBX") / (nameStr + ".fbx");
+        if (!fs::exists(fbx)) fbx = fs::path("MRenderer/fx") / (nameStr + ".fbx");
+        const fs::path bin = fs::path("ResourceOutput") / nameStr / "Meshes" / (nameStr + ".meshbin");
+        const fs::path skel = fs::path("ResourceOutput") / nameStr / "Skels" / (nameStr + ".skelbin");
 
         if (!fs::exists(bin)) { printf("%-22s  (meshbin 없음)\n", name); continue; }
 
@@ -232,6 +253,13 @@ int main(int argc, char** argv) {
         const auto fbxKB = fs::exists(fbx) ? fs::file_size(fbx) / 1024 : 0;
         const auto binKB = fs::file_size(bin) / 1024;
 
+        totVerts += st.verts;
+        totSubs += st.subMeshes;
+        totFbxKB += fbxKB;
+        totBinKB += binKB;
+        totCpuKB += st.cpuBytes / 1024;
+        if (st.skinned) ++totSkinned;
+
         char ratio[16], bonesS[16], uplow[16], fbxS[16];
         if (fbxMed > 0 && binMed > 0) snprintf(ratio, sizeof(ratio), "%.1fx", fbxMed / binMed);
         else snprintf(ratio, sizeof(ratio), "-");
@@ -251,8 +279,15 @@ int main(int argc, char** argv) {
     }
 
     printf("%s\n", std::string(140, '-').c_str());
-    printf("합계(8종)  FBX %.2f ms   meshbin %.3f ms   ->  %.1fx\n",
+    printf("합계 %zu종\n", names.size());
+    printf("  로드 시간 : FBX %.1f ms  ->  meshbin %.2f ms   (%.1f배)\n",
         totFbx, totBin, (totBin > 0) ? totFbx / totBin : 0.0);
+    printf("  정점      : %llu   서브메시 : %llu   스키닝 에셋 : %d\n",
+        (unsigned long long)totVerts, (unsigned long long)totSubs, totSkinned);
+    printf("  파일 크기 : FBX %.1f MB  ->  meshbin %.1f MB   (%.2f배)\n",
+        totFbxKB / 1024.0, totBinKB / 1024.0,
+        (totFbxKB > 0) ? (double)totBinKB / (double)totFbxKB : 0.0);
+    printf("  런타임 정점+인덱스 메모리 : %.1f MB\n", totCpuKB / 1024.0);
 
     if (dll) FreeLibrary(dll);
     return 0;

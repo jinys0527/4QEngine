@@ -374,3 +374,9 @@ ResourceOutput/
 # *.png
 # *.jpg
 # *.jpeg
+# 플레이 영상은 용량이 커서 저장소에 넣지 않는다 (외부 링크로 대체)
+docs/media/*.mp4
+
+# Notion 내보내기 잔재
+docs/*.zip
+docs/A P T *.md
