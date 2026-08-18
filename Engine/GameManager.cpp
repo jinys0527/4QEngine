@@ -148,6 +148,15 @@ void GameManager::SetDataSheetPaths(const DataSheetPaths& paths)
 	m_DataPaths = paths;
 }
 
+bool GameManager::IsFloorScene(const Scene* scene) const
+{
+	if (!scene || m_FloorSceneNames.empty())
+		return false;
+
+	return std::find(m_FloorSceneNames.begin(), m_FloorSceneNames.end(),
+		scene->GetName()) != m_FloorSceneNames.end();
+}
+
 void GameManager::SetFloorSceneNames(const std::vector<std::string>& names)
 {
 	m_FloorSceneNames = names;
@@ -866,6 +875,14 @@ void GameManager::OnPhaseEnter(Phase phase)
 		// HowToPlay는 1층 시작 시점에만 대기 상태로 진입한다.
 		// 다음 층에서는 가이드 UI가 없을 수 있으므로 자동으로 플레이어 턴을 시작한다.
 		if (m_CurrentFloor > 1)
+		{
+			m_WaitingForHowToPlayClose = false;
+		}
+
+		// 등록된 층 씬이 아니면(테스트 맵, 에디터에서 만든 임시 씬 등) 가이드 UI 자체가 없다.
+		// 이 상태로 대기에 들어가면 대기를 풀어 줄 UI_ExplorePlayerTurnRequested를
+		// 보낼 주체가 없어 씬 pause가 영구히 유지된다. 그래서 대기를 건너뛴다.
+		if (!IsFloorScene(m_ActiveScene))
 		{
 			m_WaitingForHowToPlayClose = false;
 		}

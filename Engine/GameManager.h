@@ -107,6 +107,10 @@ private:
 	void ResolveEnemyAttack(int actorId = 0);
 	bool ResolveEnemyGroupTurn();
 	std::vector<int> CollectOwnedItemIndices() const;
+
+	// SetFloorSceneNames로 등록된 게임 층 씬인지 판별한다.
+	// 테스트 맵이나 에디터 임시 씬을 걸러내는 데 쓴다.
+	bool IsFloorScene(const class Scene* scene) const;
 private:
 
 	EventDispatcher* m_EventDispatcher = nullptr;

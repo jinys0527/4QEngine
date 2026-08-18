@@ -243,7 +243,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(SolutionDir)MRenderer;$(VCPKG_ROOT)installed\x64-windows\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -251,18 +251,11 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>fmodL_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmodL.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\assimp-vc143-mtd.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\poly2tri.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\minizip.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\zlibd1.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\draco.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\kubazip.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(TargetDir)"</Command>
+      <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmodL.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_NoneBlur|x64'">
@@ -271,7 +264,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(SolutionDir)MRenderer;$(VCPKG_ROOT)installed\x64-windows\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -279,18 +272,11 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>fmodL_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmodL.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\assimp-vc143-mtd.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\poly2tri.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\minizip.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\zlibd1.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\draco.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\kubazip.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(TargetDir)"</Command>
+      <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmodL.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugEditor|x64'">
@@ -299,7 +285,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(SolutionDir)MRenderer;$(VCPKG_ROOT)\installed\x64-windows\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -307,7 +293,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)\installed\x64-windows\lib;$(VCPKG_ROOT)\installed\x64-windows-static\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>fmodL_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -322,7 +308,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(SolutionDir)MRenderer;$(VCPKG_ROOT)installed\x64-windows\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -331,18 +317,10 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\debug\bin\pugixml.dll" "$(Target
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>fmod_vc.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)installed\x64-windows\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmod.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\assimp-vc143-mt.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\poly2tri.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\minizip.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\zlib1.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\draco.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\kubazip.dll" "$(TargetDir)"
-xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
-</Command>
+      <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmod.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'">
@@ -353,7 +331,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)Importer;$(SolutionDir)MRenderer;$(VCPKG_ROOT)\installed\x64-windows\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ResourceManager;$(SolutionDir)Common;$(SolutionDir)ImGUIDX11;$(SolutionDir)Event;$(SolutionDir)GameObject;$(SolutionDir)Engine;$(SolutionDir)AI;$(SolutionDir)ThirdParty\FMOD\inc;$(SolutionDir)SoundSystem;$(SolutionDir)MRenderer;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -362,7 +340,7 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>fmod_vc.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;$(VCPKG_ROOT)\installed\x64-windows\lib;$(VCPKG_ROOT)\installed\x64-windows-static\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty/FMOD/lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /D "$(SolutionDir)ThirdParty\FMOD\lib\fmod.dll" "$(TargetDir)"</Command>
@@ -383,9 +361,6 @@ xcopy /Y /D "$(VCPKG_ROOT)installed\x64-windows\bin\pugixml.dll" "$(TargetDir)"
     </ProjectReference>
     <ProjectReference Include="..\GameObject\GameObject.vcxproj">
       <Project>{27a8092d-9702-4ab5-9e74-0a204595aad5}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Importer\Importer.vcxproj">
-      <Project>{cda21401-5075-4361-81a3-b8926519745f}</Project>
     </ProjectReference>
     <ProjectReference Include="..\MRenderer\MRenderer.vcxproj">
       <Project>{ecf85aec-9479-462b-b801-b7b6645d0b09}</Project>
