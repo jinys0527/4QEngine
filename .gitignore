@@ -364,8 +364,6 @@ MigrationBackup/
 FodyWeavers.xsd
 Sound/
 Engine/TestScene.cpp
-<<<<<<< HEAD
-=======
 
 Resources/
 ResourceOutput/
@@ -376,4 +374,3 @@ ResourceOutput/
 # *.png
 # *.jpg
 # *.jpeg
->>>>>>> UI
