@@ -938,7 +938,31 @@ bool DrawFSMGraphEditor(FSMGraph& graph, const std::string& category)
 	return updated;
 }
 
+static PropertyEditResult DrawComponentPropertyEditorInner(Component* component, const Property& property, AssetLoader& assetLoader);
+
+// 읽기 전용 프로퍼티는 위젯을 비활성으로 그린다.
+// ReadOnly 계열은 SetValue가 빈 함수라, 활성 위젯으로 그리면 클릭은 되는데 값이
+// 반영되지 않아(다음 프레임에 GetValue로 되돌아옴) 동작하는 것처럼 오해하게 된다.
 PropertyEditResult DrawComponentPropertyEditor(Component* component, const Property& property, AssetLoader& assetLoader)
+{
+	const bool readOnly = property.IsReadOnly();
+	if (readOnly)
+		ImGui::BeginDisabled();
+
+	PropertyEditResult result = DrawComponentPropertyEditorInner(component, property, assetLoader);
+
+	if (readOnly)
+	{
+		ImGui::EndDisabled();
+		// 비활성 위젯의 클릭은 편집으로 간주하지 않는다 (Undo 스냅샷 방지)
+		result.activated   = false;
+		result.deactivated = false;
+		result.updated     = false;
+	}
+	return result;
+}
+
+static PropertyEditResult DrawComponentPropertyEditorInner(Component* component, const Property& property, AssetLoader& assetLoader)
 {	// 각 Property별 배치 Layout은 정해줘야 함
 	using PlaybackStateType = std::decay_t<decltype(std::declval<AnimationComponent>().GetPlayback())>;
 	using BoneMaskSourceType = std::decay_t<decltype(std::declval<AnimationComponent>().GetBoneMaskSource())>;
@@ -1062,7 +1086,19 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 	{
 		float value = 0.0f;
 		property.GetValue(component, &value);
-		if (ImGui::DragFloat(property.GetName().c_str(), &value, DRAG_SPEED))
+
+		// 이름이 Weight로 끝나는 값(LayerWeight, BoneMaskWeight, BoneMaskDefaultWeight)은
+		// 0~1 정규화 가중치다. DragFloat(0.01/px)로는 100px만 끌어도 전 구간이 지나가
+		// 중간값을 잡기 어려우므로 위젯 폭 전체를 0~1에 대응시키는 슬라이더로 그린다.
+		const std::string& name = property.GetName();
+		const bool isNormalizedWeight =
+			name.size() >= 6 && name.compare(name.size() - 6, 6, "Weight") == 0;
+
+		const bool changed = isNormalizedWeight
+			? ImGui::SliderFloat(name.c_str(), &value, 0.0f, 1.0f, "%.3f")
+			: ImGui::DragFloat(name.c_str(), &value, DRAG_SPEED);
+
+		if (changed)
 		{
 			property.SetValue(component, &value);
 			result.updated = true;
@@ -2543,12 +2579,18 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 
 		bool changed = false;
 
+		// Playback / LayerPlayback 처럼 같은 타입이 한 컴포넌트에 둘 이상 붙으면
+		// 라벨이 같아 ImGui ID가 충돌한다. 프로퍼티 이름으로 스코프를 나눈다.
+		ImGui::PushID(property.GetName().c_str());
+
 		changed |= ImGui::InputFloat("Time", &value.time, 0.01f, 0.1f, "%.3f");
 		changed |= ImGui::InputFloat("Speed", &value.speed, 0.01f, 0.1f, "%.2f");
 
 		changed |= ImGui::Checkbox("Looping", &value.looping);
 		changed |= ImGui::Checkbox("Playing", &value.playing);
 		changed |= ImGui::Checkbox("Reverse", &value.reverse);
+
+		ImGui::PopID();
 
 		if (changed)
 		{
@@ -2873,19 +2915,34 @@ PropertyEditResult DrawComponentPropertyEditor(Component* component, const Prope
 	{
 		BoneMaskSourceType value{};
 		property.GetValue(component, &value);
-		const char* label = "None";
+
+		int current = 0;
 		switch (value)
 		{
-		case AnimationComponent::BoneMaskSource::UpperBody:
-			label = "UpperBody";
-			break;
-		case AnimationComponent::BoneMaskSource::LowerBody:
-			label = "LowerBody";
-			break;
-		default:
-			break;
+		case AnimationComponent::BoneMaskSource::UpperBody: current = 1; break;
+		case AnimationComponent::BoneMaskSource::LowerBody: current = 2; break;
+		default: current = 0; break;
 		}
-		ImGui::Text("%s: %s", property.GetName().c_str(), label);
+
+		// 스켈레톤의 upperBodyBones / lowerBodyBones를 마스크로 적용한다.
+		// 값이 바뀌면 AnimationComponent가 다음 Update에서 마스크를 다시 만든다.
+		static const char* kMaskSourceItems[] = { "None", "UpperBody", "LowerBody" };
+
+		ImGui::TextUnformatted(property.GetName().c_str());
+		ImGui::SameLine();
+		ImGui::PushID(property.GetName().c_str());
+		if (ImGui::Combo("##BoneMaskSource", &current, kMaskSourceItems, IM_ARRAYSIZE(kMaskSourceItems)))
+		{
+			BoneMaskSourceType next = AnimationComponent::BoneMaskSource::None;
+			if (current == 1)      next = AnimationComponent::BoneMaskSource::UpperBody;
+			else if (current == 2) next = AnimationComponent::BoneMaskSource::LowerBody;
+
+			property.SetValue(component, &next);
+			result.updated = true;
+		}
+		result.activated   = result.activated   || ImGui::IsItemActivated();
+		result.deactivated = result.deactivated || ImGui::IsItemDeactivatedAfterEdit();
+		ImGui::PopID();
 		return result;
 	}
 

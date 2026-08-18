@@ -25,6 +25,11 @@ using namespace MathUtils;
 		const string& GetName() const { return m_Name; }
 		bool   IsSerializable() const { return m_Serializable; }
 
+		// 에디터에서 편집 가능한지. SetValue가 무시되는 프로퍼티는 true를 반환해
+		// 위젯을 비활성으로 그리게 한다. IsSerializable()과는 별개다
+		// (읽기 전용이면서 저장은 되는 프로퍼티가 있다).
+		virtual bool IsReadOnly() const { return false; }
+
 		//virtual void DrawEditor(Component* c) const;
 		virtual const std::type_info& GetTypeInfo() const = 0;
 		virtual void GetValue(Component* c, void* outValue) const = 0;
@@ -152,6 +157,8 @@ using namespace MathUtils;
 
 		}
 
+		bool IsReadOnly() const override { return true; }
+
 		void Serialize(Component* c, nlohmann::json& j) const override {
 			if constexpr (serializable) {
 				T* obj = static_cast<T*>(c);
@@ -194,6 +201,7 @@ using namespace MathUtils;
 		}
 
 		void SetValue(Component*, const void*) const override {} // 수정 금지
+		bool IsReadOnly() const override { return true; }
 		void Serialize(Component*, nlohmann::json&) const override {} // 저장 안 함
 		void Deserialize(Component*, const nlohmann::json&) const override {} // 로드 안 함
 
