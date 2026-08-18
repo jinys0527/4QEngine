@@ -18,10 +18,13 @@ REGISTER_PROPERTY_READONLY(AnimationComponent, Blend)
 REGISTER_PROPERTY(AnimationComponent, BlendConfig)
 REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeights)
 REGISTER_PROPERTY_READONLY(AnimationComponent, RetargetOffsets)
-REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskSource)
-REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskWeight)
-REGISTER_PROPERTY_READONLY(AnimationComponent, BoneMaskDefaultWeight)
+REGISTER_PROPERTY(AnimationComponent, BoneMaskSource)
+REGISTER_PROPERTY(AnimationComponent, BoneMaskWeight)
+REGISTER_PROPERTY(AnimationComponent, BoneMaskDefaultWeight)
 REGISTER_PROPERTY_READONLY(AnimationComponent, AutoBoneMaskApplied)
+REGISTER_PROPERTY_HANDLE(AnimationComponent, LayerClipHandle)
+REGISTER_PROPERTY(AnimationComponent, LayerPlayback)
+REGISTER_PROPERTY(AnimationComponent, LayerWeight)
 REGISTER_PROPERTY_READONLY(AnimationComponent, LocalPose)
 REGISTER_PROPERTY_READONLY(AnimationComponent, GlobalPose)
 REGISTER_PROPERTY_READONLY(AnimationComponent, SkinningPalette)
@@ -442,7 +445,12 @@ void AnimationComponent::ApplyStaticPoseToSkeletal()
 	{
 		EnsureAutoBoneMask(*skeleton);
 		m_Playback.time = ClampTimeToClip(m_Playback.time, clip);
-		BuildPose(*skeleton, *clip, m_Playback.time);
+
+		// 정지 중에도 레이어를 반영해야 에디터에서 시간을 스크럽하며 확인할 수 있다.
+		if (HasActiveLayer())
+			BuildLayeredPose(*skeleton, *clip, 0.0f);
+		else
+			BuildPose(*skeleton, *clip, m_Playback.time);
 	}
 
 	ApplyPoseToSkeletal(skeletal);
@@ -531,6 +539,102 @@ void AnimationComponent::ClearSkeletonMask()
 {
 	m_BoneMaskSource = BoneMaskSource::None;
 	m_AutoBoneMaskApplied = false;
+	// EnsureAutoBoneMask는 source가 None이면 바로 반환하므로, 여기서 비우지 않으면
+	// 직전 마스크가 그대로 남아 레이어 블렌딩에 계속 적용된다.
+	m_BoneMaskWeights.clear();
+}
+
+void AnimationComponent::SetBoneMaskSource(const BoneMaskSource& boneMaskSource)
+{
+	if (m_BoneMaskSource == boneMaskSource)
+		return;
+
+	m_BoneMaskSource = boneMaskSource;
+	m_AutoBoneMaskApplied = false;
+
+	if (m_BoneMaskSource == BoneMaskSource::None)
+		m_BoneMaskWeights.clear();
+}
+
+void AnimationComponent::SetBoneMaskWeight(const float& boneMaskWeight)
+{
+	if (m_BoneMaskWeight == boneMaskWeight)
+		return;
+
+	m_BoneMaskWeight = boneMaskWeight;
+	m_AutoBoneMaskApplied = false; // 가중치가 바뀌었으니 마스크를 다시 만든다
+}
+
+void AnimationComponent::SetBoneMaskDefaultWeight(const float& boneMaskDefaultWeight)
+{
+	if (m_BoneMaskDefaultWeight == boneMaskDefaultWeight)
+		return;
+
+	m_BoneMaskDefaultWeight = boneMaskDefaultWeight;
+	m_AutoBoneMaskApplied = false;
+}
+
+void AnimationComponent::SetLayerClipHandle(const AnimationHandle& handle)
+{
+	if (m_LayerClipHandle == handle)
+		return;
+
+	m_LayerClipHandle = handle;
+	m_LayerPlayback.time = 0.0f;
+	m_LayerPlayback.playing = true;
+}
+
+void AnimationComponent::SetLayerWeight(const float& weight)
+{
+	m_LayerWeight = Clamp01(weight);
+}
+
+bool AnimationComponent::HasActiveLayer() const
+{
+	// 마스크가 없으면 레이어가 전신을 덮어써서 베이스가 무의미해지므로 레이어로 보지 않는다.
+	return m_LayerClipHandle.IsValid()
+		&& m_LayerWeight > 0.0f
+		&& !m_BoneMaskWeights.empty();
+}
+
+void AnimationComponent::BuildLayeredPose(
+	const RenderData::Skeleton& skeleton,
+	const RenderData::AnimationClip& baseClip,
+	float deltaTime)
+{
+	const RenderData::AnimationClip* layerClip = ResolveClip(m_LayerClipHandle);
+	if (!layerClip)
+	{
+		BuildPose(skeleton, baseClip, m_Playback.time);
+		return;
+	}
+
+	// 레이어는 베이스와 독립된 시간축으로 진행한다.
+	if (m_LayerPlayback.playing && deltaTime != 0.0f)
+	{
+		const float dir = m_LayerPlayback.reverse ? -1.0f : 1.0f;
+		const float scaledDelta = deltaTime * m_LayerPlayback.speed * dir;
+		bool layerStopped = false;
+		m_LayerPlayback.time = UpdatePlaybackTime(
+			m_LayerPlayback.time, scaledDelta, layerClip, m_LayerPlayback.looping, &layerStopped);
+		if (layerStopped)
+			m_LayerPlayback.playing = false;
+	}
+	m_LayerPlayback.time = ClampTimeToClip(m_LayerPlayback.time, layerClip);
+
+	std::vector<LocalPose> basePoses;
+	std::vector<LocalPose> layerPoses;
+	std::vector<LocalPose> blended;
+
+	SampleLocalPoses(skeleton, baseClip, m_Playback.time, basePoses);
+	SampleLocalPoses(skeleton, *layerClip, m_LayerPlayback.time, layerPoses);
+
+	// BlendLocalPoses가 본별 마스크를 alpha에 곱한다.
+	// 마스크 1인 본은 레이어를 취하고, 0인 본은 베이스를 유지한다.
+	BlendLocalPoses(basePoses, layerPoses, m_LayerWeight, blended);
+
+	ApplyRetargetOffsets(blended);
+	BuildPoseFromLocal(skeleton, blended);
 }
 
 void AnimationComponent::Update(float deltaTime)
@@ -611,7 +715,10 @@ void AnimationComponent::Update(float deltaTime)
 		if (stopped)
 			m_Playback.playing = false;
 
-		BuildPose(*skeleton, *clip, m_Playback.time);
+		if (HasActiveLayer())
+			BuildLayeredPose(*skeleton, *clip, deltaTime);
+		else
+			BuildPose(*skeleton, *clip, m_Playback.time);
 	}
 
 	ApplyPoseToSkeletal(skeletal);
@@ -921,6 +1028,13 @@ void AnimationComponent::EnsureAutoBoneMask(const RenderData::Skeleton& skeleton
 	if (indices.empty())
 		return;
 
+	// SetBoneMaskFromIndices는 "직접 지정" 경로라 m_BoneMaskSource를 None으로 되돌린다.
+	// 여기서는 스켈레톤 기준 자동 생성이므로 소스를 유지해야 한다.
+	// 유지하지 않으면 마스크 생성 직후 소스가 None이 되어
+	//   - 에디터에 None으로 표시되고
+	//   - 이후 EnsureAutoBoneMask가 항상 조기 반환해 스켈레톤이 바뀌어도 갱신되지 않는다.
+	const BoneMaskSource source = m_BoneMaskSource;
 	SetBoneMaskFromIndices(skeleton.bones.size(), indices, m_BoneMaskWeight, m_BoneMaskDefaultWeight);
+	m_BoneMaskSource = source;
 	m_AutoBoneMaskApplied = true;
 }

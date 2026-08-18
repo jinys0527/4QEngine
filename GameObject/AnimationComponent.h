@@ -218,6 +218,28 @@ public:
 	void LoadSetBoneMaskDefaultWeight(const float& boneMaskDefaultWeight) { m_BoneMaskDefaultWeight = boneMaskDefaultWeight; }
 	const float& GetBoneMaskDefaultWeight() const { return m_BoneMaskDefaultWeight; }
 	const bool& GetAutoBoneMaskApplied() const { return m_AutoBoneMaskApplied; }
+
+	// 에디터/런타임에서 마스크를 직접 지정하기 위한 세터.
+	// 값이 바뀌면 다음 Update에서 스켈레톤 기준으로 마스크를 다시 만든다.
+	void SetBoneMaskSource(const BoneMaskSource& boneMaskSource);
+	void SetBoneMaskWeight(const float& boneMaskWeight);
+	void SetBoneMaskDefaultWeight(const float& boneMaskDefaultWeight);
+
+	// ---- 마스크 레이어 (상하체 분리 블렌딩) ----
+	// 베이스 클립(m_ClipHandle)이 전신을 구동하고, 레이어 클립이 본 마스크가 지정한
+	// 부위만 덮어쓴다. 하체=이동 / 상체=공격 같은 조합을 이 구조로 만든다.
+	// 레이어는 베이스와 독립된 시간축(m_LayerPlayback)으로 재생된다.
+	void SetLayerClipHandle(const AnimationHandle& handle);
+	const AnimationHandle& GetLayerClipHandle() const { return m_LayerClipHandle; }
+
+	void SetLayerPlayback(const PlaybackState& playback) { m_LayerPlayback = playback; }
+	const PlaybackState& GetLayerPlayback() const { return m_LayerPlayback; }
+
+	// 레이어 전체 세기. 0이면 베이스만, 1이면 마스크 부위를 레이어가 완전히 덮는다.
+	void SetLayerWeight(const float& weight);
+	const float& GetLayerWeight() const { return m_LayerWeight; }
+
+	bool HasActiveLayer() const;
 	
 	const std::vector<DirectX::XMFLOAT4X4>& GetLocalPose      () const { return m_LocalPose;       }
 	const std::vector<DirectX::XMFLOAT4X4>& GetGlobalPose     () const { return m_GlobalPose;      }
@@ -296,6 +318,12 @@ private:
 	void ApplyRetargetOffsets(std::vector<LocalPose>& localPoses) const;
 
 	void EnsureAutoBoneMask		  (const RenderData::Skeleton& skeleton);
+
+	// 베이스 포즈 위에 마스크 레이어를 덮어 최종 포즈를 만든다.
+	void BuildLayeredPose(
+		const RenderData::Skeleton& skeleton,
+		const RenderData::AnimationClip& baseClip,
+		float deltaTime);
 private:
 	ResourceStore<RenderData::Skeleton, SkeletonHandle>*       m_Skeletons  = nullptr;
 	ResourceStore<RenderData::AnimationClip, AnimationHandle>* m_Animations = nullptr;
@@ -312,6 +340,10 @@ private:
 	float							 m_BoneMaskWeight			  = 1.0f;
 	float						     m_BoneMaskDefaultWeight	  = 0.0f;
 	bool						     m_AutoBoneMaskApplied		  = false;
+
+	AnimationHandle					 m_LayerClipHandle			  = AnimationHandle::Invalid();
+	PlaybackState					 m_LayerPlayback{};
+	float							 m_LayerWeight				  = 1.0f;
 	
 
 
