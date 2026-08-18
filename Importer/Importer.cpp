@@ -589,6 +589,14 @@ void ImportFBX(const std::string& FBXPath, const std::string& outDir)
 	// ----- 2) Assimp load -----
 	Assimp::Importer importer;
 
+	// FBX 피벗 보존을 끈다.
+	// 켜져 있으면 Assimp가 본 하나마다 `<Bone>_$AssimpFbx$_Translation /
+	// _PreRotation / _Rotation` 같은 헬퍼 노드를 만든다. 이 노드들은 실제 스키닝
+	// 본이 아닌데도 스켈레톤 계층에 조상으로 끼어들어 본 수를 3배 이상 부풀린다
+	// (Mixamo 리그 기준 65 -> 198). 스키닝 팔레트(kMaxSkinningBones=256)와
+	// 상수 버퍼를 낭비하므로 임포트 단계에서 접어버린다.
+	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+
 	// DX11 / LH 기준
 	const aiScene* scene = importer.ReadFile(
 		FBXPath,

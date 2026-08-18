@@ -358,6 +358,91 @@ bool ImportFBXToSkelBin(
 			}
 		};
 
+	const auto boneName = [&skel](int index) -> std::string
+		{
+			const uint32_t offset = skel.bones[index].nameOffset;
+			if (offset >= skel.stringTable.size())
+				return std::string();
+			return std::string(skel.stringTable.c_str() + offset);
+		};
+
+	// 계층 기반 자동 분류.
+	// 이름 목록 하드코딩 방식은 목록에 없는 본(spine_04, neck_02, *_metacarpal_*,
+	// *_twist_02_*)을 놓쳐서 상체 마스크가 계층 중간에서 끊어진다. 부모와 자식은
+	// 마스크에 들어있는데 중간 본만 빠지면 블렌딩 시 그 지점이 꺾여 보인다.
+	// 상체 루트의 서브트리를 통째로 잡으면 "연결된 하나의 서브트리"가 구조적으로 보장된다.
+	const auto autoFillFromHierarchy = [&]() -> bool
+		{
+			const int boneCount = static_cast<int>(skel.bones.size());
+			if (boneCount == 0)
+				return false;
+
+			int upperRoot = -1;
+			// 척추 체인의 '최상위' 본이 상체 루트다. Spine1 이 Spine 보다 먼저 오면
+			// Spine 하나가 상체에서 빠지므로 순서가 중요하다.
+			for (const char* candidate : { "spine_01", "mixamorig:Spine", "Spine", "spine",
+										   "Spine1", "Bip01_Spine1" })
+			{
+				auto it = skel.boneNameToIndex.find(candidate);
+				if (it != skel.boneNameToIndex.end())
+				{
+					upperRoot = static_cast<int>(it->second);
+					break;
+				}
+			}
+			if (upperRoot < 0)
+				return false; // 상체 루트를 못 찾으면 이름 목록 방식으로 폴백
+
+			std::vector<std::vector<int>> children(boneCount);
+			for (int i = 0; i < boneCount; ++i)
+			{
+				const int parent = skel.bones[i].parentIndex;
+				if (parent >= 0 && parent < boneCount)
+					children[parent].push_back(i);
+			}
+
+			const auto markSubtree = [&children](int start, std::vector<bool>& flags)
+				{
+					std::vector<int> stack{ start };
+					while (!stack.empty())
+					{
+						const int index = stack.back();
+						stack.pop_back();
+						if (flags[index])
+							continue;
+						flags[index] = true;
+						for (int child : children[index])
+							stack.push_back(child);
+					}
+				};
+
+			// IK/보조 본은 스키닝 변형에 관여하지 않으므로 서브트리째 분류에서 제외한다.
+			std::vector<bool> excluded(boneCount, false);
+			for (int i = 0; i < boneCount; ++i)
+			{
+				const std::string name = boneName(i);
+				if (name.rfind("ik_", 0) == 0 || name == "interaction" || name == "center_of_mass")
+					markSubtree(i, excluded);
+			}
+
+			std::vector<bool> upper(boneCount, false);
+			markSubtree(upperRoot, upper);
+
+			for (int i = 0; i < boneCount; ++i)
+			{
+				if (excluded[i])
+					continue;
+				if (upper[i])
+					upperBodyIndices.push_back(i);
+				else
+					lowerBodyIndices.push_back(i);
+			}
+
+			skeletonMeta["upperBodyBones"] = upperBodyIndices;
+			skeletonMeta["lowerBodyBones"] = lowerBodyIndices;
+			return true;
+		};
+
 	const auto autoFillFromUnrealNames = [&]()
 		{
 			const std::vector<std::string> upperNames = {
@@ -423,7 +508,7 @@ bool ImportFBXToSkelBin(
 		fillIndices(skeletonMeta.value("upperBodyBones", nlohmann::json::array()), upperBodyIndices);
 		fillIndices(skeletonMeta.value("lowerBodyBones", nlohmann::json::array()), lowerBodyIndices);
 	}
-	else
+	else if (!autoFillFromHierarchy())
 	{
 		autoFillFromUnrealNames();
 	}
