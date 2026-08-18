@@ -1316,6 +1316,19 @@ struct Serializer<AnimationComponent::PlaybackState> {
 	}
 };
 
+// 상하체 마스크 소스. 스켈레톤의 upperBodyBones / lowerBodyBones 중 무엇을
+// 본 마스크로 쓸지 지정한다.
+template<>
+struct Serializer<AnimationComponent::BoneMaskSource> {
+	static void ToJson(nlohmann::json& j, const AnimationComponent::BoneMaskSource& v) {
+		j = static_cast<int>(v);
+	}
+
+	static void FromJson(const nlohmann::json& j, AnimationComponent::BoneMaskSource& v) {
+		v = static_cast<AnimationComponent::BoneMaskSource>(j.is_number_integer() ? j.get<int>() : 0);
+	}
+};
+
 template<>
 struct Serializer<AnimationComponent::BlendConfig> {
 	static void ToJson(nlohmann::json& j, const AnimationComponent::BlendConfig& v) {

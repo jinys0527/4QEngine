@@ -18,9 +18,10 @@
 | 상하체 마스크 데이터 | ❌ 상체가 13조각으로 끊어짐 | ✅ **단일 서브트리, 누락 0** |
 | Mixamo 리그 마스크 | ❌ 0/0 (분류 실패) | ✅ **54/12** |
 | 리타겟 교차 리그 | ❌ 이름 일치 0/65 | ❌ **미해결 (설계 한계)** |
-| 런타임 활성화 | ❌ 호출부 없음 | ❌ **미해결** |
+| 런타임 활성화 | ❌ 호출부 없음 | ✅ **마스크 레이어로 연결, 에디터에서 동작 확인** |
 
-**최종 : PASS 14 / FAIL 1.** 남은 1건은 교차 리그 리타겟으로, 별개의 설계 이슈다.
+**헤드리스 검증 : PASS 14 / FAIL 1.** 남은 1건은 교차 리그 리타겟으로, 별개의 설계 이슈다.
+**실기 확인 : 2026-08-18, 에디터에서 하체=걷기 / 상체=던지기 동시 재생 확인.**
 
 ---
 
@@ -131,17 +132,53 @@ decompose는 실패하지 않고(0건, 최대 translation 1.052) **조용히 잘
 
 ---
 
-## D. 런타임 활성화 여부 — 여전히 켜지지 않음
+## D. 런타임 연결 — 마스크 레이어 방식으로 구현
 
-| API | 호출부 |
-|---|---|
-| `UseSkeletonUpperBodyMask` / `UseSkeletonLowerBodyMask` | 없음 |
-| `SetRetargetFromBindPose` / `SetRetargetFromSkeletonHandles` | 없음 |
+### 왜 기존 블렌드를 못 썼나
 
-데이터 파이프라인(`SkeletonBin.cpp` → `.skelbin` → `AssetLoader` → `EnsureAutoBoneMask`)은
-끝까지 이어져 있고 이제 데이터도 올바르다. **스위치를 켜는 코드만 없다.**
-에디터는 `BoneMaskSource`를 읽기 전용으로 표시만 한다(`Editor/Util.cpp:2872`,
-`REGISTER_PROPERTY_READONLY`).
+`m_Blend`(크로스페이드)는 `elapsed / duration`으로 alpha를 올리다가 1에 도달하면
+`m_Blend.active = false`로 스스로 꺼진다. 즉 **한 클립에서 다른 클립으로 넘어가는
+전이**이지, 두 클립을 계속 겹쳐 두는 구조가 아니다. 상하체 분리는 지속적으로
+유지돼야 하므로 별도 개념이 필요했다.
+
+### 구조
+
+```
+베이스 클립 (m_ClipHandle)       → 전신 구동            예: 걷기
+레이어 클립 (m_LayerClipHandle)  → 마스크 부위만 덮음   예: 던지기
+                                   독립 시간축 (m_LayerPlayback)
+```
+
+`BuildLayeredPose()`가 두 클립을 각자 시간으로 샘플링한 뒤
+**기존 `BlendLocalPoses`를 그대로 재사용**해 합친다. 그 함수는 이미
+`weightedAlpha = alpha * mask[i]`로 본별 마스크를 적용하고, B 항목에서
+"alpha=1 + 상체 마스크 → 상체는 레이어 100%, 나머지는 베이스 유지"가
+검증돼 있으므로 새 블렌딩 수학을 추가하지 않았다.
+
+`m_LayerWeight`(0~1)가 레이어 전체 세기를 정한다. 0이면 베이스만, 1이면 마스크
+부위를 레이어가 완전히 덮는다. 중간값으로 상체 동작을 페이드 인/아웃할 수 있다.
+
+### 에디터 노출
+
+- `BoneMaskSource` / `BoneMaskWeight` / `BoneMaskDefaultWeight`를
+  `REGISTER_PROPERTY_READONLY` → `REGISTER_PROPERTY`로 변경 (편집·저장·로드 가능)
+- `BoneMaskSource`는 `None / UpperBody / LowerBody` 콤보박스로 표시
+- 세터가 `m_AutoBoneMaskApplied = false`를 세워 다음 `Update`에서 마스크를 재생성
+- 열거형 저장을 위해 `Serializer<AnimationComponent::BoneMaskSource>` 추가
+
+### 확인 결과 (2026-08-18)
+
+`Unarmed Walk Forward`(베이스) + `Throw`(레이어) + `BoneMaskSource = UpperBody` 조합으로
+에디터에서 **하체는 걷고 상체는 던지는 동작**이 동시에 재생되는 것을 확인했다.
+
+두 클립은 같은 Mixamo 리그에서 export해 본 66개의 이름과 순서가 완전히 일치하므로
+리타겟 없이 그대로 합성된다. 길이가 달라(1.37s vs 2.20s) 각자 주기로 루프한다.
+
+### 함께 고친 것
+
+`ClearSkeletonMask()`가 `m_BoneMaskWeights`를 비우지 않았다. `EnsureAutoBoneMask`는
+source가 `None`이면 즉시 반환하므로, **마스크를 끈 뒤에도 직전 마스크가 계속
+적용되는** 상태였다.
 
 ---
 
